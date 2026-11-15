@@ -67,6 +67,7 @@ public final class ServerCommands {
                 .then(CommandEnvironments.environment(NAME))
                 .then(WeightCommand.weight(NAME))
                 .then(SneakCommand.sneak(NAME))
+                .then(TreeCommand.tree(NAME))
                 .then(CommandGames.game(NAME)));
     }
 

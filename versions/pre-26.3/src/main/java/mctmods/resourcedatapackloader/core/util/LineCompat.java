@@ -153,9 +153,11 @@ public final class LineCompat {
 
     public static boolean bonemeal(ServerLevel level, BlockPos pos, BlockState state) {
         if (!(state.getBlock() instanceof BonemealableBlock block) || !block.isValidBonemealTarget(level, pos, state) || !block.isBonemealSuccess(level, level.getRandom(), pos, state)) { return false; }
-        block.performBonemeal(level, level.getRandom(), pos, state);
+        performBonemeal(block, level, level.getRandom(), pos, state);
         return true;
     }
+
+    public static void performBonemeal(BonemealableBlock block, ServerLevel level, RandomSource random, BlockPos pos, BlockState state) { block.performBonemeal(level, random, pos, state); }
 
     public static JsonObject densityPair(String type, JsonElement first, JsonElement second) {
         JsonObject out = new JsonObject();

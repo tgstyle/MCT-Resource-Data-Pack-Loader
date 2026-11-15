@@ -3,9 +3,12 @@ package mctmods.resourcedatapackloader.mixin.world.level.block.state;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,6 +17,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BlockBehaviour.BlockStateBase.class) public abstract class BlockStateBaseMixin {
@@ -38,5 +42,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!ContentHardness.anyRolls() || !((Object) this instanceof BlockState state)) { return; }
         Long held = ContentHardness.modelSeed(state, pos);
         if (held != null) { cir.setReturnValue(held); }
+    }
+
+    @SuppressWarnings("ConstantValue") @Inject(method = "randomTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V", at = @At("HEAD"), cancellable = true) private void rdpl$treeTick(ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
+        if ((Object) this instanceof BlockState state && ContentTreeEvents.randomTick(level, pos, state, random)) { ci.cancel(); }
     }
 }

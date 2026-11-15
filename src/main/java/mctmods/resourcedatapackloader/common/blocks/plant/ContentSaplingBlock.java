@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGrowth;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeRecorder;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
@@ -13,10 +15,12 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.grower.TreeGrower;
@@ -55,6 +59,8 @@ public final class ContentSaplingBlock extends LineCompat.SaplingBase implements
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
+    public SaplingDef sapling() { return sapling; }
+
     @Override public void resolveSoil(@Nonnull ContentRegistry.BlockEntry entry) { soil.resolve(sapling.soil()); }
 
     @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return ContentBushBlock.SHAPE; }
@@ -62,11 +68,26 @@ public final class ContentSaplingBlock extends LineCompat.SaplingBase implements
     @Override protected boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return soil.sustains(level, pos.below(), state); }
 
     @Override protected void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        if (ContentGrowSwitch.skips(level, pos, this, random) || !level.isAreaLoaded(pos, 1)) { return; }
+        if (ContentGrowSwitch.skips(level, pos, this, random)) { return; }
+        if (clocked()) {
+            ContentTreeGrowth.plant(level, pos, state, id());
+            return;
+        }
+        if (!level.isAreaLoaded(pos, 1)) { return; }
         if (level.getMaxLocalRawBrightness(pos.above()) < sapling.light()) { return; }
+        if (sapling.growth().growing() && ContentTreeGrowth.conditions(level, pos, sapling.growth()) != null) { return; }
         if (random.nextInt(Math.max(1, sapling.chance())) != 0) { return; }
         advance(level, pos, state, random);
     }
+
+    @Override protected void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moved) {
+        super.onPlace(state, level, pos, old, moved);
+        if (level instanceof ServerLevel server && clocked() && !TreeRecorder.recording()) { ContentTreeGrowth.plant(server, pos, state, id()); }
+    }
+
+    private boolean clocked() { return sapling.growth().growing() && sapling.growth().timed(); }
+
+    private String id() { return String.valueOf(BuiltInRegistries.BLOCK.getKey(this)); }
 
     @Override protected void grow(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) { advance(level, pos, state, random); }
 
@@ -76,6 +97,18 @@ public final class ContentSaplingBlock extends LineCompat.SaplingBase implements
             level.setBlock(pos, state.setValue(stage, current + 1), 4);
             return;
         }
+        generate(level, pos, state, random);
+    }
+
+    private void generate(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
+        if (sapling.growth().growing() && !TreeRecorder.recording()) {
+            ContentTreeGrowth.start(level, pos, state, id(), sapling.growth(), picked -> place(level, pos, state, picked));
+            return;
+        }
+        place(level, pos, state, random);
+    }
+
+    private void place(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
         if (!sapling.growsVanilla()) { placeStructure(level, pos, random); }
         else if (soil.sustains(level, pos.below(), state)) { grower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random); }
     }

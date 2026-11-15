@@ -39,6 +39,7 @@ import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentFeatureTypes;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOptionFeatures;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentChunkTokens;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
@@ -152,6 +153,7 @@ public final class ContentEvents {
             helper.register(id("owned_blocks"), OwnedBlocksStore.type());
             helper.register(id("table_lapis"), TableLapis.type());
             helper.register(EntityStorage.KEY, EntityStorage.TYPE);
+            helper.register(id("trees"), ContentTreeStore.TREES);
         });
         if (Config.contentOff()) {
             event.register(Registries.ITEM, _ -> generateData());

@@ -60,6 +60,7 @@
         "world.level.levelgen.feature.FossilFeatureMixin",
         "world.level.levelgen.feature.OreFeatureMixin",
         "world.level.levelgen.structure.templatesystem.StructureTemplateManagerMixin",
+        "world.level.levelgen.structure.templatesystem.StructureTemplateMixin",
         "world.level.levelgen.structure.structures.MineShaftCorridorMixin",
         "world.level.levelgen.structure.structures.StrongholdPortalRoomMixin",
         "world.level.levelgen.structure.structures.MonsterThroneMixin",
