@@ -198,11 +198,19 @@ public final class ContentGrowSwitch {
         return new GrowSwitchDef(scales, matches, waiver, tooltip, water, sneak);
     }
 
-    private static float scale(GrowSwitchDef def, ServerLevel level, BlockPos pos, Block block, int kind) {
+    private static float dry(GrowSwitchDef def, ServerLevel level, BlockPos pos, Block block, int kind) {
         WaiverDef waiver = def.waiver();
-        float base = waiver != null && waiver.covers(kind) && waiver.found(level, pos) ? waiver.scale : def.scale(kind, block);
+        return waiver != null && waiver.covers(kind) && waiver.found(level, pos) ? waiver.scale : def.scale(kind, block);
+    }
+
+    private static float scale(GrowSwitchDef def, ServerLevel level, BlockPos pos, Block block, int kind) {
+        float base = dry(def, level, pos, block, kind);
         return base > 0.0F ? base * ContentGrowWater.factor(level, pos, block, kind, def) : base;
     }
+
+    public static float scale(ServerLevel level, BlockPos pos, Block sapling) { return dry(ContentEnvironments.growth(level, pos), level, pos, sapling, GrowSwitchDef.SAPLINGS); }
+
+    public static int draws(float scale, RandomSource random) { return roll(scale, random); }
 
     static boolean stopped(ServerLevel level, BlockPos pos, Block block, int kind) { return scale(ContentEnvironments.growth(level, pos), level, pos, block, kind) <= 0.0F; }
 

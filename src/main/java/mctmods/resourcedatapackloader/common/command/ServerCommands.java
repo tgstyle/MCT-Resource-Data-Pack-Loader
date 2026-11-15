@@ -61,6 +61,7 @@ public final class ServerCommands {
                 .then(CommandTalk.talk(NAME))
                 .then(WeightCommand.weight(NAME))
                 .then(SneakCommand.sneak(NAME))
+                .then(TreeCommand.tree(NAME))
                 .then(RegistryDumpCommand.dump(NAME))
                 .then(CommandEnvironments.environment(NAME))
                 .then(CommandGames.game(NAME))

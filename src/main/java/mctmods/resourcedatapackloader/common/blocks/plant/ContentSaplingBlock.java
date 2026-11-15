@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGrowth;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeRecorder;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.List;
@@ -32,6 +34,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @SuppressWarnings("deprecation") public final class ContentSaplingBlock extends BushBlock implements BonemealableBlock, IContentSoil {
     private static final ThreadLocal<IntegerProperty> PENDING = new ThreadLocal<>();
@@ -60,6 +63,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
+    public SaplingDef sapling() { return sapling; }
+
     @Override public void resolveSoil(@Nonnull ContentRegistry.BlockEntry entry) { soil.resolve(sapling.soil()); }
 
     @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return ContentBushBlock.SHAPE; }
@@ -67,11 +72,26 @@ import net.minecraft.world.phys.shapes.VoxelShape;
     @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return soil.sustains(level, pos.below(), this); }
 
     @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        if (ContentGrowSwitch.skips(level, pos, this, random) || !level.isAreaLoaded(pos, 1)) { return; }
+        if (ContentGrowSwitch.skips(level, pos, this, random)) { return; }
+        if (clocked()) {
+            ContentTreeGrowth.plant(level, pos, state, id());
+            return;
+        }
+        if (!level.isAreaLoaded(pos, 1)) { return; }
         if (level.getMaxLocalRawBrightness(pos.above()) < sapling.light()) { return; }
+        if (sapling.growth().growing() && ContentTreeGrowth.conditions(level, pos, sapling.growth()) != null) { return; }
         if (random.nextInt(Math.max(1, sapling.chance())) != 0) { return; }
         advance(level, pos, state, random);
     }
+
+    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moved) {
+        super.onPlace(state, level, pos, old, moved);
+        if (level instanceof ServerLevel server && clocked() && !TreeRecorder.recording()) { ContentTreeGrowth.plant(server, pos, state, id()); }
+    }
+
+    private boolean clocked() { return sapling.growth().growing() && sapling.growth().timed(); }
+
+    private String id() { return String.valueOf(ForgeRegistries.BLOCKS.getKey(this)); }
 
     @Override public boolean isValidBonemealTarget(@Nonnull LevelReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean client) { return true; }
 
@@ -85,6 +105,18 @@ import net.minecraft.world.phys.shapes.VoxelShape;
             level.setBlock(pos, state.setValue(stage, current + 1), 4);
             return;
         }
+        generate(level, pos, state, random);
+    }
+
+    private void generate(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
+        if (sapling.growth().growing() && !TreeRecorder.recording()) {
+            ContentTreeGrowth.start(level, pos, state, id(), sapling.growth(), picked -> place(level, pos, state, picked));
+            return;
+        }
+        place(level, pos, state, random);
+    }
+
+    private void place(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
         if (!sapling.growsVanilla()) { placeStructure(level, pos, random); }
         else if (soil.sustains(level, pos.below(), this)) { grower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random); }
     }

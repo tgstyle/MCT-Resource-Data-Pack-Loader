@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeTrunk;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateControl;
@@ -87,6 +88,7 @@ public class WorldgenSetup {
 
     public static void registerTrees(IEventBus modBus) {
         ContentTreeTrunk.REGISTER.register(modBus);
+        ContentTreeEvents.register(modBus);
     }
 
     public static void seedBiomes(ServerAboutToStartEvent event) {

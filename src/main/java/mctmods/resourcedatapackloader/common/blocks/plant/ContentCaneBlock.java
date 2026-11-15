@@ -1,19 +1,17 @@
 package mctmods.resourcedatapackloader.common.blocks.plant;
 
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
-import mctmods.resourcedatapackloader.common.blocks.fluid.ContentLiquidBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.plant.PlantWater;
 
-import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
@@ -25,7 +23,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -96,31 +93,16 @@ import net.minecraftforge.common.PlantType;
         if (!soil.sustains(level, below, this)) { return false; }
         if (growth.needsSky() && !level.canSeeSky(pos)) { return false; }
         if (growth.breaksNeighbors() && crowded(level, pos)) { return false; }
-        if (!growth.needsWater()) { return true; }
-        for (Direction facing : Direction.Plane.HORIZONTAL) {
-            for (int step = 1; step <= growth.waterRange(); step++) {
-                BlockPos side = below.relative(facing, step);
-                BlockState held = level.getBlockState(side);
-                if (liquid(level, side, held, FluidTags.WATER, FluidDef::waterMaterial)) { return true; }
-                if (held.isAir()) { continue; }
-                break;
-            }
-        }
-        return false;
+        return !growth.needsWater() || PlantWater.near(level, below, growth.waterRange());
     }
 
     private boolean crowded(LevelReader level, BlockPos pos) {
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             BlockPos side = pos.relative(facing);
             BlockState held = level.getBlockState(side);
-            if (held.isSolid() || liquid(level, side, held, FluidTags.LAVA, FluidDef::lavaMaterial)) { return true; }
+            if (held.isSolid() || PlantWater.liquid(level, side, held, FluidTags.LAVA, FluidDef::lavaMaterial)) { return true; }
         }
         return false;
-    }
-
-    private static boolean liquid(LevelReader level, BlockPos pos, BlockState held, TagKey<Fluid> tag, Predicate<FluidDef> material) {
-        if (level.getFluidState(pos).is(tag)) { return true; }
-        return held.getBlock() instanceof ContentLiquidBlock liquid && material.test(liquid.getDef());
     }
 
     @Override public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) { if (growth.damage()) { entity.hurt(level.damageSources().cactus(), growth.damageAmount()); } }
