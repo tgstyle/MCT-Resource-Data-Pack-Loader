@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gamerules.GameRule;
@@ -77,13 +78,38 @@ public final class ContentGameRules {
         if (held != null) { return held; }
         Map<GameRule<?>, String> wanted = WANTED.get(level.dimension().identifier());
         if (wanted == null) { return null; }
-        held = new GameRules(level.enabledFeatures());
-        for (Map.Entry<GameRule<?>, String> rule : wanted.entrySet()) { GameRuleNames.apply(held, rule.getKey(), rule.getValue()); }
+        held = build(level, wanted);
         BUILT.put(level, held);
-        if (level instanceof ServerLevel serverLevel && level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.ADVANCE_TIME)) { serverLevel.getServer().getGameRules().set(GameRules.ADVANCE_TIME, held.get(GameRules.ADVANCE_TIME), serverLevel.getServer()); }
+        if (level instanceof ServerLevel serverLevel && level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.ADVANCE_TIME)) { daylight(serverLevel.getServer(), held); }
         ContentLog.LOGGER.debug("Dimension {} keeps its own game rules: {}", level.dimension().identifier(), wanted);
         return held;
     }
+
+    public static void serverStarted(MinecraftServer server) {
+        if (WANTED.isEmpty()) { return; }
+        GameRuleStorage storage = GameRuleStorage.of(server);
+        for (ServerLevel level : server.getAllLevels()) {
+            GameRules held = forLevel(level);
+            if (held == null) { continue; }
+            String dimension = level.dimension().identifier().toString();
+            Map<String, String> saved = storage.saved(dimension);
+            for (Map.Entry<String, String> rule : saved.entrySet()) {
+                GameRule<?> known = GameRuleNames.rule(rule.getKey());
+                if (known != null) { GameRuleNames.apply(held, known, rule.getValue()); }
+            }
+            if (level.dimension() == Level.OVERWORLD && saved.containsKey(GameRules.ADVANCE_TIME.id())) { daylight(server, held); }
+            storage.watch(dimension, held, GameRuleStorage.values(build(level, WANTED.get(level.dimension().identifier()))));
+        }
+        for (String dimension : storage.unwatched()) { ContentLog.LOGGER.warn("Dimension {} was saved with its own game rules, but no pack gives it any now, so they are dropped", dimension); }
+    }
+
+    private static GameRules build(Level level, Map<GameRule<?>, String> wanted) {
+        GameRules rules = new GameRules(level.enabledFeatures());
+        for (Map.Entry<GameRule<?>, String> rule : wanted.entrySet()) { GameRuleNames.apply(rules, rule.getKey(), rule.getValue()); }
+        return rules;
+    }
+
+    private static void daylight(MinecraftServer server, GameRules held) { server.getGameRules().set(GameRules.ADVANCE_TIME, held.get(GameRules.ADVANCE_TIME), server); }
 
     public static boolean names(Level level, GameRule<?> rule) {
         Map<GameRule<?>, String> wanted = WANTED.get(level.dimension().identifier());
