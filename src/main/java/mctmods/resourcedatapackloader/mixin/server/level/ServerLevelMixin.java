@@ -37,6 +37,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
@@ -119,6 +120,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         long locked = ContentTerrain.lockedTime((ServerLevel) (Object) this);
         return locked >= 0 ? locked : data.getDayTime();
     }
+
+    @Redirect(method = "tickTime", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/WritableLevelData;getGameRules()Lnet/minecraft/world/level/GameRules;")) private GameRules rdpl$levelDaylightRules(WritableLevelData data) { return ((ServerLevel) (Object) this).getGameRules(); }
 
     @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;removeRegionTicket(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;ILjava/lang/Object;)V")) private <T> void rdpl$spawnTicketReleased(ServerChunkCache chunks, TicketType<T> type, ChunkPos pos, int distance, T value) { if (ContentSpawnChunks.leftToTheGame()) { chunks.removeRegionTicket(type, pos, distance, value); } }
 

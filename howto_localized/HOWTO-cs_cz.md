@@ -5567,7 +5567,7 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 }
 ```
 
-Každý klíč je id světa, kterému pravidla patří, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, vlastní id balíčku nebo to, co používá nějaký mód; čísla z 1.12.2 `0`, `-1` a `1` se stále berou jako vanilla trojice. Hodnoty jsou řetězce, jako v příkazu `/gamerule`, takže `"false"` a ne `false`. Uplatňují se na nové světy. Pravidlo, které soubor vynechá, hraje v tom světě s herní výchozí hodnotou, ne s hodnotou, kterou používá zbytek uložení, a klient s balíčkem čte stejná pravidla. Soubor dimenze nese tatáž pravidla místo toho v bloku `gameRules`, který se vždy uplatní jen na ten svět.
+Každý klíč je id světa, kterému pravidla patří, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, vlastní id balíčku nebo to, co používá nějaký mód; čísla z 1.12.2 `0`, `-1` a `1` se stále berou jako vanilla trojice. Hodnoty jsou řetězce, jako v příkazu `/gamerule`, takže `"false"` a ne `false`. Uplatňují se na nové světy. Pravidlo, které soubor vynechá, hraje v tom světě s herní výchozí hodnotou, ne s hodnotou, kterou používá zbytek uložení, a klient s balíčkem čte stejná pravidla. Soubor dimenze nese tatáž pravidla místo toho v bloku `gameRules`, který se vždy uplatní jen na ten svět. Pravidlo změněné ve hře, příkazem `/gamerule` operátora nebo jiným modem, se uloží se světem a po restartu platí místo hodnoty z balíčku; jeho vrácení na hodnotu z balíčku uloženou změnu zruší.
 
 ## Biomy
 
