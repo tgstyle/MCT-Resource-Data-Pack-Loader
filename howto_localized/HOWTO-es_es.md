@@ -5557,7 +5557,7 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 }
 ```
 
-Cada clave es el id del mundo al que pertenecen las reglas, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, uno propio del pack o el que use un mod; los números de 1.12.2 `0`, `-1` y `1` se siguen aceptando como los tres de vanilla. Los valores son cadenas, como en el comando `/gamerule`, así que `"false"` y no `false`. Se aplican a los mundos nuevos. Una regla que un archivo omite toma el valor por defecto del propio juego en ese mundo, no el valor que use el resto del guardado, y un cliente con el pack lee las mismas reglas. Un archivo de dimensión lleva las mismas reglas en un bloque `gameRules` en su lugar, que solo se aplica a ese mundo.
+Cada clave es el id del mundo al que pertenecen las reglas, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, uno propio del pack o el que use un mod; los números de 1.12.2 `0`, `-1` y `1` se siguen aceptando como los tres de vanilla. Los valores son cadenas, como en el comando `/gamerule`, así que `"false"` y no `false`. Se aplican a los mundos nuevos. Una regla que un archivo omite toma el valor por defecto del propio juego en ese mundo, no el valor que use el resto del guardado, y un cliente con el pack lee las mismas reglas. Un archivo de dimensión lleva las mismas reglas en un bloque `gameRules` en su lugar, que solo se aplica a ese mundo. Una regla cambiada en el juego, con el `/gamerule` de un operador o por otro mod, se guarda con el mundo y prevalece sobre el valor del pack tras un reinicio; volver a ponerla en el valor del pack descarta el cambio guardado.
 
 ## Biomas
 

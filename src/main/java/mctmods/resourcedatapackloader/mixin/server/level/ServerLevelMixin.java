@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.List;
@@ -104,6 +105,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         long locked = ContentTerrain.lockedTime((ServerLevel) (Object) this);
         return locked >= 0 ? locked : data.getDayTime();
     }
+
+    @ModifyExpressionValue(method = "tickTime()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/WritableLevelData;getGameRules()Lnet/minecraft/world/level/GameRules;")) private GameRules rdpl$levelDaylightRules(GameRules original) { return ((ServerLevel) (Object) this).getGameRules(); }
 
     @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughSleeping(I)Z")) private boolean rdpl$enoughAsleep(SleepStatus status, int requiredSleepPercentage, Operation<Boolean> original) { return ContentSleep.leavesOut() ? ContentSleep.enoughAsleep((ServerLevel) (Object) this, requiredSleepPercentage) : original.call(status, requiredSleepPercentage); }
 

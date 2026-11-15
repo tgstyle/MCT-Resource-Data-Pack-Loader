@@ -5564,7 +5564,7 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-Each key is the id of the world the rules belong to, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, a pack's own or whatever a mod uses; the 1.12.2 numbers `0`, `-1` and `1` are still taken as the vanilla three. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A rule a file leaves out plays the game's own default in that world, not the value the rest of the save uses, and a client with the pack reads the same rules. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
+Each key is the id of the world the rules belong to, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, a pack's own or whatever a mod uses; the 1.12.2 numbers `0`, `-1` and `1` are still taken as the vanilla three. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A rule a file leaves out plays the game's own default in that world, not the value the rest of the save uses, and a client with the pack reads the same rules. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world. A rule changed in game, by an op's `/gamerule` or by another mod, is saved with the world and kept over the pack's value after a restart; setting it back to the pack's value drops the saved change.
 
 ## Biomes
 

@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidSwitc
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.TradeSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentDimensionParser;
+import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
@@ -310,6 +311,7 @@ public final class ContentEnvironments {
     }
 
     public static void onServerStarted(ServerStartedEvent event) {
+        ContentGameRules.serverStarted(event.getServer());
         ACTIVE.clear();
         ContentSeasons.forget();
         ContentRaidSwitch.check(RAIDLINES.values());

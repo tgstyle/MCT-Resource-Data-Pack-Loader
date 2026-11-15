@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -81,13 +82,29 @@ public final class ContentGameRules {
         if (held != null) { return held; }
         Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location());
         if (wanted == null) { return null; }
-        CompoundTag tag = new GameRules().createTag();
-        for (Map.Entry<String, String> rule : wanted.entrySet()) { tag.putString(rule.getKey(), rule.getValue()); }
-        held = new GameRules(new Dynamic<>(NbtOps.INSTANCE, tag));
+        held = layered(new GameRules().createTag(), wanted);
         BUILT.put(level, held);
-        if (level instanceof ServerLevel serverLevel && level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.RULE_DAYLIGHT.getId())) { level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(held.getBoolean(GameRules.RULE_DAYLIGHT), serverLevel.getServer()); }
         ContentLog.LOGGER.debug("Dimension {} keeps its own game rules: {}", level.dimension().location(), wanted);
         return held;
+    }
+
+    public static void serverStarted(MinecraftServer server) {
+        if (BY_DIMENSION.isEmpty()) { return; }
+        GameRuleStorage storage = GameRuleStorage.of(server);
+        for (ServerLevel level : server.getAllLevels()) {
+            GameRules held = forLevel(level);
+            if (held == null) { continue; }
+            String dimension = level.dimension().location().toString();
+            Map<String, String> saved = storage.saved(dimension);
+            if (!saved.isEmpty()) { held.assignFrom(layered(held.createTag(), saved), null); }
+            storage.watch(dimension, held, GameRuleStorage.values(layered(new GameRules().createTag(), BY_DIMENSION.get(level.dimension().location()))));
+        }
+        for (String dimension : storage.unwatched()) { ContentLog.LOGGER.warn("Dimension {} was saved with its own game rules, but no pack gives it any now, so they are dropped", dimension); }
+    }
+
+    private static GameRules layered(CompoundTag under, Map<String, String> over) {
+        for (Map.Entry<String, String> rule : over.entrySet()) { under.putString(rule.getKey(), rule.getValue()); }
+        return new GameRules(new Dynamic<>(NbtOps.INSTANCE, under));
     }
 
     public static boolean names(Level level, GameRules.Key<?> rule) {
