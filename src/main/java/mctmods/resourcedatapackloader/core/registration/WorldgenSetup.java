@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateC
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCraters;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLand;
@@ -78,6 +79,7 @@ public class WorldgenSetup {
         NeoForge.EVENT_BUS.addListener(ContentBiomes::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentCraters::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentPopulateControl::onLevelLoad);
+        NeoForge.EVENT_BUS.addListener(ContentDungeons::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentOreControl::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentGeneratorControl::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentWorldShape::onLevelLoad);

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.command;
 import mctmods.resourcedatapackloader.common.locate.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
@@ -21,6 +22,7 @@ public final class LocatorSearch {
         String place = ContentStructureSearch.named(asked);
         BlockPos from = player.blockPosition();
         if (ContentLocate.names(level).contains(place)) { return ContentLocate.nearest(level, place, from); }
+        if (ContentDungeons.locateNames(level).contains(place)) { return ContentDungeons.nearestEntrance(level, place, from, pin -> false); }
         if (ContentStructureSearch.known(level, place)) {
             player.sendSystemMessage(Component.translatable("rdpl.command.locatelooking", place).withStyle(ChatFormatting.GREEN));
             return ContentStructureSearch.locate(level, place, from);

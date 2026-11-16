@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateC
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityClaim;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityStructure;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityGround;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapStructure;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
@@ -119,7 +120,7 @@ public final class ContentCraters {
         if (known != null) { return known; }
         int keep = crater.radius() + MARGIN;
         BoundingBox area = new BoundingBox(crater.x() - keep, level.getMinBuildHeight(), crater.z() - keep, crater.x() + keep, level.getMaxBuildHeight(), crater.z() + keep);
-        boolean claimed = ContentCityClaim.claims(CityGround.of(level), generator, level.getLevel().getChunkSource().randomState(), level.registryAccess(), area, box -> crater.near(box, keep)) || pieceNear(level.getLevel(), generator, crater, keep);
+        boolean claimed = ContentCityClaim.claims(CityGround.of(level), generator, level.getLevel().getChunkSource().randomState(), level.registryAccess(), area, box -> crater.near(box, keep)) || pieceNear(level.getLevel(), generator, crater, keep) || ContentDungeons.claims(level, area, box -> crater.near(box, keep));
         return verdicts == null ? claimed : verdicts.settle(key, claimed);
     }
 

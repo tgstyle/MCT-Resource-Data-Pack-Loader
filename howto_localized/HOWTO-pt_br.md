@@ -114,6 +114,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Dispersões](#dispersões)
 - [Mapas de estruturas](#mapas-de-estruturas)
 - [Estruturas que reaparecem](#estruturas-que-reaparecem)
+- [Dungeons procedurais](#dungeons-procedurais)
 - [Terrenos de vilas](#terrenos-de-vilas)
 - [Mapas de layout de cidades](#mapas-de-layout-de-cidades)
 - [Cidade contínua](#cidade-contínua)
@@ -7900,6 +7901,465 @@ Uma estrutura pode voltar depois que os jogadores a limparam: seus baús são re
 | `rebuild: "full"`   | Todo bloco do modelo é colocado de novo, por cima do que estiver ali                                                                     |
 
 Só reabastecem os baús que tinham uma tabela de saque quando a estrutura foi construída. Um reinício espera até que todos os chunks cobertos pela estrutura estejam carregados e nunca carrega nem gera um chunk; uma estrutura em terreno descarregado reinicia quando um jogador voltar a se aproximar dela. Estruturas construídas antes de o pacote adicionar `respawn` não são acompanhadas. Tudo roda no servidor, então os jogadores não precisam ter nada instalado.
+
+## Dungeons procedurais
+
+*geração do mundo*
+
+Um dungeon é um edifício subterrâneo de vários níveis, feito de salas, corredores e poços. O mod o planeja a partir da seed do mundo em vez de montá-lo a partir de modelos, então a mesma seed gera o mesmo dungeon. Cada chunk escreve apenas a sua parte do dungeon, e um chunk nunca carrega nem gera um vizinho para terminar a sua parte. A RDPL não traz nenhum tema de dungeon, então um pacote precisa fornecer pelo menos um, senão os seus dungeons não colocam nada. A aparência, os mobs e o saque de um dungeon vêm todos do tema.
+
+`<namespace>/dungeons/*.json` para dungeons, `<namespace>/dungeonthemes/*.json` para temas
+
+### Arquivo do dungeon
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": ["minecraft:overworld"],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["ocean", "river"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Chave                    | Tipo                               | Padrão                           | O que faz                                                                                                                                                                    |
+| ------------------------ | ---------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | texto                              | o nome do arquivo                | Nome nos logs                                                                                                                                                                |
+| `themes`                 | lista de `id` ou `id=peso`         | nenhum, obrigatório              | O conjunto de temas. Cada local sorteia um tema dele. Um tema que o bioma, a dimensão ou a altura do local recusa fica de fora. Se nenhum sobrar, o local não recebe dungeon |
+| `dimensions`             | lista de ids de dimensão           | o Overworld                      | Dimensões em que o dungeon pode gerar                                                                                                                                        |
+| `dimensionsAreBlacklist` | true/false                         | `false`                          | Transforma `dimensions` na lista de dimensões a evitar                                                                                                                       |
+| `chance`                 | 1 a 100                            | `75`                             | Percentual de locais que têm um dungeon, sorteado uma vez por local a partir da seed do mundo                                                                                |
+| `minDistance`            | 0 a 100000 blocos                  | `600`                            | Menor distância entre dois locais deste dungeon, ou do seu `group`, medida no maior entre x e z                                                                              |
+| `group`                  | texto                              | o id próprio do dungeon          | Dungeons do mesmo grupo mantêm os locais afastados pelo maior `minDistance` do grupo                                                                                         |
+| `minDistanceFromSpawn`   | 0 a 100000 blocos                  | `0`                              | Um local tão perto do spawn do mundo é recusado                                                                                                                              |
+| `noOceans`               | true/false                         | `true`                           | Recusa um local cujo bioma central é um oceano                                                                                                                               |
+| `biomes`                 | lista de ids de bioma              | nenhum                           | Filtro de bioma, como nas entradas de worldgen                                                                                                                               |
+| `biomeTypes`             | lista de tipos de bioma            | nenhum                           | Filtro de bioma por palavra de tipo, como `ocean` ou `river`. Os temas acrescentam os próprios filtros                                                                       |
+| `biomesAreBlacklist`     | true/false                         | `false`                          | Transforma `biomes` e `biomeTypes` nos biomas a evitar                                                                                                                       |
+| `at`                     | `[x, z]`, ou uma lista deles       | nenhum                           | Fixa um dungeon em coordenadas de bloco exatas. Pula `chance`, `minDistance` e o filtro de bioma, do mesmo jeito que `at` fixa um mapa de estruturas                         |
+| `locateAs`               | texto                              | nenhum                           | Registra cada local sob este nome, para que `/locate <nome>` encontre um. Funciona antes de o chunk ser gerado                                                               |
+| `sizes`                  | lista de objetos de tamanho        | os quatro tamanhos embutidos     | O sorteio de tamanho de cada local. Veja a tabela de tamanhos                                                                                                                |
+| `shrink`                 | 0 a 100 por cento                  | `0`                              | O campo de cada nível é esta porcentagem mais estreito que o de cima, até um mínimo de metade da pegada                                                                      |
+| `surfaceBuffer`          | 0 a 64 blocos                      | `7`                              | Cobertura sólida entre o teto do nível de cima e a superfície                                                                                                                |
+| `minY`                   | y do bloco                         | o piso do mundo                  | O piso mais baixo que um nível pode ter. Níveis que não cabem mais não são construídos                                                                                       |
+| `levelHeight`            | `[min, max]`, 4 a 64               | `[5, 8]`                         | Altura em blocos de um nível, do piso ao teto. A altura sorteada é por nível. Os cômodos são limitados a ela menos 2                                                         |
+| `roomSize`               | `[min, max]`, 3 a 64               | `[5, 15]`                        | Faixa de largura e profundidade dos cômodos. Um mínimo abaixo da largura do corredor mais 2 sobe para esse valor, e o log avisa                                              |
+| `corridor`               | `{ "width", "height" }`            | `{ 3, 3 }`                       | Tamanho das ligações entre cômodos. A largura vai de 1 a 5. A altura vai de 2 até o `levelHeight` mais baixo menos 2                                                         |
+| `loops`                  | 0 a 100 por cento                  | `25`                             | Ligações extras entre cômodos além da árvore de cobertura, como parcela dos pares de vizinhos possíveis                                                                      |
+| `rolls`                  | objeto de elemento para grau       | nenhum                           | Graus para os 13 sorteios, listados abaixo. Sorteado uma vez por dungeon. Um sorteio omitido é `none`                                                                        |
+| `roomKinds`              | lista de objetos de tipo de cômodo | um `hall`                        | Os cômodos tipados e os seus pesos. Veja Tipos de cômodo                                                                                                                     |
+| `entrance`               | objeto                             | `{ "types": ["simple"] }`        | Como o dungeon chega à superfície. Veja Entrada, chefe e poços                                                                                                               |
+| `boss`                   | objeto                             | nenhum                           | O cômodo do chefe. Veja Entrada, chefe e poços                                                                                                                               |
+| `shafts`                 | lista de `type` ou `type=peso`     | `ladder`                         | Os tipos de ligação entre níveis: `ladder`, `spiral` e `stairs`                                                                                                              |
+| `difficulty`             | nome de predefinição ou objeto     | `"norm"`                         | Quantos cômodos têm mobs, como os tiers sobem e com que frequência aparecem os spawners. Veja a tabela de predefinições                                                      |
+| `support`                | objeto, `true` ou `false`          | `{ "depth": 8 }`                 | Até que profundidade uma coluna é preenchida abaixo de um piso sobre ar ou líquido. `false` desliga a passagem                                                               |
+| `decay`                  | objeto                             | `{ "base": 15, "perDepth": 20 }` | Força dos blocos de deterioração: `base` é o início e `perDepth` soma com a profundidade. Cada um vai de 0 a 100                                                             |
+| `levelRules`             | lista                              | nenhum                           | Substituições por profundidade. Veja Regras de profundidade                                                                                                                  |
+| `respawn`                | objeto                             | nenhum                           | O mesmo objeto de Estruturas que reaparecem. Vale para o dungeon inteiro                                                                                                     |
+
+Os objetos de tamanho definem a forma de cada tamanho. As chaves de um tamanho são:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Chave       | Tipo                  | Padrão                 | O que faz                                    |
+| ----------- | --------------------- | ---------------------- | -------------------------------------------- |
+| `name`      | texto                 | `size` e a sua posição | Nome nos logs                                |
+| `weight`    | 1 a 1000000           | `1`                    | A parcela do tamanho no sorteio de tamanhos  |
+| `footprint` | 48 a 176 blocos       | `112`                  | Lado do campo quadrado onde os níveis ficam  |
+| `levels`    | `[min, max]`, 1 a 64  | `[4, 7]`               | Quantidade de níveis, sorteada uniformemente |
+| `rooms`     | `[min, max]`, 1 a 400 | `[15, 30]`             | Cômodos por nível, sorteados uniformemente   |
+
+Uma predefinição de dificuldade define os padrões do lado dos mobs de um dungeon. Um objeto pode nomear um `preset` como base e depois alterar qualquer uma das chaves abaixo.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Predefinição ou chave | Spawners | Promover | Tier máximo | Tier do nó | Tier do chefe | Blocos por spawner | Mobs na entrada |
+| --------------------- | -------- | -------- | ----------- | ---------- | ------------- | ------------------ | --------------- |
+| `baby`                | 30       | 0        | 0           | 0          | 0             | 371                | `false`         |
+| `noob`                | 40       | 10       | 1           | 1          | 1             | 248                | `false`         |
+| `norm`                | 50       | 20       | 1           | 1          | 2             | 180                | `false`         |
+| `hard`                | 60       | 30       | 2           | 2          | 3             | 136                | `true`          |
+| `nuts`                | 70       | 50       | 2           | 2          | 4             | 50                 | `true`          |
+
+Cada chave que um objeto deixa de fora vem da sua predefinição, e de `norm` quando ele não nomeia nenhuma. Os tiers vão de 0 para `common` até 4 para `boss`.
+
+| Chave              | Tipo                 | Padrão          | O que faz                                                                                                                                                                                    |
+| ------------------ | -------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | nome de predefinição | `norm`          | A predefinição que as outras chaves alteram                                                                                                                                                  |
+| `spawners`         | 0 a 100              | da predefinição | Percentual de cômodos que recebem mobs                                                                                                                                                       |
+| `promote`          | 0 a 100              | da predefinição | Chance percentual, a cada passo, de o tier de mob de um cômodo subir um                                                                                                                      |
+| `maxTier`          | 0 a 4                | da predefinição | Tier mais alto a que a promoção eleva um cômodo comum; nenhum cômodo do nível mais fundo fica abaixo da metade, arredondada para baixo, e os níveis acima sobem em direção a isso, em passos |
+| `nodeTier`         | 0 a 4                | da predefinição | Tier mais baixo dos cômodos onde vários caminhos se encontram                                                                                                                                |
+| `bossTier`         | 0 a 4                | da predefinição | Tier mais alto a que a promoção eleva esses cômodos de encontro; o cômodo do chefe pega o tier do mob do chefe                                                                               |
+| `blocksPerSpawner` | 1 a 100000           | da predefinição | Densidade de spawners, em blocos de dungeon por spawner                                                                                                                                      |
+| `entranceMobs`     | true ou false        | da predefinição | Se o cômodo de entrada recebe mobs quando o seu tipo não define uma quantidade de spawners                                                                                                   |
+
+Os 13 sorteios nomeiam cada um uma característica. Um grau define a chance de a característica aparecer, como mostra a tabela a seguir.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Sorteio       | O que controla                                                                                                                           |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `outside`     | Um cômodo pode abrir um buraco até a superfície                                                                                          |
+| `liquids`     | Poças em fossos e em alguns cômodos                                                                                                      |
+| `subrooms`    | Paredes divisórias que partem um cômodo em dois                                                                                          |
+| `islands`     | Ilhas em pé nos fossos                                                                                                                   |
+| `pillars`     | Pilares nos cômodos                                                                                                                      |
+| `symmetry`    | Um gêmeo espelhado de um pilar ou de uma poça                                                                                            |
+| `variability` | Um cômodo pode escolher outra variante de bloco do seu tema                                                                              |
+| `degeneracy`  | Quanto de deterioração os blocos do cômodo recebem                                                                                       |
+| `complexity`  | Quantas características cada cômodo tenta ter                                                                                            |
+| `vertical`    | Quanto variam as alturas dos cômodos dentro de um nível, e com que frequência um cômodo afunda um ou dois blocos abaixo do piso do nível |
+| `entrances`   | Poços extras de outros cômodos do nível de cima até a superfície, usados quando `entrance.extra` não está definido                       |
+| `fences`      | Cercas em volta de fossos e buracos                                                                                                      |
+| `naturals`    | Um salão de caixa simples vira um cômodo de caverna                                                                                      |
+
+| Grau     | Chance |
+| -------- | ------ |
+| `none`   | 0      |
+| `few`    | 10     |
+| `some`   | 30     |
+| `plenty` | 50     |
+| `heaps`  | 90     |
+| `always` | 100    |
+
+Um grau também pode ser escrito como um objeto de pesos, como `{ "none": 5, "few": 30 }`, que sorteia um grau por dungeon pelo peso. Um objeto só com zeros é um erro e é ignorado.
+
+### Tipos de cômodo
+
+Os tipos de cômodo definem o que cada cômodo guarda. Um dungeon sem `roomKinds` recebe um único tipo `hall` simples.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Chave                  | Tipo                                               | Padrão                        | O que faz                                                                                                                                                                               |
+| ---------------------- | -------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | texto                                              | obrigatório                   | O nome nos logs. `hall` é o cômodo simples                                                                                                                                              |
+| `weight`               | 1 a 1000000                                        | `1`                           | A parcela do tipo no sorteio de cada cômodo                                                                                                                                             |
+| `minLevel`, `maxLevel` | 0 a 64                                             | qualquer nível                | Os níveis em que pode aparecer, contando do topo a partir de 0                                                                                                                          |
+| `maxPerDungeon`        | 0 a 100000                                         | nenhum                        | O máximo de cômodos deste tipo em um dungeon. Aplicado no planejamento, então o limite vale exatamente                                                                                  |
+| `maxPerLevel`          | 0 a 100000                                         | nenhum                        | O máximo de cômodos deste tipo em um nível                                                                                                                                              |
+| `minSize`              | `[x, z]`                                           | o mínimo do tamanho do cômodo | A menor pegada que o tipo precisa. Um cômodo em um espaço pequeno demais cai para `hall`                                                                                                |
+| `height`               | `[min, max]`, 3 a 64                               | a altura do nível menos 2     | Altura interna do cômodo                                                                                                                                                                |
+| `shapes`               | lista de `type` ou `type=peso`                     | `box`                         | A forma do cômodo: `box`, `pillared`, `ring`, `pit`, `cross` ou `cave`                                                                                                                  |
+| `templates`            | lista de `id` ou `id=peso`                         | nenhum                        | Modelos de estrutura para este tipo. Cada cômodo do tipo sorteia um. Veja Modelos em dungeons                                                                                           |
+| `yOffset`              | -64 a 64                                           | `0`                           | Quanto acima do piso do nível fica a linha 0 do modelo                                                                                                                                  |
+| `turns`                | lista de `none`, `quarter`, `half`, `threequarter` | qualquer                      | As rotações que um modelo pode fazer, como num imprint                                                                                                                                  |
+| `decor`                | lista de nomes de decoradores                      | nenhum                        | Os decoradores do tema a rodar no cômodo. Veja Decoradores do tema                                                                                                                      |
+| `mobs`                 | texto                                              | `common`                      | O tier de mob ou o grupo de spawn do tema para os spawners do cômodo                                                                                                                    |
+| `loot`                 | texto                                              | `basic`                       | O conjunto de saque do tema para os baús do cômodo                                                                                                                                      |
+| `spawners`             | 0 a 100 por cento, ou `[min, max]`                 | de `difficulty`               | Spawners por cômodo. Um número é uma chance, e um par é uma faixa de quantidade                                                                                                         |
+| `chests`               | 0 a 100 por cento, ou `[min, max]`                 | de `difficulty`               | Baús por cômodo, nas mesmas formas de `spawners`                                                                                                                                        |
+| `rolls`                | objeto                                             | os sorteios do dungeon        | Substituições de grau só para este tipo                                                                                                                                                 |
+| `decay`                | 0 a 100 por cento, ou true/false                   | `0`                           | Percentual somado à força de deterioração nos cômodos deste tipo. Em um tipo com modelo, `true` deixa a deterioração atingir os blocos do próprio modelo, o que por padrão não acontece |
+| `node`                 | true/false                                         | `false`                       | Marca o cômodo como um nó, que recebe um tier de mob mais alto e um baú a mais                                                                                                          |
+
+### Entrada, chefe e poços
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Chave                       | Tipo                                                  | Padrão                                    | O que faz                                                                       |
+| --------------------------- | ----------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `entrance.types`            | lista de `simple`, `spiral` ou `toproom`, com `=peso` | `simple`                                  | Como o topo do dungeon chega à superfície                                       |
+| `entrance.topRoomTemplates` | lista de `id` ou `id=peso`                            | nenhum, um prédio procedural ou uma ruína | Modelos para um cômodo de topo. Usados com `toproom`                            |
+| `entrance.extra`            | grau (veja a tabela de sorteios)                      | o sorteio `entrances`                     | A chance de um segundo poço de outros cômodos do nível de cima até a superfície |
+| `boss.templates`            | lista de `id` ou `id=peso`                            | nenhum                                    | Modelos para o cômodo do chefe                                                  |
+| `boss.size`                 | `[min, max]`, 3 a 64                                  | nenhum                                    | Pegada do cômodo do chefe                                                       |
+| `boss.height`               | `[min, max]`, 3 a 64                                  | nenhum                                    | Altura interna do cômodo do chefe                                               |
+| `boss.mob`                  | nome de tier ou de grupo de spawn                     | `boss`                                    | Os mobs do spawner do cômodo do chefe                                           |
+| `boss.loot`                 | nome de conjunto de saque                             | `boss`                                    | O conjunto de saque do único baú do cômodo do chefe                             |
+| `boss.count`                | 1 a 16                                                | `1`                                       | Spawners no cômodo do chefe                                                     |
+| `shafts`                    | lista de `type` ou `type=peso`                        | `ladder`                                  | O tipo de ligação entre dois níveis: `ladder`, `spiral` ou `stairs`             |
+
+Um dungeon sem `boss` não tem cômodo do chefe: todo cômodo do nível mais baixo é um cômodo comum.
+
+### Regras de profundidade
+
+Uma regra de nível altera algumas chaves para os níveis a partir de uma profundidade dada para baixo. `fromDepth` vai de 0.0 no nível de cima a 1.0 no nível de baixo. Vale a última regra em ou acima da profundidade do nível, uma chave de cada vez.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Chave        | Tipo                               | Padrão            | O que faz                                                                                        |
+| ------------ | ---------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `fromDepth`  | 0.0 a 1.0                          | obrigatório       | A profundidade em que a regra começa. Uma regra sem ela, ou fora da faixa, fica de fora          |
+| `theme`      | id de tema                         | o tema do dungeon | O tema para estes níveis                                                                         |
+| `rolls`      | objeto                             | nenhum            | Substituições de grau para estes níveis                                                          |
+| `difficulty` | nome de predefinição ou objeto     | nenhum            | Uma dificuldade para estes níveis                                                                |
+| `decay`      | objeto                             | nenhum            | Um objeto de deterioração para estes níveis                                                      |
+| `lootBonus`  | número                             | nenhum            | Somado a cada nível de baú nestes níveis                                                         |
+| `roomKinds`  | lista de objetos de tipo de cômodo | nenhum            | Tipos de cômodo para estes níveis. Uma regra com esta chave não adiciona o `hall` padrão simples |
+
+### Temas
+
+Um tema é um aspecto: os blocos de cada parte do dungeon, os mobs, o saque e os decoradores. O arquivo do tema é um único objeto.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": ["minecraft:overworld"],
+  "biomeTypes": ["forest=3", "plains", "hills"],
+  "notBiomeTypes": ["sandy"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_fields"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 },
+               { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stone_bricks" } ],
+    "ceilings": [ { "block": "minecraft:stone_bricks" } ],
+    "pillars": [ { "block": "minecraft:stone_brick_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:red_carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:cobweb"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Chave                                                | Tipo                                      | Padrão                | O que faz                                                                                                                                                         |
+| ---------------------------------------------------- | ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | texto                                     | o nome do arquivo     | Nome nos logs                                                                                                                                                     |
+| `weight`                                             | número                                    | `1`                   | A parcela do tema no sorteio de temas de um dungeon                                                                                                               |
+| `dimensions`, `dimensionsAreBlacklist`               | lista de ids, true/false                  | todas as dimensões    | Filtro de dimensão, como em um dungeon                                                                                                                            |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | listas, as entradas podem ser `name=peso` | todos os biomas       | Filtro de bioma por nome, por tipo, e as duas exclusões. Um peso é a parcela daquele bioma, então um conjunto por bioma pode ser montado a partir de vários temas |
+| `minY`, `maxY`                                       | y do bloco                                | os limites do dungeon | A faixa em que os pisos mais alto e mais baixo do dungeon devem ficar. Um local que não tem cômodo nela perde o tema                                              |
+| `blocks`                                             | objeto de listas                          | `walls` obrigatório   | As famílias de blocos, como mostra a tabela abaixo. Cada entrada é um objeto de bloco                                                                             |
+| `mobs`                                               | objeto de tier para lista                 | nenhum                | Os mobs de cada tier. Veja Tiers de mob                                                                                                                           |
+| `spawnGroups`                                        | lista                                     | nenhum                | Grupos nomeados de mobs, com uma faixa de profundidade e os tipos de cômodo em que entram                                                                         |
+| `loot`                                               | objeto de conjunto para lista             | nenhum                | As entradas de baú de cada conjunto de saque. Veja Conjuntos de saque                                                                                             |
+| `lootLevels`                                         | 1 a 12                                    | `6`                   | O nível de baú mais alto. O nível do baú vem da profundidade, escalado para isto, mais `lootBonus`                                                                |
+| `lootBonus`                                          | número                                    | `0`                   | Somado a cada nível de baú do tema                                                                                                                                |
+| `decorators`                                         | objeto de nome para decorador             | nenhum                | Decoradores que os tipos de cômodo podem nomear em `decor`. Veja Decoradores do tema                                                                              |
+| `rolls`, `difficulty`, `decay`                       | como em um dungeon                        | nenhum                | Padrões do tema. Vale o valor próprio do dungeon, depois as regras de profundidade                                                                                |
+| `append`                                             | texto ou lista de ids de tema             | nenhum                | Transforma o arquivo em um acréscimo a esses temas. Veja Acréscimos a temas                                                                                       |
+
+Um objeto de bloco recebe `block`, que é o id do bloco, e opcionalmente `weight`, que por padrão é 1 e vale pelo menos 1, e `properties`, um mapa de nomes de estado do bloco para valores. Cada dungeon escolhe um bloco por família, e o sorteio `variability` permite que um cômodo escolha outro.
+
+As famílias de blocos e os seus substitutos:
+
+| Família    | Usada para                                                         | Se o tema não a define                       |
+| ---------- | ------------------------------------------------------------------ | -------------------------------------------- |
+| `walls`    | Paredes dos cômodos. Obrigatória em todo tema                      | nenhuma, o arquivo é ignorado                |
+| `floors`   | Pisos dos cômodos                                                  | o bloco de paredes                           |
+| `ceilings` | Tetos dos cômodos                                                  | o bloco de paredes                           |
+| `pillars`  | Pilares, e as peças de pilar dos cômodos                           | o bloco de paredes                           |
+| `fencing`  | Cercas em volta de fossos e buracos                                | o bloco de paredes                           |
+| `liquid`   | Poças                                                              | água                                         |
+| `cave`     | Cômodos de caverna                                                 | o bloco de paredes                           |
+| `air`      | Espaço aberto dentro de cômodos e corredores                       | ar                                           |
+| `support`  | Colunas sob um piso sobre ar ou líquido, e sob a entrada           | o bloco de pisos                             |
+| `stairs`   | Poços de escada                                                    | escadas de tijolo de pedra                   |
+| `slabs`    | Poços em espiral e de escada, onde as escadas precisam de uma laje | uma laje lisa de tijolo de pedra             |
+| `decay`    | Os blocos gastos, de leve ao pior                                  | nenhum, então a deterioração não coloca nada |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 }, { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+  "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Tiers de mob
+
+Os tiers de mob seguem esta ordem, de 0 a 4: `common`, `hard`, `brute`, `elite` e `boss`. Um tier sem mobs cai para o tier mais baixo que tenha algum. Se nenhum sobrar, o spawner não é colocado. O campo `mobs` de um tipo de cômodo nomeia um tier ou um grupo de spawn, e `difficulty` define até que tier os cômodos sobem.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+Uma entrada de mob é um id de entidade, com um `=peso` opcional e um sufixo `{nbt}` opcional escrito depois do id. Um id que nada registra fica de fora do sorteio.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Chave                  | Tipo                             | Padrão       | O que faz                                                                                     |
+| ---------------------- | -------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
+| `name`                 | texto                            | obrigatório  | O nome que o `mobs` de um tipo de cômodo usa para escolher este grupo                         |
+| `mobs`                 | lista de ids de entidade         | nenhum       | Os mobs do grupo, como em um tier                                                             |
+| `weight`               | número, pelo menos 1             | `1`          | A parcela do grupo no sorteio                                                                 |
+| `minDepth`, `maxDepth` | 0.0 a 1.0                        | `0.0`, `1.0` | A faixa de profundidade em que o grupo aparece. Os dois são trocados se escritos ao contrário |
+| `kinds`                | lista de nomes de tipo de cômodo | qualquer     | Os tipos de cômodo em que o grupo pode aparecer                                               |
+| `tier`                 | um dos cinco nomes de tier       | nenhum       | Um tier a que os mobs do grupo pertencem. Um tier desconhecido é descartado                   |
+
+#### Conjuntos de saque
+
+Cada conjunto de saque é uma lista de entradas. Um baú pega as suas entradas do conjunto que o seu cômodo nomeia, que para um cômodo comum é `basic` por padrão e para o cômodo do chefe é `boss`. Os conjuntos `weak`, `basic`, `treasure` e `boss` são os embutidos, e um pacote pode acrescentar os seus.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Chave      | Tipo                  | Padrão         | O que faz                                                                        |
+| ---------- | --------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `table`    | id de tabela de saque | obrigatório    | A tabela de saque, do vanilla ou do pacote, que o baú sorteia                    |
+| `weight`   | número, pelo menos 1  | `1`            | A parcela da entrada entre as entradas que o nível do baú permite                |
+| `minLevel` | 0 ou mais             | `0`            | O menor nível de baú em que a entrada é usada                                    |
+| `maxLevel` | número                | qualquer nível | O maior nível de baú em que a entrada é usada. Não pode ser menor que `minLevel` |
+
+#### Decoradores do tema
+
+Um decorador é um objeto com um `type`, um `block` (um id, ou uma lista de ids) e os números que o seu tipo lê. Um tipo de cômodo roda os decoradores que nomeia em `decor`.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Tipo         | Números que lê (padrão)          | O que coloca                                                                                                            |
+| ------------ | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)          | Sequências de quatro blocos ao longo das paredes, cada uma com `height` de altura, com `gap` blocos entre as sequências |
+| `floorPatch` | `percent` (10)                   | Blocos no piso na porcentagem indicada das células do piso                                                              |
+| `scatter`    | `per100` (3), `on` (floor)       | Blocos ao acaso no piso, no teto ou nas paredes, `per100` em 100 de chance por célula                                   |
+| `pillarsRow` | `height` (3), `gap` (2)          | Uma fileira de pilares no meio do cômodo, com `height` de altura, espaçados por `gap`                                   |
+| `bannerLine` | `gap` (4), `height` (2)          | Blocos pendurados nas paredes a cada `gap` blocos, `height` acima do piso                                               |
+| `torchLine`  | `gap` (4), `height` (2)          | Tochas penduradas nas paredes do mesmo jeito que uma linha de bandeiras                                                 |
+| `fill`       | `per100` (3), `loot` obrigatório | Baús nas células das paredes, `per100` em 100 de chance por célula, cheios do conjunto de saque nomeado                 |
+
+Um `fill` sem conjunto `loot` fica de fora, e um `scatter` com `on` que não seja `floor`, `ceiling` ou `wall` é descartado, então o scatter cai no piso.
+
+### Acréscimos a temas
+
+Um acréscimo soma-se a um ou mais temas sem substituí-los. O seu arquivo tem uma chave `append`, e as chaves que ele escreve são mescladas em cada tema nomeado.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:mossy_stone_bricks", "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Os acréscimos são aplicados depois que todos os temas base de todo pacote carregam, na ordem das suas chaves de recurso, então o resultado não depende da ordem dos arquivos.
+- Em um acréscimo, as chaves de lista recebem adições em: famílias de `blocks`, tiers de `mobs`, conjuntos de `loot`, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` e `spawnGroups`.
+- Uma chave de lista chamada `remove:` seguida da sua chave tira entradas em vez de acrescentar. `"remove:walls"` tira uma entrada de paredes pelo seu id de bloco, e `"remove:decorators"` tira um decorador pelo nome.
+- Chaves escalares substituem o valor base só quando o acréscimo as escreve: `weight`, `minY`, `maxY`, `lootLevels` e `lootBonus`. As chaves `rolls`, `difficulty` e `decay` também substituem, quando escritas.
+- `name`, `dimensions` e `dimensionsAreBlacklist` ficam como o tema base os tem.
+- Um acréscimo cujo alvo não nomeia nenhum tema de pacote algum é pulado com um erro no log. Um acréscimo que deixasse um tema sem paredes não é aplicado.
+
+### Colocando dungeons
+
+Os locais são escolhidos a partir da seed do mundo. Um local é recusado quando um filtro falha, e um local recusado é pulado em vez de tentado de novo. Os filtros de bioma, dimensão e altura são os do próprio dungeon, e um tema acrescenta os seus em `dimensions`, nas listas de biomas e em `minY` e `maxY`.
+
+- `dimensions` e `biomes` filtram onde o dungeon pode gerar, como fazem as entradas de worldgen.
+- `noOceans` recusa um local cujo bioma central é um oceano. Vem ativado por padrão.
+- `minDistance` mantém os locais de um mesmo dungeon afastados. `group` permite que vários dungeons dividam esse espaçamento, e cada um mantém o maior `minDistance` do grupo.
+- `at` fixa cópias em coordenadas exatas e pula `chance`, `minDistance` e o filtro de bioma.
+- `locateAs` registra cada local sob um nome para `/locate`. Encontra um local mesmo antes de o chunk ser gerado.
+
+Um dungeon ocupa só a pegada da sua entrada, então as vilas ficam longe dele. Para saber como uma estrutura colocada é encontrada e como o mapa é organizado, veja [Onde pode gerar](#onde-pode-gerar) e [Encontrando estruturas colocadas](#encontrando-estruturas-colocadas).
+
+### Modelos em dungeons
+
+Um tipo de cômodo pode nomear modelos `.nbt` de `<namespace>/structures/` do pacote. Cada cômodo desse tipo sorteia um modelo pelo peso. O cômodo assume o tamanho do modelo, girado pela rotação do cômodo, e as rotações que ele pode assumir estão listadas em `turns`. A linha 0 do modelo fica `yOffset` blocos acima do piso do nível. Para saber como os modelos são escritos e colocados, veja [Colocando modelos](#colocando-modelos).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Dungeons que reaparecem
+
+Um dungeon usa o mesmo objeto `respawn` de uma estrutura, e a redefinição vale para o dungeon inteiro. Cada fatia de chunk do dungeon é registrada como uma reconstrução própria, então uma redefinição espera cada chunk carregar, como para qualquer estrutura. Veja [Estruturas que reaparecem](#estruturas-que-reaparecem) para o que cada chave faz.
+
+### Notas
+
+- Um dungeon é escrito um chunk por vez, e nenhum chunk carrega ou gera os seus vizinhos para terminar a sua parte.
+- A mesma seed dá o mesmo dungeon, e o tema e o tamanho de um local vêm da seed do mundo.
+- Uma `depth` em uma regra de nível ou em um grupo de spawn é uma fração de 0.0 no nível de cima a 1.0 no nível de baixo, não uma contagem de blocos.
+- Os `biomeTypes` de um tema são palavras de tipo em qualquer caixa, como `ocean`, `forest` e `plains`, ou um id de tag de bioma, como `minecraft:is_forest`.
 
 ## Terrenos de vilas
 

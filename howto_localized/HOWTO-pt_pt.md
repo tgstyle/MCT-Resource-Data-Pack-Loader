@@ -114,6 +114,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Dispersões](#dispersões)
 - [Mapas de estruturas](#mapas-de-estruturas)
 - [Estruturas que reaparecem](#estruturas-que-reaparecem)
+- [Masmorras procedurais](#masmorras-procedurais)
 - [Parcelas de aldeias](#parcelas-de-aldeias)
 - [Mapas de disposição de cidades](#mapas-de-disposição-de-cidades)
 - [Cidade contínua](#cidade-contínua)
@@ -7900,6 +7901,465 @@ Uma estrutura pode voltar depois de os jogadores a limparem: os baús voltam a s
 | `rebuild: "full"`   | Todos os blocos do modelo são colocados de novo, por cima do que lá estiver                                               |
 
 Só voltam a ser abastecidos os baús que tinham uma tabela de saque quando a estrutura foi construída. Uma reposição espera até que todos os chunks ocupados pela estrutura estejam carregados e nunca carrega nem gera nenhum; uma estrutura em terreno descarregado é reposta quando um jogador voltar a aproximar-se. As estruturas construídas antes de o pacote acrescentar `respawn` não são registadas. Tudo corre no servidor, por isso os jogadores não precisam de ter nada instalado.
+
+## Masmorras procedurais
+
+*a gerar o mundo*
+
+Uma masmorra é um edifício enterrado, de vários níveis, feito de salas, corredores e poços. O mod planeia-a a partir da semente do mundo em vez de a carimbar a partir de modelos, por isso a mesma semente dá sempre a mesma masmorra. Cada chunk escreve apenas a sua parte da masmorra, e um chunk nunca carrega nem gera um vizinho para acabar a sua parte. O RDPL não traz nenhum tema de masmorra, por isso um pacote tem de fornecer pelo menos um, ou as masmorras não colocam nada. O aspeto, as criaturas e o saque de uma masmorra vêm todos do seu tema.
+
+`<namespace>/dungeons/*.json` para masmorras, `<namespace>/dungeonthemes/*.json` para temas
+
+### Ficheiro da masmorra
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": ["minecraft:overworld"],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["ocean", "river"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Chave                    | Tipo                             | Predefinição                     | O que faz                                                                                                                                                                         |
+| ------------------------ | -------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | texto                            | o nome do ficheiro               | Nome nos registos                                                                                                                                                                 |
+| `themes`                 | lista de `id` ou `id=peso`       | nenhum, obrigatório              | A reserva de temas. Cada local sorteia dela um tema. Um tema que o bioma, a dimensão ou a altura do local recusem fica de fora. Se não sobrar nenhum, o local não recebe masmorra |
+| `dimensions`             | lista de ids de dimensão         | o Overworld                      | Dimensões onde a masmorra pode gerar                                                                                                                                              |
+| `dimensionsAreBlacklist` | true/false                       | `false`                          | Transforma `dimensions` na lista das dimensões a evitar                                                                                                                           |
+| `chance`                 | 1 a 100                          | `75`                             | Percentagem dos locais que têm uma masmorra, sorteada uma vez por local a partir da semente do mundo                                                                              |
+| `minDistance`            | 0 a 100000 blocos                | `600`                            | Distância mínima entre dois locais desta masmorra, ou do seu `group`, medida pelo maior de x e z                                                                                  |
+| `group`                  | texto                            | o id da própria masmorra         | As masmorras de um mesmo grupo mantêm os locais afastados pelo maior `minDistance` do grupo                                                                                       |
+| `minDistanceFromSpawn`   | 0 a 100000 blocos                | `0`                              | Um local tão perto do spawn do mundo é recusado                                                                                                                                   |
+| `noOceans`               | true/false                       | `true`                           | Recusa um local cujo bioma central seja um oceano                                                                                                                                 |
+| `biomes`                 | lista de ids de biomas           | nenhum                           | Filtro de biomas, como nas entradas de worldgen                                                                                                                                   |
+| `biomeTypes`             | lista de tipos de bioma          | nenhum                           | Filtro de biomas por palavra de tipo, como `ocean` ou `river`. Os temas acrescentam os seus próprios filtros                                                                      |
+| `biomesAreBlacklist`     | true/false                       | `false`                          | Transforma `biomes` e `biomeTypes` nos biomas a evitar                                                                                                                            |
+| `at`                     | `[x, z]`, ou uma lista deles     | nenhum                           | Fixa uma masmorra em coordenadas de blocos exatas. Ignora `chance`, `minDistance` e o filtro de biomas, tal como `at` fixa um mapa de estrutura                                   |
+| `locateAs`               | texto                            | nenhum                           | Regista cada local com este nome, para que `/locate <nome>` encontre um. Funciona antes de o chunk ter sido gerado                                                                |
+| `sizes`                  | lista de objetos de tamanho      | os quatro tamanhos incorporados  | O sorteio de tamanho de cada local. Ver a tabela de tamanhos                                                                                                                      |
+| `shrink`                 | 0 a 100 por cento                | `0`                              | O campo de cada nível é esta percentagem mais estreito do que o de cima, até um mínimo de metade da pegada                                                                        |
+| `surfaceBuffer`          | 0 a 64 blocos                    | `7`                              | Cobertura sólida entre o teto do nível de cima e a superfície                                                                                                                     |
+| `minY`                   | y do bloco                       | o piso do mundo                  | O piso mais baixo que um nível pode ter. Os níveis que já não cabem não são construídos                                                                                           |
+| `levelHeight`            | `[mín, máx]`, 4 a 64             | `[5, 8]`                         | Altura em blocos de um nível, do piso ao teto. A altura sorteada é por nível. As salas ficam limitadas a ela menos 2                                                              |
+| `roomSize`               | `[mín, máx]`, 3 a 64             | `[5, 15]`                        | Intervalo de largura e profundidade das salas. Um mínimo abaixo da largura do corredor mais 2 sobe até lá, e o registo assim o diz                                                |
+| `corridor`               | `{ "width", "height" }`          | `{ 3, 3 }`                       | Tamanho das ligações entre salas. A largura vai de 1 a 5. A altura vai de 2 até ao `levelHeight` mais baixo menos 2                                                               |
+| `loops`                  | 0 a 100 por cento                | `25`                             | Ligações extra entre salas, para além da árvore de expansão, como percentagem dos pares de vizinhos possíveis                                                                     |
+| `rolls`                  | objeto de elemento para grau     | nenhum                           | Graus dos 13 sorteios, como se lista abaixo. Sorteado uma vez por masmorra. Um sorteio que falte é `none`                                                                         |
+| `roomKinds`              | lista de objetos de tipo de sala | um `hall`                        | Os tipos de sala com o seu peso. Ver Tipos de sala                                                                                                                                |
+| `entrance`               | objeto                           | `{ "types": ["simple"] }`        | Como a masmorra chega à superfície. Ver Entrada, chefe e poços                                                                                                                    |
+| `boss`                   | objeto                           | nenhum                           | A sala do chefe. Ver Entrada, chefe e poços                                                                                                                                       |
+| `shafts`                 | lista de `type` ou `type=peso`   | `ladder`                         | Os tipos de ligação entre níveis: `ladder`, `spiral` e `stairs`                                                                                                                   |
+| `difficulty`             | nome de predefinição ou objeto   | `"norm"`                         | Quantas salas têm criaturas, como sobem os níveis e com que frequência aparecem spawners. Ver a tabela de predefinições                                                           |
+| `support`                | objeto, `true` ou `false`        | `{ "depth": 8 }`                 | Até onde uma coluna é preenchida para baixo a partir de um piso sobre ar ou líquido. `false` desliga esta passagem                                                                |
+| `decay`                  | objeto                           | `{ "base": 15, "perDepth": 20 }` | Força dos blocos de decadência: `base` é o início e `perDepth` acresce com a profundidade. Cada um vai de 0 a 100                                                                 |
+| `levelRules`             | lista                            | nenhum                           | Substituições por profundidade. Ver Regras de profundidade                                                                                                                        |
+| `respawn`                | objeto                           | nenhum                           | O mesmo objeto de Estruturas que reaparecem. Aplica-se à masmorra inteira                                                                                                         |
+
+Os objetos de tamanho definem a forma de cada tamanho. As chaves de um tamanho são:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Chave       | Tipo                  | Predefinição           | O que faz                                      |
+| ----------- | --------------------- | ---------------------- | ---------------------------------------------- |
+| `name`      | texto                 | `size` e a sua posição | Nome nos registos                              |
+| `weight`    | 1 a 1000000           | `1`                    | A parte do tamanho no sorteio de tamanhos      |
+| `footprint` | 48 a 176 blocos       | `112`                  | Lado do campo quadrado onde assentam os níveis |
+| `levels`    | `[mín, máx]`, 1 a 64  | `[4, 7]`               | Número de níveis, sorteado de forma uniforme   |
+| `rooms`     | `[mín, máx]`, 1 a 400 | `[15, 30]`             | Salas por nível, sorteadas de forma uniforme   |
+
+Uma predefinição de dificuldade define os valores por omissão do lado das criaturas de uma masmorra. Um objeto pode indicar um `preset` como base e depois alterar qualquer uma das chaves abaixo.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Predefinição ou chave | Spawners | Promoção | Tier máximo | Tier de nó | Tier de chefe | Blocos por spawner | Criaturas da entrada |
+| --------------------- | -------- | -------- | ----------- | ---------- | ------------- | ------------------ | -------------------- |
+| `baby`                | 30       | 0        | 0           | 0          | 0             | 371                | `false`              |
+| `noob`                | 40       | 10       | 1           | 1          | 1             | 248                | `false`              |
+| `norm`                | 50       | 20       | 1           | 1          | 2             | 180                | `false`              |
+| `hard`                | 60       | 30       | 2           | 2          | 3             | 136                | `true`               |
+| `nuts`                | 70       | 50       | 2           | 2          | 4             | 50                 | `true`               |
+
+Cada chave que um objeto deixe de fora vem da sua predefinição, e de `norm` quando não indique nenhuma. Os tiers vão de 0 para `common` até 4 para `boss`.
+
+| Chave              | Tipo                 | Predefinição    | O que faz                                                                                                                                                                                 |
+| ------------------ | -------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | nome de predefinição | `norm`          | A predefinição que as outras chaves alteram                                                                                                                                               |
+| `spawners`         | 0 a 100              | da predefinição | Percentagem das salas que recebem criaturas                                                                                                                                               |
+| `promote`          | 0 a 100              | da predefinição | Probabilidade, em percentagem por passo, de o tier de criaturas de uma sala subir um nível                                                                                                |
+| `maxTier`          | 0 a 4                | da predefinição | Tier mais alto até onde a promoção eleva uma sala comum; nenhuma sala do nível mais fundo fica abaixo de metade dele, arredondada para baixo, e os níveis acima sobem para lá por degraus |
+| `nodeTier`         | 0 a 4                | da predefinição | Tier mais baixo das salas onde se juntam vários caminhos                                                                                                                                  |
+| `bossTier`         | 0 a 4                | da predefinição | Tier mais alto até onde a promoção eleva essas salas de junção; a sala do chefe toma o seu tier do mob do chefe                                                                           |
+| `blocksPerSpawner` | 1 a 100000           | da predefinição | Densidade de spawners, em blocos de masmorra por spawner                                                                                                                                  |
+| `entranceMobs`     | true ou false        | da predefinição | Se a sala de entrada recebe criaturas quando o seu tipo de sala não define um número de spawners                                                                                          |
+
+Cada um dos 13 sorteios indica uma funcionalidade. Um grau define a probabilidade de a funcionalidade aparecer, como mostra a tabela seguinte.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Sorteio       | O que controla                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `outside`     | Uma sala pode abrir um sumidouro até à superfície                                                                                     |
+| `liquids`     | Poças em poços e em algumas salas                                                                                                     |
+| `subrooms`    | Paredes divisórias que partem uma sala em duas                                                                                        |
+| `islands`     | Ilhas que ficam de pé dentro de poços                                                                                                 |
+| `pillars`     | Pilares nas salas                                                                                                                     |
+| `symmetry`    | Um gémeo espelhado de um pilar ou de uma poça                                                                                         |
+| `variability` | Uma sala pode escolher outra variante de bloco do seu tema                                                                            |
+| `degeneracy`  | Quanta decadência tomam os blocos da sala                                                                                             |
+| `complexity`  | Quantas funcionalidades cada sala tenta obter                                                                                         |
+| `vertical`    | Quanto variam as alturas das salas dentro de um nível, e com que frequência uma sala afunda um ou dois blocos abaixo do piso do nível |
+| `entrances`   | Poços extra das salas do nível de cima até à superfície, usados quando `entrance.extra` não está definido                             |
+| `fences`      | Vedações à volta de poços e sumidouros                                                                                                |
+| `naturals`    | Uma sala de caixa simples passa a ser uma sala de gruta                                                                               |
+
+| Grau     | Probabilidade |
+| -------- | ------------- |
+| `none`   | 0             |
+| `few`    | 10            |
+| `some`   | 30            |
+| `plenty` | 50            |
+| `heaps`  | 90            |
+| `always` | 100           |
+
+Um grau também se escreve como objeto de pesos, como `{ "none": 5, "few": 30 }`, que sorteia um grau por masmorra conforme o peso. Um objeto só com zeros é um erro e é ignorado.
+
+### Tipos de sala
+
+Os tipos de sala definem o que cada sala tem. Uma masmorra sem `roomKinds` recebe um único tipo `hall` simples.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Chave                  | Tipo                                               | Predefinição                | O que faz                                                                                                                                                                       |
+| ---------------------- | -------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | texto                                              | obrigatório                 | O nome nos registos. `hall` é a sala simples                                                                                                                                    |
+| `weight`               | 1 a 1000000                                        | `1`                         | A parte do tipo no sorteio de cada sala                                                                                                                                         |
+| `minLevel`, `maxLevel` | 0 a 64                                             | qualquer nível              | Os níveis onde pode aparecer, contando do topo a partir de 0                                                                                                                    |
+| `maxPerDungeon`        | 0 a 100000                                         | nenhum                      | O maior número de salas deste tipo numa masmorra. Aplicado durante o planeamento, para que o limite se cumpra exatamente                                                        |
+| `maxPerLevel`          | 0 a 100000                                         | nenhum                      | O maior número de salas deste tipo num nível                                                                                                                                    |
+| `minSize`              | `[x, z]`                                           | o mínimo de tamanho de sala | A menor pegada de que o tipo precisa. Uma sala num espaço pequeno demais recua para `hall`                                                                                      |
+| `height`               | `[mín, máx]`, 3 a 64                               | a altura do nível menos 2   | Altura interior da sala                                                                                                                                                         |
+| `shapes`               | lista de `type` ou `type=peso`                     | `box`                       | A forma da sala: `box`, `pillared`, `ring`, `pit`, `cross` ou `cave`                                                                                                            |
+| `templates`            | lista de `id` ou `id=peso`                         | nenhum                      | Modelos de estrutura para este tipo. Cada sala do tipo sorteia um. Ver Modelos nas masmorras                                                                                    |
+| `yOffset`              | -64 a 64                                           | `0`                         | A que altura acima do piso do nível fica a linha 0 do modelo                                                                                                                    |
+| `turns`                | lista de `none`, `quarter`, `half`, `threequarter` | qualquer                    | As rotações que um modelo pode tomar, como num imprint                                                                                                                          |
+| `decor`                | lista de nomes de decoradores                      | nenhum                      | Os decoradores do tema a correr na sala. Ver Decoradores do tema                                                                                                                |
+| `mobs`                 | texto                                              | `common`                    | O tier de criaturas ou o grupo de spawn do tema para os spawners da sala                                                                                                        |
+| `loot`                 | texto                                              | `basic`                     | O conjunto de saque do tema para os baús da sala                                                                                                                                |
+| `spawners`             | 0 a 100 por cento, ou `[mín, máx]`                 | de `difficulty`             | Spawners por sala. Um número é uma probabilidade, e um par é um intervalo de contagem                                                                                           |
+| `chests`               | 0 a 100 por cento, ou `[mín, máx]`                 | de `difficulty`             | Baús por sala, nas mesmas formas que `spawners`                                                                                                                                 |
+| `rolls`                | objeto                                             | os sorteios da masmorra     | Substituições de graus só para este tipo                                                                                                                                        |
+| `decay`                | 0 a 100 por cento, ou true/false                   | `0`                         | Percentagem somada à força de decadência nas salas deste tipo. Num tipo de modelo, `true` deixa a decadência tocar nos blocos do próprio modelo, o que por omissão não acontece |
+| `node`                 | true/false                                         | `false`                     | Marca a sala como um nó, que recebe um tier de criaturas mais alto e um baú extra                                                                                               |
+
+### Entrada, chefe e poços
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Chave                       | Tipo                                                  | Predefinição                            | O que faz                                                                      |
+| --------------------------- | ----------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `entrance.types`            | lista de `simple`, `spiral` ou `toproom`, com `=peso` | `simple`                                | Como o topo da masmorra chega à superfície                                     |
+| `entrance.topRoomTemplates` | lista de `id` ou `id=peso`                            | nenhum, um edifício ou ruína processual | Modelos para uma sala do topo. Usado com `toproom`                             |
+| `entrance.extra`            | grau (ver a tabela dos sorteios)                      | o sorteio `entrances`                   | A probabilidade de um segundo poço das salas do nível de cima até à superfície |
+| `boss.templates`            | lista de `id` ou `id=peso`                            | nenhum                                  | Modelos para a sala do chefe                                                   |
+| `boss.size`                 | `[mín, máx]`, 3 a 64                                  | nenhum                                  | Pegada da sala do chefe                                                        |
+| `boss.height`               | `[mín, máx]`, 3 a 64                                  | nenhum                                  | Altura interior da sala do chefe                                               |
+| `boss.mob`                  | nome de tier ou de grupo de spawn                     | `boss`                                  | As criaturas do spawner da sala do chefe                                       |
+| `boss.loot`                 | nome de conjunto de saque                             | `boss`                                  | O conjunto de saque do único baú da sala do chefe                              |
+| `boss.count`                | 1 a 16                                                | `1`                                     | Spawners na sala do chefe                                                      |
+| `shafts`                    | lista de `type` ou `type=peso`                        | `ladder`                                | O tipo de ligação entre dois níveis: `ladder`, `spiral` ou `stairs`            |
+
+Uma masmorra sem `boss` não tem sala de chefe: todas as salas do nível mais fundo são salas comuns.
+
+### Regras de profundidade
+
+Uma regra de nível muda algumas chaves para os níveis a partir de uma dada profundidade para baixo. `fromDepth` vai de 0.0 no nível de cima a 1.0 no nível de baixo. A última regra no nível ou acima da profundidade de um nível ganha, uma chave de cada vez.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Chave        | Tipo                             | Predefinição       | O que faz                                                                                             |
+| ------------ | -------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------- |
+| `fromDepth`  | 0.0 a 1.0                        | obrigatório        | A profundidade onde a regra começa. Uma regra sem ela, ou fora do intervalo, fica de fora             |
+| `theme`      | id de tema                       | o tema da masmorra | O tema destes níveis                                                                                  |
+| `rolls`      | objeto                           | nenhum             | Substituições de graus para estes níveis                                                              |
+| `difficulty` | nome de predefinição ou objeto   | nenhum             | Uma dificuldade para estes níveis                                                                     |
+| `decay`      | objeto                           | nenhum             | Um objeto de decadência para estes níveis                                                             |
+| `lootBonus`  | número                           | nenhum             | Somado a cada nível de baú nestes níveis                                                              |
+| `roomKinds`  | lista de objetos de tipo de sala | nenhum             | Tipos de sala para estes níveis. Uma regra com esta chave não acrescenta o `hall` simples por omissão |
+
+### Temas
+
+Um tema é um aspeto: os blocos de cada parte da masmorra, as criaturas, o saque e os decoradores. O ficheiro do tema é um único objeto.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": ["minecraft:overworld"],
+  "biomeTypes": ["forest=3", "plains", "hills"],
+  "notBiomeTypes": ["sandy"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_fields"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 },
+               { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stone_bricks" } ],
+    "ceilings": [ { "block": "minecraft:stone_bricks" } ],
+    "pillars": [ { "block": "minecraft:stone_brick_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:red_carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:cobweb"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Chave                                                | Tipo                                      | Predefinição           | O que faz                                                                                                                                                        |
+| ---------------------------------------------------- | ----------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | texto                                     | o nome do ficheiro     | Nome nos registos                                                                                                                                                |
+| `weight`                                             | número                                    | `1`                    | A parte do tema no sorteio de temas de uma masmorra                                                                                                              |
+| `dimensions`, `dimensionsAreBlacklist`               | lista de ids, true/false                  | todas as dimensões     | Filtro de dimensões, como numa masmorra                                                                                                                          |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | listas; as entradas podem ser `nome=peso` | todos os biomas        | Filtro de biomas por nome e por tipo, e as duas exclusões. Um peso é a parte desse bioma, por isso se pode montar uma reserva por bioma a partir de vários temas |
+| `minY`, `maxY`                                       | y do bloco                                | os limites da masmorra | A faixa onde têm de estar os pisos de topo e de baixo da masmorra. Um local sem sala nela perde o tema                                                           |
+| `blocks`                                             | objeto de listas                          | `walls` obrigatório    | As famílias de blocos, como mostra a tabela seguinte. Cada entrada é um objeto de bloco                                                                          |
+| `mobs`                                               | objeto de tier para lista                 | nenhum                 | As criaturas de cada tier. Ver Tiers de criaturas                                                                                                                |
+| `spawnGroups`                                        | lista                                     | nenhum                 | Grupos com nome de criaturas, com um intervalo de profundidade e os tipos de sala onde entram                                                                    |
+| `loot`                                               | objeto de conjunto para lista             | nenhum                 | As entradas de baú de cada conjunto de saque. Ver Conjuntos de saque                                                                                             |
+| `lootLevels`                                         | 1 a 12                                    | `6`                    | O nível de baú mais alto. O nível do baú vem da profundidade, escalada para este valor, mais `lootBonus`                                                         |
+| `lootBonus`                                          | número                                    | `0`                    | Somado a cada nível de baú do tema                                                                                                                               |
+| `decorators`                                         | objeto de nome para decorador             | nenhum                 | Decoradores que os tipos de sala podem indicar em `decor`. Ver Decoradores do tema                                                                               |
+| `rolls`, `difficulty`, `decay`                       | como numa masmorra                        | nenhum                 | Valores por omissão do tema. Vence o valor próprio da masmorra, depois as regras de profundidade                                                                 |
+| `append`                                             | texto ou lista de ids de temas            | nenhum                 | Torna o ficheiro um acrescento a esses temas. Ver Acrescentos a temas                                                                                            |
+
+Um objeto de bloco aceita `block`, o id do bloco, e opcionalmente `weight`, que por omissão é 1 e nunca é menos de 1, e `properties`, um mapa de nomes de estado do bloco para valores. Cada masmorra escolhe um bloco por família, e o sorteio `variability` deixa uma sala escolher outro.
+
+As famílias de blocos e as suas alternativas:
+
+| Família    | Usada para                                                         | Se o tema não a indicar                       |
+| ---------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| `walls`    | Paredes das salas. Obrigatória em todos os temas                   | nenhuma, o ficheiro é ignorado                |
+| `floors`   | Pisos das salas                                                    | o bloco de `walls`                            |
+| `ceilings` | Tetos das salas                                                    | o bloco de `walls`                            |
+| `pillars`  | Pilares e as peças de pilar das salas                              | o bloco de `walls`                            |
+| `fencing`  | Vedações à volta de poços e sumidouros                             | o bloco de `walls`                            |
+| `liquid`   | Poças                                                              | água                                          |
+| `cave`     | Salas de gruta                                                     | o bloco de `walls`                            |
+| `air`      | Espaço aberto dentro de salas e corredores                         | ar                                            |
+| `support`  | Colunas sob um piso sobre ar ou líquido, e sob a entrada           | o bloco de `floors`                           |
+| `stairs`   | Poços de escada                                                    | escadas de pedra lavrada                      |
+| `slabs`    | Poços em espiral e de escada, onde as escadas precisam de uma laje | uma laje de pedra lavrada lisa                |
+| `decay`    | Os blocos gastos, do mais leve ao pior                             | nenhum, por isso a decadência não coloca nada |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 }, { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+  "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Tiers de criaturas
+
+Os tiers de criaturas seguem esta ordem, de 0 a 4: `common`, `hard`, `brute`, `elite` e `boss`. Um tier sem criaturas cai para o tier inferior seguinte que as tenha. Se não sobrar nenhum, o spawner não é colocado. O `mobs` de um tipo de sala indica um tier ou um grupo de spawn, e `difficulty` define até onde sobem os tiers nas salas.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+Uma entrada de criatura é um id de entidade, com um sufixo `=peso` opcional e um sufixo `{nbt}` opcional escrito depois do id. Um id que nada regista fica de fora do sorteio.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Chave                  | Tipo                            | Predefinição | O que faz                                                                                                |
+| ---------------------- | ------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| `name`                 | texto                           | obrigatório  | O nome que o `mobs` de um tipo de sala usa para escolher este grupo                                      |
+| `mobs`                 | lista de ids de entidades       | nenhum       | As criaturas do grupo, como num tier                                                                     |
+| `weight`               | número, pelo menos 1            | `1`          | A parte do grupo no sorteio                                                                              |
+| `minDepth`, `maxDepth` | 0.0 a 1.0                       | `0.0`, `1.0` | O intervalo de profundidade onde o grupo aparece. Os dois trocam de lugar se forem escritos ao contrário |
+| `kinds`                | lista de nomes de tipos de sala | qualquer     | Os tipos de sala onde o grupo pode aparecer                                                              |
+| `tier`                 | um dos cinco nomes de tier      | nenhum       | Um tier a que pertencem as criaturas do grupo. Um tier desconhecido é descartado                         |
+
+#### Conjuntos de saque
+
+Cada conjunto de saque é uma lista de entradas. Um baú tira as suas entradas do conjunto que a sala indica, que é `basic` por omissão para uma sala e `boss` para a sala do chefe. Os conjuntos `weak`, `basic`, `treasure` e `boss` são os incorporados, e um pacote pode acrescentar os seus.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Chave      | Tipo                  | Predefinição   | O que faz                                                                              |
+| ---------- | --------------------- | -------------- | -------------------------------------------------------------------------------------- |
+| `table`    | id de tabela de saque | obrigatório    | A tabela de saque, do vanilla ou do pacote, que o baú sorteia                          |
+| `weight`   | número, pelo menos 1  | `1`            | A parte da entrada entre as que o nível do baú permite                                 |
+| `minLevel` | 0 ou mais             | `0`            | O nível de baú mais baixo em que a entrada é usada                                     |
+| `maxLevel` | número                | qualquer nível | O nível de baú mais alto em que a entrada é usada. Não pode estar abaixo de `minLevel` |
+
+#### Decoradores do tema
+
+Um decorador é um objeto com um `type`, um `block` (um id, ou uma lista de ids) e os números que o tipo lê. Um tipo de sala corre os decoradores que indica em `decor`.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Tipo         | Números que lê (predefinição)    | O que coloca                                                                                                             |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `wallLine`   | `height` (1), `gap` (1)          | Sequências de quatro blocos ao longo das paredes, cada uma com altura `height`, e `gap` blocos entre sequências          |
+| `floorPatch` | `percent` (10)                   | Blocos no piso, na percentagem indicada das células do piso                                                              |
+| `scatter`    | `per100` (3), `on` (floor)       | Blocos ao acaso no piso, no teto ou nas paredes, `per100` em 100 de probabilidade por célula                             |
+| `pillarsRow` | `height` (3), `gap` (2)          | Uma fila de pilares ao meio da sala, com altura `height`, espaçados de `gap`                                             |
+| `bannerLine` | `gap` (4), `height` (2)          | Blocos pendurados nas paredes a cada `gap` blocos, a `height` acima do piso                                              |
+| `torchLine`  | `gap` (4), `height` (2)          | Tochas penduradas nas paredes da mesma forma que uma linha de estandartes                                                |
+| `fill`       | `per100` (3), `loot` obrigatório | Baús nas células das paredes, `per100` em 100 de probabilidade por célula, cheios a partir do conjunto de saque indicado |
+
+Um `fill` sem conjunto de `loot` fica de fora, e um `on` de `scatter` que não seja `floor`, `ceiling` ou `wall` é descartado, por isso o scatter cai no piso.
+
+### Acréscimos a temas
+
+Um acréscimo soma-se a um ou mais temas sem os substituir. O seu ficheiro tem uma chave `append`, e as chaves que escreve são fundidas em cada tema indicado.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:mossy_stone_bricks", "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Os acréscimos são aplicados depois de todos os temas base de todos os pacotes carregarem, pela ordem das suas chaves de recurso, por isso o resultado não depende da ordem dos ficheiros.
+- Num acréscimo, as chaves de lista são as que recebem entradas: famílias de `blocks`, tiers de `mobs`, conjuntos de `loot`, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` e `spawnGroups`.
+- Uma chave de lista chamada `remove:` seguida da chave tira entradas em vez disso. `"remove:walls"` tira uma entrada de walls pelo seu id de bloco, e `"remove:decorators"` tira um decorador pelo nome.
+- As chaves escalares só substituem o valor base quando o acréscimo as escreve: `weight`, `minY`, `maxY`, `lootLevels` e `lootBonus`. As chaves `rolls`, `difficulty` e `decay` também substituem, quando escritas.
+- `name`, `dimensions` e `dimensionsAreBlacklist` ficam como o tema base os tem.
+- Um acréscimo cujo alvo não nomeia nenhum tema de nenhum pacote é ignorado, com um erro registado. Um acréscimo que deixaria um tema sem walls não é aplicado.
+
+### Colocar masmorras
+
+Os locais são escolhidos a partir da semente do mundo. Um local é recusado quando um filtro falha, e um local recusado é saltado, não tentado de novo. Os filtros de bioma, dimensão e altura são os da própria masmorra, e um tema acrescenta os seus nos `dimensions`, nas listas de biomas e nos `minY` e `maxY` do tema.
+
+- `dimensions` e `biomes` filtram onde a masmorra pode gerar, tal como fazem as entradas de worldgen.
+- `noOceans` recusa um local cujo bioma central seja um oceano. Está ativo por omissão.
+- `minDistance` mantém os locais de uma masmorra afastados. `group` deixa várias masmorras partilharem esse espaçamento, e cada uma mantém o maior `minDistance` do grupo.
+- `at` fixa cópias em coordenadas exatas e ignora `chance`, `minDistance` e o filtro de biomas.
+- `locateAs` regista todos os locais sob um nome para `/locate`. Encontra um local mesmo antes de o chunk ter sido gerado.
+
+Uma masmorra reclama apenas a pegada da sua entrada, por isso as aldeias ficam longe dela. Sobre como uma estrutura colocada é encontrada e como o mapa é organizado, ver [Onde pode gerar](#onde-pode-gerar) e [Encontrar estruturas colocadas](#encontrar-estruturas-colocadas).
+
+### Modelos nas masmorras
+
+Um tipo de sala pode indicar modelos `.nbt` da pasta `<namespace>/structures/` do pacote. Cada sala desse tipo sorteia um modelo por peso. A sala toma o tamanho do modelo, rodado pela rotação da sala, e as rotações que pode tomar estão listadas em `turns`. A linha 0 do modelo fica `yOffset` blocos acima do piso do nível. Sobre como os modelos são escritos e colocados, ver [Colocar modelos](#colocar-modelos).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Masmorras que reaparecem
+
+Uma masmorra usa o mesmo objeto `respawn` que uma estrutura, e a reposição aplica-se à masmorra inteira. Cada fatia de chunks da masmorra fica registada como a sua própria reconstrução, por isso uma reposição espera que cada chunk esteja carregado, como em qualquer estrutura. Ver [Estruturas que reaparecem](#estruturas-que-reaparecem) para o que cada chave faz.
+
+### Notas
+
+- Uma masmorra é escrita um chunk de cada vez, e nenhum chunk carrega ou gera os vizinhos para acabar a sua parte.
+- A mesma semente dá a mesma masmorra, e o tema e o tamanho de um local vêm da semente do mundo.
+- Um `depth` numa regra de nível ou num grupo de criaturas é uma fração de 0.0 no nível de cima a 1.0 no nível de baixo, não uma contagem de blocos.
+- Os `biomeTypes` de um tema são palavras de tipo em qualquer caixa, como `ocean`, `forest` e `plains`, ou um id de tag de bioma, como `minecraft:is_forest`.
 
 ## Parcelas de aldeias
 

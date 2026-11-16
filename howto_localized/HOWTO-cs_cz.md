@@ -114,6 +114,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Rozptyly](#rozptyly)
 - [Mapy struktur](#mapy-struktur)
 - [Obnova struktur](#obnova-struktur)
+- [Procedurální kobky](#procedurální-kobky)
 - [Pozemky vesnic](#pozemky-vesnic)
 - [Mapy rozložení měst](#mapy-rozložení-měst)
 - [Souvislé město](#souvislé-město)
@@ -7902,6 +7903,465 @@ Struktura se může vrátit poté, co ji hráči vyčistí: její truhly se dopl
 | `rebuild: "full"`   | Každý blok šablony se položí znovu, přes cokoli, co tam stojí                                              |
 
 Doplní se jen truhly, které měly tabulku kořisti, když byla struktura postavena. Reset počká, dokud nejsou načteny všechny chunky, které struktura zabírá, a nikdy žádný nenačte ani negeneruje; struktura v nenačtené oblasti se resetuje, až ji hráč znovu přivede. Struktury postavené dříve, než balíček přidal `respawn`, se nesledují. Vše běží na serveru, takže hráči nic instalovat nemusí.
+
+## Procedurální kobky
+
+*generování světa*
+
+Kobka je zakopaná, víceúrovňová stavba z místností, chodeb a šachet. Mod ji plánuje ze semínka světa, místo aby ji otiskl ze šablon, takže stejné semínko dá stejnou kobku. Každý chunk zapisuje jen svou část kobky a chunk nikdy nenačítá ani negeneruje souseda, aby dokončil svůj díl. RDPL žádný motiv kobky nedodává, takže balíček musí dodat alespoň jeden, jinak jeho kobky nic neumístí. Vzhled, moby i kořist kobky pocházejí z jejího motivu.
+
+`<namespace>/dungeons/*.json` pro kobky, `<namespace>/dungeonthemes/*.json` pro motivy
+
+### Soubor kobky
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": ["minecraft:overworld"],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["ocean", "river"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Klíč                     | Typ                            | Výchozí                          | Co dělá                                                                                                                                                              |
+| ------------------------ | ------------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | text                           | název souboru                    | Název v logu                                                                                                                                                         |
+| `themes`                 | seznam `id` nebo `id=váha`     | žádný, povinné                   | Výběr motivů. Každé místo si z něj vylosuje jeden motiv. Motiv, který biom, dimenze nebo výška místa vylučuje, se vynechá. Když nezbude žádný, místo kobku nedostane |
+| `dimensions`             | seznam id dimenzí              | Svět nad zemí                    | Dimenze, ve kterých smí kobka generovat                                                                                                                              |
+| `dimensionsAreBlacklist` | true/false                     | `false`                          | Změní `dimensions` na seznam dimenzí, kterým se má kobka vyhnout                                                                                                     |
+| `chance`                 | 1 až 100                       | `75`                             | Procento míst, která dostanou kobku. Losuje se jednou pro každé místo ze semínka světa                                                                               |
+| `minDistance`            | 0 až 100000 bloků              | `600`                            | Nejmenší vzdálenost mezi dvěma místy této kobky nebo jejich `group`, měřená podle větší z os x a z                                                                   |
+| `group`                  | text                           | id samotné kobky                 | Kobky ve stejné skupině drží svá místa od sebe podle největšího `minDistance` ve skupině                                                                             |
+| `minDistanceFromSpawn`   | 0 až 100000 bloků              | `0`                              | Místo tak blízko u spawnu světa se odmítne                                                                                                                           |
+| `noOceans`               | true/false                     | `true`                           | Odmítne místo, jehož střední biom je oceán                                                                                                                           |
+| `biomes`                 | seznam id biomů                | žádný                            | Filtr biomů, stejně jako u položek worldgenu                                                                                                                         |
+| `biomeTypes`             | seznam typů biomů              | žádný                            | Filtr biomů podle slova typu, například `ocean` nebo `river`. Motivy přidávají vlastní filtry                                                                        |
+| `biomesAreBlacklist`     | true/false                     | `false`                          | Změní `biomes` a `biomeTypes` na biomy, kterým se má kobka vyhnout                                                                                                   |
+| `at`                     | `[x, z]`, nebo seznam takových | žádný                            | Připne kobku na přesné souřadnice bloků. Přeskočí `chance`, `minDistance` a filtr biomů, stejně jako `at` připíná strukturu na mapě struktur                         |
+| `locateAs`               | text                           | žádný                            | Zapíše každé místo pod tento název, takže `/locate <name>` ho najde. Funguje i předtím, než chunk vygeneruje                                                         |
+| `sizes`                  | seznam objektů velikostí       | čtyři vestavěné velikosti        | Losování velikosti pro každé místo. Viz tabulka velikostí                                                                                                            |
+| `shrink`                 | 0 až 100 procent               | `0`                              | Pole každého patra je o tolik užší než pole nad ním, nejvýš do poloviny půdorysu                                                                                     |
+| `surfaceBuffer`          | 0 až 64 bloků                  | `7`                              | Pevné krytí mezi stropem nejvyššího patra a povrchem                                                                                                                 |
+| `minY`                   | y bloku                        | dno světa                        | Nejnižší podlaha, kterou patro smí mít. Patra, která se už nevejdou, se nepostaví                                                                                    |
+| `levelHeight`            | `[min, max]`, 4 až 64          | `[5, 8]`                         | Výška jednoho patra v blocích, od podlahy ke stropu. Losovaná výška platí pro každé patro zvlášť. Místnosti se musí vejít do ní minus 2                              |
+| `roomSize`               | `[min, max]`, 3 až 64          | `[5, 15]`                        | Rozsah šířky a hloubky místnosti. Minimum menší než šířka chodby plus 2 se zvýší na tuto hodnotu a log to napíše                                                     |
+| `corridor`               | `{ "width", "height" }`        | `{ 3, 3 }`                       | Velikost spojů mezi místnostmi. Šířka je 1 až 5. Výška je 2 až po nejnižší `levelHeight` minus 2                                                                     |
+| `loops`                  | 0 až 100 procent               | `25`                             | Další spoje mezi místnostmi nad kostru, jako podíl možných sousedních dvojic                                                                                         |
+| `rolls`                  | objekt, prvek na stupeň        | žádný                            | Stupně pro 13 losování, jak je uvedeno níže. Losuje se jednou na kobku. Losování, které chybí, je `none`                                                             |
+| `roomKinds`              | seznam objektů druhů místností | jedna `hall`                     | Typované místnosti a jejich váhy. Viz Druhy místností                                                                                                                |
+| `entrance`               | objekt                         | `{ "types": ["simple"] }`        | Jak se kobka dostane na povrch. Viz Vstup, boss a šachty                                                                                                             |
+| `boss`                   | objekt                         | žádný                            | Místnost bosse. Viz Vstup, boss a šachty                                                                                                                             |
+| `shafts`                 | seznam `type` nebo `type=váha` | `ladder`                         | Typy spojů mezi patry: `ladder`, `spiral` a `stairs`                                                                                                                 |
+| `difficulty`             | název předvolby nebo objekt    | `"norm"`                         | Kolik místností dostane moby, jak rychle rostou hodnosti a jak často se objevují líheně. Viz tabulka předvoleb                                                       |
+| `support`                | objekt, `true` nebo `false`    | `{ "depth": 8 }`                 | Jak daleko se sloupec doplní dolů od podlahy nad vzduchem nebo kapalinou. `false` tento průchod vypne                                                                |
+| `decay`                  | objekt                         | `{ "base": 15, "perDepth": 20 }` | Síla rozpadových bloků: `base` je začátek a `perDepth` se přidává s hloubkou. Každé je 0 až 100                                                                      |
+| `levelRules`             | seznam                         | žádný                            | Přepsání podle hloubky. Viz Pravidla hloubky                                                                                                                         |
+| `respawn`                | objekt                         | žádný                            | Stejný objekt jako u Obnovy struktur. Platí pro celou kobku                                                                                                          |
+
+Objekty velikostí určují tvar každé velikosti. Klíče velikosti jsou:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Klíč        | Typ                    | Výchozí              | Co dělá                                     |
+| ----------- | ---------------------- | -------------------- | ------------------------------------------- |
+| `name`      | text                   | `size` a jeho pozice | Název v logu                                |
+| `weight`    | 1 až 1000000           | `1`                  | Podíl velikosti v losování velikosti        |
+| `footprint` | 48 až 176 bloků        | `112`                | Strana čtvercového pole, v němž stojí patra |
+| `levels`    | `[min, max]`, 1 až 64  | `[4, 7]`             | Počet pater, losovaný rovnoměrně            |
+| `rooms`     | `[min, max]`, 1 až 400 | `[15, 30]`           | Místností na patro, losovaných rovnoměrně   |
+
+Předvolba obtížnosti nastavuje výchozí hodnoty pro stránku mobů kobky. Objekt může jako základ uvést `preset` a pak změnit kterýkoli z níže uvedených klíčů.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Předvolba nebo klíč | Líheně | Postup | Nejvyšší hodnost | Hodnost uzlu | Hodnost bosse | Bloků na líheň | Moby u vstupu |
+| ------------------- | ------ | ------ | ---------------- | ------------ | ------------- | -------------- | ------------- |
+| `baby`              | 30     | 0      | 0                | 0            | 0             | 371            | `false`       |
+| `noob`              | 40     | 10     | 1                | 1            | 1             | 248            | `false`       |
+| `norm`              | 50     | 20     | 1                | 1            | 2             | 180            | `false`       |
+| `hard`              | 60     | 30     | 2                | 2            | 3             | 136            | `true`        |
+| `nuts`              | 70     | 50     | 2                | 2            | 4             | 50             | `true`        |
+
+Každý klíč, který objekt vynechá, se vezme z jeho předvolby, a když žádnou neuvede, z `norm`. Hodnosti jdou od 0 pro `common` až po 4 pro `boss`.
+
+| Klíč               | Typ             | Výchozí     | Co dělá                                                                                                                                                                                              |
+| ------------------ | --------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | název předvolby | `norm`      | Předvolba, kterou mění ostatní klíče                                                                                                                                                                 |
+| `spawners`         | 0 až 100        | z předvolby | Procento místností, které dostanou moby                                                                                                                                                              |
+| `promote`          | 0 až 100        | z předvolby | Procentní šance v každém kroku, že hodnost moba v místnosti vzroste o jednu                                                                                                                          |
+| `maxTier`          | 0 až 4          | z předvolby | Nejvyšší hodnost, na kterou postup zvedne běžnou místnost. Žádná místnost nejspodnějšího patra nebude pod polovinou této hodnoty (zaokrouhleno dolů) a patra nad ní se k ní posouvají stejným krokem |
+| `nodeTier`         | 0 až 4          | z předvolby | Nejnižší hodnost místností, kde se sbíhá více cest                                                                                                                                                   |
+| `bossTier`         | 0 až 4          | z předvolby | Nejvyšší hodnost, na kterou postup zvedne ta sbíhající se místnost. Místnost bosse místo toho bere hodnost z moba bosse                                                                              |
+| `blocksPerSpawner` | 1 až 100000     | z předvolby | Hustota líhní, v blocích kobky na jednu líheň                                                                                                                                                        |
+| `entranceMobs`     | true nebo false | z předvolby | Zda místnost u vstupu dostane moby, když její druh místnosti nenastavuje počet líhní                                                                                                                 |
+
+Třináct losování pojmenovává každé jednu vlastnost. Stupeň určuje šanci, že se vlastnost objeví, jak ukazuje další tabulka.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Losování      | Co řídí                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------ |
+| `outside`     | Místnost může otevřít propadlinu na povrch                                                                   |
+| `liquids`     | Tůně v jámách a v některých místnostech                                                                      |
+| `subrooms`    | Dělicí zdi, které místnost rozdělí na dvě                                                                    |
+| `islands`     | Ostrůvky stojící v jámách                                                                                    |
+| `pillars`     | Pilíře v místnostech                                                                                         |
+| `symmetry`    | Zrcadlový dvojník pilíře nebo tůně                                                                           |
+| `variability` | Místnost si může z motivu vybrat jinou variantu bloku                                                        |
+| `degeneracy`  | Kolik rozpadu přijmou bloky místnosti                                                                        |
+| `complexity`  | Kolik vlastností se každá místnost pokusí získat                                                             |
+| `vertical`    | Jak moc se výšky místností v patře liší a jak často místnost klesne o jeden nebo dva bloky pod podlahu patra |
+| `entrances`   | Další šachty od místností nejvyššího patra na povrch, použité, když není nastaveno `entrance.extra`          |
+| `fences`      | Ploty kolem jam a propadlin                                                                                  |
+| `naturals`    | Obyčejná krabicová síň se změní na jeskynní místnost                                                         |
+
+| Stupeň   | Šance |
+| -------- | ----- |
+| `none`   | 0     |
+| `few`    | 10    |
+| `some`   | 30    |
+| `plenty` | 50    |
+| `heaps`  | 90    |
+| `always` | 100   |
+
+Stupeň lze zapsat také jako objekt vah, například `{ "none": 5, "few": 30 }`, který na kobku losuje jeden stupeň podle vah. Objekt samých nul je chyba a ignoruje se.
+
+### Druhy místností
+
+Druhy místností určují, co každá místnost obsahuje. Kobka bez `roomKinds` dostane jeden obyčejný druh `hall`.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Klíč                   | Typ                                              | Výchozí                     | Co dělá                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | text                                             | povinné                     | Název v logu. `hall` je obyčejná místnost                                                                                                                     |
+| `weight`               | 1 až 1000000                                     | `1`                         | Podíl druhu v losování pro každou místnost                                                                                                                    |
+| `minLevel`, `maxLevel` | 0 až 64                                          | libovolné patro             | Patra, na nichž se smí objevit, počítána odshora od 0                                                                                                         |
+| `maxPerDungeon`        | 0 až 100000                                      | žádný                       | Nejvíc místností tohoto druhu v jedné kobce. Platí už při plánování, takže limit drží přesně                                                                  |
+| `maxPerLevel`          | 0 až 100000                                      | žádný                       | Nejvíc místností tohoto druhu na jednom patře                                                                                                                 |
+| `minSize`              | `[x, z]`                                         | minimum velikosti místnosti | Nejmenší půdorys, který druh potřebuje. Místnost v příliš malém místě spadne zpět na `hall`                                                                   |
+| `height`               | `[min, max]`, 3 až 64                            | výška patra minus 2         | Vnitřní výška místnosti                                                                                                                                       |
+| `shapes`               | seznam `type` nebo `type=váha`                   | `box`                       | Tvar místnosti: `box`, `pillared`, `ring`, `pit`, `cross` nebo `cave`                                                                                         |
+| `templates`            | seznam `id` nebo `id=váha`                       | žádný                       | Šablony struktur pro tento druh. Každá místnost druhu si vylosuje jednu. Viz Šablony v kobkách                                                                |
+| `yOffset`              | -64 až 64                                        | `0`                         | Jak vysoko nad podlahou patra je řádek 0 šablony                                                                                                              |
+| `turns`                | seznam `none`, `quarter`, `half`, `threequarter` | libovolné                   | Otočení, které šablona smí mít, jako u otisku                                                                                                                 |
+| `decor`                | seznam názvů dekorátorů                          | žádný                       | Dekorátory motivu, které se v místnosti spustí. Viz Dekorátory motivu                                                                                         |
+| `mobs`                 | text                                             | `common`                    | Hodnost moba nebo skupina spawnu motivu pro líheně místnosti                                                                                                  |
+| `loot`                 | text                                             | `basic`                     | Sada kořisti motivu pro truhly místnosti                                                                                                                      |
+| `spawners`             | 0 až 100 procent, nebo `[min, max]`              | z `difficulty`              | Líheně na místnost. Číslo je šance, dvojice je rozsah počtu                                                                                                   |
+| `chests`               | 0 až 100 procent, nebo `[min, max]`              | z `difficulty`              | Truhly na místnost, ve stejných tvarech jako `spawners`                                                                                                       |
+| `rolls`                | objekt                                           | losování kobky              | Přepsání stupňů jen pro tento druh                                                                                                                            |
+| `decay`                | 0 až 100 procent, nebo true/false                | `0`                         | Procento přidané k síle rozpadu v místnostech tohoto druhu. U druhu šablony `true` nechá rozpad zasáhnout vlastní bloky šablony, což výchozí nastavení nedělá |
+| `node`                 | true/false                                       | `false`                     | Označí místnost jako uzel, který dostane vyšší hodnost moba a jednu truhlu navíc                                                                              |
+
+### Vstup, boss a šachty
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Klíč                        | Typ                                                 | Výchozí                            | Co dělá                                                        |
+| --------------------------- | --------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
+| `entrance.types`            | seznam `simple`, `spiral` nebo `toproom`, s `=váha` | `simple`                           | Jak se vrch kobky dostane na povrch                            |
+| `entrance.topRoomTemplates` | seznam `id` nebo `id=váha`                          | žádný, budova nebo ruina z postupu | Šablony pro horní místnost. Použije se s `toproom`             |
+| `entrance.extra`            | stupeň (viz tabulka losování)                       | losování `entrances`               | Šance na druhou šachtu od místností nejvyššího patra na povrch |
+| `boss.templates`            | seznam `id` nebo `id=váha`                          | žádný                              | Šablony pro místnost bosse                                     |
+| `boss.size`                 | `[min, max]`, 3 až 64                               | žádný                              | Půdorys místnosti bosse                                        |
+| `boss.height`               | `[min, max]`, 3 až 64                               | žádný                              | Vnitřní výška místnosti bosse                                  |
+| `boss.mob`                  | název hodnosti nebo skupiny spawnu                  | `boss`                             | Moby líhně místnosti bosse                                     |
+| `boss.loot`                 | název sady kořisti                                  | `boss`                             | Sada kořisti jediné truhly místnosti bosse                     |
+| `boss.count`                | 1 až 16                                             | `1`                                | Líheně v místnosti bosse                                       |
+| `shafts`                    | seznam `type` nebo `type=váha`                      | `ladder`                           | Typ spoje mezi dvěma patry: `ladder`, `spiral` nebo `stairs`   |
+
+Kobka bez `boss` nemá místnost bosse: každá místnost nejspodnějšího patra je obyčejná místnost.
+
+### Pravidla hloubky
+
+Pravidlo patra mění některé klíče pro patra od dané hloubky dolů. `fromDepth` jde od 0.0 v nejvyšším patře do 1.0 v nejspodnějším. Poslední pravidlo, které je na hloubce patra nebo nad ní, vyhraje, a to po jednom klíči.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Klíč         | Typ                            | Výchozí     | Co dělá                                                                        |
+| ------------ | ------------------------------ | ----------- | ------------------------------------------------------------------------------ |
+| `fromDepth`  | 0.0 až 1.0                     | povinné     | Hloubka, kde pravidlo začíná. Pravidlo bez ní, nebo mimo rozsah, se vynechá    |
+| `theme`      | id motivu                      | motiv kobky | Motiv pro tato patra                                                           |
+| `rolls`      | objekt                         | žádný       | Přepsání stupňů pro tato patra                                                 |
+| `difficulty` | název předvolby nebo objekt    | žádný       | Obtížnost pro tato patra                                                       |
+| `decay`      | objekt                         | žádný       | Objekt rozpadu pro tato patra                                                  |
+| `lootBonus`  | číslo                          | žádný       | Přidá se ke každé úrovni truhly na těchto patrech                              |
+| `roomKinds`  | seznam objektů druhů místností | žádný       | Druhy místností pro tato patra. Pravidlo s tímto klíčem nepřidá výchozí `hall` |
+
+### Motivy
+
+Motiv je vzhled: bloky každé části kobky, moby, kořist a dekorátory. Soubor motivu je jeden objekt.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": ["minecraft:overworld"],
+  "biomeTypes": ["forest=3", "plains", "hills"],
+  "notBiomeTypes": ["sandy"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_fields"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 },
+               { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stone_bricks" } ],
+    "ceilings": [ { "block": "minecraft:stone_bricks" } ],
+    "pillars": [ { "block": "minecraft:stone_brick_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:red_carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:cobweb"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Klíč                                                 | Typ                                    | Výchozí         | Co dělá                                                                                                                                     |
+| ---------------------------------------------------- | -------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | text                                   | název souboru   | Název v logu                                                                                                                                |
+| `weight`                                             | číslo                                  | `1`             | Podíl motivu v losování motivu kobky                                                                                                        |
+| `dimensions`, `dimensionsAreBlacklist`               | seznam id, true/false                  | všechny dimenze | Filtr dimenzí, stejně jako u kobky                                                                                                          |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | seznamy, položky mohou být `name=váha` | všechny biomy   | Filtr biomů podle názvu, podle typu a obě vyloučení. Váha je podíl daného biomu, takže se z několika motivů dá složit seznam pro každý biom |
+| `minY`, `maxY`                                       | y bloku                                | limity kobky    | Pásmo, v němž musí ležet nejvyšší a nejnižší podlaha kobky. Místo, které v něm nemá místnost, o motiv přijde                                |
+| `blocks`                                             | objekt seznamů                         | `walls` povinné | Rodiny bloků, jak ukazuje další tabulka. Každá položka je objekt bloku                                                                      |
+| `mobs`                                               | objekt hodnost na seznam               | žádný           | Moby pro každou hodnost. Viz Hodnosti mobů v kobkách                                                                                        |
+| `spawnGroups`                                        | seznam                                 | žádný           | Pojmenované skupiny mobů s rozsahem hloubky a druhy místností, kam patří                                                                    |
+| `loot`                                               | objekt sada na seznam                  | žádný           | Položky truhel pro každou sadu kořisti. Viz Sady kořisti                                                                                    |
+| `lootLevels`                                         | 1 až 12                                | `6`             | Nejvyšší úroveň truhly. Úroveň truhly se bere z hloubky, přepočtené na tuto hodnotu, plus `lootBonus`                                       |
+| `lootBonus`                                          | číslo                                  | `0`             | Přidá se ke každé úrovni truhly v motivu                                                                                                    |
+| `decorators`                                         | objekt názvu na dekorátor              | žádný           | Dekorátory, které druhy místností mohou jmenovat v `decor`. Viz Dekorátory motivu                                                           |
+| `rolls`, `difficulty`, `decay`                       | jako v kobce                           | žádný           | Výchozí hodnoty motivu. Vlastní hodnota kobky vyhraje, potom pravidla hloubky                                                               |
+| `append`                                             | text, nebo seznam id motivů            | žádný           | Z souboru udělá přídavek k těmto motivům. Viz Přídavky motivů                                                                               |
+
+Objekt bloku bere `block`, což je id bloku, a volitelně `weight`, které je výchozí 1 a je nejméně 1, a `properties`, což je mapa názvů stavů bloku na hodnoty. Každá kobka vybere jeden blok na rodinu a losování `variability` dovolí místnosti vybrat jiný.
+
+Rodiny bloků a jejich záložní hodnoty:
+
+| Rodina     | Použití                                                        | Když motiv ji vynechá            |
+| ---------- | -------------------------------------------------------------- | -------------------------------- |
+| `walls`    | Stěny místností. Povinné v každém motivu                       | žádná, soubor se ignoruje        |
+| `floors`   | Podlahy místností                                              | blok stěn                        |
+| `ceilings` | Stropy místností                                               | blok stěn                        |
+| `pillars`  | Pilíře a části pilířů místností                                | blok stěn                        |
+| `fencing`  | Ploty kolem jam a propadlin                                    | blok stěn                        |
+| `liquid`   | Tůně                                                           | voda                             |
+| `cave`     | Jeskynní místnosti                                             | blok stěn                        |
+| `air`      | Otevřený prostor v místnostech a chodbách                      | vzduch                           |
+| `support`  | Sloupy pod podlahou nad vzduchem nebo kapalinou a pod vchodem  | blok podlah                      |
+| `stairs`   | Schodišťové šachty                                             | schody z kamenných cihel         |
+| `slabs`    | Spirálové a schodišťové šachty, kde schody potřebují polotovar | hladká deska z kamenných cihel   |
+| `decay`    | Opotřebované bloky, od mírných po nejhorší                     | žádná, takže rozpad nic nepoloží |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 }, { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+  "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Hodnosti mobů v kobkách
+
+Hodnosti moba jdou v tomto pořadí od 0 do 4: `common`, `hard`, `brute`, `elite` a `boss`. Hodnost bez mobů spadne na nejbližší nižší hodnost, která nějaké má. Když žádná nezbude, líheň se nepostaví. Druh místnosti v `mobs` jmenuje hodnost nebo skupinu spawnu a `difficulty` určuje, jak vysoko po hodnostech místnosti stoupají.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+Položka moba je id entity s volitelným `=váha` a volitelnou příponou `{nbt}` napsanou za id. Id, které nic nezaregistruje, se z losování vynechá.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Klíč                   | Typ                          | Výchozí      | Co dělá                                                                       |
+| ---------------------- | ---------------------------- | ------------ | ----------------------------------------------------------------------------- |
+| `name`                 | text                         | povinné      | Název, podle něhož druh místnosti v `mobs` vybírá tuto skupinu                |
+| `mobs`                 | seznam id entit              | žádný        | Moby ve skupině, jako u hodnosti                                              |
+| `weight`               | číslo, nejméně 1             | `1`          | Podíl skupiny v losování                                                      |
+| `minDepth`, `maxDepth` | 0.0 až 1.0                   | `0.0`, `1.0` | Rozsah hloubky, v němž skupina spawnuje. Jsou-li napsané obráceně, prohodí se |
+| `kinds`                | seznam názvů druhů místností | libovolné    | Druhy místností, do kterých smí skupina spawnovat                             |
+| `tier`                 | jeden z pěti názvů hodnosti  | žádný        | Hodnost, do které moby skupiny patří. Neznámá hodnost se zahodí               |
+
+#### Sady kořisti
+
+Každá sada kořisti je seznam položek. Truhla bere položky z té sady, kterou jmenuje její místnost. Pro běžnou místnost je to výchozí `basic`, pro místnost bosse `boss`. Sady `weak`, `basic`, `treasure` a `boss` jsou vestavěné a balíček může přidat vlastní.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Klíč       | Typ                | Výchozí          | Co dělá                                                                             |
+| ---------- | ------------------ | ---------------- | ----------------------------------------------------------------------------------- |
+| `table`    | id tabulky kořisti | povinné          | Tabulka kořisti z vanilly nebo balíčku, kterou truhla losuje                        |
+| `weight`   | číslo, nejméně 1   | `1`              | Podíl položky mezi položkami, které úroveň truhly dovoluje                          |
+| `minLevel` | 0 nebo více        | `0`              | Nejnižší úroveň truhly, na které se položka použije                                 |
+| `maxLevel` | číslo              | libovolná úroveň | Nejvyšší úroveň truhly, na které se položka použije. Nesmí být nižší než `minLevel` |
+
+#### Dekorátory motivu
+
+Dekorátor je objekt s `type`, `block` (jedno id, nebo seznam id) a čísly, která jeho typ čte. Druh místnosti spustí dekorátory, které jmenuje v `decor`.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Typ          | Čísla, která čte (výchozí)   | Co položí                                                                                       |
+| ------------ | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)      | Řady čtyř bloků podél stěn, každá `height` vysoká, s `gap` bloky mezi řadami                    |
+| `floorPatch` | `percent` (10)               | Bloky na podlaze v tomto procentu políček podlahy                                               |
+| `scatter`    | `per100` (3), `on` (floor)   | Bloky náhodně na podlaze, stropě nebo stěnách, `per100` ze 100 šance na políčko                 |
+| `pillarsRow` | `height` (3), `gap` (2)      | Řada pilířů uprostřed místnosti, `height` vysoká, rozestupy `gap`                               |
+| `bannerLine` | `gap` (4), `height` (2)      | Bloky zavěšené na stěnách každých `gap` bloků, `height` nad podlahou                            |
+| `torchLine`  | `gap` (4), `height` (2)      | Pochodně zavěšené na stěnách stejně jako řada praporů                                           |
+| `fill`       | `per100` (3), `loot` povinné | Truhly na políčkách stěn, `per100` ze 100 šance na políčko, naplněné z pojmenované sady kořisti |
+
+`fill` bez nastavené `loot` se vynechá a `scatter` s `on`, které není `floor`, `ceiling` nebo `wall`, se zahodí, takže rozptyl dopadne na podlahu.
+
+### Přídavky motivů
+
+Přídavek přidává k jednomu nebo více motivům, aniž by je nahradil. Jeho soubor má klíč `append` a klíče, které zapisuje, se sloučí do každého jmenovaného motivu.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:mossy_stone_bricks", "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Přídavky se uplatní poté, co se načtou všechny základní motivy všech balíčků, v pořadí jejich klíčů zdrojů, takže výsledek nezávisí na pořadí souborů.
+- V přídavku se seznamové klíče připojují k: rodinám `blocks`, hodnostem `mobs`, sadám `loot`, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` a `spawnGroups`.
+- Seznamový klíč pojmenovaný `remove:` následovaný svým klíčem místo toho položky odebere. `"remove:walls"` odebere položku stěn podle jejího id bloku a `"remove:decorators"` odebere dekorátor podle názvu.
+- Skalární klíče nahradí základní hodnotu, jen když je přídavek zapíše: `weight`, `minY`, `maxY`, `lootLevels` a `lootBonus`. Klíče `rolls`, `difficulty` a `decay` se také nahradí, když jsou zapsané.
+- `name`, `dimensions` a `dimensionsAreBlacklist` zůstanou tak, jak je má základní motiv.
+- Přídavek, jehož cíl nejmenuje žádný motiv žádného balíčku, se přeskočí se zapsanou chybou. Přídavek, který by motivu nechal bez stěn, se neuplatní.
+
+### Umísťování kobek
+
+Místa se vybírají ze semínka světa. Místo se odmítne, když některý filtr selže, a odmítnuté místo se přeskočí, ne opakuje. Filtry biomů, dimenze a výšky jsou vlastní filtry kobky. Motiv přidává své v `dimensions`, seznamech biomů a v `minY` a `maxY`.
+
+- `dimensions` a `biomes` filtrují, kde smí kobka generovat, stejně jako položky worldgenu.
+- `noOceans` odmítne místo, jehož střední biom je oceán. Je zapnuté výchozí.
+- `minDistance` drží místa jedné kobky od sebe. `group` dovolí, aby několik kobek sdílelo tento rozestup, a každá si drží největší `minDistance` ze skupiny.
+- `at` připne kopie na přesné souřadnice a přeskočí `chance`, `minDistance` a filtr biomů.
+- `locateAs` zapíše každé místo pod název pro `/locate`. Najde místo i předtím, než chunk vygeneruje.
+
+Kobka zabírá jen půdorys svého vchodu, takže se vesnice drží stranou. Jak se postavená struktura najde a jak je mapa rozložena, viz [Kde se smí generovat](#kde-se-smí-generovat) a [Hledání umístěných struktur](#hledání-umístěných-struktur).
+
+### Šablony v kobkách
+
+Druh místnosti může jmenovat `.nbt` šablony ze složky `<namespace>/structures/` balíčku. Každá místnost tohoto druhu si vylosuje jednu šablonu podle váhy. Místnost převezme velikost šablony, otočenou podle otočení místnosti, a otočení, která smí mít, jsou vypsána v `turns`. Řádek 0 šablony sedí `yOffset` bloků nad podlahou patra. Jak se šablony píší a umisťují, viz [Umísťování šablon](#umísťování-šablon).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Obnova kobek
+
+Kobka má stejný objekt `respawn` jako struktura a reset platí pro celou kobku. Každý chunkový řez kobky se zaznamená jako vlastní obnova, takže reset čeká, až se každý chunk načte, jako u každé struktury. Co dělá každý klíč, viz [Obnova struktur](#obnova-struktur).
+
+### Poznámky
+
+- Kobka se zapisuje po jednom chunku a žádný chunk nenačítá ani negeneruje své sousedy, aby dokončil svůj díl.
+- Stejné semínko dá stejnou kobku a motiv i velikost místa se berou ze semínka světa.
+- `depth` v pravidle hloubky nebo ve skupině spawnu je zlomek od 0.0 v nejvyšším patře do 1.0 v nejspodnějším, ne počet bloků.
+- `biomeTypes` motivu jsou slova typů v libovolné velikosti písmen, například `ocean`, `forest` a `plains`, nebo id biomové značky, například `minecraft:is_forest`.
 
 ## Pozemky vesnic
 

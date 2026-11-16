@@ -19,7 +19,8 @@ public final class RespawnInstance {
     public static final int MAP = 1;
     public static final int CAVE = 2;
     public static final int PLOT = 3;
-    private static final String[] KINDS = {"imprint", "map", "cave", "plot"};
+    public static final int DUNGEON = 4;
+    private static final String[] KINDS = {"imprint", "map", "cave", "plot", "dungeon"};
     public final String id;
     public final int kind;
     public final String def;

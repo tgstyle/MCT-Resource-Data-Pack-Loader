@@ -2,11 +2,13 @@ package mctmods.resourcedatapackloader.common.respawn;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 
 import java.util.ArrayList;
@@ -28,6 +30,10 @@ public final class RespawnRecorder {
         if (kind == RespawnInstance.PLOT) {
             VillageDef village = ContentVillages.byKey(def);
             return village == null ? null : village.respawn();
+        }
+        if (kind == RespawnInstance.DUNGEON) {
+            DungeonDef dungeon = ContentDungeons.byName(def);
+            return dungeon == null ? null : dungeon.respawn();
         }
         ResourceLocation key = ResourceLocation.tryParse(def);
         if (key == null) { return null; }
