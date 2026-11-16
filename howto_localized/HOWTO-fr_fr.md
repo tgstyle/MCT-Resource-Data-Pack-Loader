@@ -113,6 +113,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Propagations](#propagations)
 - [Cartes de structures](#cartes-de-structures)
 - [Structures qui réapparaissent](#structures-qui-réapparaissent)
+- [Donjons procéduraux](#donjons-procéduraux)
 - [Parcelles de village](#parcelles-de-village)
 - [Cartes de plan des villes](#cartes-de-plan-des-villes)
 - [Ville continue](#ville-continue)
@@ -7906,6 +7907,463 @@ Une structure peut revenir une fois que les joueurs l'ont vidée : ses coffres s
 | `rebuild: "full"`   | Chaque bloc du modèle est posé à nouveau, par-dessus ce qui se trouve là                                                                          |
 
 Seuls les coffres qui avaient une table de butin au moment de la construction de la structure se remplissent. Une réinitialisation attend que chaque chunk couvert par la structure soit chargé, et ne charge ni ne génère jamais de chunk ; une structure en terrain non chargé se réinitialise dès qu'un joueur s'en approche de nouveau. Les structures construites avant que le pack ajoute `respawn` ne sont pas suivies. Tout tourne sur le serveur, les joueurs n'ont rien à installer.
+
+## Donjons procéduraux
+
+*génération du monde*
+
+Un donjon est un bâtiment enterré sur plusieurs niveaux, fait de salles, de couloirs et de puits. Le mod le planifie à partir de la graine du monde au lieu de le reproduire depuis des modèles, si bien qu'une même graine donne le même donjon. Chaque chunk n'écrit que sa propre part du donjon, et un chunk ne charge ni ne génère jamais un voisin pour terminer sa part. RDPL ne fournit aucun thème de donjon : un pack doit en fournir au moins un, sans quoi ses donjons ne placent rien. L'apparence, les monstres et le butin d'un donjon viennent tous de son thème.
+
+`<namespace>/dungeons/*.json` pour les donjons, `<namespace>/dungeonthemes/*.json` pour les thèmes
+
+### Fichier de donjon
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": ["minecraft:overworld"],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["ocean", "river"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Clé                      | Type                                  | Défaut                           | Ce qu'il fait                                                                                                                                                                 |
+| ------------------------ | ------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | texte                                 | le nom du fichier                | Nom dans les logs                                                                                                                                                             |
+| `themes`                 | liste de `id` ou `id=poids`           | aucun, obligatoire               | Le réservoir de thèmes. Chaque site en tire un. Un thème que le biome, la dimension ou la hauteur du site refuse est écarté. S'il n'en reste aucun, le site n'a pas de donjon |
+| `dimensions`             | liste d'identifiants de dimension     | l'Overworld                      | Dimensions où le donjon peut se générer                                                                                                                                       |
+| `dimensionsAreBlacklist` | true/false                            | `false`                          | Transforme `dimensions` en liste des dimensions à éviter                                                                                                                      |
+| `chance`                 | 1 à 100                               | `75`                             | Pourcentage de sites qui abritent un donjon, tiré une fois par site à partir de la graine du monde                                                                            |
+| `minDistance`            | 0 à 100000 blocs                      | `600`                            | Distance minimale entre deux sites de ce donjon, ou de son `group`, mesurée sur le plus grand de x et z                                                                       |
+| `group`                  | texte                                 | l'identifiant propre du donjon   | Les donjons d'un même groupe espacent leurs sites selon le plus grand `minDistance` du groupe                                                                                 |
+| `minDistanceFromSpawn`   | 0 à 100000 blocs                      | `0`                              | Un site aussi proche du point d'apparition du monde est refusé                                                                                                                |
+| `noOceans`               | true/false                            | `true`                           | Refuse un site dont le biome central est un océan                                                                                                                             |
+| `biomes`                 | liste d'identifiants de biome         | aucun                            | Filtre de biomes, comme pour les entrées de worldgen                                                                                                                          |
+| `biomeTypes`             | liste de types de biome               | aucun                            | Filtre de biomes par mot de type, comme `ocean` ou `river`. Les thèmes ajoutent leurs propres filtres                                                                         |
+| `biomesAreBlacklist`     | true/false                            | `false`                          | Transforme `biomes` et `biomeTypes` en biomes à éviter                                                                                                                        |
+| `at`                     | `[x, z]`, ou une liste de ces couples | aucun                            | Fixe un donjon à des coordonnées de blocs exactes. Ignore `chance`, `minDistance` et le filtre de biome, comme `at` fixe une carte de structures                              |
+| `locateAs`               | texte                                 | aucun                            | Enregistre chaque site sous ce nom, pour que `/locate <nom>` le trouve. Fonctionne avant que le chunk soit généré                                                             |
+| `sizes`                  | liste d'objets de taille              | les quatre tailles intégrées     | Le tirage de taille de chaque site. Voir le tableau des tailles                                                                                                               |
+| `shrink`                 | 0 à 100 pour cent                     | `0`                              | Le champ de chaque niveau est inférieur de ce pourcentage à celui du dessus, jusqu'à un plancher de la moitié de l'emprise                                                    |
+| `surfaceBuffer`          | 0 à 64 blocs                          | `7`                              | Couverture pleine entre le plafond du niveau supérieur et la surface                                                                                                          |
+| `minY`                   | y de bloc                             | le plancher du monde             | Le plancher le plus bas qu'un niveau peut prendre. Les niveaux qui ne tiennent plus ne sont pas construits                                                                    |
+| `levelHeight`            | `[min, max]`, 4 à 64                  | `[5, 8]`                         | Hauteur en blocs d'un niveau, du sol au plafond. La hauteur tirée vaut par niveau. Les salles sont bornées à elle moins 2                                                     |
+| `roomSize`               | `[min, max]`, 3 à 64                  | `[5, 15]`                        | Plage de largeur et de profondeur des salles. Un minimum inférieur à la largeur du couloir plus 2 est relevé à cette valeur, et le log le signale                             |
+| `corridor`               | `{ "width", "height" }`               | `{ 3, 3 }`                       | Taille des liaisons entre salles. La largeur va de 1 à 5. La hauteur va de 2 jusqu'au `levelHeight` le plus bas moins 2                                                       |
+| `loops`                  | 0 à 100 pour cent                     | `25`                             | Liaisons supplémentaires entre salles au-delà de l'arbre couvrant, en proportion des paires de voisines possibles                                                             |
+| `rolls`                  | objet élément vers degré              | aucun                            | Degrés des 13 tirages, comme listé ci-dessous. Tiré une fois par donjon. Un tirage omis vaut `none`                                                                           |
+| `roomKinds`              | liste d'objets de type de salle       | un `hall`                        | Les types de salles et leurs poids. Voir Types de salles                                                                                                                      |
+| `entrance`               | objet                                 | `{ "types": ["simple"] }`        | Comment le donjon atteint la surface. Voir Entrée, boss et puits                                                                                                              |
+| `boss`                   | objet                                 | aucun                            | La salle du boss. Voir Entrée, boss et puits                                                                                                                                  |
+| `shafts`                 | liste de `type` ou `type=weight`      | `ladder`                         | Les types de liaison entre niveaux : `ladder`, `spiral` et `stairs`                                                                                                           |
+| `difficulty`             | nom de préréglage ou objet            | `"norm"`                         | Combien de salles ont des monstres, comment les rangs grimpent et à quelle fréquence les générateurs apparaissent. Voir le tableau des préréglages                            |
+| `support`                | objet, `true` ou `false`              | `{ "depth": 8 }`                 | Jusqu'où une colonne est remplie sous un sol au-dessus de l'air ou d'un liquide. `false` désactive la passe                                                                   |
+| `decay`                  | objet                                 | `{ "base": 15, "perDepth": 20 }` | Force des blocs de dégradation : `base` est le départ et `perDepth` s'ajoute avec la profondeur. Chacun va de 0 à 100                                                         |
+| `levelRules`             | liste                                 | aucun                            | Surcharges par profondeur. Voir Règles de profondeur                                                                                                                          |
+| `respawn`                | objet                                 | aucun                            | Le même objet que dans Structures qui réapparaissent. S'applique à tout le donjon                                                                                             |
+
+L'objet de taille fixe la forme de chaque taille. Les clés d'une taille sont :
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Clé         | Type                  | Défaut                | Ce qu'il fait                                 |
+| ----------- | --------------------- | --------------------- | --------------------------------------------- |
+| `name`      | texte                 | `size` et sa position | Nom dans les logs                             |
+| `weight`    | 1 à 1000000           | `1`                   | La part de la taille dans le tirage de taille |
+| `footprint` | 48 à 176 blocs        | `112`                 | Côté du champ carré où reposent les niveaux   |
+| `levels`    | `[min, max]`, 1 à 64  | `[4, 7]`              | Nombre de niveaux, tiré uniformément          |
+| `rooms`     | `[min, max]`, 1 à 400 | `[15, 30]`            | Salles par niveau, tirées uniformément        |
+
+Un préréglage de difficulté fixe les valeurs par défaut du volet monstres d'un donjon. Un objet peut nommer un `preset` comme base, puis modifier n'importe laquelle des clés ci-dessous.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Préréglage ou clé | Générateurs | Promotion | Rang max | Rang de nœud | Rang du boss | Blocs par générateur | Monstres d'entrée |
+| ----------------- | ----------- | --------- | -------- | ------------ | ------------ | -------------------- | ----------------- |
+| `baby`            | 30          | 0         | 0        | 0            | 0            | 371                  | `false`           |
+| `noob`            | 40          | 10        | 1        | 1            | 1            | 248                  | `false`           |
+| `norm`            | 50          | 20        | 1        | 1            | 2            | 180                  | `false`           |
+| `hard`            | 60          | 30        | 2        | 2            | 3            | 136                  | `true`            |
+| `nuts`            | 70          | 50        | 2        | 2            | 4            | 50                   | `true`            |
+
+| Clé                | Type              | Défaut               | Ce qu'il fait                                                                                                                                                                                                                     |
+| ------------------ | ----------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | nom de préréglage | `norm`               | Le préréglage que modifient les autres clés                                                                                                                                                                                       |
+| `spawners`         | 0 à 100           | depuis le préréglage | Pourcentage de salles qui ont des monstres                                                                                                                                                                                        |
+| `promote`          | 0 à 100           | depuis le préréglage | Chance par pas, en pour cent, qu'une salle monte d'un rang de monstre                                                                                                                                                             |
+| `maxTier`          | 0 à 4             | depuis le préréglage | Rang le plus haut auquel la promotion élève une salle ordinaire. Aucune salle du niveau le plus profond n'est sous la moitié de celui-ci, arrondie vers le bas, et les niveaux au-dessus montent vers cette valeur au même rythme |
+| `nodeTier`         | 0 à 4             | depuis le préréglage | Rang le plus bas des salles où plusieurs chemins se rejoignent                                                                                                                                                                    |
+| `bossTier`         | 0 à 4             | depuis le préréglage | Rang le plus haut auquel la promotion élève ces salles de jonction. La salle du boss prend son rang du monstre boss                                                                                                               |
+| `blocksPerSpawner` | 1 à 100000        | depuis le préréglage | Densité des générateurs, en blocs de donjon par générateur                                                                                                                                                                        |
+| `entranceMobs`     | true ou false     | depuis le préréglage | Si la salle d'entrée reçoit des monstres quand son type de salle ne fixe pas de nombre de générateurs                                                                                                                             |
+
+Les 13 tirages nomment chacun une caractéristique. Un degré fixe la chance que la caractéristique apparaisse, comme le montre le tableau suivant.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Tirage        | Ce qu'il pilote                                                                                                                           |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `outside`     | Une salle peut ouvrir un trou d'effondrement vers la surface                                                                              |
+| `liquids`     | Mares dans les fosses et dans certaines salles                                                                                            |
+| `subrooms`    | Cloisons qui coupent une salle en deux                                                                                                    |
+| `islands`     | Îlots posés dans les fosses                                                                                                               |
+| `pillars`     | Piliers dans les salles                                                                                                                   |
+| `symmetry`    | Un jumeau miroir d'un pilier ou d'une mare                                                                                                |
+| `variability` | Une salle peut prendre une autre variante de bloc de son thème                                                                            |
+| `degeneracy`  | La dégradation que subissent les blocs de la salle                                                                                        |
+| `complexity`  | Combien de caractéristiques chaque salle essaie d'obtenir                                                                                 |
+| `vertical`    | De combien la hauteur des salles varie dans un niveau, et à quelle fréquence une salle s'enfonce d'un ou deux blocs sous le sol du niveau |
+| `entrances`   | Puits supplémentaires depuis d'autres salles du niveau supérieur jusqu'à la surface, utilisés quand `entrance.extra` n'est pas défini     |
+| `fences`      | Clôtures autour des fosses et des trous d'effondrement                                                                                    |
+| `naturals`    | Une salle en boîte simple devient une salle de caverne                                                                                    |
+
+| Degré    | Chance |
+| -------- | ------ |
+| `none`   | 0      |
+| `few`    | 10     |
+| `some`   | 30     |
+| `plenty` | 50     |
+| `heaps`  | 90     |
+| `always` | 100    |
+
+Un degré s'écrit aussi comme un objet de poids, tel que `{ "none": 5, "few": 30 }`, qui tire un degré par donjon selon le poids. Un objet ne contenant que des zéros est une erreur et est ignoré.
+
+### Types de salles
+
+Les types de salles fixent ce que contient chaque salle. Un donjon sans `roomKinds` reçoit un seul type `hall` simple.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Clé                    | Type                                               | Défaut                        | Ce qu'il fait                                                                                                                                                                                      |
+| ---------------------- | -------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | texte                                              | obligatoire                   | Le nom dans les logs. `hall` est la salle simple                                                                                                                                                   |
+| `weight`               | 1 à 1000000                                        | `1`                           | La part du type dans le tirage de chaque salle                                                                                                                                                     |
+| `minLevel`, `maxLevel` | 0 à 64                                             | n'importe quel niveau         | Les niveaux où il peut apparaître, en comptant depuis le haut à 0                                                                                                                                  |
+| `maxPerDungeon`        | 0 à 100000                                         | aucun                         | Le plus grand nombre de salles de ce type dans un donjon. Appliqué pendant la planification, donc la limite est exacte                                                                             |
+| `maxPerLevel`          | 0 à 100000                                         | aucun                         | Le plus grand nombre de salles de ce type sur un niveau                                                                                                                                            |
+| `minSize`              | `[x, z]`                                           | le minimum de taille de salle | L'emprise la plus petite dont le type a besoin. Une salle placée dans un emplacement trop petit revient à `hall`                                                                                   |
+| `height`               | `[min, max]`, 3 à 64                               | la hauteur du niveau moins 2  | Hauteur intérieure de la salle                                                                                                                                                                     |
+| `shapes`               | liste de `type` ou `type=weight`                   | `box`                         | La forme de la salle : `box`, `pillared`, `ring`, `pit`, `cross` ou `cave`                                                                                                                         |
+| `templates`            | liste de `id` ou `id=weight`                       | aucun                         | Modèles de structure pour ce type. Chaque salle du type en tire un. Voir Modèles dans les donjons                                                                                                  |
+| `yOffset`              | -64 à 64                                           | `0`                           | De combien au-dessus du sol du niveau se trouve la rangée 0 du modèle                                                                                                                              |
+| `turns`                | liste de `none`, `quarter`, `half`, `threequarter` | n'importe lequel              | Les tours qu'un modèle peut prendre, comme dans un imprint                                                                                                                                         |
+| `decor`                | liste de noms de décorateurs                       | aucun                         | Les décorateurs du thème à exécuter dans la salle. Voir Décorateurs du thème                                                                                                                       |
+| `mobs`                 | texte                                              | `common`                      | Le rang de monstre ou le groupe d'apparition du thème pour les générateurs de la salle                                                                                                             |
+| `loot`                 | texte                                              | `basic`                       | L'ensemble de butin du thème pour les coffres de la salle                                                                                                                                          |
+| `spawners`             | 0 à 100 pour cent, ou `[min, max]`                 | depuis `difficulty`           | Générateurs par salle. Un nombre est une chance, et une paire est une plage de quantité                                                                                                            |
+| `chests`               | 0 à 100 pour cent, ou `[min, max]`                 | depuis `difficulty`           | Coffres par salle, sous les mêmes formes que `spawners`                                                                                                                                            |
+| `rolls`                | objet                                              | les tirages du donjon         | Degrés qui ne surchargent que ce type                                                                                                                                                              |
+| `decay`                | 0 à 100 pour cent, ou true/false                   | `0`                           | Pourcentage ajouté à la force de dégradation dans les salles de ce type. Sur un type à modèle, `true` laisse la dégradation toucher les blocs propres du modèle, ce qu'elle ne fait pas par défaut |
+| `node`                 | true/false                                         | `false`                       | Marque la salle comme nœud, qui reçoit un rang de monstre plus élevé et un coffre supplémentaire                                                                                                   |
+
+### Entrée, boss et puits
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Clé                         | Type                                                     | Défaut                                     | Ce qu'il fait                                                                          |
+| --------------------------- | -------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `entrance.types`            | liste de `simple`, `spiral` ou `toproom`, avec `=weight` | `simple`                                   | Comment le haut du donjon atteint la surface                                           |
+| `entrance.topRoomTemplates` | liste de `id` ou `id=weight`                             | aucun, un bâtiment procédural ou une ruine | Modèles pour une salle du haut. Utilisés avec `toproom`                                |
+| `entrance.extra`            | degré (voir le tableau des tirages)                      | le tirage `entrances`                      | Chance d'un second puits depuis d'autres salles du niveau supérieur jusqu'à la surface |
+| `boss.templates`            | liste de `id` ou `id=weight`                             | aucun                                      | Modèles pour la salle du boss                                                          |
+| `boss.size`                 | `[min, max]`, 3 à 64                                     | aucun                                      | Emprise de la salle du boss                                                            |
+| `boss.height`               | `[min, max]`, 3 à 64                                     | aucun                                      | Hauteur intérieure de la salle du boss                                                 |
+| `boss.mob`                  | nom de rang ou de groupe d'apparition                    | `boss`                                     | Les monstres du générateur de la salle du boss                                         |
+| `boss.loot`                 | nom d'ensemble de butin                                  | `boss`                                     | L'ensemble de butin du coffre unique de la salle du boss                               |
+| `boss.count`                | 1 à 16                                                   | `1`                                        | Générateurs dans la salle du boss                                                      |
+| `shafts`                    | liste de `type` ou `type=weight`                         | `ladder`                                   | Le type de liaison entre deux niveaux : `ladder`, `spiral` ou `stairs`                 |
+
+Un donjon sans `boss` n'a pas de salle de boss : chaque salle du niveau le plus bas est une salle ordinaire.
+
+### Règles de profondeur
+
+Une règle de niveau modifie certaines clés pour les niveaux à partir d'une profondeur donnée et en descendant. `fromDepth` va de 0.0 au niveau le plus haut à 1.0 au niveau le plus bas. La dernière règle située à la profondeur d'un niveau ou au-dessus l'emporte, clé par clé.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Clé          | Type                            | Défaut             | Ce qu'il fait                                                                                       |
+| ------------ | ------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `fromDepth`  | 0.0 à 1.0                       | obligatoire        | La profondeur où commence la règle. Une règle sans elle, ou hors de la plage, est écartée           |
+| `theme`      | identifiant de thème            | le thème du donjon | Le thème de ces niveaux                                                                             |
+| `rolls`      | objet                           | aucun              | Surcharges de degrés pour ces niveaux                                                               |
+| `difficulty` | nom de préréglage ou objet      | aucun              | Une difficulté pour ces niveaux                                                                     |
+| `decay`      | objet                           | aucun              | Un objet de dégradation pour ces niveaux                                                            |
+| `lootBonus`  | nombre                          | aucun              | Ajouté à chaque niveau de coffre de ces niveaux                                                     |
+| `roomKinds`  | liste d'objets de type de salle | aucun              | Types de salles pour ces niveaux. Une règle avec cette clé n'ajoute pas le `hall` simple par défaut |
+
+### Thèmes
+
+Un thème est une apparence : les blocs de chaque partie du donjon, les monstres, le butin et les décorateurs. Le fichier de thème est un seul objet.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": ["minecraft:overworld"],
+  "biomeTypes": ["forest=3", "plains", "hills"],
+  "notBiomeTypes": ["sandy"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_fields"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 },
+               { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stone_bricks" } ],
+    "ceilings": [ { "block": "minecraft:stone_bricks" } ],
+    "pillars": [ { "block": "minecraft:stone_brick_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:red_carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:cobweb"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Clé                                                  | Type                                           | Défaut                | Ce qu'il fait                                                                                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | texte                                          | le nom du fichier     | Nom dans les logs                                                                                                                                                               |
+| `weight`                                             | nombre                                         | `1`                   | La part du thème dans le tirage de thèmes d'un donjon                                                                                                                           |
+| `dimensions`, `dimensionsAreBlacklist`               | liste d'identifiants, true/false               | toutes les dimensions | Filtre de dimensions, comme pour un donjon                                                                                                                                      |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | listes, les entrées peuvent être `name=weight` | tous les biomes       | Filtre de biomes par nom et par type, et les deux exclusions. Un poids est la part de ce biome, si bien qu'un groupe par biome peut être constitué à partir de plusieurs thèmes |
+| `minY`, `maxY`                                       | y de bloc                                      | les limites du donjon | La bande dans laquelle doivent se trouver les étages supérieur et inférieur du donjon. Un site qui n'y a aucune place perd le thème                                             |
+| `blocks`                                             | objet de listes                                | `walls` obligatoire   | Les familles de blocs, comme le montre le tableau suivant. Chaque entrée est un objet de bloc                                                                                   |
+| `mobs`                                               | objet de rang vers liste                       | aucun                 | Les monstres de chaque rang. Voir Rangs de mobs                                                                                                                                 |
+| `spawnGroups`                                        | liste                                          | aucun                 | Groupes nommés de monstres avec une plage de profondeur et les types de salles où ils apparaissent                                                                              |
+| `loot`                                               | objet d'ensemble vers liste                    | aucun                 | Les entrées de coffre de chaque ensemble de butin. Voir Ensembles de butin                                                                                                      |
+| `lootLevels`                                         | 1 à 12                                         | `6`                   | Le niveau de coffre le plus haut. Le niveau du coffre vient de la profondeur, ramenée à cette valeur, plus `lootBonus`                                                          |
+| `lootBonus`                                          | nombre                                         | `0`                   | Ajouté à chaque niveau de coffre du thème                                                                                                                                       |
+| `decorators`                                         | objet de nom vers décorateur                   | aucun                 | Décorateurs que les types de salles peuvent nommer dans `decor`. Voir Décorateurs du thème                                                                                      |
+| `rolls`, `difficulty`, `decay`                       | comme dans un donjon                           | aucun                 | Valeurs par défaut du thème. La valeur propre du donjon l'emporte, puis les règles de profondeur                                                                                |
+| `append`                                             | texte ou liste d'identifiants de thème         | aucun                 | Fait de ce fichier un ajout à ces thèmes. Voir Ajouts de thème                                                                                                                  |
+
+Un objet de bloc prend `block`, l'identifiant du bloc, et facultativement `weight`, qui vaut 1 par défaut et au moins 1, et `properties`, une table de noms d'états de bloc vers des valeurs. Chaque donjon choisit un bloc par famille, et le tirage `variability` permet à une salle d'en choisir un autre.
+
+Les familles de blocs et leurs replis :
+
+| Famille    | Sert à                                                                    | Si le thème l'omet                       |
+| ---------- | ------------------------------------------------------------------------- | ---------------------------------------- |
+| `walls`    | Murs des salles. Obligatoire dans chaque thème                            | aucun, le fichier est ignoré             |
+| `floors`   | Sols des salles                                                           | la famille `walls`                       |
+| `ceilings` | Plafonds des salles                                                       | la famille `walls`                       |
+| `pillars`  | Piliers, et les morceaux de pilier des salles                             | la famille `walls`                       |
+| `fencing`  | Clôtures autour des fosses et des trous d'effondrement                    | la famille `walls`                       |
+| `liquid`   | Mares                                                                     | eau                                      |
+| `cave`     | Salles de caverne                                                         | la famille `walls`                       |
+| `air`      | Espace libre dans les salles et les couloirs                              | air                                      |
+| `support`  | Colonnes sous un sol au-dessus de l'air ou d'un liquide, et sous l'entrée | la famille `floors`                      |
+| `stairs`   | Puits d'escalier                                                          | escaliers en pierre taillée              |
+| `slabs`    | Puits en spirale et en escalier, où les escaliers ont besoin d'une dalle  | une dalle lisse en pierre taillée        |
+| `decay`    | Les blocs usés, du plus léger au pire                                     | aucun, donc la dégradation ne place rien |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 }, { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+  "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Rangs de mobs
+
+Les rangs de monstres se suivent dans cet ordre, de 0 à 4 : `common`, `hard`, `brute`, `elite` et `boss`. Un rang sans monstres retombe sur le rang inférieur qui en a. S'il n'en reste aucun, le générateur n'est pas placé. Le `mobs` d'un type de salle nomme un rang ou un groupe d'apparition, et `difficulty` fixe la hauteur à laquelle les rangs grimpent dans les salles.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+Une entrée de monstre est un identifiant d'entité, avec un `=weight` facultatif et un suffixe `{nbt}` facultatif écrit après l'identifiant. Un identifiant qu'aucun mod n'enregistre est écarté du tirage.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Clé                    | Type                             | Défaut           | Ce qu'il fait                                                                                     |
+| ---------------------- | -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `name`                 | texte                            | obligatoire      | Le nom qu'utilise le `mobs` d'un type de salle pour choisir ce groupe                             |
+| `mobs`                 | liste d'identifiants d'entité    | aucun            | Les monstres du groupe, comme dans un rang                                                        |
+| `weight`               | nombre, au moins 1               | `1`              | La part du groupe dans le tirage                                                                  |
+| `minDepth`, `maxDepth` | 0.0 à 1.0                        | `0.0`, `1.0`     | La plage de profondeur où apparaît le groupe. Les deux sont inversés s'ils sont écrits à l'envers |
+| `kinds`                | liste de noms de types de salles | n'importe lequel | Les types de salles où le groupe peut apparaître                                                  |
+| `tier`                 | l'un des cinq noms de rang       | aucun            | Un rang auquel appartiennent les monstres du groupe. Un rang inconnu est écarté                   |
+
+#### Ensembles de butin
+
+Chaque ensemble de butin est une liste d'entrées. Un coffre tire ses entrées dans l'ensemble que nomme sa salle, qui est `basic` par défaut pour une salle et `boss` pour la salle du boss. Les ensembles `weak`, `basic`, `treasure` et `boss` sont intégrés, et un pack peut en ajouter d'autres.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Clé        | Type                          | Défaut                | Ce qu'il fait                                                                                   |
+| ---------- | ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------- |
+| `table`    | identifiant de table de butin | obligatoire           | La table de butin, vanilla ou du pack, que tire le coffre                                       |
+| `weight`   | nombre, au moins 1            | `1`                   | La part de l'entrée parmi celles qu'autorise le niveau du coffre                                |
+| `minLevel` | 0 ou plus                     | `0`                   | Le plus bas niveau de coffre où l'entrée est utilisée                                           |
+| `maxLevel` | nombre                        | n'importe quel niveau | Le plus haut niveau de coffre où l'entrée est utilisée. Ne doit pas être inférieur à `minLevel` |
+
+#### Décorateurs du thème
+
+Un décorateur est un objet avec un `type`, un `block` (un identifiant, ou une liste d'identifiants) et les nombres que son type lit. Un type de salle exécute les décorateurs nommés dans `decor`.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Type         | Nombres lus (défaut)             | Ce qu'il place                                                                                                         |
+| ------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)          | Séries de quatre blocs le long des murs, chacune haute de `height`, avec `gap` blocs entre les séries                  |
+| `floorPatch` | `percent` (10)                   | Blocs au sol, selon ce pourcentage des cellules du sol                                                                 |
+| `scatter`    | `per100` (3), `on` (floor)       | Blocs au hasard sur le sol, le plafond ou les murs, avec `per100` de chance sur 100 par cellule                        |
+| `pillarsRow` | `height` (3), `gap` (2)          | Une rangée de piliers au milieu de la salle, hauts de `height`, espacés de `gap`                                       |
+| `bannerLine` | `gap` (4), `height` (2)          | Blocs suspendus aux murs tous les `gap` blocs, à `height` au-dessus du sol                                             |
+| `torchLine`  | `gap` (4), `height` (2)          | Torches suspendues aux murs de la même façon qu'une ligne de bannières                                                 |
+| `fill`       | `per100` (3), `loot` obligatoire | Coffres sur les cellules de mur, avec `per100` de chance sur 100 par cellule, remplis depuis l'ensemble de butin nommé |
+
+Un `fill` sans `loot` est écarté, et un `on` de `scatter` qui n'est ni `floor`, ni `ceiling`, ni `wall` est supprimé, si bien que la dispersion tombe sur le sol.
+
+### Ajouts de thème
+
+Un ajout complète un ou plusieurs thèmes sans les remplacer. Son fichier a une clé `append`, et les clés qu'il écrit sont fusionnées dans chaque thème nommé.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:mossy_stone_bricks", "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Les ajouts sont appliqués après le chargement de tous les thèmes de base de tous les packs, dans l'ordre de leurs clés de ressource, si bien que le résultat ne dépend pas de l'ordre des fichiers.
+- Dans un ajout, les clés de liste s'étendent : familles de `blocks`, rangs de `mobs`, ensembles de `loot`, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` et `spawnGroups`.
+- Une clé de liste nommée `remove:` suivie de sa clé retire des entrées au lieu d'en ajouter. `"remove:walls"` retire une entrée de murs par son identifiant de bloc, et `"remove:decorators"` retire un décorateur par son nom.
+- Les clés scalaires ne remplacent la valeur de base que lorsque l'ajout les écrit : `weight`, `minY`, `maxY`, `lootLevels` et `lootBonus`. Les clés `rolls`, `difficulty` et `decay` remplacent aussi, quand elles sont écrites.
+- `name`, `dimensions` et `dimensionsAreBlacklist` restent tels que le thème de base les a.
+- Un ajout dont la cible ne nomme aucun thème d'aucun pack est ignoré avec une erreur dans le log. Un ajout qui laisserait un thème sans murs n'est pas appliqué.
+
+### Placer des donjons
+
+Les sites sont choisis à partir de la graine du monde. Un site est refusé quand un filtre échoue, et un site refusé est ignoré plutôt que retenté. Les filtres de biome, de dimension et de hauteur sont ceux du donjon, et un thème ajoute les siens dans les `dimensions` du thème, ses listes de biomes, ainsi que `minY` et `maxY`.
+
+- `dimensions` et `biomes` filtrent les endroits où le donjon peut se générer, comme le font les entrées de worldgen.
+- `noOceans` refuse un site dont le biome central est un océan. Il est activé par défaut.
+- `minDistance` maintient les sites d'un donjon à distance. `group` permet à plusieurs donjons de partager cet espacement, et chacun garde le plus grand `minDistance` du groupe.
+- `at` place des copies à des coordonnées exactes et ignore `chance`, `minDistance` et le filtre de biome.
+- `locateAs` enregistre chaque site sous un nom pour `/locate`. Il trouve un site même avant que le chunk soit généré.
+
+Un donjon ne réserve que l'emprise de son entrée, si bien que les villages restent à l'écart. Pour savoir comment une structure placée est retrouvée et comment la carte est organisée, voir [Où il peut se générer](#où-il-peut-se-générer) et [Retrouver les structures placées](#retrouver-les-structures-placées).
+
+### Modèles dans les donjons
+
+Un type de salle peut nommer des modèles `.nbt` du dossier `<namespace>/structures/` du pack. Chaque salle de ce type tire un modèle selon son poids. La salle prend la taille du modèle, tournée selon le tour de la salle, et les tours qu'il peut prendre sont listés dans `turns`. La rangée 0 du modèle se place `yOffset` blocs au-dessus du sol du niveau. Pour savoir comment les modèles sont écrits et placés, voir [Placer des modèles](#placer-des-modèles).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Donjons qui réapparaissent
+
+Un donjon prend le même objet `respawn` qu'une structure, et la réinitialisation s'applique à tout le donjon. Chaque tranche de chunk du donjon est enregistrée comme sa propre reconstruction, si bien qu'une réinitialisation attend que chaque chunk soit chargé, comme pour toute structure. Voir [Structures qui réapparaissent](#structures-qui-réapparaissent) pour ce que fait chaque clé.
+
+### Notes
+
+- Un donjon s'écrit un chunk à la fois, et aucun chunk ne charge ni ne génère ses voisins pour finir sa part.
+- La même graine donne le même donjon, et le thème et la taille d'un site viennent de la graine du monde.
+- Une `depth` dans une règle de niveau ou un groupe d'apparition est une fraction, de 0.0 au niveau le plus haut à 1.0 au niveau le plus bas, et non un nombre de blocs.
+- Les `biomeTypes` d'un thème sont des mots de type, sans distinction de casse, comme `ocean`, `forest` et `plains`, ou un identifiant de tag de biome comme `minecraft:is_forest`.
 
 ## Parcelles de village
 

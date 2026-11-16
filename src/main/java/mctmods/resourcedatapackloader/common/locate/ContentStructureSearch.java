@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.villages.CityDistricts;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructureSpread;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityStructure;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -223,6 +224,11 @@ public final class ContentStructureSearch {
     private static boolean explored(ServerLevel level, ChunkPos spot) {
         if (level.getChunkSource().getChunkNow(spot.x, spot.z) != null) { return true; }
         return level.getChunkSource().chunkMap.read(spot).join().map(tag -> ChunkSerializer.getChunkTypeFromTag(tag) == ChunkStatus.ChunkType.LEVELCHUNK).orElse(false);
+    }
+
+    @Nullable public static BlockPos findDungeon(ServerLevel level, ServerPlayer player, String named, BlockPos from, boolean next) {
+        List<BlockPos> visited = next ? been(player, named) : List.of();
+        return ContentDungeons.nearestEntrance(level, named, from, pin -> next ? beenNear(visited, pin) || beenNear(List.of(from), pin) : explored(level, new ChunkPos(pin)));
     }
 
     public static boolean known(ServerLevel level, String named) { return wanted(level, named) != null; }

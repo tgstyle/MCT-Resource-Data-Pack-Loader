@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
@@ -215,15 +216,14 @@ public final class ContentWorldgen {
     }
 
     public static boolean dimensionAllows(Entry entry, WorldGenLevel level) {
-        if (entry.dimensions().isEmpty()) { return true; }
-        return entry.dimensions().contains(level.getLevel().dimension().location()) != entry.def().dimensionsAreBlacklist();
+        return BiomeFilter.allowsDimension(entry.dimensions(), entry.def().dimensionsAreBlacklist(), level.getLevel().dimension().location());
     }
 
     public static boolean allows(Entry entry, WorldGenLevel level, BlockPos pos) {
         if (entry.def().worksAnywhere()) { return true; }
         if (!ContentPlacer.loaded(level, pos)) { return false; }
         Holder<Biome> biome = level.getBiome(pos);
-        if (entry.def().hasBiomeFilter() && matches(entry, biome) == entry.def().biomesAreBlacklist()) { return false; }
+        if (entry.def().hasBiomeFilter() && BiomeFilter.blocked(entry.biomes(), entry.biomeTags(), entry.def().biomesAreBlacklist(), biome)) { return false; }
         return entry.def().climateAllows(biome.value().getBaseTemperature(), biome.value().getModifiedClimateSettings().downfall());
     }
 
@@ -235,16 +235,6 @@ public final class ContentWorldgen {
             if (def != null && ContentCaveRegions.holds(level, def, pos)) { return false; }
         }
         return true;
-    }
-
-    private static boolean matches(Entry entry, Holder<Biome> biome) {
-        for (ResourceLocation named : entry.biomes()) {
-            if (biome.is(named)) { return true; }
-        }
-        for (TagKey<Biome> tag : entry.biomeTags()) {
-            if (biome.is(tag)) { return true; }
-        }
-        return false;
     }
 
     @Nullable private static Entry resolve(WorldgenDef def) {

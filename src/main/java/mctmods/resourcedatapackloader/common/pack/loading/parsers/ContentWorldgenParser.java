@@ -161,19 +161,21 @@ public final class ContentWorldgenParser {
         return List.copyOf(followers);
     }
 
-    private static List<BlockWeightDef> weights(ResourceLocation key, JsonObject json) {
-        if (!json.has("blocks")) { return List.of(); }
+    private static List<BlockWeightDef> weights(ResourceLocation key, JsonObject json) { return weights(key, json, "blocks"); }
+
+    public static List<BlockWeightDef> weights(ResourceLocation key, JsonObject json, String member) {
+        if (!json.has(member)) { return List.of(); }
         List<BlockWeightDef> values = new ArrayList<>();
-        for (JsonElement element : Json.getJsonArray(json, "blocks")) {
+        for (JsonElement element : Json.getJsonArray(json, member)) {
             if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A blocks entry in {} is not an object, skipping it", key);
+                ContentLog.LOGGER.error("A {} entry in {} is not an object, skipping it", member, key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            if (entry.has("meta")) { ContentLog.LOGGER.warn("A blocks entry in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", key); }
+            if (entry.has("meta")) { ContentLog.LOGGER.warn("A {} entry in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", member, key); }
             ResourceLocation block = ContentParser.location(Json.getString(entry, "block", ""));
             if (block == null) {
-                ContentLog.LOGGER.error("A blocks entry in {} names no block, skipping it", key);
+                ContentLog.LOGGER.error("A {} entry in {} names no block, skipping it", member, key);
                 continue;
             }
             values.add(new BlockWeightDef(block, Math.max(1, Json.getInt(entry, "weight", 1)), Json.map(entry, "properties")));

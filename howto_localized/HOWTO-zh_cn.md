@@ -113,6 +113,7 @@
 - [扩散](#扩散)
 - [结构地图](#结构地图)
 - [重生结构](#重生结构)
+- [程序化地牢](#程序化地牢)
 - [村庄地块](#村庄地块)
 - [城市布局地图](#城市布局地图)
 - [连绵城市](#连绵城市)
@@ -7906,6 +7907,465 @@ Ad Astra 火箭的变种可以改变它的等级、燃料箱、货物和有效�
 | `rebuild: "full"`   | 每个模板方块都会重新放置，覆盖那里原有的任何东西                       |
 
 只有建成时带有战利品表的箱子才会重新装满。重置会等到结构覆盖的每个区块都已加载，且绝不会加载或生成区块；位于未加载区域的结构，会在下一次有玩家走进它的范围时重置。资源包加入 `respawn` 之前建成的结构不会被追踪。一切都在服务器上运行，玩家无需安装任何东西。
+
+## 程序化地牢
+
+*生成世界*
+
+地牢是埋在地下、由房间、走廊和竖井组成的多层建筑。模组根据世界种子规划它，而不是从模板盖出来，所以同一个种子得到同一座地牢。每个区块只写入地牢中属于自己的那一部分，区块也从不为了完成自己的部分而加载或生成相邻区块。RDPL 不提供地牢主题，所以资源包至少要提供一个，否则地牢什么也不放。地牢的外观、怪物和战利品都来自它的主题。
+
+`<namespace>/dungeons/*.json` 为地牢，`<namespace>/dungeonthemes/*.json` 为主题
+
+### 地牢文件
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": ["minecraft:overworld"],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["ocean", "river"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| 键                       | 值                           | 默认值                           | 作用                                                                                                               |
+| ------------------------ | ---------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `name`                   | 文本                         | 文件名                           | 日志中显示的名称                                                                                                   |
+| `themes`                 | `id` 或 `id=weight` 列表     | 无，必填                         | 主题池。每个地点从中抽取一个主题。地点的生物群系、维度或高度不接受的主题会被排除。若一个都不剩，该地点就不生成地牢 |
+| `dimensions`             | 维度 id 列表                 | 主世界                           | 地牢可以生成的维度                                                                                                 |
+| `dimensionsAreBlacklist` | true/false                   | `false`                          | 把 `dimensions` 变成需要避开的维度列表                                                                             |
+| `chance`                 | 1 到 100                     | `75`                             | 含有地牢的地点所占百分比，每个地点从世界种子中掷一次                                                               |
+| `minDistance`            | 0 到 100000 格               | `600`                            | 同一地牢或其 `group` 的两个地点之间的最小距离，按 x 与 z 中较大者计算                                              |
+| `group`                  | 文本                         | 地牢自身的 id                    | 同一组的地牢，其地点之间的距离由组内最大的 `minDistance` 保持                                                      |
+| `minDistanceFromSpawn`   | 0 到 100000 格               | `0`                              | 距离世界出生点这么近的地点会被拒绝                                                                                 |
+| `noOceans`               | true/false                   | `true`                           | 拒绝中心生物群系为海洋的地点                                                                                       |
+| `biomes`                 | 生物群系 id 列表             | 无                               | 生物群系过滤，与世界生成条目相同                                                                                   |
+| `biomeTypes`             | 生物群系类型列表             | 无                               | 按类型词过滤生物群系，如 `ocean` 或 `river`。主题会添加它们自己的过滤                                              |
+| `biomesAreBlacklist`     | true/false                   | `false`                          | 把 `biomes` 和 `biomeTypes` 变成需要避开的生物群系                                                                 |
+| `at`                     | `[x, z]` 或其列表            | 无                               | 把地牢固定在精确的方块坐标上。跳过 `chance`、`minDistance` 和生物群系过滤，与 `at` 固定结构地图的方式相同          |
+| `locateAs`               | 文本                         | 无                               | 以此名称登记每个地点，使 `/locate <name>` 能找到它。区块生成之前即可生效                                           |
+| `sizes`                  | 尺寸对象列表                 | 内置的四种尺寸                   | 每个地点的尺寸抽取。见尺寸表                                                                                       |
+| `shrink`                 | 0 到 100 百分比              | `0`                              | 每一层的场地比上一层窄这么多，最窄不低于占地的一半                                                                 |
+| `surfaceBuffer`          | 0 到 64 格                   | `7`                              | 最上层天花板与地表之间的实心覆盖层                                                                                 |
+| `minY`                   | 方块 y                       | 世界底部                         | 某一层可以取到的最低地面。装不下的层不会被建造                                                                     |
+| `levelHeight`            | `[min, max]`，4 到 64        | `[5, 8]`                         | 一层的方块高度，从地面到天花板。每层的高度单独抽取。房间的高度被限制为它减 2                                       |
+| `roomSize`               | `[min, max]`，3 到 64        | `[5, 15]`                        | 房间宽度和深度的范围。最小值若低于走廊宽度加 2，会被提升到该值，并在日志中注明                                     |
+| `corridor`               | `{ "width", "height" }`      | `{ 3, 3 }`                       | 房间之间连接通道的尺寸。宽度为 1 到 5。高度从 2 起，最高为最低 `levelHeight` 减 2                                  |
+| `loops`                  | 0 到 100 百分比              | `25`                             | 生成树之外房间之间额外的连接，按可能的相邻对所占比例计                                                             |
+| `rolls`                  | 元素到程度的对象             | 无                               | 下表所列 13 项判定的程度。每个地牢判定一次。未列出的判定为 `none`                                                  |
+| `roomKinds`              | 房间类型对象列表             | 一个 `hall`                      | 有类型的房间及其权重。见房间类型                                                                                   |
+| `entrance`               | 对象                         | `{ "types": ["simple"] }`        | 地牢如何通到地表。见入口、Boss 与竖井                                                                              |
+| `boss`                   | 对象                         | 无                               | Boss 房间。见入口、Boss 与竖井                                                                                     |
+| `shafts`                 | `type` 或 `type=weight` 列表 | `ladder`                         | 层与层之间的连接类型：`ladder`、`spiral` 和 `stairs`                                                               |
+| `difficulty`             | 预设名或对象                 | `"norm"`                         | 有多少房间生成怪物，等级如何攀升，以及刷怪笼出现的频率。见预设表                                                   |
+| `support`                | 对象、`true` 或 `false`      | `{ "depth": 8 }`                 | 在空气或液体上方的地面以下，列被填充多深。`false` 关闭此过程                                                       |
+| `decay`                  | 对象                         | `{ "base": 15, "perDepth": 20 }` | 腐朽方块的强度：`base` 为起始值，`perDepth` 随深度增加。两者均为 0 到 100                                          |
+| `levelRules`             | 列表                         | 无                               | 按深度覆盖。见深度规则                                                                                             |
+| `respawn`                | 对象                         | 无                               | 与重生结构中的对象相同。作用于整个地牢                                                                             |
+
+尺寸对象用来设定每种尺寸的形状。尺寸的键如下：
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| 键          | 值                     | 默认值          | 作用                         |
+| ----------- | ---------------------- | --------------- | ---------------------------- |
+| `name`      | 文本                   | `size` 及其位置 | 日志中显示的名称             |
+| `weight`    | 1 到 1000000           | `1`             | 该尺寸在尺寸抽取中所占的份额 |
+| `footprint` | 48 到 176 格           | `112`           | 层所在方形场地的边长         |
+| `levels`    | `[min, max]`，1 到 64  | `[4, 7]`        | 层数，均匀抽取               |
+| `rooms`     | `[min, max]`，1 到 400 | `[15, 30]`      | 每层的房间数，均匀抽取       |
+
+难度预设为地牢的怪物部分设定默认值。对象可以把某个 `preset` 作为基础，然后修改下面的任意键。
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| 预设或键 | 刷怪笼 | 晋升 | 最高等级 | 节点等级 | Boss 等级 | 每个刷怪笼的方块数 | 入口怪物 |
+| -------- | ------ | ---- | -------- | -------- | --------- | ------------------ | -------- |
+| `baby`   | 30     | 0    | 0        | 0        | 0         | 371                | `false`  |
+| `noob`   | 40     | 10   | 1        | 1        | 1         | 248                | `false`  |
+| `norm`   | 50     | 20   | 1        | 1        | 2         | 180                | `false`  |
+| `hard`   | 60     | 30   | 2        | 2        | 3         | 136                | `true`   |
+| `nuts`   | 70     | 50   | 2        | 2        | 4         | 50                 | `true`   |
+
+对象省略的每个键都取自其预设；若未指定预设，则取自 `norm`。等级从 `common` 的 0 到 `boss` 的 4。
+
+| 键                 | 值            | 默认值   | 作用                                                                                                       |
+| ------------------ | ------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `preset`           | 预设名        | `norm`   | 其他键所修改的基础预设                                                                                     |
+| `spawners`         | 0 到 100      | 取自预设 | 生成怪物的房间所占百分比                                                                                   |
+| `promote`          | 0 到 100      | 取自预设 | 每一步中某个房间的怪物等级提升一级的机会（百分比）                                                         |
+| `maxTier`          | 0 到 4        | 取自预设 | 晋升能把普通房间提升到的最高等级。最深层的任何房间都不会低于它的一半（向下取整），而上面各层会逐步向它靠拢 |
+| `nodeTier`         | 0 到 4        | 取自预设 | 多条路径交汇的房间的最低等级                                                                               |
+| `bossTier`         | 0 到 4        | 取自预设 | 晋升能把这些交汇房间提升到的最高等级。Boss 房间则改由 Boss 怪物决定等级                                    |
+| `blocksPerSpawner` | 1 到 100000   | 取自预设 | 刷怪笼密度，即每个刷怪笼对应的地牢方块数                                                                   |
+| `entranceMobs`     | true 或 false | 取自预设 | 当入口房间的房间类型没有设置刷怪笼数量时，入口房间是否生成怪物                                             |
+
+13 项判定各自控制一种特征。程度决定该特征出现的机会，如下表所示。
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| 判定          | 控制内容                                                           |
+| ------------- | ------------------------------------------------------------------ |
+| `outside`     | 房间可以开一个通到地表的塌陷坑                                     |
+| `liquids`     | 坑中以及部分房间中的水池                                           |
+| `subrooms`    | 把房间一分为二的隔墙                                               |
+| `islands`     | 立在坑中的小岛                                                     |
+| `pillars`     | 房间中的柱子                                                       |
+| `symmetry`    | 柱子或水池的对称孪生                                               |
+| `variability` | 房间可以从主题中选用另一种方块变体                                 |
+| `degeneracy`  | 房间方块承受的腐朽程度                                             |
+| `complexity`  | 每个房间尝试获得的特征数量                                         |
+| `vertical`    | 同一层内房间高度的变化幅度，以及房间下沉到层地面以下一到两格的频率 |
+| `entrances`   | 从其他顶层房间通往地表的额外竖井，未设置 `entrance.extra` 时使用   |
+| `fences`      | 坑和塌陷坑周围的栅栏                                               |
+| `naturals`    | 普通的箱形大厅变成洞穴房间                                         |
+
+| 程度     | 机会 |
+| -------- | ---- |
+| `none`   | 0    |
+| `few`    | 10   |
+| `some`   | 30   |
+| `plenty` | 50   |
+| `heaps`  | 90   |
+| `always` | 100  |
+
+程度也可以写成权重对象，例如 `{ "none": 5, "few": 30 }`，此时按权重为每个地牢抽取一个程度。全为零的对象是错误的，会被忽略。
+
+### 房间类型
+
+房间类型决定每个房间里放什么。没有 `roomKinds` 的地牢只获得一个普通的 `hall` 类型。
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| 键                     | 值                                             | 默认值            | 作用                                                                                              |
+| ---------------------- | ---------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------- |
+| `kind`                 | 文本                                           | 必填              | 日志中显示的名称。`hall` 为普通房间                                                               |
+| `weight`               | 1 到 1000000                                   | `1`               | 每个房间抽取时该类型所占的份额                                                                    |
+| `minLevel`, `maxLevel` | 0 到 64                                        | 任意层            | 可以出现的层，从顶层起算为 0                                                                      |
+| `maxPerDungeon`        | 0 到 100000                                    | 无                | 一个地牢中该类型房间的最大数量。在规划时生效，因此上限会被精确遵守                                |
+| `maxPerLevel`          | 0 到 100000                                    | 无                | 一层中该类型房间的最大数量                                                                        |
+| `minSize`              | `[x, z]`                                       | 房间尺寸的最小值  | 该类型所需的最小占地。位置太小的房间会退回为 `hall`                                               |
+| `height`               | `[min, max]`，3 到 64                          | 层高减 2          | 房间内部高度                                                                                      |
+| `shapes`               | `type` 或 `type=weight` 列表                   | `box`             | 房间形状：`box`、`pillared`、`ring`、`pit`、`cross` 或 `cave`                                     |
+| `templates`            | `id` 或 `id=weight` 列表                       | 无                | 该类型的结构模板。该类型的每个房间各抽取一个。见地牢中的模板                                      |
+| `yOffset`              | -64 到 64                                      | `0`               | 模板第 0 行位于层地面以上多少格                                                                   |
+| `turns`                | `none`、`quarter`、`half`、`threequarter` 列表 | 任意              | 模板可以采取的旋转，与印记中相同                                                                  |
+| `decor`                | 装饰器名称列表                                 | 无                | 在房间中运行的主题装饰器。见主题装饰器                                                            |
+| `mobs`                 | 文本                                           | `common`          | 房间刷怪笼所用的主题怪物等级或生成组                                                              |
+| `loot`                 | 文本                                           | `basic`           | 房间箱子所用的主题战利品集                                                                        |
+| `spawners`             | 0 到 100 百分比，或 `[min, max]`               | 取自 `difficulty` | 每个房间的刷怪笼数量。单个数字为机会，一对数字为数量范围                                          |
+| `chests`               | 0 到 100 百分比，或 `[min, max]`               | 取自 `difficulty` | 每个房间的箱子数量，形式与 `spawners` 相同                                                        |
+| `rolls`                | 对象                                           | 地牢的判定        | 仅对此类型生效的程度覆盖                                                                          |
+| `decay`                | 0 到 100 百分比，或 true/false                 | `0`               | 在此类型房间的腐朽强度上增加的百分比。对于模板类型，`true` 让腐朽也能触及模板自身的方块，默认不会 |
+| `node`                 | true/false                                     | `false`           | 将房间标记为枢纽。枢纽会获得更高的怪物等级和一个额外箱子                                          |
+
+### 入口、Boss 与竖井
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| 键                          | 值                                                   | 默认值                   | 作用                                               |
+| --------------------------- | ---------------------------------------------------- | ------------------------ | -------------------------------------------------- |
+| `entrance.types`            | `simple`、`spiral` 或 `toproom` 列表，可带 `=weight` | `simple`                 | 地牢顶部如何通到地表                               |
+| `entrance.topRoomTemplates` | `id` 或 `id=weight` 列表                             | 无，程序生成的建筑或废墟 | 顶层房间的模板。与 `toproom` 一同使用              |
+| `entrance.extra`            | 程度（见判定表）                                     | `entrances` 判定         | 顶层房间通往地表的第二条竖井的机会                 |
+| `boss.templates`            | `id` 或 `id=weight` 列表                             | 无                       | Boss 房间的模板                                    |
+| `boss.size`                 | `[min, max]`，3 到 64                                | 无                       | Boss 房间的占地                                    |
+| `boss.height`               | `[min, max]`，3 到 64                                | 无                       | Boss 房间的内部高度                                |
+| `boss.mob`                  | 等级或生成组名称                                     | `boss`                   | Boss 房间刷怪笼所用的怪物                          |
+| `boss.loot`                 | 战利品集名称                                         | `boss`                   | Boss 房间唯一箱子的战利品集                        |
+| `boss.count`                | 1 到 16                                              | `1`                      | Boss 房间中的刷怪笼数量                            |
+| `shafts`                    | `type` 或 `type=weight` 列表                         | `ladder`                 | 两层之间的连接类型：`ladder`、`spiral` 或 `stairs` |
+
+没有 `boss` 的地牢没有 Boss 房间：最底层的每个房间都是普通房间。
+
+### 深度规则
+
+层规则会改变从给定深度往下各层的部分键。`fromDepth` 从顶层的 0.0 到底层的 1.0。对某一层而言，深度不超过该层深度的最后一条规则生效，逐个键覆盖。
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| 键           | 值               | 默认值     | 作用                                                       |
+| ------------ | ---------------- | ---------- | ---------------------------------------------------------- |
+| `fromDepth`  | 0.0 到 1.0       | 必填       | 规则开始生效的深度。没有该键或超出范围的规则会被忽略       |
+| `theme`      | 主题 id          | 地牢的主题 | 这些层所用的主题                                           |
+| `rolls`      | 对象             | 无         | 这些层的程度覆盖                                           |
+| `difficulty` | 预设名或对象     | 无         | 这些层的难度                                               |
+| `decay`      | 对象             | 无         | 这些层的腐朽对象                                           |
+| `lootBonus`  | 数字             | 无         | 加到这些层中所有箱子的战利品等级上                         |
+| `roomKinds`  | 房间类型对象列表 | 无         | 这些层的房间类型。带有此键的规则不会添加普通 `hall` 默认值 |
+
+### 主题
+
+主题是一种外观：地牢各部分的方块、怪物、战利品和装饰器。主题文件是一个对象。
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": ["minecraft:overworld"],
+  "biomeTypes": ["forest=3", "plains", "hills"],
+  "notBiomeTypes": ["sandy"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_fields"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 },
+               { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stone_bricks" } ],
+    "ceilings": [ { "block": "minecraft:stone_bricks" } ],
+    "pillars": [ { "block": "minecraft:stone_brick_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:red_carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:cobweb"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| 键                                                   | 值                           | 默认值         | 作用                                                                                                     |
+| ---------------------------------------------------- | ---------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| `name`                                               | 文本                         | 文件名         | 日志中显示的名称                                                                                         |
+| `weight`                                             | 数字                         | `1`            | 地牢主题抽取中该主题所占的份额                                                                           |
+| `dimensions`, `dimensionsAreBlacklist`               | id 列表，true/false          | 所有维度       | 与地牢相同的维度过滤                                                                                     |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | 列表，条目可为 `name=weight` | 所有生物群系   | 按名称、按类型的生物群系过滤，以及两种排除。权重即该生物群系的份额，因此可由多个主题组成每个生物群系的池 |
+| `minY`, `maxY`                                       | 方块 y                       | 地牢的范围限制 | 地牢最上层与最下层地面必须位于的范围。其中没有容身之处的地点会失去该主题                                 |
+| `blocks`                                             | 列表的对象                   | 必须有 `walls` | 方块族，如下表所示。每个条目都是一个方块对象                                                             |
+| `mobs`                                               | 等级到列表的对象             | 无             | 每个等级的怪物。见怪物等级                                                                               |
+| `spawnGroups`                                        | 列表                         | 无             | 带深度范围及其所属房间类型的命名怪物组                                                                   |
+| `loot`                                               | 集合到列表的对象             | 无             | 每个战利品集的箱子条目。见战利品集                                                                       |
+| `lootLevels`                                         | 1 到 12                      | `6`            | 最高箱子等级。箱子等级由深度按此值缩放得出，再加上 `lootBonus`                                           |
+| `lootBonus`                                          | 数字                         | `0`            | 加到主题中每个箱子等级上                                                                                 |
+| `decorators`                                         | 名称到装饰器的对象           | 无             | 房间类型可在 `decor` 中引用的装饰器。见主题装饰器                                                        |
+| `rolls`, `difficulty`, `decay`                       | 与地牢相同                   | 无             | 主题的默认值。地牢自身的值优先，然后才是深度规则                                                         |
+| `append`                                             | 文本或主题 id 列表           | 无             | 使该文件成为这些主题的追加文件。见主题追加                                                               |
+
+方块对象接受 `block`（方块 id），可选 `weight`（默认为 1，且至少为 1）和 `properties`（方块状态名到值的映射）。每个地牢为每个方块族选一个方块，而 `variability` 判定允许某个房间选用另一个方块。
+
+方块族及其回退值：
+
+| 方块族     | 用于                                             | 若主题省略                 |
+| ---------- | ------------------------------------------------ | -------------------------- |
+| `walls`    | 房间墙壁。每个主题都必需                         | 无，该文件被忽略           |
+| `floors`   | 房间地板                                         | walls 方块                 |
+| `ceilings` | 房间天花板                                       | walls 方块                 |
+| `pillars`  | 柱子，以及房间的柱子部件                         | walls 方块                 |
+| `fencing`  | 坑和塌陷坑周围的栅栏                             | walls 方块                 |
+| `liquid`   | 水池                                             | 水                         |
+| `cave`     | 洞穴房间                                         | walls 方块                 |
+| `air`      | 房间和走廊内的开放空间                           | 空气                       |
+| `support`  | 空气或液体上方地板之下的柱子，以及入口之下的柱子 | floors 方块                |
+| `stairs`   | 楼梯式竖井                                       | 石砖楼梯                   |
+| `slabs`    | 螺旋式和楼梯式竖井中需要半砖的楼梯               | 平滑石砖半砖               |
+| `decay`    | 磨损的方块，从轻微到最严重                       | 无，因此腐朽不放置任何东西 |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stone_bricks", "weight": 5 }, { "block": "minecraft:mossy_stone_bricks", "weight": 2 } ],
+  "decay": [ { "block": "minecraft:cracked_stone_bricks" }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### 怪物等级
+
+怪物等级从 0 到 4 依次为：`common`、`hard`、`brute`、`elite` 和 `boss`。没有怪物的等级会降到下一个有怪物的更低等级。若一个都不剩，刷怪笼就不会放置。房间类型的 `mobs` 指定一个等级或一个生成组，`difficulty` 则设定房间的等级向上攀升到多高。
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+怪物条目是实体 id，id 之后可选 `=weight` 和 `{nbt}` 后缀。没有被任何东西注册的 id 会被排除在判定之外。
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| 键                     | 值               | 默认值       | 作用                                     |
+| ---------------------- | ---------------- | ------------ | ---------------------------------------- |
+| `name`                 | 文本             | 必填         | 房间类型的 `mobs` 用来选取该组的名称     |
+| `mobs`                 | 实体 id 列表     | 无           | 组中的怪物，与等级中相同                 |
+| `weight`               | 至少为 1 的数字  | `1`          | 该组在判定中所占的份额                   |
+| `minDepth`, `maxDepth` | 0.0 到 1.0       | `0.0`、`1.0` | 该组生成的深度范围。若写反了，两者会互换 |
+| `kinds`                | 房间类型名称列表 | 任意         | 该组可以生成于其中的房间类型             |
+| `tier`                 | 五个等级名之一   | 无           | 该组怪物所属的等级。未知等级会被丢弃     |
+
+#### 战利品集
+
+每个战利品集是一个条目列表。箱子从其房间指定的集合中取条目：房间默认为 `basic`，Boss 房间为 `boss`。`weak`、`basic`、`treasure` 和 `boss` 是内置集合，资源包可以添加自己的集合。
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| 键         | 值              | 默认值   | 作用                                          |
+| ---------- | --------------- | -------- | --------------------------------------------- |
+| `table`    | 战利品表 id     | 必填     | 箱子所掷的原版或资源包战利品表                |
+| `weight`   | 至少为 1 的数字 | `1`      | 该条目在箱子等级允许的条目中所占的份额        |
+| `minLevel` | 0 或更大        | `0`      | 使用该条目的最低箱子等级                      |
+| `maxLevel` | 数字            | 任意等级 | 使用该条目的最高箱子等级。不得低于 `minLevel` |
+
+#### 主题装饰器
+
+装饰器是一个带有 `type`、`block`（一个 id 或一个 id 列表）以及其类型所读取数字的对象。房间类型会运行它在 `decor` 中指定的装饰器。
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| 类型         | 读取的数字（默认值）         | 放置的内容                                                             |
+| ------------ | ---------------------------- | ---------------------------------------------------------------------- |
+| `wallLine`   | `height`（1），`gap`（1）    | 沿墙壁排列的四个方块一组，每组高 `height`，组与组之间相隔 `gap` 个方块 |
+| `floorPatch` | `percent`（10）              | 按地板格子该百分比放置在地板上的方块                                   |
+| `scatter`    | `per100`（3），`on`（floor） | 随机放置在地板、天花板或墙壁上的方块，每格有 `per100`/100 的机会       |
+| `pillarsRow` | `height`（3），`gap`（2）    | 房间中央一排柱子，高 `height`，间隔 `gap`                              |
+| `bannerLine` | `gap`（4），`height`（2）    | 每隔 `gap` 个方块挂在墙上的方块，离地面 `height` 高                    |
+| `torchLine`  | `gap`（4），`height`（2）    | 以与旗帜线相同的方式挂在墙上的火把                                     |
+| `fill`       | `per100`（3），必须有 `loot` | 墙格上的箱子，每格有 `per100`/100 的机会，由指定的战利品集填充         |
+
+没有 `loot` 集合的 `fill` 会被排除。若 `scatter` 的 `on` 不是 `floor`、`ceiling` 或 `wall`，该值会被丢弃，因此散布会落在地板上。
+
+### 主题追加
+
+追加可以为一个或多个主题增加内容，而不替换它们。其文件有一个 `append` 键，它所写的键会合并进每个指定的主题。
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:mossy_stone_bricks", "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- 追加在每个资源包的每个基础主题加载之后，按资源键的顺序应用，因此结果不依赖文件顺序。
+- 在追加中，被添加内容的是列表键：`blocks` 方块族、`mobs` 等级、`loot` 集合、`decorators`、`biomes`、`biomeTypes`、`notBiomes`、`notBiomeTypes` 和 `spawnGroups`。
+- 以 `remove:` 开头并加上键名的列表键，改为移除条目。`"remove:walls"` 按方块 id 移除一个墙壁条目，`"remove:decorators"` 按名称移除一个装饰器。
+- 标量键只有在追加中写出时才会替换基础值：`weight`、`minY`、`maxY`、`lootLevels` 和 `lootBonus`。`rolls`、`difficulty` 和 `decay` 键在写出时同样会替换。
+- `name`、`dimensions` 和 `dimensionsAreBlacklist` 保持基础主题的原样。
+- 目标没有指向任何资源包中主题的追加会被跳过，并记录一条错误。会使主题失去墙壁的追加不会被应用。
+
+### 放置地牢
+
+地点从世界种子中选出。过滤器失败时地点会被拒绝，被拒绝的地点会被跳过而不是重试。生物群系、维度和高度过滤器属于地牢自身，主题则会在其 `dimensions`、生物群系列表以及 `minY` 和 `maxY` 中添加自己的过滤器。
+
+- `dimensions` 和 `biomes` 限定地牢可以生成的位置，与世界生成条目相同。
+- `noOceans` 拒绝中心生物群系为海洋的地点。默认开启。
+- `minDistance` 让同一地牢的地点彼此保持距离。`group` 让多个地牢共享这一间距，每个地牢都保留该组中最大的 `minDistance`。
+- `at` 把副本固定在精确坐标上，并跳过 `chance`、`minDistance` 和生物群系过滤器。
+- `locateAs` 以一个名称为每个地点登记，供 `/locate` 使用。即使区块尚未生成，它也能找到该地点。
+
+地牢只占用其入口的占地范围，因此村庄会避开它。关于已放置结构如何被找到以及地图如何布局，见 [可生成的位置](#可生成的位置) 与 [查找已放置的结构](#查找已放置的结构)。
+
+### 地牢中的模板
+
+房间类型可以指定来自资源包 `<namespace>/structures/` 的 `.nbt` 模板。该类型的每个房间按权重抽取一个模板。房间采用模板的尺寸，并按房间的旋转转动；它可以采用的旋转列在 `turns` 中。模板第 0 行位于层地面以上 `yOffset` 格处。关于模板如何编写和放置，见 [放置模板](#放置模板)。
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### 地牢重生
+
+地牢采用与结构相同的 `respawn` 对象，重置作用于整个地牢。地牢的每个区块切片都被记录为各自的重建，因此与任何结构一样，重置会等待每个区块加载。各键的作用见 [重生结构](#重生结构)。
+
+### 注意
+
+- 地牢一次写入一个区块，且没有任何区块会为了完成自己的部分而加载或生成相邻区块。
+- 相同的种子给出相同的地牢，地点的主题和尺寸来自世界种子。
+- 层规则或怪物组中的 `depth` 是从顶层 0.0 到底层 1.0 的比例，而不是方块数。
+- 主题的 `biomeTypes` 可以是任意大小写的类型词，如 `ocean`、`forest` 和 `plains`，也可以是生物群系标签 id，如 `minecraft:is_forest`。
 
 ## 村庄地块
 

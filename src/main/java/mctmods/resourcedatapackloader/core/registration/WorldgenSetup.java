@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateC
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCraters;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLand;
@@ -78,6 +79,7 @@ public class WorldgenSetup {
 
     public static void levelListeners() {
         MinecraftForge.EVENT_BUS.addListener(ContentPopulateControl::onLevelLoad);
+        MinecraftForge.EVENT_BUS.addListener(ContentDungeons::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentOreControl::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentGeneratorControl::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onLevelLoad);

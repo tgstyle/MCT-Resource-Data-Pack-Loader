@@ -12,8 +12,10 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -29,6 +31,7 @@ public final class ContentLog {
     private static final int KEPT_AT_MOST = 1000;
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss");
     @Nullable private PrintWriter writer;
+    private final Set<String> told = ConcurrentHashMap.newKeySet();
     private boolean failed;
     private boolean debug;
     private final ThreadLocal<Boolean> quiet = ThreadLocal.withInitial(() -> false);
@@ -53,6 +56,8 @@ public final class ContentLog {
     public void info(String message, Object... args) { write(INFO, message, args); }
 
     public void warn(String message, Object... args) { write(WARN, message, args); }
+
+    public void onceWarn(String message, Object... args) { if (told.add(message + Arrays.toString(args))) { warn(message, args); } }
 
     public void error(String message, Object... args) { write(ERROR, message, args); }
 

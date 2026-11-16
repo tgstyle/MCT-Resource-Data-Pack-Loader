@@ -67,6 +67,8 @@ public final class PackManager {
     public static final String PATHINTERSECTS = "pathintersects";
     public static final String CITYMAPS = "citymaps";
     public static final String STRUCTUREMAPS = "structuremaps";
+    public static final String DUNGEONS = "dungeons";
+    public static final String DUNGEONTHEMES = "dungeonthemes";
     public static final String PORTALFRAMES = "portalframes";
     public static final String CURIOSLOTS = "curioslots";
     public static final String GATES = "gates";
