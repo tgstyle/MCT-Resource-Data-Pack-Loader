@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public final class StructureMapDef {
     @Nullable public final int[] depth;
     public final List<PickDef> spawners;
     @Nullable public final ResourceLocation loot;
+    public final FillRules fillRules;
     public final int cellsWide;
     public final int cellsDeep;
     public final int widest;
@@ -39,6 +41,7 @@ public final class StructureMapDef {
         this.depth = depth;
         this.spawners = spawners;
         this.loot = loot;
+        this.fillRules = new FillRules(key, spawners, loot);
         this.respawn = respawn;
         int wide = 1;
         int deep = 1;

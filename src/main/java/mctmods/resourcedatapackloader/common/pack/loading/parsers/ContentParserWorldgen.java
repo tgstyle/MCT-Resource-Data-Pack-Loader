@@ -317,9 +317,11 @@ public final class ContentParserWorldgen {
 
     private static List<BlockMatchDef> adjacent(ResourceLocation key, JsonObject json) { return Collections.unmodifiableList(ContentParser.matches(key, json, "adjacent")); }
 
-    private static List<BlockWeightDef> weights(JsonObject json) {
-        if (!json.has("blocks")) { return Collections.emptyList(); }
-        JsonArray array = Json.getJsonArray(json, "blocks");
+    private static List<BlockWeightDef> weights(JsonObject json) { return weights(json, "blocks"); }
+
+    public static List<BlockWeightDef> weights(JsonObject json, String member) {
+        if (!json.has(member)) { return Collections.emptyList(); }
+        JsonArray array = Json.getJsonArray(json, member);
         List<BlockWeightDef> values = new ArrayList<>(array.size());
         for (JsonElement element : array) {
             JsonObject entry = element.getAsJsonObject();

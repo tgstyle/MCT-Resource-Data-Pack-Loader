@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGenerator
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentBedrock;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
@@ -69,7 +70,7 @@ public class WorldgenSetup {
         MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
         if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
-        if (veins.isEmpty() && ContentStructureMaps.none() && !ContentCaveRegions.any()) { ContentRetrogen.setup(veins, null); }
+        if (veins.isEmpty() && ContentStructureMaps.none() && ContentDungeons.none() && !ContentCaveRegions.any()) { ContentRetrogen.setup(veins, null); }
         else {
             ContentWorldgen worldgen = new ContentWorldgen(veins);
             GameRegistry.registerWorldGenerator(worldgen, 3);

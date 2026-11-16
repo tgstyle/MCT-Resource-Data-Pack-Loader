@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.map;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
 import net.minecraft.init.Blocks;
@@ -20,42 +21,46 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
-final class ContentMapFill {
+public final class ContentMapFill {
     private static final Set<String> MISSING = new HashSet<>();
     private static final String PIG = "minecraft:pig";
 
     private ContentMapFill() {}
 
-    static Template.BlockInfo fill(StructureMapDef def, long seed, BlockPos at, Template.BlockInfo info) {
+    public static Template.BlockInfo fill(FillRules rules, long seed, BlockPos at, Template.BlockInfo info, @Nullable String mob, @Nullable ResourceLocation loot) {
         Block block = info.blockState.getBlock();
-        if (block == Blocks.MOB_SPAWNER) { return spawner(def, seed, at, info); }
-        if (block instanceof BlockChest) { return chest(def, seed, at, info); }
+        if (block == Blocks.MOB_SPAWNER) { return spawner(rules, seed, at, info, mob); }
+        if (block instanceof BlockChest) { return chest(rules, seed, at, info, loot); }
         return info;
     }
 
-    private static Template.BlockInfo spawner(StructureMapDef def, long seed, BlockPos at, Template.BlockInfo info) {
+    private static Template.BlockInfo spawner(FillRules rules, long seed, BlockPos at, Template.BlockInfo info, @Nullable String mob) {
         NBTTagCompound saved = info.tileentityData;
-        if (def.spawners.isEmpty() || !blankSpawner(saved)) { return info; }
-        List<PickDef> usable = new ArrayList<>();
-        for (PickDef pick : def.spawners) {
-            if (ForgeRegistries.ENTITIES.containsKey(new ResourceLocation(pick.name))) { usable.add(pick); }
-            else { ContentLog.LOGGER.errorOnce(MISSING, pick.name, "Structure map {} gives spawners '{}', which nothing registers, so it is left out of the roll", def.key, pick.name); }
+        if (mob == null && rules.spawners.isEmpty() || !blankSpawner(saved)) { return info; }
+        String named = mob;
+        if (named == null) {
+            List<PickDef> usable = new ArrayList<>();
+            for (PickDef pick : rules.spawners) {
+                if (ForgeRegistries.ENTITIES.containsKey(new ResourceLocation(pick.name))) { usable.add(pick); }
+                else { ContentLog.LOGGER.errorOnce(MISSING, pick.name, "Structure map {} gives spawners '{}', which nothing registers, so it is left out of the roll", rules.key, pick.name); }
+            }
+            named = PickDef.pick(usable, new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())), null);
         }
-        String named = PickDef.pick(usable, new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())), null);
         if (named == null) { return info; }
         NBTTagCompound copy = saved == null ? new NBTTagCompound() : saved.copy();
-        NBTTagCompound mob = new NBTTagCompound();
-        mob.setString("id", new ResourceLocation(named).toString());
-        copy.setTag("SpawnData", mob);
+        NBTTagCompound spawnData = new NBTTagCompound();
+        spawnData.setString("id", new ResourceLocation(named).toString());
+        copy.setTag("SpawnData", spawnData);
         copy.removeTag("SpawnPotentials");
         return new Template.BlockInfo(at, info.blockState, copy);
     }
 
-    private static Template.BlockInfo chest(StructureMapDef def, long seed, BlockPos at, Template.BlockInfo info) {
+    private static Template.BlockInfo chest(FillRules rules, long seed, BlockPos at, Template.BlockInfo info, @Nullable ResourceLocation override) {
         NBTTagCompound saved = info.tileentityData;
-        if (def.loot == null || !blankChest(saved)) { return info; }
+        ResourceLocation loot = override != null ? override : rules.loot;
+        if (loot == null || !blankChest(saved)) { return info; }
         NBTTagCompound copy = saved == null ? new NBTTagCompound() : saved.copy();
-        copy.setString("LootTable", def.loot.toString());
+        copy.setString("LootTable", loot.toString());
         copy.setLong("LootTableSeed", new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())).nextLong());
         return new Template.BlockInfo(at, info.blockState, copy);
     }

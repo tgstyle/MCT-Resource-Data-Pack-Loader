@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeight
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.FollowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
 import mctmods.resourcedatapackloader.common.util.worldgen.Biomes;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
@@ -144,7 +145,7 @@ public final class WorldgenDef {
         if (!resolved.isEmpty()) { this.types = resolved; }
     }
 
-    @Nullable private static BiomeDictionary.Type knownType(String name) {
+    @Nullable public static BiomeDictionary.Type knownType(String name) {
         String wanted = name.toUpperCase(Locale.ROOT);
         for (BiomeDictionary.Type type : BiomeDictionary.Type.getAll()) {
             if (type.getName().equals(wanted)) { return type; }
@@ -178,13 +179,12 @@ public final class WorldgenDef {
                 && rainfall >= leastRainfall && rainfall <= mostRainfall;
     }
 
-    public boolean namesBiome(Biome biome) { return biomeSet.contains(biome); }
+    public Set<Biome> namedBiomes() { return biomeSet; }
 
     public boolean inCaveRegion(ResourceLocation key) { return caveRegionKeys.contains(key); }
 
     public boolean allowsDimension(int dimension) {
-        if (dimensionSet.isEmpty()) { return true; }
-        return dimensionSet.contains(dimension) != dimensionsAreBlacklist;
+        return BiomeFilter.allowsDimension(dimensionSet, dimensionsAreBlacklist, dimension);
     }
 
     public List<BiomeDictionary.Type> getTypes() { return types; }

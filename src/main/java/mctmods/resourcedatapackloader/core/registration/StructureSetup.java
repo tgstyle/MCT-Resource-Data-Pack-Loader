@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.villages.VillagePieces;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardSeat;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityMaps;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 
@@ -23,6 +24,7 @@ public class StructureSetup {
     public static void loadMaps() {
         ContentPathIntersects.load();
         ContentStructureMaps.load();
+        ContentDungeons.load();
         ContentCityMaps.load();
     }
 

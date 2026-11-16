@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeight
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.FollowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentBelt;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentFieldShape;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentOreVein;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -34,7 +36,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
 public final class ContentWorldgen implements IWorldGenerator {
@@ -75,7 +76,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         return names;
     }
 
-    public static boolean allowsAt(WorldgenDef def, World world, BlockPos origin) { return dimensionAllowed(def, world.provider.getDimension()) && allows(def, world, origin, def.hasBiomeFilter()); }
+    public static boolean allowsAt(WorldgenDef def, World world, BlockPos origin) { return def.allowsDimension(world.provider.getDimension()) && allows(def, world, origin, def.hasBiomeFilter()); }
 
     @Nullable public static IContentShape shapeFor(String name) {
         WorldgenDef def = BY_NAME.get(name);
@@ -91,6 +92,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         ContentCaveRegions.decorate(world, chunkX, chunkZ, random);
         ContentCaveRegions.placeStructures(world, chunkX, chunkZ);
         ContentStructureMaps.place(world, chunkX, chunkZ);
+        ContentDungeons.place(world, chunkX, chunkZ);
         List<WorldgenDef> active = forDimension(world.provider.getDimension());
         if (active.isEmpty()) { return; }
         generate(random, chunkX, chunkZ, world, active);
@@ -102,7 +104,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         int baseZ = chunkZ * 16;
         for (WorldgenDef def : subset) {
             IContentShape figure = def.getShape();
-            if (figure == null || !dimensionAllowed(def, dimension)) { continue; }
+            if (figure == null || !def.allowsDimension(dimension)) { continue; }
             if (!farEnoughFromSpawn(def, world, baseX, baseZ)) { continue; }
             boolean filtered = def.hasBiomeFilter();
             Random region = def.spread.isSprawl() ? ContentSpread.regionRandom(world, chunkX, chunkZ) : random;
@@ -153,7 +155,7 @@ public final class ContentWorldgen implements IWorldGenerator {
                         if (cave == null || !def.inCaveRegion(cave.key)) { continue; }
                     }
                     Biome biome = world.getBiome(pos);
-                    if (filtered && biomeBlocked(def, biome)) { continue; }
+                    if (filtered && BiomeFilter.blocked(def.namedBiomes(), def.getTypes(), def.biomesAreBlacklist, biome)) { continue; }
                     if (!def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall())) { continue; }
                     if (figure.generate(world, random, pos)) { after(def, world, random, pos, baseX + 8, baseZ + 8, baseX + 23, baseZ + 23, new ArrayList<>()); }
                 }
@@ -241,7 +243,7 @@ public final class ContentWorldgen implements IWorldGenerator {
 
     private static boolean allows(WorldgenDef def, World world, BlockPos source, boolean filtered) {
         Biome biome = world.getBiome(source);
-        if (filtered && biomeBlocked(def, biome)) { return false; }
+        if (filtered && BiomeFilter.blocked(def.namedBiomes(), def.getTypes(), def.biomesAreBlacklist, biome)) { return false; }
         return def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall());
     }
 
@@ -250,7 +252,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         if (cached != null) { return cached; }
         List<WorldgenDef> active = new ArrayList<>();
         for (WorldgenDef def : defs) {
-            if (dimensionAllowed(def, dimension)) { active.add(def); }
+            if (def.allowsDimension(dimension)) { active.add(def); }
         }
         byDimension.put(dimension, active);
         return active;
@@ -264,15 +266,4 @@ public final class ContentWorldgen implements IWorldGenerator {
         return dx * dx + dz * dz >= (double) def.minDistanceFromSpawn * def.minDistanceFromSpawn;
     }
 
-    private static boolean dimensionAllowed(WorldgenDef def, int dimension) { return def.allowsDimension(dimension); }
-
-    private static boolean biomeBlocked(WorldgenDef def, Biome biome) { return matchesBiome(def, biome) == def.biomesAreBlacklist; }
-
-    private static boolean matchesBiome(WorldgenDef def, Biome biome) {
-        if (def.namesBiome(biome)) { return true; }
-        for (BiomeDictionary.Type type : def.getTypes()) {
-            if (BiomeDictionary.hasType(biome, type)) { return true; }
-        }
-        return false;
-    }
 }

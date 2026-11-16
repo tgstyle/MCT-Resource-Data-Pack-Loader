@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardSurface;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -72,8 +73,8 @@ public class ContentStructureMaps {
     }
 
     public static boolean claims(World world, StructureBoundingBox area, Predicate<StructureBoundingBox> hit) {
-        if (DEFS.isEmpty()) { return false; }
-        return sites(world, area, (def, seed, originX, originZ) -> hit.test(footprint(def, seed, originX, originZ)));
+        if (!DEFS.isEmpty() && sites(world, area, (def, seed, originX, originZ) -> hit.test(footprint(def, seed, originX, originZ)))) { return true; }
+        return ContentDungeons.claims(world, area, hit);
     }
 
     private interface ISite { boolean at(StructureMapDef def, long seed, int originX, int originZ); }
@@ -183,10 +184,10 @@ public class ContentStructureMaps {
                     BlockPos placeAt = new BlockPos(cornerX + backX, layerY, cornerZ + backZ);
                     if (filter != null) {
                         BlockRotationProcessor turning = new BlockRotationProcessor(placeAt, settings);
-                        ITemplateProcessor first = def.fills() ? (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info) : turning;
+                        ITemplateProcessor first = def.fills() ? (placed, at, info) -> ContentMapFill.fill(def.fillRules, cellSeed, at, info, null, null) : turning;
                         piece.addBlocksToWorld(world, placeAt, TemplateFilters.chain(first, filter), settings, FLAGS);
                     }
-                    else if (def.fills()) { piece.addBlocksToWorld(world, placeAt, (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info), settings, FLAGS); }
+                    else if (def.fills()) { piece.addBlocksToWorld(world, placeAt, (placed, at, info) -> ContentMapFill.fill(def.fillRules, cellSeed, at, info, null, null), settings, FLAGS); }
                     else { piece.addBlocksToWorld(world, placeAt, settings, FLAGS); }
                     placedCells++;
                 }

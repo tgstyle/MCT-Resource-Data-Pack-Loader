@@ -107,6 +107,7 @@
 - [퍼짐](#퍼짐)
 - [구조물 맵](#구조물-맵)
 - [구조물 리스폰](#구조물-리스폰)
+- [절차적 던전](#절차적-던전)
 - [마을 구획](#마을-구획)
 - [도시 배치 맵](#도시-배치-맵)
 - [연속 도시](#연속-도시)
@@ -8369,6 +8370,465 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
 | `rebuild: "full"`   | 템플릿 블록을 모두, 그 자리에 있는 것 위에 다시 놓습니다                                                              |
 
 상자는 구조물을 지을 때 전리품 테이블이 있었던 것만 다시 채워집니다. 리셋은 구조물이 걸친 모든 청크가 로드될 때까지 기다리며, 청크를 로드하거나 생성하지 않습니다. 로드되지 않은 땅의 구조물은 플레이어가 다음에 그곳으로 들어올 때 리셋됩니다. `respawn`이 추가되기 전에 지은 구조물은 추적되지 않습니다. 모든 것은 서버에서 실행되므로 플레이어는 아무것도 설치할 필요가 없습니다.
+
+## 절차적 던전
+
+*월드 생성*
+
+던전은 방, 복도, 수직 통로로 이루어진, 땅속에 묻힌 여러 층짜리 건물입니다. 모드는 템플릿을 찍어 내는 대신 월드 시드로 던전을 설계하므로, 같은 시드에서는 같은 던전이 나옵니다. 각 청크는 던전에서 자기 몫만 씁니다. 청크가 자기 몫을 마무리하려고 이웃을 불러오거나 생성하지는 않습니다. RDPL에는 던전 테마가 들어 있지 않으므로 팩이 최소 하나는 제공해야 하며, 그렇지 않으면 던전은 아무것도 배치하지 않습니다. 던전의 모습, 몹, 전리품은 모두 테마에서 나옵니다.
+
+`<namespace>/dungeons/*.json`은 던전, `<namespace>/dungeonthemes/*.json`은 테마
+
+### 던전 파일
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": [0],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["OCEAN", "RIVER"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| 키                       | 값                             | 기본값                           | 설명                                                                                                                                                                         |
+| ------------------------ | ------------------------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | 텍스트                         | 파일 이름                        | 로그에 찍히는 이름                                                                                                                                                           |
+| `themes`                 | `id` 또는 `id=weight` 목록     | 없음, 필수                       | 테마 풀. 각 사이트는 여기서 테마 하나를 뽑습니다. 사이트의 바이옴, 차원 또는 높이가 받아들이지 않는 테마는 빠집니다. 남는 테마가 없으면 그 사이트에는 던전이 생기지 않습니다 |
+| `dimensions`             | 숫자 목록                      | `[0]`, 오버월드                  | 던전이 생성될 수 있는 차원                                                                                                                                                   |
+| `dimensionsAreBlacklist` | true/false                     | `false`                          | `dimensions`를 피해야 할 차원의 목록으로 바꿉니다                                                                                                                            |
+| `chance`                 | 1 ~ 100                        | `75`                             | 던전을 가진 사이트의 백분율. 사이트마다 월드 시드에서 한 번 굴립니다                                                                                                         |
+| `minDistance`            | 0 ~ 100000 블록                | `600`                            | 이 던전, 또는 그 `group`에 속한 두 사이트 사이의 최소 거리. x와 z 중 큰 값으로 잽니다                                                                                        |
+| `group`                  | 텍스트                         | 던전 자신의 id                   | 같은 그룹의 던전은 그룹 안에서 가장 큰 `minDistance`만큼 사이트를 떨어뜨립니다                                                                                               |
+| `minDistanceFromSpawn`   | 0 ~ 100000 블록                | `0`                              | 월드 스폰에서 이보다 가까운 사이트는 거부됩니다                                                                                                                              |
+| `noOceans`               | true/false                     | `true`                           | 중심 바이옴이 바다인 사이트를 거부합니다                                                                                                                                     |
+| `biomes`                 | 바이옴 id 목록                 | 없음                             | 바이옴 필터. 월드젠 항목과 같습니다                                                                                                                                          |
+| `biomeTypes`             | 바이옴 유형 이름 목록          | 없음                             | 유형으로 거르는 바이옴 필터. 예: `OCEAN`, `RIVER`. 테마는 자체 필터를 더합니다                                                                                               |
+| `biomesAreBlacklist`     | true/false                     | `false`                          | `biomes`와 `biomeTypes`를 피해야 할 바이옴으로 바꿉니다                                                                                                                      |
+| `at`                     | `[x, z]`, 또는 그 목록         | 없음                             | 던전을 정확한 블록 좌표에 고정합니다. `chance`, `minDistance`와 바이옴 필터를 건너뛰며, `at`이 구조물 맵을 고정하는 방식과 같습니다                                          |
+| `locateAs`               | 텍스트                         | 없음                             | 모든 사이트를 이 이름으로 등록하여 `/locate <name>`으로 찾을 수 있게 합니다. 청크가 생성되기 전에도 작동합니다                                                               |
+| `sizes`                  | 크기 오브젝트 목록             | 기본 제공 네 가지 크기           | 사이트마다 크기를 뽑습니다. 크기 표를 참고하세요                                                                                                                             |
+| `shrink`                 | 0 ~ 100 퍼센트                 | `0`                              | 각 층의 바닥 면적이 바로 위 층보다 이 비율만큼 좁아지며, 바닥 면적의 절반까지 줄어듭니다                                                                                     |
+| `surfaceBuffer`          | 0 ~ 64 블록                    | `7`                              | 최상층 천장과 지표 사이의 고체 덮개                                                                                                                                          |
+| `minY`                   | 블록 y                         | 월드 바닥                        | 층이 가질 수 있는 가장 낮은 바닥. 더 이상 들어가지 않는 층은 만들지 않습니다                                                                                                 |
+| `levelHeight`            | `[min, max]`, 4 ~ 64           | `[5, 8]`                         | 한 층의 블록 높이, 바닥에서 천장까지. 굴린 높이는 층마다 따로 정해집니다. 방은 이 높이에서 2를 뺀 값으로 제한됩니다                                                          |
+| `roomSize`               | `[min, max]`, 3 ~ 64           | `[5, 15]`                        | 방의 너비와 깊이 범위. 복도 너비에 2를 더한 값보다 작은 최솟값은 그 값으로 올라가며, 로그에 그렇게 기록됩니다                                                                |
+| `corridor`               | `{ "width", "height" }`        | `{ 3, 3 }`                       | 방 사이 연결 통로의 크기. 너비는 1 ~ 5입니다. 높이는 2부터 가장 낮은 `levelHeight`에서 2를 뺀 값까지입니다                                                                   |
+| `loops`                  | 0 ~ 100 퍼센트                 | `25`                             | 뼈대 트리 밖에서 방 사이에 더하는 연결. 가능한 이웃 쌍에서 차지하는 비율입니다                                                                                               |
+| `rolls`                  | 요소에서 정도로 가는 오브젝트  | 없음                             | 아래에 나열된 13개 굴림의 정도. 던전마다 한 번 굴립니다. 빠진 굴림은 `none`입니다                                                                                            |
+| `roomKinds`              | 방 종류 오브젝트 목록          | 기본 `hall` 하나                 | 종류가 있는 방과 그 가중치. 방 종류 절을 참고하세요                                                                                                                          |
+| `entrance`               | 오브젝트                       | `{ "types": ["simple"] }`        | 던전이 지표에 닿는 방식. 입구, 보스, 수직 통로 절을 참고하세요                                                                                                               |
+| `boss`                   | 오브젝트                       | 없음                             | 보스 방. 입구, 보스, 수직 통로 절을 참고하세요                                                                                                                               |
+| `shafts`                 | `type` 또는 `type=weight` 목록 | `ladder`                         | 층 사이의 연결 방식: `ladder`, `spiral`, `stairs`                                                                                                                            |
+| `difficulty`             | 프리셋 이름 또는 오브젝트      | `"norm"`                         | 몇 개의 방에 몹이 나오는지, 등급이 어떻게 오르는지, 스포너가 얼마나 자주 나타나는지. 프리셋 표를 참고하세요                                                                  |
+| `support`                | 오브젝트, `true` 또는 `false`  | `{ "depth": 8 }`                 | 공기나 액체 위의 바닥에서 기둥을 얼마나 깊이 채울지. `false`는 이 과정을 끕니다                                                                                              |
+| `decay`                  | 오브젝트                       | `{ "base": 15, "perDepth": 20 }` | 부식 블록의 강도. `base`가 시작값이고 `perDepth`는 깊이에 따라 더해집니다. 둘 다 0 ~ 100입니다                                                                               |
+| `levelRules`             | 목록                           | 없음                             | 깊이별 재정의. 깊이 규칙 절을 참고하세요                                                                                                                                     |
+| `respawn`                | 오브젝트                       | 없음                             | 구조물 리스폰 절과 같은 오브젝트입니다. 던전 전체에 적용됩니다                                                                                                               |
+
+크기 오브젝트는 각 크기의 모양을 정합니다. 크기의 키는 다음과 같습니다:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| 키          | 값                    | 기본값           | 설명                                  |
+| ----------- | --------------------- | ---------------- | ------------------------------------- |
+| `name`      | 텍스트                | `size`와 그 위치 | 로그에 찍히는 이름                    |
+| `weight`    | 1 ~ 1000000           | `1`              | 크기 굴림에서 이 크기가 차지하는 비율 |
+| `footprint` | 48 ~ 176 블록         | `112`            | 층이 놓이는 정사각형 바닥의 한 변     |
+| `levels`    | `[min, max]`, 1 ~ 64  | `[4, 7]`         | 층 수, 균등하게 굴립니다              |
+| `rooms`     | `[min, max]`, 1 ~ 400 | `[15, 30]`       | 층마다의 방 수, 균등하게 굴립니다     |
+
+난이도 프리셋은 던전의 몹 쪽 기본값을 정합니다. 오브젝트는 `preset`으로 기준을 지정한 뒤 아래 키 중 아무거나 바꿀 수 있습니다.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| 프리셋 또는 키 | 스포너 | 승급 | 최대 등급 | 노드 등급 | 보스 등급 | 스포너당 블록 | 입구 몹 |
+| -------------- | ------ | ---- | --------- | --------- | --------- | ------------- | ------- |
+| `baby`         | 30     | 0    | 0         | 0         | 0         | 371           | `false` |
+| `noob`         | 40     | 10   | 1         | 1         | 1         | 248           | `false` |
+| `norm`         | 50     | 20   | 1         | 1         | 2         | 180           | `false` |
+| `hard`         | 60     | 30   | 2         | 2         | 3         | 136           | `true`  |
+| `nuts`         | 70     | 50   | 2         | 2         | 4         | 50            | `true`  |
+
+오브젝트가 빼먹은 키는 프리셋에서 가져오며, 프리셋을 이름으로 적지 않았으면 `norm`에서 가져옵니다. 등급은 `common`의 0부터 `boss`의 4까지 올라갑니다.
+
+| 키                 | 값              | 기본값     | 설명                                                                                                                                                                       |
+| ------------------ | --------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | 프리셋 이름     | `norm`     | 다른 키들이 바꾸는 기준 프리셋                                                                                                                                             |
+| `spawners`         | 0 ~ 100         | 프리셋에서 | 몹이 나오는 방의 백분율                                                                                                                                                    |
+| `promote`          | 0 ~ 100         | 프리셋에서 | 한 단계마다 방의 몹 등급이 한 단계 올라갈 확률(백분율)                                                                                                                     |
+| `maxTier`          | 0 ~ 4           | 프리셋에서 | 승급이 일반 방을 끌어올릴 수 있는 가장 높은 등급. 가장 깊은 층의 방은 어느 것도 이 값의 절반(내림) 아래로 떨어지지 않으며, 그 위 층들도 그 값을 향해 단계적으로 올라갑니다 |
+| `nodeTier`         | 0 ~ 4           | 프리셋에서 | 여러 길이 만나는 방의 가장 낮은 등급                                                                                                                                       |
+| `bossTier`         | 0 ~ 4           | 프리셋에서 | 승급이 그 만나는 방들을 끌어올릴 수 있는 가장 높은 등급. 보스 방은 대신 보스 몹에서 등급을 가져옵니다                                                                      |
+| `blocksPerSpawner` | 1 ~ 100000      | 프리셋에서 | 스포너 밀도. 스포너 하나당 던전 블록 수                                                                                                                                    |
+| `entranceMobs`     | true 또는 false | 프리셋에서 | 입구 방의 방 종류가 스포너 수를 정하지 않을 때, 입구 방에 몹이 나올지 여부                                                                                                 |
+
+13개의 굴림은 각각 기능 하나를 정합니다. 정도는 그 기능이 나타날 확률을 정하며, 다음 표와 같습니다.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| 굴림          | 작동시키는 것                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `outside`     | 방이 지표로 이어지는 싱크홀을 열 수 있습니다                                               |
+| `liquids`     | 구덩이와 일부 방의 웅덩이                                                                  |
+| `subrooms`    | 방을 둘로 나누는 칸막이 벽                                                                 |
+| `islands`     | 구덩이 안에 서 있는 섬                                                                     |
+| `pillars`     | 방의 기둥                                                                                  |
+| `symmetry`    | 기둥이나 웅덩이의 대칭 쌍둥이                                                              |
+| `variability` | 방이 테마에서 다른 블록 변형을 고를 수 있습니다                                            |
+| `degeneracy`  | 방의 블록이 받는 부식의 정도                                                               |
+| `complexity`  | 각 방이 얻으려고 시도하는 기능의 수                                                        |
+| `vertical`    | 층 안에서 방 높이가 얼마나 다양한지, 그리고 방이 층 바닥보다 한두 블록 가라앉는 빈도       |
+| `entrances`   | 최상층 방에서 지표로 가는 추가 수직 통로. `entrance.extra`가 설정되지 않았을 때 사용됩니다 |
+| `fences`      | 구덩이와 싱크홀 주변의 울타리                                                              |
+| `naturals`    | 평범한 상자형 홀이 동굴 방이 됩니다                                                        |
+
+| 정도     | 확률 |
+| -------- | ---- |
+| `none`   | 0    |
+| `few`    | 10   |
+| `some`   | 30   |
+| `plenty` | 50   |
+| `heaps`  | 90   |
+| `always` | 100  |
+
+정도는 `{ "none": 5, "few": 30 }`처럼 가중치 오브젝트로도 쓸 수 있으며, 이 경우 가중치에 따라 던전마다 정도 하나를 굴립니다. 모두 0인 오브젝트는 오류이며 무시됩니다.
+
+### 방 종류
+
+방 종류는 각 방이 무엇을 담을지 정합니다. `roomKinds`가 없는 던전은 평범한 `hall` 종류 하나를 받습니다.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| 키                     | 값                                             | 기본값                | 설명                                                                                                                               |
+| ---------------------- | ---------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | 텍스트                                         | 필수                  | 로그에 찍히는 이름. `hall`은 평범한 방입니다                                                                                       |
+| `weight`               | 1 ~ 1000000                                    | `1`                   | 각 방의 굴림에서 이 종류가 차지하는 비율                                                                                           |
+| `minLevel`, `maxLevel` | 0 ~ 64                                         | 모든 층               | 나타날 수 있는 층. 맨 위를 0으로 셉니다                                                                                            |
+| `maxPerDungeon`        | 0 ~ 100000                                     | 없음                  | 한 던전에 있을 수 있는 이 종류 방의 최대 수. 계획 단계에서 적용되므로 상한이 정확히 지켜집니다                                     |
+| `maxPerLevel`          | 0 ~ 100000                                     | 없음                  | 한 층에 있을 수 있는 이 종류 방의 최대 수                                                                                          |
+| `minSize`              | `[x, z]`                                       | 방 크기 최솟값        | 이 종류에 필요한 가장 작은 바닥 면적. 너무 작은 자리에 놓인 방은 `hall`로 대체됩니다                                               |
+| `height`               | `[min, max]`, 3 ~ 64                           | 층 높이에서 2를 뺀 값 | 방 내부의 높이                                                                                                                     |
+| `shapes`               | `type` 또는 `type=weight` 목록                 | `box`                 | 방의 모양: `box`, `pillared`, `ring`, `pit`, `cross`, `cave`                                                                       |
+| `templates`            | `id` 또는 `id=weight` 목록                     | 없음                  | 이 종류의 구조물 템플릿. 이 종류의 방마다 하나씩 굴립니다. 던전의 템플릿 절을 참고하세요                                           |
+| `yOffset`              | -64 ~ 64                                       | `0`                   | 템플릿의 0번 행이 층 바닥보다 얼마나 위에 놓이는지                                                                                 |
+| `turns`                | `none`, `quarter`, `half`, `threequarter` 목록 | 전부                  | 템플릿이 돌 수 있는 회전. 임프린트와 같습니다                                                                                      |
+| `decor`                | 장식기 이름 목록                               | 없음                  | 방에서 실행할 테마의 장식기. 테마 장식기 절을 참고하세요                                                                           |
+| `mobs`                 | 텍스트                                         | `common`              | 방의 스포너에 쓸, 테마의 몹 등급 또는 스폰 그룹                                                                                    |
+| `loot`                 | 텍스트                                         | `basic`               | 방의 상자에 쓸, 테마의 전리품 세트                                                                                                 |
+| `spawners`             | 0 ~ 100 퍼센트, 또는 `[min, max]`              | `difficulty`에서      | 방마다의 스포너. 숫자는 확률이고, 짝은 개수의 범위입니다                                                                           |
+| `chests`               | 0 ~ 100 퍼센트, 또는 `[min, max]`              | `difficulty`에서      | 방마다의 상자. `spawners`와 같은 형식입니다                                                                                        |
+| `rolls`                | 오브젝트                                       | 던전의 굴림           | 이 종류에만 적용되는 정도 재정의                                                                                                   |
+| `decay`                | 0 ~ 100 퍼센트, 또는 true/false                | `0`                   | 이 종류 방의 부식 강도에 더해지는 백분율. 템플릿 종류에서 `true`는 부식이 템플릿 자신의 블록에도 닿게 하며, 기본값은 닿지 않습니다 |
+| `node`                 | true/false                                     | `false`               | 방을 허브로 표시합니다. 허브는 더 높은 몹 등급과 상자 하나를 추가로 얻습니다                                                       |
+
+### 입구, 보스, 수직 통로
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| 키                          | 값                                                 | 기본값                      | 설명                                                 |
+| --------------------------- | -------------------------------------------------- | --------------------------- | ---------------------------------------------------- |
+| `entrance.types`            | `simple`, `spiral`, `toproom` 목록, `=weight` 포함 | `simple`                    | 던전의 맨 위가 지표에 닿는 방식                      |
+| `entrance.topRoomTemplates` | `id` 또는 `id=weight` 목록                         | 없음, 절차적 건물 또는 폐허 | 최상층 방의 템플릿. `toproom`과 함께 사용합니다      |
+| `entrance.extra`            | 정도 (굴림 표 참고)                                | `entrances` 굴림            | 최상층 방들에서 지표로 가는 두 번째 수직 통로의 확률 |
+| `boss.templates`            | `id` 또는 `id=weight` 목록                         | 없음                        | 보스 방의 템플릿                                     |
+| `boss.size`                 | `[min, max]`, 3 ~ 64                               | 없음                        | 보스 방의 바닥 면적                                  |
+| `boss.height`               | `[min, max]`, 3 ~ 64                               | 없음                        | 보스 방의 내부 높이                                  |
+| `boss.mob`                  | 등급 또는 스폰 그룹 이름                           | `boss`                      | 보스 방 스포너의 몹                                  |
+| `boss.loot`                 | 전리품 세트 이름                                   | `boss`                      | 보스 방 상자 하나의 전리품 세트                      |
+| `boss.count`                | 1 ~ 16                                             | `1`                         | 보스 방의 스포너 수                                  |
+| `shafts`                    | `type` 또는 `type=weight` 목록                     | `ladder`                    | 두 층 사이의 연결 방식: `ladder`, `spiral`, `stairs` |
+
+`boss`가 없는 던전에는 보스 방이 없습니다. 맨 아래 층의 모든 방이 평범한 방입니다.
+
+### 깊이 규칙
+
+층 규칙은 주어진 깊이부터 아래쪽 층들의 키 일부를 바꿉니다. `fromDepth`는 맨 위 층의 0.0에서 맨 아래 층의 1.0까지 갑니다. 층의 깊이 이하에서 마지막으로 나오는 규칙이 이기며, 키 하나씩 적용됩니다.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| 키           | 값                        | 기본값      | 설명                                                                          |
+| ------------ | ------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| `fromDepth`  | 0.0 ~ 1.0                 | 필수        | 규칙이 시작되는 깊이. 이 키가 없거나 범위를 벗어난 규칙은 빠집니다            |
+| `theme`      | 테마 id                   | 던전의 테마 | 이 층들의 테마                                                                |
+| `rolls`      | 오브젝트                  | 없음        | 이 층들의 정도 재정의                                                         |
+| `difficulty` | 프리셋 이름 또는 오브젝트 | 없음        | 이 층들의 난이도                                                              |
+| `decay`      | 오브젝트                  | 없음        | 이 층들의 부식 오브젝트                                                       |
+| `lootBonus`  | 숫자                      | 없음        | 이 층들에 있는 모든 상자의 전리품 단계에 더해집니다                           |
+| `roomKinds`  | 방 종류 오브젝트 목록     | 없음        | 이 층들의 방 종류. 이 키가 있는 규칙은 평범한 `hall` 기본값을 더하지 않습니다 |
+
+### 테마
+
+테마는 던전의 모습입니다. 던전 각 부분의 블록, 몹, 전리품, 장식기가 여기에 담깁니다. 테마 파일은 오브젝트 하나입니다.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": [0],
+  "biomeTypes": ["FOREST=3", "PLAINS", "HILLS"],
+  "notBiomeTypes": ["SANDY"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_island"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "weight": 5 },
+               { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stonebrick" } ],
+    "ceilings": [ { "block": "minecraft:stonebrick" } ],
+    "pillars": [ { "block": "minecraft:stone_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:web"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| 키                                                   | 값                              | 기본값       | 설명                                                                                                                                |
+| ---------------------------------------------------- | ------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | 텍스트                          | 파일 이름    | 로그에 찍히는 이름                                                                                                                  |
+| `weight`                                             | 숫자                            | `1`          | 던전의 테마 굴림에서 이 테마가 차지하는 비율                                                                                        |
+| `dimensions`, `dimensionsAreBlacklist`               | 숫자 목록, true/false           | 모든 차원    | 던전과 같은 차원 필터                                                                                                               |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | 목록, 항목은 `name=weight` 가능 | 모든 바이옴  | 이름과 유형으로 거르는 바이옴 필터, 그리고 두 가지 제외. 가중치는 그 바이옴의 비율이므로 여러 테마로 바이옴별 풀을 만들 수 있습니다 |
+| `minY`, `maxY`                                       | 블록 y                          | 던전의 한계  | 던전의 최상층과 최하층 바닥이 놓여야 하는 범위. 그 안에 자리가 없는 사이트는 이 테마를 잃습니다                                     |
+| `blocks`                                             | 목록의 오브젝트                 | `walls` 필수 | 블록 계열. 다음 표와 같습니다. 각 항목은 블록 오브젝트입니다                                                                        |
+| `mobs`                                               | 등급에서 목록으로 가는 오브젝트 | 없음         | 등급별 몹. 몹 등급 절을 참고하세요                                                                                                  |
+| `spawnGroups`                                        | 목록                            | 없음         | 깊이 범위와 그 그룹이 들어갈 방 종류를 함께 지정한, 이름 있는 몹 그룹                                                               |
+| `loot`                                               | 세트에서 목록으로 가는 오브젝트 | 없음         | 각 전리품 세트의 상자 항목. 전리품 세트 절을 참고하세요                                                                             |
+| `lootLevels`                                         | 1 ~ 12                          | `6`          | 가장 높은 상자 단계. 상자 단계는 깊이에서 이 값에 맞춰 조정한 값에 `lootBonus`를 더한 것입니다                                      |
+| `lootBonus`                                          | 숫자                            | `0`          | 테마의 모든 상자 단계에 더해집니다                                                                                                  |
+| `decorators`                                         | 이름에서 장식기로 가는 오브젝트 | 없음         | 방 종류가 `decor`에서 이름으로 지정할 수 있는 장식기. 테마 장식기 절을 참고하세요                                                   |
+| `rolls`, `difficulty`, `decay`                       | 던전과 같음                     | 없음         | 테마 기본값. 던전 자체의 값이 이기고, 그다음에 깊이 규칙이 적용됩니다                                                               |
+| `append`                                             | 텍스트 또는 테마 id 목록        | 없음         | 이 파일을 그 테마들에 덧붙이는 파일로 만듭니다. 테마 덧붙이기 절을 참고하세요                                                       |
+
+블록 오브젝트는 블록 id인 `block`을 받고, 선택 사항으로 기본값 0인 `meta`, 기본값 1이고 최소 1인 `weight`, 블록 상태 이름과 값의 맵인 `properties`를 받습니다. 던전마다 계열당 블록 하나를 고르며, `variability` 굴림이 방에서 다른 블록을 고르게 합니다.
+
+블록 계열과 대체 값:
+
+| 계열       | 쓰이는 곳                                                | 테마가 빼먹었을 때                         |
+| ---------- | -------------------------------------------------------- | ------------------------------------------ |
+| `walls`    | 방의 벽. 모든 테마에 필수입니다                          | 없음, 파일은 무시됩니다                    |
+| `floors`   | 방의 바닥                                                | walls 블록                                 |
+| `ceilings` | 방의 천장                                                | walls 블록                                 |
+| `pillars`  | 기둥과 방의 기둥 조각                                    | walls 블록                                 |
+| `fencing`  | 구덩이와 싱크홀 주변의 울타리                            | walls 블록                                 |
+| `liquid`   | 웅덩이                                                   | 물                                         |
+| `cave`     | 동굴 방                                                  | walls 블록                                 |
+| `air`      | 방과 복도 안의 빈 공간                                   | 공기                                       |
+| `support`  | 공기나 액체 위 바닥 아래의 기둥, 그리고 입구 아래의 기둥 | floors 블록                                |
+| `stairs`   | 계단형 수직 통로                                         | 돌벽돌 계단                                |
+| `slabs`    | 나선형과 계단형 수직 통로에서 계단에 반블록이 필요한 곳  | 매끈한 돌벽돌 반블록                       |
+| `decay`    | 닳은 블록, 약한 것부터 최악까지                          | 없음, 그래서 부식은 아무것도 놓지 않습니다 |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stonebrick", "weight": 5 }, { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+  "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### 몹 등급
+
+몹 등급은 0부터 4까지 이 순서로 올라갑니다: `common`, `hard`, `brute`, `elite`, `boss`. 몹이 없는 등급은 몹이 있는 바로 아래 등급으로 내려갑니다. 남는 등급이 없으면 스포너를 놓지 않습니다. 방 종류의 `mobs`는 등급 또는 스폰 그룹을 지정하고, `difficulty`는 방들이 등급을 얼마나 높이 올릴지 정합니다.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+몹 항목은 엔티티 id이며, id 뒤에 선택 사항으로 `=weight`와 `{nbt}` 접미사를 쓸 수 있습니다. 어떤 것도 등록하지 않은 id는 굴림에서 빠집니다.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| 키                     | 값                     | 기본값       | 설명                                                        |
+| ---------------------- | ---------------------- | ------------ | ----------------------------------------------------------- |
+| `name`                 | 텍스트                 | 필수         | 방 종류의 `mobs`가 이 그룹을 고를 때 쓰는 이름              |
+| `mobs`                 | 엔티티 id 목록         | 없음         | 그룹의 몹. 등급에서와 같습니다                              |
+| `weight`               | 숫자, 최소 1           | `1`          | 굴림에서 이 그룹이 차지하는 비율                            |
+| `minDepth`, `maxDepth` | 0.0 ~ 1.0              | `0.0`, `1.0` | 그룹이 스폰되는 깊이 범위. 거꾸로 적으면 두 값을 맞바꿉니다 |
+| `kinds`                | 방 종류 이름 목록      | 아무거나     | 그룹이 나올 수 있는 방 종류                                 |
+| `tier`                 | 다섯 등급 이름 중 하나 | 없음         | 그룹의 몹이 속하는 등급. 알 수 없는 등급은 버려집니다       |
+
+#### 전리품 세트
+
+각 전리품 세트는 항목의 목록입니다. 상자는 방이 지정한 세트에서 항목을 가져오며, 방은 기본값으로 `basic`을, 보스 방은 `boss`를 씁니다. `weak`, `basic`, `treasure`, `boss` 세트는 기본 제공이며, 팩이 자체 세트를 추가할 수 있습니다.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| 키         | 값               | 기본값    | 설명                                                                |
+| ---------- | ---------------- | --------- | ------------------------------------------------------------------- |
+| `table`    | 전리품 테이블 id | 필수      | 상자가 굴리는 바닐라 또는 팩의 전리품 테이블                        |
+| `weight`   | 숫자, 최소 1     | `1`       | 상자의 단계가 허용하는 항목들 사이에서 이 항목이 차지하는 비율      |
+| `minLevel` | 0 이상           | `0`       | 이 항목을 쓰는 가장 낮은 상자 단계                                  |
+| `maxLevel` | 숫자             | 모든 단계 | 이 항목을 쓰는 가장 높은 상자 단계. `minLevel`보다 낮으면 안 됩니다 |
+
+#### 테마 장식기
+
+장식기는 `type`, `block`(id 하나 또는 id 목록), 그리고 그 유형이 읽는 숫자들을 가진 오브젝트입니다. 방 종류는 `decor`에 적은 장식기를 실행합니다.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| 유형         | 읽는 숫자 (기본값)         | 놓는 것                                                                                      |
+| ------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)    | 벽을 따라 블록 네 개로 이어진 줄. 각 줄은 `height` 높이이며, 줄 사이에는 `gap` 블록을 둡니다 |
+| `floorPatch` | `percent` (10)             | 바닥 칸의 그 백분율만큼 바닥에 놓이는 블록                                                   |
+| `scatter`    | `per100` (3), `on` (floor) | 바닥, 천장 또는 벽에 무작위로 놓이는 블록. 칸마다 100분의 `per100` 확률입니다                |
+| `pillarsRow` | `height` (3), `gap` (2)    | 방 가운데를 따라 서는 기둥 줄. 높이는 `height`, 간격은 `gap`입니다                           |
+| `bannerLine` | `gap` (4), `height` (2)    | `gap` 블록마다 벽에 걸리는 블록. 바닥에서 `height` 위입니다                                  |
+| `torchLine`  | `gap` (4), `height` (2)    | 배너 줄과 같은 방식으로 벽에 거는 횃불                                                       |
+| `fill`       | `per100` (3), `loot` 필수  | 벽 칸에 놓이는 상자. 칸마다 100분의 `per100` 확률이며, 지정한 전리품 세트로 채웁니다         |
+
+`loot` 세트가 없는 `fill`은 빠지며, `floor`, `ceiling`, `wall` 중 하나가 아닌 `scatter`의 `on`은 버려지므로 그 장식기는 바닥에 놓입니다.
+
+### 테마 덧붙이기
+
+덧붙이기는 테마를 대체하지 않고 하나 이상의 테마에 내용을 더합니다. 이 파일에는 `append` 키가 있으며, 여기에 적은 키들이 지정된 각 테마에 합쳐집니다.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "meta": 1, "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- 덧붙이기는 모든 팩의 기본 테마를 다 불러온 뒤, 리소스 키 순서대로 적용되므로 결과가 파일 순서에 따라 달라지지 않습니다.
+- 덧붙이기에서 목록 키에는 항목이 추가됩니다: `blocks` 계열, `mobs` 등급, `loot` 세트, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes`, `spawnGroups`.
+- 목록 키 앞에 `remove:`를 붙인 키는 대신 항목을 뺍니다. `"remove:walls"`는 블록 id로 walls 항목 하나를 빼고, `"remove:decorators"`는 이름으로 장식기 하나를 뺍니다.
+- 스칼라 키는 덧붙이기가 적었을 때만 기본 테마의 값을 대체합니다: `weight`, `minY`, `maxY`, `lootLevels`, `lootBonus`. `rolls`, `difficulty`, `decay` 키도 적었을 때 대체합니다.
+- `name`, `dimensions`, `dimensionsAreBlacklist`는 기본 테마의 값을 그대로 유지합니다.
+- 어떤 팩의 테마도 가리키지 않는 덧붙이기는 로그에 오류를 남기고 건너뜁니다. 벽이 없게 되는 덧붙이기는 적용되지 않습니다.
+
+### 던전 배치하기
+
+사이트는 월드 시드에서 고릅니다. 필터가 하나라도 실패하면 사이트는 거부되며, 거부된 사이트는 다시 시도하지 않고 건너뜁니다. 바이옴, 차원, 높이 필터는 던전 자체의 것이고, 테마는 `dimensions`, 바이옴 목록, `minY`, `maxY`로 자기 필터를 더합니다.
+
+- `dimensions`와 `biomes`는 월드젠 항목과 마찬가지로 던전이 생성될 수 있는 곳을 거릅니다.
+- `noOceans`는 중심 바이옴이 바다인 사이트를 거부합니다. 기본으로 켜져 있습니다.
+- `minDistance`는 한 던전의 사이트들을 떨어뜨려 둡니다. `group`은 여러 던전이 그 간격을 함께 쓰게 하며, 각 던전은 그룹에서 가장 큰 `minDistance`를 유지합니다.
+- `at`은 사본을 정확한 좌표에 고정하며, `chance`, `minDistance`, 바이옴 필터를 건너뜁니다.
+- `locateAs`는 모든 사이트를 `/locate`용 이름으로 등록합니다. 청크가 생성되기 전에도 사이트를 찾습니다.
+
+던전은 입구 부분의 자리만 차지하므로 마을은 그 자리를 피해 짓습니다. 배치된 구조물을 어떻게 찾고 맵이 어떻게 배열되는지는 [생성될 수 있는 위치](#생성될-수-있는-위치)와 [배치된 구조물 찾기](#배치된-구조물-찾기)를 보세요.
+
+### 던전의 템플릿
+
+방 종류는 팩의 `<namespace>/structures/`에 있는 `.nbt` 템플릿을 지정할 수 있습니다. 그 종류의 각 방은 가중치에 따라 템플릿 하나를 굴립니다. 방은 템플릿의 크기를 가지며, 방의 회전만큼 돌립니다. 템플릿이 가질 수 있는 회전은 `turns`에 나열합니다. 템플릿의 0번 행은 층 바닥에서 `yOffset` 블록 위에 놓입니다. 템플릿을 어떻게 작성하고 배치하는지는 [템플릿 배치하기](#템플릿-배치하기)를 보세요.
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### 던전 리스폰
+
+던전은 구조물과 같은 `respawn` 오브젝트를 받으며, 초기화는 던전 전체에 적용됩니다. 던전의 청크별 조각은 각각 따로 리빌드로 기록되므로, 구조물과 마찬가지로 각 청크가 로드될 때까지 초기화가 기다립니다. 각 키가 무엇을 하는지는 [구조물 리스폰](#구조물-리스폰)을 보세요.
+
+### 참고
+
+- 던전은 한 번에 청크 하나씩 쓰이며, 어떤 청크도 자기 몫을 마무리하려고 이웃을 로드하거나 생성하지 않습니다.
+- 같은 시드는 같은 던전을 만들며, 사이트의 테마와 크기는 월드 시드에서 나옵니다.
+- 층 규칙이나 스폰 그룹의 `depth`는 블록 수가 아니라, 맨 위 층의 0.0부터 맨 아래 층의 1.0까지의 비율입니다.
+- 테마의 `biomeTypes`는 대문자로 된 1.12.2 바이옴 사전 이름입니다. 예: `OCEAN`, `FOREST`, `PLAINS`.
 
 ## 마을 구획
 

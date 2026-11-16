@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.core.integration.cubicchunks.CubicChunksWorlds;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
@@ -28,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -102,8 +104,15 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         reporting = true;
         try { start(player, name, key, false, false); }
         finally { reporting = false; }
-        return looking();
+        return looking() || ContentDungeons.locateNames(player.world).contains(name);
     }
+
+    public static void pointDungeon(ICommandSender sender, String name) {
+        BlockPos from = sender.getPosition();
+        point(sender, name, nearestPin(dungeonSpots(sender.getEntityWorld(), name, from), from.getX(), from.getZ(), 0, pin -> false));
+    }
+
+    private static List<long[]> dungeonSpots(World world, String name, BlockPos from) { return ContentDungeons.locateSpots(world, name, from, CHUNK_REACH * 16); }
 
     public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere) { start(player, name, key, findUnexplored, skipHere, null); }
 
@@ -115,6 +124,10 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 settleOnPins(player, name, pinned, ContentStructurePlacement.VILLAGES.equals(key) ? ContentBeard.BESIDE_WELL : 0, findUnexplored, skipHere, delivery);
                 return;
             }
+        }
+        if (ContentDungeons.locateNames(world).contains(name)) {
+            settleOnPins(player, name, dungeonSpots(world, name, player.getPosition()), 0, findUnexplored, skipHere, delivery);
+            return;
         }
         MapGenStructure generator = generatorFor(world, name);
         if (generator == null) {
@@ -213,24 +226,32 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, int beside, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
+        List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
+        long fromX = (long) player.posX;
+        long fromZ = (long) player.posZ;
+        BlockPos best = nearestPin(pinned, fromX, fromZ, beside, pin -> findUnexplored && player.world.isChunkGeneratedAt((int) pin[0] >> 4, (int) pin[1] >> 4) || skipHere && (away(pin, fromX, fromZ) < BEEN_NEAR || beenNear(visited, (int) pin[0], (int) pin[1])));
+        if (delivery != null) { delivery.accept(best); }
+        else if (reporting) { point(player, name, best); }
+        else { arrive(player, name, best); }
+    }
+
+    @Nullable private static BlockPos nearestPin(List<long[]> pinned, long fromX, long fromZ, int beside, Predicate<long[]> skip) {
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
-        List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
         for (long[] pin : pinned) {
-            int chunkX = (int) pin[0] >> 4;
-            int chunkZ = (int) pin[1] >> 4;
-            if (findUnexplored && player.world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
-            long awayX = pin[0] - (long) player.posX;
-            long awayZ = pin[1] - (long) player.posZ;
-            long away = awayX * awayX + awayZ * awayZ;
-            if (skipHere && away < BEEN_NEAR) { continue; }
-            if (skipHere && beenNear(visited, (int) pin[0], (int) pin[1])) { continue; }
+            if (skip.test(pin)) { continue; }
+            long away = away(pin, fromX, fromZ);
             if (away >= bestAway) { continue; }
             bestAway = away;
             best = new BlockPos((int) pin[0] + beside, 64, (int) pin[1] + beside);
         }
-        if (delivery != null) { delivery.accept(best); }
-        else { arrive(player, name, best); }
+        return best;
+    }
+
+    private static long away(long[] pin, long fromX, long fromZ) {
+        long awayX = pin[0] - fromX;
+        long awayZ = pin[1] - fromZ;
+        return awayX * awayX + awayZ * awayZ;
     }
 
     private void settle() {
@@ -248,12 +269,12 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return standing;
     }
 
-    private static void point(EntityPlayerMP player, String name, @Nullable BlockPos best) {
+    private static void point(ICommandSender sender, String name, @Nullable BlockPos best) {
         if (best == null) {
-            tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name));
+            tell(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.command.gotonothing", name));
             return;
         }
-        player.sendMessage(new TextComponentTranslation("commands.locate.success", name, best.getX(), best.getZ()));
+        sender.sendMessage(new TextComponentTranslation("commands.locate.success", name, best.getX(), best.getZ()));
     }
 
     static void arrive(EntityPlayerMP player, String name, BlockPos best) {
@@ -484,5 +505,5 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return Longs.pack(middleX - ring, middleZ + ring - along);
     }
 
-    private static void tell(EntityPlayerMP player, TextFormatting color, String message) { player.sendMessage(new TextComponentString(color + message)); }
+    private static void tell(ICommandSender sender, TextFormatting color, String message) { sender.sendMessage(new TextComponentString(color + message)); }
 }

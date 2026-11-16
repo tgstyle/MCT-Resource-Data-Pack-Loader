@@ -107,6 +107,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Spreads](#spreads)
 - [Structure maps](#structure-maps)
 - [Respawning structures](#respawning-structures)
+- [Procedural dungeons](#procedural-dungeons)
 - [Village plots](#village-plots)
 - [City layout maps](#city-layout-maps)
 - [Continuous city](#continuous-city)
@@ -8369,6 +8370,465 @@ A structure can come back after players have cleared it: its chests refill, its 
 | `rebuild: "full"`   | Every template block is placed again, over whatever stands there                                      |
 
 Only the chests that had a loot table when the structure was built refill. A reset waits until every chunk the structure covers is loaded and never loads or generates one; a structure in unloaded land resets when a player next brings it in. Structures built before the pack added `respawn` are not tracked. Everything runs on the server, so players need nothing installed.
+
+## Procedural dungeons
+
+*generating the world*
+
+A dungeon is a buried, multi-level building of rooms, corridors and shafts. The mod plans it from the world seed rather than stamping it from templates, so the same seed gives the same dungeon. Each chunk writes only its own part of the dungeon, and a chunk never loads or generates a neighbor to finish its share. RDPL ships no dungeon theme, so a pack has to give at least one, or its dungeons place nothing. The look, mobs and loot of a dungeon all come from its theme.
+
+`<namespace>/dungeons/*.json` for dungeons, `<namespace>/dungeonthemes/*.json` for themes
+
+### Dungeon file
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": [0],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["OCEAN", "RIVER"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Key                      | Type                            | Default                          | What it does                                                                                                                                                    |
+| ------------------------ | ------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | text                            | the file name                    | Name in logs                                                                                                                                                    |
+| `themes`                 | list of `id` or `id=weight`     | none, required                   | The theme pool. Each site draws one theme from it. A theme the site's biome, dimension or height refuses is left out. If none is left, the site gets no dungeon |
+| `dimensions`             | list of numbers                 | `[0]`, the Overworld             | Dimensions the dungeon may generate in                                                                                                                          |
+| `dimensionsAreBlacklist` | true/false                      | `false`                          | Turns `dimensions` into the list of dimensions to avoid                                                                                                         |
+| `chance`                 | 1 to 100                        | `75`                             | Percent of sites that hold a dungeon, rolled once per site from the world seed                                                                                  |
+| `minDistance`            | 0 to 100000 blocks              | `600`                            | Least distance between two sites of this dungeon, or of its `group`, taken on whichever of x and z is larger                                                    |
+| `group`                  | text                            | the dungeon's own id             | Dungeons in one group keep their sites apart by the largest `minDistance` in the group                                                                          |
+| `minDistanceFromSpawn`   | 0 to 100000 blocks              | `0`                              | A site this close to the world spawn is refused                                                                                                                 |
+| `noOceans`               | true/false                      | `true`                           | Refuses a site whose center biome is an ocean                                                                                                                   |
+| `biomes`                 | list of biome ids               | none                             | Biome filter, as for worldgen entries                                                                                                                           |
+| `biomeTypes`             | list of biome type names        | none                             | Biome filter by type, such as `OCEAN` or `RIVER`. Themes add their own filters                                                                                  |
+| `biomesAreBlacklist`     | true/false                      | `false`                          | Turns `biomes` and `biomeTypes` into the biomes to avoid                                                                                                        |
+| `at`                     | `[x, z]`, or a list of them     | none                             | Pins a dungeon at exact block coordinates. Skips `chance`, `minDistance` and the biome filter, the way `at` pins a structure map                                |
+| `locateAs`               | text                            | none                             | Registers every site under this name, so `/locate <name>` finds one. It works before the chunk has generated                                                    |
+| `sizes`                  | list of size objects            | the four built in sizes          | The size roll for each site. See the size table                                                                                                                 |
+| `shrink`                 | 0 to 100 percent                | `0`                              | Each level's field is this much narrower than the one above, down to a floor of half the footprint                                                              |
+| `surfaceBuffer`          | 0 to 64 blocks                  | `7`                              | Solid cover between the top level's ceiling and the surface                                                                                                     |
+| `minY`                   | block y                         | the world floor                  | The lowest floor a level may take. Levels that no longer fit are not built                                                                                      |
+| `levelHeight`            | `[min, max]`, 4 to 64           | `[5, 8]`                         | Block height of one level, from floor to ceiling. The rolled height is per level. Rooms are clamped to it minus 2                                               |
+| `roomSize`               | `[min, max]`, 3 to 64           | `[5, 15]`                        | Room width and depth range. A minimum below the corridor width plus 2 is raised to that, and the log says so                                                    |
+| `corridor`               | `{ "width", "height" }`         | `{ 3, 3 }`                       | Size of the links between rooms. Width is 1 to 5. Height is 2 up to the lowest `levelHeight` minus 2                                                            |
+| `loops`                  | 0 to 100 percent                | `25`                             | Extra links between rooms beyond the spanning tree, as a share of the possible neighbor pairs                                                                   |
+| `rolls`                  | object of element to degree     | none                             | Degrees for the 13 rolls, as listed below. Rolled once per dungeon. A roll left out is `none`                                                                   |
+| `roomKinds`              | list of room kind objects       | one `hall`                       | The typed rooms and their weights. See Room kinds                                                                                                               |
+| `entrance`               | object                          | `{ "types": ["simple"] }`        | How the dungeon reaches the surface. See Entrance, boss and shafts                                                                                              |
+| `boss`                   | object                          | none                             | The boss room. See Entrance, boss and shafts                                                                                                                    |
+| `shafts`                 | list of `type` or `type=weight` | `ladder`                         | The link types between levels: `ladder`, `spiral` and `stairs`                                                                                                  |
+| `difficulty`             | preset name or object           | `"norm"`                         | How many rooms get mobs, how tiers climb and how often spawners appear. See the preset table                                                                    |
+| `support`                | object, `true` or `false`       | `{ "depth": 8 }`                 | How far a column is filled down from a floor over air or liquid. `false` turns the pass off                                                                     |
+| `decay`                  | object                          | `{ "base": 15, "perDepth": 20 }` | Strength of the decay blocks: `base` is the start and `perDepth` is added with depth. Each is 0 to 100                                                          |
+| `levelRules`             | list                            | none                             | Overrides by depth. See Depth rules                                                                                                                             |
+| `respawn`                | object                          | none                             | The same object as in Respawning structures. It applies to the whole dungeon                                                                                    |
+
+The size objects set the shape of each size. A size's keys are:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Key         | Type                   | Default                 | What it does                               |
+| ----------- | ---------------------- | ----------------------- | ------------------------------------------ |
+| `name`      | text                   | `size` and its position | Name in logs                               |
+| `weight`    | 1 to 1000000           | `1`                     | The size's share in the size roll          |
+| `footprint` | 48 to 176 blocks       | `112`                   | Side of the square field the levels sit in |
+| `levels`    | `[min, max]`, 1 to 64  | `[4, 7]`                | Level count, rolled uniformly              |
+| `rooms`     | `[min, max]`, 1 to 400 | `[15, 30]`              | Rooms per level, rolled uniformly          |
+
+A difficulty preset sets the defaults for the mob side of a dungeon. An object may name a `preset` as its base and then change any of the keys below it.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Preset or key | Spawners | Promote | Max tier | Node tier | Boss tier | Blocks per spawner | Entrance mobs |
+| ------------- | -------- | ------- | -------- | --------- | --------- | ------------------ | ------------- |
+| `baby`        | 30       | 0       | 0        | 0         | 0         | 371                | `false`       |
+| `noob`        | 40       | 10      | 1        | 1         | 1         | 248                | `false`       |
+| `norm`        | 50       | 20      | 1        | 1         | 2         | 180                | `false`       |
+| `hard`        | 60       | 30      | 2        | 2         | 3         | 136                | `true`        |
+| `nuts`        | 70       | 50      | 2        | 2         | 4         | 50                 | `true`        |
+
+Each key an object leaves out comes from its preset, and from `norm` when it names none. Tiers run from 0 for `common` up to 4 for `boss`.
+
+| Key                | Type          | Default         | What it does                                                                                                                                                    |
+| ------------------ | ------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | preset name   | `norm`          | The preset the other keys change                                                                                                                                |
+| `spawners`         | 0 to 100      | from the preset | Percent of rooms that get mobs                                                                                                                                  |
+| `promote`          | 0 to 100      | from the preset | Percent chance per step that a room's mob tier goes up one                                                                                                      |
+| `maxTier`          | 0 to 4        | from the preset | Highest tier promotion lifts an ordinary room to; no room on the deepest level is below half of it, rounded down, and the levels above rise toward that in step |
+| `nodeTier`         | 0 to 4        | from the preset | Lowest tier of rooms where several paths meet                                                                                                                   |
+| `bossTier`         | 0 to 4        | from the preset | Highest tier promotion lifts those meeting rooms to; the boss room takes its tier from the boss mob instead                                                     |
+| `blocksPerSpawner` | 1 to 100000   | from the preset | Spawner density, in blocks of dungeon per spawner                                                                                                               |
+| `entranceMobs`     | true or false | from the preset | Whether the entrance room gets mobs when its room kind sets no spawner count                                                                                    |
+
+The 13 rolls each name one feature. A degree sets the chance that the feature appears, as the next table shows.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Roll          | What it drives                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------- |
+| `outside`     | A room may open a sinkhole to the surface                                                                     |
+| `liquids`     | Pools in pits and in some rooms                                                                               |
+| `subrooms`    | Partition walls that split a room in two                                                                      |
+| `islands`     | Islands standing in pits                                                                                      |
+| `pillars`     | Pillars in rooms                                                                                              |
+| `symmetry`    | A mirrored twin of a pillar or pool                                                                           |
+| `variability` | A room may pick another block variant from its theme                                                          |
+| `degeneracy`  | How much decay the room's blocks take                                                                         |
+| `complexity`  | How many features each room tries to get                                                                      |
+| `vertical`    | How much room heights vary within a level, and how often a room sinks one or two blocks below the level floor |
+| `entrances`   | Extra shafts from other top level rooms to the surface, used when `entrance.extra` is not set                 |
+| `fences`      | Fences around pits and sinkholes                                                                              |
+| `naturals`    | A plain box hall becomes a cave room                                                                          |
+
+| Degree   | Chance |
+| -------- | ------ |
+| `none`   | 0      |
+| `few`    | 10     |
+| `some`   | 30     |
+| `plenty` | 50     |
+| `heaps`  | 90     |
+| `always` | 100    |
+
+A degree is also written as an object of weights, such as `{ "none": 5, "few": 30 }`, which rolls one degree per dungeon by weight. An object of all zeros is an error and is ignored.
+
+### Room kinds
+
+The room kinds set what each room holds. A dungeon with no `roomKinds` gets one plain `hall` kind.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Key                    | Type                                              | Default                  | What it does                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                 | text                                              | required                 | The name in logs. `hall` is the plain room                                                                                                                    |
+| `weight`               | 1 to 1000000                                      | `1`                      | The kind's share in the roll for each room                                                                                                                    |
+| `minLevel`, `maxLevel` | 0 to 64                                           | any level                | The levels it may appear on, counting from the top at 0                                                                                                       |
+| `maxPerDungeon`        | 0 to 100000                                       | none                     | The most rooms of this kind in one dungeon. Applied while planning, so the cap holds exactly                                                                  |
+| `maxPerLevel`          | 0 to 100000                                       | none                     | The most rooms of this kind on one level                                                                                                                      |
+| `minSize`              | `[x, z]`                                          | the room size minimum    | The smallest footprint the kind needs. A room in a slot too small falls back to `hall`                                                                        |
+| `height`               | `[min, max]`, 3 to 64                             | the level height minus 2 | Interior height of the room                                                                                                                                   |
+| `shapes`               | list of `type` or `type=weight`                   | `box`                    | The room's shape: `box`, `pillared`, `ring`, `pit`, `cross` or `cave`                                                                                         |
+| `templates`            | list of `id` or `id=weight`                       | none                     | Structure templates for this kind. Each room of the kind rolls one. See Templates in dungeons                                                                 |
+| `yOffset`              | -64 to 64                                         | `0`                      | How far above the level floor the template's row 0 sits                                                                                                       |
+| `turns`                | list of `none`, `quarter`, `half`, `threequarter` | any                      | The turns a template may take, as in an imprint                                                                                                               |
+| `decor`                | list of decorator names                           | none                     | The theme's decorators to run in the room. See Theme decorators                                                                                               |
+| `mobs`                 | text                                              | `common`                 | The mob tier or spawn group of the theme for the room's spawners                                                                                              |
+| `loot`                 | text                                              | `basic`                  | The loot set of the theme for the room's chests                                                                                                               |
+| `spawners`             | 0 to 100 percent, or `[min, max]`                 | from `difficulty`        | Spawners per room. A number is a chance, and a pair is a count range                                                                                          |
+| `chests`               | 0 to 100 percent, or `[min, max]`                 | from `difficulty`        | Chests per room, in the same forms as `spawners`                                                                                                              |
+| `rolls`                | object                                            | the dungeon's rolls      | Degree overrides for this kind only                                                                                                                           |
+| `decay`                | 0 to 100 percent, or true/false                   | `0`                      | Percent added to the decay strength in this kind's rooms. On a template kind, `true` lets decay touch the template's own blocks, which it does not by default |
+| `node`                 | true/false                                        | `false`                  | Marks the room as a hub, which gets a higher mob tier and an extra chest                                                                                      |
+
+### Entrance, boss and shafts
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Key                         | Type                                                    | Default                             | What it does                                                           |
+| --------------------------- | ------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------- |
+| `entrance.types`            | list of `simple`, `spiral` or `toproom`, with `=weight` | `simple`                            | How the top of the dungeon reaches the surface                         |
+| `entrance.topRoomTemplates` | list of `id` or `id=weight`                             | none, a procedural building or ruin | Templates for a top room. Used with `toproom`                          |
+| `entrance.extra`            | degree (see the rolls table)                            | the `entrances` roll                | The chance of a second shaft from other top level rooms to the surface |
+| `boss.templates`            | list of `id` or `id=weight`                             | none                                | Templates for the boss room                                            |
+| `boss.size`                 | `[min, max]`, 3 to 64                                   | none                                | Footprint of the boss room                                             |
+| `boss.height`               | `[min, max]`, 3 to 64                                   | none                                | Interior height of the boss room                                       |
+| `boss.mob`                  | tier or spawn group name                                | `boss`                              | The mobs of the boss room's spawner                                    |
+| `boss.loot`                 | loot set name                                           | `boss`                              | The loot set of the boss room's one chest                              |
+| `boss.count`                | 1 to 16                                                 | `1`                                 | Spawners in the boss room                                              |
+| `shafts`                    | list of `type` or `type=weight`                         | `ladder`                            | The link type between two levels: `ladder`, `spiral` or `stairs`       |
+
+A dungeon with no `boss` has no boss room: every room on the bottom level is an ordinary room.
+
+### Depth rules
+
+A level rule changes some keys for the levels from a given depth down. `fromDepth` runs from 0.0 at the top level to 1.0 at the bottom level. The last rule at or above a level's depth wins, one key at a time.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Key          | Type                      | Default             | What it does                                                                            |
+| ------------ | ------------------------- | ------------------- | --------------------------------------------------------------------------------------- |
+| `fromDepth`  | 0.0 to 1.0                | required            | The depth where the rule starts. A rule without it, or outside the range, is left out   |
+| `theme`      | theme id                  | the dungeon's theme | The theme for these levels                                                              |
+| `rolls`      | object                    | none                | Degree overrides for these levels                                                       |
+| `difficulty` | preset name or object     | none                | A difficulty for these levels                                                           |
+| `decay`      | object                    | none                | A decay object for these levels                                                         |
+| `lootBonus`  | number                    | none                | Added to every chest level on these levels                                              |
+| `roomKinds`  | list of room kind objects | none                | Room kinds for these levels. A rule with this key does not add the plain `hall` default |
+
+### Themes
+
+A theme is a look: the blocks of each part of the dungeon, the mobs, the loot and the decorators. The theme file is one object.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": [0],
+  "biomeTypes": ["FOREST=3", "PLAINS", "HILLS"],
+  "notBiomeTypes": ["SANDY"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_island"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "weight": 5 },
+               { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stonebrick" } ],
+    "ceilings": [ { "block": "minecraft:stonebrick" } ],
+    "pillars": [ { "block": "minecraft:stone_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:web"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Key                                                  | Type                                | Default              | What it does                                                                                                                                |
+| ---------------------------------------------------- | ----------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | text                                | the file name        | Name in logs                                                                                                                                |
+| `weight`                                             | number                              | `1`                  | The theme's share in a dungeon's theme roll                                                                                                 |
+| `dimensions`, `dimensionsAreBlacklist`               | list of numbers, true/false         | all dimensions       | Dimension filter, as for a dungeon                                                                                                          |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | lists, entries may be `name=weight` | all biomes           | Biome filter by name, by type, and the two exclusions. A weight is that biome's share, so a pool per biome can be built from several themes |
+| `minY`, `maxY`                                       | block y                             | the dungeon's limits | The band the dungeon's top and bottom floors must sit in. A site that has no room in it loses the theme                                     |
+| `blocks`                                             | object of lists                     | `walls` required     | The block families, as the next table shows. Each entry is a block object                                                                   |
+| `mobs`                                               | object of tier to list              | none                 | The mobs of each tier. See Mob tiers                                                                                                        |
+| `spawnGroups`                                        | list                                | none                 | Named groups of mobs with a depth range and the room kinds they go in                                                                       |
+| `loot`                                               | object of set to list               | none                 | The chest entries of each loot set. See Loot sets                                                                                           |
+| `lootLevels`                                         | 1 to 12                             | `6`                  | The top chest level. The chest level comes from depth, scaled to this, plus `lootBonus`                                                     |
+| `lootBonus`                                          | number                              | `0`                  | Added to every chest level in the theme                                                                                                     |
+| `decorators`                                         | object of name to decorator         | none                 | Decorators that room kinds may name in `decor`. See Theme decorators                                                                        |
+| `rolls`, `difficulty`, `decay`                       | as in a dungeon                     | none                 | Theme defaults. The dungeon's own value wins, then the depth rules                                                                          |
+| `append`                                             | text or list of theme ids           | none                 | Makes the file an append to those themes. See Theme appends                                                                                 |
+
+A block object takes `block`, which is the block id, and optionally `meta`, which defaults to 0, `weight`, which defaults to 1 and is at least 1, and `properties`, which is a map of block state names to values. Each dungeon picks one block per family, and the `variability` roll lets a room pick another.
+
+The block families and their fallbacks:
+
+| Family     | Used for                                                         | If the theme leaves it out    |
+| ---------- | ---------------------------------------------------------------- | ----------------------------- |
+| `walls`    | Room walls. Required in every theme                              | none, the file is ignored     |
+| `floors`   | Room floors                                                      | the walls block               |
+| `ceilings` | Room ceilings                                                    | the walls block               |
+| `pillars`  | Pillars, and the rooms' pillar pieces                            | the walls block               |
+| `fencing`  | Fences around pits and sinkholes                                 | the walls block               |
+| `liquid`   | Pools                                                            | water                         |
+| `cave`     | Cave rooms                                                       | the walls block               |
+| `air`      | Open space inside rooms and corridors                            | air                           |
+| `support`  | Columns under a floor over air or liquid, and under the entrance | the floors block              |
+| `stairs`   | Stair shafts                                                     | stone brick stairs            |
+| `slabs`    | Spiral and stair shafts, where the stairs need a slab            | a smooth stone brick slab     |
+| `decay`    | The worn blocks, mild to worst                                   | none, so decay places nothing |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stonebrick", "weight": 5 }, { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+  "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Mob tiers
+
+The mob tiers run in this order, from 0 to 4: `common`, `hard`, `brute`, `elite` and `boss`. A tier with no mobs falls down to the next lower tier that has some. If none is left, the spawner is not placed. A room kind's `mobs` names a tier or a spawn group, and `difficulty` sets how far up the tiers the rooms climb.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+A mob entry is an entity id, with an optional `=weight` and an optional `{nbt}` suffix written after the id. An id that nothing registers is left out of the roll.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Key                    | Type                       | Default      | What it does                                                                            |
+| ---------------------- | -------------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `name`                 | text                       | required     | The name a room kind's `mobs` uses to pick this group                                   |
+| `mobs`                 | list of entity ids         | none         | The mobs in the group, as in a tier                                                     |
+| `weight`               | number, at least 1         | `1`          | The group's share in the roll                                                           |
+| `minDepth`, `maxDepth` | 0.0 to 1.0                 | `0.0`, `1.0` | The depth range the group spawns in. The two are swapped if written the wrong way round |
+| `kinds`                | list of room kind names    | any          | The room kinds the group may spawn in                                                   |
+| `tier`                 | one of the five tier names | none         | A tier the group's mobs belong to. An unknown tier is dropped                           |
+
+#### Loot sets
+
+Each loot set is a list of entries. A chest takes its entries from the set its room names, which is `basic` by default for a room and `boss` for the boss room. Sets `weak`, `basic`, `treasure` and `boss` are the built in ones, and a pack may add its own.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Key        | Type               | Default   | What it does                                                               |
+| ---------- | ------------------ | --------- | -------------------------------------------------------------------------- |
+| `table`    | loot table id      | required  | The vanilla or pack loot table the chest rolls                             |
+| `weight`   | number, at least 1 | `1`       | The entry's share among the entries the chest's level allows               |
+| `minLevel` | 0 or more          | `0`       | The lowest chest level the entry is used at                                |
+| `maxLevel` | number             | any level | The highest chest level the entry is used at. Must not be below `minLevel` |
+
+#### Theme decorators
+
+A decorator is an object with a `type`, a `block` (one id, or a list of ids), and the numbers its type reads. A room kind runs the decorators it names in `decor`.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Type         | Numbers it reads (default)    | What it places                                                                              |
+| ------------ | ----------------------------- | ------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)       | Runs of four blocks along the walls, each run `height` tall, with `gap` blocks between runs |
+| `floorPatch` | `percent` (10)                | Blocks on the floor at that percent of the floor cells                                      |
+| `scatter`    | `per100` (3), `on` (floor)    | Blocks at random on the floor, the ceiling or the walls, `per100` in 100 chance per cell    |
+| `pillarsRow` | `height` (3), `gap` (2)       | A row of pillars down the middle of the room, `height` tall, spaced by `gap`                |
+| `bannerLine` | `gap` (4), `height` (2)       | Blocks hung on the walls every `gap` blocks, `height` above the floor                       |
+| `torchLine`  | `gap` (4), `height` (2)       | Torches hung on the walls the same way as a banner line                                     |
+| `fill`       | `per100` (3), `loot` required | Chests on the wall cells, `per100` in 100 chance per cell, filled from the named loot set   |
+
+A `fill` with no `loot` set is left out, and a `scatter` `on` that is not `floor`, `ceiling` or `wall` is dropped, so the scatter lands on the floor.
+
+### Theme appends
+
+An append adds to one or more themes without replacing them. Its file has an `append` key, and the keys it writes are merged into each named theme.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "meta": 1, "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Appends are applied after every base theme of every pack loads, in order of their resource keys, so the result does not depend on file order.
+- In an append, the list keys are added to: `blocks` families, `mobs` tiers, `loot` sets, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` and `spawnGroups`.
+- A list key named `remove:` followed by its key takes entries out instead. `"remove:walls"` takes out a walls entry by its block id, and `"remove:decorators"` takes out a decorator by name.
+- Scalar keys replace the base value only when the append writes them: `weight`, `minY`, `maxY`, `lootLevels` and `lootBonus`. The `rolls`, `difficulty` and `decay` keys replace too, when written.
+- `name`, `dimensions` and `dimensionsAreBlacklist` stay as the base theme has them.
+- An append whose target names no theme of any pack is skipped with a logged error. An append that would leave a theme with no walls is not applied.
+
+### Placing dungeons
+
+Sites are chosen from the world seed. A site is refused when a filter fails, and a refused site is skipped rather than retried. The biome, dimension and height filters are the dungeon's own, and a theme adds its own in the theme's `dimensions`, biome lists and `minY` and `maxY`.
+
+- `dimensions` and `biomes` filter where the dungeon may generate, as the worldgen entries do.
+- `noOceans` refuses a site whose center biome is an ocean. It is on by default.
+- `minDistance` keeps the sites of one dungeon apart. `group` lets several dungeons share that spacing, and each keeps the largest `minDistance` of the group.
+- `at` pins copies at exact coordinates and skips `chance`, `minDistance` and the biome filter.
+- `locateAs` registers every site under a name for `/locate`. It finds a site even before the chunk has generated.
+
+A dungeon claims only its entrance footprint, so villages keep off it. For how a placed structure is found and how the map is laid out, see [Where it may generate](#where-it-may-generate) and [Finding placed structures](#finding-placed-structures).
+
+### Templates in dungeons
+
+A room kind may name `.nbt` templates from the pack's `<namespace>/structures/`. Each room of that kind rolls one template by weight. The room takes the template's size, turned by the room's turn, and the turns it may take are listed in `turns`. Template row 0 sits `yOffset` blocks above the level floor. For how templates are written and placed, see [Placing templates](#placing-templates).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Respawning dungeons
+
+A dungeon takes the same `respawn` object as a structure, and the reset applies to the whole dungeon. Each chunk slice of the dungeon is recorded as its own rebuild, so a reset waits until each chunk is loaded, as for any structure. See [Respawning structures](#respawning-structures) for what each key does.
+
+### Notes
+
+- A dungeon is written one chunk at a time, and no chunk loads or generates its neighbors to finish its part.
+- The same seed gives the same dungeon, and a site's theme and size come from the world seed.
+- A `depth` in a level rule or a spawn group is a fraction from 0.0 at the top level to 1.0 at the bottom level, not a block count.
+- A theme's `biomeTypes` are the 1.12.2 biome dictionary names, in upper case, such as `OCEAN`, `FOREST` and `PLAINS`.
 
 ## Village plots
 

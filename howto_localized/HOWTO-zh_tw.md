@@ -107,6 +107,7 @@
 - [擴散](#擴散)
 - [結構地圖](#結構地圖)
 - [重生結構](#重生結構)
+- [程序化地城](#程序化地城)
 - [村莊地塊](#村莊地塊)
 - [城市配置地圖](#城市配置地圖)
 - [連綿城市](#連綿城市)
@@ -8369,6 +8370,465 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
 | `rebuild: "full"`   | 每個範本方塊都會重新放置，覆蓋那裡原有的任何東西                       |
 
 只有建成時帶有戰利品表的箱子才會重新裝滿。重置會等到結構覆蓋的每個區塊都已載入，且絕不會載入或生成區塊；位於未載入區域的結構，會在下一次有玩家走進它的範圍時重置。資源包加入 `respawn` 之前建成的結構不會被追蹤。一切都在伺服器上執行，玩家無需安裝任何東西。
+
+## 程序化地城
+
+*生成世界*
+
+地城是埋在地下、有多層房間、走廊與豎井的建築。模組依世界種子規劃它，而不是從範本複製貼上，所以同一個種子會得到同一座地城。每個區塊只寫入地城屬於它的那一部分，區塊也絕不會為了完成自己的部分而載入或生成鄰近的區塊。RDPL 不附帶任何地城主題，所以資源包至少要提供一個，否則地城什麼都不會放置。地城的外觀、生物與戰利品都來自它的主題。
+
+`<namespace>/dungeons/*.json` 為地城，`<namespace>/dungeonthemes/*.json` 為主題
+
+### 地城檔案
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": [0],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["OCEAN", "RIVER"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| 設定                     | 類型                         | 預設                             | 作用                                                                                                           |
+| ------------------------ | ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `name`                   | 文字                         | 檔名                             | 日誌中顯示的名稱                                                                                               |
+| `themes`                 | `id` 或 `id=權重` 的清單     | 無，必填                         | 主題池。每處地點從中抽出一個主題。地點的生態域、維度或高度拒絕的主題會被排除。若一個也不剩，該地點就不生成地城 |
+| `dimensions`             | 數字清單                     | `[0]`，主世界                    | 地城可以生成的維度                                                                                             |
+| `dimensionsAreBlacklist` | 布林值                       | `false`                          | 把 `dimensions` 改為要避開的維度清單                                                                           |
+| `chance`                 | 1 到 100                     | `75`                             | 有地城的地點百分比，每處地點依世界種子擲一次                                                                   |
+| `minDistance`            | 0 到 100000 方塊             | `600`                            | 同一座地城（或其 `group`）的兩處地點之間的最短距離，取 x 與 z 中較大的那個                                     |
+| `group`                  | 文字                         | 地城自己的 id                    | 同一群組的地城，會以群組中最大的 `minDistance` 讓各自的地點彼此分開                                            |
+| `minDistanceFromSpawn`   | 0 到 100000 方塊             | `0`                              | 離世界出生點這麼近的地點會被拒絕                                                                               |
+| `noOceans`               | 布林值                       | `true`                           | 拒絕中心生態域為海洋的地點                                                                                     |
+| `biomes`                 | 生態域 id 清單               | 無                               | 生態域篩選，與世界生成條目相同                                                                                 |
+| `biomeTypes`             | 生態域類型名稱清單           | 無                               | 依類型篩選生態域，例如 `OCEAN` 或 `RIVER`。主題會加上它們自己的篩選                                            |
+| `biomesAreBlacklist`     | 布林值                       | `false`                          | 把 `biomes` 與 `biomeTypes` 改為要避開的生態域                                                                 |
+| `at`                     | `[x, z]`，或其清單           | 無                               | 把地城固定在精確的方塊座標。與 `at` 固定結構地圖的方式相同，會略過 `chance`、`minDistance` 與生態域篩選        |
+| `locateAs`               | 文字                         | 無                               | 以此名稱登記每處地點，讓 `/locate <name>` 找得到。區塊尚未生成時也能用                                         |
+| `sizes`                  | 尺寸物件清單                 | 內建的四種尺寸                   | 每處地點的尺寸抽取。見尺寸表                                                                                   |
+| `shrink`                 | 0 到 100 百分比              | `0`                              | 每一層的地面比上一層窄這麼多，最窄不小於佔地的一半                                                             |
+| `surfaceBuffer`          | 0 到 64 方塊                 | `7`                              | 最上層天花板與地表之間的實心覆蓋                                                                               |
+| `minY`                   | 方塊 y 座標                  | 世界底部                         | 一層可以取的最低地面。放不下的層不會建造                                                                       |
+| `levelHeight`            | `[min, max]`，4 到 64        | `[5, 8]`                         | 一層從地面到天花板的方塊高度。抽出的高度逐層而定。房間高度限制為它減 2                                         |
+| `roomSize`               | `[min, max]`，3 到 64        | `[5, 15]`                        | 房間寬度與深度的範圍。最小值若低於走廊寬度加 2，會被提高到那個值，並在日誌中說明                               |
+| `corridor`               | `{ "width", "height" }`      | `{ 3, 3 }`                       | 房間之間連接通道的尺寸。寬度為 1 到 5。高度從 2 起，最高到最低 `levelHeight` 減 2                              |
+| `loops`                  | 0 到 100 百分比              | `25`                             | 房間之間除了生成樹之外的額外連接，以可能的相鄰配對數的比例計                                                   |
+| `rolls`                  | 元素到程度的物件             | 無                               | 下列 13 種擲骰的程度。每座地城擲一次。未列出的擲骰為 `none`                                                    |
+| `roomKinds`              | 房間類型物件清單             | 一個 `hall`                      | 有類型的房間及其權重。見房間類型                                                                               |
+| `entrance`               | 物件                         | `{ "types": ["simple"] }`        | 地城如何連到地表。見入口、首領與豎井                                                                           |
+| `boss`                   | 物件                         | 無                               | 首領房間。見入口、首領與豎井                                                                                   |
+| `shafts`                 | `type` 或 `type=權重` 的清單 | `ladder`                         | 各層之間的連接類型：`ladder`、`spiral` 與 `stairs`                                                             |
+| `difficulty`             | 預設名稱或物件               | `"norm"`                         | 有多少房間會有生物、等級如何攀升，以及刷怪籠出現的頻率。見預設表                                               |
+| `support`                | 物件、`true` 或 `false`      | `{ "depth": 8 }`                 | 地板下方落在空氣或液體上時，支撐柱要往下填多深。`false` 會關閉此步驟                                           |
+| `decay`                  | 物件                         | `{ "base": 15, "perDepth": 20 }` | 腐朽方塊的強度：`base` 為起始值，`perDepth` 隨深度增加。兩者皆為 0 到 100                                      |
+| `levelRules`             | 清單                         | 無                               | 依深度的覆寫。見深度規則                                                                                       |
+| `respawn`                | 物件                         | 無                               | 與重生結構相同的物件，適用於整座地城                                                                           |
+
+尺寸物件設定每種尺寸的形狀。一個尺寸的鍵如下：
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| 鍵          | 類型                   | 預設            | 作用                     |
+| ----------- | ---------------------- | --------------- | ------------------------ |
+| `name`      | 文字                   | `size` 及其位置 | 日誌中顯示的名稱         |
+| `weight`    | 1 到 1000000           | `1`             | 該尺寸在尺寸抽取中的比例 |
+| `footprint` | 48 到 176 方塊         | `112`           | 各層所在正方形場地的邊長 |
+| `levels`    | `[min, max]`，1 到 64  | `[4, 7]`        | 層數，均勻抽取           |
+| `rooms`     | `[min, max]`，1 到 400 | `[15, 30]`      | 每層的房間數，均勻抽取   |
+
+難度預設會設定地城中生物那一面的預設值。物件可以用 `preset` 指定一個基礎，然後改動下方任何一個鍵。
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| 預設或鍵 | 刷怪籠 | 晉升 | 最高等級 | 節點等級 | 首領等級 | 每個刷怪籠的方塊數 | 入口生物 |
+| -------- | ------ | ---- | -------- | -------- | -------- | ------------------ | -------- |
+| `baby`   | 30     | 0    | 0        | 0        | 0        | 371                | `false`  |
+| `noob`   | 40     | 10   | 1        | 1        | 1        | 248                | `false`  |
+| `norm`   | 50     | 20   | 1        | 1        | 2        | 180                | `false`  |
+| `hard`   | 60     | 30   | 2        | 2        | 3        | 136                | `true`   |
+| `nuts`   | 70     | 50   | 2        | 2        | 4        | 50                 | `true`   |
+
+物件沒有寫出的鍵，取自它的預設，若未指定預設則取自 `norm`。等級從 `common` 的 0 到 `boss` 的 4。
+
+| 設定               | 類型          | 預設     | 作用                                                                                         |
+| ------------------ | ------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `preset`           | 預設名稱      | `norm`   | 其他鍵所改動的預設                                                                           |
+| `spawners`         | 0 到 100      | 取自預設 | 有生物的房間百分比                                                                           |
+| `promote`          | 0 到 100      | 取自預設 | 每一步中，房間的生物等級提高一級的機率百分比                                                 |
+| `maxTier`          | 0 到 4        | 取自預設 | 晉升所能提到的最高等級。最深一層的房間都不低於它的一半（無條件捨去），其上各層會依序朝它提升 |
+| `nodeTier`         | 0 到 4        | 取自預設 | 多條路徑交會的房間之最低等級                                                                 |
+| `bossTier`         | 0 到 4        | 取自預設 | 晉升能把那些交會房間提升到的最高等級；首領房間則改由首領生物決定其等級                       |
+| `blocksPerSpawner` | 1 到 100000   | 取自預設 | 刷怪籠的密度，以每個刷怪籠對應的地城方塊數計                                                 |
+| `entranceMobs`     | true 或 false | 取自預設 | 入口房間在其房間類型未設定刷怪籠數量時，是否有生物                                           |
+
+13 種擲骰各命名一項特性。程度決定該特性出現的機率，見下表。
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| 擲骰          | 作用                                                               |
+| ------------- | ------------------------------------------------------------------ |
+| `outside`     | 房間可能會開出一個通往地表的坑洞                                   |
+| `liquids`     | 坑洞與部分房間中的水池                                             |
+| `subrooms`    | 把房間切成兩半的隔牆                                               |
+| `islands`     | 立在坑洞中的小島                                                   |
+| `pillars`     | 房間中的柱子                                                       |
+| `symmetry`    | 柱子或水池的對稱副本                                               |
+| `variability` | 房間可能從其主題中挑選另一種方塊變體                               |
+| `degeneracy`  | 房間的方塊承受多少腐朽                                             |
+| `complexity`  | 每個房間嘗試取得多少特性                                           |
+| `vertical`    | 同一層內房間高度的變化幅度，以及房間有多常下沉一到兩格低於層地板   |
+| `entrances`   | 從其他頂層房間通往地表的額外豎井，在未設定 `entrance.extra` 時使用 |
+| `fences`      | 坑洞與坑洞口周圍的柵欄                                             |
+| `naturals`    | 單純的箱形大廳會變成洞穴房間                                       |
+
+| 程度     | 機率 |
+| -------- | ---- |
+| `none`   | 0    |
+| `few`    | 10   |
+| `some`   | 30   |
+| `plenty` | 50   |
+| `heaps`  | 90   |
+| `always` | 100  |
+
+程度也可以寫成權重物件，例如 `{ "none": 5, "few": 30 }`，依權重每座地城擲一次程度。全為零的物件是錯誤，會被忽略。
+
+### 房間類型
+
+房間類型決定每個房間容納什麼。沒有 `roomKinds` 的地城會得到一種普通的 `hall` 類型。
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| 設定                   | 類型                                             | 預設              | 作用                                                                                          |
+| ---------------------- | ------------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------- |
+| `kind`                 | 文字                                             | 必填              | 日誌中的名稱。`hall` 是普通房間                                                               |
+| `weight`               | 1 到 1000000                                     | `1`               | 該類型在每個房間抽取中所佔的比例                                                              |
+| `minLevel`, `maxLevel` | 0 到 64                                          | 任何一層          | 它可以出現的層，從頂層起算為 0                                                                |
+| `maxPerDungeon`        | 0 到 100000                                      | 無                | 一座地城中該類型房間的上限。規劃時套用，所以上限會嚴格成立                                    |
+| `maxPerLevel`          | 0 到 100000                                      | 無                | 一層中該類型房間的上限                                                                        |
+| `minSize`              | `[x, z]`                                         | 房間寬度的最小值  | 該類型所需的最小佔地。位置太小的房間會退回 `hall`                                             |
+| `height`               | `[min, max]`，3 到 64                            | 層高減 2          | 房間的內部高度                                                                                |
+| `shapes`               | `type` 或 `type=weight` 的清單                   | `box`             | 房間的形狀：`box`、`pillared`、`ring`、`pit`、`cross` 或 `cave`                               |
+| `templates`            | `id` 或 `id=weight` 的清單                       | 無                | 此類型的結構範本。該類型的每個房間都會抽一個。見地城中的範本                                  |
+| `yOffset`              | -64 到 64                                        | `0`               | 範本的第 0 列位於層地板之上多遠                                                               |
+| `turns`                | `none`、`quarter`、`half`、`threequarter` 的清單 | 任何              | 範本可以旋轉的角度，與 imprint 相同                                                           |
+| `decor`                | 裝飾器名稱清單                                   | 無                | 在房間中執行的主題裝飾器。見主題裝飾器                                                        |
+| `mobs`                 | 文字                                             | `common`          | 房間刷怪籠所用的主題生物等級或生成群組                                                        |
+| `loot`                 | 文字                                             | `basic`           | 房間箱子所用的主題戰利品組                                                                    |
+| `spawners`             | 0 到 100 百分比，或 `[min, max]`                 | 取自 `difficulty` | 每個房間的刷怪籠數。一個數字是機率，一組數對則是數量範圍                                      |
+| `chests`               | 0 到 100 百分比，或 `[min, max]`                 | 取自 `difficulty` | 每個房間的箱子數，形式與 `spawners` 相同                                                      |
+| `rolls`                | 物件                                             | 地城的擲骰        | 只針對此類型的程度覆寫                                                                        |
+| `decay`                | 0 到 100 百分比，或 true/false                   | `0`               | 加在此類型房間腐朽強度上的百分比。在範本類型中，`true` 會讓腐朽碰到範本自己的方塊，預設則不會 |
+| `node`                 | true/false                                       | `false`           | 把房間標記為樞紐，會得到較高的生物等級與一個額外的箱子                                        |
+
+### 入口、首領與豎井
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| 設定                        | 類型                                                 | 預設                   | 作用                                               |
+| --------------------------- | ---------------------------------------------------- | ---------------------- | -------------------------------------------------- |
+| `entrance.types`            | `simple`、`spiral` 或 `toproom` 的清單，可加 `=權重` | `simple`               | 地城頂端如何連到地表                               |
+| `entrance.topRoomTemplates` | `id` 或 `id=weight` 的清單                           | 無，即程序化建築或廢墟 | 頂層房間的範本。與 `toproom` 合用                  |
+| `entrance.extra`            | 程度（見擲骰表）                                     | `entrances` 擲骰       | 從其他頂層房間通往地表的第二個豎井的機率           |
+| `boss.templates`            | `id` 或 `id=weight` 的清單                           | 無                     | 首領房間的範本                                     |
+| `boss.size`                 | `[min, max]`，3 到 64                                | 無                     | 首領房間的佔地                                     |
+| `boss.height`               | `[min, max]`，3 到 64                                | 無                     | 首領房間的內部高度                                 |
+| `boss.mob`                  | 等級或生成群組名稱                                   | `boss`                 | 首領房間刷怪籠所用的生物                           |
+| `boss.loot`                 | 戰利品組名稱                                         | `boss`                 | 首領房間唯一一個箱子所用的戰利品組                 |
+| `boss.count`                | 1 到 16                                              | `1`                    | 首領房間中的刷怪籠數                               |
+| `shafts`                    | `type` 或 `type=weight` 的清單                       | `ladder`               | 兩層之間的連接類型：`ladder`、`spiral` 或 `stairs` |
+
+沒有 `boss` 的地城沒有首領房間：最底層的每個房間都是普通房間。
+
+### 深度規則
+
+層規則會為從某個深度往下的各層改動一些鍵。`fromDepth` 從頂層的 0.0 到底層的 1.0。對某一層而言，`fromDepth` 不大於該層深度的規則中，最後一條勝出，並逐鍵計算。
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| 設定         | 類型             | 預設       | 作用                                                         |
+| ------------ | ---------------- | ---------- | ------------------------------------------------------------ |
+| `fromDepth`  | 0.0 到 1.0       | 必填       | 規則開始的深度。沒有此鍵或超出範圍的規則會被略過             |
+| `theme`      | 主題 id          | 地城的主題 | 這些層所用的主題                                             |
+| `rolls`      | 物件             | 無         | 這些層的程度覆寫                                             |
+| `difficulty` | 預設名稱或物件   | 無         | 這些層的難度                                                 |
+| `decay`      | 物件             | 無         | 這些層的腐朽物件                                             |
+| `lootBonus`  | 數字             | 無         | 加在這些層每個箱子的戰利品等級上                             |
+| `roomKinds`  | 房間類型物件清單 | 無         | 這些層的房間類型。帶有此鍵的規則不會加入普通 `hall` 的預設值 |
+
+### 主題
+
+主題是一種外觀：地城各部分的方塊、生物、戰利品與裝飾器。主題檔案是一個物件。
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": [0],
+  "biomeTypes": ["FOREST=3", "PLAINS", "HILLS"],
+  "notBiomeTypes": ["SANDY"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_island"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "weight": 5 },
+               { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stonebrick" } ],
+    "ceilings": [ { "block": "minecraft:stonebrick" } ],
+    "pillars": [ { "block": "minecraft:stone_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:web"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| 設定                                                 | 類型                         | 預設         | 作用                                                                                                 |
+| ---------------------------------------------------- | ---------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
+| `name`                                               | 文字                         | 檔名         | 日誌中顯示的名稱                                                                                     |
+| `weight`                                             | 數字                         | `1`          | 該主題在地城主題抽取中所佔的比例                                                                     |
+| `dimensions`, `dimensionsAreBlacklist`               | 數字清單、true/false         | 所有維度     | 維度篩選，與地城相同                                                                                 |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | 清單，項目可為 `name=weight` | 所有生態域   | 依名稱與依類型篩選生態域，以及兩種排除。權重即該生態域的比例，因此可由多個主題組成每個生態域的主題池 |
+| `minY`, `maxY`                                       | 方塊 y 座標                  | 地城的上下限 | 地城頂層與底層地板必須落在的範圍。在此範圍內沒有房間的地點會失去該主題                               |
+| `blocks`                                             | 清單物件                     | 必填 `walls` | 方塊系列，見下一張表。每個項目都是一個方塊物件                                                       |
+| `mobs`                                               | 等級到清單的物件             | 無           | 每個等級的生物。見生物等級                                                                           |
+| `spawnGroups`                                        | 清單                         | 無           | 具名的生物群組，附帶深度範圍與它們會出現的房間類型                                                   |
+| `loot`                                               | 組到清單的物件               | 無           | 每個戰利品組的箱子項目。見戰利品組                                                                   |
+| `lootLevels`                                         | 1 到 12                      | `6`          | 最高箱子等級。箱子等級由深度依此換算而得，再加上 `lootBonus`                                         |
+| `lootBonus`                                          | 數字                         | `0`          | 加在主題中每個箱子等級上的值                                                                         |
+| `decorators`                                         | 名稱到裝飾器的物件           | 無           | 房間類型可在 `decor` 中指定的裝飾器。見主題裝飾器                                                    |
+| `rolls`, `difficulty`, `decay`                       | 與地城相同                   | 無           | 主題預設值。地城自己的值優先，然後才是深度規則                                                       |
+| `append`                                             | 文字或主題 id 清單           | 無           | 讓此檔案成為這些主題的附加。見主題附加                                                               |
+
+方塊物件接受 `block`（方塊 id），以及選用的 `meta`（預設為 0）、`weight`（預設為 1，且至少為 1），還有 `properties`（方塊狀態名稱到值的對照）。每座地城每個系列各挑一種方塊，而 `variability` 擲骰可讓房間挑另一種。
+
+方塊系列與其備援如下：
+
+| 系列       | 用於                                               | 若主題未列出               |
+| ---------- | -------------------------------------------------- | -------------------------- |
+| `walls`    | 房間牆壁。每個主題都必須有                         | 無，該檔案會被忽略         |
+| `floors`   | 房間地板                                           | 沿用牆壁方塊               |
+| `ceilings` | 房間天花板                                         | 沿用牆壁方塊               |
+| `pillars`  | 柱子，以及房間的柱子部件                           | 沿用牆壁方塊               |
+| `fencing`  | 坑洞與坑洞口周圍的柵欄                             | 沿用牆壁方塊               |
+| `liquid`   | 水池                                               | 水                         |
+| `cave`     | 洞穴房間                                           | 沿用牆壁方塊               |
+| `air`      | 房間與走廊內的開放空間                             | 空氣                       |
+| `support`  | 空氣或液體上方地板之下的支撐柱，以及入口之下的柱子 | 沿用地板方塊               |
+| `stairs`   | 樓梯豎井                                           | 石磚樓梯                   |
+| `slabs`    | 螺旋與樓梯豎井中需要半磚的地方                     | 平滑石磚半磚               |
+| `decay`    | 磨損的方塊，由輕到重                               | 無，因此腐朽不放置任何東西 |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stonebrick", "weight": 5 }, { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+  "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### 生物等級
+
+生物等級依下列順序排列，從 0 到 4：`common`、`hard`、`brute`、`elite` 與 `boss`。沒有生物的等級會退到下一個較低、且有生物的等級。若一個也不剩，刷怪籠就不放置。房間類型的 `mobs` 指定一個等級或一個生成群組，而 `difficulty` 決定房間往上爬多少等級。
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+生物項目是實體 id，可選擇在 id 之後加 `=weight`，以及可選擇的 `{nbt}` 後綴。擲骰中若沒有任何東西登記該 id，它就會被略過。
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| 設定                   | 類型             | 預設         | 作用                                   |
+| ---------------------- | ---------------- | ------------ | -------------------------------------- |
+| `name`                 | 文字             | 必填         | 房間類型的 `mobs` 用來挑選此群組的名稱 |
+| `mobs`                 | 實體 id 清單     | 無           | 群組中的生物，寫法與等級相同           |
+| `weight`               | 數字，至少為 1   | `1`          | 該群組在擲骰中所佔的比例               |
+| `minDepth`, `maxDepth` | 0.0 到 1.0       | `0.0`、`1.0` | 群組生成的深度範圍。若寫反，兩者會對調 |
+| `kinds`                | 房間類型名稱清單 | 任何         | 此群組可以生成的房間類型               |
+| `tier`                 | 五種等級名稱之一 | 無           | 群組生物所屬的等級。未知的等級會被捨去 |
+
+#### 戰利品組
+
+每個戰利品組是一份項目清單。箱子從它的房間所指定的組取得項目，房間預設為 `basic`，首領房間則為 `boss`。`weak`、`basic`、`treasure` 與 `boss` 是內建的組，資源包也可以加入自己的組。
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| 設定       | 類型           | 預設     | 作用                                          |
+| ---------- | -------------- | -------- | --------------------------------------------- |
+| `table`    | 戰利品表 id    | 必填     | 箱子擲的原版或資源包戰利品表                  |
+| `weight`   | 數字，至少為 1 | `1`      | 此項目在箱子等級允許的項目中所佔的比例        |
+| `minLevel` | 0 或更大       | `0`      | 此項目使用的最低箱子等級                      |
+| `maxLevel` | 數字           | 任何等級 | 此項目使用的最高箱子等級。不可低於 `minLevel` |
+
+#### 主題裝飾器
+
+裝飾器是一個物件，有 `type`、`block`（一個 id，或 id 清單），以及其類型所讀取的數字。房間類型會執行它在 `decor` 中指定的裝飾器。
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| 類型         | 讀取的數字（預設）           | 放置的內容                                                             |
+| ------------ | ---------------------------- | ---------------------------------------------------------------------- |
+| `wallLine`   | `height`（1）、`gap`（1）    | 沿牆壁排列、每段四格的方塊長條，每段高 `height`，段與段之間隔 `gap` 格 |
+| `floorPatch` | `percent`（10）              | 地板格中按該百分比放置的方塊                                           |
+| `scatter`    | `per100`（3）、`on`（floor） | 隨機放在地板、天花板或牆上的方塊，每格有 `per100` 在 100 的機率        |
+| `pillarsRow` | `height`（3）、`gap`（2）    | 沿房間中線排列的一列柱子，高 `height`，間距為 `gap`                    |
+| `bannerLine` | `gap`（4）、`height`（2）    | 每隔 `gap` 格掛在牆上的方塊，離地 `height` 格                          |
+| `torchLine`  | `gap`（4）、`height`（2）    | 與旗幟列相同方式掛在牆上的火把                                         |
+| `fill`       | `per100`（3）、`loot` 必填   | 牆壁格上的箱子，每格有 `per100` 在 100 的機率，由指定的戰利品組填入    |
+
+沒有 `loot` 的 `fill` 會被略過；`on` 不是 `floor`、`ceiling` 或 `wall` 的 `scatter` 會被捨去，因此散放會落在地板上。
+
+### 主題附加
+
+附加會為一個或多個主題加入內容，而不取代它們。附加檔案有一個 `append` 鍵，它寫入的鍵會合併到每個指定的主題中。
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "meta": 1, "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- 附加會在每個資源包的每個基礎主題載入之後套用，依資源鍵的順序排列，因此結果與檔案順序無關。
+- 在附加中，清單鍵是加在後面的：`blocks` 系列、`mobs` 等級、`loot` 組、`decorators`、`biomes`、`biomeTypes`、`notBiomes`、`notBiomeTypes` 與 `spawnGroups`。
+- 名為 `remove:` 加上其鍵的清單鍵，改為移除項目。`"remove:walls"` 依方塊 id 移除一個牆壁項目，`"remove:decorators"` 依名稱移除一個裝飾器。
+- 純量鍵只有在附加寫入時才取代基礎值：`weight`、`minY`、`maxY`、`lootLevels` 與 `lootBonus`。`rolls`、`difficulty` 與 `decay` 鍵在寫入時也會取代。
+- `name`、`dimensions` 與 `dimensionsAreBlacklist` 保持基礎主題的設定。
+- 目標沒有指向任何資源包主題的附加，會記錄一則錯誤後略過。會讓某個主題沒有牆壁的附加不會套用。
+
+### 放置地城
+
+地點由世界種子選出。篩選失敗的地點會被拒絕，被拒絕的地點會略過而不重試。生態域、維度與高度篩選屬於地城本身，主題則會在它自己的 `dimensions`、生態域清單以及 `minY` 與 `maxY` 中加上自己的篩選。
+
+- `dimensions` 與 `biomes` 篩選地城可以生成的位置，與世界生成條目相同。
+- `noOceans` 拒絕中心生態域為海洋的地點，預設為開啟。
+- `minDistance` 讓同一座地城的地點彼此分開。`group` 讓數座地城共用這個間距，每座地城保留該群組中最大的 `minDistance`。
+- `at` 把副本釘在精確座標，並略過 `chance`、`minDistance` 與生態域篩選。
+- `locateAs` 以一個名稱為每處地點登記，供 `/locate` 使用。即使區塊尚未生成也能找到地點。
+
+地城只佔用它入口的範圍，因此村莊會避開它。關於放置後的結構如何被找到、地圖如何配置，見[可生成的位置](#可生成的位置)與[尋找已放置的結構](#尋找已放置的結構)。
+
+### 地城中的範本
+
+房間類型可以指定資源包 `<namespace>/structures/` 中的 `.nbt` 範本。該類型的每個房間都會依權重抽一個範本。房間採用範本的尺寸，依房間的旋轉方向轉動；範本可以採用的旋轉在 `turns` 中列出。範本第 0 列位於層地板之上 `yOffset` 格。關於範本如何寫成與放置，見[放置範本](#放置範本)。
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### 重生地城
+
+地城採用與結構相同的 `respawn` 物件，重置適用於整座地城。地城的每個區塊片段都會被記錄為自己的重建，因此與任何結構一樣，重置會等到每個區塊都已載入。各鍵的作用見[重生結構](#重生結構)。
+
+### 註記
+
+- 地城一次寫入一個區塊，且沒有任何區塊會為了完成自己的部分而載入或生成鄰近的區塊。
+- 同一個種子會得到同一座地城，地點的主題與尺寸都由世界種子決定。
+- 層規則或生成群組中的 `depth` 是從頂層的 0.0 到底層的 1.0 之間的分數，而不是方塊數。
+- 主題的 `biomeTypes` 是 1.12.2 生態域字典的名稱，使用大寫，例如 `OCEAN`、`FOREST` 與 `PLAINS`。
 
 ## 村莊地塊
 

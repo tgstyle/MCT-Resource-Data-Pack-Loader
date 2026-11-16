@@ -6,6 +6,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMa
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write.DungeonWriter;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -54,6 +56,11 @@ public final class RespawnReset {
     private static void rebuild(WorldServer world, RespawnInstance instance, RespawnDef.Rebuild mode) {
         ITemplateProcessor filter = mode == RespawnDef.Rebuild.BROKEN ? TemplateFilters.broken() : null;
         StructureBoundingBox area = instance.area();
+        if (instance.kind == RespawnInstance.DUNGEON) {
+            DungeonSites.Site site = siteOf(world, instance);
+            if (site != null) { DungeonWriter.rewrite(world, site, area, area.minY, area.maxY, mode == RespawnDef.Rebuild.BROKEN); }
+            return;
+        }
         if (instance.kind == RespawnInstance.MAP || instance.tpl.isEmpty()) {
             StructureMapDef map = mapOf(instance);
             if (map != null) { ContentStructureMaps.cells(world, map, instance.seed, instance.rotation, instance.pos.getX(), instance.pos.getY(), instance.pos.getZ(), area, filter); }
@@ -65,6 +72,14 @@ public final class RespawnReset {
         if (instance.kind == RespawnInstance.PLOT) { settings.setSeed(instance.seed); }
         else { settings.setRandom(new Random(instance.seed)); }
         template.addBlocksToWorld(world, instance.pos, TemplateFilters.chain(new BlockRotationProcessor(instance.pos, settings), filter), settings, FLAGS);
+    }
+
+    @Nullable private static DungeonSites.Site siteOf(WorldServer world, RespawnInstance instance) {
+        BlockPos origin = BlockPos.fromLong(instance.seed);
+        for (DungeonSites.Site site : DungeonSites.sitesNear(world, origin, 0)) {
+            if (site.def.key.toString().equals(instance.def) && site.originX == origin.getX() && site.originZ == origin.getZ()) { return site; }
+        }
+        return null;
     }
 
     @Nullable private static StructureMapDef mapOf(RespawnInstance instance) {

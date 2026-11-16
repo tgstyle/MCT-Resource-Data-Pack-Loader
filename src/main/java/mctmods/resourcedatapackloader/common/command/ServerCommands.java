@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.locate.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipCommand;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimCommand;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
@@ -202,6 +203,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "goto".equals(args[0])) {
             List<String> known = new ArrayList<>(STRUCTURE_NAMES);
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
+            known.addAll(ContentDungeons.locateNames(sender.getEntityWorld()));
             known.addAll(biomeNames());
             known.removeIf(place -> !sender.canUseCommand(neededFor(place, "gotoLevel", Config.commands.gotoLevel), getName()));
             return getListOfStringsMatchingLastWord(args, known);
@@ -318,7 +320,7 @@ public class ServerCommands extends CommandBase {
     }
 
     @Nullable private static Biome biomeFor(World world, String name) {
-        if (STRUCTURE_NAMES.contains(name) || ContentLocate.names(world).contains(name)) { return null; }
+        if (STRUCTURE_NAMES.contains(name) || ContentLocate.names(world).contains(name) || ContentDungeons.locateNames(world).contains(name)) { return null; }
         return findBiome(name);
     }
 

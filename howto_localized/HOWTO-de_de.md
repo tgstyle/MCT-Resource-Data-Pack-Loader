@@ -107,6 +107,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Verteilung](#verteilung)
 - [Strukturkarten](#strukturkarten)
 - [Wiederkehrende Strukturen](#wiederkehrende-strukturen)
+- [Prozedurale Verliese](#prozedurale-verliese)
 - [Dorfgrundstücke](#dorfgrundstücke)
 - [Stadtpläne](#stadtpläne)
 - [Durchgehende Stadt](#durchgehende-stadt)
@@ -8369,6 +8370,465 @@ Eine Struktur kann wiederkommen, nachdem Spieler sie geleert haben: ihre Truhen 
 | `rebuild: "full"`   | Jeder Vorlagenblock wird erneut gesetzt, über dem, was dort steht                                                                |
 
 Nur die Truhen, die beim Bau der Struktur eine Beutetabelle hatten, füllen sich neu. Ein Reset wartet, bis jeder Chunk, den die Struktur abdeckt, geladen ist, und lädt oder erzeugt nie einen; eine Struktur in nicht geladenem Land wird zurückgesetzt, sobald ein Spieler sie das nächste Mal in den Bereich holt. Strukturen, die vor dem Hinzufügen von `respawn` durch das Pack gebaut wurden, werden nicht verfolgt. Alles läuft auf dem Server, Spieler brauchen nichts zu installieren.
+
+## Prozedurale Verliese
+
+*Erzeugung der Welt*
+
+Ein Verlies ist ein vergrabenes, mehrstöckiges Bauwerk aus Räumen, Gängen und Schächten. Der Mod plant es aus dem Weltseed, statt es aus Vorlagen zu stempeln, daher ergibt derselbe Seed dasselbe Verlies. Jeder Chunk schreibt nur seinen eigenen Teil des Verlieses, und ein Chunk lädt oder erzeugt nie einen Nachbarn, um seinen Anteil fertigzustellen. RDPL liefert kein Verlies-Thema mit, daher muss ein Pack mindestens eines mitbringen, sonst setzen seine Verliese nichts. Aussehen, Mobs und Beute eines Verlieses kommen alle aus seinem Thema.
+
+`<namespace>/dungeons/*.json` für Verliese, `<namespace>/dungeonthemes/*.json` für Themen
+
+### Verliesdatei
+
+```json
+{
+  "name": "Old Crypt",
+  "themes": ["mypack:stone_crypt=3", "mypack:mossy_crypt=2", "mypack:sand_tomb"],
+  "dimensions": [0],
+  "chance": 75,
+  "minDistance": 600,
+  "minDistanceFromSpawn": 200,
+  "noOceans": true,
+  "biomeTypes": ["OCEAN", "RIVER"],
+  "biomesAreBlacklist": true,
+  "locateAs": "Crypt",
+  "sizes": [
+    { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+    { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] }
+  ],
+  "surfaceBuffer": 7,
+  "levelHeight": [5, 8],
+  "roomSize": [5, 15],
+  "corridor": { "width": 3, "height": 3 },
+  "loops": 25,
+  "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" },
+  "roomKinds": [
+    { "kind": "hall", "weight": 10 },
+    { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+      "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" }
+  ],
+  "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2"], "extra": "few" },
+  "boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss" },
+  "shafts": ["ladder=2", "spiral=2", "stairs=1"],
+  "difficulty": "norm",
+  "support": { "depth": 12 },
+  "decay": { "base": 20, "perDepth": 25 },
+  "levelRules": [
+    { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "lootBonus": 1 }
+  ],
+  "respawn": { "after": 3600, "playerDistance": 64, "loot": "emptied", "spawners": true, "rebuild": "broken" }
+}
+```
+
+| Schlüssel                | Typ                                  | Standard                         | Was er macht                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                   | Text                                 | der Dateiname                    | Name in Logs                                                                                                                                                                                 |
+| `themes`                 | Liste aus `id` oder `id=Gewicht`     | keiner, Pflicht                  | Der Thema-Pool. Jeder Standort zieht daraus ein Thema. Ein Thema, das Biom, Dimension oder Höhe des Standorts ausschließt, fällt weg. Bleibt keines übrig, bekommt der Standort kein Verlies |
+| `dimensions`             | Liste von Zahlen                     | `[0]`, die Oberwelt              | Dimensionen, in denen ein Verlies entstehen darf                                                                                                                                             |
+| `dimensionsAreBlacklist` | true/false                           | `false`                          | Macht `dimensions` zur Liste der zu meidenden Dimensionen                                                                                                                                    |
+| `chance`                 | 1 bis 100                            | `75`                             | Prozent der Standorte mit Verlies, einmal pro Standort aus dem Weltseed gewürfelt                                                                                                            |
+| `minDistance`            | 0 bis 100000 Blöcke                  | `600`                            | Mindestabstand zwischen zwei Standorten dieses Verlieses oder seiner `group`, gemessen an der größeren der Achsen x und z                                                                    |
+| `group`                  | Text                                 | die eigene ID des Verlieses      | Verliese in einer Gruppe halten ihre Standorte um den größten `minDistance` der Gruppe auseinander                                                                                           |
+| `minDistanceFromSpawn`   | 0 bis 100000 Blöcke                  | `0`                              | Ein Standort so nah am Weltspawn wird abgelehnt                                                                                                                                              |
+| `noOceans`               | true/false                           | `true`                           | Lehnt einen Standort ab, dessen Biom in der Mitte ein Ozean ist                                                                                                                              |
+| `biomes`                 | Liste von Biom-IDs                   | keine                            | Biomfilter, wie bei Worldgen-Einträgen                                                                                                                                                       |
+| `biomeTypes`             | Liste von Biomtyp-Namen              | keine                            | Biomfilter nach Typ, etwa `OCEAN` oder `RIVER`. Themen fügen eigene Filter hinzu                                                                                                             |
+| `biomesAreBlacklist`     | true/false                           | `false`                          | Macht `biomes` und `biomeTypes` zur Liste der zu meidenden Biome                                                                                                                             |
+| `at`                     | `[x, z]` oder eine Liste davon       | keine                            | Fixiert ein Verlies auf genaue Blockkoordinaten. Umgeht `chance`, `minDistance` und den Biomfilter, so wie `at` eine Struktur auf der Strukturkarte festpinnt                                |
+| `locateAs`               | Text                                 | keine                            | Registriert jeden Standort unter diesem Namen, sodass `/locate <name>` einen davon findet. Es funktioniert, bevor der Chunk erzeugt ist                                                      |
+| `sizes`                  | Liste von Größenobjekten             | die vier eingebauten Größen      | Der Größenwurf für jeden Standort. Siehe Größentabelle                                                                                                                                       |
+| `shrink`                 | 0 bis 100 Prozent                    | `0`                              | Das Feld jeder Ebene ist um diesen Anteil schmaler als das darüber, bis hinab zu einer Untergrenze der halben Grundfläche                                                                    |
+| `surfaceBuffer`          | 0 bis 64 Blöcke                      | `7`                              | Feste Deckschicht zwischen der Decke der obersten Ebene und der Oberfläche                                                                                                                   |
+| `minY`                   | Block-y                              | der Weltboden                    | Der tiefste Boden, den eine Ebene annehmen darf. Ebenen, die nicht mehr passen, werden nicht gebaut                                                                                          |
+| `levelHeight`            | `[min, max]`, 4 bis 64               | `[5, 8]`                         | Blockhöhe einer Ebene von Boden bis Decke. Die gewürfelte Höhe gilt pro Ebene. Räume werden auf diese minus 2 begrenzt                                                                       |
+| `roomSize`               | `[min, max]`, 3 bis 64               | `[5, 15]`                        | Bereich von Breite und Tiefe der Räume. Ein Minimum unter Gangbreite plus 2 wird darauf angehoben, und das Log vermerkt es                                                                   |
+| `corridor`               | `{ "width", "height" }`              | `{ 3, 3 }`                       | Größe der Verbindungen zwischen Räumen. Breite ist 1 bis 5. Höhe ist 2 bis zur niedrigsten `levelHeight` minus 2                                                                             |
+| `loops`                  | 0 bis 100 Prozent                    | `25`                             | Zusätzliche Verbindungen zwischen Räumen über den Spannbaum hinaus, als Anteil der möglichen Nachbarpaare                                                                                    |
+| `rolls`                  | Objekt von Element zu Grad           | keine                            | Grade für die 13 Auslosungen, wie unten aufgeführt. Einmal pro Verlies gewürfelt. Eine fehlende Auslosung ist `none`                                                                         |
+| `roomKinds`              | Liste von Raumart-Objekten           | ein `hall`                       | Die typisierten Räume und ihre Gewichte. Siehe Raumarten                                                                                                                                     |
+| `entrance`               | Objekt                               | `{ "types": ["simple"] }`        | Wie das Verlies die Oberfläche erreicht. Siehe Eingang, Boss und Schächte                                                                                                                    |
+| `boss`                   | Objekt                               | keiner                           | Der Bossraum. Siehe Eingang, Boss und Schächte                                                                                                                                               |
+| `shafts`                 | Liste von `type` oder `type=Gewicht` | `ladder`                         | Die Verbindungsarten zwischen Ebenen: `ladder`, `spiral` und `stairs`                                                                                                                        |
+| `difficulty`             | Voreinstellungsname oder Objekt      | `"norm"`                         | Wie viele Räume Mobs bekommen, wie die Ränge steigen und wie oft Spawner auftauchen. Siehe Voreinstellungstabelle                                                                            |
+| `support`                | Objekt, `true` oder `false`          | `{ "depth": 8 }`                 | Wie weit eine Säule von einem Boden über Luft oder Flüssigkeit nach unten gefüllt wird. `false` schaltet diesen Durchgang ab                                                                 |
+| `decay`                  | Objekt                               | `{ "base": 15, "perDepth": 20 }` | Stärke der Verfallsblöcke: `base` ist der Start, `perDepth` kommt mit der Tiefe hinzu. Jeweils 0 bis 100                                                                                     |
+| `levelRules`             | Liste                                | keine                            | Überschreibungen nach Tiefe. Siehe Tiefenregeln                                                                                                                                              |
+| `respawn`                | Objekt                               | keiner                           | Dasselbe Objekt wie bei Wiederkehrende Strukturen. Gilt für das ganze Verlies                                                                                                                |
+
+Die Größenobjekte legen die Form jeder Größe fest. Die Schlüssel einer Größe sind:
+
+```json
+{ "sizes": [
+  { "name": "small", "weight": 30, "footprint": 80, "levels": [2, 5], "rooms": [10, 20] },
+  { "name": "medium", "weight": 25, "footprint": 112, "levels": [4, 7], "rooms": [15, 30] },
+  { "name": "large", "weight": 25, "footprint": 144, "levels": [6, 9], "rooms": [20, 40] },
+  { "name": "vast", "weight": 20, "footprint": 176, "levels": [8, 11], "rooms": [25, 50] }
+] }
+```
+
+| Schlüssel   | Typ                     | Standard                  | Was er macht                                             |
+| ----------- | ----------------------- | ------------------------- | -------------------------------------------------------- |
+| `name`      | Text                    | `size` und seine Position | Name in Logs                                             |
+| `weight`    | 1 bis 1000000           | `1`                       | Anteil der Größe am Größenwurf                           |
+| `footprint` | 48 bis 176 Blöcke       | `112`                     | Seite des quadratischen Feldes, in dem die Ebenen liegen |
+| `levels`    | `[min, max]`, 1 bis 64  | `[4, 7]`                  | Anzahl der Ebenen, gleichverteilt gewürfelt              |
+| `rooms`     | `[min, max]`, 1 bis 400 | `[15, 30]`                | Räume pro Ebene, gleichverteilt gewürfelt                |
+
+Eine Schwierigkeitsvoreinstellung setzt die Standardwerte für die Mob-Seite eines Verlieses. Ein Objekt darf eine `preset` als Basis nennen und dann jeden der Schlüssel unten ändern.
+
+```json
+{ "difficulty": { "preset": "hard", "spawners": 40, "entranceMobs": false } }
+```
+
+| Voreinstellung oder Schlüssel | Spawner | Aufstieg | Max. Rang | Knoten-Rang | Boss-Rang | Blöcke pro Spawner | Mobs am Eingang |
+| ----------------------------- | ------- | -------- | --------- | ----------- | --------- | ------------------ | --------------- |
+| `baby`                        | 30      | 0        | 0         | 0           | 0         | 371                | `false`         |
+| `noob`                        | 40      | 10       | 1         | 1           | 1         | 248                | `false`         |
+| `norm`                        | 50      | 20       | 1         | 1           | 2         | 180                | `false`         |
+| `hard`                        | 60      | 30       | 2         | 2           | 3         | 136                | `true`          |
+| `nuts`                        | 70      | 50       | 2         | 2           | 4         | 50                 | `true`          |
+
+Jeder Schlüssel, den ein Objekt auslässt, kommt aus seiner Voreinstellung und, wenn es keine nennt, aus `norm`. Die Ränge laufen von 0 für `common` bis 4 für `boss`.
+
+| Schlüssel          | Typ                 | Standard               | Was er macht                                                                                                                                                                                            |
+| ------------------ | ------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preset`           | Voreinstellungsname | `norm`                 | Die Voreinstellung, die die übrigen Schlüssel ändern                                                                                                                                                    |
+| `spawners`         | 0 bis 100           | aus der Voreinstellung | Prozent der Räume, die Mobs bekommen                                                                                                                                                                    |
+| `promote`          | 0 bis 100           | aus der Voreinstellung | Prozentuale Chance pro Schritt, dass der Mob-Rang eines Raums um eine Stufe steigt                                                                                                                      |
+| `maxTier`          | 0 bis 4             | aus der Voreinstellung | Höchster Rang, auf den die Beförderung einen gewöhnlichen Raum hebt. Kein Raum der untersten Ebene liegt unter der Hälfte davon, abgerundet, und die Ebenen darüber steigen Schritt für Schritt dorthin |
+| `nodeTier`         | 0 bis 4             | aus der Voreinstellung | Niedrigster Rang der Räume, in denen mehrere Wege zusammentreffen                                                                                                                                       |
+| `bossTier`         | 0 bis 4             | aus der Voreinstellung | Höchster Rang, auf den die Beförderung diese Verbindungsräume hebt. Der Bossraum nimmt seinen Rang stattdessen vom Boss-Mob                                                                             |
+| `blocksPerSpawner` | 1 bis 100000        | aus der Voreinstellung | Spawner-Dichte, in Verlies-Blöcken pro Spawner                                                                                                                                                          |
+| `entranceMobs`     | true oder false     | aus der Voreinstellung | Ob der Eingangsraum Mobs bekommt, wenn seine Raumart keine Spawner-Anzahl setzt                                                                                                                         |
+
+Die 13 Auslosungen benennen je ein Merkmal. Ein Grad legt die Chance fest, dass das Merkmal erscheint, wie die nächste Tabelle zeigt.
+
+```json
+{ "rolls": { "pillars": "some", "liquids": { "none": 5, "few": 30, "some": 50, "plenty": 20 }, "naturals": "few" } }
+```
+
+| Auslosung     | Was sie steuert                                                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `outside`     | Ein Raum darf ein Erdloch zur Oberfläche öffnen                                                                                        |
+| `liquids`     | Tümpel in Gruben und in manchen Räumen                                                                                                 |
+| `subrooms`    | Trennwände, die einen Raum in zwei teilen                                                                                              |
+| `islands`     | Inseln, die in Gruben stehen                                                                                                           |
+| `pillars`     | Säulen in Räumen                                                                                                                       |
+| `symmetry`    | Ein gespiegelter Zwilling einer Säule oder eines Tümpels                                                                               |
+| `variability` | Ein Raum darf aus seinem Thema eine andere Blockvariante wählen                                                                        |
+| `degeneracy`  | Wie viel Verfall die Blöcke des Raums annehmen                                                                                         |
+| `complexity`  | Wie viele Merkmale jeder Raum zu bekommen versucht                                                                                     |
+| `vertical`    | Wie stark sich die Raumhöhen innerhalb einer Ebene unterscheiden und wie oft ein Raum ein oder zwei Blöcke unter den Ebenenboden sinkt |
+| `entrances`   | Zusätzliche Schächte von anderen Räumen der obersten Ebene zur Oberfläche, genutzt, wenn `entrance.extra` nicht gesetzt ist            |
+| `fences`      | Zäune um Gruben und Erdlöcher                                                                                                          |
+| `naturals`    | Eine schlichte Kastenhalle wird zu einem Höhlenraum                                                                                    |
+
+| Grad     | Chance |
+| -------- | ------ |
+| `none`   | 0      |
+| `few`    | 10     |
+| `some`   | 30     |
+| `plenty` | 50     |
+| `heaps`  | 90     |
+| `always` | 100    |
+
+Ein Grad kann auch als Objekt von Gewichten geschrieben werden, etwa `{ "none": 5, "few": 30 }`, das pro Verlies nach Gewicht einen Grad würfelt. Ein Objekt aus lauter Nullen ist ein Fehler und wird ignoriert.
+
+### Raumarten
+
+Die Raumarten legen fest, was jeder Raum enthält. Ein Verlies ohne `roomKinds` bekommt eine einzige schlichte Raumart `hall`.
+
+```json
+{ "roomKinds": [
+  { "kind": "hall", "weight": 10 },
+  { "kind": "library", "weight": 2, "maxPerDungeon": 3, "minSize": [7, 7], "height": [5, 7],
+    "decor": ["shelves", "carpet", "cobweb"], "loot": "library", "mobs": "weak" },
+  { "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "maxPerLevel": 1 }
+] }
+```
+
+| Schlüssel              | Typ                                                 | Standard                      | Was er macht                                                                                                                                                                                     |
+| ---------------------- | --------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `kind`                 | Text                                                | Pflicht                       | Der Name in Logs. `hall` ist der schlichte Raum                                                                                                                                                  |
+| `weight`               | 1 bis 1000000                                       | `1`                           | Anteil der Raumart am Wurf für jeden Raum                                                                                                                                                        |
+| `minLevel`, `maxLevel` | 0 bis 64                                            | jede Ebene                    | Die Ebenen, auf denen sie auftauchen darf, von oben mit 0 gezählt                                                                                                                                |
+| `maxPerDungeon`        | 0 bis 100000                                        | keine                         | Die meisten Räume dieser Art in einem Verlies. Wird schon beim Planen angewendet, damit die Obergrenze genau hält                                                                                |
+| `maxPerLevel`          | 0 bis 100000                                        | keine                         | Die meisten Räume dieser Art auf einer Ebene                                                                                                                                                     |
+| `minSize`              | `[x, z]`                                            | das Mindestmaß des Raums      | Die kleinste Grundfläche, die die Raumart braucht. Ein Raum in einem zu kleinen Platz fällt auf `hall` zurück                                                                                    |
+| `height`               | `[min, max]`, 3 bis 64                              | die Ebenenhöhe minus 2        | Innenhöhe des Raums                                                                                                                                                                              |
+| `shapes`               | Liste von `type` oder `type=Gewicht`                | `box`                         | Die Form des Raums: `box`, `pillared`, `ring`, `pit`, `cross` oder `cave`                                                                                                                        |
+| `templates`            | Liste von `id` oder `id=Gewicht`                    | keine                         | Strukturvorlagen für diese Raumart. Jeder Raum dieser Art würfelt eine aus. Siehe Vorlagen im Verlies                                                                                            |
+| `yOffset`              | -64 bis 64                                          | `0`                           | Wie weit über dem Ebenenboden die Zeile 0 der Vorlage sitzt                                                                                                                                      |
+| `turns`                | Liste von `none`, `quarter`, `half`, `threequarter` | beliebig                      | Die Drehungen, die eine Vorlage annehmen darf, wie bei einem Abdruck                                                                                                                             |
+| `decor`                | Liste von Dekorator-Namen                           | keine                         | Die Dekoratoren des Themas, die im Raum laufen. Siehe Thema-Dekoratoren                                                                                                                          |
+| `mobs`                 | Text                                                | `common`                      | Der Mob-Rang oder die Spawn-Gruppe des Themas für die Spawner des Raums                                                                                                                          |
+| `loot`                 | Text                                                | `basic`                       | Der Beutesatz des Themas für die Truhen des Raums                                                                                                                                                |
+| `spawners`             | 0 bis 100 Prozent, oder `[min, max]`                | aus `difficulty`              | Spawner pro Raum. Eine Zahl ist eine Chance, ein Paar ist ein Anzahlbereich                                                                                                                      |
+| `chests`               | 0 bis 100 Prozent, oder `[min, max]`                | aus `difficulty`              | Truhen pro Raum, in denselben Formen wie `spawners`                                                                                                                                              |
+| `rolls`                | Objekt                                              | die Auslosungen des Verlieses | Grad-Überschreibungen nur für diese Raumart                                                                                                                                                      |
+| `decay`                | 0 bis 100 Prozent, oder true/false                  | `0`                           | Prozent, die zur Verfallsstärke in den Räumen dieser Art addiert werden. Bei einer Vorlagenart lässt `true` den Verfall die eigenen Blöcke der Vorlage erreichen, was er standardmäßig nicht tut |
+| `node`                 | true/false                                          | `false`                       | Markiert den Raum als Knotenpunkt, der einen höheren Mob-Rang und eine zusätzliche Truhe bekommt                                                                                                 |
+
+### Eingang, Boss und Schächte
+
+```json
+{ "entrance": { "types": ["simple=2", "spiral=2", "toproom=3"], "topRoomTemplates": ["mypack:crypt_ruin=2", "mypack:crypt_gate"], "extra": "few" },
+"boss": { "templates": ["mypack:boss_hall"], "size": [12, 12], "height": [8, 10], "mob": "boss", "loot": "boss", "count": 2 },
+"shafts": ["ladder=2", "spiral=2", "stairs=1"] }
+```
+
+| Schlüssel                   | Typ                                                         | Standard                                             | Was er macht                                                                              |
+| --------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `entrance.types`            | Liste von `simple`, `spiral` oder `toproom`, mit `=Gewicht` | `simple`                                             | Wie der obere Teil des Verlieses die Oberfläche erreicht                                  |
+| `entrance.topRoomTemplates` | Liste von `id` oder `id=Gewicht`                            | keine, ein Bauwerk oder eine Ruine aus dem Verfahren | Vorlagen für einen oberen Raum. Wird mit `toproom` verwendet                              |
+| `entrance.extra`            | Grad (siehe Tabelle der Auslosungen)                        | die Auslosung `entrances`                            | Die Chance auf einen zweiten Schacht von anderen Räumen der obersten Ebene zur Oberfläche |
+| `boss.templates`            | Liste von `id` oder `id=Gewicht`                            | keine                                                | Vorlagen für den Bossraum                                                                 |
+| `boss.size`                 | `[min, max]`, 3 bis 64                                      | keine                                                | Grundfläche des Bossraums                                                                 |
+| `boss.height`               | `[min, max]`, 3 bis 64                                      | keine                                                | Innenhöhe des Bossraums                                                                   |
+| `boss.mob`                  | Rang- oder Spawn-Gruppenname                                | `boss`                                               | Die Mobs des Spawners im Bossraum                                                         |
+| `boss.loot`                 | Name eines Beutesatzes                                      | `boss`                                               | Der Beutesatz der einen Truhe im Bossraum                                                 |
+| `boss.count`                | 1 bis 16                                                    | `1`                                                  | Spawner im Bossraum                                                                       |
+| `shafts`                    | Liste von `type` oder `type=Gewicht`                        | `ladder`                                             | Der Verbindungstyp zwischen zwei Ebenen: `ladder`, `spiral` oder `stairs`                 |
+
+Ein Verlies ohne `boss` hat keinen Bossraum: Jeder Raum auf der untersten Ebene ist ein gewöhnlicher Raum.
+
+### Tiefenregeln
+
+Eine Ebenenregel ändert einige Schlüssel für die Ebenen ab einer bestimmten Tiefe nach unten. `fromDepth` läuft von 0.0 auf der obersten Ebene bis 1.0 auf der untersten. Die letzte Regel, deren Tiefe bei oder über der Tiefe einer Ebene liegt, gewinnt, und zwar je Schlüssel einzeln.
+
+```json
+{ "levelRules": [
+  { "fromDepth": 0.5, "theme": "mypack:deep_crypt", "difficulty": { "spawners": 70 }, "decay": { "base": 35, "perDepth": 25 }, "lootBonus": 1 }
+] }
+```
+
+| Schlüssel    | Typ                             | Standard                | Was er macht                                                                                                |
+| ------------ | ------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `fromDepth`  | 0.0 bis 1.0                     | Pflicht                 | Die Tiefe, ab der die Regel gilt. Eine Regel ohne sie oder außerhalb des Bereichs fällt weg                 |
+| `theme`      | Thema-ID                        | das Thema des Verlieses | Das Thema für diese Ebenen                                                                                  |
+| `rolls`      | Objekt                          | keine                   | Grad-Überschreibungen für diese Ebenen                                                                      |
+| `difficulty` | Voreinstellungsname oder Objekt | keine                   | Eine Schwierigkeit für diese Ebenen                                                                         |
+| `decay`      | Objekt                          | keiner                  | Ein Verfallsobjekt für diese Ebenen                                                                         |
+| `lootBonus`  | Zahl                            | keiner                  | Wird zu jeder Truhenstufe auf diesen Ebenen addiert                                                         |
+| `roomKinds`  | Liste von Raumart-Objekten      | keine                   | Raumarten für diese Ebenen. Eine Regel mit diesem Schlüssel fügt nicht den schlichten Standard `hall` hinzu |
+
+### Themen
+
+Ein Thema ist ein Look: die Blöcke jedes Teils des Verlieses, die Mobs, die Beute und die Dekoratoren. Die Themendatei ist ein einziges Objekt.
+
+```json
+{
+  "name": "Stone Crypt",
+  "weight": 1,
+  "dimensions": [0],
+  "biomeTypes": ["FOREST=3", "PLAINS", "HILLS"],
+  "notBiomeTypes": ["SANDY"],
+  "biomes": [],
+  "notBiomes": ["minecraft:mushroom_island"],
+  "minY": 10,
+  "maxY": 60,
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "weight": 5 },
+               { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+    "floors": [ { "block": "minecraft:stonebrick" } ],
+    "ceilings": [ { "block": "minecraft:stonebrick" } ],
+    "pillars": [ { "block": "minecraft:stone_slab" } ],
+    "fencing": [ { "block": "minecraft:iron_bars" } ],
+    "liquid": [ { "block": "minecraft:water" } ],
+    "cave": [ { "block": "minecraft:cobblestone" } ],
+    "air": [ { "block": "minecraft:air" } ],
+    "support": [ { "block": "minecraft:cobblestone" } ],
+    "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" },
+               { "block": "minecraft:gravel" }, { "block": "minecraft:air" } ]
+  },
+  "mobs": {
+    "common": ["minecraft:zombie=3", "minecraft:skeleton=3"],
+    "hard": ["minecraft:cave_spider"],
+    "brute": ["minecraft:creeper"],
+    "elite": ["minecraft:witch"],
+    "boss": ["mypack:crypt_lord"]
+  },
+  "spawnGroups": [
+    { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "kinds": ["library"] }
+  ],
+  "loot": {
+    "weak": [ { "table": "minecraft:chests/simple_dungeon", "weight": 1, "minLevel": 0, "maxLevel": 2 } ],
+    "basic": [ { "table": "minecraft:chests/simple_dungeon", "minLevel": 0, "maxLevel": 6 } ],
+    "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "minLevel": 2, "maxLevel": 6 } ],
+    "boss": [ { "table": "mypack:chests/crypt_boss" } ],
+    "library": [ { "table": "mypack:chests/books" } ]
+  },
+  "decorators": {
+    "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+    "carpet": { "type": "floorPatch", "block": ["minecraft:carpet"], "percent": 60 },
+    "cobweb": { "type": "scatter", "block": ["minecraft:web"], "on": "ceiling", "per100": 4 }
+  },
+  "rolls": { "degeneracy": { "none": 50, "few": 5, "some": 15, "plenty": 50, "heaps": 10 } },
+  "difficulty": "norm",
+  "lootLevels": 6,
+  "lootBonus": 0
+}
+```
+
+| Schlüssel                                            | Typ                                         | Standard                  | Was er macht                                                                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | Text                                        | der Dateiname             | Name in Logs                                                                                                                                                      |
+| `weight`                                             | Zahl                                        | `1`                       | Anteil des Themas am Themenwurf eines Verlieses                                                                                                                   |
+| `dimensions`, `dimensionsAreBlacklist`               | Liste von Zahlen, true/false                | alle Dimensionen          | Dimensionsfilter, wie bei einem Verlies                                                                                                                           |
+| `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` | Listen, Einträge dürfen `name=Gewicht` sein | alle Biome                | Biomfilter nach Name, nach Typ, und die beiden Ausschlüsse. Ein Gewicht ist der Anteil dieses Bioms, daher lässt sich aus mehreren Themen ein Pool pro Biom bauen |
+| `minY`, `maxY`                                       | Block-y                                     | die Grenzen des Verlieses | Das Band, in dem Boden oben und unten im Verlies liegen müssen. Ein Standort, der darin keinen Raum hat, verliert das Thema                                       |
+| `blocks`                                             | Objekt aus Listen                           | `walls` Pflicht           | Die Blockfamilien, wie die nächste Tabelle zeigt. Jeder Eintrag ist ein Blockobjekt                                                                               |
+| `mobs`                                               | Objekt von Rang zu Liste                    | keine                     | Die Mobs jedes Rangs. Siehe Mob-Ränge im Verlies                                                                                                                  |
+| `spawnGroups`                                        | Liste                                       | keine                     | Benannte Gruppen von Mobs mit einem Tiefenbereich und den Raumarten, in denen sie stehen                                                                          |
+| `loot`                                               | Objekt von Satz zu Liste                    | keine                     | Die Truhen-Einträge jedes Beutesatzes. Siehe Beutesätze                                                                                                           |
+| `lootLevels`                                         | 1 bis 12                                    | `6`                       | Die oberste Truhenstufe. Die Truhenstufe kommt aus der Tiefe, skaliert auf diesen Wert, plus `lootBonus`                                                          |
+| `lootBonus`                                          | Zahl                                        | `0`                       | Wird zu jeder Truhenstufe im Thema addiert                                                                                                                        |
+| `decorators`                                         | Objekt von Name zu Dekorator                | keine                     | Dekoratoren, die Raumarten in `decor` nennen dürfen. Siehe Thema-Dekoratoren                                                                                      |
+| `rolls`, `difficulty`, `decay`                       | wie beim Verlies                            | keine                     | Standardwerte des Themas. Der eigene Wert des Verlieses gewinnt, danach die Tiefenregeln                                                                          |
+| `append`                                             | Text oder Liste von Thema-IDs               | keiner                    | Macht die Datei zu einem Anhang an diese Themen. Siehe Thema-Anhänge                                                                                              |
+
+Ein Blockobjekt nimmt `block`, die Block-ID, und optional `meta`, das standardmäßig 0 ist, `weight`, das standardmäßig 1 ist und mindestens 1 sein muss, und `properties`, eine Zuordnung von Blockzustandsnamen zu Werten. Jedes Verlies wählt pro Familie einen Block, und der Wurf `variability` lässt einen Raum einen anderen wählen.
+
+Die Blockfamilien und ihre Ersatzwerte:
+
+| Familie    | Verwendet für                                                             | Wenn das Thema sie auslässt        |
+| ---------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| `walls`    | Raumwände. In jedem Thema Pflicht                                         | keiner, die Datei wird ignoriert   |
+| `floors`   | Raumböden                                                                 | der Wandblock                      |
+| `ceilings` | Raumdecken                                                                | der Wandblock                      |
+| `pillars`  | Säulen und die Säulenteile der Räume                                      | der Wandblock                      |
+| `fencing`  | Zäune um Gruben und Erdlöcher                                             | der Wandblock                      |
+| `liquid`   | Tümpel                                                                    | Wasser                             |
+| `cave`     | Höhlenräume                                                               | der Wandblock                      |
+| `air`      | Offener Raum in Räumen und Gängen                                         | Luft                               |
+| `support`  | Säulen unter einem Boden über Luft oder Flüssigkeit und unter dem Eingang | der Bodenblock                     |
+| `stairs`   | Treppenschächte                                                           | Treppen aus Steinziegeln           |
+| `slabs`    | Spiral- und Treppenschächte, wo die Treppen eine Stufe brauchen           | eine glatte Steinziegelplatte      |
+| `decay`    | Die verwitterten Blöcke, von mild bis am schlimmsten                      | keiner, daher setzt Verfall nichts |
+
+```json
+{ "blocks": {
+  "walls": [ { "block": "minecraft:stonebrick", "weight": 5 }, { "block": "minecraft:stonebrick", "meta": 1, "weight": 2 } ],
+  "decay": [ { "block": "minecraft:stonebrick", "meta": 2 }, { "block": "minecraft:cobblestone" }, { "block": "minecraft:air" } ]
+} }
+```
+
+#### Mob-Ränge im Verlies
+
+Die Mob-Ränge laufen in dieser Reihenfolge von 0 bis 4: `common`, `hard`, `brute`, `elite` und `boss`. Ein Rang ohne Mobs fällt auf den nächst niedrigeren Rang mit Mobs zurück. Bleibt keiner, wird der Spawner nicht gesetzt. Der `mobs`-Eintrag einer Raumart nennt einen Rang oder eine Spawn-Gruppe, und `difficulty` legt fest, wie weit die Ränge im Raum aufsteigen.
+
+```json
+{ "mobs": { "common": ["minecraft:zombie=3", "minecraft:skeleton=3"], "hard": ["minecraft:cave_spider"] } }
+```
+
+Ein Mob-Eintrag ist eine Entity-ID, mit optionalem `=Gewicht` und optionalem `{nbt}`-Suffix hinter der ID. Eine ID, die nichts registriert, fällt aus dem Wurf heraus.
+
+```json
+{ "spawnGroups": [ { "name": "weak", "mobs": ["minecraft:silverfish"], "weight": 2, "minDepth": 0.0, "maxDepth": 0.4, "tier": "common", "kinds": ["library"] } ] }
+```
+
+| Schlüssel              | Typ                      | Standard     | Was er macht                                                                                                   |
+| ---------------------- | ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `name`                 | Text                     | Pflicht      | Der Name, mit dem der `mobs`-Eintrag einer Raumart diese Gruppe auswählt                                       |
+| `mobs`                 | Liste von Entity-IDs     | keine        | Die Mobs der Gruppe, wie bei einem Rang                                                                        |
+| `weight`               | Zahl, mindestens 1       | `1`          | Anteil der Gruppe am Wurf                                                                                      |
+| `minDepth`, `maxDepth` | 0.0 bis 1.0              | `0.0`, `1.0` | Der Tiefenbereich, in dem die Gruppe erscheint. Sind die beiden falsch herum geschrieben, werden sie getauscht |
+| `kinds`                | Liste von Raumart-Namen  | beliebig     | Die Raumarten, in denen die Gruppe erscheinen darf                                                             |
+| `tier`                 | einer der fünf Rangnamen | keiner       | Ein Rang, zu dem die Mobs der Gruppe gehören. Ein unbekannter Rang wird verworfen                              |
+
+#### Beutesätze
+
+Jeder Beutesatz ist eine Liste von Einträgen. Eine Truhe nimmt ihre Einträge aus dem Satz, den ihr Raum nennt, für einen Raum ist das standardmäßig `basic`, für den Bossraum `boss`. Die Sätze `weak`, `basic`, `treasure` und `boss` sind eingebaut, ein Pack darf eigene hinzufügen.
+
+```json
+{ "loot": { "treasure": [ { "table": "minecraft:chests/stronghold_corridor", "weight": 2, "minLevel": 2, "maxLevel": 6 } ] } }
+```
+
+| Schlüssel  | Typ                | Standard   | Was er macht                                                                                    |
+| ---------- | ------------------ | ---------- | ----------------------------------------------------------------------------------------------- |
+| `table`    | Loot-Table-ID      | Pflicht    | Die Loot-Table aus Vanilla oder dem Pack, die die Truhe würfelt                                 |
+| `weight`   | Zahl, mindestens 1 | `1`        | Anteil des Eintrags unter den Einträgen, die die Truhenstufe zulässt                            |
+| `minLevel` | 0 oder mehr        | `0`        | Die niedrigste Truhenstufe, bei der der Eintrag verwendet wird                                  |
+| `maxLevel` | Zahl               | jede Stufe | Die höchste Truhenstufe, bei der der Eintrag verwendet wird. Darf nicht unter `minLevel` liegen |
+
+#### Thema-Dekoratoren
+
+Ein Dekorator ist ein Objekt mit einem `type`, einem `block` (eine ID oder eine Liste von IDs) und den Zahlen, die sein Typ liest. Eine Raumart führt die Dekoratoren aus, die sie in `decor` nennt.
+
+```json
+{ "decorators": {
+  "shelves": { "type": "wallLine", "block": ["minecraft:bookshelf"], "height": 3, "gap": 4 },
+  "lamps": { "type": "torchLine", "block": ["minecraft:torch"], "gap": 6, "height": 2 },
+  "loot": { "type": "fill", "loot": "treasure", "per100": 3 }
+} }
+```
+
+| Typ          | Gelesene Zahlen (Standard)   | Was er setzt                                                                                         |
+| ------------ | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `wallLine`   | `height` (1), `gap` (1)      | Reihen von vier Blöcken entlang der Wände, jede `height` hoch, mit `gap` Blöcken zwischen den Reihen |
+| `floorPatch` | `percent` (10)               | Blöcke auf dem Boden, zu diesem Prozentsatz der Bodenfelder                                          |
+| `scatter`    | `per100` (3), `on` (floor)   | Blöcke zufällig auf dem Boden, der Decke oder den Wänden, `per100` mit 100 Chance pro Feld           |
+| `pillarsRow` | `height` (3), `gap` (2)      | Eine Reihe von Säulen durch die Mitte des Raums, `height` hoch, mit `gap` Abstand                    |
+| `bannerLine` | `gap` (4), `height` (2)      | Blöcke an den Wänden alle `gap` Blöcke, `height` über dem Boden                                      |
+| `torchLine`  | `gap` (4), `height` (2)      | Fackeln an den Wänden, auf dieselbe Weise wie eine Banner-Reihe                                      |
+| `fill`       | `per100` (3), `loot` Pflicht | Truhen auf den Wandfeldern, `per100` mit 100 Chance pro Feld, gefüllt aus dem benannten Beutesatz    |
+
+Ein `fill` ohne `loot`-Satz fällt weg, und ein `scatter`-`on`, das nicht `floor`, `ceiling` oder `wall` ist, wird verworfen, sodass der Streuwurf auf dem Boden landet.
+
+### Thema-Anhänge
+
+Ein Anhang ergänzt ein oder mehrere Themen, ohne sie zu ersetzen. Seine Datei hat einen Schlüssel `append`, und die Schlüssel, die sie schreibt, werden in jedes genannte Thema eingemischt.
+
+```json
+{
+  "append": ["mypack:stone_crypt", "mypack:mossy_crypt"],
+  "blocks": {
+    "walls": [ { "block": "minecraft:stonebrick", "meta": 1, "weight": 4 } ],
+    "remove:decay": [ { "block": "minecraft:air" } ]
+  },
+  "mobs": { "boss": ["mypack:crypt_lord_2"] },
+  "lootBonus": 1
+}
+```
+
+- Anhänge werden angewendet, nachdem jedes Basisthema jedes Packs geladen ist, in der Reihenfolge ihrer Ressourcenschlüssel, daher hängt das Ergebnis nicht von der Dateireihenfolge ab.
+- In einem Anhang werden die Listenschlüssel ergänzt: die Blockfamilien in `blocks`, die Ränge in `mobs`, die Beutesätze in `loot`, `decorators`, `biomes`, `biomeTypes`, `notBiomes`, `notBiomeTypes` und `spawnGroups`.
+- Ein Listenschlüssel mit dem Präfix `remove:` vor seinem Namen entfernt stattdessen Einträge. `"remove:walls"` entfernt einen Wandeintrag über seine Block-ID, und `"remove:decorators"` entfernt einen Dekorator über seinen Namen.
+- Skalare Schlüssel ersetzen den Basiswert nur, wenn der Anhang sie schreibt: `weight`, `minY`, `maxY`, `lootLevels` und `lootBonus`. Auch die Schlüssel `rolls`, `difficulty` und `decay` ersetzen, wenn sie geschrieben sind.
+- `name`, `dimensions` und `dimensionsAreBlacklist` bleiben so, wie das Basisthema sie hat.
+- Ein Anhang, dessen Ziel kein Thema irgendeines Packs nennt, wird mit einem protokollierten Fehler übersprungen. Ein Anhang, der einem Thema alle Wände nehmen würde, wird nicht angewendet.
+
+### Verliese platzieren
+
+Standorte werden aus dem Weltseed gewählt. Ein Standort wird abgelehnt, wenn ein Filter scheitert, und ein abgelehnter Standort wird übersprungen statt wiederholt. Die Filter für Biom, Dimension und Höhe gehören dem Verlies selbst, und ein Thema ergänzt eigene in `dimensions`, den Biomlisten sowie `minY` und `maxY` des Themas.
+
+- `dimensions` und `biomes` filtern, wo das Verlies entstehen darf, wie es die Worldgen-Einträge tun.
+- `noOceans` lehnt einen Standort ab, dessen Biom in der Mitte ein Ozean ist. Das ist standardmäßig aktiv.
+- `minDistance` hält die Standorte eines Verlieses auseinander. `group` lässt mehrere Verliese denselben Abstand teilen, und jedes behält den größten `minDistance` der Gruppe.
+- `at` fixiert Kopien auf genaue Koordinaten und umgeht `chance`, `minDistance` und den Biomfilter.
+- `locateAs` registriert jeden Standort unter einem Namen für `/locate`. Es findet einen Standort, auch bevor der Chunk erzeugt ist.
+
+Ein Verlies belegt nur die Grundfläche seines Eingangs, damit Dörfer sich davon fernhalten. Wie ein gesetztes Bauwerk gefunden wird und wie die Karte aufgebaut ist, siehe [Wo es generieren darf](#wo-es-generieren-darf) und [Platzierte Strukturen finden](#platzierte-strukturen-finden).
+
+### Vorlagen im Verlies
+
+Eine Raumart darf `.nbt`-Vorlagen aus `<namespace>/structures/` des Packs nennen. Jeder Raum dieser Art würfelt eine Vorlage nach Gewicht. Der Raum übernimmt die Größe der Vorlage, gedreht um die Drehung des Raums, und welche Drehungen erlaubt sind, steht in `turns`. Zeile 0 der Vorlage sitzt `yOffset` Blöcke über dem Ebenenboden. Wie Vorlagen geschrieben und gesetzt werden, siehe [Vorlagen setzen](#vorlagen-setzen).
+
+```json
+{ "kind": "shrine", "weight": 2, "templates": ["mypack:shrine_a=2", "mypack:shrine_b"], "turns": ["none", "half"], "yOffset": 1, "maxPerLevel": 1 }
+```
+
+### Wiederkehrende Verliese
+
+Ein Verlies nimmt dasselbe `respawn`-Objekt wie eine Struktur, und das Zurücksetzen gilt für das ganze Verlies. Jeder Chunk-Anteil des Verlieses wird als eigene Wiederherstellung erfasst, daher wartet ein Reset, bis jeder Chunk geladen ist, wie bei jeder Struktur. Was jeder Schlüssel bewirkt, siehe [Wiederkehrende Strukturen](#wiederkehrende-strukturen).
+
+### Hinweise
+
+- Ein Verlies wird jeweils einen Chunk nach dem anderen geschrieben, und kein Chunk lädt oder erzeugt seine Nachbarn, um seinen Anteil fertigzustellen.
+- Derselbe Seed ergibt dasselbe Verlies, und Thema und Größe eines Standorts kommen aus dem Weltseed.
+- Eine `depth` in einer Ebenenregel oder einer Spawn-Gruppe ist ein Anteil von 0.0 auf der obersten Ebene bis 1.0 auf der untersten, keine Blockzahl.
+- Die `biomeTypes` eines Themas sind die Namen des Biom-Wörterbuchs aus 1.12.2 in Großbuchstaben, etwa `OCEAN`, `FOREST` und `PLAINS`.
 
 ## Dorfgrundstücke
 

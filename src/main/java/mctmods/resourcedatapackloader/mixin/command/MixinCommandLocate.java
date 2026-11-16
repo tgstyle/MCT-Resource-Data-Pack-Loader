@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.command;
 
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 
 import java.util.List;
 import net.minecraft.command.CommandLocate;
@@ -22,7 +23,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (args.length != 1) { return; }
 
         World world = sender.getEntityWorld();
-        if (!ContentLocate.names(world).contains(args[0])) { return; }
+        if (!ContentLocate.names(world).contains(args[0])) {
+            if (!(sender instanceof EntityPlayerMP) && ContentDungeons.locateNames(world).contains(args[0])) {
+                ContentStructureSearch.pointDungeon(sender, args[0]);
+                ci.cancel();
+            }
+            return;
+        }
 
         BlockPos found = ContentLocate.nearest(world, args[0], sender.getPosition());
         if (found == null) { return; }
@@ -42,6 +49,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (args.length != 1) { return; }
         List<String> held = cir.getReturnValue();
         for (String name : ContentLocate.names(sender.getEntityWorld())) {
+            if (name.toLowerCase().startsWith(args[0].toLowerCase()) && !held.contains(name)) { held.add(name); }
+        }
+        for (String name : ContentDungeons.locateNames(sender.getEntityWorld())) {
             if (name.toLowerCase().startsWith(args[0].toLowerCase()) && !held.contains(name)) { held.add(name); }
         }
     }
