@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.respawn;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
@@ -9,6 +10,9 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImpri
 import mctmods.resourcedatapackloader.common.worldgen.structure.RespawnBrokenProcessor;
 import mctmods.resourcedatapackloader.common.worldgen.structure.RespawnVoidProcessor;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityBlocks;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write.DungeonWriter;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapCells;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapFillProcessor;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
@@ -61,6 +65,10 @@ public final class RespawnReset {
     }
 
     private static void rebuild(ServerLevel level, RespawnInstance instance, RespawnDef.Rebuild mode) {
+        if (instance.kind == RespawnInstance.DUNGEON) {
+            rebuildDungeon(level, instance, mode);
+            return;
+        }
         if (instance.kind == RespawnInstance.MAP || instance.tpl.isEmpty()) {
             rebuildMap(level, instance, mode);
             return;
@@ -98,6 +106,16 @@ public final class RespawnReset {
             piece.get().placeInWorld(level, at, at, settings, RandomSource.create(cell.seed()), Block.UPDATE_CLIENTS);
             return true;
         });
+    }
+
+    private static void rebuildDungeon(ServerLevel level, RespawnInstance instance, RespawnDef.Rebuild mode) {
+        DungeonDef dungeon = ContentDungeons.byName(instance.def);
+        if (dungeon == null) { return; }
+        BlockPos origin = BlockPos.of(instance.seed);
+        DungeonSites.Site site = ContentDungeons.site(ContentDungeons.world(level), dungeon, origin.getX(), origin.getZ());
+        if (site == null) { return; }
+        BoundingBox area = instance.area();
+        DungeonWriter.rewrite(level, site, area, area.minY(), area.maxY(), mode == RespawnDef.Rebuild.BROKEN);
     }
 
     @Nullable private static StructureMapDef mapOf(RespawnInstance instance) {

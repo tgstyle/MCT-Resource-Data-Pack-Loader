@@ -24,6 +24,7 @@ public final class ServerCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         CommandLocateLock.apply(dispatcher);
+        CommandLocateDungeons.apply(dispatcher);
         dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote", true)
                 .then(Commands.literal("pregen").requires(source -> CommandShared.allowed(source, CommandShared.OPERATOR))
                         .then(Commands.literal("status").executes(context -> {

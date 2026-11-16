@@ -290,6 +290,14 @@ public final class LineCompat {
 
     public static StructureTemplateManager templates(MinecraftServer server) { return server.getStructureManager(); }
 
+    @SuppressWarnings("deprecation") public static boolean blocksMotion(BlockState state) { return state.blocksMotion(); }
+
+    public static Structure.GenerationContext generationContext(ServerLevel level, ChunkGenerator generator, RandomState random, ChunkPos pos) {
+        return new Structure.GenerationContext(level.registryAccess(), generator, generator.getBiomeSource(), random, templates(level.getServer()), level.getSeed(), pos, level, _ -> true);
+    }
+
+    public static Holder<Biome> biomeAt(Structure.GenerationContext context, int quartX, int quartY, int quartZ) { return context.biomeSource().getNoiseBiome(quartX, quartY, quartZ, context.randomState().sampler()); }
+
     public static StructureStart pieceAt(StructureManager structures, BlockPos at, Structure structure) { return structures.getStructureWithPieceAt(at, structure); }
 
     public static List<StructureStart> starts(StructureManager structures, ChunkPos chunk, Predicate<Structure> matcher) { return structures.startsForStructure(chunk, matcher); }

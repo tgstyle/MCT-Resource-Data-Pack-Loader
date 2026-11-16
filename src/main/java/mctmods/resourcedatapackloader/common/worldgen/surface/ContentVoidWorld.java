@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPregenHold;
 import mctmods.resourcedatapackloader.common.pregen.VoidMemory;
 import mctmods.resourcedatapackloader.common.util.dimension.DimensionValues;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentFeatureTypes;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonStructure;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapStructure;
 import mctmods.resourcedatapackloader.core.config.Config;
 
@@ -60,7 +61,7 @@ public final class ContentVoidWorld {
         remembered = memory;
     }
 
-    public static boolean voidRefuses(LevelAccessor level, Structure structure) { return level instanceof ServerLevel server && !(structure instanceof ContentMapStructure) && voidApplies(server); }
+    public static boolean voidRefuses(LevelAccessor level, Structure structure) { return level instanceof ServerLevel server && !(structure instanceof ContentMapStructure || structure instanceof ContentDungeonStructure) && voidApplies(server); }
 
     public static boolean voidRefuses(WorldGenLevel level, PlacedFeature feature) { return ContentFeatureTypes.foreign(feature) && voidApplies(level.getLevel()); }
 

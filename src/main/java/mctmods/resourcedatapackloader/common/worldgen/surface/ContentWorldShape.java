@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOptionOres;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateControl;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -377,6 +378,7 @@ public final class ContentWorldShape {
         structures.add(ResourceDataPackLoader.MOD_ID + ":" + ContentCity.STRUCTURE);
         for (String set : asked.structures()) { structures.add(set); }
         for (String set : ContentStructureMaps.sets()) { structures.add(set); }
+        for (String set : ContentDungeons.sets()) { structures.add(set); }
         settings.add("structure_overrides", structures);
         generator.add("settings", settings);
         flatSettings = settings;

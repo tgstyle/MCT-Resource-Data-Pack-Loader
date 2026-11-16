@@ -66,6 +66,9 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.piece.Conte
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.piece.ContentCityStationPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.piece.ContentCityWellPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.ContentPlotPoolElement;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonStructure;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapSignPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapStructure;
@@ -123,11 +126,13 @@ public final class ContentEvents {
         event.register(Registries.STRUCTURE_TYPE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
             helper.register(id(ContentCity.STRUCTURE), ContentCityStructure.TYPE);
+            helper.register(id(ContentDungeons.DUNGEON_STRUCTURE), ContentDungeonStructure.TYPE);
         });
         event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(id(ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE));
         event.register(Registries.STRUCTURE_PIECE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
             helper.register(id(ContentStructureMaps.MAP_PIECE + "_sign"), ContentMapSignPiece.TYPE);
+            helper.register(id(ContentDungeons.DUNGEON_PIECE), DungeonPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_deck"), ContentCityDeckPiece.TYPE);
@@ -255,6 +260,7 @@ public final class ContentEvents {
         ContentGeneratorControl.load();
         ContentStructureControl.generate();
         ContentStructureMaps.generate();
+        ContentDungeons.generate();
         ContentCity.generate();
         ContentWorldShape.generate();
         ContentDimensions.generate();

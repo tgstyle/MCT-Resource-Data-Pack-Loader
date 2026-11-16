@@ -1,14 +1,16 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.map;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,56 +21,61 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
-final class ContentMapFill {
+public final class ContentMapFill {
     private static final Set<String> MISSING = new HashSet<>();
     private static final String PIG = "minecraft:pig";
 
     private ContentMapFill() {}
 
-    static StructureTemplate.StructureBlockInfo fill(StructureMapDef def, long seed, StructureTemplate.StructureBlockInfo info) {
+    public static StructureTemplate.StructureBlockInfo fill(FillRules rules, long seed, StructureTemplate.StructureBlockInfo info, @Nullable String mob, @Nullable Identifier loot) {
         Block block = info.state().getBlock();
-        if (block == Blocks.SPAWNER) { return spawner(def, seed, info); }
-        if (block instanceof ChestBlock) { return chest(def, info); }
+        if (block == Blocks.SPAWNER) { return spawner(rules, seed, info, mob); }
+        if (block instanceof ChestBlock) { return chest(rules, seed, info, loot); }
         return info;
     }
 
-    private static StructureTemplate.StructureBlockInfo spawner(StructureMapDef def, long seed, StructureTemplate.StructureBlockInfo info) {
+    private static StructureTemplate.StructureBlockInfo spawner(FillRules rules, long seed, StructureTemplate.StructureBlockInfo info, @Nullable String mob) {
         CompoundTag saved = info.nbt();
-        if (def.spawners().isEmpty() || !blankSpawner(saved)) { return info; }
-        List<PickDef> usable = new ArrayList<>();
-        for (PickDef pick : def.spawners()) {
-            Identifier id = Identifier.tryParse(pick.name());
-            if (id != null && BuiltInRegistries.ENTITY_TYPE.containsKey(id)) { usable.add(pick); }
-            else { ContentLog.LOGGER.errorOnce(MISSING, pick.name(), "Structure map {} gives spawners '{}', which nothing registers, so it is left out of the roll", def.key(), pick.name()); }
+        if (mob == null && rules.spawners().isEmpty() || keepsSpawner(saved)) { return info; }
+        String named = mob;
+        if (named == null) {
+            List<PickDef> usable = new ArrayList<>();
+            for (PickDef pick : rules.spawners()) {
+                Identifier id = Identifier.tryParse(pick.name());
+                if (id != null && BuiltInRegistries.ENTITY_TYPE.containsKey(id)) { usable.add(pick); }
+                else { ContentLog.LOGGER.errorOnce(MISSING, pick.name(), "Structure map {} gives spawners '{}', which nothing registers, so it is left out of the roll", rules.key(), pick.name()); }
+            }
+            named = PickDef.pick(usable, RandomSource.create(Hashes.mix(seed, info.pos().getX(), info.pos().getY(), info.pos().getZ())));
         }
-        String named = PickDef.pick(usable, RandomSource.create(Hashes.mix(seed, info.pos().getX(), info.pos().getY(), info.pos().getZ())));
         if (named == null) { return info; }
         CompoundTag copy = saved == null ? new CompoundTag() : saved.copy();
-        CompoundTag mob = new CompoundTag();
-        mob.putString("id", Identifier.parse(named).toString());
+        CompoundTag entity = new CompoundTag();
+        entity.putString("id", Identifier.parse(named).toString());
         CompoundTag data = new CompoundTag();
-        data.put("entity", mob);
+        data.put("entity", entity);
         copy.put("SpawnData", data);
         copy.remove("SpawnPotentials");
         return new StructureTemplate.StructureBlockInfo(info.pos(), info.state(), copy);
     }
 
-    private static StructureTemplate.StructureBlockInfo chest(StructureMapDef def, StructureTemplate.StructureBlockInfo info) {
+    private static StructureTemplate.StructureBlockInfo chest(FillRules rules, long seed, StructureTemplate.StructureBlockInfo info, @Nullable Identifier override) {
         CompoundTag saved = info.nbt();
-        if (def.loot() == null || !blankChest(saved)) { return info; }
+        Identifier loot = override != null ? override : rules.loot();
+        if (loot == null || keepsChest(saved)) { return info; }
         CompoundTag copy = saved == null ? new CompoundTag() : saved.copy();
-        copy.putString("LootTable", def.loot().toString());
+        copy.putString("LootTable", loot.toString());
+        copy.putLong("LootTableSeed", new Random(Hashes.mix(seed, info.pos().getX(), info.pos().getY(), info.pos().getZ())).nextLong());
         return new StructureTemplate.StructureBlockInfo(info.pos(), info.state(), copy);
     }
 
-    private static boolean blankSpawner(CompoundTag saved) {
-        if (saved == null) { return true; }
-        if (keepsMob(saved.getCompoundOrEmpty("SpawnData").getCompoundOrEmpty("entity"))) { return false; }
+    public static boolean keepsSpawner(@Nullable CompoundTag saved) {
+        if (saved == null) { return false; }
+        if (keepsMob(saved.getCompoundOrEmpty("SpawnData").getCompoundOrEmpty("entity"))) { return true; }
         ListTag potentials = saved.getListOrEmpty("SpawnPotentials");
         for (int at = 0; at < potentials.size(); at++) {
-            if (keepsMob(potentials.getCompoundOrEmpty(at).getCompoundOrEmpty("data").getCompoundOrEmpty("entity"))) { return false; }
+            if (keepsMob(potentials.getCompoundOrEmpty(at).getCompoundOrEmpty("data").getCompoundOrEmpty("entity"))) { return true; }
         }
-        return true;
+        return false;
     }
 
     private static boolean keepsMob(CompoundTag mob) {
@@ -76,5 +83,5 @@ final class ContentMapFill {
         return !id.isEmpty() && (mob.size() > 1 || !PIG.equals(id));
     }
 
-    private static boolean blankChest(CompoundTag saved) { return saved == null || saved.getStringOr("LootTable", "").isEmpty() && saved.getListOrEmpty("Items").isEmpty(); }
+    public static boolean keepsChest(@Nullable CompoundTag saved) { return saved != null && (!saved.getStringOr("LootTable", "").isEmpty() || !saved.getListOrEmpty("Items").isEmpty()); }
 }

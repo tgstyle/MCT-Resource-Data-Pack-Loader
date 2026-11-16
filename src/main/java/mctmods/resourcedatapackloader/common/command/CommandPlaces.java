@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.locate.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -35,6 +36,7 @@ final class CommandPlaces {
         int space = typed.indexOf(' ');
         if (space >= 0) { return SharedSuggestionProvider.suggest(List.of(NEXT, BACK), suggestions.createOffset(suggestions.getStart() + space + 1)); }
         List<String> known = new ArrayList<>(ContentLocate.names(source.getLevel()));
+        known.addAll(ContentDungeons.locateNames(source.getLevel()));
         known.addAll(ContentStructureSearch.aliases());
         for (Identifier biome : source.registryAccess().lookupOrThrow(Registries.BIOME).keySet()) { known.add(biome.toString()); }
         known.removeIf(place -> !mayGo(source, ContentStructureSearch.levelFor(place, "gotoLevel", Config.commands.gotoLevel())));
@@ -80,6 +82,7 @@ final class CommandPlaces {
             found = ContentBiomeSearch.find(level, player, biome, place, from, next);
         }
         else if (ContentLocate.names(level).contains(place)) { found = ContentLocate.nearest(level, place, from, next ? 128.0D : 0.0D); }
+        else if (ContentDungeons.locateNames(level).contains(place)) { found = ContentStructureSearch.findDungeon(level, player, place, from, next); }
         else {
             CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gotolooking", place));
             found = ContentStructureSearch.find(level, player, place, from, next);
@@ -100,7 +103,7 @@ final class CommandPlaces {
     }
 
     @Nullable private static ResourceKey<Biome> biomeOf(CommandSourceStack source, ServerLevel level, String place) {
-        if (ContentLocate.names(level).contains(place) || ContentStructureSearch.known(level, place)) { return null; }
+        if (ContentLocate.names(level).contains(place) || ContentDungeons.locateNames(level).contains(place) || ContentStructureSearch.known(level, place)) { return null; }
         return CommandShared.findBiome(source, place.trim());
     }
 

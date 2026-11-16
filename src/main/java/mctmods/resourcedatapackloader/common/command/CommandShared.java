@@ -35,6 +35,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentOreVe
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -188,7 +189,7 @@ public final class CommandShared {
                         .then(Commands.literal("vote")
                                 .then(Commands.literal("yes").executes(context -> CommandTeams.roundVote(context, name, true)))
                                 .then(Commands.literal("no").executes(context -> CommandTeams.roundVote(context, name, false)))))
-                .then(Commands.literal("locate").requires(staff).then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> SharedSuggestionProvider.suggest(ContentLocate.names(context.getSource().getLevel()), suggestions)).executes(context -> {
+                .then(Commands.literal("locate").requires(staff).then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> SharedSuggestionProvider.suggest(locatable(context.getSource().getLevel()), suggestions)).executes(context -> {
                     String target = StringArgumentType.getString(context, "name");
                     ran(context.getSource(), name, "locate " + target);
                     locate(context.getSource(), target);
@@ -396,12 +397,19 @@ public final class CommandShared {
     static void locate(CommandSourceStack source, String target) {
         BlockPos from = BlockPos.containing(source.getPosition());
         BlockPos found = ContentLocate.nearest(source.getLevel(), target, from);
+        if (found == null && ContentDungeons.locateNames(source.getLevel()).contains(target)) { found = ContentDungeons.nearestEntrance(source.getLevel(), target, from, _ -> false); }
         if (found == null) {
             refuse(source, tr("rdpl.command.locatenone", target));
             return;
         }
         int away = (int) Math.sqrt(found.distSqr(from));
         send(source, ChatFormatting.WHITE, tr("rdpl.command.located", target, found.getX(), found.getY(), found.getZ(), away));
+    }
+
+    private static List<String> locatable(ServerLevel level) {
+        List<String> names = new ArrayList<>(ContentLocate.names(level));
+        names.addAll(ContentDungeons.locateNames(level));
+        return names;
     }
 
     static void which(CommandSourceStack source, String target, boolean server) {
