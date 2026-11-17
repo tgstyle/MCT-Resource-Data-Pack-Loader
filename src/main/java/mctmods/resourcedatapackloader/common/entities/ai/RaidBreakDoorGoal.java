@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.raids.ActiveRaid;
 import mctmods.resourcedatapackloader.common.raids.RaidStorage;
+import mctmods.resourcedatapackloader.common.util.world.PosTags;
 
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -16,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
@@ -46,14 +49,17 @@ public final class RaidBreakDoorGoal extends Goal {
         return door != null && breakable(door);
     }
 
-    @Override public boolean canContinueToUse() { return door != null && breaking <= BREAK_TICKS && closedDoor(door) && door.distToLowCornerSqr(mob.getX(), mob.getY(), mob.getZ()) < STAY_SQ && hardEnough() && raiding(); }
+    @Override public boolean canContinueToUse() { return door != null && breaking <= BREAK_TICKS && breakableBlock(door) && door.distToLowCornerSqr(mob.getX(), mob.getY(), mob.getZ()) < STAY_SQ && hardEnough() && raiding(); }
 
     @Override public void start() {
         breaking = 0;
         shown = -1;
     }
 
-    @Override public void stop() { if (door != null) { mob.level().destroyBlockProgress(mob.getId(), door, -1); } }
+    @Override public void stop() {
+        mob.getPersistentData().remove(ActiveRaid.DOOR);
+        if (door != null) { mob.level().destroyBlockProgress(mob.getId(), door, -1); }
+    }
 
     @Override public void tick() {
         if (!canContinueToUse()) { return; }
@@ -93,10 +99,10 @@ public final class RaidBreakDoorGoal extends Goal {
         for (int i = 0; i < Math.min(path.getNextNodeIndex() + 2, path.getNodeCount()); i++) {
             Node point = path.getNode(i);
             BlockPos at = new BlockPos(point.x, point.y + 1, point.z);
-            if (mob.distanceToSqr(at.getX(), mob.getY(), at.getZ()) <= REACH_SQ && closedDoor(at)) { return at; }
+            if (mob.distanceToSqr(at.getX(), mob.getY(), at.getZ()) <= REACH_SQ && breakableBlock(at)) { return at; }
         }
         BlockPos at = mob.blockPosition().above();
-        return closedDoor(at) ? at : null;
+        return breakableBlock(at) ? at : null;
     }
 
     private boolean closedDoor(BlockPos at) {
@@ -104,9 +110,20 @@ public final class RaidBreakDoorGoal extends Goal {
         return DoorBlock.isWoodenDoor(state) && !state.getValue(DoorBlock.OPEN);
     }
 
+    private boolean breakableBlock(BlockPos at) {
+        if (closedDoor(at)) { return true; }
+        if (!(mob.level() instanceof ServerLevel level) || !mob.getPersistentData().contains(ActiveRaid.RAIDER)) { return false; }
+        ActiveRaid raid = RaidStorage.get(level).raidOf(PosTags.read(mob.getPersistentData().getCompound(ActiveRaid.RAIDER)));
+        BaseDef base = raid == null ? null : raid.def().base();
+        if (base == null || base.breakable().isEmpty()) { return false; }
+        BlockState state = level.getBlockState(at);
+        return base.breakable().contains(state.getBlock()) && !(state.hasProperty(TrapDoorBlock.OPEN) && state.getValue(TrapDoorBlock.OPEN));
+    }
+
     private boolean breakable(BlockPos at) {
         Level level = mob.level();
         BlockState state = level.getBlockState(at);
+        mob.getPersistentData().putLong(ActiveRaid.DOOR, at.asLong());
         return hardEnough() && ForgeEventFactory.getMobGriefingEvent(level, mob) && state.canEntityDestroy(level, at, mob) && ForgeEventFactory.onEntityDestroyBlock(mob, at, state);
     }
 

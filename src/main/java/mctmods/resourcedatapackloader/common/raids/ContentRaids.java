@@ -4,11 +4,16 @@ import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.ContentBellBlockEntity;
 import mctmods.resourcedatapackloader.common.entities.ai.RaidBreakDoorGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.RaidMarchGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.RaidTargetGoal;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserGames;
+import mctmods.resourcedatapackloader.common.raids.base.BaseLedger;
+import mctmods.resourcedatapackloader.common.raids.base.BaseSignals;
 import mctmods.resourcedatapackloader.common.rules.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.common.util.world.PosTags;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
@@ -52,7 +57,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 public final class ContentRaids {
     private static final int LOOK_EVERY = 20;
-    private static final int VILLAGE_SEARCH = 32;
     private static final int GLOW_TICKS = 60;
     private static final Set<Block> BELLS = new HashSet<>();
     private static final Map<ResourceLocation, RaidDef> DEFS = new LinkedHashMap<>();
@@ -68,6 +72,12 @@ public final class ContentRaids {
             RaidDef def = ContentParserGames.raidFile(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
+        int largest = 0;
+        for (RaidDef def : DEFS.values()) {
+            if (def.base() != null) { largest = Math.max(largest, def.base().cellCap()); }
+        }
+        BaseLedger.setCellCap(largest > 0 ? largest : BaseDef.DEFAULT_CELL_CAP);
+        BaseSignals.arm(DEFS.values());
         if (DEFS.isEmpty()) { return; }
         for (RaidDef def : DEFS.values()) {
             for (String name : def.bells()) {
@@ -136,8 +146,9 @@ public final class ContentRaids {
 
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level) || player.tickCount % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
+        BaseSignals.sample(player);
         RaidDef due = ContentRaidSwitch.due(level, player, LOOK_EVERY);
-        if (due != null) { around(level, player, due, "carries the raid clock"); }
+        if (due != null && rolled(level, player, due)) { around(level, player, due, "carries the raid clock"); }
         for (RaidDef def : DEFS.values()) {
             MobEffect omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(ContentEffects.find(name))).orElse(null);
             if (omen == null || !player.hasEffect(omen)) { continue; }
@@ -146,19 +157,23 @@ public final class ContentRaids {
         }
     }
 
+    private static boolean rolled(ServerLevel level, ServerPlayer player, RaidDef def) {
+        BaseDef base = def.base();
+        if (base == null || base.chance() >= 1.0D || !def.target().contains(RaidTarget.Kind.BASE) && !def.target().contains(RaidTarget.Kind.PLAYER)) { return true; }
+        return ContentRaidSwitch.roll(level, player, def);
+    }
+
     private static boolean around(ServerLevel level, ServerPlayer player, RaidDef def, String cause) {
-        RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
-        RaidStorage storage = RaidStorage.get(level);
-        if (village == null) {
-            if (!def.anywhere() || storage.raided(player.blockPosition(), def.reach())) { return false; }
-            ActiveRaid.start(level, def, player.blockPosition(), true);
+        RaidTarget target = RaidTargets.resolve(level, player, def);
+        if (target == null || !RaidTargets.launch(level, player, def, target)) { return false; }
+        BlockPos center = target.center();
+        if (target.kind() == RaidTarget.Kind.FREE) {
             ContentLog.LOGGER.info("{} {} with no village near, so raid {} begins around them", player.getGameProfile().getName(), cause, def.key());
             return true;
         }
-        if (storage.raided(village.center(), VILLAGE_SEARCH + village.radius())) { return false; }
-        ActiveRaid.start(level, def, village.center(), false);
-        ContentRaidSwitch.reset(level, player);
-        ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().getName(), cause, village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
+        if (target.kind() == RaidTarget.Kind.VILLAGE) { ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().getName(), cause, center.getX(), center.getY(), center.getZ(), def.key()); }
+        else if (target.kind() == RaidTarget.Kind.BASE) { ContentLog.LOGGER.info("{} {} at their base at {}, {}, {}, so raid {} begins", player.getGameProfile().getName(), cause, center.getX(), center.getY(), center.getZ(), def.key()); }
+        else { ContentLog.LOGGER.info("{} {}, so raid {} hunts them", player.getGameProfile().getName(), cause, def.key()); }
         return true;
     }
 
@@ -174,9 +189,15 @@ public final class ContentRaids {
 
     public static void onJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide() || DEFS.isEmpty() || !(event.getEntity() instanceof PathfinderMob raider) || !raider.getPersistentData().contains(ActiveRaid.RAIDER)) { return; }
+        ActiveRaid raid = RaidStorage.get((ServerLevel) event.getLevel()).raidOf(PosTags.read(raider.getPersistentData().getCompound(ActiveRaid.RAIDER)));
+        if (raid == null) {
+            raider.getPersistentData().remove(ActiveRaid.RAIDER);
+            return;
+        }
         raider.goalSelector.addGoal(1, new RaidBreakDoorGoal(raider));
         raider.goalSelector.addGoal(4, new RaidMarchGoal(raider));
-        raider.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(raider, Player.class, true));
+        boolean guarded = raid.kind() == RaidTarget.Kind.BASE || raid.kind() == RaidTarget.Kind.PLAYER;
+        raider.targetSelector.addGoal(3, guarded ? new RaidTargetGoal(raider) : new NearestAttackableTargetGoal<>(raider, Player.class, true));
         raider.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(raider, Villager.class, false));
         raider.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(raider, IronGolem.class, true));
     }

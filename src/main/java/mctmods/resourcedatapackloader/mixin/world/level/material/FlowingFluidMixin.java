@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(FlowingFluid.class) public abstract class FlowingFluidMixin {
-    @Shadow protected abstract void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState fluidState);
+    @Shadow protected abstract void spreadTo(LevelAccessor level, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState);
 
     @Inject(method = "canPassThroughWall", at = @At("HEAD"), cancellable = true) private void rdpl$washesThrough(Direction direction, BlockGetter level, BlockPos pos, BlockState state, BlockPos spreadPos, BlockState spreadState, CallbackInfoReturnable<Boolean> cir) {
         boolean here = ContentTypes.washedAway(state);
@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         cir.setReturnValue(!Shapes.mergedFaceOccludes(from, to, direction));
     }
 
-    @Redirect(method = {"spread(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/FluidState;)V", "spreadToSides(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/FluidState;Lnet/minecraft/world/level/block/state/BlockState;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FlowingFluid;spreadTo(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/material/FluidState;)V")) private void rdpl$guardFlow(FlowingFluid self, LevelAccessor level, BlockPos target, BlockState targetState, Direction direction, FluidState fluidState) {
-        if (ClaimGuard.fluidMayFlow((Level) level, target.relative(direction.getOpposite()), target)) { spreadTo(level, target, targetState, direction, fluidState); }
+    @Redirect(method = {"spread(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/FluidState;)V", "spreadToSides(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/FluidState;Lnet/minecraft/world/level/block/state/BlockState;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FlowingFluid;spreadTo(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/material/FluidState;)V")) private void rdpl$guardFlow(FlowingFluid self, LevelAccessor level, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState) {
+        if (ClaimGuard.fluidMayFlow((Level) level, pos.relative(direction.getOpposite()), pos)) { spreadTo(level, pos, blockState, direction, fluidState); }
     }
 }

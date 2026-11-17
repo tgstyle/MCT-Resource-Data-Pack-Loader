@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rules;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidSwitchDef;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
@@ -22,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class ContentRaidSwitch {
     private static final List<String> KEYS = List.of("every", "start", "waves", "points");
     private static final String CLOCK = "rdplRaidClock";
+    private static final String ROLL = "rdplRaidRoll";
 
     private ContentRaidSwitch() {}
 
@@ -93,6 +95,17 @@ public final class ContentRaidSwitch {
             if (raid != null) { known.add(raid); }
         }
         return known.isEmpty() ? null : known.get(player.getRandom().nextInt(known.size()));
+    }
+
+    public static boolean roll(ServerLevel level, ServerPlayer player, RaidDef def) {
+        BaseDef base = def.base();
+        if (base == null) { return true; }
+        CompoundTag rolls = PlayerPersisted.section(player, ROLL);
+        String dimension = level.dimension().location().toString();
+        long now = level.getGameTime();
+        if (rolls.contains(dimension) && now - rolls.getLong(dimension) < base.rollEvery()) { return false; }
+        rolls.putLong(dimension, now);
+        return level.getRandom().nextDouble() < base.chance();
     }
 
     public static void reset(ServerLevel level, ServerPlayer player) { PlayerPersisted.section(player, CLOCK).putInt(level.dimension().location().toString(), 0); }

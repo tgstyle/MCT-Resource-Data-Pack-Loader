@@ -12,5 +12,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AccountProfileKeyPairManager.class) public abstract class AccountProfileKeyPairManagerMixin {
-    @Inject(method = "prepareKeyPair", at = @At("HEAD"), cancellable = true) private void rdpl$signNothing(CallbackInfoReturnable<CompletableFuture<Optional<ProfileKeyPair>>> cir) { if (ContentServer.privacy()) { cir.setReturnValue(CompletableFuture.completedFuture(Optional.empty())); } }
+    @Inject(method = "prepareKeyPair", at = @At("HEAD"), cancellable = true) private void rdpl$signNothing(CallbackInfoReturnable<CompletableFuture<Optional<ProfileKeyPair>>> cir) { if (ContentServer.chatUnsigned()) { cir.setReturnValue(CompletableFuture.completedFuture(Optional.empty())); } }
 }

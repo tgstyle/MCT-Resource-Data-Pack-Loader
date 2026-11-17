@@ -17,17 +17,17 @@ public final class ConfigData {
 
     ConfigData(ForgeConfigSpec.Builder builder) {
         builder.comment("Loot, functions and registry names").push("data");
-        lootInjections = builder.comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]").define("lootInjections", true);
-        lootRemovals = builder.comment("Apply loot_removals/*.json files, which delete named entries from loot tables that already exist, or empty a table whole [Default=true]").define("lootRemovals", true);
-        playerLoot = builder.comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]").define("playerLoot", true);
-        soulbound = builder.comment("Apply soulbound/*.json files, which keep marked items (an enchantment, a list of items or an NBT flag) with the player through death, and show a tooltip line on them [Default=true]").define("soulbound", true);
-        mobDrops = builder.comment("Apply mob_drops/*.json files, which strip named items from what a mob drops when it dies and add stacks to it, by killer item or damage type [Default=true]").define("mobDrops", true);
-        registryRemaps = builder.comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]").define("registryRemaps", true);
-        anvils = builder.comment("Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then [Default=true]").define("anvils", true);
-        affixes = builder.comment("Apply affixes/*.json and gems/*.json files, which give an item random attribute bonuses and sockets the first time a player holds it, and let an anvil put a gem in a socket [Default=true]").define("affixes", true);
-        enchanting = builder.comment("Apply enchanting/*.json files, which change what the enchanting table offers, asks and takes: per enchantment, per item and for the whole table [Default=true]").define("enchanting", true);
-        blockDrops = builder.comment("Apply block_drops/*.json files, which add to or replace what a block drops whenever it breaks, experience included, for blocks a pack does not own [Default=true]").define("blockDrops", true);
-        functions = builder.comment("Load .mcfunction files from packs, so they work in every world [Default=true]").define("functions", true);
+        lootInjections = builder.comment("True applies loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table; false applies none [Default=true]").define("lootInjections", true);
+        lootRemovals = builder.comment("True applies loot_removals/*.json files, which delete named entries from loot tables that already exist, or empty a table whole; false applies none [Default=true]").define("lootRemovals", true);
+        playerLoot = builder.comment("True applies player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory; false applies none [Default=true]").define("playerLoot", true);
+        soulbound = builder.comment("True applies soulbound/*.json files, which keep marked items (an enchantment, a list of items or an NBT flag) with the player through death, and show a tooltip line on them; false applies none [Default=true]").define("soulbound", true);
+        mobDrops = builder.comment("True applies mob_drops/*.json files, which strip named items from what a mob drops when it dies and add stacks to it, by killer item or damage type; false applies none [Default=true]").define("mobDrops", true);
+        registryRemaps = builder.comment("True applies registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them; false applies none [Default=true]").define("registryRemaps", true);
+        anvils = builder.comment("True applies anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then; false applies none [Default=true]").define("anvils", true);
+        affixes = builder.comment("True applies affixes/*.json and gems/*.json files, which give an item random attribute bonuses and sockets the first time a player holds it, and let an anvil put a gem in a socket; false applies none [Default=true]").define("affixes", true);
+        enchanting = builder.comment("True applies enchanting/*.json files, which change what the enchanting table offers, asks and takes: per enchantment, per item and for the whole table; false applies none [Default=true]").define("enchanting", true);
+        blockDrops = builder.comment("True applies block_drops/*.json files, which add to or replace what a block drops whenever it breaks, experience included, for blocks a pack does not own; false applies none [Default=true]").define("blockDrops", true);
+        functions = builder.comment("True loads .mcfunction files from packs, so they work in every world; false loads none [Default=true]").define("functions", true);
         builder.pop();
     }
 

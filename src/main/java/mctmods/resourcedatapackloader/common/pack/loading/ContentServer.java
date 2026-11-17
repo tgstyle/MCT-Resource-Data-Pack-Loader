@@ -49,7 +49,9 @@ public final class ContentServer {
         return null;
     }
 
-    public static boolean privacy() { return ContentControl.flag(ContentControl.SERVER, "privacy", Config.tweaks.privacy()); }
+    public static boolean privacy() { return Config.tweaks.privacy(); }
+
+    public static boolean chatUnsigned() { return !Config.tweaks.chatReporting(); }
 
     public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode()); }
 

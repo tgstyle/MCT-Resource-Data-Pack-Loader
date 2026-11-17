@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.List;
+import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 
@@ -18,21 +19,29 @@ public final class Toasts {
     public static final int OTHER = 16;
     private static final int ALL = ADVANCEMENTS | RECIPES | TUTORIAL | SYSTEM | OTHER;
     private static final String KEY = "toasts";
+    private static final String HIDDEN_KEY = "hiddenToasts";
     private static final int OFF_SERVER = -1;
     private static volatile int shown = OFF_SERVER;
+    private static volatile Set<String> hidden = Set.of();
 
     private Toasts() {}
 
-    public static boolean hides(int kind) {
+    public static boolean hides(int kind, String name) {
         int kinds = shown == OFF_SERVER ? (Config.chunks.toasts() ? ALL : 0) : shown;
-        return (kinds & kind) == 0;
+        return (kinds & kind) == 0 || (shown == OFF_SERVER ? Config.chunks.hiddenToasts().contains(name) : hidden.contains(name));
     }
 
-    public static void show(int kinds) { shown = kinds; }
+    public static void show(int kinds, List<String> names) {
+        hidden = Set.copyOf(names);
+        shown = kinds;
+    }
 
-    public static void leave() { shown = OFF_SERVER; }
+    public static void leave() {
+        shown = OFF_SERVER;
+        hidden = Set.of();
+    }
 
-    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player) { RDPLNetwork.sendToasts(player, allowed()); } }
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player) { RDPLNetwork.sendToasts(player, allowed(), ContentControl.list(ContentControl.CHUNKS, HIDDEN_KEY, Config.chunks.hiddenToasts())); } }
 
     private static int allowed() {
         if (ContentControl.notArray(ContentControl.CHUNKS, KEY)) { return ContentControl.flag(ContentControl.CHUNKS, KEY, Config.chunks.toasts()) ? ALL : 0; }

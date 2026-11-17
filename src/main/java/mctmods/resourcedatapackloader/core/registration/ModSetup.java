@@ -97,6 +97,7 @@ import mctmods.resourcedatapackloader.common.portals.PortalEvents;
 import mctmods.resourcedatapackloader.common.potions.ContentPotions;
 import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
+import mctmods.resourcedatapackloader.common.raids.base.BaseSignals;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
 import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
@@ -223,6 +224,12 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentRaids::onJoin);
         MinecraftForge.EVENT_BUS.addListener(ContentRaids::onRaiderHit);
         MinecraftForge.EVENT_BUS.addListener(ContentRaids::onRaiderTarget);
+        MinecraftForge.EVENT_BUS.addListener(BaseSignals::onSpawn);
+        MinecraftForge.EVENT_BUS.addListener(BaseSignals::onWake);
+        MinecraftForge.EVENT_BUS.addListener(BaseSignals::onLogin);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, BaseSignals::onPlace);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, BaseSignals::onBreak);
+        MinecraftForge.EVENT_BUS.addListener(BaseSignals::onOpen);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, LivingEntityUseItemEvent.Tick.class, ContentDiet::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentDiet::onFinish);
         MinecraftForge.EVENT_BUS.addListener(ContentDiet::onLogout);
@@ -395,7 +402,6 @@ public class ModSetup {
         WorldgenSetup.seamListeners();
         WorldgenSetup.pregenListeners();
         StructureSetup.cityListeners();
-
         WorldgenSetup.pregenHoldListeners();
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
