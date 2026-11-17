@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.pregen.PregenMemory;
 import mctmods.resourcedatapackloader.common.pregen.VoidMemory;
 import mctmods.resourcedatapackloader.common.raids.RaidStorage;
+import mctmods.resourcedatapackloader.common.raids.base.BaseLedger;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructureCounts;
 import mctmods.resourcedatapackloader.common.worldgen.surface.SeamMemory;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -25,7 +26,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 
 public final class SavedDataMigration {
-    private static final List<String> NAMES = List.of(PregenMemory.NAME, SeamMemory.NAME, VoidMemory.NAME, ContentStructureCounts.NAME, ContentLocate.NAME, CardStorage.NAME, RaidStorage.NAME, GateStorage.NAME, PortalStorage.NAME);
+    private static final List<String> NAMES = List.of(PregenMemory.NAME, SeamMemory.NAME, VoidMemory.NAME, ContentStructureCounts.NAME, ContentLocate.NAME, CardStorage.NAME, RaidStorage.NAME, BaseLedger.NAME, GateStorage.NAME, PortalStorage.NAME);
 
     private SavedDataMigration() {}
 

@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (!ClaimGuard.fireMaySpread(level, pos.relative(face), pos)) { ci.cancel(); }
     }
 
-    @Redirect(method = "tick(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z", ordinal = 1)) private boolean rdpl$guardSpread(ServerLevel level, BlockPos target, BlockState newState, int flags, BlockState state, ServerLevel tickLevel, BlockPos pos, RandomSource random) {
-        return ClaimGuard.fireMaySpread(level, pos, target) && level.setBlock(target, newState, flags);
+    @Redirect(method = "tick(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z", ordinal = 1)) private boolean rdpl$guardSpread(ServerLevel spreadLevel, BlockPos target, BlockState newState, int flags, BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        return ClaimGuard.fireMaySpread(spreadLevel, pos, target) && spreadLevel.setBlock(target, newState, flags);
     }
 }

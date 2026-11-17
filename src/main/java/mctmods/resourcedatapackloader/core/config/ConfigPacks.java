@@ -14,10 +14,10 @@ public final class ConfigPacks {
     ConfigPacks(ModConfigSpec.Builder builder) {
         builder.comment("How pack folders are found and served").push("packs");
         rootDirectory = builder.comment("Folder packs are loaded from, relative to the .minecraft directory. An absolute path also works. Requires a restart [Default=rdploader]").worldRestart().define("rootDirectory", PackManager.ROOT_DIRECTORY);
-        overrideResourcePacks = builder.comment("Insert the asset pack above the player's selected resource packs and the world's own data packs. A pack named RDPLO... always overrides, RDPLN... never does [Default=true]").define("overrideResourcePacks", true);
-        warnOnCaseMismatch = builder.comment("Warn when a file only matches because the filesystem is case-insensitive. Such packs break on Linux [Default=true]").define("warnOnCaseMismatch", true);
-        logContents = builder.comment("Log every pack found and how many files it provides [Default=false]").define("logContents", false);
-        traceUnresolvedVariables = builder.comment("Log a stack trace the first time a file with a '#' in its name is requested, naming whatever asked for it [Default=false]").define("traceUnresolvedVariables", false);
+        overrideResourcePacks = builder.comment("True inserts the asset pack above the player's selected resource packs and the world's own data packs. A pack named RDPLO... always overrides, RDPLN... never does. False does not insert it above them [Default=true]").define("overrideResourcePacks", true);
+        warnOnCaseMismatch = builder.comment("True warns when a file only matches because the filesystem is case-insensitive. Such packs break on Linux. False gives no warning [Default=true]").define("warnOnCaseMismatch", true);
+        logContents = builder.comment("True logs every pack found and how many files it provides. False logs nothing [Default=false]").define("logContents", false);
+        traceUnresolvedVariables = builder.comment("True logs a stack trace the first time a file with a '#' in its name is requested, naming whatever asked for it. False logs no trace [Default=false]").define("traceUnresolvedVariables", false);
         builder.pop();
     }
 
