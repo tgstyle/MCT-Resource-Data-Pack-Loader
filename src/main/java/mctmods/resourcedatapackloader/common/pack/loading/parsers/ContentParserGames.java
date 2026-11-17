@@ -8,7 +8,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.ScoreDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TurnsDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemGiveDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
+import mctmods.resourcedatapackloader.common.raids.RaidTarget;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.messages.BossBars;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -28,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.block.Block;
 import net.minecraft.scoreboard.IScoreCriteria;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
@@ -35,12 +38,18 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.BossInfo;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentParserGames {
     private static final List<String> RESET_LEADS = Collections.unmodifiableList(Arrays.asList(RoundResetDef.NONE, RoundResetDef.NOW, RoundResetDef.VOTE));
     private static final List<String> RESET_PLAYERS = Collections.unmodifiableList(Arrays.asList(RoundResetDef.NONE, RoundResetDef.VOTE));
     private static final List<String> OPENS = Collections.unmodifiableList(Arrays.asList("auto", "leader"));
     private static final List<String> LEADS = Collections.unmodifiableList(Arrays.asList(TeamDef.LEAD_NONE, TeamDef.LEAD_FIRST, TeamDef.LEAD_TOP_SCORE, TeamDef.LEAD_APPOINTED, TeamDef.LEAD_VOTE, TeamDef.LEAD_CLAIM));
+    private static final List<String> RAID_TARGETS = Collections.unmodifiableList(Arrays.asList("village", "base", "player"));
+    private static final List<String> BASE_CLAIMS = Collections.unmodifiableList(Arrays.asList("any", "unclaimed", "claimed"));
+    private static final List<String> BASE_LOSS = Collections.unmodifiableList(Arrays.asList("defenders", "none"));
+    private static final List<String> BASE_LOGOFF = Collections.unmodifiableList(Arrays.asList("pause", "continue", "end"));
+    private static final List<String> BASE_BREAK = Collections.unmodifiableList(Arrays.asList("protect", "allow"));
 
     private ContentParserGames() {}
 
@@ -175,6 +184,7 @@ public final class ContentParserGames {
             ContentLog.LOGGER.error("Raid {} has no wave with anyone in it, so it is left out", key);
             return null;
         }
+        List<RaidTarget.Kind> target = raidTargets(json, key);
         return new RaidDef(key, omen,
                 Json.getString(json, "name", "Raid"),
                 color,
@@ -190,7 +200,80 @@ public final class ContentParserGames {
                 Json.getInt(json, "points", 0),
                 Json.getString(json, "loot", "").trim(),
                 Json.getBoolean(json, "anywhere", false),
-                BossBars.read("Raid " + key, json, color, BossInfo.Overlay.NOTCHED_10));
+                BossBars.read("Raid " + key, json, color, BossInfo.Overlay.NOTCHED_10),
+                target,
+                target.contains(RaidTarget.Kind.BASE) || target.contains(RaidTarget.Kind.PLAYER) ? baseDef(Json.object(json, "base"), "Raid " + key + " base") : null);
+    }
+
+    private static List<RaidTarget.Kind> raidTargets(JsonObject json, ResourceLocation key) {
+        List<RaidTarget.Kind> kinds = new ArrayList<>();
+        if (json.has("target")) {
+            List<String> asked = json.get("target").isJsonPrimitive() ? Collections.singletonList(Json.getString(json, "target", "").trim()) : Json.names(json, "target");
+            for (String name : asked) {
+                RaidTarget.Kind kind = RAID_TARGETS.contains(name) ? RaidTarget.Kind.parse(name) : null;
+                if (kind == null) { ContentLog.LOGGER.error("Raid {} names the target '{}', which is not one of {}, so it is dropped", key, name, RAID_TARGETS); }
+                else if (!kinds.contains(kind)) { kinds.add(kind); }
+            }
+        }
+        if (kinds.isEmpty()) { kinds.add(RaidTarget.Kind.VILLAGE); }
+        return Collections.unmodifiableList(kinds);
+    }
+
+    private static BaseDef baseDef(JsonObject base, String owner) {
+        JsonObject weights = Json.object(base, "weights");
+        String weighed = owner + " weights";
+        return new BaseDef(Json.choice(base, "claims", "any", owner, BASE_CLAIMS),
+                number(base, "minScore", 40, 0, Double.MAX_VALUE, owner),
+                number(base, "fullScore", 0, 0, Double.MAX_VALUE, owner),
+                (int) number(base, "radius", 48, 16, 128, owner),
+                new BaseDef.Weights(number(weights, "bed", BaseDef.BED_WEIGHT, 0, Double.MAX_VALUE, weighed),
+                        number(weights, "spawn", BaseDef.SPAWN_WEIGHT, 0, Double.MAX_VALUE, weighed),
+                        number(weights, "chest", BaseDef.CHEST_WEIGHT, 0, Double.MAX_VALUE, weighed),
+                        number(weights, "placed", BaseDef.PLACED_WEIGHT, 0, Double.MAX_VALUE, weighed),
+                        number(weights, "minutes", BaseDef.MINUTES_WEIGHT, 0, Double.MAX_VALUE, weighed),
+                        number(weights, "claim", BaseDef.CLAIM_WEIGHT, 0, Double.MAX_VALUE, weighed)),
+                number(base, "decayDays", 0, 0, Double.MAX_VALUE, owner),
+                number(base, "cellFloor", 1, -Double.MAX_VALUE, Double.MAX_VALUE, owner),
+                (int) number(base, "cellCap", BaseDef.DEFAULT_CELL_CAP, BaseDef.MIN_CELL_CAP, Integer.MAX_VALUE, owner),
+                Json.getBoolean(base, "creative", false),
+                number(base, "chance", 1, 0, 1, owner),
+                (int) number(base, "rollEvery", 6000, 20, Integer.MAX_VALUE, owner),
+                (int) number(base, "cooldown", 0, 0, Integer.MAX_VALUE, owner),
+                Json.getBoolean(base, "onlineOnly", true),
+                Json.choice(base, "loss", "defenders", owner, BASE_LOSS),
+                (int) number(base, "loseGrace", 600, 20, Integer.MAX_VALUE, owner),
+                Json.getBoolean(base, "rewardAll", false),
+                Json.choice(base, "onLogoff", "pause", owner, BASE_LOGOFF),
+                (int) number(base, "logoffGrace", 1200, 20, Integer.MAX_VALUE, owner),
+                Json.getBoolean(base, "follow", true),
+                Json.getBoolean(base, "hostileToAll", true),
+                Json.getBoolean(base, "insideSpawn", false),
+                Json.choice(base, "breakClaimed", "protect", owner, BASE_BREAK),
+                breakable(base, owner),
+                Json.getBoolean(base, "share", false));
+    }
+
+    private static double number(JsonObject json, String member, double fallback, double low, double high, String owner) {
+        if (!json.has(member)) { return fallback; }
+        JsonElement element = json.get(member);
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+            ContentLog.LOGGER.error("{} sets {} to {}, which is not a number, so {} is used instead", owner, member, element, fallback);
+            return fallback;
+        }
+        double value = element.getAsDouble();
+        if (value >= low && value <= high) { return value; }
+        ContentLog.LOGGER.error("{} sets {} to {}, which is outside {} to {}, so {} is used instead", owner, member, value, low, high, fallback);
+        return fallback;
+    }
+
+    private static List<Block> breakable(JsonObject base, String owner) {
+        List<Block> blocks = new ArrayList<>();
+        for (String name : Json.names(base, "breakable")) {
+            ResourceLocation id = new ResourceLocation(name);
+            if (ForgeRegistries.BLOCKS.containsKey(id)) { blocks.add(ForgeRegistries.BLOCKS.getValue(id)); }
+            else { ContentLog.LOGGER.error("{} lists the breakable block {}, which nothing registers, so it is dropped", owner, name); }
+        }
+        return Collections.unmodifiableList(blocks);
     }
 
     private static List<String> bells(JsonObject json) {

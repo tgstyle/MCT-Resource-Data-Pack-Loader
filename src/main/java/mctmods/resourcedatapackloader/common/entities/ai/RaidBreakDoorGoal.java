@@ -1,15 +1,18 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.raids.ActiveRaid;
 import mctmods.resourcedatapackloader.common.raids.RaidStorage;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockTrapDoor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathNavigateGround;
 import net.minecraft.pathfinding.PathPoint;
@@ -39,14 +42,17 @@ public final class RaidBreakDoorGoal extends EntityAIBase {
         return door != null && breakable();
     }
 
-    @Override public boolean shouldContinueExecuting() { return breaking <= BREAK_TICKS && closedDoor(door) && mob.getDistanceSq(door) < STAY_SQ && hardEnough() && raiding(); }
+    @Override public boolean shouldContinueExecuting() { return breaking <= BREAK_TICKS && breakableBlock(door) && mob.getDistanceSq(door) < STAY_SQ && hardEnough() && raiding(); }
 
     @Override public void startExecuting() {
         breaking = 0;
         shown = -1;
     }
 
-    @Override public void resetTask() { mob.world.sendBlockBreakProgress(mob.getEntityId(), door, -1); }
+    @Override public void resetTask() {
+        mob.getEntityData().removeTag(ActiveRaid.DOOR);
+        mob.world.sendBlockBreakProgress(mob.getEntityId(), door, -1);
+    }
 
     @Override public void updateTask() {
         BlockBreak.look(mob, door);
@@ -84,10 +90,10 @@ public final class RaidBreakDoorGoal extends EntityAIBase {
         for (int i = 0; i < Math.min(path.getCurrentPathIndex() + 2, path.getCurrentPathLength()); i++) {
             PathPoint point = path.getPathPointFromIndex(i);
             BlockPos at = new BlockPos(point.x, point.y + 1, point.z);
-            if (mob.getDistanceSq(at.getX(), mob.posY, at.getZ()) <= REACH_SQ && closedDoor(at)) { return at; }
+            if (mob.getDistanceSq(at.getX(), mob.posY, at.getZ()) <= REACH_SQ && breakableBlock(at)) { return at; }
         }
         BlockPos at = new BlockPos(mob).up();
-        return closedDoor(at) ? at : null;
+        return breakableBlock(at) ? at : null;
     }
 
     private boolean closedDoor(BlockPos at) {
@@ -95,8 +101,19 @@ public final class RaidBreakDoorGoal extends EntityAIBase {
         return state.getBlock() instanceof BlockDoor && state.getMaterial() == Material.WOOD && !BlockDoor.isOpen(mob.world, at);
     }
 
+    private boolean breakableBlock(BlockPos at) {
+        if (closedDoor(at)) { return true; }
+        if (!(mob.world instanceof WorldServer) || !mob.getEntityData().hasKey(ActiveRaid.RAIDER)) { return false; }
+        ActiveRaid raid = RaidStorage.get((WorldServer) mob.world).raidOf(NBTUtil.getPosFromTag(mob.getEntityData().getCompoundTag(ActiveRaid.RAIDER)));
+        BaseDef base = raid == null ? null : raid.def().base();
+        if (base == null || base.breakable.isEmpty()) { return false; }
+        IBlockState state = mob.world.getBlockState(at);
+        return base.breakable.contains(state.getBlock()) && !(state.getPropertyKeys().contains(BlockTrapDoor.OPEN) && state.getValue(BlockTrapDoor.OPEN));
+    }
+
     private boolean breakable() {
         IBlockState state = mob.world.getBlockState(door);
+        mob.getEntityData().setLong(ActiveRaid.DOOR, door.toLong());
         return hardEnough() && ForgeEventFactory.getMobGriefingEvent(mob.world, mob) && state.getBlock().canEntityDestroy(state, mob.world, door, mob) && ForgeEventFactory.onEntityDestroyBlock(mob, door, state);
     }
 

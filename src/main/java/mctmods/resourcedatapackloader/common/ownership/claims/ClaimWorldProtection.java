@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
+import mctmods.resourcedatapackloader.common.raids.RaidClaimWaiver;
+
 import net.minecraft.entity.Entity;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.world.BlockEvent;
@@ -17,7 +19,7 @@ public final class ClaimWorldProtection {
 
     @SubscribeEvent public static void onMobGriefing(EntityMobGriefingEvent event) {
         Entity entity = event.getEntity();
-        if (entity != null && ClaimGuard.refusesGriefing(entity)) { event.setResult(Event.Result.DENY); }
+        if (entity != null && ClaimGuard.refusesGriefing(entity) && !RaidClaimWaiver.lifts(entity)) { event.setResult(Event.Result.DENY); }
     }
 
     @SubscribeEvent public static void onFluidPlace(BlockEvent.FluidPlaceBlockEvent event) {

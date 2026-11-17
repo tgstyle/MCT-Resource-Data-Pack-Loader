@@ -104,6 +104,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
+import mctmods.resourcedatapackloader.common.raids.base.BaseSignals;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceBlocking;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceSwaps;
@@ -260,6 +261,7 @@ public class ModSetup {
         ContentDice.load();
         ContentBoards.load();
         if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
+        MinecraftForge.EVENT_BUS.register(BaseSignals.class);
         if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBellBlock.class); }
         SpawnLocks.load();
         SpawnSwaps.load();

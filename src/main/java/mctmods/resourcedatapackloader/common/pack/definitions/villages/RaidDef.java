@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.villages;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBarDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
+import mctmods.resourcedatapackloader.common.raids.RaidTarget;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -27,8 +28,10 @@ public final class RaidDef {
     public final boolean anywhere;
     @Nullable public final BossBarDef bossBar;
     public final String title;
+    private final List<RaidTarget.Kind> target;
+    @Nullable private final BaseDef base;
 
-    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells, int points, String loot, boolean anywhere, @Nullable BossBarDef bossBar) {
+    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells, int points, String loot, boolean anywhere, @Nullable BossBarDef bossBar, List<RaidTarget.Kind> target, @Nullable BaseDef base) {
         this.registryName = registryName;
         this.omen = omen;
         this.name = name;
@@ -47,7 +50,13 @@ public final class RaidDef {
         this.anywhere = anywhere;
         this.bossBar = bossBar;
         this.title = bossBar != null && !bossBar.name.isEmpty() ? bossBar.name : name;
+        this.target = target;
+        this.base = base;
     }
+
+    public List<RaidTarget.Kind> target() { return target; }
+
+    @Nullable public BaseDef base() { return base; }
 
     public static final class Group {
         public final String entity;

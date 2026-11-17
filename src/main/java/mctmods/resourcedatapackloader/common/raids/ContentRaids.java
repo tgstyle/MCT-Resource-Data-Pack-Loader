@@ -4,10 +4,14 @@ import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
 import mctmods.resourcedatapackloader.common.entities.ai.HideIndoorsGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.RaidBreakDoorGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.RaidMarchGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.RaidTargetGoal;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserGames;
+import mctmods.resourcedatapackloader.common.raids.base.BaseLedger;
+import mctmods.resourcedatapackloader.common.raids.base.BaseSignals;
 import mctmods.resourcedatapackloader.common.rules.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -32,17 +36,18 @@ import net.minecraft.entity.monster.EntityIronGolem;
 import net.minecraft.entity.monster.EntityWitch;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.village.Village;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -54,7 +59,6 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentRaids {
     private static final int LOOK_EVERY = 20;
-    private static final int VILLAGE_SEARCH = 32;
     private static final int BELL_REACH = 48;
     private static final int GLOW_TICKS = 60;
     private static final int HIDE_TICKS = 300;
@@ -72,6 +76,12 @@ public final class ContentRaids {
             RaidDef def = ContentParserGames.raidFile(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
+        int largest = 0;
+        for (RaidDef def : DEFS.values()) {
+            if (def.base() != null) { largest = Math.max(largest, def.base().cellCap); }
+        }
+        BaseLedger.setCellCap(largest > 0 ? largest : BaseDef.DEFAULT_CELL_CAP);
+        BaseSignals.arm(DEFS.values());
         belled = ContentRegistry.registeredBlocks().stream().anyMatch(entry -> entry.getValue() instanceof ContentBellBlock);
         if (DEFS.isEmpty() && !belled) { return false; }
         for (RaidDef def : DEFS.values()) {
@@ -145,8 +155,9 @@ public final class ContentRaids {
         EntityPlayer player = event.player;
         if (event.phase != TickEvent.Phase.END || !(player.world instanceof WorldServer) || player.ticksExisted % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
         WorldServer world = (WorldServer) player.world;
+        BaseSignals.sample(player);
         RaidDef due = ContentRaidSwitch.due(world, player, LOOK_EVERY);
-        if (due != null) { around(world, player, due, "carries the raid clock"); }
+        if (due != null && rolled(world, player, due)) { around(world, player, due, "carries the raid clock"); }
         for (RaidDef def : DEFS.values()) {
             Potion omen = ForgeRegistries.POTIONS.getValue(new ResourceLocation(def.omen));
             if (omen == null || !player.isPotionActive(omen)) { continue; }
@@ -155,20 +166,24 @@ public final class ContentRaids {
         }
     }
 
+    private static boolean rolled(WorldServer world, EntityPlayer player, RaidDef def) {
+        BaseDef base = def.base();
+        if (base == null || base.chance >= 1.0D || !def.target().contains(RaidTarget.Kind.BASE) && !def.target().contains(RaidTarget.Kind.PLAYER)) { return true; }
+        return ContentRaidSwitch.roll(world, player, def);
+    }
+
     private static boolean around(WorldServer world, EntityPlayer player, RaidDef def, String cause) {
-        BlockPos at = new BlockPos(player);
-        Village village = ActiveRaid.nearestVillage(world, at, 0);
-        RaidStorage storage = RaidStorage.get(world);
-        if (village == null) {
-            if (!def.anywhere || storage.near(at, def.reach) != null) { return false; }
-            ActiveRaid.start(world, def, at, true);
+        if (!(player instanceof EntityPlayerMP)) { return false; }
+        RaidTarget target = RaidTargets.resolve(world, (EntityPlayerMP) player, def);
+        if (target == null || !RaidTargets.launch(world, (EntityPlayerMP) player, def, target)) { return false; }
+        BlockPos center = target.center();
+        if (target.kind() == RaidTarget.Kind.FREE) {
             ContentLog.LOGGER.info("{} {} with no village near, so raid {} begins around them", player.getName(), cause, def.registryName);
             return true;
         }
-        if (storage.near(village.getCenter(), VILLAGE_SEARCH + village.getVillageRadius()) != null) { return false; }
-        ActiveRaid.start(world, def, village.getCenter(), false);
-        ContentRaidSwitch.reset(world, player);
-        ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getName(), cause, village.getCenter().getX(), village.getCenter().getY(), village.getCenter().getZ(), def.registryName);
+        if (target.kind() == RaidTarget.Kind.VILLAGE) { ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getName(), cause, center.getX(), center.getY(), center.getZ(), def.registryName); }
+        else if (target.kind() == RaidTarget.Kind.BASE) { ContentLog.LOGGER.info("{} {} at their base at {}, {}, {}, so raid {} begins", player.getName(), cause, center.getX(), center.getY(), center.getZ(), def.registryName); }
+        else { ContentLog.LOGGER.info("{} {}, so raid {} hunts them", player.getName(), cause, def.registryName); }
         return true;
     }
 
@@ -192,9 +207,16 @@ public final class ContentRaids {
         }
         if (DEFS.isEmpty() || !(entity instanceof EntityCreature) || !entity.getEntityData().hasKey(ActiveRaid.RAIDER)) { return; }
         EntityCreature raider = (EntityCreature) entity;
+        NBTTagCompound tag = raider.getEntityData();
+        ActiveRaid raid = RaidStorage.get((WorldServer) event.getWorld()).raidOf(NBTUtil.getPosFromTag(tag.getCompoundTag(ActiveRaid.RAIDER)));
+        if (raid == null) {
+            tag.removeTag(ActiveRaid.RAIDER);
+            return;
+        }
         raider.tasks.addTask(1, new RaidBreakDoorGoal(raider));
         raider.tasks.addTask(4, new RaidMarchGoal(raider));
-        raider.targetTasks.addTask(3, new EntityAINearestAttackableTarget<>(raider, EntityPlayer.class, true));
+        boolean guarded = raid.kind() == RaidTarget.Kind.BASE || raid.kind() == RaidTarget.Kind.PLAYER;
+        raider.targetTasks.addTask(3, guarded ? new RaidTargetGoal(raider) : new EntityAINearestAttackableTarget<>(raider, EntityPlayer.class, true));
         raider.targetTasks.addTask(4, new EntityAINearestAttackableTarget<>(raider, EntityVillager.class, false));
         raider.targetTasks.addTask(4, new EntityAINearestAttackableTarget<>(raider, EntityIronGolem.class, true));
     }

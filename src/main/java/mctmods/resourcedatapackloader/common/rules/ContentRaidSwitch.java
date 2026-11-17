@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rules;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidSwitchDef;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
@@ -23,6 +24,7 @@ import net.minecraft.world.WorldServer;
 public final class ContentRaidSwitch {
     private static final List<String> KEYS = Arrays.asList("every", "start", "waves", "points");
     private static final String CLOCK = "rdplRaidClock";
+    private static final String ROLL = "rdplRaidRoll";
 
     private ContentRaidSwitch() {}
 
@@ -105,6 +107,17 @@ public final class ContentRaidSwitch {
             if (raid != null) { known.add(raid); }
         }
         return known.isEmpty() ? null : known.get(player.getRNG().nextInt(known.size()));
+    }
+
+    public static boolean roll(WorldServer world, EntityPlayer player, RaidDef def) {
+        BaseDef base = def.base();
+        if (base == null) { return true; }
+        NBTTagCompound rolls = PlayerPersisted.section(player, ROLL);
+        String dimension = String.valueOf(world.provider.getDimension());
+        long now = world.getTotalWorldTime();
+        if (rolls.hasKey(dimension) && now - rolls.getLong(dimension) < base.rollEvery) { return false; }
+        rolls.setLong(dimension, now);
+        return world.rand.nextDouble() < base.chance;
     }
 
     public static void reset(WorldServer world, EntityPlayer player) { PlayerPersisted.section(player, CLOCK).setInteger(String.valueOf(world.provider.getDimension()), 0); }

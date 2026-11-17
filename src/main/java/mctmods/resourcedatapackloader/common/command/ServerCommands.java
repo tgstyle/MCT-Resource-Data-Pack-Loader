@@ -29,7 +29,6 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.pregen.ContentReset;
-import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.scoring.ContentRoundReset;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
@@ -184,8 +183,7 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "ownership".equals(args[0])) { return OwnershipCommand.complete(args); }
         if (args.length >= 2 && ClaimCommand.handles(args[0])) { return ClaimCommand.complete(server, sender, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
-        if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
-        if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
+        if (args.length >= 2 && "raid".equals(args[0])) { return RaidCommand.complete(server, args); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
         if (args.length == 2 && "vein".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentWorldgen.veinNames()); }
