@@ -19,18 +19,18 @@ public final class ConfigRecipes {
 
     ConfigRecipes(ModConfigSpec.Builder builder) {
         builder.comment("Recipe files, removals and blocking").push("recipes");
-        furnace = builder.comment("Apply furnace/*.json files, which add and remove furnace smelting recipes [Default=true]").define("furnace", true);
-        swaps = builder.comment("Apply recipe_swaps/*.json files, which replace an item with another in the ingredients and results of crafting and furnace recipes [Default=true]").define("swaps", true);
-        removals = builder.comment("Apply recipe_removals/*.json files, which delete crafting recipes by name, namespace or output [Default=true]").define("removals", true);
-        skipMissingItems = builder.comment("Skip recipes that use an item which is not registered, instead of letting them fail. The count is logged once [Default=true]").define("skipMissingItems", true);
-        blockRecipes = builder.comment("Remove every crafting recipe, keeping only the mods in recipeWhitelist. Include your pack's namespace to keep its own recipes [Default=false]").define("blockRecipes", false);
-        recipeWhitelist = builder.comment("Mod ids whose crafting recipes survive while blockRecipes is on. Include your pack's namespace to keep its own recipes").defineListAllowEmpty("recipeWhitelist", List.of("minecraft"), ConfigCore.BLANK, ConfigCore.IS_TEXT);
+        furnace = builder.comment("True applies furnace/*.json files, which add and remove furnace smelting recipes; false applies none [Default=true]").define("furnace", true);
+        swaps = builder.comment("True applies recipe_swaps/*.json files, which replace an item with another in the ingredients and results of crafting and furnace recipes; false applies none [Default=true]").define("swaps", true);
+        removals = builder.comment("True applies recipe_removals/*.json files, which delete crafting recipes by name, namespace or output; false applies none [Default=true]").define("removals", true);
+        skipMissingItems = builder.comment("True skips recipes that use an item which is not registered, instead of letting them fail; false lets them fail. The count is logged once [Default=true]").define("skipMissingItems", true);
+        blockRecipes = builder.comment("True removes every crafting recipe, keeping only the mods in recipeWhitelist; false removes none. Include your pack's namespace to keep its own recipes [Default=false]").define("blockRecipes", false);
+        recipeWhitelist = builder.comment("Mod ids whose crafting recipes survive while blockRecipes is true. Include your pack's namespace to keep its own recipes").defineListAllowEmpty("recipeWhitelist", List.of("minecraft"), ConfigCore.BLANK, ConfigCore.IS_TEXT);
         blockedRecipeMods = builder.comment("Mod ids whose crafting recipes are removed outright, whoever they belong to and whatever the whitelist says").defineListAllowEmpty("blockedRecipeMods", List.of(), ConfigCore.BLANK, ConfigCore.IS_TEXT);
         recipeMatch = builder.comment("What the mod id is read from when blocking crafting recipes. 'recipe' uses the recipe's own name, 'output' uses the item it makes, 'both' blocks if either matches and spares if either is whitelisted [Default=recipe]").define("recipeMatch", "recipe");
-        blockFurnaceRecipes = builder.comment("Remove every furnace recipe, keeping only the mods in furnaceWhitelist. The mod is read from the item produced [Default=false]").define("blockFurnaceRecipes", false);
-        furnaceWhitelist = builder.comment("Mod ids whose furnace recipes survive while blockFurnaceRecipes is on. Include your pack's namespace to keep its own recipes").defineListAllowEmpty("furnaceWhitelist", List.of("minecraft"), ConfigCore.BLANK, ConfigCore.IS_TEXT);
+        blockFurnaceRecipes = builder.comment("True removes every furnace recipe, keeping only the mods in furnaceWhitelist; false removes none. The mod is read from the item produced [Default=false]").define("blockFurnaceRecipes", false);
+        furnaceWhitelist = builder.comment("Mod ids whose furnace recipes survive while blockFurnaceRecipes is true. Include your pack's namespace to keep its own recipes").defineListAllowEmpty("furnaceWhitelist", List.of("minecraft"), ConfigCore.BLANK, ConfigCore.IS_TEXT);
         blockedFurnaceMods = builder.comment("Mod ids whose furnace recipes are removed outright, whatever the whitelist says").defineListAllowEmpty("blockedFurnaceMods", List.of(), ConfigCore.BLANK, ConfigCore.IS_TEXT);
-        logBlockedRecipes = builder.comment("Log a per mod count of what was blocked, so you can see what to whitelist [Default=true]").define("logBlockedRecipes", true);
+        logBlockedRecipes = builder.comment("True logs a per mod count of what was blocked, so you can see what to whitelist; false logs none [Default=true]").define("logBlockedRecipes", true);
         builder.pop();
     }
 

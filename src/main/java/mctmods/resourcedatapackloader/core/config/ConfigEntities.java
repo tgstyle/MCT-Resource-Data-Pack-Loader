@@ -13,7 +13,7 @@ public final class ConfigEntities {
 
     ConfigEntities(ModConfigSpec.Builder builder) {
         builder.comment("How entities far from every player are ticked").push("entities");
-        slowDistantEntities = builder.comment("Tick entities far from every player less often. Nothing is ever left unticked, only ticked at a slower pace [Default=true]").define("slowDistantEntities", true);
+        slowDistantEntities = builder.comment("True ticks entities far from every player less often; false ticks them all at the normal pace. Nothing is ever left unticked, only ticked at a slower pace [Default=true]").define("slowDistantEntities", true);
         slowedKinds = builder.comment("Which kinds are given fewer ticks: items, experience, projectiles. Anything that thinks for itself is always given a slower pace instead, without being named here, and machines are never slowed [Default=[items, experience]]").defineListAllowEmpty("slowedKinds", List.of("items", "experience"), ConfigCore.BLANK, ConfigCore.IS_TEXT);
         slowDistance = builder.comment("How far from the nearest player, in blocks, before a chunk is slowed. The game stops telling a player about most entities beyond 64, so nothing below that [Default=192]").defineInRange("slowDistance", 192, 64, 4096);
         slowRate = builder.comment("One tick in this many is given to a slowed chunk. 1 is no slowing at all, 20 is once a second [Default=4]").defineInRange("slowRate", 4, 1, 20);

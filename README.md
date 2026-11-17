@@ -252,9 +252,6 @@ root is read like any pack, so the mod needs no separate download. See the
 
 **1.12.2:** mods that require CoFH World load without it.
 
-**1.20.1 / 1.21.1 / 26.x:** the game's telemetry and chat reporting are switched off by
-default; `privacy` in the config puts them back.
-
 The mod's own report goes to `logs/rdpl.log` rather than the main log.
 
 # Requirements

@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
+import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -24,7 +25,6 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackg
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
-import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +50,7 @@ public final class RDPLNetwork {
         registrar.playToClient(HoldMessage.TYPE, HoldMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog(), message.backdrop(), message.font()); } });
         registrar.playToClient(NoteMessage.TYPE, NoteMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said(), message.backdrop(), message.font()); } });
         registrar.playToClient(BossBackgroundMessage.TYPE, BossBackgroundMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { BossBackgrounds.set(message); } });
-        registrar.playToClient(ToastsMessage.TYPE, ToastsMessage.CODEC, (message, context) -> Toasts.show(message.kinds()));
+        registrar.playToClient(ToastsMessage.TYPE, ToastsMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ToastFilter.receive(message.kinds(), message.hidden()); } });
         registrar.playToClient(AnvilCostsMessage.TYPE, AnvilCostsMessage.CODEC, (message, context) -> AnvilCosts.show(message.cap(), ints(message.paid()), ints(message.lapis()), message.opening()));
         registrar.playToClient(HeartColorsMessage.TYPE, HeartColorsMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HeartsHud.show(message.colors()); } });
         registrar.playToClient(GatesMessage.TYPE, GatesMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ContentSkyGates.receive(message.open()); } });
@@ -99,7 +99,7 @@ public final class RDPLNetwork {
         else { send(player, new BossBackgroundMessage(bar, background.texture(), background.width(), background.height(), background.x(), background.y())); }
     }
 
-    public static void sendToasts(ServerPlayer player, int kinds) { send(player, new ToastsMessage(kinds)); }
+    public static void sendToasts(ServerPlayer player, int kinds, List<String> hidden) { send(player, new ToastsMessage(kinds, StringListCodec.capped(hidden))); }
 
     public static void sendAnvilCosts(ServerPlayer player) { send(player, new AnvilCostsMessage(AnvilCosts.servedCap(), boxed(AnvilCosts.servedPaid()), boxed(AnvilCosts.servedLapis()), AnvilCosts.servedOpening())); }
 

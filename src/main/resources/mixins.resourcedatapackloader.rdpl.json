@@ -133,7 +133,6 @@
         "client.gui.screens.worldselection.WorldOpenFlowsMixin",
         "client.telemetry.ClientTelemetryManagerMixin",
         "client.multiplayer.AccountProfileKeyPairManagerMixin",
-        "client.multiplayer.ClientPacketListenerMixin",
         "client.gui.screens.LogoTextureMixin",
         "client.gui.screens.ShareToLanScreenMixin",
         "client.server.IntegratedServerMixin",

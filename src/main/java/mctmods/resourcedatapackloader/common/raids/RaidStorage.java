@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.raids;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -46,6 +47,28 @@ public final class RaidStorage extends SavedData {
         return false;
     }
 
+    @Nullable public ActiveRaid ownerRaid(int handle) {
+        if (handle == 0) { return null; }
+        for (ActiveRaid raid : raids) {
+            if (!raid.stopped() && raid.owner() == handle) { return raid; }
+        }
+        return null;
+    }
+
+    @Nullable public ActiveRaid raidOf(BlockPos center) {
+        for (ActiveRaid raid : raids) {
+            if (!raid.stopped() && raid.center().equals(center)) { return raid; }
+        }
+        return null;
+    }
+
+    boolean crowds(ActiveRaid raid, int within) {
+        for (ActiveRaid other : raids) {
+            if (other != raid && !other.stopped() && other.center().distSqr(raid.center()) <= (double) within * within) { return true; }
+        }
+        return false;
+    }
+
     public boolean underway(BlockPos at) {
         for (ActiveRaid raid : raids) {
             if (raid.underway(at)) { return true; }
@@ -60,7 +83,11 @@ public final class RaidStorage extends SavedData {
 
     public void tick(ServerLevel level) {
         if (raids.isEmpty()) { return; }
-        for (ActiveRaid raid : new ArrayList<>(raids)) { raid.tick(level); }
+        List<ActiveRaid> live = new ArrayList<>(raids);
+        if (level.getGameTime() % ActiveRaid.SUPERVISE == 0) {
+            for (ActiveRaid raid : live) { raid.supervise(level); }
+        }
+        for (ActiveRaid raid : live) { raid.tick(level); }
         raids.removeIf(ActiveRaid::stopped);
         setDirty();
     }
