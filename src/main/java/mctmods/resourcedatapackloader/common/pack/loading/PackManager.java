@@ -75,6 +75,7 @@ public final class PackManager {
     public static final String GATES = "gates";
     public static final String CARDS = "cards";
     public static final String DIALOGS = "dialogs";
+    public static final String SYNCDATA = "syncdata";
     public static final String POTIONS = "potions";
     public static final String POTION_TYPES = "potion_types";
     public static final String ENCHANTMENTS = "enchantments";
@@ -89,8 +90,11 @@ public final class PackManager {
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
     public static final String SPAWN_SWAPS = "spawn_swaps";
+    public static final String HURT_RULES = "hurt_rules";
     public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
+    public static final String COMMANDS = "commands";
+    public static final String COMMAND_GUARDS = "command_guards";
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String LOOT_REMOVALS = "loot_removals";
@@ -133,6 +137,10 @@ public final class PackManager {
     public static final String ORDERS = "orders";
     public static final String RANKS = "ranks";
     public static final String CELESTIAL = "celestial";
+    public static final String ZONES = "zones";
+    public static final String SCHEDULES = "schedules";
+    public static final String SCRIPTS = "scripts";
+    public static final String TAG_COPIES = "tag_copies";
     private static final String DISABLED_SUFFIX = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();

@@ -27,6 +27,17 @@ public final class ContentParserFluids {
 
     private ContentParserFluids() {}
 
+    static boolean blockWanted(JsonObject json) {
+        JsonElement value = json.get("block");
+        return value != null && !(value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && !value.getAsBoolean());
+    }
+
+    static JsonObject blockObject(JsonObject json) {
+        JsonElement value = json.get("block");
+        if (value == null || value.isJsonObject() || value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return Json.object(json, "block"); }
+        return Json.getJsonObject(json, "block", new JsonObject());
+    }
+
     public static FluidBehaviorDef behavior(ResourceLocation key, JsonObject block) {
         FluidBehaviorDef.Creatures creatures = creatures(key, Json.object(block, "creatures"));
         FluidBehaviorDef.Items items = items(key, Json.object(block, "items"));

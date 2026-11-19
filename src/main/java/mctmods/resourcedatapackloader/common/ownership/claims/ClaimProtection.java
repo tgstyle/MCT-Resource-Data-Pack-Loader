@@ -91,7 +91,7 @@ public final class ClaimProtection {
         return true;
     }
 
-    static void deny(PlayerInteractEvent.RightClickBlock event) {
+    public static void deny(PlayerInteractEvent.RightClickBlock event) {
         event.setCanceled(true);
         event.setUseBlock(TriState.FALSE);
         event.setUseItem(TriState.FALSE);

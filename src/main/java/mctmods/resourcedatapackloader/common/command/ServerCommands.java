@@ -63,6 +63,7 @@ public final class ServerCommands {
                 }))
                 .then(CommandRaids.raid(NAME))
                 .then(CommandCards.card(NAME))
+                .then(CommandData.data(NAME))
                 .then(CommandTalk.talk(NAME))
                 .then(CommandWeight.weight(NAME))
                 .then(SneakCommand.sneak(NAME))

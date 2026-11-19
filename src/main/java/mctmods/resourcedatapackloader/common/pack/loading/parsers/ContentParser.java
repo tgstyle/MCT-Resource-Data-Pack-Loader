@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.TabDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.scripts.ScriptRef;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
@@ -122,7 +123,7 @@ public final class ContentParser {
                 ContentParserSeasons.sensor(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json), ContentParserWeights.weight(json, key), ContentParserCrops.tall(json, key, maxAge),
-                ContentParserShields.spawns(json, key), ContentParserShields.weather(json), Json.getBoolean(json, "needsOxygen", true));
+                ContentParserShields.spawns(json, key), ContentParserShields.weather(json), Json.getBoolean(json, "needsOxygen", true), Json.getBoolean(json, "tagged", true));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {
@@ -307,6 +308,7 @@ public final class ContentParser {
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "item definition");
         if (json == null) { return null; }
+        if (json.has("item")) { return ContentParserDerived.item(key, json); }
         List<ItemVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
             ResourceLocation id = variantId(key, entry.getKey(), "Item");
@@ -346,7 +348,7 @@ public final class ContentParser {
                 Json.getString(json, "rolls", "").trim(),
                 Json.getString(json, "rollStore", "").trim(),
                 Json.getBoolean(json, "passesTurn", false),
-                Json.getString(json, "locates", "").trim(),
+                ContentParserLocator.parse(json),
                 ContentParserContainers.curioSlot(key, json),
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
                 Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
@@ -355,7 +357,9 @@ public final class ContentParser {
                 Json.getBoolean(json, "sleepingBag", false), ContentParserContainers.upgrade(key, json), ContentParserWeights.weight(json, key),
                 ContentParserFireworks.firework(key, json),
                 ContentParserSeasons.clock(json),
-                Json.getString(json, "rocket", "").trim());
+                Json.getString(json, "rocket", "").trim(),
+                Json.getString(json, "runs", "").trim(),
+                ScriptRef.read(key, json), ContentParserRecords.record(key, json), null);
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
@@ -366,7 +370,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Fluid definition {} names itself '{}', which is not a usable registry name, ignoring it", key, name);
             return null;
         }
-        JsonObject block = Json.getJsonObject(json, "block", new JsonObject());
+        JsonObject block = ContentParserFluids.blockObject(json);
         ResourceLocation still = location(Json.getString(json, "still", DEFAULT_STILL));
         ResourceLocation flow = location(Json.getString(json, "flow", DEFAULT_FLOW));
         return new FluidDef(key, name,
@@ -379,7 +383,7 @@ public final class ContentParser {
                 Mth.clamp(Json.getInt(json, "luminosity", 0), 0, 15),
                 Json.getBoolean(json, "gaseous", false),
                 Json.getBoolean(json, "bucket", true),
-                json.has("block"),
+                ContentParserFluids.blockWanted(json),
                 Settings.lower(Json.getString(block, "material", "water")),
                 Json.getString(json, "creativeTab", "").trim(),
                 Json.getInt(block, "flammability", 0),

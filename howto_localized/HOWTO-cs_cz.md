@@ -2,7 +2,7 @@
 
 **Jedna složka, která přepíše cokoli, co poskytuje Minecraft nebo mód, definuje nový obsah z JSONu a řídí, co se generuje, v každém světě, na klientech i serverech, a hráči přitom nemusí nic zapínat.**
 
-Třináct funkčních příkladů. Kterýkoli z nich stačí vložit rovnou do `rdploader` a podívat se, jak je každý soubor napsaný.
+Čtrnáct funkčních příkladů. Kterýkoli z nich stačí vložit rovnou do `rdploader` a podívat se, jak je každý soubor napsaný.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) používá téměř každý druh souboru, který loader čte: bloky, předměty, tekutinu, kartu kreativního režimu, biomy, šablonu světa, dimenzi za bránou, worldgen, lektvar a jeho vaření, vesničana a obchody, recepty, kořist, přepisy vanilla věcí, zvuk, pokrok a funkci. Jeho readme říká, co zkontrolovat ve hře.
 - [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) udělá z Overworldu prázdnotu, v níž worldgen visí ve vzduchu, jeden tvar na každé výškové pásmo, takže je každý dobře vidět zvlášť.
@@ -17,6 +17,7 @@ Třináct funkčních příkladů. Kterýkoli z nich stačí vložit rovnou do `
 - [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) postaví plochý svět kolem jedné z vesnic hry a při připojení dá hráči Zlověstné znamení: pět vln vanilla illagerů, čarodějnici a vlastní nájezdníky, kapitány nájezdu, vrhače seker a ničitele balíčku, znamení a Hrdinu vesnice jako vlastní efekty balíčku s ikonami z pixelových map, vlastní zvon balíčku, nápoj, který znamení vrátí, a funkce, které nájezd ukončí.
 - [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) udělá z plochého světa herní halu: vážené kostky z balíčku, balíček karet s moby, který se sám zamíchá, a balíček karet osudu, který zůstane prázdný, dokud se nezamíchá, kelímek na kostky, který po kliknutí pravým tlačítkem hodí 2k6, kostkový souboj proti bance hraný po tazích, který rovnost rozhodne losem, a šachy a dámu hrané s moby proti počítači.
 - [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) po zavření úvodu sám postaví pracovní dvůr a zadá vesničanům všechny druhy zakázek: horníka, jehož dosah roste s krumpáčem, dřevorubce, který si nasekané dřevo nechává, farmáře, který udržuje stálou zásobu pšenice, a nosiče, který tahá dlažební kameny; každou zakázku otevírá cedule, nástroj, najmutí nebo zásobní truhla.
+- [RDPLExampleScripts.zip](../example/RDPLExampleScripts.zip) ukazuje každou podobu skriptů na malém svatyňce: záznamy událostí se skripty vloženými přímo a ze souboru pro všech šest událostí, každý filtr, `every`, události, které skript ruší, dva předměty, které spouštějí skript při použití, a většinu toho, čeho `rdpl` dosáhne, od uložených dat a fází po skóre, karty a strukturu.
 
 Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch pár míst, kde se obě liší, je označeno **1.20.1** a **1.21.1**.
 
@@ -51,6 +52,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)
 - [Jak donutit vanillu zacházet s tvým blokem správně](#jak-donutit-vanillu-zacházet-s-tvým-blokem-správně)
 - [Předměty](#předměty)
+  - [Odvozené předměty](#odvozené-předměty)
 - [Ohňostroje](#ohňostroje)
 - [Tekutiny](#tekutiny)
 - [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)
@@ -62,6 +64,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Zámky předmětů](#zámky-předmětů)
 - [Váha předmětů](#váha-předmětů)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
+- [Odebrání receptů](#odebrání-receptů)
 - [Výměna receptů](#výměna-receptů)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
@@ -131,6 +134,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Kostky a balíčky karet](#kostky-a-balíčky-karet)
 
 **Ovládání**
+- [Skriptování](#skriptování)
 - [Vrstva ovládání](#vrstva-ovládání)
 - [Co dělá která skupina](#co-dělá-která-skupina)
 
@@ -220,6 +224,14 @@ V `data/`:
 | `<namespace>/weights/*.json`                 | Váha předmětů, limit nošení a stupně zatížení. [Váha předmětů](#váha-předmětů)                                                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                         |
 | `<namespace>/spawn_swaps/*.json`             | Moby nahrazené jinými při spawnu. [Výměna spawnu](#výměna-spawnu)                                                                                                                                    |
+| `<namespace>/hurt_rules/*.json`              | Moby, které ubližují jiným mobům, jsou zrušeny nebo spustí funkci. [Pravidla zranění](#pravidla-zranění)                                                                                             |
+| `<namespace>/zones/*.json`                   | Pevné oblasti, kde hráči nesmějí ničit, pokládat, používat, otevírat nebo létat. [Pravidla zón](#pravidla-zón)                                                                                       |
+| `<namespace>/schedules/*.json`               | Funkce spouštěná časovačem, jednou nebo opakovaně, jako server. [Časovače](#časovače)                                                                                                                |
+| `<namespace>/commands/*.json`                | Tvoje vlastní lomítkové příkazy s typovanými argumenty, které spustí funkci nebo skript. [Příkazy balíčku](#příkazy-balíčku)                                                                         |
+| `<namespace>/syncdata/*.json`                | Pojmenované hodnoty uložené pro každého hráče i pro svět, které nastavují a zobrazují karty, dialogy, příkazy a skripty. [Synchronizovaná data](#synchronizovaná-data)                               |
+| `<namespace>/command_guards/*.json`          | Blokuje hráčům jiný příkaz, dokud neplatí podmínka. [Strážci příkazů](#strážci-příkazů)                                                                                                              |
+| `<namespace>/scripts/events/*.json`          | Skript spuštěný, když nastane herní událost, například položení bloku nebo přihlášení hráče. [Skriptování](#skriptování)                                                                             |
+| `<namespace>/scripts/registries/*.json`      | Skript spuštěný, když hra registruje věci, aby přidal předměty do registru. [Skripty registrů](#skripty-registrů)                                                                                    |
 | `<namespace>/spawn_locks/*.json`             | Moby, které se neobjeví, dokud neplatí podmínky. [Zámky spawnu](#zámky-spawnu)                                                                                                                       |
 | `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                            |
 | `<namespace>/furnace/*.json`                 | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                            |
@@ -815,6 +827,8 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `portway`    | Zapíše se do vlastního seznamu zastávek každého hráče, který ho použije, a otevře nabídku cesty na kteroukoli z nich, s volitelnými omezeními, cenami a branami. Je vysoký jeden nebo dva bloky a může se natočit k hráči. Má blokový objekt      |
 | `bell`       | Zvon jako ten ve vesnicích hry: zvoní, když se použije na jeho bok, redstonem nebo když do něj narazí projektil, houpá se ve svém rámu a rozzáří poblíž nájezdníky. Jeho blockstate nese směr a způsob zavěšení                                   |
 | `log`        | Natáčí se k ploše, o kterou ho opíráš, a nese tag `minecraft:logs`, takže kácení stromů a Blast Plaster s ním zacházejí jako s kmenem                                                                                                             |
+| `pillar`     | Natáčí se k ploše, o kterou ho opíráš, stejně jako `log`, ale nenese tag `minecraft:logs`, takže ho kácení stromů a Blast Plaster nechávají být                                                                                                   |
+| `carpet`     | Tenká vrstva vysoká šestnáctinu bloku, jako vanilkový koberec. Nelze ji položit nad vzduch a rozbije se a vypadne, když zmizí blok pod ní                                                                                                         |
 | `leaves`     | Opadává, stříhá se, barví se a dropí sazenici, a nese tag `minecraft:leaves`. Ponechány `opaque` se kreslí plné, jako rychlé listí; nastav `"opaque": false`, aby bylo skrz ně vidět                                                              |
 | `sapling`    | Vyroste ve strom nebo v jednu z tvých struktur                                                                                                                                                                                                    |
 | `crop`       | Roste po fázích, dropí semeno a produkt, pšeničná semínka a pšenici pro to, co soubor vynechá; s `tall` několik bloků vysoká                                                                                                                      |
@@ -875,6 +889,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `container`                  | jen kontejner                          | objekt                                            | žádný                                                                                            | Viz [Kontejnery](#kontejnery)                                                                                                                                                                                                                                                                                                                                                                                   |
 | `portway`                    | jen průchod                            | objekt                                            | žádný                                                                                            | Viz [Průchody](#průchody)                                                                                                                                                                                                                                                                                                                                                                                       |
 | `bell`                       | jen zvon                               | objekt                                            | žádný                                                                                            | Viz [Zvony](#zvony)                                                                                                                                                                                                                                                                                                                                                                                             |
+| `tagged`                     | ne                                     | `true` nebo `false`                               | `true`                                                                                           | Jen pro `log`: `false` nechá blok mimo tag `minecraft:logs`, což dělá `pillar`                                                                                                                                                                                                                                                                                                                                  |
 | `weight`                     | ne                                     | číslo od 0                                        | žádný                                                                                            | Nesená váha předmětu bloku v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                                                                                                                                                                                                     |
 
 ### Komprimované vrstvy
@@ -1659,7 +1674,8 @@ assets/mypack/lang/en_us.json
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `basic`, `ore`, `falling`, `portway`                          | `<name>`, s `<name>_top` a `<name>_bottom` pro horní a spodní stěnu tam, kde je balíček dodává | `cube_all`, nebo `cube_bottom_top`, když je přítomna horní nebo spodní textura                                                                                                                               |
 | `flower`, `sapling`, `cane`, `leaves`, `container` bez truhly | `<name>`                                                                                       | `cube_all`, `cross` nebo `leaves`                                                                                                                                                                            |
-| `log`                                                         | `<name>` pro bok, `<name>_top` pro konce                                                       | `cube_column`                                                                                                                                                                                                |
+| `log`, `pillar`                                               | `<name>` pro bok, `<name>_top` pro konce                                                       | `cube_column`                                                                                                                                                                                                |
+| `carpet`                                                      | `<name>`                                                                                       | `carpet` ze hry s texturou jako `wool`, nikdy plná krychle                                                                                                                                                   |
 | `slab`                                                        | `<name>`                                                                                       | `slab`, `slab_top` a dvojitý `cube_all`                                                                                                                                                                      |
 | `stairs`                                                      | `<name>`                                                                                       | `stairs`, `inner_stairs`, `outer_stairs`, všech čtyřicet stavů vypsáno                                                                                                                                       |
 | `fence`                                                       | `<name>`                                                                                       | `fence_post` a `fence_side` jako multipart a `fence_inventory` pro ruku                                                                                                                                      |
@@ -2017,14 +2033,16 @@ Prostý předmět s `locates` je lokátorový kompas. Pravé kliknutí vyhledá 
 ```json
 {
   "locates": "Village",
-  "cooldown": 100,
+  "locatesEye": true,
+  "locatesSound": "minecraft:entity.ender_eye.launch",
+  "locatesRange": 2000,
   "variants": {
-    "seeker": {
-      "maxSize": 1
-    }
+    "seeker": { "meta": 0, "maxSize": 1 }
   }
 }
 ```
+
+Název `locates` začínající `#` je tag struktur: předmět najde nejbližší strukturu z tohoto tagu.
 
 Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do dalšího pravého kliknutí a v jiné dimenzi se točí. Střelku kreslí vlastní model předmětu, který přebírá stejné přepsání `angle` jako vanilla kompas, po jednom záznamu na snímek:
 
@@ -2050,39 +2068,55 @@ Obyčejný předmět s `sleepingBag` je spacák. Pravým kliknutím na horní st
 
 *předměty*
 
-| Klíč             | Povinné       | Hodnota                                    | Výchozí              | Co dělá                                                                                                                                                                                                                                                                                                               |
-| ---------------- | ------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`       | ano           | objekt názvu varianty na variantu          |                      | Jeden předmět na záznam. Klíč je jeho název v registru a pojmenovává jeho model, texturu a jazykový klíč                                                                                                                                                                                                              |
-| `type`           | ne            | jeden z typů výše                          | `basic`              | Jaký typ předmět má                                                                                                                                                                                                                                                                                                   |
-| `creativeTab`    | ne            | název karty                                | žádný                | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu)                                                                                                                                                                                                                                  |
-| `material`       | tool, armor   | název materiálu                            | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                                                                                                                                                                |
-| `toolClass`      | tool          | `pickaxe`, `axe`, `shovel`, `sword`        | žádný                | Jaký je to nástroj. `sword` je nástroj z 1.12.2, ne vanilla meč: udeří za 3 plus `damage` materiálu, těží bloky, jejichž `harvestTool` je `sword`, bere těžební kouzla a ani nezametá, ani neřeže pavučiny                                                                                                            |
-| `slot`           | armor         | `head`, `chest`, `legs`, `feet`            | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                                                                                                                                                                   |
-| `eat`            | food          | boolean                                    | `false`              | `true`: používá animaci jedení. `false`: nepoužívá                                                                                                                                                                                                                                                                    |
-| `alwaysEdible`   | food          | boolean                                    | `false`              | `true`: lze sníst i při plné liště hladu. `false`: jen když má hráč hlad, jako ve vanille                                                                                                                                                                                                                             |
-| `useDuration`    | drink, potion | celé číslo, ticky                          | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy to ignorují                                                                                                                                                                                                               |
-| `attackReach`    | ne            | desetinné číslo, bloky                     | `3.0`                | Jak daleko sahá úder s předmětem v hlavní ruce. Platí i pro pravé kliknutí na tvory. Viz [Zbraně](#zbraně)                                                                                                                                                                                                            |
-| `sweep`          | ne            | objekt                                     | žádný                | Zraní i další tvory kolem úderu v plné síle. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                                    |
-| `combo`          | ne            | objekt                                     | žádný                | Údery do `window` ticků po sobě procházejí `steps`. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                             |
-| `fireSeconds`    | ne            | celé číslo, 0 nebo více                    | `0`                  | Podpálí tvora, kterého zásah trefí, na tolik sekund. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                            |
-| `finisher`       | ne            | objekt                                     | žádný                | Závěrečný úder proti uvedeným mobům, zasazený až po úderu hry. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                  |
-| `attackSpeed`    | ne            | desetinné číslo                            | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                                                                           |
-| `cooldown`       | ne            | celé číslo, ticky                          | `0`                  | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody                                                                                                                                                                             |
-| `container`      | drink         | název předmětu                             | žádný                | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery)                                                                                                                                                                                 |
-| `crop`           | seed          | název bloku                                | žádný                | Plodina, kterou sází                                                                                                                                                                                                                                                                                                  |
-| `soil`           | seed          | název bloku                                | `minecraft:farmland` | Na co ji lze zasadit                                                                                                                                                                                                                                                                                                  |
-| `rolls`          | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček | žádný                | U obyčejného předmětu pravé kliknutí hodí tak, jako by to udělalo `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                                                                                    |
-| `rollStore`      | ne            | název cíle skóre                           | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                                                                                 |
-| `portway`        | portway       | objekt                                     | žádný                | Nastavení cestovního předmětu: [klíče průchodu](#průchody), které platí pro cestu, plus `consume` a `bind`. Viz [Cestovní předměty](#cestovní-předměty)                                                                                                                                                               |
-| `curioSlot`      | ne            | název slotu Curios                         | žádný                | Slot Curios, do kterého lze předmět nasadit, u předmětu libovolného typu. Bez nainstalovaného Curios se ignoruje                                                                                                                                                                                                      |
-| `wornEffects`    | ne            | seznam efektů                              | žádný                | Efekty lektvaru držené na nositeli, dokud je předmět ve svém slotu Curios, jako `potion`, `amplifier`, `ambient` a `showParticles`                                                                                                                                                                                    |
-| `wornAttributes` | ne            | seznam změn atributů                       | žádný                | Změny atributů držené na nositeli, dokud je předmět ve svém slotu Curios, jako `attribute`, `amount` a `operation`                                                                                                                                                                                                    |
-| `firework`       | ne            | objekt                                     | žádný                | Pravé kliknutí odpálí nebo spustí ohňostroj, u předmětu jakéhokoli typu. Viz [Ohňostroje](#ohňostroje)                                                                                                                                                                                                                |
-| `locates`        | ne            | `Village`, `minecraft:river`               | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše                                                        |
-| `passesTurn`     | ne            | boolean                                    | `false`              | `true`: u obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. `false`: nepředá. Viz [Střídání tahů](#střídání-tahů)                                                                                                                                                          |
-| `sleepingBag`    | ne            | boolean                                    | `false`              | `true`: u obyčejného předmětu pravé kliknutí na horní stranu bloku uloží držitele ke spánku a noc se přeskočí jako u postele. Nenastavuje bod oživení a nespotřebuje se. Funguje jen tam, kde je spánek povolen. Ignoruje se s `locates`, `rolls` nebo `passesTurn`. `false`: pravé kliknutí nikoho ke spánku neuloží |
-| `requires`       | ne            | seznam id módů nebo namespace balíčků      | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                     |
-| `weight`         | ne            | číslo od 0                                 | žádný                | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                                                                          |
+```json
+{
+  "runs": "mypack:ping",
+  "cooldown": 100,
+  "variants": {
+    "commlink": {}
+  }
+}
+```
+
+| Klíč             | Povinné       | Hodnota                                    | Výchozí              | Co dělá                                                                                                                                                                                                                                                                                                                                          |
+| ---------------- | ------------- | ------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `variants`       | ano           | objekt názvu varianty na variantu          |                      | Jeden předmět na záznam. Klíč je jeho název v registru a pojmenovává jeho model, texturu a jazykový klíč                                                                                                                                                                                                                                         |
+| `type`           | ne            | jeden z typů výše                          | `basic`              | Jaký typ předmět má                                                                                                                                                                                                                                                                                                                              |
+| `creativeTab`    | ne            | název karty                                | žádný                | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu)                                                                                                                                                                                                                                                             |
+| `material`       | tool, armor   | název materiálu                            | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                                                                                                                                                                                           |
+| `toolClass`      | tool          | `pickaxe`, `axe`, `shovel`, `sword`        | žádný                | Jaký je to nástroj. `sword` je nástroj z 1.12.2, ne vanilla meč: udeří za 3 plus `damage` materiálu, těží bloky, jejichž `harvestTool` je `sword`, bere těžební kouzla a ani nezametá, ani neřeže pavučiny                                                                                                                                       |
+| `slot`           | armor         | `head`, `chest`, `legs`, `feet`            | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                                                                                                                                                                                              |
+| `eat`            | food          | boolean                                    | `false`              | `true`: používá animaci jedení. `false`: nepoužívá                                                                                                                                                                                                                                                                                               |
+| `alwaysEdible`   | food          | boolean                                    | `false`              | `true`: lze sníst i při plné liště hladu. `false`: jen když má hráč hlad, jako ve vanille                                                                                                                                                                                                                                                        |
+| `useDuration`    | drink, potion | celé číslo, ticky                          | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy to ignorují                                                                                                                                                                                                                                          |
+| `attackReach`    | ne            | desetinné číslo, bloky                     | `3.0`                | Jak daleko sahá úder s předmětem v hlavní ruce. Platí i pro pravé kliknutí na tvory. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                       |
+| `sweep`          | ne            | objekt                                     | žádný                | Zraní i další tvory kolem úderu v plné síle. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                                                               |
+| `combo`          | ne            | objekt                                     | žádný                | Údery do `window` ticků po sobě procházejí `steps`. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                                                        |
+| `fireSeconds`    | ne            | celé číslo, 0 nebo více                    | `0`                  | Podpálí tvora, kterého zásah trefí, na tolik sekund. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                                                       |
+| `finisher`       | ne            | objekt                                     | žádný                | Závěrečný úder proti uvedeným mobům, zasazený až po úderu hry. Viz [Zbraně](#zbraně)                                                                                                                                                                                                                                                             |
+| `attackSpeed`    | ne            | desetinné číslo                            | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                                                                                                      |
+| `cooldown`       | ne            | celé číslo, ticky                          | `0`                  | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody; u předmětu, který `runs`, jak dlouho do dalšího pravého kliknutí, zobrazené jako vanilla odpočet předmětu                                                                                             |
+| `container`      | drink         | název předmětu                             | žádný                | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery)                                                                                                                                                                                                            |
+| `crop`           | seed          | název bloku                                | žádný                | Plodina, kterou sází                                                                                                                                                                                                                                                                                                                             |
+| `soil`           | seed          | název bloku                                | `minecraft:farmland` | Na co ji lze zasadit                                                                                                                                                                                                                                                                                                                             |
+| `rolls`          | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček | žádný                | U obyčejného předmětu pravé kliknutí hodí tak, jako by to udělalo `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                                                                                                               |
+| `rollStore`      | ne            | název cíle skóre                           | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                                                                                                            |
+| `locates`        | ne            | `Village`, `minecraft:river`               | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše                                                                                   |
+| `locatesEye`     | ne            | boolean                                    | `false`              | `true`: u předmětu, který `locates`, pravé kliknutí, které místo najde, také hodí od držitele k němu očko enderu, které letí jako vanilla očko enderu                                                                                                                                                                                            |
+| `locatesSound`   | ne            | id zvukové události                        | žádný                | U předmětu, který `locates`, zvuk přehraný držiteli při každém pravém kliknutí, například `minecraft:entity.ender_eye.launch`                                                                                                                                                                                                                    |
+| `locatesRange`   | ne            | celé číslo, bloky                          | `0`                  | U předmětu, který `locates`, jak daleko smí být místo, měřeno vodorovně od držitele. Místo dál se počítá jako nenalezené. `0` nenastaví žádný limit                                                                                                                                                                                              |
+| `passesTurn`     | ne            | boolean                                    | `false`              | `true`: u obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. `false`: nepředá. Viz [Střídání tahů](#střídání-tahů)                                                                                                                                                                                     |
+| `portway`        | portway       | objekt                                     | žádný                | Nastavení cestovního předmětu: [klíče průchodu](#průchody), které platí pro cestu, plus `consume` a `bind`. Viz [Cestovní předměty](#cestovní-předměty)                                                                                                                                                                                          |
+| `sleepingBag`    | ne            | boolean                                    | `false`              | `true`: u obyčejného předmětu pravé kliknutí na horní stranu bloku uloží držitele ke spánku a noc se přeskočí jako u postele. Nenastavuje bod oživení a nespotřebuje se. Funguje jen tam, kde je spánek povolen. Ignoruje se s `locates`, `rolls` nebo `passesTurn`. `false`: pravé kliknutí nikoho ke spánku neuloží                            |
+| `curioSlot`      | ne            | název slotu Curios                         | žádný                | Slot Curios, do kterého lze předmět nasadit, u předmětu libovolného typu. Bez nainstalovaného Curios se ignoruje                                                                                                                                                                                                                                 |
+| `wornEffects`    | ne            | seznam efektů                              | žádný                | Efekty lektvaru držené na nositeli, dokud je předmět ve svém slotu Curios, jako `potion`, `amplifier`, `ambient` a `showParticles`                                                                                                                                                                                                               |
+| `wornAttributes` | ne            | seznam změn atributů                       | žádný                | Změny atributů držené na nositeli, dokud je předmět ve svém slotu Curios, jako `attribute`, `amount` a `operation`                                                                                                                                                                                                                               |
+| `firework`       | ne            | objekt                                     | žádný                | Pravé kliknutí odpálí nebo spustí ohňostroj, u předmětu jakéhokoli typu. Viz [Ohňostroje](#ohňostroje)                                                                                                                                                                                                                                           |
+| `runs`           | ne            | ID funkce                                  | žádný                | U prostého předmětu pravé kliknutí, ve vzduchu nebo na bloku, spustí funkci jako držitel a u držitele, na serveru. Běží až po pevném použití `rolls`, `locates`, `passesTurn` nebo `sleepingBag`, pokud je předmět má. Funkce, kterou žádný balíček neposkytuje, se zapíše do logu a nic se nespustí. Bez ní pravé kliknutí dělá, co dělalo dřív |
+| `script`         | ne            | text                                       | žádný                | Skript spuštěný při pravém kliknutí, viz [Skriptování](#skriptování). Lze nastavit spolu s `runs`. Skript, jehož výsledek je `"cancel"`, přeskočí cooldown předmětu                                                                                                                                                                              |
+| `scriptFile`     | ne            | cesta                                      | žádný                | Totéž jako cesta pod `scripts/` končící na `.js`, viz [Skriptování](#skriptování)                                                                                                                                                                                                                                                                |
+| `requires`       | ne            | seznam id módů nebo namespace balíčků      | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                |
+| `weight`         | ne            | číslo od 0                                 | žádný                | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                                                                                                     |
 
 ### Ohňostroje
 
@@ -2263,6 +2297,178 @@ Kombo se posouvá a vlna se spouští jen úderem v plné síle. Slabší úder 
 | `push`       | ne      | `{ "horizontal": 0, "vertical": 0 }` | žádný     | Náhodné odhození do strany až o `horizontal` na obě strany a vzhůru až o `vertical`, obojí od 0 do 100                                   |
 
 Úder hráče zůstává, jak je, takže zabití závěrečným úderem se počítá hráči: dává zkušenosti a dropy za zabití hráčem, a položka [dropů z mobů](#dropy-z-mobů) `damageTypes` vidí typ poškození závěrečného úderu. Cíl, který během konce ticku zemře nebo opustí svět, se přeskočí.
+
+### Odvozené předměty
+
+*předměty*
+
+`<namespace>/items/*.json`
+
+Odvozený předmět je samostatný předmět s vlastním názvem, který funguje podle chování jiného předmětu. Základ uvedeš klíčem `item`, stejně jako varianta entity uvádí svou `entity`, a soubor dostane kopii třídy a polí toho předmětu pod svým registračním názvem. Základní předmět zůstane beze změny. Odtud měníš statistiky předmětu v `components`, jeho pole pomocí `set`, necháš metody vracet pevné hodnoty pomocí `returns` a předmět přidáš do seznamu modu pomocí `addTo`. Funguje jen pro předměty: blokový předmět jako základ se zaloguje a vynechá, odvozené bloky neexistují. Předmět získá model z `assets/<ns>/models/item/<name>.json` jako každý jiný předmět.
+
+```json
+{
+  "item": "minecraft:iron_pickaxe",
+  "name": "Tempered Pickaxe",
+  "components": {
+    "minecraft:max_damage": 2000,
+    "minecraft:rarity": "epic",
+    "minecraft:enchantment_glint_override": true
+  },
+  "set": {
+    "toolMaterial": { "set": { "enchantability": 30 } }
+  },
+  "returns": {
+    "hasEffect": true
+  }
+}
+```
+
+| Klíč          | Povinné | Hodnota                                  | Výchozí | Co dělá                                                                                                                                               |
+| ------------- | ------- | ---------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | ano     | `<mod>:<item>`                           |         | Předmět ke zkopírování. Musí být zaregistrován, když se odvozený předmět načítá, takže pro modu, která ho poskytuje, použij `requires`                |
+| `components`  | ne      | objekt názvu komponenty a hodnoty        | žádný   | Mění statistiky komponent předmětu. Viz `components` níže                                                                                             |
+| `set`         | ne      | objekt cesty k poli s tečkami a hodnotou | žádný   | Zapisuje skutečná pole kopie. Viz `set` níže                                                                                                          |
+| `returns`     | ne      | objekt názvu metody a konstanty          | žádný   | Nechá metody kopie vracet konstantu. Viz `returns` níže                                                                                               |
+| `addTo`       | ne      | `<fully.qualified.Class>.<member>`       | žádný   | Přidá nový předmět do statické kolekce jiné třídy. Viz `addTo` níže                                                                                   |
+| `name`        | ne      | text                                     | žádný   | Zobrazovaný název, jako u variant entit. Nastaví se jako komponenta `minecraft:item_name`. Položka `returns` pro `getName` má přednost a log to hlásí |
+| `creativeTab` | ne      | název záložky                            | žádný   | Záložka, ve které se předmět objeví                                                                                                                   |
+| `requires`    | ne      | seznam ID modů                           | žádný   | Vynechá předmět, když uvedená mod není načtena                                                                                                        |
+| `inherits`    | ne      | soubor rodičovského předmětu             | žádný   | Převezme klíče rodiče. `components`, `set` nebo `returns` potomka nahradí celé, neslučují se                                                          |
+
+Tyto klíče si na odvozeném předmětu zachovávají obvyklý význam: `curioSlot` (a `bauble`), `wornEffects`, `wornAttributes`, `attackReach`, `sweep`, `combo`, `fireSeconds`, `finisher` a `weight`.
+
+Tyto klíče na odvozeném předmětu nedělají nic, protože patří do třídy předmětu RDPL, kterou kopie nemá. Každý přítomný klíč se zaloguje jednou a ignoruje: `type`, `variants`, `runs`, `script`, `cooldown`, `rolls`, `rollStore`, `locates`, `locator`, `sleepingBag`, `firework`, `container`, `upgrade`, `portway`, `eat`, `alwaysEdible`, `useDuration`, `material`, `toolClass`, `slot`, `crop`, `soil`, `potionTypes`, `attackSpeed`, `rocket`, `passesTurn`, `record`, `seasonClock` a `holds`. Jejich účinek, pokud nějaký je, už je v základním předmětu, nebo ho napíšeš pomocí `components`, `set` a `returns`.
+
+#### Pojmenování polí a metod
+
+Pole a metody se píší jejich vanilla názvy: `tier`, `isFoil`, `getEnchantmentValue`. Název se hledá nejdřív ve třídě základního předmětu, pak v každé nadtřídě nad ní, a použije se první shoda. U metody se jako poslední prohledají výchozí metody interfaců.
+
+Metoda, která existuje s více seznamy parametrů, se musí pojmenovat s typy parametrů v závorkách, s jednoduchými názvy tříd a bez mezer: `getName(ItemStack)`, nebo `name(type,type)` pro dva parametry. Prostý název stačí, když ho má jen jedna metoda. Je-li název nejednoznačný, log vypíše možnosti. Název, který neodpovídá ničemu, se zaloguje a tato položka se přeskočí.
+
+Tyto starší názvy fungují jako aliasy, takže pack psaný pro jinou verzi se stále načte:
+
+| Kde       | Alias                   | Čte se jako                           |
+| --------- | ----------------------- | ------------------------------------- |
+| `set`     | `toolMaterial`          | `tier`                                |
+| `set`     | `enchantability`        | `enchantmentValue`, uvnitř tieru      |
+| `set`     | `maxUses`               | `uses`, uvnitř tieru                  |
+| `set`     | `efficiency`            | `speed`, uvnitř tieru                 |
+| `returns` | `hasEffect`             | `isFoil(ItemStack)`                   |
+| `returns` | `getItemEnchantability` | `getEnchantmentValue()`               |
+| `returns` | `getContainerItem`      | `getCraftingRemainingItem(ItemStack)` |
+
+#### `components`
+
+Většina statistik předmětu ve verzi 1.21.1 nejsou pole, ale datové komponenty: kolik poškození snese, jeho vzácnost, zda se třpytí, zda jde začarovat, co nástroj těží. `components` je objekt s názvem komponenty a hodnotou. Každou hodnotu čte kodek dané komponenty, takže se zapisuje přesně tak, jak se komponenta píše v příkazu `/give` nebo v datapacku, v JSONu. `"minecraft:max_damage": 2000` nastaví poškození, které nástroj snese, a `"minecraft:tool": { ... }` zapíše celou komponentu nástroje i s jejími pravidly. Názvy jsou názvy registrovaných komponent, včetně těch z modů.
+
+Komponenty začínají jako komponenty základního předmětu a každá položka zde jednu z nich nahradí. Hodnota `null` komponentu z kopie odstraní, například `"minecraft:tool": null` udělá krumpáč, který netěží rychleji než holá ruka. Název, který není komponentou s kodekem, nebo hodnota, kterou její kodek odmítne, se zaloguje se zprávou kodeku a tato položka se vynechá. Ostatní položky platí dál.
+
+Statistiky nástroje a brnění se do komponent načtou při sestavení předmětu, takže změna objektu `tier` je nezmění. Místo toho piš `minecraft:max_damage`, `minecraft:tool`, `minecraft:attribute_modifiers` a podobné do `components`.
+
+#### `set`
+
+`set` je jen pro skutečná pole: objekt s tečkovými cestami k polím a hodnotami. `"tier": ...` zapíše pole `tier` na kopii. `"tier.enchantmentValue": 30` vstoupí do objektu, který drží `tier`, a zapíše tam. Statická pole se nikdy nezapisují, protože by každý předmět sdílel tu změnu. Cokoli, co je komponentou, patří do `components`, ne sem.
+
+| Hodnota JSON       | Typ pole                                              | Poznámky                                                                                            |
+| ------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| číslo              | `int`, `long`, `short`, `byte`, `float`, `double`     | Celá čísla jen pro celočíselné typy, a hodnota se musí vejít do typu                                |
+| `true`, `false`    | `boolean`                                             |                                                                                                     |
+| text               | `String`, `char`                                      | `char` přijímá text o jednom znaku                                                                  |
+| text               | výčet                                                 | Název konstanty, velkými nebo malými písmeny                                                        |
+| text               | `ResourceLocation`                                    | `mod:name`                                                                                          |
+| text               | `Component`                                           | Prostý text, zobrazí se tak, jak je napsaný                                                         |
+| text               | `ItemStack`                                           | Stack zapsaný tak, jak ho packy zapisují jinde. Nesmí vyjít prázdný                                 |
+| text               | položka registru, například `Item`, `Block`, `Potion` | Název v registru. Musí být zaregistrován. Pole `Holder<T>` a `Supplier<T>` těchto typů fungují také |
+| pole               | pole, nebo `List`, `Set` či `Collection`              | Každý prvek sleduje tuto tabulku. Pole kolekce se nahradí celé, nikdy se nepřidává                  |
+| objekt             | jakýkoli jiný objekt                                  | Vnořený objekt, viz níže                                                                            |
+| text `<ns>:<item>` | jakýkoli jiný objekt                                  | Znovupoužije objekt, který odvozený předmět postavil na stejné cestě, viz níže                      |
+
+Registry, jejichž název může text pojmenovat, jsou předměty, bloky, tekutiny, typy entit, efekty moba, lektvary, zvuky, atributy, materiály brnění, nástroje, typy částic a začarování. Začarování se hledá, až když svět běží.
+
+**Vnořené objekty.** Objekt JSON pod `set` má stejné tři klíče jako soubor: `set`, `returns` a `addTo`. Mění kopii objektu, který pole drží, takže základní předmět a vše ostatní, co ten objekt sdílí, si zachová původní. Je to kopie při zápisu: kopírují se jen objekty podél cesty, kterou zapisuješ, a každé jiné pole ukazuje na stejný objekt jako základ.
+
+Tier se kopíruje jako nový tier s ponechaným opravným předmětem. Jeho pole jsou `uses`, `speed`, `attackDamageBonus` a `enchantmentValue`. Jakýkoli jiný výčet jako vnořený objekt je odmítnut, stejně jako objekt z balíčku `java.`. Pole a kolekce se neprocházejí: cesta jimi nemůže vést a pole kolekce se nahrazuje celé z pole JSON.
+
+Záznam se jako vnořený objekt nekopíruje, ale tečkovaná cesta jím vést může: záznam se přestaví s novou hodnotou a vrátí zpět. `"set": { "someRecord.size": 3 }` to udělá. Název, který není polem záznamu, se zaloguje.
+
+Text `"<ns>:<item>"` místo objektu znovupoužije objekt toho odvozeného předmětu na stejné cestě. Dva odvozené předměty tak mohou sdílet jeden tier a ten jmenovaný se postaví první.
+
+#### `returns`
+
+`returns` je objekt s názvem metody a konstantou, kterou metoda nyní vrací. Kopie metodu přepíše a vrátí tuto hodnotu. Čísla, booleany a texty se zapisují přímo. `Component` bere prostý text, výčet svůj název konstanty, stack předmětů nebo položka registru svůj název jako text. Ty se hledají až po registraci všech předmětů, takže mohou jmenovat předmět, který se načte později. Název, který na konci stále není zaregistrován, se zaloguje a základní chování zůstane.
+
+Metoda je odmítnuta a položka vynechána, když je statická, final, private, package-private mimo balíček základu, nebo nemá návratovou hodnotu. Konstanta špatného typu je rovněž odmítnuta. Vnořený objekt pod `returns` funguje jen pro metody bez argumentů: je to kopie toho, co metoda vrací, upravená jako vnořený objekt `set`, a kopie je to, co metoda předá dál.
+
+#### `addTo`
+
+`addTo` je `<fully.qualified.Class>.<member>`. Členem je statické pole `Collection`, nebo statický getter bez argumentů zapsaný s prázdnými závorkami, například `com.example.Registry.items()`. Jakmile se vše zaregistruje, nový předmět se přidá do té kolekce, pokud v ní ještě není, a jen když typ prvků kolekce předmět přijímá. Použij to pro modu, která vede vlastní seznam předmětů, aby se s kopií zacházelo jako s originálem. Uvnitř vnořeného objektu `set` stejný klíč přidá tento objekt, například tier, do kolekce.
+
+#### Co kopie nedostane
+
+Kopie je samostatný objekt se zkopírovanými poli základu, takže tyto věci se nepřenesou:
+
+- Kontroly identity jako `== Items.IRON_PICKAXE` a porovnání `getClass`. Kód, který testuje základní předmět, kopii nepozná.
+- Registrace vázané na základní předmět: jeho model, jeho color handler, jeho tagy, jeho položky JEI a jeho recepty. Kopii dej vlastní.
+- Vedlejší účinky konstruktoru, například registrace, kterou udělal konstruktor základu.
+- Pole, která nejsou uvedena v `set`. Měnitelná zůstávají sdílená se základem, takže seznam nebo mapa v jednom je stejný seznam nebo mapa v druhém.
+
+#### Pořadí a requires
+
+Odvozený předmět, jehož základ je jiný odvozený předmět, nebo který znovupoužívá cizí objekt, se staví až po něm. Závisí-li odvozené předměty na sobě v cyklu, všechny se zalogují a vynechají. Odvozený předmět, jehož `requires` není splněno, se přeskočí, takže základ z jiné mody potřebuje stejné `requires`. Název předmětu, který je už zaregistrován, se přeskočí.
+
+Tři věci vynechají celý předmět: chybí základ, základ je blokový předmět, nebo je třída základu final.
+
+#### Zprávy logu
+
+`{}` znamená název nebo hodnotu, kterou log doplní.
+
+| Zpráva                                                                                                                    | Co to znamená                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `Derived item {} names no item to copy, ignoring it`                                                                      | `item` chybí nebo není názvem předmětu                                                    |
+| `The {} of derived item {} is not an object, so it is treated as empty`                                                   | `set`, `returns` nebo `components` není objekt                                            |
+| `The derived item {} sets {}, which needs an RDPL item class, so the key is ignored`                                      | Klíč z výše uvedeného seznamu je u odvozeného předmětu                                    |
+| `An item named {} is already registered, skipping the pack definition`                                                    | Registrační název je už obsazen                                                           |
+| `Derived item {} is based on {}, which nothing registers, leaving it out`                                                 | Základní předmět neexistuje, přidej `requires` pro jeho modu                              |
+| `Derived item {} is based on {}, a block item, and derived blocks are not supported, leaving it out`                      | Základ je blokový předmět                                                                 |
+| `Derived item {} is based on {}, a final class, so it cannot be copied`                                                   | Třída základu je final                                                                    |
+| `Could not make a class for derived item {}`                                                                              | Třídu kopie se nepodařilo definovat, následuje stack trace                                |
+| `Derived item {} could not be made, leaving it out`                                                                       | Jiná chyba předmět zastavila, následuje stack trace                                       |
+| `Derived items depend on each other in a loop, {}{}, leaving them out`                                                    | Cyklus přes základy nebo znovupoužité objekty, každý předmět v cyklu se vynechá           |
+| `Derived item {} gives both a name and returns for {}, the returns wins`                                                  | Jsou nastaveny `name` i položka `getName` v `returns`                                     |
+| `Derived item {} could not take its components, the base components stay: {}`                                             | Převzetí `components` předmětu selhalo, následuje příčina                                 |
+| `Derived item {} sets the component {}, which is no component with a codec, leaving it out`                               | Název v `components` není registrovanou komponentou, nebo komponenta nemá kodek           |
+| `Derived item {} sets the component {} to {}, which is {}, leaving it out`                                                | Kodek komponenty hodnotu odmítl, následuje jeho zpráva                                    |
+| `{} has no field named {}`                                                                                                | Cesta v `set` nejmenuje žádné pole                                                        |
+| `{} has no method named {}`                                                                                               | Název v `returns` neodpovídá žádné metodě                                                 |
+| `{} has several methods named {} ({}), name one with its parameter types`                                                 | Přetížená metoda potřebuje `name(type,type)`                                              |
+| `Derived item {} returns a constant for {} twice, leaving the second out`                                                 | Dva klíče `returns` pojmenovávají tutéž metodu                                            |
+| `Derived item {} returns a constant for {}, which {}, leaving it out`                                                     | Metoda je odmítnuta: je statická, final, private, package-private, nebo nic nevrací       |
+| `Derived item {} returns {} for {}, which is {}, leaving it out`                                                          | Konstanta je pro metodu špatného typu                                                     |
+| `Derived item {} returns {}, which is not registered, the base behavior stays`                                            | Zásobník nebo položka registru v `returns` pojmenovává něco, co se nikdy nezaregistrovalo |
+| `Derived item {} returns an object for {}, which takes arguments, and only methods without arguments can, leaving it out` | Vnořený objekt u metody s parametry                                                       |
+| `Derived item {} returns an object for {}, which has no object to copy, leaving it out`                                   | Není zdrojový objekt, ze kterého by se kopírovalo                                         |
+| `Derived item {} returns an object for {}, which returns nothing to copy, leaving it out`                                 | Metoda na základu vrátila null                                                            |
+| `Derived item {} could not read {} to copy it, leaving it out: {}`                                                        | Volání metody na základu selhalo                                                          |
+| `Derived item {} could not set {}, leaving it out: {}`                                                                    | Zápis do pole selhal, následuje příčina                                                   |
+| `Derived item {} sets below {}, which holds nothing, leaving it out`                                                      | Cesta vede přes pole, které je null                                                       |
+| `Derived item {} sets {}, but static fields are shared by every item, not written, leaving it out`                        | Cesta končí na statickém poli                                                             |
+| `Derived item {} sets {} to an object, but it holds nothing to copy, leaving it out`                                      | Vnořený objekt u pole, které je null                                                      |
+| `{} sets {} to {}, which is {}, leaving it out`                                                                           | Hodnota se nevejde do typu pole, viz tabulka hodnot                                       |
+| `Derived item {} sets {} to the object of {}, which is no derived item that built a {} there, leaving it out`             | Znovupoužitý objekt na této cestě neexistuje                                              |
+| `Derived item {} reaches {} through an array or collection, but paths do not go through arrays, leaving it out`           | Cesta nebo vnořený objekt vede do pole nebo kolekce                                       |
+| `Derived item {} changes {}, a {}, which cannot be copied, leaving it out`                                                | Výčet, záznam jako vnořený objekt, nebo objekt `java.`                                    |
+| `Derived item {} sets {}, but there is no field named {} there, leaving it out`                                           | Cesta přes záznam pojmenovává pole, které záznam nemá                                     |
+| `Derived item {} sets {}, but paths do not go through {}, leaving it out`                                                 | Cesta vede do pole záznamu, které žádný záznam nedrží                                     |
+| `Derived item {} has an unknown key {} under {}, ignoring it`                                                             | Vnořený objekt má klíč jiný než `set`, `returns` a `addTo`                                |
+| `The {} of {} in derived item {} is not an object, so it is treated as empty`                                             | Vnořený `set` nebo `returns` není objekt                                                  |
+| `Could not make a material named {} for derived item {}`                                                                  | Kopie tieru selhala                                                                       |
+| `Derived item {} adds itself to {}, which is not written <Class>.<member>, leaving it out`                                | `addTo` nemá třídu a člen                                                                 |
+| `Derived item {} adds itself to {}, which is no static field or static getter without arguments, leaving it out`          | Člen nebyl nalezen                                                                        |
+| `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | Člen není kolekce                                                                         |
+| `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | Typ prvků kolekce předmět nepřijímá                                                       |
+| `Derived item {} could not be added to {}: {}`                                                                            | `addTo` selhalo, například třída neexistuje                                               |
+| `Registered {} derived item(s) from packs`                                                                                | Souhrnný řádek s počtem vytvořených předmětů                                              |
 
 ## Tekutiny
 
@@ -2561,6 +2767,24 @@ Tagy jsou formát samotné hry ve složce samotné hry a balíček je dodává t
 
 Slovník rud z 1.12.2 je to, co nahradily tagy. Jeho názvy se mapují na konvenční tagy: `oreRuby` je `forge:ores/ruby` na 1.20.1 a `c:ores/ruby` na 1.21.1, `ingotCopper` je `ingots/copper`, `gemRuby` je `gems/ruby`, `dustX` je `dusts/x`, `nuggetX` je `nuggets/x`, `blockX` je `storage_blocks/x` a `logWood`, `plankWood` a `stickWood` jsou `minecraft:logs` a `minecraft:planks` samotné hry a konvenční `rods/wooden`. `"remove": [...]` souboru tagu vyjme z tagu jednotlivé záznamy a `"replace": true` s prázdným `"values": []` ho vyprázdní, takže tag z nižšího balíčku nebo z módu lze zkrátit nebo vyčistit. Chceš-li vyjmout předměty ze všech tagů najednou a ze hry, použij [Zakázané bloky a předměty](#zakázané-bloky-a-předměty).
 
+**Kopírování podle vzoru.** Soubor v `<namespace>/tag_copies/item/*.json` pro tagy předmětů nebo `<namespace>/tag_copies/block/*.json` pro tagy bloků (soubor kdekoli jinde v `tag_copies` se přeskočí s řádkem v logu a název souboru si zvolíš sám) neuvádí názvy. Přidá do jednoho tagu každý předmět nebo blok, jehož id odpovídá vzoru, takže balíček může tag naplnit, aniž by vypisoval každý prvek. `tag` a `from` jsou id tagů, `#` na začátku je povolené (`#mypack:rubies`) a `from`, které není platné id, se zaloguje a soubor se přeskočí. Log píše „Tag copy“.
+
+```json
+{
+  "tag": "mypack:all_logs",
+  "matches": "^minecraft:(oak|birch)_log$",
+  "from": "minecraft:logs"
+}
+```
+
+| Klíč      | Povinné | Hodnota         | Výchozí | Co dělá                                                                                                                                                                                                                                    |
+| --------- | ------- | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tag`     | ano     | id tagu         |         | Tag, který dostane předměty nebo bloky                                                                                                                                                                                                     |
+| `matches` | ano     | regulární výraz |         | Java vzor, který se hledá v id každého předmětu nebo bloku, zapsaném jako `namespace:path`, takže se shoduje kdekoli v id, pokud nezačíná na `^` nebo nekončí na `$`. Soubor bez vzoru nebo s neplatným výrazem se ignoruje a log to řekne |
+| `from`    | ne      | id tagu         | none    | Kopíruje jen z členů, které už jsou v tomto tagu. Když se vynechá, otestuje se každý předmět nebo blok ve hře a každá shoda se přidá do `tag`. Tag `from` bez členů zaloguje chybu a nezkopíruje nic                                       |
+
+Kopie proběhne jednou, až každý mód zaregistruje své předměty a až budou aplikovány prosté soubory výše. Vzor, který se neshoduje s ničím, se zaloguje jako varování a soubor nic neudělá.
+
 ## Přepsání vlastností
 
 *bloky a předměty*
@@ -2589,6 +2813,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
   "maxStackSize": 16,
   "maxDamage": 250,
   "containerItem": "minecraft:bucket",
+  "tool": { "speed": 6.0, "minesWith": "#minecraft:mineable/pickaxe" },
   "food": {
     "heal": 4,
     "saturation": 0.3,
@@ -2624,13 +2849,14 @@ Každý klíč je volitelný a soubor mění jen to, co uvádí, takže soubor v
 
 *přepsání vlastností*
 
-| Klíč            | Hodnota        | Co dělá                                                                                                                                                      |
-| --------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `maxStackSize`  | `1` až `64`    | Velikost stacku                                                                                                                                              |
-| `maxDamage`     | celé číslo     | Odolnost                                                                                                                                                     |
-| `containerItem` | název předmětu | Zůstane v mřížce výroby, tak jako kbelík                                                                                                                     |
-| `food`          | objekt         | Udělá z předmětu poživatelný, viz níže                                                                                                                       |
-| `weight`        | číslo od 0     | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů) |
+| Klíč            | Hodnota        | Co dělá                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `maxStackSize`  | `1` až `64`    | Velikost stacku                                                                                                                                                                                                                                                                                                                                                                      |
+| `maxDamage`     | celé číslo     | Odolnost                                                                                                                                                                                                                                                                                                                                                                             |
+| `containerItem` | název předmětu | Zůstane v mřížce výroby, tak jako kbelík                                                                                                                                                                                                                                                                                                                                             |
+| `tool`          | objekt         | Přidá pravidlo těžby do dat nástroje předmětu: `minesWith` je tag bloků, například `#minecraft:mineable/pickaxe`, a `speed`, větší než 0, je, jak rychle předmět tyto bloky těží. Předmět se také počítá jako správný nástroj pro ně, takže dropnou svou kořist. Ostatní pravidla těžby předmětu zůstávají za ním. Soubor se špatným `tool` zaloguje jednu chybu a nástroj nechá být |
+| `food`          | objekt         | Udělá z předmětu poživatelný, viz níže                                                                                                                                                                                                                                                                                                                                               |
+| `weight`        | číslo od 0     | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                                                                                                                                         |
 
 Název, který je zároveň blok i předmět, a to je každý umístitelný blok, přebírá obě skupiny z jednoho souboru:
 
@@ -2864,16 +3090,23 @@ Vyřadí bloky a předměty ze hry, aniž by je odregistrovalo, takže světy si
   "requires": ["thermal"],
   "names": ["thermal:tin_ore", "thermal:deepslate_tin_ore", "mekanism:salt*"],
   "namespaces": ["bigreactors"],
-  "tags": ["forge:ores/tin"]
+  "tags": ["forge:ores/tin"],
+  "hideOnly": false,
+  "untag": ["minecraft:stick"],
+  "fluids": ["minecraft:water"]
 }
 ```
 
-| Klíč         | Povinné | Hodnota                       | Výchozí | Co dělá                                                                                                                             |
-| ------------ | ------- | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `names`      | ne      | seznam názvů bloků a předmětů | žádný   | Co je zakázáno. Název končící na `*` odpovídá každému názvu, který začíná zbytkem                                                   |
-| `namespaces` | ne      | seznam id módů                | žádný   | Každý blok a předmět daného módu                                                                                                    |
-| `tags`       | ne      | seznam názvů tagů             | žádný   | Každý předmět v tagu předmětů a každý blok v tagu bloků s tímto názvem, přičemž oba tagy zůstanou prázdné. Počáteční `#` je povolen |
-| `requires`   | ne      | seznam id módů                | žádný   | Soubor se přeskočí, pokud není načten každý z nich. Položky `config:` a `file:` fungují jako všude jinde                            |
+| Klíč             | Povinné | Hodnota                       | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------- | ------- | ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`          | ne      | seznam názvů bloků a předmětů | žádný   | Co je zakázáno. Název končící na `*` odpovídá každému názvu, který začíná zbytkem                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `namespaces`     | ne      | seznam id módů                | žádný   | Každý blok a předmět daného módu                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `tags`           | ne      | seznam názvů tagů             | žádný   | Každý předmět v tagu předmětů a každý blok v tagu bloků s tímto názvem, přičemž oba tagy zůstanou prázdné. Počáteční `#` je povolen                                                                                                                                                                                                                                                                                                                                                |
+| `hideOnly`       | ne      | `true` nebo `false`           | `false` | `true` způsobí, že tento soubor skryje vše, co uvádí, jen v JEI. Ty bloky a předměty zůstanou vyrobitelné, pokládatelné a použitelné                                                                                                                                                                                                                                                                                                                                               |
+| `untag`          | ne      | seznam názvů bloků a předmětů | žádný   | Při načtení vyjme uvedené předměty ze všech tagů předmětů. Zůstanou ve hře, na rozdíl od zakázaných. Názvy se píší jako v `names`                                                                                                                                                                                                                                                                                                                                                  |
+| `hideCategories` | ne      | seznam id kategorií JEI       | žádný   | Kategorie receptů JEI, které se skryjí, podle id, jaké JEI kategorii přiřadí, například `minecraft:smelting` pro pecní recepty. Každá uvedená kategorie zmizí z JEI a HEI i se svými recepty. Čte se ze všech souborů bez ohledu na `hideOnly` a pro samotnou hru nic nemění. Id, které není platné nebo které žádný načtený plugin nezaregistroval, se zapíše do logu jako chyba („Disabled file hides JEI category“) a kategorie se ukáže jako dřív. Bez JEI nebo HEI nedělá nic |
+| `fluids`         | ne      | seznam názvů tekutin          | žádný   | Při načtení vyjme uvedené tekutiny ze všech tagů tekutin. Zůstanou ve hře                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `requires`       | ne      | seznam id módů                | žádný   | Soubor se přeskočí, pokud není načten každý z nich. Položky `config:` a `file:` fungují jako všude jinde                                                                                                                                                                                                                                                                                                                                                                           |
 
 Zakázaný blok nebo předmět:
 
@@ -3050,6 +3283,36 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 | `tag`      | jedno ze dvou | id tagu           | žádný   | Hoří všechno v tomto tagu |
 | `burnTime` | ano           | celé číslo, ticky | `0`     | Uhlí je 1600, prkno 300   |
 
+## Odebrání receptů
+
+*výroba, kořist a obchod*
+
+`<namespace>/recipe_removals/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se skládá. Maže recepty. Recept zmizí, jakmile na něj sedne kterýkoli výběr.
+
+```json
+{
+  "names": ["minecraft:bow", "thermal:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword", "#c:ingots/copper"],
+  "inputs": ["minecraft:string", "#minecraft:planks"],
+  "regex": ["^minecraft:.*_slab$"],
+  "types": ["minecraft:smelting", "create:milling"]
+}
+```
+
+| Klíč         | Povinné | Hodnota               | Výchozí | Co dělá                                                                                                                                                                                |
+| ------------ | ------- | --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`      | ne      | seznam                | žádný   | Názvy receptů k odebrání. Koncová `*` odpovídá každému názvu začínajícímu tímto textem                                                                                                 |
+| `namespaces` | ne      | seznam                | žádný   | Všechny recepty těchto namespace                                                                                                                                                       |
+| `outputs`    | ne      | seznam názvů předmětů | žádný   | Všechny recepty, které vyrábějí některý z těchto předmětů. Název začínající `#` je tag předmětu a odpovídá každému receptu, jehož výsledek je v něm                                    |
+| `inputs`     | ne      | seznam názvů předmětů | žádný   | Všechny recepty s ingrediencí, do které se vejde některý z těchto předmětů. Název začínající `#` je tag předmětu                                                                       |
+| `regex`      | ne      | seznam textů          | žádný   | Regulární výraz Javy, který odpovídá libovolné části názvu receptu (hledá se, nejde o úplnou shodu; ukotvi ho `^` a `$`), například `minecraft:oak_.*`                                 |
+| `types`      | ne      | seznam                | žádný   | Názvy typů receptů, například `minecraft:smelting`. Zmizí každý recept těchto typů, ať ho zaregistroval kterýkoli mód. Na rozdíl od ostatních výběrů dosáhne i na typy jiné než výroba |
+
+Výběry `names`, `namespaces`, `outputs`, `inputs` a `regex` posuzují jen výrobní recepty. Výběr, který jmenuje tag předmětu, začne platit, až se tagy načtou, chvíli po receptech. Recepty, které vytvoří skript jako KubeJS, zůstanou ušetřeny.
+
 ## Výměna receptů
 
 *výroba, kořist a obchod*
@@ -3076,27 +3339,117 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 }
 ```
 
-| Klíč       | Povinné | Hodnota        | Výchozí | Co dělá                                                  |
-| ---------- | ------- | -------------- | ------- | -------------------------------------------------------- |
-| `requires` | ne      | seznam id módů | žádný   | Soubor se načte, jen když jsou načteny všechny tyto módy |
-| `swaps`    | ano     | seznam         | žádný   | Výměny, provedené v pořadí                               |
+Soubor, který místo výměn nastavuje zbytky:
+
+```json
+{
+  "recipes": { "names": ["minecraft:mushroom_stew"] },
+  "remainder": [
+    { "ingredient": "minecraft:potion", "returns": "minecraft:glass_bottle" }
+  ]
+}
+```
+
+| Klíč        | Povinné                                                                                        | Hodnota        | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`  | ne                                                                                             | seznam id módů | žádný   | Soubor se načte, jen když jsou načteny všechny tyto módy                                                                                                                                                                                                                                                                                                                  |
+| `swaps`     | ano, pokud soubor nemá `remainder`, `transfer`, `template`, `edit`, `script` nebo `scriptFile` | seznam         | žádný   | Výměny, provedené v pořadí                                                                                                                                                                                                                                                                                                                                                |
+| `remainder` | ne                                                                                             | seznam         | žádný   | Soubor s `remainder` a objektem `recipes` a bez `swaps` nastaví, co pojmenované výrobní recepty nechají v mřížce: každá položka má `ingredient` (název předmětu nebo tag předmětu začínající `#`) a předmět `returns`. Každá spotřebovaná `ingredient` nechá místo toho, co tam zůstalo dřív, `returns`. `recipes` přijímá výběry z [Odebrání receptů](#odebrání-receptů) |
+| `transfer`  | ne                                                                                             | objekt         | žádný   | Soubor s `transfer` a objektem `recipes` a bez `swaps` způsobí, že pojmenované výrobní recepty přenesou data z mřížky do výsledku, jak je popsáno níže v části Přenos                                                                                                                                                                                                     |
 
 Položky pod klíčem `swaps`:
 
-| Klíč      | Povinné | Hodnota        | Výchozí      | Co dělá                                                                                                                                                                                                                                                 |
-| --------- | ------- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `from`    | ano     | objekt         | žádný        | Co se nahrazuje: `names` (koncová `*` trefí každý název začínající tímto textem), `namespaces` a `tags`, klíče z [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                |
-| `to`      | ano     | název předmětu | žádný        | Co je nahradí. Neznámý předmět přeskočí položku a log to řekne                                                                                                                                                                                          |
-| `output`  | ne      | boolean        | `false`      | `true` nahradí `from` také tam, kde je to, co recept vyrábí. `false`: nenahradí `from` jako výsledek. Počet zůstane a komponenty starého výsledku se zahodí                                                                                             |
-| `recipes` | ne      | objekt         | každý recept | Omezí výměnu na tyto výrobní recepty: `names`, koncová `*` trefí každý název začínající tímto textem, a `namespaces`. Položka s `recipes` nechá pecní recepty být, jako na 1.12.2, kde pecní recepty nemají názvy; `outputs` se tu nečte a log to řekne |
+| Klíč      | Povinné | Hodnota                    | Výchozí      | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------- | ------- | -------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | ano     | objekt                     | žádný        | Co se nahrazuje: `names` (koncová `*` trefí každý název začínající tímto textem), `namespaces` a `tags`, klíče z [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `to`      | ano     | název předmětu nebo `#tag` | žádný        | Co je nahradí, například `minecraft:iron_ingot`, nebo tag předmětu zapsaný s `#`, například `#c:ingots/iron`. S tagem každý slot receptu, který drží nahrazený předmět, dostane tento tag, takže přijme kteréhokoli člena. Tag nemůže být tím, co recept vyrábí: kde by `output` nebo cesta výsledku nahradila výsledek tagem, výsledek zůstane a log to řekne. `to`, které není platným názvem předmětu nebo tagu, přeskočí položku, stejně tak tag, který neexistuje                                                                                                                                              |
+| `output`  | ne      | boolean                    | `false`      | `true` nahradí `from` také tam, kde je to, co recept vyrábí. `false`: nenahradí `from` jako výsledek. Počet zůstane a komponenty starého výsledku se zahodí                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `recipes` | ne      | objekt                     | každý recept | Omezí výměnu na tyto výrobní recepty: `names`, koncová `*` trefí každý název začínající tímto textem, a `namespaces`. Položka s `recipes` nechá pecní recepty být, jako na 1.12.2, kde pecní recepty nemají názvy; `outputs` se tu nečte a log to řekne                                                                                                                                                                                                                                                                                                                                                             |
+| `types`   | ne      | seznam typů receptů        | žádný        | Typy receptů, které výměna také zasáhne, podle id typu, například `minecraft:smoking` nebo vlastní typ módu. Koncová `*` trefí každý typ, který začíná textem před ní, takže `create:*` jsou všechny typy Create a samotná `*` jsou všechny typy. `*` kdekoli jinde nebo název, který není platný, se zaloguje a přeskočí. Recept daného typu se prohledává přes svůj JSON, ne podle typu                                                                                                                                                                                                                           |
+| `paths`   | no      | list of paths              | none         | Vyžaduje `types`. Omezí hledání v receptech těchto typů na tato místa, každé jako tečkovanou cestu od začátku JSON receptu, například `ingredients.0.item` nebo `results.0.id`. Cesta, která v receptu chybí, se tiše přeskočí. Cesta s prázdnou částí se zaloguje a přeskočí. Cesty bez `types` se zalogují jako `has paths but no types, ignoring its paths`. Cesta, která má v některé své části `result` nebo `output`, se bere jako výsledek a nahradí se, i když je `output` `false`. Když se vynechá, prohledá se každá část receptu a části, jejichž klíč obsahuje `result` nebo `output`, se řídí `output` |
+
+Recept, jehož vyměněný tvar už nejde načíst, zůstane beze změny a log to řekne: `Left <recipe> alone, its swapped form does not parse`. Limit `recipes` výměny čte jen `names` a `namespaces`, v každé položce; `regex` patří do souborů přepisů.
 
 Slot, který přijímá jen předměty `from`, se změní na `to`. Slot, který přijímá i jiné předměty, si je ponechá a přijme i `to`, ale ztratí svůj tag, takže předmět přidaný do tagu později se tam nevezme. Předmět `from` dosáhne na slot zapsaný jako tag, který ho obsahuje, a tag `from` dosáhne na slot, který jmenuje některý z jeho předmětů.
+
+`to` zapsané jako `#tag` je výměna tagu, ne výměna předmětu. Každý slot, který držel nahrazený předmět, místo něj přijme tag, a slot, který držel i jiné předměty, si je ponechá a dostane přidaný tag. Slot, který je sám zapsán jako tag, zůstane beze změny a log to řekne.
 
 Položka, jejíž `to` odpovídá jejímu vlastnímu `from`, se přeskočí a log to řekne. Vstup pecního receptu se nevymění, pokud je `to` už vstupem jiného receptu stejného druhu, tavení, vysoké pece, udírny nebo ohniště, a log pojmenuje ten recept.
 
 Výměny přepisují soubory receptů při načítání, takže běží znovu při každém `/reload`. Odebírání a blokování receptů posuzují recept podle toho, co vyráběl před výměnou, jako na 1.12.2; [Zakázané bloky a předměty](#zakázané-bloky-a-předměty), [soubory pece](#recepty-pro-pec-a-paliva) a [zámky receptů](#zámky-receptů) vidí vyměněný recept.
 
-Výrobní recepty a čtyři druhy pecních receptů se přepisují. Jiný typ receptu, například stroj jiného módu, se nikdy nedotkne. Ingredience s vlastním klíčem `type`, který jmenuje nahrazený předmět, zůstane beze změny. Recepty, které vytvoří skript, například recept ze skriptu KubeJS, se nevymění a log to řekne jednou. Log to pak shrne: `Replaced N ingredient(s) and N result(s) in N recipe(s)` a `Left N recipe(s) alone`, pokud nějaké zůstaly.
+Výrobní a pecní recepty a každý recept typu uvedeného v `types` se přepisují. Recept jiného typu, který jmenuje nahrazený předmět, zůstane beze změny a log jednou uvede jeho typ spolu s příkladem receptu. Log to pak shrne: `Replaced N ingredient(s) and N result(s) in N recipe(s)` a `Left N recipe(s) alone`, pokud nějaké zůstaly. Recepty, které vytvořil skriptový mód, se nepřepisují a log to řekne.
+
+Přenos: soubor, který způsobí, že výsledek si ponechá data jedné ingredience a převezme části jiné:
+
+```json
+{
+  "recipes": { "names": ["mypack:enchant_armor"] },
+  "transfer": { "from": "armor", "take": ["enchantments"], "source": "book" }
+}
+```
+
+| Klíč     | Povinné | Hodnota                                        | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                              |
+| -------- | ------- | ---------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`   | ano     | `armor`, `tool`, `weapon`, předmět nebo `#tag` | žádný   | Ingredience, jejíž data výsledek drží celá, včetně poškození. `armor`, `tool` a `weapon` se shodují podle druhu předmětu; název předmětu nebo tag předmětu začínající `#` se shodují s tím předmětem                                                                                                                 |
+| `source` | ano     | `book`, předmět nebo `#tag`                    | žádný   | Ingredience, ze které pocházejí části z `take`. `book` je očarovaná kniha, jejíž uložená očarování se počítají jako její očarování                                                                                                                                                                                   |
+| `take`   | ano     | seznam                                         | žádný   | Části vzaté ze `source`: `enchantments` se slijí na výsledek, vyšší úroveň vyhraje a očarování, které výsledek nemůže převzít nebo které se s některým z jeho má, se přeskočí, jako to dělá kovadlina; `name` nastaví vlastní jméno; `damage` nastaví poškození; `nbt` sloučí vlastní data (`minecraft:custom_data`) |
+
+Pro každé se použije první odpovídající ingredience v mřížce a obě musejí být v různých slotech. Přenos přijme jen obyčejný tvarovaný nebo netvarovaný výrobní recept; jiný typ receptu se přeskočí a log to řekne. Náhled výsledku ve slotu, obyčejný klik i shift-klik dají stejný výsledek a vanilla klient ho vidí z aktualizace slotu. Log to shrne: `Gave N crafting recipe(s) a transfer`.
+
+Přepisy receptů: soubor v `recipe_swaps`, který má `template`, `edit`, `script` nebo několik z nich dohromady a nepotřebuje `swaps`, mění recepty podle jejich JSON. Pokrývá recepty, které jmenuje jeho limit `recipes` a seznam `types`, a když jsou zadány oba, recept musí odpovídat oběma.
+
+```json
+{
+  "types": ["minecraft:smelting", "minecraft:blasting"],
+  "recipes": { "namespaces": ["minecraft"], "regex": ["_ore$"] },
+  "edit": [
+    { "op": "multiply", "path": "cookingtime", "by": 0.5, "round": "down" },
+    { "op": "set", "path": "experience", "value": 1.0 }
+  ]
+}
+```
+
+```json
+{
+  "recipes": { "names": ["mypack:iron_rod"] },
+  "template": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [{ "item": "{result.id}" }],
+    "result": { "id": "mypack:rod_bundle", "count": "{result.count}" }
+  }
+}
+```
+
+```json
+{
+  "recipes": { "names": ["minecraft:stick"] },
+  "script": "(function (text) { var recipe = JSON.parse(text); recipe.result.count = 8; return recipe; })"
+}
+```
+
+| Klíč           | Povinné                    | Hodnota         | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------- | -------------------------- | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`     | ne                         | seznam módů     | žádný   | Soubor se načte, jen když jsou načteny všechny tyto módy                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `recipes`      | jedno z tohoto a `types`   | objekt          | žádný   | Které recepty podle názvu: `names` (koncová `*` trefí každý název začínající tímto textem), `namespaces` a `regex`, seznam výrazů, které se testují proti celému id receptu, například `minecraft:iron_ingot`, kde se počítá shoda kdekoli v něm. `outputs`, `inputs` a `types` se tady zaloguje a soubor se přeskočí. `regex`, který není platný, se zaloguje a soubor se přeskočí                                                                                                                                                                                             |
+| `types`        | jedno z tohoto a `recipes` | seznam          | žádný   | Id typů receptů, koncová `*` značí předponu, stejně jako u `types` ve výměně                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `template`     | ne                         | objekt          | žádný   | Recept se stane tímto objektem. V každém řetězci se `{path}` nahradí tím, co starý recept drží na této tečkované cestě, například `{result.id}` nebo `{ingredients.0.item}`. Řetězec, který je jen zástupným znakem, převezme hodnotu tak, jak je, ať je to číslo, text, objekt nebo seznam. Zástupný znak uvnitř delšího textu potřebuje jedinou hodnotu, jinak se recept nechá beze změny a log řekne proč. Cesta, kterou starý recept nemá, nechá recept beze změny. Šablona, která není objekt, se zaloguje a ignoruje. Podmínky receptu se zachovají, když je šablona nemá |
+| `edit`         | ne                         | seznam          | žádný   | Změny provedené na receptu, v pořadí. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `script`       | ne                         | text            | žádný   | JavaScript, který změní každý odpovídající recept, viz níže. Nelze spolu s `scriptFile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `scriptFile`   | ne                         | cesta           | žádný   | Totéž jako cesta pod `scripts/` ve stejném jmenném prostoru, končící na `.js`, viz [Skriptování](#skriptování)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `before_swaps` | ne                         | logická hodnota | `false` | `true`: přepis proběhne před výměnami předmětů. `false`: po nich                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+
+| Klíč `edit` | Povinné               | Hodnota         | Výchozí   | Co dělá                                                                                                                                                                                                                          |
+| ----------- | --------------------- | --------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `op`        | ano                   | text            | žádný     | `set` vloží `value` na `path` a přidá ho, když chybí, pokud část nad ním existuje. `replace` vloží `value` na `path` a vyžaduje, aby cesta existovala. `multiply` vynásobí číslo na `path` hodnotou `by`                         |
+| `path`      | ano                   | tečkovaná cesta | žádný     | Kde je v JSON receptu, například `cookingtime`, `result.count` nebo `ingredients.0.item`. Cesta s prázdnou částí se zaloguje a úprava se přeskočí                                                                                |
+| `value`     | pro `set` a `replace` | libovolný JSON  | žádný     | Co tam vložit. Chybějící `value` se zaloguje a úprava se přeskočí                                                                                                                                                                |
+| `by`        | pro `multiply`        | číslo           | žádný     | Násobitel. Chybějící nebo nečíselné `by` se zaloguje a úprava se přeskočí                                                                                                                                                        |
+| `round`     | ne                    | text            | `nearest` | Pro `multiply` na celé číslo: `nearest`, `down` nebo `up`. Kladné číslo nikdy nezaokrouhlí na 0, stane se z něj 1. Číslo zapsané s desetinnou tečkou zůstane desetinné. Jakákoli jiná hodnota se zaloguje a použije se `nearest` |
+
+Přepisovací skript běží jednou pro každý odpovídající recept, po seznamu `edit` a `template` souboru. Skript musí vyhodnotit na funkci, proto ho jako v příkladu obal do závorek. Funkce dostane JSON receptu jako text, nic jiného, a vrátí JSON text nebo objekt, který se stane receptem. Recept zůstane takový, jaký byl před skriptem, když funkce vrátí null nebo nic, vrátí cokoli, co není JSON objekt, vrátí recept, který se nedá načíst, nebo selže. Skript, který selže nebo běží déle než 50 ms, se znovu nevolá až do dalšího přenačtení, takže ostatní recepty souboru zůstanou, jak byly. Log každý případ zapíše jednou pro každý soubor a přenačtení: `The script of recipe rewrite file <file> <why> (first seen on <recipe>), keeping each such recipe as it was before the script`, kde je `<why>` jedno z `failed: <message>`, `returned null`, `returned text that is not JSON`, `returned JSON that is not an object` nebo `returned a recipe that does not parse`. Soubor s `script` i `scriptFile` se zaloguje jako `Recipe rewrite file <file> has more than one of script and scriptFile, ignoring both`; jeho seznam `edit` a `template` platí dál.
+
+Úprava, která nejde použít, protože cesta chybí u `replace` nebo `multiply` nebo číslo není číslo, nechá ten recept beze změny a log řekne který. Recept, jehož přepsaný tvar se nedá načíst, zůstane beze změny a log to řekne: `Left <recipe> alone, its rewritten form from <file> does not parse`. Úprava s `op` jiným než těmito třemi nebo bez `path` se zaloguje a přeskočí. Log to shrne: `Edited N recipe(s) and rewrote N recipe(s) from a template`. Soubor v `recipe_swaps`, který nemá ani `swaps`, `template`, `edit`, `remainder` ani `transfer`, se zaloguje jako soubor bez pole swaps. Nastavení `swaps` na `false` v konfiguraci `recipes` vypne přepisy spolu s výměnami. Recepty, které vytvoří skriptovací mód, se nepřepisují a log to řekne.
 
 ## Zámky receptů
 
@@ -3114,18 +3467,20 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
   "scoreAtLeast": 5,
   "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
   "namespaces": ["tconstruct"],
-  "outputs": ["minecraft:diamond_sword"]
+  "outputs": ["minecraft:diamond_sword", "#c:ingots/copper"],
+  "regex": ["^tconstruct:.*_pickaxe$"]
 }
 ```
 
 | Klíč                        | Povinný | Hodnota               | Výchozí | Co dělá                                                                                                                                                                                                                                                       |
 | --------------------------- | ------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `advancement`               | ne      | `namespace:path`      | žádný   | Pokrok, který hráč potřebuje, aby tyto recepty fungovaly. Zámek potřebuje buď jej, nebo podmínku týmu či skóre (`team`, nebo `objective` se `scoreAtLeast`); jsou-li nastaveny obě, hráč potřebuje obě. Soubor bez jedné ani druhé se přeskočí a log to uvede |
-| `names`                     | ne      | seznam                | žádný   | Názvy receptů, které se zadrží. Koncová `*` odpovídá všem názvům začínajícím tímto textem, například `thermalfoundation:*`                                                                                                                                    |
-| `namespaces`                | ne      | seznam                | žádný   | Všechny recepty těchto namespace                                                                                                                                                                                                                              |
-| `outputs`                   | ne      | seznam názvů předmětů | žádný   | Všechny recepty, které vyrábějí některý z těchto předmětů                                                                                                                                                                                                     |
 | `team`                      | ne      | text                  | žádný   | Tým výsledkové tabule, ve kterém hráč musí být                                                                                                                                                                                                                |
 | `objective`, `scoreAtLeast` | ne      | text, celé číslo      | žádný   | Skóre hráče v cíli musí být alespoň tolik. Potřeba jsou obě                                                                                                                                                                                                   |
+| `names`                     | ne      | seznam                | žádný   | Názvy receptů, které se zadrží. Koncová `*` odpovídá všem názvům začínajícím tímto textem, například `thermalfoundation:*`                                                                                                                                    |
+| `namespaces`                | ne      | seznam                | žádný   | Všechny recepty těchto namespace                                                                                                                                                                                                                              |
+| `outputs`                   | ne      | seznam názvů předmětů | žádný   | Všechny recepty, které vyrábějí některý z těchto předmětů. Název začínající `#` je tag předmětu a odpovídá každému receptu, jehož výsledek je v něm                                                                                                           |
+| `regex`                     | ne      | seznam textů          | žádný   | Regulární výraz Javy, který odpovídá libovolné části názvu receptu (hledá se, nejde o úplnou shodu; ukotvi ho `^` a `$`). Zámky nepřijímají `inputs`                                                                                                          |
 
 Hráč bez pokroku vidí u odpovídajícího receptu prázdný výsledný slot, a to na pracovním stole, v mřížce 2x2 v inventáři i tehdy, když mřížku vyplní kniha receptů; hráč, který pokrok má, vyrábí jako obvykle. Pece, kovadliny a automatické výrobníky se nezadržují. Více souborů se sčítá a recept, který odpovídá dvěma souborům, potřebuje oba pokroky. Soubor, který nevybere žádný recept, se přeskočí a log to uvede.
 
@@ -3155,11 +3510,29 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 
 Záznam v `items` nebo `enchantments` přijímá tyto klíče.
 
-| Klíč          | Povinný | Hodnota        | Výchozí | Co dělá                                       |
-| ------------- | ------- | -------------- | ------- | --------------------------------------------- |
-| `item`        | ano     | název předmětu | žádný   | Předmět, nebo předmět bloku                   |
-| `enchantment` | ano     | název kouzla   | žádný   | Kouzlo, které řádky dostane                   |
-| `lines`       | ano     | seznam textů   | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí |
+| Klíč          | Povinný | Hodnota                | Výchozí | Co dělá                                                                                                                                                                                                                                                                                     |
+| ------------- | ------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | ano     | název předmětu         | žádný   | Předmět, nebo předmět bloku                                                                                                                                                                                                                                                                 |
+| `enchantment` | ano     | název kouzla           | žádný   | Kouzlo, které řádky dostane                                                                                                                                                                                                                                                                 |
+| `lines`       | ano     | seznam textů           | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí                                                                                                                                                                                                                                               |
+| `shift`       | ne      | logická hodnota        | `false` | `true`: řádky se ukážou jen dokud hráč drží Shift, takže předmět může nést krátkou nápovědu a zbytek na požádání. `false`: vždy se ukazují                                                                                                                                                  |
+| `position`    | ne      | celé číslo, 0 nebo víc | žádný   | Kam řádky půjdou. `0` je dá přímo pod název předmětu, nebo přímo pod název kouzla u záznamu kouzla; `1` o řádek níž. Číslo za koncem popisku je přidá na konec. Když chybí, řádky předmětu jdou na konec a řádky kouzla hned za název. Záporné číslo se zapíše do logu a záznam se přeskočí |
+| `replace`     | ne      | logická hodnota        | `false` | `true`: první řádek záznamu nahradí řádek, který už je na `position`, a další řádky se přidají za něj. `false`: řádky se přidají bez odebrání čehokoli. Potřebuje `position`: bez něj to log řekne a řádky se přidají na konec. Když je `position` za koncem popisku, nic se nenahradí      |
+| `when`        | ne      | objekt                 | žádný   | Ukáže řádky jen dokud platí kontroly. Čte se jen `data`, jedna kontrola nebo seznam, jako v [Synchronizovaná data](#synchronizovaná-data); jakýkoli jiný klíč se zapíše do logu a záznam se přeskočí                                                                                        |
+
+Řádek může ukázat synchronizovanou hodnotu pomocí `{data:name|fallback}`. Klient čte synchronizované hodnoty, které mu server poslal, takže klient bez módu nebo server se zapnutým `vanillaClients` nikdy neukáže záznam s `when` a v řádku ukáže záložní text.
+
+**Hodnoty z předmětu.** Řádek může ukázat hodnotu uloženou v prohlíženém předmětu. `{nbt:path}` se nahradí hodnotou nalezenou na této cestě v `minecraft:custom_data` předmětu a `{item:component.path}` začíná id komponenty dat, například `minecraft:damage` nebo `minecraft:enchantments`, pak tečka a cesta uvnitř komponenty tak, jak je uložená. Neznámá komponenta nebo cesta, která v ní není, nezobrazí nic. Cesta se zapisuje jako názvy oddělené tečkami a část, která je celé číslo, vybere to místo v seznamu, počítáno od 0. Funguje to stejně v klíčích jazyka i v prostém textu.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby_ring", "lines": ["Charge {nbt:mypack.charge} of {nbt:mypack.max}", "First gem: {nbt:gems.0.id}"] }
+  ]
+}
+```
+
+Číslo se ukáže jako celé číslo, když nemá desetinnou část, a textová hodnota se ukáže bez barevných kódů. Něco, co tam není, místo za koncem seznamu, nebo část, která drží víc hodnot místo jednoho čísla nebo textu, se nezobrazí. `{nbt:}` bez cesty a otevřené `{nbt:`, které se nikdy neuzavře `}`, zůstanou v řádku tak, jak jsou napsány, a prázdný se zapíše do logu.
 
 ## Jazykové brány
 
@@ -3334,8 +3707,6 @@ Každý záznam v `effects` má `type`:
 `amount` a `duration` používají stejnou dvojici `base` a `perLevel` jako ceny a `protection` obě hodnoty zaokrouhlí dolů na celé body. Efekt `protection` na slotu, který není zbroj, a `apply_effect` s neznámým lektvarem se přeskočí s chybovým řádkem.
 
 Každý soubor se na serveru převede na záznam vanilla enchantu, takže vanilla klient od packu nic nepotřebuje. Vanilla čte enchanty předmětu přes registr enchantů: když se pack odebere a svět načte předmět, který jmenuje jeho enchant, log napíše „Tried to load invalid item“ a vanilla zahodí ten záznam, nebo celý stack. Tak se chovají vanilla datapacky a po vrácení packu se nic nevrátí.
-
-Soubor [vázání k duši](#předměty-vázané-k-duši) může označit i každý stack, který ho nese.
 
 ## Práce s kovadlinou
 
@@ -3622,13 +3993,15 @@ Tabulka kořisti bloku určuje, co z něj padne, ale dodání jedné přebírá 
 }
 ```
 
-| Klíč          | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                                                    |
-| ------------- | ------- | --------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `block`       | ano     | id bloku                    |         | Blok, který pravidlo sleduje                                                                                               |
-| `properties`  | ne      | objekt vlastnosti a hodnoty | žádný   | Jen stavy s těmito hodnotami, například `{ "axis": "x" }` u kmene; bez toho každý stav. `meta` z 1.12.2 se nečte           |
-| `replace`     | ne      | boolean                     | `false` | Zda se obvyklé dropy před losováním těchto zahodí. `true`: zahodí se. `false`: zachovají se                                |
-| `advancement` | ne      | `namespace:path`            | žádný   | Pravidlo platí jen pro hráče, který má daný advancement, takže stejný blok může před ním dropnout jednu věc a po něm jinou |
-| `drops`       | ano     | seznam dropů                |         | Každý se losuje sám, když se blok rozbije                                                                                  |
+| Klíč          | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                                                                                                                                                  |
+| ------------- | ------- | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `block`       | ano     | id bloku                    |         | Blok, který pravidlo sleduje                                                                                                                                                                                             |
+| `properties`  | ne      | objekt vlastnosti a hodnoty | žádný   | Jen stavy s těmito hodnotami, například `{ "axis": "x" }` u kmene; bez toho každý stav. `meta` z 1.12.2 se nečte                                                                                                         |
+| `replace`     | ne      | boolean                     | `false` | Zda se obvyklé dropy před losováním těchto zahodí. `true`: zahodí se. `false`: zachovají se                                                                                                                              |
+| `advancement` | ne      | `namespace:path`            | žádný   | Pravidlo platí jen pro hráče, který má daný advancement, takže stejný blok může před ním dropnout jednu věc a po něm jinou                                                                                               |
+| `once`        | ne      | objekt                      | žádný   | Způsobí, že pravidlo se spustí jednou pro každého hráče. `per` musí být `player` a `grant` id pokroku. Pravidlo platí pro hráče, který ten pokrok ještě nemá, a pokrok mu je udělen, jakmile pravidlo proběhne. Viz níže |
+| `runs`        | ne      | id funkce                   | žádný   | Funkce spuštěná pokaždé, když pravidlo platí, jako hráč, který blok rozbil, nebo u bloku, když žádný hráč nebyl. Funkce, kterou žádný balíček neposkytuje, se zapíše do logu                                             |
+| `drops`       | ano     | seznam dropů                |         | Každý se losuje sám, když se blok rozbije                                                                                                                                                                                |
 
 Každý drop:
 
@@ -3642,6 +4015,20 @@ Každý drop:
 | `silkTouch`  | ne                           | `either`, `only` nebo `never` | `either` | Zda drop potřebuje sklizeň s Hedvábným dotykem, odmítá ji, nebo je mu to jedno. Je to ona, když hráč nástrojem s Hedvábným dotykem rozbije blok, který lze takto sklidit podle rozhodnutí 1.12.2: plný blok bez blokového objektu, nebo skleněné tabule, železné mříže, pavučiny a truhly Endu |
 
 Pravidla vidí každé rozbití, při němž padá kořist bloku, jako v 1.12.2: hráčovo, a také výbuchy, písty, tekoucí voda, moby a mob balíčku, který se blokem prokopává, a ty losují každé pravidlo bez `advancement`. Kde výbuch ztenčí vlastní dropy bloku, každý vylosovaný předmět přežije se stejnou pravděpodobností; zkušenosti se neztenčují. Pro jeden blok platí všechna pravidla najednou a `replace` v kterémkoli z nich nejdřív smaže obvyklé dropy.
+
+**Tag v `block`.** `block` může být také tag bloků zapsaný s `#`, například `"#minecraft:logs"`, a pravidlo na tagu přijímá volitelný objekt `properties`, který ho omezí na bloky s těmito hodnotami stavů bloku, stejně jako pravidlo na jednom bloku. Id tagu, které není platné, se zaloguje a soubor se ignoruje. Členové se zjistí při prvním potřebném použití pravidla a znovu po přenačtení.
+
+**Jednou pro každého hráče.** `once` vydá odměnu jednou každému hráči a k zapamatování, kdo ji už dostal, použije pokrok. `per` (který musí být `player`) i `grant` jsou povinné a soubor se ignoruje s řádkem v logu, když některý chybí nebo když `once` není objekt. Pravidlo se počítá jen pro skutečného hráče na serveru, nikdy pro výbuch, stroj nebo falešného hráče, a jen dokud hráč nemá pokrok `grant`. Poté, co pravidlo shodí své předměty a spustí svou funkci, hráč pokrok dostane, takže další rozbití nic neudělá. Když žádný balíček pokrok neposkytuje, log řekne, že se pravidlo přeskočí, a nikdy se neuplatní. `once` lze kombinovat s `advancement`, které musí platit také.
+
+```json
+{
+  "block": "minecraft:dirt",
+  "replace": true,
+  "once": { "per": "player", "grant": "mypack:first_dirt" },
+  "runs": "mypack:first_dirt",
+  "drops": [ { "item": "minecraft:diamond" } ]
+}
+```
 
 ## Sklizeň pravým tlačítkem
 
@@ -4289,6 +4676,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
   "despawns": true,
   "despawnAfter": 600,
+  "leash": "delete",
   "noAI": false,
   "leftHanded": false,
   "fireproof": false,
@@ -4353,6 +4741,13 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
   "swoops": false,
   "gusts": false,
   "gustPower": 1.5,
+  "fleesLight": 0,
+  "followsPlayers": 0,
+  "teleportsWhenHit": 0,
+  "pulls": false,
+  "pullReload": 5,
+  "pullPower": 1.0,
+  "pullItem": "minecraft:ender_pearl",
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -4728,15 +5123,16 @@ Sloupec `List` říká, kde úkol žije. `tasks` je to, co tvor dělá; `targets
 
 *varianty entit*
 
-| Klíč                | Povinné | Hodnota             | Výchozí    | Co dělá                                                                                                                                                                                                                                                                                                            |
-| ------------------- | ------- | ------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `despawns`          | ne      | boolean             | `true`     | `true`: odklidí se jako obvykle. `false`: zůstane, i když by se normálně odklidila                                                                                                                                                                                                                                 |
-| `despawnAfter`      | ne      | celé číslo, sekundy | žádný      | Tiše odejde, jakmile je ve světě tak dlouho, ať je kdokoli jakkoli daleko                                                                                                                                                                                                                                          |
-| `persistent`        | ne      | boolean             | `false`    | `true`: nikdy nezmizí. `false`: zmizí jako obvykle                                                                                                                                                                                                                                                                 |
-| `ignoresSpawnRules` | ne      | boolean             | `false`    | `true`: spawnuje se, kamkoli je postavena, a ignoruje zděděná pravidla. `false`: řídí se zděděnými pravidly                                                                                                                                                                                                        |
-| `spawns`            | ne      | seznam objektů      | žádný      | `creatureType`, `weight`, `min` a `max`, stejný tvar jako používá biom; `weight` je ve výchozím stavu 8, `min` 1 a `max` 4. `creatureType` je jeden z [typů tvorů](#seznamy-hodnot), `creature`, pokud chybí, a vybírá seznam spawnů, ke kterému se položka připojí; položka s typem, který hra nezná, nepřidá nic |
-| `biomes`            | ne      | seznam názvů biomů  | každý biom | Kam se tyto spawny přidají, podle id biomu nebo podle názvu, který 1.12.2 ukazovala u vanilla biomu, například `Extreme Hills`. Bez tohoto i `biomeTypes` je přijme každý biom, včetně Netheru a Endu, a biom, kterému odpovídají oba seznamy, vezme každý spawn jednou                                            |
-| `biomeTypes`        | ne      | seznam typů biomů   | žádný      | Totéž, podle slova typu                                                                                                                                                                                                                                                                                            |
+| Klíč                | Povinné | Hodnota              | Výchozí    | Co dělá                                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------- | -------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `despawns`          | ne      | boolean              | `true`     | `true`: odklidí se jako obvykle. `false`: zůstane, i když by se normálně odklidila                                                                                                                                                                                                                                 |
+| `despawnAfter`      | ne      | celé číslo, sekundy  | žádný      | Tiše odejde, jakmile je ve světě tak dlouho, ať je kdokoli jakkoli daleko                                                                                                                                                                                                                                          |
+| `leash`             | ne      | `drop` nebo `delete` | `drop`     | Co se stane s vodítkem na tvorovi, kterého `despawnAfter` odebere. `drop`: vodítko vypadne jako předmět. `delete`: vodítko zmizí spolu s tvorem, bez předmětu                                                                                                                                                      |
+| `persistent`        | ne      | boolean              | `false`    | `true`: nikdy nezmizí. `false`: zmizí jako obvykle                                                                                                                                                                                                                                                                 |
+| `ignoresSpawnRules` | ne      | boolean              | `false`    | `true`: spawnuje se, kamkoli je postavena, a ignoruje zděděná pravidla. `false`: řídí se zděděnými pravidly                                                                                                                                                                                                        |
+| `spawns`            | ne      | seznam objektů       | žádný      | `creatureType`, `weight`, `min` a `max`, stejný tvar jako používá biom; `weight` je ve výchozím stavu 8, `min` 1 a `max` 4. `creatureType` je jeden z [typů tvorů](#seznamy-hodnot), `creature`, pokud chybí, a vybírá seznam spawnů, ke kterému se položka připojí; položka s typem, který hra nezná, nepřidá nic |
+| `biomes`            | ne      | seznam názvů biomů   | každý biom | Kam se tyto spawny přidají, podle id biomu nebo podle názvu, který 1.12.2 ukazovala u vanilla biomu, například `Extreme Hills`. Bez tohoto i `biomeTypes` je přijme každý biom, včetně Netheru a Endu, a biom, kterému odpovídají oba seznamy, vezme každý spawn jednou                                            |
+| `biomeTypes`        | ne      | seznam typů biomů    | žádný      | Totéž, podle slova typu                                                                                                                                                                                                                                                                                            |
 
 **Tvor s výdrží.** `despawnAfter` počítá v sekundách od okamžiku, kdy tvor poprvé vstoupí do světa, a po uplynutí času ho tiše odebere: žádná smrt, žádné dropy, žádný zvuk, přesně jako by odešel pryč a byl odklizen. Hodiny jsou zapsány do samotného tvora, takže běží dál přes uložení a znovunačtení a nezačínají znovu pokaždé, když se chunk vrátí.
 
@@ -4841,22 +5237,171 @@ Tento pár souborů mění netherní kostlivce a stray na lučištníky wither k
 }
 ```
 
-| Klíč                                                                                                                         | Povinné | Hodnota                                       | Výchozí | Co dělá                                                                                                                                                                                                       |
-| ---------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entities`                                                                                                                   | ano     | seznam názvů entit nebo druhů                 | žádný   | Moby nahrazené, jako u Zámků spawnu. Soubor bez něj se přeskočí a log to řekne                                                                                                                                |
-| `becomes`                                                                                                                    | ano     | seznam ID, nebo objekty s `entity` a `weight` | žádný   | Co je nahradí, vybráno podle váhy (`1`, když se vynechá). ID může být vanilla mob, mob z jiného modu nebo varianta balíčku. Soubor bez něj se přeskočí a log to řekne                                         |
-| `biomes`, `biomeTypes`                                                                                                       | ne      | jako u varianty                               | žádný   | Biomy, kde výměna platí                                                                                                                                                                                       |
-| `blocks`                                                                                                                     | ne      | seznam názvů bloků, jako u Těžby žil          | žádný   | Výměna platí, když blok pod místem spawnu odpovídá                                                                                                                                                            |
-| `requireAll`                                                                                                                 | ne      | boolean                                       | `false` | Při `false` stačí jedno z `biomes`, `biomeTypes` a `blocks`; při `true` musí platit všechna zadaná. Soubor, který žádné z nich neuvádí, platí všude, kde platí jeho ostatní podmínky                          |
-| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | ne      | jako u Podmínek spawnu                        | žádný   | Stejné klíče se stejným významem jako u Podmínek spawnu. Všechny musí platit, včetně `elsewhere`                                                                                                              |
-| `elsewhere`                                                                                                                  | ne      | objekt                                        | vypnuto | Tam, kde neplatí `biomes`, `biomeTypes` a `blocks`, se výměna přesto provede, s šancí a podmínkami níže                                                                                                       |
-| `elsewhere.chance`                                                                                                           | ne      | desetinné číslo, `0` až `1`                   | `1.0`   | Šance výměny tam; `0.15` je zhruba jedna ze sedmi                                                                                                                                                             |
-| `elsewhere.lightBelow`                                                                                                       | ne      | celé číslo, `1` až `16`                       | žádný   | Jen tam, kde je světlo v místě spawnu pod touto hodnotou                                                                                                                                                      |
-| `elsewhere.night`                                                                                                            | ne      | boolean                                       | `false` | `true`: jen od ticku `13000` do `23000` dne. `false`: bez časového omezení                                                                                                                                    |
-| `extra`                                                                                                                      | ne      | celé číslo, `0` až `16`                       | `0`     | Kolik dalších mobů se objeví na místě. Každý má vlastní losování `becomes`, dostane výbavu jako každý spawn a přeskočí se, když se nevejde do prostoru. Počítají se do limitu mobů od dalšího průchodu spawnu |
-| `fromSpawners`                                                                                                               | ne      | boolean                                       | `false` | `true`: přidá bloky spawnerů, jejichž data obsahují jen ID mobu. Přirozené spawny, mobové pevnosti a ti, které chunk vytvoří při generování, se vymění. `false`: žádné bloky spawnerů se nepřidají            |
+Soubor s `runs` a bez `becomes` jen spustí funkci, když se entita objeví, což funguje i pro věci, které nejsou moby:
+
+```json
+{
+  "entities": ["minecraft:eye_of_ender"],
+  "runs": "mypack:eye_spawned"
+}
+```
+
+| Klíč                                                                                                                         | Povinné | Hodnota                                       | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities`                                                                                                                   | ano     | seznam názvů entit nebo druhů                 | žádný   | Moby nahrazené, jako u Zámků spawnu. Soubor bez něj se přeskočí a log to řekne                                                                                                                                                                                                                                                                                                             |
+| `becomes`                                                                                                                    | ne      | seznam ID, nebo objekty s `entity` a `weight` | žádný   | Co je nahradí, vybráno podle váhy (`1`, když se vynechá). ID může být vanilla mob, mob z jiného modu nebo varianta balíčku. Soubor bez něj ani bez `runs` se přeskočí a log to řekne                                                                                                                                                                                                       |
+| `biomes`, `biomeTypes`                                                                                                       | ne      | jako u varianty                               | žádný   | Biomy, kde výměna platí                                                                                                                                                                                                                                                                                                                                                                    |
+| `blocks`                                                                                                                     | ne      | seznam názvů bloků, jako u Těžby žil          | žádný   | Výměna platí, když blok pod místem spawnu odpovídá                                                                                                                                                                                                                                                                                                                                         |
+| `requireAll`                                                                                                                 | ne      | boolean                                       | `false` | Při `false` stačí jedno z `biomes`, `biomeTypes` a `blocks`; při `true` musí platit všechna zadaná. Soubor, který žádné z nich neuvádí, platí všude, kde platí jeho ostatní podmínky                                                                                                                                                                                                       |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | ne      | jako u Podmínek spawnu                        | žádný   | Stejné klíče se stejným významem jako u Podmínek spawnu. Všechny musí platit, včetně `elsewhere`                                                                                                                                                                                                                                                                                           |
+| `elsewhere`                                                                                                                  | ne      | objekt                                        | vypnuto | Tam, kde neplatí `biomes`, `biomeTypes` a `blocks`, se výměna přesto provede, s šancí a podmínkami níže                                                                                                                                                                                                                                                                                    |
+| `elsewhere.chance`                                                                                                           | ne      | desetinné číslo, `0` až `1`                   | `1.0`   | Šance výměny tam; `0.15` je zhruba jedna ze sedmi                                                                                                                                                                                                                                                                                                                                          |
+| `elsewhere.lightBelow`                                                                                                       | ne      | celé číslo, `1` až `16`                       | žádný   | Jen tam, kde je světlo v místě spawnu pod touto hodnotou                                                                                                                                                                                                                                                                                                                                   |
+| `elsewhere.night`                                                                                                            | ne      | boolean                                       | `false` | `true`: jen od ticku `13000` do `23000` dne. `false`: bez časového omezení                                                                                                                                                                                                                                                                                                                 |
+| `extra`                                                                                                                      | ne      | celé číslo, `0` až `16`                       | `0`     | Kolik dalších mobů se objeví na místě. Každý má vlastní losování `becomes`, dostane výbavu jako každý spawn a přeskočí se, když se nevejde do prostoru. Počítají se do limitu mobů od dalšího průchodu spawnu                                                                                                                                                                              |
+| `fromSpawners`                                                                                                               | ne      | boolean                                       | `false` | `true`: přidá bloky spawnerů, jejichž data obsahují jen ID mobu. Přirozené spawny, mobové pevnosti a ti, které chunk vytvoří při generování, se vymění. `false`: žádné bloky spawnerů se nepřidají                                                                                                                                                                                         |
+| `runs`                                                                                                                       | ne      | ID funkce                                     | žádný   | Spustí tuto funkci, když se do světa připojí odpovídající entita, jako a u této entity, pro každý druh entity (včetně `minecraft:eye_of_ender`), jednou pro každou entitu: přenačtení chunku ji znovu nespustí. Bez `becomes` soubor jen spustí funkci a nic nevymění. Nespustí se u spawnu, který soubor vymění. ID, které žádný balíček neposkytuje, se zapíše do logu a nic se nespustí |
 
 Balíček bez souboru tady se spawnuje jako dřív a vlastní `becomes` varianty se nemění. Náhradou je mob, který pak dostane statistiky a výbavu varianty, takže výměna do varianty funguje.
+
+### Pravidla zranění
+
+*varianty entit*
+
+`<namespace>/hurt_rules/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Zruší nebo nechá reagovat na to, když jeden mob zraní jiného, například aby stráže balíčku nikdy neubližovaly jeho vlastním vesničanům. Hráči jsou vynecháni: pro ně použij spouštěče karet `player_hurt_entity` a `entity_hurt_player`.
+
+```json
+{
+  "attacker": ["minecraft:skeleton", "#monster", "#minecraft:skeletons"],
+  "victim": "minecraft:zombie",
+  "cancel": true,
+  "runs": "mypack:hurt"
+}
+```
+
+| Klíč       | Povinné | Hodnota                                       | Výchozí | Co dělá                                                                                                                                                                                                                     |
+| ---------- | ------- | --------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `attacker` | ano     | název entity nebo seznam názvů, druhů či tagů | žádný   | Moby, které zasáhnou, jako u Zámků spawnu. Tagy entit jako `#minecraft:skeletons` fungují také. Střela se počítá tomu, kdo ji vystřelil. Soubor bez něj se přeskočí a log to uvede                                          |
+| `victim`   | ano     | název entity nebo seznam názvů, druhů či tagů | žádný   | Moby, které jsou zasaženy, zapsané stejně. Soubor bez něj se přeskočí a log to uvede                                                                                                                                        |
+| `cancel`   | ne      | logická hodnota                               | `false` | `true`: zásah nedělá nic                                                                                                                                                                                                    |
+| `runs`     | ne      | ID funkce                                     | žádný   | Spustí tuto funkci jako a u oběti pokaždé, když se zásah pokusí, před jakýmkoli poškozením, takže ji spustí i zásah, který dopadne během nezranitelnosti oběti. Soubor bez `cancel` i bez `runs` se přeskočí a log to uvede |
+
+### Časovače
+
+`<namespace>/schedules/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Spouští funkci na časovači, jednou nebo pořád dokola, jako server. Nic se neukládá: každý časovač začne počítat znovu při startu serveru a při `/rdplserver reload`.
+
+```json
+{
+  "id": "mypack:airdrop",
+  "after": 1200,
+  "every": 6000,
+  "runs": "mypack:airdrop"
+}
+```
+
+| Klíč    | Povinné | Hodnota           | Výchozí | Co dělá                                                                                                                                                              |
+| ------- | ------- | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | ne      | text              | žádný   | Jméno pro tvou vlastní potřebu, mod ho nečte                                                                                                                         |
+| `after` | ne      | celé číslo, ticky | `0`     | Ticky od startu serveru nebo od přenačtení, než proběhne první spuštění. `0` spustí při prvním ticku                                                                 |
+| `every` | ne      | celé číslo, ticky | `0`     | Ticky mezi spuštěními po prvním. `0` nebo vynecháno spustí jednou                                                                                                    |
+| `runs`  | ano     | ID funkce         | žádný   | Funkce, která se spustí jako server. Soubor bez něj se přeskočí a log to uvede. Funkce, kterou žádný balíček neposkytuje, se zapíše do logu pokaždé, když je na řadě |
+
+Log vypíše `Loaded N schedule(s)`, když se soubory načtou.
+
+### Synchronizovaná data
+
+`<namespace>/syncdata/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Synchronizovaná data jsou úložiště pojmenovaných hodnot, každá text, číslo, nebo true či false, uložená na serveru pro každého hráče a pro celý svět. Karta, odpověď v dialogu, příkaz nebo skript hodnotu nastaví, a karty, dialogy, brány a popisky ji testují nebo ukazují ve svém textu. Hodnota nepotřebuje soubor: nastavit jde jakékoli platné jméno. Soubor jméno deklaruje, aby určil jeho typ, dal mu výchozí hodnotu, omezil jeho délku nebo ho vyřadil z uložení. Jméno má 1 až 64 znaků `a` až `z`, `0` až `9`, `_`, `.`, `:`, `/` a `-`, bez velkých písmen a mezer.
+
+```json
+{
+  "values": [
+    { "name": "quest.stage", "type": "number", "default": 0 },
+    { "name": "quest.title", "type": "text", "max": 40, "default": "Newcomer" },
+    { "name": "quest.met_smith", "type": "bool" },
+    { "name": "event.banner", "type": "text", "persist": false }
+  ]
+}
+```
+
+| Klíč     | Povinné | Hodnota        | Výchozí | Co dělá                                                           |
+| -------- | ------- | -------------- | ------- | ----------------------------------------------------------------- |
+| `values` | ano     | seznam objektů | žádný   | Deklarace. Položka, která není objekt, se přeskočí a log to řekne |
+
+Každá deklarace přijímá tyto klíče.
+
+| Klíč      | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                                                                                                           |
+| --------- | ------- | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`    | ano     | text                        | žádný   | Jméno hodnoty. Položka s neplatným jménem se přeskočí a log to řekne. Jméno, které už bylo deklarováno v dřívějším souboru, si drží první deklaraci a log uvede ten soubor        |
+| `type`    | ne      | `text`, `number`, `bool`    | `text`  | Co hodnota drží. Cokoli jiného se zapíše do logu a položka se přeskočí                                                                                                            |
+| `default` | ne      | text, číslo nebo true/false | žádný   | Co čtení dá, dokud nic není nastaveno, pro hráče nebo svět. Počítá se jako nastavené, když se ptá kontrola. Výchozí hodnota špatného typu se zapíše do logu a hodnota žádnou nemá |
+| `max`     | ne      | celé číslo, 1 až 256        | `256`   | Nejdelší délka textové hodnoty. Hodnota mimo 1 až 256 se zapíše do logu a použije se `256`                                                                                        |
+| `persist` | ne      | logická hodnota             | `true`  | `true`: hodnota se ukládá se světem. `false`: nikdy se neukládá, takže hodnota světa po restartu zmizí a hodnota hráče zmizí, když se odhlásí                                     |
+
+Hráč má vlastní hodnoty a svět má své: každé drží nejvýš 64. Hráč nejdřív čte svou vlastní hodnotu, potom světovou a nakonec výchozí. Nastavení, které poruší limit, se odmítne a zapíše do logu a nic nezmění: neplatné jméno, typ, který se liší od deklarace, text delší než `max` (nebo 256 pro jméno bez souboru), hodnota, která není text, číslo ani true či false, nebo plné úložiště. Nastavení hodnoty na to, co už je, nedělá nic. Po přenačtení se uložená hodnota, která už neodpovídá své deklaraci, odstraní a log to řekne.
+
+#### Kontroly
+
+Kontrola testuje jednu hodnotu. `data` přijímá jednu kontrolu nebo seznam a musí platit každá. Čte se v `when` karty, v `when` odpovědi v dialogu, v `when` položky popisku a v `unlock` brány.
+
+```json
+{
+  "when": {
+    "data": [
+      { "name": "quest.stage", "atLeast": 2, "atMost": 4 },
+      { "name": "quest.title", "isNot": "Newcomer" },
+      { "name": "quest.met_smith", "is": true },
+      { "name": "event.banner", "set": false }
+    ]
+  }
+}
+```
+
+| Klíč      | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                                                                                                        |
+| --------- | ------- | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`    | ano     | text                        | žádný   | Hodnota, která se testuje. Kontrola bez jména se přeskočí a log to řekne                                                                                                       |
+| `is`      | ne      | text, číslo nebo true/false | žádný   | Hodnota se musí rovnat tomuto. Text se porovnává přesně, včetně velkých písmen. Hodnota jiného typu se mu nikdy nerovná                                                        |
+| `isNot`   | ne      | text, číslo nebo true/false | žádný   | Hodnota se tomuto nesmí rovnat                                                                                                                                                 |
+| `atLeast` | ne      | číslo                       | žádný   | Hodnota musí být číslo a alespoň tolik. Hodnota, která není číslo, neprojde                                                                                                    |
+| `atMost`  | ne      | číslo                       | žádný   | Hodnota musí být číslo a nejvýš tolik                                                                                                                                          |
+| `set`     | ne      | logická hodnota             | `true`  | `true`: hodnota musí být nastavená, i výchozí hodnotou, a ostatní klíče ji pak testují. `false`: kontrola platí jen dokud hodnota nastavená není, a ostatní klíče se nepoužijí |
+
+Položka popisku testuje hodnoty, které klient drží, viz níže. Karta, dialog nebo brána testuje serverové hodnoty pro hráče, pro kterého je.
+
+#### Nastavování hodnot
+
+Karta, odpověď v dialogu, příkaz a skript nastavují hodnoty. V souboru karty a v odpovědi drží `sets` hodnoty pro hráče a `worldSets` hodnoty pro celý svět, jako `name: value`.
+
+```json
+{
+  "trigger": "command",
+  "lines": ["Stage {data:quest.stage|0}, {data:quest.title|nobody}"],
+  "sets": { "quest.stage": 1, "quest.title": "Apprentice" },
+  "worldSets": { "event.banner": "A stranger arrived" }
+}
+```
+
+| Klíč        | Povinné | Hodnota | Výchozí | Co dělá                                                                                                                          |
+| ----------- | ------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `sets`      | ne      | objekt  | žádný   | Hodnoty nastavené pro hráče. Hodnota, která není text, číslo nebo true/false, se zapíše do logu a přeskočí, a ostatní se použijí |
+| `worldSets` | ne      | objekt  | žádný   | Hodnoty nastavené pro svět, ve stejném tvaru                                                                                     |
+
+Jen soubory karet a odpovědi v dialogu čtou tyto klíče. Nastavení, které pravidla odmítnou, se zapíše do logu a ostatní pokračují.
+
+#### Zobrazení hodnot v textu
+
+`{data:name|fallback}` v textu se nahradí hodnotou. Bez hodnoty se použije text za `|`, nebo nic, když `|` chybí. Záložní text končí prvním `}`, takže žádný nemůže obsahovat. Jméno se ořízne a prázdné jméno se v popisku zapíše do logu a text se nechá tak, jak je napsán. Číslo se ukáže bez `.0` a true nebo false se ukáže jako to slovo. Funguje v `title` a `lines` karty, v `title` dialogu, v `title` a `lines` uzlu, v `text` odpovědi a v `lines` popisku. Karta nebo dialog ukáže serverovou hodnotu pro hráče, kterému se ukazuje.
+
+#### Co se ukládá
+
+Hodnoty se ukládají do uložení světa, hráčovy pod jeho id, kromě těch deklarovaných s `persist` nastaveným na `false`. Odhlášení si hráčovy hodnoty ponechá, kromě těchto. Klient s módem dostane při připojení hodnoty světa, hráčovy vlastní a všechny výchozí, totéž znovu po přenačtení a každou změnu hned, jak nastane. Při odpojení je zapomene. Právě je čte popisek. Textová hodnota přijde klientovi bez formátovacích kódů. Klient bez módu, nebo jakýkoli klient při zapnutém `vanillaClients`, nedostane nic, takže popisek s `when` nebo `{data:}` tam spadne na záložní text; karty, dialogy a brány běží na serveru a na tom nezávisí.
+
+`/rdplserver data` čte a nastavuje hodnoty, viz [Příkazy synchronizovaných dat](#příkazy-synchronizovaných-dat), a skript se k nim dostane přes `sync` a `synced`, viz [Objekt rdpl](#objekt-rdpl).
 
 ### Síť
 
@@ -7047,8 +7592,41 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | `safeReturn`      | ne      | boolean                               | `false`                          | `true`: hráč, který je vrácen, se položí na bezpečné místo ve světě, který se pokusil opustit: vedle své postele nebo nabité kotvy oživení tam, pokud ještě stojí, jinak do spawnu toho světa. `false`: vrácený hráč se na bezpečné místo nepřesouvá                                                                                                                                                   |
 | `requires`        | ne      | seznam id módů nebo namespaců balíčků | žádný                            | Brána se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                       |
 | `portalBlocks`    | ne      | seznam názvů bloků                    | každý portál                     | Omezí bránu na tyto bloky portálu, takže jedna dimenze může mít hlídané dveře a otevřené                                                                                                                                                                                                                                                                                                               |
+| `stayMinutes`     | ne      | celé číslo                            | žádný                            | Časový rozpočet v minutách pro `dimension` brány. Čas ubývá, když je hráč v té dimenzi, po sekundách, a drží se s hráčem i přes odhlášení a restarty. Když je vyčerpán, hráč je vyslán ven a nový vstup do dimenze se odmítne, dokud se rozpočet nevrátí (viz `stayReset`). Potřebuje `dimension`; bez něj nebo s hodnotou 0 nebo menší log to řekne a brána nemá rozpočet                             |
+| `stayReset`       | ne      | `never`, `day`, `visit`               | `never`                          | Kdy se použitý čas vrátí. `never`: nevrátí se. `day`: na začátku každého nového dne v overworldu. `visit`: pokaždé, když hráč byl mimo dimenzi, takže každá návštěva začíná s plným rozpočtem. Jiné slovo se zapíše do logu a použije se `never`                                                                                                                                                       |
+| `stayMessage`     | ne      | řetězec                               | `%dim%: %time% left`             | Zobrazí se na action baru, jak rozpočet ubývá. `%dim%` je `name` brány a `%time%` zbývající čas v minutách a sekundách, například `0:30`                                                                                                                                                                                                                                                               |
+| `stayWarn`        | ne      | seznam celých čísel                   | `[60, 30, 10, 5, 4, 3, 2, 1]`    | Počet zbývajících sekund, při nichž se ukáže `stayMessage`. Prázdný seznam ji nikdy neukáže. Položka, která není číslo, se přeskočí                                                                                                                                                                                                                                                                    |
+| `onExpire`        | ne      | objekt                                | žádný                            | Co se stane, když je rozpočet vyčerpán. Viz níže                                                                                                                                                                                                                                                                                                                                                       |
+| `dropOnLeave`     | ne      | `true` nebo objekt                    | žádný                            | Označí, co hráč v dimenzi získá, a zahodí to, když odejde. `true` vezme každou výchozí hodnotu níže. Potřebuje `dimension`; bez něj log to řekne a nic se neoznačí                                                                                                                                                                                                                                     |
 
 `unlock` přijímá `hold` (předmět, který je třeba držet), `consume` s `consumeCount` (`1`), `craft` (předmět, který musel být vyroben), `advancement` a `killed` (název entity; brána se otevře tomu, kdo jednu zabije, takže boss může držet klíč ke světu) s `killedCount` (`1`), když jedna nestačí, počítáno za každého hráče zvlášť nebo za celý svět podle `scope`. `killedRank` (název hodnosti moba) počítá jen zabití moba, na kterém tato hodnost padla. Přidání `killedDrops` (název předmětu) způsobí, že započtená zabití položí tento předmět zabijákovi k nohám místo otevření brány a počítání začne znovu, takže klíč lze získat opakovaně a předat někomu, kdo o něj nebojoval; podmiň bránu předmětem `hold` nebo `consume` téhož předmětu, aby se z něj stal klíč. `%item%`, `%mob%` a `%dim%` se doplní za tebe. Klíč, který padá z moba, nepotřebuje nic zvláštního: dej mobovi drop a podmiň bránu pomocí `hold` nebo `consume`. `team` a `objective` se `scoreAtLeast` ji otevřou hráči v tomto týmu na scoreboardu, jehož skóre v daném cíli je alespoň tolik – stejné podmínky, jaké bere `when` u karty; každá z nich platí i samostatně. Kontrolují se ve chvíli, kdy hráč prochází, a brána se pak otevře v rámci svého rozsahu jako při každém jiném odemčení. S rozsahem `team` patří odemčení týmu toho, kdo ji otevřel: projde každý v týmu, i ten, kdo se přidá později, a hráč bez týmu si ji odemkne jen pro sebe. `teamAndScore` určuje, jak se ty dvě počítají: `alone` (výchozí) jim dovolí otevřít bránu samy, kdežto `with` z nich udělá další podmínku, takže se brána otevře až po splnění jiného klíče odemčení, a to jen hráči, který je zároveň v tom týmu s tím skóre. `killedTally` nastavené na `team` počítá do `killedCount` všechna zabití týmu toho, kdo zabíjí, dohromady, místo aby počítalo každého hráče zvlášť (`player`, výchozí); kdo není v žádném týmu, počítá dál sám. `teamless` nastavené na `refuse` u brány s rozsahem `team` odmítne hráče bez týmu, místo aby si ji odemkl jen pro sebe (`player`, výchozí).
+
+`unlock` také přijímá `worn`, název předmětu, který hráč musí mít na sobě: v jednom ze čtyř slotů brnění, nebo ve slotu Curios, když je Curios nainstalován. `worn` bere id předmětu bez metadat a předmět se změněnými daty se počítá jen tehdy, když je název prostý předmět. Dokud hráč předmět nosí, brána je pro něj otevřená. Ve výchozím nastavení projití portálem nebo portway s předmětem na sobě odemkne bránu také natrvalo v jejím rozsahu, jako každé jiné odemčení. Nastavení `each` v `unlock` na `true` to vypne: předmět se musí nosit pokaždé, nic se nepamatuje a sundání jej bránu zase zavře. `%item%` v `blockedMessage` ukáže název předmětu, když je `worn` jediné, co brána vyžaduje. Název předmětu, který neexistuje, se zaloguje a brána se pak nedá otevřít nošením. `each` bez `worn` se zaloguje a nedělá nic.
+
+```json
+{
+  "dimension": "mypack:ruby_world",
+  "unlock": { "worn": "minecraft:iron_helmet", "each": true }
+}
+```
+
+`unlock` přijímá také `data`, jednu kontrolu nebo seznam jako v [Synchronizovaná data](#synchronizovaná-data). Bránu neotevírá: je to další podmínka, která se kontroluje při každém pokusu hráče projít, takže brána, která je otevřená nebo už hráči odemčená, ho stále otočí zpět s `blockedMessage`, dokud kontrola neplatí.
+
+**Časový rozpočet.** `onExpire` přijímá tyto klíče.
+
+| Klíč       | Povinné | Hodnota         | Výchozí                    | Co dělá                                                                                                                                                                                             |
+| ---------- | ------- | --------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit`     | ne      | logická hodnota | `true`                     | `true`: přesune hráče do postele nebo na spawn světa v Overworldu. Nejdřív sundá případné vozidlo a předměty z truhly vozidla jdou s ním. `false`: hráč se nepřesune. Když přesun selže, log varuje |
+| `function` | ne      | id funkce       | žádný                      | Spustí tuto funkci jako hráč po zprávě                                                                                                                                                              |
+| `message`  | ne      | řetězec         | `Your time in %dim% is up` | Zobrazí se na action baru, když rozpočet dojde, a znovu pokaždé, když se hráč pokusí vstoupit, zatímco je vyčerpán. `%dim%` je `name` brány. Prázdné nezobrazí nic                                  |
+
+**Kořist, která zůstane.** S `dropOnLeave` se označí předmět, který hráč během pobytu v dimenzi sebere, vyrobí, vytaví nebo vyndá z kontejneru. Když hráč dimenzi opustí, každý označený předmět, který nese, upadne tam, kde stál, s krátkou prodlevou, než jde znovu sebrat, a ukáže se `message`. Označený předmět uvnitř krabice shulker nebo jiného kontejneru předmětů se počítá a loď nebo vozík s označenými předměty nemůže odjet. Označený předmět nese tag, dokud nespadne, takže se neslučuje s neoznačeným. Hráč, který zemře se zapnutým `keepInventory`, nechá označené předměty upadnout tam, kde zemřel. Co hráč nese, znamená jeho inventář, brnění a ruce, truhlu na vozidle, na kterém jede, a sloty, které nosí Curios. `dropOnLeave` přijímá tyto klíče.
+
+| Key          | Required | Value                 | Default                        | What it does                                                                                                                                                                                  |
+| ------------ | -------- | --------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keep`       | no       | seznam názvů předmětů | none                           | Předměty, které se nikdy neoznačí, zapsané jako `modid:name`, a shodují se s předmětem bez ohledu na jeho data. Název, který není známým předmětem nebo nemá `modid:`, se zaloguje a ignoruje |
+| `enderChest` | ne       | logická hodnota       | `true`                         | `true`: označené předměty v hráčově truhle na Ender spadnou také, když odejde. `false`: zůstanou v ní. Smrt s `keepInventory` truhlu na Ender nikdy nezahodí                                  |
+| `message`    | ne       | řetězec               | `Loot from %dim% stays behind` | Zobrazí se na action baru, když spadl aspoň jeden předmět. `%dim%` je `name` brány a `%count%` počet předmětů. Prázdné nezobrazí nic                                                          |
 
 Brány hlídají i herní vlastní dimenze: brána, jejíž `dimension` je `minecraft:the_nether`, stojí před každým portálem do Netheru.
 
@@ -9125,6 +9703,101 @@ Strana nebo hráč může zabírat chunky půdy. Zabraný chunk zůstává vlast
 
 **FTB Chunks.** `ftbPolicy` se čte samo o sobě a zábory RDPL a zábory FTB Chunks jsou oddělené záznamy. `independent` (výchozí) zábory FTB ignoruje. `yield` odmítne zábor na chunku, který drží FTB, a ochranu tam nechá na FTB, takže zábor udělaný předtím, než ho FTB převzalo, přestane chránit, dokud ho FTB drží. `exclusive` odmítá každý zábor RDPL, ukazuje hráči na příkaz záboru FTB a vypíná ochranu RDPL, zatímco jsou aktivní zábory FTB. Když žádné zábory FTB aktivní nejsou, `yield` a `exclusive` fungují jako `independent` a při startu serveru se zapíše jeden řádek do logu. `no_wilderness=true` v FTB Chunks blokuje stavění i v chunku, který drží jen RDPL, protože ho FTB vidí jako nezabraný; běžte s vypnutou volbou, nebo použijte `yield` a nechte hráče zabírat přes FTB.
 
+### Pravidla zón
+
+*týmy*
+
+`<namespace>/zones/*.json`
+
+Název souboru si volíš sám, čte se jen složka, jedna zóna na soubor a více souborů se skládá. Zóna je pevná oblast jedné dimenze, kde hráči nesmějí ničit, pokládat, používat nebo otevírat určité věci, případně létat. Je to statické pravidlo a žádný zábor nepotřebuje.
+
+```json
+{
+  "id": "rift_rules",
+  "where": { "dimension": "ftb:rift", "box": [-256, -64, -207, 192, 320, 256], "claim": false },
+  "except": { "creative": true, "tag": "builder" },
+  "break": { "allow": ["#minecraft:logs"] },
+  "place": { "deny": "all", "on": ["#mypack:altar_base"] },
+  "use": { "deny": ["minecraft:ender_pearl"] },
+  "open": { "allow": ["minecraft:chest"] },
+  "fly": false,
+  "message": "mypack.rift.nope"
+}
+```
+
+Druhý soubor zón, který drží nástroje a poškození mimo ohraničený kvádr pro všechny kromě hráčů v kreativním režimu. Hráči v kreativním režimu tam mohou dál motykou orat a zvířata ranit:
+
+```json
+{
+  "id": "farm_guard",
+  "where": { "dimension": "minecraft:overworld", "box": [100, 0, 100, 140, 255, 140] },
+  "except": { "creative": true },
+  "denyToolActions": ["hoe_till", "axe_strip", "shovel_flatten"],
+  "damage": { "entities": ["minecraft:cow", "minecraft:pig", "#creature"], "unlessAttackerInside": true },
+  "open": { "allow": ["minecraft:chest"], "close": true }
+}
+```
+
+| Klíč              | Povinné | Hodnota          | Výchozí            | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------- | ------- | ---------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | ne      | text             | název souboru      | Název, pod kterým log zónu uvádí                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `where`           | ne      | objekt           | celý svět          | Kde zóna je. Hráč je v zóně, když sedí každý zadaný rozsah. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `except`          | ne      | objekt           | nikdo              | Hráči, které zóna nechá být. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `break`           | ne      | objekt           | žádné pravidlo     | Které bloky smí hráč rozbít. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `place`           | ne      | objekt           | žádné pravidlo     | Které bloky smí hráč položit a na čem smí stát. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `use`             | ne      | objekt           | žádné pravidlo     | Které předměty smí hráč použít pravým kliknutím                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `open`            | ne      | objekt           | žádné pravidlo     | Které kontejnery smí hráč otevřít                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `denyToolActions` | no      | text nebo seznam | žádný              | Akce s nástroji, které se uvnitř zóny odmítnou: `hoe_till` (motyka, která mění hlínu nebo trávu na pole), `axe_strip` (sekera, která odlupuje kůru kmene) a `shovel_flatten` (lopata, která mění trávu na cestu). Názvy nerozlišují velká a malá písmena. Opracovávaný blok musí být uvnitř zóny a odmítnutý hráč vidí `message` zóny. Hodnota, která není ani text, ani seznam, položka, která není text, a název, který není žádným ze tří, se každý zaloguje a ignoruje |
+| `damage`          | ne      | objekt           | žádný              | Chrání živé tvory před poškozením uvnitř zóny. Viz níže                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `fly`             | ne      | logická hodnota  | `true`             | `false`: jednou za sekundu je hráč uvnitř zóny, který letí, stažen k zemi a ztratí schopnost létat, pokud není v kreativním nebo divákovském režimu; tam se zastaví jen let                                                                                                                                                                                                                                                                                                |
+| `message`         | ne      | text             | `rdpl.zone.denied` | Klíč jazyka zobrazený nad hotbarem hráči, který je odmítnut, nejvýše každé dva sekundy. Výchozí klíč `rdpl.zone.denied` říká „Tady to udělat nemůžeš“                                                                                                                                                                                                                                                                                                                      |
+
+| Klíč `where` | Hodnota          | Co dělá                                                                                                                                              |
+| ------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension`  | název dimenze    | Jen tato dimenze, pojmenovaná jako všude jinde v RDPL, s namespace i bez něj. Vynecháno: každá dimenze                                               |
+| `box`        | šest čísel bloků | `[x1, y1, z1, x2, y2, z2]`, dva protilehlé rohy v libovolném pořadí, oba včetně. Blok, se kterým se pracuje, musí být uvnitř. Vynecháno: bez omezení |
+| `claim`      | logická hodnota  | `true`: jen uvnitř chunků zabraných v [Zabrané chunky](#zabrané-chunky). `false` nebo vynecháno: zábory nerozhodují                                  |
+
+| Klíč `except` | Hodnota         | Co dělá                                                                |
+| ------------- | --------------- | ---------------------------------------------------------------------- |
+| `creative`    | logická hodnota | `true`: hráči v kreativním režimu se přeskočí                          |
+| `tag`         | text            | Hráči s touto značkou scoreboardu, nastavenou přes `/tag`, se přeskočí |
+
+`break`, `place`, `use` a `open` mají každý tyto klíče. Všechny jsou nepovinné a pravidlo bez nich se ignoruje a log to řekne.
+
+| Klíč    | Hodnota              | Co dělá                                                                                                                                                                         |
+| ------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allow` | seznam id nebo tagů  | Povoleno je jen tohle, vše ostatní je odmítnuto                                                                                                                                 |
+| `deny`  | seznam, nebo `"all"` | Tohle je odmítnuto. `"all"` odmítne všechno                                                                                                                                     |
+| `on`    | seznam id nebo tagů  | Jen u `place`: blok smí být položen, jen když je blok pod ním jedním z těchto. Platí navrch k `allow` a `deny`, takže položení, které ostatní klíče odmítnou, zůstane odmítnuto |
+| `close` | logická hodnota      | Jen u `open`: zavře i kontejner, který je už otevřený. Výchozí `false`. Viz níže                                                                                                |
+
+Položka je id bloku nebo předmětu, například `minecraft:chest`, id končící na `*` pro celý namespace, například `minecraft:*`, nebo `#name` pro tag. `break`, `place`, `open` a `on` odpovídají blokům a čtou tagy bloků, `use` odpovídá předmětu v ruce hráče a čte tagy předmětů. Id nebo tag, který nic nezaregistruje, se zapíše do logu a neodpovídá ničemu.
+
+**`open`** platí jen pro blok, který se při použití otevře jako nabídka: blok s kontejnerem nebo strojem (truhla, pec, rozvaděč), pracovní stůl nebo kovadlina. Pojmenovává blok, na který se kliklo. Jiný blok `open` nikdy neodmítne, ať `allow` vypisuje cokoli. Odmítnutý klik nedělá nic, takže se nabídka neotevře.
+
+**`use`** odmítá jen předmět. Pravý klik na blok s odmítnutým předmětem blok stále spustí, například tlačítko. Blok pod kliknutím do pravidla nepatří.
+
+**`damage`** odmítne poškození uvedených živých věcí, zatímco stojí uvnitř zóny, ať je útočník kdekoli. Testuje se blok, na kterém entita sama stojí, proti `where`. Položka v `entities` je id entity, například `minecraft:pig`, s `minecraft:` nebo bez něj, druh (`#monster`, `#creature`, `#ambient` nebo `#water_creature`), nebo tag typu entity s namespace, například `#c:bosses`. Poškození, které obchází nezranitelnost, například void nebo `/kill`, se nikdy neodmítne. Hráč, který útočí a odpovídá `except`, se nikdy neodmítne, takže zóna, která vyjímá kreativní hráče, nechá jejich útoky fungovat. Odmítnutý útočník, který je hráč, vidí `message` zóny; ostatní útočníci se zastaví bez zprávy. `damage`, které není objekt, `entities`, které není seznam, položka `#`, která není ani druh, ani tag entity, položka, která není text, nebo seznam `entities` bez použitelné položky, se zaloguje a `damage` se ignoruje.
+
+| Klíč `damage`          | Povinné | Hodnota                 | Výchozí | Co dělá                                                                                                   |
+| ---------------------- | ------- | ----------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `entities`             | yes     | seznam id, druhů a tagů | none    | Živé věci, které zóna chrání                                                                              |
+| `unlessAttackerInside` | ne      | logická hodnota         | `false` | `true`: poškození od útočníka, který je také uvnitř zóny, je povoleno a odmítne se jen poškození zvenčí   |
+| `allowNoAttacker`      | ne      | logická hodnota         | `false` | `true`: poškození bez útočníka, například pádem, ohněm nebo lávou, je povoleno. `false`: odmítne se i ono |
+
+Hodnota `unlessAttackerInside` nebo `allowNoAttacker`, která není `true` ani `false`, se zapíše do logu a počítá se jako `false`.
+
+**`close`** dělá, že `open` posuzuje víc než blok, na který se kliklo. S ním se kontejner, který hráč otevřel kliknutím na blok mimo zónu, hned zavře, pokud hráč stojí uvnitř zóny a pravidlo `open` ten blok odmítne. Hráč uvidí `message` zóny. Bez něj rozhoduje jen kliknutý blok. `close` se čte jen v `open` a počítá se jako `false`, pokud není `true` nebo `false`; jinak se to zapíše do logu. Zavírá kontejnery otevřené kliknutím na blok, ne ty otevřené jinak.
+
+Zónový soubor, v němž chybí všechny z `break`, `place`, `use`, `open`, `damage`, `denyToolActions` nebo `fly: false`, se ignoruje a log to řekne. `where.box` s jiným počtem hodnot než šest se zapíše do logu jako `gives a box of N numbers, it needs 6 (x1, y1, z1, x2, y2, z2), ignoring the zone` a zóna se nenačte.
+
+**Kdo je v zóně.** `break`, `place` a `open` se dívají na blok, který se rozbíjí, pokládá nebo na který se klikne, takže hráč venku nemůže pracovat s bloky uvnitř zóny a hráč uvnitř může pracovat s bloky venku. `use` na bloku funguje stejně, kdežto `use` ve vzduchu a `fly` se dívají na blok, ve kterém hráč stojí. Zóna bez `where` pokrývá každého ve světě. Hráči, na které sedí `except`, nejsou nikdy odmítnuti a nikdy staženi k zemi.
+
+**Let.** `fly: false` jen vypíná létání. Hráč, který zónu opustí, zůstane s vypnutým létáním, dokud mu něco jiného nedá létání znovu, například kreativní režim nebo příkaz.
+
+Bez souboru není nic omezeno. Log po načtení souborů vypíše `Loaded N zone(s)` a `/rdplserver reload` je načte znovu.
+
 ## Bodování
 
 *herní režimy*
@@ -9585,10 +10258,32 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 
 *karty*
 
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "login",
+  "title": "Welcome back, {player}",
+  "sound": "minecraft:entity.player.levelup",
+  "runs": "mypack:login_news"
+}
+```
+
+```json
+{
+  "trigger": "command",
+  "title": "{player} found {item}",
+  "lines": ["Worth {value} coins."]
+}
+```
+
+`login` se spustí při každém přihlášení, `first_join` jen při prvním. Příkaz `/rdplserver card mypack:found Steve item=Ruby value=50` ukáže druhou kartu s dosazeným `{item}` a `{value}` z dvojic `key=value`.
+
 | Spouštěč             | Vyžaduje                | Spustí se, když                                                                                                                                                                                                                                          |
 | -------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `command`            | nic                     | Spustí se `/rdplserver card <rule> [players]`. Příkaz přeskočí `when`, `repeat` a `cooldown` a stále spouští `runs`. Takto lze ukázat jakékoli pravidlo, ať má jakýkoli spouštěč                                                                         |
 | `first_join`         | nic                     | Hráč se poprvé připojí do světa                                                                                                                                                                                                                          |
+| `login`              | nic                     | Hráč se přihlásí, pokaždé a ne jen poprvé. `runs` se spustí jako u každého jiného spouštěče                                                                                                                                                              |
 | `dimension_enter`    | `dimension`             | Hráč dorazí do této dimenze                                                                                                                                                                                                                              |
 | `biome_enter`        | `biomes`                | Hráč vejde do jednoho z těchto biomů odjinud                                                                                                                                                                                                             |
 | `structure_enter`    | `structures`            | Hráč vejde do jedné z těchto struktur zvenčí                                                                                                                                                                                                             |
@@ -9618,6 +10313,7 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 | `score`              | `objective`             | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
 | `exposure_level`     | nic, nebo `exposure`    | Úroveň hráče v některém nebezpečí se změní, nahoru i dolů. S `exposure` jen u tohoto nebezpečí, s `level` jen při změně, která dosáhne této úrovně. První kontrola po připojení ji nikdy nespustí                                                        |
 | `round_start`        | nic                     | Kolo se otevře po odpočtu: jednou pro každého hráče, nebo jednou pro `audience`. Spustí se po resetu stejně jako po `/rdplserver round start`                                                                                                            |
+| `worn`               | `when.worn`             | Ne okamžik, ale měřák: dokud hráč nosí předmět z `when.worn`, karta se mu ukazuje znovu každých `every` tiků. Viz níže. Pravidlo bez `when.worn` se přeskočí a log to řekne                                                                              |
 | `environment_change` | nic, nebo `environment` | Prostředí se v dimenzi zapne příkazem nebo ročním obdobím, nebo se vrátí `default`: jednou pro každého hráče tam, nebo jednou pro `audience`. S `environment` jen toto prostředí. Načtení uloženého světa ji nikdy nespustí                              |
 
 Úrovně nebezpečí se čtou při každé kontrole, takže karta s `exposure_level` se spustí do `scanInterval` nebezpečí od změny.
@@ -9625,6 +10321,18 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 Biom, struktura, výška, herní čas a skóre se kontrolují jednou za sekundu u každého hráče a spouštějí se při změně zvenčí dovnitř, nikdy při první kontrole po připojení. Pravidlo `time_of_day` nebo `day`, jehož publikum není `player`, se spustí jednou pro dimenzi místo jednou pro každého hráče v ní.
 
 Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa, počká a ukáže se, až se úvod zavře, ať je její spouštěč jakýkoli, včetně `command`. Zahodí se, pokud hráč do té doby odejde.
+
+Pravidlo `worn` je živý měřák, například pro ukazatel výdrže nebo řádek stavu. Každých `every` tiků se podívá na každého hráče a pro toho, kdo nosí předmět z `when.worn`, ukáže kartu jen tomuto hráči, bez ohledu na `audience`. Neukáže se, dokud má hráč otevřený úvod světa. Zbytek `when` a `dimension` musí stále platit. `repeat` a `cooldown` pro měřák nemají význam a log varuje, když jsou nastaveny; `sets` a `runs` běží při každém obnovení. Nošení znamená v slotu brnění, nebo ve slotu Curios, když je Curios nainstalován. Text karty může použít `{worn}`, název předmětu, `{percent}`, zbývající výdrž od 0 do 100, `{left}`, zbývající použití, `{max}`, plnou výdrž, a `{bar}`, ukazatel z deseti znaků `|` pro to, co zbývá, a `.` pro to, co je spotřebováno. Předmět bez výdrže ukazuje 100 procent, 0 pro `{left}` a `{max}` a plný ukazatel. S `style` `bar` se řádek nahradí sám na liště akcí.
+
+```json
+{
+  "trigger": "worn",
+  "when": { "worn": "minecraft:iron_helmet" },
+  "every": 40,
+  "style": "bar",
+  "lines": ["{worn} {bar} {percent}%"]
+}
+```
 
 ### Nastavení spouštěčů
 
@@ -9684,6 +10392,7 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `environment`        | text                                  | žádný          | Pro `environment_change`: název prostředí, které se zapnulo, například `night`, nebo `default`. Bez něj spustí pravidlo každé zapnuté prostředí                                                                                                                                                                        |
 | `atLeast`, `atMost`  | celé číslo                            | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1                                                                                                                                 |
 | `objective`, `score` | text, celé číslo                      | žádný, `1`     | Pro `score`: cíl a hodnota, které je třeba dosáhnout                                                                                                                                                                                                                                                                   |
+| `every`              | celé číslo v tickách                  | `40`           | Pro `worn`: tiky mezi obnovami měřáku. Hodnota, která není násobkem 20, se zaokrouhlí nahoru na další a log to napíše. Nejnižší je `20`                                                                                                                                                                                |
 | `portway`            | text                                  | žádný          | Pro triggery `portway_*`: id bloku průchodu, například `mypack:northgate`. Bez něj platí jakýkoli průchod                                                                                                                                                                                                              |
 | `network`            | text                                  | žádný          | Pro triggery `portway_*`: síť průchodu. Bez ní platí jakákoli síť                                                                                                                                                                                                                                                      |
 | `reason`             | text                                  | žádný          | Pro `portway_refused`: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel` nebo `item`. Pro `portway_forget`: `gone`, `player` nebo `command`. Bez něj platí jakýkoli důvod                                                                                                                        |
@@ -9699,25 +10408,36 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 { "when": { "season": ["winter", "spring"], "dimension": "minecraft:overworld" } }
 ```
 
-| Nastavení                   | Typ              | Co kontroluje                                                                                                                                                                                    |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `biomes`                    | seznam           | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                                                                                                                   |
-| `environments`              | seznam           | Jedno z těchto prostředí je v hráčově dimenzi zapnuté, včetně `default`                                                                                                                          |
-| `season`                    | seznam           | Dimenze je podle ročního hodinového cyklu v jednom z těchto ročních období, i když bylo prostředí přepnuto ručně. Název ročního období je první název prostředí u položky `order` ročních období |
-| `dimension`                 | text             | Dimenze, jejíž roční období `season` čte, registrový název dimenze, například `minecraft:overworld`. Bez něj se bere hráčova dimenze                                                             |
-| `timeFrom`, `timeTo`        | celé číslo       | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000`                                                                                                  |
-| `dayAtLeast`                | celé číslo       | Číslo dne je alespoň toto                                                                                                                                                                        |
-| `advancement`               | text             | Hráč má tento pokrok                                                                                                                                                                             |
-| `portway`, `network`        | text             | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat                                                                           |
-| `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                                                                                              |
-| `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                                                                                                                               |
-| `dietAtLeast`               | celé číslo       | Zapamatovaná jídla hráče obsahují alespoň tolik různých jídel, nebo s `dietCount` `lifetime` každé jídlo, které hráč kdy snědl (vyžaduje soubor Pestrosti jídla)                                 |
-| `dietCount`                 | text             | `memory` (výchozí) nebo `lifetime`: co počítá `dietAtLeast`                                                                                                                                      |
-| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                                                                                                                               |
+| Nastavení                   | Typ                | Co kontroluje                                                                                                                                                                                        |
+| --------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | seznam             | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                                                                                                                       |
+| `environments`              | seznam             | Jedno z těchto prostředí je v hráčově dimenzi zapnuté, včetně `default`                                                                                                                              |
+| `season`                    | seznam             | Dimenze je podle ročního hodinového cyklu v jednom z těchto ročních období, i když bylo prostředí přepnuto ručně. Název ročního období je první název prostředí u položky `order` ročních období     |
+| `dimension`                 | text               | Dimenze, jejíž roční období `season` čte, registrový název dimenze, například `minecraft:overworld`. Bez něj se bere hráčova dimenze                                                                 |
+| `timeFrom`, `timeTo`        | celé číslo         | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000`                                                                                                      |
+| `dayAtLeast`                | celé číslo         | Číslo dne je alespoň toto                                                                                                                                                                            |
+| `advancement`               | text               | Hráč má tento pokrok                                                                                                                                                                                 |
+| `portway`, `network`        | text               | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat                                                                               |
+| `gameMode`                  | text               | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                                                                                                  |
+| `team`                      | text               | Hráč je v tomto týmu tabulky skóre                                                                                                                                                                   |
+| `dietAtLeast`               | celé číslo         | Zapamatovaná jídla hráče obsahují alespoň tolik různých jídel, nebo s `dietCount` `lifetime` každé jídlo, které hráč kdy snědl (vyžaduje soubor Pestrosti jídla)                                     |
+| `dietCount`                 | text               | `memory` (výchozí) nebo `lifetime`: co počítá `dietAtLeast`                                                                                                                                          |
+| `objective`, `scoreAtLeast` | text, celé číslo   | Skóre hráče v cíli je alespoň toto                                                                                                                                                                   |
+| `worn`                      | text               | Hráč nosí tento předmět v slotu brnění, nebo ve slotu Curios, když je Curios nainstalován. Jinde v balíčku se zapisuje jako předmět, například `minecraft:iron_helmet`. Spouštěč `worn` ho potřebuje |
+| `data`                      | objekt nebo seznam | Platí všechny tyto kontroly synchronizovaných hodnot. Viz [Synchronizovaná data](#synchronizovaná-data)                                                                                              |
 
 ### Karta
 
 *karty*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "sound": "minecraft:block.note_block.chime"
+}
+```
 
 | Nastavení    | Typ        | Výchozí          | Co dělá                                                                                                                                                                                                    |
 | ------------ | ---------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -9729,13 +10449,18 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `image`      | text       | `saysImage`      | PNG z klientských prostředků balíčku, roztažený přes kartu jako její pozadí                                                                                                                                |
 | `background` | boolean    | `saysBackground` | `true`: panel, jeho okraj a barevný pruh se kreslí. `false` zahodí panel, jeho okraj a barevný pruh; text si drží stín a `image` se stále kreslí                                                           |
 | `font`       | text       | `saysFont`       | Písmo, jímž se kreslí text karty, jako `namespace:name`. Prázdné používá písmo RDPL                                                                                                                        |
+| `sound`      | text       | žádný            | ID zvukové události, například `minecraft:entity.player.levelup`, se přehraje každému hráči, kterému se karta ukáže. Prázdné nepřehraje nic                                                                |
 | `ticks`      | celé číslo | `0`              | Jak dlouho karta zůstává, včetně mizení. `0` ponechá standardních 160                                                                                                                                      |
 | `audience`   | text       | `player`         | Kdo ji vidí: `player`, `everyone`, `dimension` (všichni v dimenzi hráče) nebo `team` (tým hráče na tabulce skóre)                                                                                          |
 | `repeat`     | text       | `always`         | `always`, `once_per_player`, `once_per_world` nebo `once_per_session` (znovu po opětovném přihlášení hráče)                                                                                                |
 | `cooldown`   | celé číslo | `0`              | Sekundy, než se pravidlo znovu spustí pro stejného hráče                                                                                                                                                   |
 | `runs`       | text       | žádný            | Funkce spuštěná jako hráč, když se pravidlo spustí                                                                                                                                                         |
+| `sets`       | objekt     | žádný            | Hodnoty synchronizovaných dat nastavené hráči, pro kterého se pravidlo spustí, jako `name: value`. Viz [Synchronizovaná data](#synchronizovaná-data)                                                       |
+| `worldSets`  | objekt     | žádný            | Hodnoty synchronizovaných dat nastavené pro celý svět, ve stejném tvaru                                                                                                                                    |
 
 Rohová karta jde do chatu, když je `saysCard` `false`. Co bylo hráči ukázáno, se ukládá u hráče, takže to přežije smrt i přesun mezi dimenzemi; `once_per_world` se ukládá u světa.
+
+`sets` a `worldSets` se použijí, když se pravidlo spustí, až po splnění jeho podmínek a před sestavením karty, takže vlastní text karty už ukazuje nové hodnoty. `title` a `lines` mohou ukázat synchronizovanou hodnotu pomocí `{data:name|fallback}`, viz [Synchronizovaná data](#synchronizovaná-data).
 
 Písmo RDPL, `resourcedatapackloader:rdpl`, je výchozí pro veškerý text: karty, zprávy Says, uvítání a zadržovací poznámky, úvod do světa i vlastní nabídky hry, chat, HUD a popisky. Jeho tučný a kurzívní řez jsou `resourcedatapackloader:rdpl_bold` a `resourcedatapackloader:rdpl_italic`. Písmo kouzelnického stolu zůstává takové, jaké má hra.
 
@@ -9761,6 +10486,9 @@ Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou
 | ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `rdpl:gate_unlocked`     | Brána se otevře                                                   | `unlockedMessage` v [Brány](#brány)                                                                                               |
 | `rdpl:gate_blocked`      | Zavřená brána hráče vrátí, na action baru                         | `blockedMessage` v [Brány](#brány)                                                                                                |
+| `rdpl:gate_stay`         | Zbývající čas v dimenzi brány, na action baru                     | `stayMessage` v [Brány](#brány)                                                                                                   |
+| `rdpl:gate_expired`      | Časový rozpočet brány je vyčerpán nebo je hráč kvůli němu vrácen  | `onExpire.message` v [Brány](#brány)                                                                                              |
+| `rdpl:gate_loot_left`    | Označená kořist zůstane na místě, když hráč opouští dimenzi brány | `dropOnLeave.message` v [Brány](#brány)                                                                                           |
 | `rdpl:portway_activated` | Hráč přidá průchod do svého seznamu, na liště akcí                | jazykový soubor                                                                                                                   |
 | `rdpl:portway_refused`   | Průchod hráče odmítne, na liště akcí                              | jazykový soubor                                                                                                                   |
 | `rdpl:portway_forgot`    | Zastávka opustí seznam hráče, na liště akcí                       | jazykový soubor                                                                                                                   |
@@ -9856,17 +10584,21 @@ První odpověď vede do uzlu `who`, který má vlastní `title` a odpověď zp�
 
 *dialogy*
 
-| Nastavení | Typ     | Výchozí           | Co dělá                                                                                                                                                                                                                      |
-| --------- | ------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text`    | text    | žádný, povinné    | Odpověď tak, jak ji hráč čte. Odpověď bez `text` se zahodí                                                                                                                                                                   |
-| `goto`    | text    | žádný             | Uzel, kam se pokračuje, podle názvu. Odpověď, jejíž `goto` nepojmenuje žádný uzel, se zahodí                                                                                                                                 |
-| `card`    | text    | žádný             | Id pravidla z [Karty](#karty), které se ukáže při výběru odpovědi. Jeho `when`, `repeat` a `cooldown` se přeskočí, `runs` se spustí i tak                                                                                    |
-| `runs`    | text    | žádný             | Funkce spuštěná jako hráč při výběru odpovědi. Takto odpověď spouští příkazy                                                                                                                                                 |
-| `when`    | objekt  | žádný             | Podmínky z [Kdy](#kdy). Odpověď, která je nesplní, je skrytá                                                                                                                                                                 |
-| `close`   | boolean | `true` bez `goto` | `true`: po výběru rozhovor ukončí. Při nastaveném `goto` nic nedělá. `false`: rozhovor zůstane otevřený i po výběru                                                                                                          |
-| `trade`   | boolean | `false`           | `true`: po výběru otevře vlastní obchody mluvčího a ukončí rozhovor, takže `goto` se ignoruje. Mluvčí, který není obchodník nebo právě obchoduje, nic neotevře a rozhovor přesto skončí. `false`: žádné obchody se neotevřou |
+| Nastavení   | Typ     | Výchozí           | Co dělá                                                                                                                                                                                                                      |
+| ----------- | ------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`      | text    | žádný, povinné    | Odpověď tak, jak ji hráč čte. Odpověď bez `text` se zahodí                                                                                                                                                                   |
+| `goto`      | text    | žádný             | Uzel, kam se pokračuje, podle názvu. Odpověď, jejíž `goto` nepojmenuje žádný uzel, se zahodí                                                                                                                                 |
+| `card`      | text    | žádný             | Id pravidla z [Karty](#karty), které se ukáže při výběru odpovědi. Jeho `when`, `repeat` a `cooldown` se přeskočí, `runs` se spustí i tak                                                                                    |
+| `runs`      | text    | žádný             | Funkce spuštěná jako hráč při výběru odpovědi. Takto odpověď spouští příkazy                                                                                                                                                 |
+| `when`      | objekt  | žádný             | Podmínky z [Kdy](#kdy). Odpověď, která je nesplní, je skrytá                                                                                                                                                                 |
+| `close`     | boolean | `true` bez `goto` | `true`: po výběru rozhovor ukončí. Při nastaveném `goto` nic nedělá. `false`: rozhovor zůstane otevřený i po výběru                                                                                                          |
+| `trade`     | boolean | `false`           | `true`: po výběru otevře vlastní obchody mluvčího a ukončí rozhovor, takže `goto` se ignoruje. Mluvčí, který není obchodník nebo právě obchoduje, nic neotevře a rozhovor přesto skončí. `false`: žádné obchody se neotevřou |
+| `sets`      | objekt  | žádný             | Hodnoty synchronizovaných dat nastavené pro hráče, který vybral odpověď, jako `name: value`. Viz [Synchronizovaná data](#synchronizovaná-data)                                                                               |
+| `worldSets` | objekt  | žádný             | Hodnoty synchronizovaných dat nastavené pro celý svět, ve stejném tvaru                                                                                                                                                      |
 
 Výběr nejdřív spustí `runs`, potom ukáže `card` a pak přejde na `goto` nebo rozhovor ukončí. Dialog si sám nic nepamatuje: neukládá se a rozhovor, který hráč zavřel nebo který přerušilo odhlášení, nelze obnovit. Větev, která si má něco zapamatovat, nastaví ve své funkci skóre nebo štítek.
+
+Výběr nejdřív nastaví `sets` a `worldSets`, potom spustí `runs`. Titulek dialogu, `title` a `lines` uzlu a `text` odpovědi mohou ukázat synchronizovanou hodnotu pomocí `{data:name|fallback}`. `when` odpovědi ji může otestovat přes `data`, viz [Synchronizovaná data](#synchronizovaná-data). Uzel ukazuje hodnoty tak, jak jsou v okamžiku vykreslení, takže odpověď, která hodnotu nastaví a přejde na jiný uzel, tam ukáže novou hodnotu.
 
 Klient s módem ukáže dialog jako panel u dolního okraje obrazovky, s jedním řádkem pro každou odpověď. Klikni na řádek nebo stiskni jeho číslo, 1 až 8; Esc nebo klávesa inventáře rozhovor zavře. Vanilla klient dostane stejný text jako řádky chatu, kde je každá odpověď klikací `[n]`, která spustí `/rdplserver talk n`. Server přijme výběr jen tehdy, když entita žije a je nejvýše 8 bloků od hráče, a ignoruje číslo, které aktuální uzel nemá; obrazovka se sama zavře, když se hráč vzdálí o více než 8 bloků. Chybějící `start`, odpověď bez `text` a neznámé `goto` se zapíší do logu a zahodí dialog nebo odpověď; varianta entity, jejíž `dialog` žádný balíček neposkytuje, se zapíše do logu a zůstane bez dialogu.
 
@@ -10090,6 +10822,151 @@ Na konci `result` vyplatí držiteli každé strany do jejího cíle (objective)
 ---
 
 # Ovládání
+
+## Skriptování
+
+Skript běží, když ho JSON balíčku pojmenuje, buď `scriptFile` (soubor `.js` v balíčku), nebo `script` (JavaScript napsaný rovnou v JSONu). Soubor `.js`, který žádný JSON nepojmenuje, nikdy neběží. Skripty jsou JavaScript zhruba na úrovni ES6. RDPL je spouští vestavěným enginem Rhino v modu jako interpretovaný kód.
+
+### Události skriptů
+
+`data/<namespace>/scripts/events/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Každý soubor je jeden záznam: událost, na kterou se naslouchá, volitelný filtr a skript, který se spustí, když událost nastane.
+
+```json
+{
+  "event": "block_place",
+  "filter": { "block": "#ftb:trophies" },
+  "scriptFile": "scripts/trophy_altar.js"
+}
+```
+
+| Klíč         | Povinné         | Hodnota           | Výchozí                                     | Co dělá                                                                                                                                            |
+| ------------ | --------------- | ----------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `event`      | ano             | druh události     | žádný                                       | Událost, na kterou se naslouchá, z tabulky níže                                                                                                    |
+| `every`      | ne              | celé číslo, ticky | `1`; `20` pro `player_tick` a `server_tick` | Běží jen na ticích, kde je herní čas násobkem této hodnoty. Kontroluje se před během skriptu. Hodnota menší než 1 se zaloguje a záznam se přeskočí |
+| `filter`     | ne              | objekt            | všechny                                     | Zúží událost na odpovídající. Kontroluje se před během skriptu, viz klíče filtru níže                                                              |
+| `script`     | jeden z dvou    | text              | žádný                                       | JavaScript, který se spustí přímo v záznamu                                                                                                        |
+| `scriptFile` | jeden z dvou    | cesta             | žádný                                       | Cesta pod `scripts/` ve stejném namespace, končící na `.js`                                                                                        |
+| `class`      | jen `mod_event` | text              | žádný                                       | Úplný název třídy události, na kterou záznam `mod_event` naslouchá. Viz níže                                                                       |
+
+Záznam s oběma `script` a `scriptFile`, nebo s žádným z nich, se přeskočí a log dostane řádek s chybou.
+
+Klíče filtru:
+
+| Klíč        | Hodnota                      | Odpovídá                           |
+| ----------- | ---------------------------- | ---------------------------------- |
+| `dimension` | id dimenze, nebo seznam jich | Dimenze, ve které se událost stane |
+| `block`     | id bloku, nebo tvar `#`      | Blok položený nebo rozbitý         |
+| `entity`    | id entity                    | Entita, o které událost je         |
+| `item`      | id předmětu, nebo tvar `#`   | Předmět, který hráč drží           |
+
+Druhy událostí:
+
+| Událost            | Kdy nastane                                                 | Hodnoty, které skript dostane                                                    | `"cancel"` funguje              |
+| ------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
+| `block_place`      | Blok je položen                                             | `rdpl`, `pos`, `state`, `entity` (kdo položil)                                   | Ano                             |
+| `block_break`      | Hráč rozbije blok                                           | `rdpl`, `pos`, `state`, `player`                                                 | Ano                             |
+| `entity_hurt`      | Každá živá entita, včetně hráčů, se chystá utrpět poškození | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                             | Ano                             |
+| `entity_spawn`     | Mob poprvé vstoupí do světa (ne hráči)                      | `rdpl`, `entity`                                                                 | Ano, a entita se nikdy neobjeví |
+| `entity_despawn`   | Mob zmizí, nebo ho ukončí časované odebrání varianty entity | `rdpl`, `entity`                                                                 | Ne                              |
+| `player_login`     | Hráč se připojí                                             | `rdpl`, `player`                                                                 | Ne                              |
+| `player_tick`      | Každých `every` ticků, pro každého hráče, po ticku          | `rdpl`, `player`, `pos`                                                          | Ne                              |
+| `server_tick`      | Každých `every` ticků, jednou, po ticku                     | `rdpl` (overworld), `tick` (čas světa)                                           | Ne                              |
+| `dimension_change` | Hráč dorazil do jiné dimenze                                | `rdpl`, `player`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ne                              |
+| `loot_drop`        | Mob zemřel a jeho kořist se má objevit                      | `rdpl`, `entity`, `attacker`, `damageType` (id zprávy typu poškození), `drops`   | Ne                              |
+| `entity_travel`    | Entita se má přesunout do jiné dimenze                      | `rdpl`, `entity`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ano, a entita zůstane, kde je   |
+| `mod_event`        | Událost pojmenovaná v `class` nastane na serveru            | `rdpl`, `event`, `player`                                                        | Ano, když ji lze zrušit         |
+
+Skript, jehož konečná hodnota je text `"cancel"`, zruší událost všude tam, kde tabulka říká, že to funguje. Událost, kterou už zrušilo pravidlo zóny nebo jiný mod, se do skriptu nedostane. `entity_despawn` se nespustí u zabití, uvolnění chunku ani u `/kill`.
+
+Nové druhy čtou jen některé klíče filtru. `player_tick` a `dimension_change` čtou `dimension` a `item`. `loot_drop` a `entity_travel` čtou `dimension`, `entity` a `item`. `server_tick` a `mod_event` nečtou žádný. Klíč filtru, který událost nečte, přeskočí záznam a log řekne `the <event> event does not read the filter key '<key>', skipping the entry`. `entity` bere id, druhy `#monster`, `#creature`, `#ambient` a `#water_creature` a tag typu entity s namespace, například `#minecraft:skeletons`. U `loot_drop` je `entity` mob, který zemřel, a `item` je to, co drží jeho zabiják; u `entity_travel` je `entity` cestovatel. `player_tick` a `server_tick` běží každých 20 tiků, pokud `every` neříká jinak. `server_tick` běží jednou pro server, podle hodin overworldu, a nemá hráče.
+
+Skript nového druhu (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`), který selže nebo přeběhne časový limit, se vypne až do dalšího přenačtení a log říká `Script <name> is turned off until the next reload`. Skripty starších druhů běží dál.
+
+`drops` v `loot_drop` je seznam toho, co mob upustí. `drops.size()` je spočítá, `drops.stack(index)` je svazek předmětů na indexu, `drops.remove(index)` jeden vyjme, `drops.clear()` vyjme všechny a `drops.add(item, count)` přidá svazek, který se objeví tam, kde mob zemřel. Skript smí přidat nejvýš 32 svazků na jednu smrt. Přidání dalších skript zastaví s hláškou `A loot_drop script can add at most 32 stacks`, a neznámý předmět nebo počet menší než 1 ho zastaví s `Unknown item`, stejně jako jakákoli chyba skriptu.
+
+`mod_event` umožní skriptu naslouchat události jiného modu, nebo některé z událostí samotné hry, podle názvu její třídy. Třídu uveďte v `class` jejím úplným názvem. Záznam se ignoruje a log to říká, když chybí `class` (`a mod_event needs a class`), když taková třída neexistuje (`the class <name> was not found`), a když to není třída události, na kterou lze naslouchat (`the class <name> is not a Forge event`). Počítá se jen přesně tato třída: událost, která ji rozšiřuje, skript nespustí. Skript běží jen na vlákně serveru, ve světě entity nebo světa události, a když událost nemá ani jedno, v overworldu; událost stejné třídy, kterou sám skript vyvolá, ho znovu nespustí. Dostane `rdpl`, `event` (objekt události) a `player` (hráč, o kterého událost jde, nebo nic). `every` a ostatní klíče fungují jako u každé události. Výsledek `"cancel"` zruší událost, když ji lze zrušit.
+
+### Skripty registrů
+
+`<namespace>/scripts/registries/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a několik souborů se skládá. Skript registru přidá objekty do jednoho ze vestavěných registrů hry během načítání, což jinak balíček nedokáže. Potřebuje kategorii `content` s `load` zapnutým a `vanillaClients` vypnutým, stejně jako bloky a předměty.
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var I = java("net.minecraft.world.item.Item");
+var P = java("net.minecraft.world.item.Item$Properties");
+registry.register("mypack:script_item", new I(new P()));
+```
+
+| Klíč         | Povinné         | Hodnota        | Výchozí | Co dělá                                                                                                                                |
+| ------------ | --------------- | -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `registry`   | ano             | název registru | žádný   | Registr, do kterého se přidává, například `minecraft:item` nebo `minecraft:block`. Jen vestavěné registry hry, do kterých lze přidávat |
+| `script`     | jedno z dvojice | text           | žádný   | Vložený JavaScript ke spuštění                                                                                                         |
+| `scriptFile` | jedno z dvojice | cesta          | žádná   | Cesta pod `scripts/` ve stejném jmenném prostoru, končící na `.js`                                                                     |
+
+Skript běží jednou, když se ten registr otevře pro registraci, až poté, co se zaregistrovaly všechny mody. Dostane dvě věci. `registry` má jednu metodu, `register(name, object)`, která přidá `object` pod `name`. `java(className)` vrátí třídu Javy podle úplného názvu, takže skript může objekt postavit; třída, která neexistuje, selže s `The class <name> was not found`. Skript nedostane `rdpl`, protože svět ještě neexistuje.
+
+`register` odmítne a zaloguje, a skript jde dál, když objekt není druhem, který registr drží (`is not a <type>, not registering it`), když název není platné id (`could not be registered: not a valid name`), když název není v jmenném prostoru balíčku (`is not in the pack namespace <namespace>, not registering it`), když je název už obsazený (`is already registered in <registry>, skipping it`), a když registr sám to odmítne (`could not be registered`). Úspěch zapíše `Script <name> registered <id> in <registry>`. Samotná položka se zaloguje a ignoruje, když chybí `registry` (`needs a registry`), když nemá skript (`needs script or scriptFile`), když registr není takový, do něhož skripty mohou přidávat (`the registry '<name>' is not a registry that scripts can add to, ignoring it`), a když žádný mód registr nedodává (`no mod provides the registry '<name>', ignoring it`). Skript, který selže nebo přeběhne limit, se vypne až do dalšího přenačtení. Objekt registrovaný tímto způsobem má jen to, co mu skript dal: blok nebo předmět stále potřebuje vlastní model, texturu a záznamy jazyka.
+
+### Kam patří soubory skriptů
+
+Všechno kolem skriptů sedí pod složkou `scripts/` balíčku. Záznamy událostí jdou do `scripts/events/`. Soubor `.js` může být kdekoli pod `scripts/` a pojmenovává se podle své cesty v balíčku, takže `"scriptFile": "scripts/trophy_altar.js"` čte `data/<namespace>/scripts/trophy_altar.js`. Předmět pojmenovává svůj skript stejně, pomocí `script` nebo `scriptFile` (viz [Předměty](#předměty)), a stejně i soubor, který přepisuje recepty (viz [Výměna receptů](#výměna-receptů)).
+
+### Objekt rdpl
+
+Skript dosáhne na hru přes `rdpl`. Jeho členové:
+
+```js
+if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
+```
+
+| Člen                                                 | Co dělá                                                                                                                                                                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | Hráč, nebo nic, když událost žádného nemá                                                                                                                                                                                                   |
+| `level`                                              | Svět                                                                                                                                                                                                                                        |
+| `runCommand(command)`                                | Spustí příkaz jako hráč, nebo na spawnu světa, když žádný není, na úrovni oprávnění 2. Vrátí true při úspěchu                                                                                                                               |
+| `give(item, count)`                                  | Dá hráči daný počet předmětu                                                                                                                                                                                                                |
+| `actionbar(text)`                                    | Ukáže text na akční liště hráče                                                                                                                                                                                                             |
+| `cooldown(item, ticks)`                              | Dá předmět hráči do cooldownu na tolik ticků                                                                                                                                                                                                |
+| `card(id, "key=value", ...)`                         | Ukáže kartu s jejími argumenty                                                                                                                                                                                                              |
+| `schedule(ticks, function)`                          | Spustí funkci po ticích. Naráz čeká nejvýše 1000. Fronta se při přenačtení vyprázdní                                                                                                                                                        |
+| `data()`, `data(player)`, `teamData(name)`           | Uložené úložiště s `get`, `set`, `has` a `remove`. Drží text, čísla a true/false a je uloženo v úložišti světa. `data()` je světové, `data(player)` hráčovo, `teamData(name)` týmové                                                        |
+| `sync(name, value)`                                  | Nastaví synchronizovanou hodnotu hráči, nebo světu, když událost žádného hráče nemá. Hodnota je text, číslo nebo true/false. Vrátí true, když se nastaví, a false, když pravidla odmítnou, což řekne log. Jiná hodnota vyhodí chybu skriptu |
+| `syncTo(player, name, value)`                        | Totéž pro jiného hráče                                                                                                                                                                                                                      |
+| `syncAll(name, value)`                               | Totéž pro svět                                                                                                                                                                                                                              |
+| `unsync(name)`                                       | Odstraní hodnotu hráče, nebo světa, když událost žádného hráče nemá. Vrátí true, když nějaká byla                                                                                                                                           |
+| `synced(name)`                                       | Hodnota, kterou čtení dá: hráčova vlastní, pak světová, pak výchozí, nebo světová a výchozí, když událost žádného hráče nemá. Nic, když není nastavena                                                                                      |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Ověří, přidá nebo odebere stage (značku) na hráči                                                                                                                                                                                           |
+| `score(objective)`, `setScore(objective, value)`     | Přečte nebo nastaví skóre hráče v objektivu scoreboardu                                                                                                                                                                                     |
+| `hasAdvancement(id)`                                 | True, když hráč pokrok má                                                                                                                                                                                                                   |
+| `world.scan(player, match)`                          | Spočítá odpovídající předměty v inventáři hráče a v shulker boxech v něm. `match` je id předmětu, tvar `#`, nebo funkce, která dostane každý stack                                                                                          |
+| `world.scanAt(x, y, z, match)`                       | Totéž pro blok kontejneru na dané pozici                                                                                                                                                                                                    |
+| `world.capability(x, y, z, type)`                    | Handler bloku na dané pozici pro `"items"`, `"fluids"` nebo `"energy"`                                                                                                                                                                      |
+| `world.placeStructure(template, x, y, z)`            | Položí šablonu struktury na pozici                                                                                                                                                                                                          |
+| `world.summon(id, x, y, z, nbt)`                     | Spawne entitu na pozici, s volitelným NBT                                                                                                                                                                                                   |
+
+### Co skript dosáhne
+
+Skript vidí jen objekt `rdpl`, hodnoty, které mu každá událost předá (viz tabulka druhů událostí), a herní typy, které tyto hodnoty vracejí. `Packages` ve skriptu neexistuje a `java` existuje jen ve skriptu registru (viz [Skripty registrů](#skripty-registrů)); skripty událostí, předmětů, příkazů a přepisů receptů ho nemají. Cokoli jiného se odmítne a odmítnutí se zapíše do logu jednou.
+
+Skript smí použít libovolnou třídu Javy podle jejího úplného názvu, například `java.util.UUID` nebo `net.minecraft.world.item.ItemStack`. V praxi je to skript registru, který třídu žádá přes `java(className)`.
+
+### Limity
+
+- Běh se zastaví po 50 ms. Chyba v logu pojmenuje skript.
+- `try`/`catch` neudrží běh při životě za tento limit.
+- Chyby se zapisují s cestou skriptu v balíčku. Nikdy neshodí hru.
+- `every` a filtry se kontrolují před během skriptu, což drží náklady nízko.
+- Skripty se zkompilují jednou a drží v mezipaměti až do `/rdplserver reload`.
 
 ## Vrstva ovládání
 
@@ -11748,6 +12625,21 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 | `/rdplserver gate grant <player> <gate>`  | 3      | Otevře bránu hráči                                       |
 | `/rdplserver gate revoke <player> <gate>` | 3      | Znovu ji zavře                                           |
 
+#### Příkazy synchronizovaných dat
+
+*příkazy serveru*
+
+`<target>` je `world`, nebo hráč: jméno, nebo selektor, který vybere jednoho hráče. `<name>` je jméno hodnoty. Každý příkaz odpoví v chatu a nastavení, které pravidla odmítnou, to řekne tam i v logu.
+
+| Příkaz                                                | Úroveň | Co dělá                                                                                                                                                                       |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver data set <target> <name> <value>`        | 2      | Nastaví deklarovanou hodnotu, typu, s jakým byla deklarována. Text může obsahovat mezery                                                                                      |
+| `/rdplserver data set <target> <name> <type> <value>` | 2      | Nastaví hodnotu s uvedeným typem: `text`, `number` nebo `bool`. Jméno bez souboru typ potřebuje a jméno se souborem potřebuje svůj typ. Bool je `true`, `false`, `1` nebo `0` |
+| `/rdplserver data add <target> <name> <amount>`       | 2      | Přičte číslo k číselné hodnotě, počítáno od její výchozí hodnoty nebo 0. Hodnota, která není číslo, se odmítne                                                                |
+| `/rdplserver data remove <target> <name>`             | 2      | Odstraní hodnotu, takže znovu ukáže výchozí, nebo nic                                                                                                                         |
+| `/rdplserver data get <target> <name>`                | 2      | Řekne, co čtení dá: pro hráče jeho vlastní hodnotu, pak hodnotu světa, pak výchozí; pro svět jeho hodnotu, pak výchozí                                                        |
+| `/rdplserver data list [target]`                      | 2      | Vypíše hodnoty nastavené pro cíl, bez něj pro svět. Výchozí hodnoty se nevypisují                                                                                             |
+
 #### Příkazy průchodů
 
 *příkazy serveru*
@@ -11783,6 +12675,7 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0      | Strany, které balíček postavil, a cesty na ně a z nich, nabízené jen tehdy, když balíček strany staví, viz [Týmy](#týmy)                                                                                                                                                                                                                                        |
 | `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no`              | 0      | Spustit kolo, které balíček drží v lobby, resetovat probíhající kolo nebo svolat hlasování o něm a hlasovat v něm, jak bodování balíčku dovoluje, a kolo spouští jen hráč; hráčům se nabízí jen tehdy, když balíček vede skóre, viz [Bodování](#bodování)                                                                                                       |
 | `/rdplserver card <rule> [players]`                                                      | 2      | Ukáže [pravidlo karty](#karty) uvedeným hráčům, nebo tobě, podle jeho id nebo názvu souboru. `when`, `repeat` a `cooldown` se přeskočí                                                                                                                                                                                                                          |
+| `/rdplserver card <rule> [players] key=value...`                                         | 2      | Jako příkaz výše, a každé `key=value` nahradí `{key}` v titulku a řádcích karty. Slova za dvojicí bez `=` patří k její hodnotě                                                                                                                                                                                                                                  |
 | `/rdplserver talk <number>`                                                              | 0      | Vybere odpověď podle čísla v otevřeném dialogu. Spouštějí ho klikací odpovědi vanilla klienta. [Dialogy](#dialogy)                                                                                                                                                                                                                                              |
 | `/rdplserver talk open <players> <dialog> <npc>`                                         | 2      | Otevře dialog uvedeným hráčům s uvedenou entitou jako mluvčím, podle id dialogu nebo názvu souboru. Mluvčí musí být ve stejném světě a nejvýše 8 bloků daleko. [Dialogy](#dialogy)                                                                                                                                                                              |
 | `/rdplserver raid <raid> [hráč nebo x y z]`                                              | 3      | Spustí [nájezd](#nájezdy) daného názvu na hráči, na pozici nebo, bez obojího, na vás, bez vesnice. Odmítne se, dokud v dosahu `reach` probíhá jiný nájezd                                                                                                                                                                                                       |
@@ -11907,6 +12800,95 @@ Každá část `game` má vlastní úroveň: 0 pro každý hod a 2 pro `deck shu
 | `gameLevels` | Jedna část `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` nebo `board` a jeho akce, například `board move` |
 
 Stupnice je stejná jako u `goto` a `4` uzavře část všem. Doplňování tabulátorem nabízí jen části, které smí odesílatel spustit. `gameLevels` je ve skupině `commands` spolu s nastaveními `goto`.
+
+### Příkazy balíčku
+
+*příkazy*
+
+`<namespace>/commands/*.json`
+
+Název souboru si zvolíš sám a několik souborů se skládá. Soubor přidá jeden lomítkový příkaz, který může napsat každý, koho dovoluje `permission`, s typovanými argumenty, a při použití spustí funkci. Funkce běží jako hráč, který příkaz napsal, s úrovní oprávnění 2 pro příkazy uvnitř a bez výpisu do chatu, nebo jako server, když příkaz přijde z konzole nebo příkazového bloku. Příkazy se přidají, když server registruje své příkazy.
+
+```json
+{
+  "name": "giveruby",
+  "permission": 2,
+  "args": [
+    { "name": "who", "type": "player", "optional": true },
+    { "name": "count", "type": "int", "optional": true, "default": "1" },
+    { "name": "note", "type": "text", "optional": true }
+  ],
+  "runs": "mypack:giveruby"
+}
+```
+
+a funkce `mypack/functions/giveruby.mcfunction`:
+
+```
+$give $(who) mypack:ruby $(count)
+$say Gave $(count) ruby to $(who): $(note)
+```
+
+| Klíč         | Povinné                                | Hodnota               | Výchozí       | Co dělá                                                                                                                                                                 |
+| ------------ | -------------------------------------- | --------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | ne                                     | text                  | název souboru | Slovo napsané za lomítkem: malá písmena, číslice a podtržítka. Cokoli jiného se zaloguje a soubor se přeskočí. Stejně tak název, který už používá jiný příkaz           |
+| `runs`       | jedno z `runs`, `script`, `scriptFile` | ID funkce             | žádná         | Funkce ke spuštění. Soubor bez žádného z těch tří se přeskočí a log to řekne. Funkce, kterou žádný balíček neposkytuje, se zaloguje při každém použití příkazu          |
+| `permission` | ne                                     | celé číslo `0` až `4` | `2`           | Potřebná úroveň oprávnění. `0` dovolí použít příkaz každému hráči, `2` připouští i příkazové bloky, `3` je operátor. Číslo mimo `0` až `4` se zaloguje a použije se `2` |
+| `args`       | ne                                     | seznam objektů        | žádné         | Argumenty v pořadí, v jakém se píšou. Viz níže                                                                                                                          |
+| `requires`   | ne                                     | seznam ID modů        | žádné         | Soubor se přeskočí, dokud není načten každý uvedený mod. Položky `config:` a `file:` fungují stejně jako všude jinde                                                    |
+| `script`     | jedno z `runs`, `script`, `scriptFile` | text                  | žádný         | Vložený JavaScript místo funkce                                                                                                                                         |
+| `scriptFile` | jedno z `runs`, `script`, `scriptFile` | cesta                 | žádná         | Cesta pod `scripts/` ve stejném jmenném prostoru, končící na `.js`                                                                                                      |
+
+Soubor s příkazem potřebuje přesně jedno z `runs`, `script` a `scriptFile`. Soubor bez nich se přeskočí, stejně tak soubor s více než jedním, a log to řekne. Skriptový příkaz dostane každý argument jako proměnnou stejného jména: celé číslo pro `int`, desetinné číslo pro `number`, text pro ostatní a nic, když byl argument vynechán nebo není číslo. Žádný argument nesmí být pojmenován `rdpl` ani `sender`, protože skript dostane i tyto dva. `sender.reply(text)` odpoví tomu, kdo příkaz použil, `sender.getName()` vrátí jeho jméno, `sender.isPlayer()` řekne, zda je hráč, a `sender.player()` je ten hráč, nebo nic. Skript, který selže, nejde zkompilovat nebo překročí limit, způsobí, že příkaz odpoví `The command /<name> failed; the server log names the script`, a skript se nevypne.
+
+```json
+{
+  "name": "greet",
+  "permission": 0,
+  "args": [{ "name": "who", "type": "player", "optional": true }],
+  "scriptFile": "scripts/greet.js"
+}
+```
+
+```js
+sender.reply("Hello " + who);
+```
+
+Každý argument:
+
+| Klíč       | Povinné | Hodnota                                     | Výchozí  | Co dělá                                                                                                                                                                                                                                                                                                     |
+| ---------- | ------- | ------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | ano     | text                                        |          | Jméno, které funkce používá, `$(name)`, malá písmena, číslice a podtržítka. Argument bez použitelného jména nebo druhý se stejným jménem se zaloguje a vynechá                                                                                                                                              |
+| `type`     | ne      | `player`, `int`, `number`, `string`, `text` | `string` | `player` je jméno hráče, který je online, doplňované tabulátorem. `int` je celé číslo a `number` jakékoli číslo. `string` je jedno slovo. `text` je zbytek řádku, včetně mezer, a smí být jen posledním argumentem, jinak se to zaloguje a je z něj `string`. Neznámý typ se zaloguje a použije se `string` |
+| `optional` | ne      | boolean                                     | `false`  | `true`: hráč ho může vynechat. Povinný argument napsaný za volitelným se zaloguje a také se stane volitelným                                                                                                                                                                                                |
+| `default`  | ne      | text                                        | prázdné  | Co funkce dostane, když se volitelný argument vynechá. Argument `player` vynechaný znamená hráče, který příkaz napsal, nebo chybné hlášení použití pro konzoli, a `default` ignoruje                                                                                                                        |
+
+Když hráč napíše málo argumentů, nebo příliš mnoho, když poslední není `text`, ukáže se řádek použití, například `/giveruby [who] [count] [note]`, s povinnými argumenty v lomených závorkách a volitelnými v hranatých. Hodnota `string` nebo `text`, která začíná `@` nebo obsahuje jeden ze znaků `{ } " \` nebo zalomení řádku, se odmítne s řádkem použití, takže hráč nemůže do funkce vsunout selektor nebo další text příkazu. `number` se předá zapsané prostými číslicemi. Argumenty jsou skutečné argumenty příkazu, takže je hráč vidí při psaní a hodnota, která se nehodí, se odmítne dřív, než funkce běží. Funkce je dostane jako makra: každý řádek, který jedno použije, začíná `$`, například `$say Welcome $(who)`, a `$(who)` se nahradí hodnotou. Řádek bez `$` se spustí tak, jak je, a `$(name)` zůstane zapsané. Funkce, která po dosazení hodnot už nejde načíst, se zaloguje a nic se nespustí.
+
+### Strážci příkazů
+
+*příkazy*
+
+`<namespace>/command_guards/*.json`
+
+Název souboru si zvolíte sami, čte se jen složka a několik souborů se sčítá. Strážce brání hráči použít příkaz, ať z hry nebo z jiného modu, dokud platí podmínka. Čte se při startu a znovu při `/rdplserver reload`.
+
+```json
+{
+  "guard": "home",
+  "unless": { "advancement": "mypack:first_camp" },
+  "message": "Build a camp before you use /home"
+}
+```
+
+| Klíč      | Povinné | Hodnota          | Výchozí                        | Co dělá                                                                                                                                                                                                            |
+| --------- | ------- | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `guard`   | ano     | název příkazu    |                                | Příkaz, který se zastaví, napsaný bez lomítka, například `home` nebo `tp`. Počítá se i alias příkazu. Soubor bez názvu se přeskočí. `rdpl` a `rdplserver` strážce mít nemohou a soubor se přeskočí s řádkem v logu |
+| `when`    | ne      | objekt           | vždy                           | Strážce zastaví příkaz jen dokud platí tyto podmínky. Stejné klíče jako [Kdy](#kdy) u karty                                                                                                                        |
+| `unless`  | ne      | objekt           | žádný                          | Strážce pustí příkaz, dokud platí tyto podmínky, a jinak ho zastaví. Stejné klíče jako `when`                                                                                                                      |
+| `message` | no      | lang key or text | vanilla's unknown command text | Ukáže se červeně hráči, který je zastaven. Text bez mezery, který obsahuje tečku, se čte jako klíč jazyka, cokoli jiného se ukáže tak, jak je                                                                      |
+
+Příkaz je zastaven, když platí `when`, nebo není zadán, a neplatí `unless`, nebo není zadán. Soubor bez obou klíčů zastaví příkaz pro všechny a log na to upozorní. Prázdné `when` nebo `unless` se zaloguje a ignoruje. Strážci platí jen pro hráče: konzole a příkazové bloky se nikdy nezastaví a log zaznamená každé zastavení se souborem, příkazem a hráčem. Mluví jen první strážce, který příkaz zastaví. U `unless` uveďte podmínku, kterou musí hráč splnit, aby příkaz mohl použít; u `when` podmínku, za které je příkaz zavřený.
 
 ## Dobré vědět
 

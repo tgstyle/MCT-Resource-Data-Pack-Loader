@@ -48,7 +48,7 @@ public final class RecipeLocks {
             return;
         }
         RecipeSelector selector = new RecipeSelector();
-        selector.read(key, json);
+        selector.readWithoutInputs(key, json);
         if (selector.isEmpty()) {
             ContentLog.LOGGER.error("Recipe lock file {} selects no recipes, ignoring it", key);
             return;

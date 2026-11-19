@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -37,6 +38,7 @@ import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 
 public final class SpawnSwaps {
     private static final String FRESH = "rdplSwapFresh";
+    private static final String RAN = "rdplSpawnRan";
     private static final byte NATURAL = 1;
     private static final byte SPAWNER = 2;
     private static final int NIGHT_FROM = 13000;
@@ -61,7 +63,7 @@ public final class SpawnSwaps {
         else { return; }
         Entity entity = event.getEntity();
         for (SpawnSwapDef swap : SWAPS) {
-            if (MobStats.targets(swap.entities(), entity) && (origin == NATURAL || swap.fromSpawners())) {
+            if (swap.swaps() && MobStats.targets(swap.entities(), entity) && (origin == NATURAL || swap.fromSpawners())) {
                 entity.getPersistentData().putByte(FRESH, origin);
                 return;
             }
@@ -83,9 +85,21 @@ public final class SpawnSwaps {
         return true;
     }
 
+    public static void onJoinRuns(EntityJoinLevelEvent event) {
+        Entity entity = event.getEntity();
+        if (SWAPS.isEmpty() || event.getLevel().isClientSide() || entity.getPersistentData().contains(RAN)) { return; }
+        List<String> functions = new ArrayList<>();
+        for (SpawnSwapDef swap : SWAPS) {
+            if (!swap.runs().isEmpty() && MobStats.targets(swap.entities(), entity)) { functions.add(swap.runs()); }
+        }
+        if (functions.isEmpty()) { return; }
+        entity.getPersistentData().putBoolean(RAN, true);
+        for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getType()); }
+    }
+
     @Nullable private static SpawnSwapDef matching(ServerLevel level, Entity entity, byte origin) {
         for (SpawnSwapDef swap : SWAPS) {
-            if (!MobStats.targets(swap.entities(), entity) || origin == SPAWNER && !swap.fromSpawners() || !ContentSpawnGate.holds(swap.gate(), entity)) { continue; }
+            if (!swap.swaps() || !MobStats.targets(swap.entities(), entity) || origin == SPAWNER && !swap.fromSpawners() || !ContentSpawnGate.holds(swap.gate(), entity)) { continue; }
             if (placeHolds(level, entity, swap) || elsewhereHolds(level, entity, swap)) { return swap; }
         }
         return null;
@@ -158,8 +172,9 @@ public final class SpawnSwaps {
             return;
         }
         List<PickDef> becomes = ContentWorldgenParser.picks(json, "becomes", "entity");
-        if (becomes.isEmpty()) {
-            ContentLog.LOGGER.error("{} names nothing the entities become, ignoring it", owner);
+        String runs = Json.getString(json, "runs", "").trim();
+        if (becomes.isEmpty() && runs.isEmpty()) {
+            ContentLog.LOGGER.error("{} names nothing the entities become and no function it runs, ignoring it", owner);
             return;
         }
         SpawnSwapDef.Elsewhere elsewhere = null;
@@ -168,6 +183,6 @@ public final class SpawnSwaps {
             elsewhere = new SpawnSwapDef.Elsewhere(Mth.clamp(Json.getFloat(held, "chance", 1.0F), 0.0F, 1.0F), held.has("lightBelow") ? Mth.clamp(Json.getInt(held, "lightBelow", 0), 1, 16) : 0, Json.flag(held, "night"));
         }
         SWAPS.add(new SpawnSwapDef(entities, becomes, Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), ContentParser.matches(key, json, "blocks"), Json.flag(json, "requireAll"),
-                SpawnGateDef.read(key, json, "Spawn swap file"), elsewhere, Mth.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA), Json.flag(json, "fromSpawners")));
+                SpawnGateDef.read(key, json, "Spawn swap file"), elsewhere, Mth.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA), Json.flag(json, "fromSpawners"), runs));
     }
 }

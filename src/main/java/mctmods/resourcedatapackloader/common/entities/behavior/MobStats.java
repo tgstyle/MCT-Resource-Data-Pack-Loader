@@ -9,7 +9,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -19,6 +21,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 public final class MobStats {
     public static final String MONSTER = "#monster";
     private static final List<String> KINDS = List.of("#monster", "#creature", "#ambient", "#water_creature");
+
+    public static boolean unknownKind(String entry) {
+        return entry.startsWith("#") && entry.indexOf(':') < 0 && !KINDS.contains(entry);
+    }
 
     private MobStats() {}
 
@@ -35,8 +41,8 @@ public final class MobStats {
             }
             String id = Settings.lower(item.getAsString());
             if (id.startsWith("#")) {
-                if (KINDS.contains(id)) { listed.add(id); }
-                else { ContentLog.LOGGER.error("{} gives {} '{}', which is not a kind, ignoring it", owner, label, id); }
+                if (KINDS.contains(id) || ResourceLocation.tryParse(id.substring(1)) != null && id.indexOf(':') > 0) { listed.add(id); }
+                else { ContentLog.LOGGER.error("{} gives {} '{}', which is not a kind or an entity tag, ignoring it", owner, label, id); }
             }
             else { listed.add(id.indexOf(':') < 0 ? "minecraft:" + id : id); }
         }
@@ -47,7 +53,11 @@ public final class MobStats {
         if (entities.isEmpty()) { return false; }
         String id = String.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()));
         String kind = "#" + mob.getType().getCategory().getName();
-        return entities.contains(id) || entities.contains(kind);
+        if (entities.contains(id) || entities.contains(kind)) { return true; }
+        for (String entity : entities) {
+            if (entity.startsWith("#") && entity.indexOf(':') > 0 && mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse(entity.substring(1))))) { return true; }
+        }
+        return false;
     }
 
     public static boolean scale(Mob mob, Holder<Attribute> attribute, ResourceLocation id, float multiplier) {

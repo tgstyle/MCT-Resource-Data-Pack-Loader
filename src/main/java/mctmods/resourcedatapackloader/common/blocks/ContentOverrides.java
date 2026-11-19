@@ -29,19 +29,23 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FireBlock;
@@ -149,7 +153,7 @@ public final class ContentOverrides {
                 tool, Math.max(0, Json.getInt(json, "harvestToolLevel", 0)),
                 intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
-                effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
+                effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null, tool(source, json),
                 Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
@@ -159,6 +163,26 @@ public final class ContentOverrides {
     }
 
     private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
+
+    @Nullable private static OverrideDef.ToolDef tool(ResourceLocation source, JsonObject json) {
+        if (!json.has("tool")) { return null; }
+        JsonObject held = Json.object(json, "tool");
+        String tag = Json.getString(held, "minesWith", "").trim();
+        ResourceLocation mines = ContentParser.location(tag.startsWith("#") ? tag.substring(1) : tag);
+        float speed = Json.getFloat(held, "speed", 0.0F);
+        if (mines == null || speed <= 0.0F) {
+            ContentLog.LOGGER.error("Override file {} gives a tool that needs a speed above 0 and a block tag in minesWith, such as #minecraft:mineable/pickaxe, ignoring it", source);
+            return null;
+        }
+        return new OverrideDef.ToolDef(speed, mines);
+    }
+
+    private static Tool tool(OverrideDef.ToolDef def, @Nullable Tool was) {
+        List<Tool.Rule> rules = new ArrayList<>();
+        rules.add(new Tool.Rule(BuiltInRegistries.BLOCK.getOrCreateTag(TagKey.create(Registries.BLOCK, def.minesWith())), Optional.of(def.speed()), Optional.of(true)));
+        if (was != null) { rules.addAll(was.rules()); }
+        return new Tool(rules, was == null ? 1.0F : was.defaultMiningSpeed(), was == null ? 1 : was.damagePerBlock());
+    }
 
     private static boolean apply(OverrideDef def, Map<Block, Integer> lights) {
         boolean block = def.touchesBlock() && applyBlock(def, lights);
@@ -208,6 +232,7 @@ public final class ContentOverrides {
         }
         OverrideDef.FoodDef food = def.food();
         if (food != null) { builder.set(DataComponents.FOOD, food(def, food, item.components().get(DataComponents.FOOD))); }
+        if (def.tool() != null) { builder.set(DataComponents.TOOL, tool(def.tool(), item.components().get(DataComponents.TOOL))); }
         item.components = builder.build();
         if (def.weight() >= 0) { ContentWeights.override(def.target(), def.weight()); }
         return true;

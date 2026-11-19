@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -21,6 +22,11 @@ public final class PortalEvents {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentPortalBlock.forget(event.getEntity().getUUID()); }
 
     public static void onBroken(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof Level level && !ContentCarry.probing()) { ContentPortals.shaken(level, event.getPos(), event.getState()); } }
+
+    public static void onFluid(BlockEvent.NeighborNotifyEvent event) {
+        if (!ContentPortals.fluidLit() || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        ContentPortals.lightByFluid(level, event.getPos(), event.getState());
+    }
 
     public static void onLit(PlayerInteractEvent.RightClickBlock event) {
         Level level = event.getLevel();

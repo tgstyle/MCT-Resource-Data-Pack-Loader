@@ -6,9 +6,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchD
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
+import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.config.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,10 +18,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
@@ -49,17 +45,7 @@ public final class ContentGrowSwitch {
 
     private ContentGrowSwitch() {}
 
-    @Nullable static BlockMatch match(String owner, String text) {
-        String name = text.trim();
-        if (!name.startsWith("#")) {
-            Block block = ContentWorldShape.block(name, owner + " growth");
-            return block == null ? null : BlockMatch.of(block);
-        }
-        ResourceLocation tag = name.length() > 1 ? ResourceLocation.tryParse(Settings.lower(name.substring(1))) : null;
-        if (tag != null) { return BlockMatch.group(TagKey.create(Registries.BLOCK, tag)); }
-        ContentLog.LOGGER.error("{} gives '{}' with no valid block tag name in growth, ignoring it", owner, name);
-        return null;
-    }
+    @Nullable static BlockMatch match(String owner, String text) { return BlockMatches.parse(owner, text, "growth"); }
 
     static float within(String owner, String key, JsonElement value, boolean whole, float high) {
         float number = ContentSpawnSwitch.amount(owner, key, value);

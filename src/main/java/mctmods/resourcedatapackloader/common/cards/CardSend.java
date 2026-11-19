@@ -2,7 +2,10 @@ package mctmods.resourcedatapackloader.common.cards;
 
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
+import mctmods.resourcedatapackloader.common.syncdata.DataText;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
@@ -15,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 
 public final class CardSend {
@@ -25,14 +29,17 @@ public final class CardSend {
 
     private CardSend() {}
 
-    static void dress(CardLook look, CardRule rule, ServerPlayer subject) {
+    static void dress(CardLook look, CardRule rule, ServerPlayer subject) { dress(look, rule, subject, Map.of()); }
+
+    static void dress(CardLook look, CardRule rule, ServerPlayer subject, Map<String, String> args) {
         List<String> said = look.lines;
-        look.title = fill(rule.title != null ? rule.title : look.title, subject, said);
+        look.title = fill(rule.title != null ? rule.title : look.title, subject, said, args);
+        if (!rule.sound.isEmpty()) { look.sound = rule.sound; }
         if (rule.lines != null) {
             List<String> lines = new ArrayList<>();
             for (String line : rule.lines) {
                 if (TEXT.equals(line.trim())) { lines.addAll(said); }
-                else { lines.add(fill(line, subject, said)); }
+                else { lines.add(fill(line, subject, said, args)); }
             }
             look.lines = lines;
         }
@@ -45,13 +52,18 @@ public final class CardSend {
         if (rule.ticks > 0) { look.ticks = rule.ticks; }
     }
 
-    public static String fill(String line, ServerPlayer subject, List<String> said) {
+    public static String fill(String line, ServerPlayer subject, List<String> said) { return fill(line, subject, said, Map.of()); }
+
+    private static String fill(String line, ServerPlayer subject, List<String> said, Map<String, String> args) {
         if (line.indexOf('{') < 0) { return line; }
-        return line.replace(TEXT, String.join(" ", said))
+        String given = line;
+        for (Map.Entry<String, String> arg : args.entrySet()) { given = given.replace("{" + arg.getKey() + "}", arg.getValue()); }
+        String done = given.replace(TEXT, String.join(" ", said))
                 .replace("{player}", subject.getName().getString())
                 .replace("{dim}", CardPlace.dimensionName(subject))
                 .replace("{biome}", CardPlace.biomeName(subject))
                 .replace("{day}", Long.toString(CardPlace.day(subject.level())));
+        return done.contains(DataText.OPEN) ? DataText.fill(done, DataReader.server(subject)) : done;
     }
 
     static List<ServerPlayer> audience(CardRule rule, ServerPlayer subject) {
@@ -71,6 +83,7 @@ public final class CardSend {
             HELD.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(look);
             return;
         }
+        if (!look.sound.isEmpty()) { ContentSounds.play(player, look.sound, SoundSource.MASTER); }
         switch (look.style) {
             case CardLook.CHAT -> chat(look, player);
             case CardLook.BAR -> player.displayClientMessage(Says.marked(String.join(" ", all(look)), look.chat), true);

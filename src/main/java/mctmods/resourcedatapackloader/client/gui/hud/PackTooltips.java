@@ -13,6 +13,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -49,13 +52,49 @@ public final class PackTooltips {
 
     private static Component text(String line) { return (I18n.exists(line) ? Component.translatable(line) : Component.literal(line)).withStyle(ChatFormatting.GRAY); }
 
-    private static void describe(ItemEnchantments enchantments, List<Component> tooltip) {
+    private static void describe(ItemEnchantments enchantments, ItemStack stack, List<Component> tooltip) {
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            List<String> lines = entry.getKey().unwrapKey().map(key -> ContentTooltips.forEnchantment(key.location())).orElse(List.of());
-            int at = lines.isEmpty() ? -1 : tooltip.indexOf(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
-            if (at < 0) { continue; }
-            for (String line : lines) { tooltip.add(++at, text(line)); }
+            List<ContentTooltips.Rule> rules = entry.getKey().unwrapKey().map(key -> ContentTooltips.forEnchantment(key.location())).orElse(List.of());
+            int name = rules.isEmpty() ? -1 : tooltip.indexOf(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
+            if (name < 0) { continue; }
+            int cursor = name + 1;
+            for (ContentTooltips.Rule rule : rules) {
+                if (!shown(rule)) { continue; }
+                int before = tooltip.size();
+                int next = place(tooltip, rule, stack, name + 1, cursor);
+                if (rule.position == ContentTooltips.NO_POSITION) { cursor = next; }
+                else if (next - rule.lines.size() == cursor) { cursor = next; }
+                else if (next - rule.lines.size() < cursor) { cursor += tooltip.size() - before; }
+            }
         }
+    }
+
+    private static boolean shown(ContentTooltips.Rule rule) { return (!rule.shift || Screen.hasShiftDown()) && (rule.data.isEmpty() || DataCheck.met(rule.data, DataReader.client())); }
+
+    private static Component line(ContentTooltips.Line line, ItemStack stack) {
+        String translated = translated(line.raw());
+        if (translated.indexOf('{') < 0) { return text(line.raw()); }
+        ClientLevel level = Minecraft.getInstance().level;
+        return Component.literal(line.render(stack, translated, level == null ? null : level.registryAccess())).withStyle(ChatFormatting.GRAY);
+    }
+
+    private static int place(List<Component> tooltip, ContentTooltips.Rule rule, ItemStack stack, int from, int fallback) {
+        int at = rule.position == ContentTooltips.NO_POSITION ? fallback : from + rule.position;
+        boolean replace = rule.replace;
+        if (at >= tooltip.size()) {
+            at = tooltip.size();
+            replace = false;
+        }
+        for (ContentTooltips.Line line : rule.lines) {
+            if (replace) {
+                tooltip.set(at, line(line, stack));
+                replace = false;
+            } else {
+                tooltip.add(at, line(line, stack));
+            }
+            at++;
+        }
+        return at;
     }
 
     private static String translated(String line) { return I18n.exists(line) ? I18n.get(line) : line; }
@@ -176,8 +215,10 @@ public final class PackTooltips {
         if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();
-        describe(stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY), tooltip);
-        describe(stack.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY), tooltip);
-        for (String line : ContentTooltips.forItem(stack)) { tooltip.add(text(line)); }
+        describe(stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY), stack, tooltip);
+        describe(stack.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY), stack, tooltip);
+        for (ContentTooltips.Rule rule : ContentTooltips.forItem(stack)) {
+            if (shown(rule)) { place(tooltip, rule, stack, 1, tooltip.size()); }
+        }
     }
 }

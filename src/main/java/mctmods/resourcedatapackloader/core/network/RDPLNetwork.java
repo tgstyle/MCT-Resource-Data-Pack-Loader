@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientSyncData;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
@@ -24,6 +25,7 @@ import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
+import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 
 import java.util.Arrays;
@@ -71,6 +73,7 @@ public final class RDPLNetwork {
         registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } });
         registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
         registrar.playToClient(SeasonClockMessage.TYPE, SeasonClockMessage.CODEC, (message, context) -> SeasonClock.received(message.ticks()));
+        registrar.playToClient(SyncDataMessage.TYPE, SyncDataMessage.CODEC, (message, context) -> ClientSyncData.receive(message));
         registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
     }
 
@@ -108,6 +111,8 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
+
+    public static boolean sendSyncData(ServerPlayer player, SyncDataMessage message) { return !Config.content.vanillaClients() && send(player, message); }
 
     public static void sendSeasonClock(ServerPlayer player, long ticks) { send(player, new SeasonClockMessage(ticks)); }
 

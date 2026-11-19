@@ -1,11 +1,17 @@
 package mctmods.resourcedatapackloader.common.util;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.scripts.RdplApi;
+import mctmods.resourcedatapackloader.common.scripts.engine.ScriptEngine;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.text.RomanNumerals;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -13,6 +19,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,6 +32,20 @@ public final class ContentEffects {
     private ContentEffects() {}
 
     public static void cooldown(LivingEntity entity, Item item, int ticks) { if (ticks > 0 && entity instanceof Player player) { player.getCooldowns().addCooldown(item, ticks); } }
+
+    public static void used(Player player, Item item, ItemDef def, InteractionHand hand) {
+        if (!def.runs().isEmpty() && player instanceof ServerPlayer server) { Functions.runAs(server, def.runs(), "The item " + def.key()); }
+        if (!scripted(player, def, hand)) { cooldown(player, item, def.cooldown()); }
+    }
+
+    private static boolean scripted(Player player, ItemDef def, InteractionHand hand) {
+        if (def.script() == null || !(player.level() instanceof ServerLevel level)) { return false; }
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put("rdpl", new RdplApi(level, player));
+        bindings.put("item", player.getItemInHand(hand));
+        bindings.put("hand", hand.name());
+        return "cancel".equals(ScriptEngine.run(def.script(), bindings));
+    }
 
     @Nullable public static Holder<MobEffect> find(@Nullable String name) {
         if (name == null) { return null; }

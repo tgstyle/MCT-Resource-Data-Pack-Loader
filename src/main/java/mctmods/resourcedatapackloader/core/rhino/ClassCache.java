@@ -1,0 +1,227 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package mctmods.resourcedatapackloader.core.rhino;
+
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Cache of generated classes and data structures to access Java runtime from JavaScript.
+ *
+ * @author Igor Bukanov
+ * @since Rhino 1.5 Release 5
+ */
+public class ClassCache implements Serializable {
+
+    private static final long serialVersionUID = -8866246036237312215L;
+    private static final Object AKEY = "ClassCache";
+    private volatile boolean cachingIsEnabled = true;
+    private transient volatile Map<CacheKey, JavaMembers> classTable;
+    private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
+    private int generatedClassSerial;
+    private Scriptable associatedScope;
+    private final transient MemberRemapper memberRemapper = NullMemberRemapper.INSTANCE;
+
+    public MemberRemapper getMemberRemapper() {
+        return memberRemapper;
+    }
+
+    /**
+     * CacheKey is a combination of class and securityContext. This is required when classes are
+     * loaded from different security contexts
+     */
+    static class CacheKey {
+        final Class<?> cls;
+        final Object sec;
+
+        /** Constructor. */
+        public CacheKey(Class<?> cls, Object securityContext) {
+            this.cls = cls;
+            this.sec = securityContext;
+        }
+
+        @Override
+        public int hashCode() {
+            if (sec != null) {
+                return sec.hashCode() ^ cls.hashCode();
+            }
+            return cls.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof CacheKey)
+                    && Objects.equals(this.cls, ((CacheKey) obj).cls)
+                    && Objects.equals(this.sec, ((CacheKey) obj).sec);
+        }
+    }
+
+    /**
+     * Search for ClassCache object in the given scope. The method first calls {@link
+     * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
+     * to locate associated ClassCache object in the prototype chain of the top scope. If none was
+     * found, it will try to associate a new ClassCache object to the top scope.
+     *
+     * @param scope scope to search for ClassCache object.
+     * @return previously associated ClassCache object or a new instance of ClassCache if no
+     *     ClassCache object was found.
+     * @see #associate(ScriptableObject topScope)
+     * @throws IllegalArgumentException if the top scope of provided scope have no associated
+     *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
+     *     ScriptableObject}
+     */
+    public static ClassCache get(Scriptable scope) {
+        ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
+        if (cache == null) {
+            // we expect this to not happen frequently, so computing top scope twice is acceptable
+            Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
+            if (!(topScope instanceof ScriptableObject)) {
+                // Note: it's originally a RuntimeException, the super class of
+                // IllegalArgumentException, so this will not break error catching
+                throw new IllegalArgumentException(
+                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
+            }
+            cache = new ClassCache();
+            cache.associate(((ScriptableObject) topScope));
+        }
+        return cache;
+    }
+
+    /**
+     * Associate ClassCache object with the given top-level scope. The ClassCache object can only be
+     * associated with the given scope once.
+     *
+     * @param topScope scope to associate this ClassCache object with.
+     * @return true if no previous ClassCache objects were embedded into the scope and this
+     *     ClassCache were successfully associated or false otherwise.
+     * @see #get(Scriptable scope)
+     */
+    public boolean associate(ScriptableObject topScope) {
+        if (topScope.getParentScope() != null) {
+            // Can only associate cache with top level scope
+            throw new IllegalArgumentException();
+        }
+        if (this == topScope.associateValue(AKEY, this)) {
+            associatedScope = topScope;
+            return true;
+        }
+        return false;
+    }
+
+    /** Empty caches of generated Java classes and Java reflection information. */
+    public synchronized void clearCaches() {
+        classTable = null;
+        interfaceAdapterCache = null;
+    }
+
+    /** Check if generated Java classes and Java reflection information is cached. */
+    public final boolean isCachingEnabled() {
+        return cachingIsEnabled;
+    }
+
+    /**
+     * Set whether to cache some values.
+     *
+     * <p>By default, the engine will cache the results of {@code Class.getMethods()} and similar
+     * calls. This can speed execution dramatically, but increases the memory footprint. Also, with
+     * caching enabled, references may be held to objects past the lifetime of any real usage.
+     *
+     * <p>If caching is enabled and this method is called with a {@code false} argument, the caches
+     * will be emptied.
+     *
+     * <p>Caching is enabled by default.
+     *
+     * @param enabled if true, caching is enabled
+     * @see #clearCaches()
+     */
+    public synchronized void setCachingEnabled(boolean enabled) {
+        if (enabled == cachingIsEnabled) return;
+        if (!enabled) clearCaches();
+        cachingIsEnabled = enabled;
+    }
+
+    /**
+     * @return a map from classes to associated JavaMembers objects
+     */
+    Map<CacheKey, JavaMembers> getClassCacheMap() {
+        if (classTable == null) {
+            synchronized (this) {
+                if (classTable == null) {
+                    classTable = new ConcurrentHashMap<>();
+                }
+            }
+        }
+        return classTable;
+    }
+
+    /**
+     * @deprecated The method always returns false.
+     * @see #setInvokerOptimizationEnabled(boolean enabled)
+     */
+    @Deprecated
+    public boolean isInvokerOptimizationEnabled() {
+        return false;
+    }
+
+    /**
+     * @deprecated The method does nothing. Invoker optimization is no longer used by Rhino. On
+     *     modern JDK like 1.4 or 1.5 the disadvantages of the optimization like increased memory
+     *     usage or longer initialization time overweight small speed increase that can be gained
+     *     using generated proxy class to replace reflection.
+     */
+    @Deprecated
+    public synchronized void setInvokerOptimizationEnabled(boolean enabled) {}
+
+    /**
+     * Internal engine method to return serial number for generated classes to ensure name
+     * uniqueness.
+     */
+    public final synchronized int newClassSerialNumber() {
+        return ++generatedClassSerial;
+    }
+
+    Object getInterfaceAdapter(Class<?> cl) {
+        return interfaceAdapterCache == null ? null : interfaceAdapterCache.get(cl);
+    }
+
+    synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
+        if (cachingIsEnabled) {
+            if (interfaceAdapterCache == null) {
+                synchronized (this) {
+                    if (interfaceAdapterCache == null) {
+                        interfaceAdapterCache = new ConcurrentHashMap<>();
+                    }
+                }
+            }
+            interfaceAdapterCache.put(cl, iadapter);
+        }
+    }
+
+    Scriptable getAssociatedScope() {
+        return associatedScope;
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
+    }
+}

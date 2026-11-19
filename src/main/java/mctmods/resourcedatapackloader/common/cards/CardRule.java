@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.cards;
 
+import mctmods.resourcedatapackloader.common.syncdata.DataSets;
+
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -7,6 +9,7 @@ import javax.annotation.Nullable;
 public final class CardRule {
     static final String COMMAND = "command";
     static final String FIRST_JOIN = "first_join";
+    static final String LOGIN = "login";
     public static final String DIMENSION_ENTER = "dimension_enter";
     public static final String BIOME_ENTER = "biome_enter";
     public static final String STRUCTURE_ENTER = "structure_enter";
@@ -37,10 +40,11 @@ public final class CardRule {
     public static final String PORTWAY_PAID = "portway_paid";
     public static final String PORTWAY_FORGET = "portway_forget";
     public static final String PORTWAY_BIND = "portway_bind";
+    public static final String WORN = "worn";
     public static final String BUILTIN = "builtin";
-    public static final List<String> TRIGGERS = List.of(COMMAND, FIRST_JOIN, DIMENSION_ENTER, BIOME_ENTER, STRUCTURE_ENTER, ADVANCEMENT,
+    public static final List<String> TRIGGERS = List.of(COMMAND, FIRST_JOIN, LOGIN, DIMENSION_ENTER, BIOME_ENTER, STRUCTURE_ENTER, ADVANCEMENT,
             TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, DOWNED, REVIVED, EXPOSURE_LEVEL, ROUND_START,
-            ENVIRONMENT_CHANGE, PORTWAY_ACTIVATE, PORTWAY_TRAVEL, PORTWAY_ARRIVE, PORTWAY_REFUSED, PORTWAY_PAID, PORTWAY_FORGET, PORTWAY_BIND, RAID_WON, RAID_LOST);
+            ENVIRONMENT_CHANGE, PORTWAY_ACTIVATE, PORTWAY_TRAVEL, PORTWAY_ARRIVE, PORTWAY_REFUSED, PORTWAY_PAID, PORTWAY_FORGET, PORTWAY_BIND, RAID_WON, RAID_LOST, WORN);
     static final List<String> SCANNED = List.of(BIOME_ENTER, STRUCTURE_ENTER, Y_LEVEL, PLAY_TIME, SCORE);
     public static final String PLAYER = "player";
     static final String EVERYONE = "everyone";
@@ -91,10 +95,13 @@ public final class CardRule {
     @Nullable public String font;
     @Nullable public String style;
     public int ticks;
+    public String sound = "";
     public String audience = PLAYER;
     public String repeat = ALWAYS;
     public int cooldown;
+    public int every;
     public String runs = "";
+    public DataSets sets = DataSets.NONE;
     public List<String> requires = Collections.emptyList();
 
     public CardRule(String key) { this.key = key; }

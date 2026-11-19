@@ -27,7 +27,7 @@ public final class ContentRollItem extends Item {
             if (def.passesTurn()) { ContentTurns.byItem(server); }
             else { ContentDice.byItem(server, def.rolls(), def.rollStore()); }
         }
-        ContentEffects.cooldown(player, this, def.cooldown());
+        ContentEffects.used(player, this, def, hand);
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 }

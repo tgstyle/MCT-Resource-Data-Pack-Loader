@@ -15,8 +15,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentSounds {
@@ -71,6 +74,16 @@ public final class ContentSounds {
     @Nullable public static Holder<SoundEvent> holder(@Nullable String name) { return Registered.holder(BuiltInRegistries.SOUND_EVENT, ContentParser.location(modern(name))); }
 
     @Nullable public static Holder<SoundEvent> holder(@Nullable ResourceLocation name) { return name == null ? null : holder(name.toString()); }
+
+    public static void play(ServerPlayer player, String name, SoundSource source) {
+        Holder<SoundEvent> sound = holder(name);
+        if (sound == null) {
+            ResourceLocation id = ContentParser.location(modern(name));
+            if (id == null) { return; }
+            sound = Holder.direct(SoundEvent.createVariableRangeEvent(id));
+        }
+        player.connection.send(new ClientboundSoundPacket(sound, source, player.getX(), player.getY(), player.getZ(), 1.0F, 1.0F, player.getRandom().nextLong()));
+    }
 
     private static String modern(@Nullable String name) {
         String named = name == null ? "" : name.trim();

@@ -158,7 +158,7 @@ public final class Ported extends PortBase<Ported.Source> {
                     dropped++;
                     note("'" + path + "' has no twin on this version and is left out");
                 }
-                case OREDICT -> expandOreDict(real, path);
+                case OREDICT -> expandOreDict(namespace, real, path);
                 case BLOCKSTATE -> {
                     Banner banner = banner(namespace, path);
                     if (banner != null) { bannerState(namespace, real, path, banner); }
@@ -370,16 +370,31 @@ public final class Ported extends PortBase<Ported.Source> {
         note("'" + path + "' runs a gameLoopFunction, which is the #minecraft:tick function tag now, so it became " + tagPath + " under minecraft");
     }
 
-    private void expandOreDict(Path real, String path) {
+    private void expandOreDict(String namespace, Path real, String path) {
         JsonObject json = readJson(real);
         if (json == null) { return; }
+        if (json.has("tag") && json.get("tag").isJsonPrimitive()) {
+            for (String member : List.of("tag", "from")) {
+                if (json.has(member) && json.get(member).isJsonPrimitive()) {
+                    String named = json.get(member).getAsString().trim();
+                    json.addProperty(member, named.indexOf(':') < 0 ? Ids.oreDictTag(named) : named);
+                }
+            }
+            String copyPath = PackManager.TAG_COPIES + "/item/" + path.substring(path.indexOf('/') + 1);
+            cache.put(key(PackType.SERVER_DATA, namespace, copyPath), GSON.toJson(json).getBytes(StandardCharsets.UTF_8));
+            expose(PackType.SERVER_DATA, namespace, copyPath, new Source(real, Port.Kind.OREDICT));
+            moved++;
+            note("'" + path + "' became " + copyPath + " under " + namespace);
+            rewrote();
+            return;
+        }
         Map<String, JsonObject> tags = ConvertRecipes.oreDict(json, this);
         for (Map.Entry<String, JsonObject> tag : tags.entrySet()) {
             String id = tag.getKey();
-            String namespace = IdNames.namespace(id);
+            String tagSpace = IdNames.namespace(id);
             String tagPath = ContentFormats.ITEM_TAGS + "/" + IdNames.path(id) + PackManager.JSON_SUFFIX;
-            cache.put(key(PackType.SERVER_DATA, namespace, tagPath), GSON.toJson(tag.getValue()).getBytes(StandardCharsets.UTF_8));
-            expose(PackType.SERVER_DATA, namespace, tagPath, new Source(real, Port.Kind.OREDICT));
+            cache.put(key(PackType.SERVER_DATA, tagSpace, tagPath), GSON.toJson(tag.getValue()).getBytes(StandardCharsets.UTF_8));
+            expose(PackType.SERVER_DATA, tagSpace, tagPath, new Source(real, Port.Kind.OREDICT));
             moved++;
         }
         note("'" + path + "' became " + tags.size() + " item tag file(s)");

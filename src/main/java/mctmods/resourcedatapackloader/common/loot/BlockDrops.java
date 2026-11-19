@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -24,8 +25,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -34,6 +38,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -46,11 +52,13 @@ import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.WebBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.loot.LootModifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -68,9 +76,16 @@ public final class BlockDrops extends LootModifier {
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
+    private static final String ONCE = "once";
+    private static final String PER = "per";
+    private static final String GRANT = "grant";
+    private static final String RUNS = "runs";
+    private static final String PLAYER = "player";
     public static final MapCodec<BlockDrops> CODEC = RecordCodecBuilder.mapCodec(instance -> codecStart(instance).apply(instance, BlockDrops::new));
     public static final DeferredRegister<MapCodec<? extends IGlobalLootModifier>> REGISTER = DeferredRegister.create(NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, ResourceDataPackLoader.MOD_ID);
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
+    private static final List<TagRule> BY_TAG = new ArrayList<>();
+    private static final Set<ResourceLocation> MISSING = new HashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     static { REGISTER.register("block_drops", () -> CODEC); }
@@ -79,22 +94,39 @@ public final class BlockDrops extends LootModifier {
 
     @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
 
-    private record Rule(@Nullable List<BlockState> states, boolean replace, String advancement, List<Drop> drops) {}
+    private record Rule(ResourceLocation key, @Nullable List<BlockState> states, boolean replace, String advancement, String grant, String runs, List<Drop> drops) {}
+
+    private record TagRule(TagKey<Block> tag, Map<String, String> properties, Rule rule) {}
 
     private record Drop(ItemStack item, boolean experience, AmountDef count, float chance, int fortune, String silkTouch) {}
 
     private static void reload() {
         BY_BLOCK.clear();
+        BY_TAG.clear();
+        MISSING.clear();
         GENERATION.stale();
         if (Config.data.blockDropsOff()) { return; }
         int[] count = new int[1];
         Json.eachObject(PackManager.BLOCK_DROPS, "block drops", (key, json) -> read(key, json, count));
-        if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)"); }
+        if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)" + (BY_TAG.isEmpty() ? "" : " and " + BY_TAG.size() + " tag rule(s)")); }
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
         if (Json.getString(json, "block", "").isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
+            return;
+        }
+        String name = Json.getString(json, "block", "");
+        if (name.startsWith("#")) {
+            ResourceLocation id = ResourceLocation.tryParse(name.substring(1).trim());
+            if (id == null) {
+                ContentLog.LOGGER.error("Block drops {} names tag '{}', which is not a valid tag id, ignoring it", key, name);
+                return;
+            }
+            Rule rule = rule(key, json, null);
+            if (rule == null) { return; }
+            BY_TAG.add(new TagRule(TagKey.create(Registries.BLOCK, id), Json.map(json, "properties"), rule));
+            count[0]++;
             return;
         }
         BlockMatchDef match = ContentParser.match(key, json);
@@ -104,9 +136,16 @@ public final class BlockDrops extends LootModifier {
             ContentLog.LOGGER.error("Block drops {} names block '{}', which nothing registers, ignoring it", key, match.block());
             return;
         }
+        Rule rule = rule(key, json, match.properties().isEmpty() ? null : ContentStates.matching(block, match.properties(), key));
+        if (rule == null) { return; }
+        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(rule);
+        count[0]++;
+    }
+
+    @Nullable private static Rule rule(ResourceLocation key, JsonObject json, @Nullable List<BlockState> states) {
         if (!json.has(DROPS)) {
             ContentLog.LOGGER.error("Block drops {} has no drops, ignoring it", key);
-            return;
+            return null;
         }
         List<Drop> drops = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(json, DROPS)) {
@@ -119,11 +158,26 @@ public final class BlockDrops extends LootModifier {
         }
         if (drops.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} has no usable drop, ignoring it", key);
-            return;
+            return null;
         }
-        List<BlockState> states = match.properties().isEmpty() ? null : ContentStates.matching(block, match.properties(), key);
-        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(states, Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), drops));
-        count[0]++;
+        String grant = grant(key, json);
+        if (grant == null) { return null; }
+        return new Rule(key, states, Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), grant, Json.getString(json, RUNS, "").trim(), drops);
+    }
+
+    @Nullable private static String grant(ResourceLocation key, JsonObject json) {
+        if (!json.has(ONCE)) { return ""; }
+        if (!json.get(ONCE).isJsonObject()) {
+            ContentLog.LOGGER.error("Block drops {} has a 'once' that is not an object, ignoring it", key);
+            return null;
+        }
+        JsonObject once = json.getAsJsonObject(ONCE);
+        String grant = Json.getString(once, GRANT, "").trim();
+        if (!PLAYER.equals(Settings.lower(Json.getString(once, PER, ""))) || grant.isEmpty()) {
+            ContentLog.LOGGER.error("Block drops {} 'once' needs per \"player\" and a grant, ignoring it", key);
+            return null;
+        }
+        return grant;
     }
 
     @Nullable private static Drop drop(ResourceLocation key, JsonObject json) {
@@ -173,7 +227,7 @@ public final class BlockDrops extends LootModifier {
         Vec3 origin = context.getParamOrNull(LootContextParams.ORIGIN);
         if (state == null || origin == null) { return generatedLoot; }
         if (GENERATION.stale()) { reload(); }
-        List<Rule> rules = BY_BLOCK.get(state.getBlock());
+        List<Rule> rules = rulesFor(state);
         if (rules == null) { return generatedLoot; }
         Player player = context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
         roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, context.getParamOrNull(LootContextParams.TOOL), context.getParamOrNull(LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
@@ -184,18 +238,54 @@ public final class BlockDrops extends LootModifier {
         ObjectArrayList<ItemStack> dropped = new ObjectArrayList<>();
         if (Config.data.blockDropsOff()) { return dropped; }
         if (GENERATION.stale()) { reload(); }
-        List<Rule> rules = BY_BLOCK.get(state.getBlock());
+        List<Rule> rules = rulesFor(state);
         if (rules == null) { return dropped; }
         roll(rules, dropped, state, level, pos, player, tool, null, level.getRandom(), true);
         return dropped;
     }
 
+    @Nullable private static List<Rule> rulesFor(BlockState state) {
+        List<Rule> direct = BY_BLOCK.get(state.getBlock());
+        if (BY_TAG.isEmpty()) { return direct; }
+        List<Rule> found = null;
+        for (TagRule tag : BY_TAG) {
+            if (!state.is(tag.tag()) || !fits(state, tag.properties())) { continue; }
+            if (found == null) { found = direct == null ? new ArrayList<>() : new ArrayList<>(direct); }
+            found.add(tag.rule());
+        }
+        return found == null ? direct : found;
+    }
+
+    private static boolean fits(BlockState state, Map<String, String> properties) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            Property<?> property = state.getBlock().getStateDefinition().getProperty(entry.getKey());
+            if (property == null || !property.getValue(entry.getValue()).map(value -> value.equals(state.getValue(property))).orElse(false)) { return false; }
+        }
+        return true;
+    }
+
+    private static boolean open(@Nullable Player player, Rule rule) {
+        if (!(player instanceof ServerPlayer earner) || player instanceof FakePlayer) { return false; }
+        if (!Advancements.defined(earner.server, rule.grant())) {
+            if (MISSING.add(rule.key())) { ContentLog.LOGGER.error("Block drops {} grants the advancement {}, which no pack provides, so the rule is skipped", rule.key(), rule.grant()); }
+            return false;
+        }
+        return !Advancements.has(earner, rule.grant());
+    }
+
+    private static void run(ServerLevel level, BlockPos pos, @Nullable Player player, String named) {
+        if (player != null) { Functions.runAs(player, named, "Block drops"); }
+        else { Functions.runAt(level, pos, named, "Block drops"); }
+    }
+
     private static void roll(List<Rule> rules, ObjectArrayList<ItemStack> generatedLoot, BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool, @Nullable Float radius, RandomSource random, boolean prospecting) {
         boolean silk = silk(state, level, pos, player, tool);
         int fortuneLevel = silk || tool == null ? 0 : level(level, tool, Enchantments.FORTUNE);
+        Set<String> grants = null;
         for (Rule rule : rules) {
             if (rule.states() != null && !rule.states().contains(state)) { continue; }
             if (!rule.advancement().isEmpty() && !Advancements.has(player, rule.advancement())) { continue; }
+            if (!rule.grant().isEmpty() && !open(player, rule)) { continue; }
             if (rule.replace()) { generatedLoot.clear(); }
             for (Drop drop : rule.drops()) {
                 if (ONLY.equals(drop.silkTouch()) && !silk) { continue; }
@@ -211,6 +301,13 @@ public final class BlockDrops extends LootModifier {
                 if (prospecting || radius != null && random.nextFloat() > 1.0F / radius) { continue; }
                 generatedLoot.add(drop.item().copyWithCount(count));
             }
+            if (!rule.runs().isEmpty()) { run(level, pos, player, rule.runs()); }
+            if (rule.grant().isEmpty()) { continue; }
+            if (grants == null) { grants = new LinkedHashSet<>(); }
+            grants.add(rule.grant());
+        }
+        if (grants != null && player instanceof ServerPlayer earner) {
+            for (String grant : grants) { Advancements.grant(earner, grant, "Block drops"); }
         }
     }
 

@@ -10,12 +10,14 @@ import mctmods.resourcedatapackloader.common.items.ContentLocatorItem;
 import mctmods.resourcedatapackloader.common.items.ContentPortwayItem;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
 import mctmods.resourcedatapackloader.common.items.ContentRollItem;
+import mctmods.resourcedatapackloader.common.items.ContentRunItem;
 import mctmods.resourcedatapackloader.common.items.ContentSeasonClockItem;
 import mctmods.resourcedatapackloader.common.items.ContentSleepingBagItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.SeasonClockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayItemDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
@@ -30,6 +32,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -58,7 +61,8 @@ public final class ContentItemTypes {
     public static final String CONTAINER_UPGRADE = "container_upgrade";
     public static final String PORTWAY = "portway";
     public static final String ROCKET = "rocket";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY, ROCKET);
+    public static final String RECORD = "record";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY, ROCKET, RECORD);
     private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0, false);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, ResourceLocation.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
@@ -87,8 +91,17 @@ public final class ContentItemTypes {
             case CONTAINER_UPGRADE -> new ContentContainerUpgradeItem(def, properties);
             case PORTWAY -> portway(def, properties);
             case ROCKET -> rocket(def, properties);
-            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : def.seasonClock() != null && def.seasonClock().message() ? new ContentSeasonClockItem(def.seasonClock(), properties) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
+            case RECORD -> record(def, variant, properties.stacksTo(1));
+            default -> def.locator().empty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : plain(def, properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };
+    }
+
+    @Nullable private static Item record(ItemDef def, ItemVariant variant, Item.Properties properties) { return def.record() == null ? null : new Item(properties.jukeboxPlayable(ResourceKey.create(Registries.JUKEBOX_SONG, variant.id()))); }
+
+    private static Item plain(ItemDef def, Item.Properties properties) {
+        SeasonClockDef clock = def.seasonClock();
+        if (clock != null && clock.message()) { return new ContentSeasonClockItem(def, clock, properties); }
+        return def.runs().isEmpty() && def.script() == null ? new Item(properties) : new ContentRunItem(def, properties);
     }
 
     private static Item portway(ItemDef def, Item.Properties properties) {

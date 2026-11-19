@@ -4,9 +4,12 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.dimension.Travel;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -15,6 +18,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -29,10 +33,14 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public final class GateEvents {
     private static final long QUIET_MILLIS = 2000L;
     private static final Map<UUID, Long> SPOKEN = new HashMap<>();
+    private static final int TIMED_EVERY = 20;
+    private static int ticks;
 
     private GateEvents() {}
 
@@ -114,10 +122,39 @@ public final class GateEvents {
         }
     }
 
+    static void onTick(ServerTickEvent.Post event) {
+        if (ContentGates.timed() && ++ticks % TIMED_EVERY == 0) {
+            GateStay.tick(event.getServer());
+            GateLoot.track(event.getServer());
+        }
+    }
+
+    static void sendOut(ServerPlayer player, ServerLevel level) {
+        BlockPos spot = landing(player, level);
+        List<ItemStack> returned = new ArrayList<>();
+        if (player.getVehicle() instanceof Container inventory) {
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                ItemStack stack = inventory.getItem(slot);
+                if (!stack.isEmpty() && !GateLoot.stays(player, stack)) { returned.add(inventory.removeItemNoUpdate(slot)); }
+            }
+        }
+        player.stopRiding();
+        if (!Travel.to(player, level, spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, player.getYRot(), player.getXRot())) {
+            ServerLevel overworld = player.server.overworld();
+            BlockPos home = ContentDimensions.landing(overworld, overworld.getSharedSpawnPos(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+            Travel.to(player, overworld, home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        }
+        for (ItemStack stack : returned) { ItemHandlerHelper.giveItemToPlayer(player, stack); }
+    }
+
+    private static BlockPos landing(ServerPlayer player, ServerLevel level) {
+        BlockPos bed = safeBed(player, level);
+        return ContentDimensions.landing(level, bed == null ? level.getSharedSpawnPos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+    }
+
     private static void retreat(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
-        BlockPos bed = safeBed(player, level);
-        BlockPos feet = ContentDimensions.landing(level, bed == null ? level.getSharedSpawnPos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        BlockPos feet = landing(player, level);
         player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot());
     }
 

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.portals;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidTouch;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalFrameDef;
@@ -16,10 +17,13 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,7 +31,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 
 public final class ContentPortalFrames {
     private static final int BUDGET = 20000;
@@ -129,7 +135,19 @@ public final class ContentPortalFrames {
 
     @Nullable public static PortalFit fit(Level level, BlockPos candidate, PortalFrameDef frame) { return fit(level, candidate, frame, null); }
 
-    @Nullable public static PortalFit fit(Level level, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken) {
+    @Nullable public static PortalFit fit(Level level, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken) { return fit(level, candidate, frame, broken, null); }
+
+    public static Set<Block> frameBlocks(Collection<PortalFrameDef> frames) {
+        Set<Block> out = new HashSet<>();
+        for (PortalFrameDef frame : frames) {
+            for (BlockMatchDef wanted : frame.legend().values()) {
+                for (BlockState state : states.getOrDefault(wanted, List.of())) { out.add(state.getBlock()); }
+            }
+        }
+        return out;
+    }
+
+    @Nullable public static PortalFit fit(Level level, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken, @Nullable Fluid wet) {
         int[] budget = { BUDGET };
         for (List<String> shape : PortalShapes.spread(frame)) {
             int rows = shape.size();
@@ -148,7 +166,7 @@ public final class ContentPortalFrames {
                             if (line.charAt(column) != PortalFrameDef.HOLE) { continue; }
                             BlockPos offset = PortalShapes.at(BlockPos.ZERO, column, row, rows, alongX, flat, mirrored);
                             BlockPos origin = candidate.subtract(offset);
-                            PortalFit found = check(level, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget, broken);
+                            PortalFit found = check(level, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget, broken, wet);
                             if (found != null) { return found; }
                             if (budget[0] <= 0) {
                                 ContentLog.LOGGER.debug("Looking for portal frame {} at {} gave up after {} tries, which a smaller limit would avoid", frame.key(), candidate, BUDGET);
@@ -162,7 +180,7 @@ public final class ContentPortalFrames {
         return null;
     }
 
-    @Nullable private static PortalFit check(Level level, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget, @Nullable BlockPos broken) {
+    @Nullable private static PortalFit check(Level level, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget, @Nullable BlockPos broken, @Nullable Fluid wet) {
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, BlockState> edge = new LinkedHashMap<>();
         for (int row = 0; row < rows; row++) {
@@ -176,7 +194,7 @@ public final class ContentPortalFrames {
                 if (!level.isLoaded(at)) { return null; }
                 BlockState found = at.equals(broken) ? Blocks.AIR.defaultBlockState() : level.getBlockState(at);
                 if (held == PortalFrameDef.HOLE) {
-                    if (!found.isAir() && !(found.getBlock() instanceof ContentPortalBlock)) { return null; }
+                    if (!found.isAir() && !(found.getBlock() instanceof ContentPortalBlock) && !(wet != null && found.getBlock() instanceof LiquidBlock && FluidTouch.sourceOf(found.getFluidState()) == wet)) { return null; }
                     holes.add(at);
                     continue;
                 }

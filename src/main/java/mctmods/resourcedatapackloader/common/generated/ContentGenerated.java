@@ -20,6 +20,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.CurioSlotDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.RecordDef;
 import mctmods.resourcedatapackloader.common.pack.io.FallbackIcon;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -171,9 +172,17 @@ public final class ContentGenerated {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
         }
         if (def != null) {
+            if (def.record() != null) { jukeboxSong(entry, def.record()); }
             for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
             if (def.slotted()) { tag(itemTags, "curios:" + def.curioSlot(), entry.id()); }
         }
+    }
+
+    private static void jukeboxSong(ContentRegistry.ItemEntry entry, RecordDef record) {
+        String namespace = entry.id().getNamespace();
+        String path = ContentFormats.JUKEBOX_SONG_FOLDER + "/" + entry.id().getPath() + PackManager.JSON_SUFFIX;
+        if (provided(PackType.SERVER_DATA, namespace, path)) { return; }
+        data(namespace, path, Json.obj("sound_event", Json.obj("sound_id", record.sound().toString()), "description", Json.obj("translate", "jukebox_song." + namespace + "." + entry.id().getPath(), "fallback", entry.id().toString()), "length_in_seconds", record.seconds(), "comparator_output", record.level()));
     }
 
     @Nullable private static ResourceLocation rocketBase(@Nullable ItemDef def) {
@@ -328,7 +337,9 @@ public final class ContentGenerated {
             case ContentBlockTypes.TRAPDOOR -> both(blockTags, itemTags, hasItem, "minecraft:trapdoors", id);
             case ContentBlockTypes.FENCE_GATE -> both(blockTags, itemTags, hasItem, "minecraft:fence_gates", id);
             case ContentBlockTypes.LEAVES -> both(blockTags, itemTags, hasItem, "minecraft:leaves", id);
-            case ContentBlockTypes.LOG -> both(blockTags, itemTags, hasItem, "minecraft:logs", id);
+            case ContentBlockTypes.LOG -> {
+                if (def.tagged()) { both(blockTags, itemTags, hasItem, "minecraft:logs", id); }
+            }
             case ContentBlockTypes.SAPLING -> both(blockTags, itemTags, hasItem, "minecraft:saplings", id);
             case ContentBlockTypes.FLOWER -> {
                 both(blockTags, itemTags, hasItem, "minecraft:small_flowers", id);

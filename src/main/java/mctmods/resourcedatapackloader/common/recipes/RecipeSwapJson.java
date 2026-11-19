@@ -1,12 +1,17 @@
 package mctmods.resourcedatapackloader.common.recipes;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -25,16 +30,22 @@ final class RecipeSwapJson {
     private final Set<ResourceLocation> from;
     private final ResourceLocation to;
     private final boolean output;
+    private final boolean tagged;
     private final Map<ResourceLocation, Set<ResourceLocation>> tags;
+    private final List<String> missing = new ArrayList<>();
     private int ingredients;
     private int results;
     private boolean left;
+    private boolean taggedResult;
+    private boolean taggedSlot;
+    private boolean forced;
     @Nullable private ResourceLocation replaced;
 
-    RecipeSwapJson(Set<ResourceLocation> from, ResourceLocation to, boolean output, Map<ResourceLocation, Set<ResourceLocation>> tags) {
+    RecipeSwapJson(Set<ResourceLocation> from, ResourceLocation to, boolean output, boolean tagged, Map<ResourceLocation, Set<ResourceLocation>> tags) {
         this.from = from;
         this.to = to;
         this.output = output;
+        this.tagged = tagged;
         this.tags = tags;
     }
 
@@ -43,6 +54,27 @@ final class RecipeSwapJson {
     int results() { return results; }
 
     boolean left() { return left; }
+
+    boolean taggedResult() { return taggedResult; }
+
+    boolean taggedSlot() { return taggedSlot; }
+
+    List<String> missing() { return missing; }
+
+    static boolean resultKey(String key) {
+        String lower = key.toLowerCase(Locale.ROOT);
+        return lower.contains(RESULT) || lower.contains("output");
+    }
+
+    private void reset() {
+        ingredients = 0;
+        results = 0;
+        left = false;
+        taggedResult = false;
+        taggedSlot = false;
+        replaced = null;
+        missing.clear();
+    }
 
     @Nullable ResourceLocation replaced() { return replaced; }
 
@@ -54,10 +86,7 @@ final class RecipeSwapJson {
     }
 
     @Nullable JsonObject walk(JsonObject recipe) {
-        ingredients = 0;
-        results = 0;
-        left = false;
-        replaced = null;
+        reset();
         Map<String, JsonElement> keys = new LinkedHashMap<>();
         JsonElement keyed = recipe.get(KEY);
         if (keyed != null && keyed.isJsonObject()) {
@@ -79,6 +108,141 @@ final class RecipeSwapJson {
         return copy;
     }
 
+    @Nullable JsonObject walkForeign(JsonObject recipe, List<String> paths) {
+        reset();
+        JsonObject copy = null;
+        if (paths.isEmpty()) {
+            for (Map.Entry<String, JsonElement> member : recipe.entrySet()) {
+                JsonElement next = deep(member.getValue(), resultKey(member.getKey()));
+                if (next == member.getValue()) { continue; }
+                if (copy == null) { copy = recipe.deepCopy(); }
+                copy.add(member.getKey(), next);
+            }
+            return copy;
+        }
+        for (String path : paths) {
+            JsonObject source = copy == null ? recipe : copy;
+            JsonElement held = JsonTree.get(source, path);
+            if (JsonTree.parent(source, path) == null || held == null) {
+                missing.add(path);
+                continue;
+            }
+            forced = resultPath(path);
+            JsonElement next = held.isJsonPrimitive() ? primitive(held.getAsJsonPrimitive(), forced) : deep(held, forced);
+            forced = false;
+            if (next == held) { continue; }
+            if (copy == null) { copy = recipe.deepCopy(); }
+            JsonElement parent = JsonTree.parent(copy, path);
+            if (parent == null) {
+                missing.add(path);
+                continue;
+            }
+            JsonTree.put(parent, JsonTree.last(path), next.deepCopy());
+        }
+        return copy;
+    }
+
+    private static boolean resultPath(String path) {
+        for (String part : path.split("\\.", -1)) {
+            if (resultKey(part)) { return true; }
+        }
+        return false;
+    }
+
+    private JsonElement primitive(JsonPrimitive value, boolean result) {
+        ResourceLocation id = value.isString() ? ResourceLocation.tryParse(value.getAsString()) : null;
+        if (id == null || !from.contains(id)) { return value; }
+        if (tagged) {
+            if (result) { taggedResult = true; }
+            else { left = true; }
+            return value;
+        }
+        if (result) {
+            replaced = id;
+            results++;
+        }
+        else { ingredients++; }
+        return new JsonPrimitive(to.toString());
+    }
+
+    private JsonElement deep(JsonElement element, boolean result) {
+        if (element.isJsonArray()) { return deepArray(element.getAsJsonArray(), result); }
+        if (!element.isJsonObject()) { return element; }
+        JsonObject object = element.getAsJsonObject();
+        if (!object.has(TYPE)) {
+            ResourceLocation item = slotId(object);
+            if (item != null) { return item(object, item, result); }
+            ResourceLocation tag = string(object, TAG);
+            if (tag != null) { return tagSlot(object, tag, result); }
+        }
+        else if (mentions(object)) { left = true; }
+        JsonObject next = null;
+        for (Map.Entry<String, JsonElement> member : object.entrySet()) {
+            JsonElement value = deep(member.getValue(), result || resultKey(member.getKey()));
+            if (value != member.getValue()) {
+                if (next == null) { next = object.deepCopy(); }
+                next.add(member.getKey(), value);
+            }
+        }
+        return next == null ? object : next;
+    }
+
+    private JsonElement deepArray(JsonArray array, boolean result) {
+        JsonArray next = new JsonArray();
+        boolean changed = false;
+        for (JsonElement each : array) {
+            JsonElement value = deep(each, result);
+            if (value == each) { next.add(each); }
+            else {
+                changed = true;
+                if (!tagged || !next.contains(value)) { next.add(value); }
+            }
+        }
+        return changed ? next : array;
+    }
+
+    private JsonElement item(JsonObject slot, ResourceLocation id, boolean result) {
+        if (!from.contains(id) || result && !output && !forced) { return slot; }
+        if (result && tagged) {
+            taggedResult = true;
+            return slot;
+        }
+        String member = slot.has(ITEM) ? ITEM : ID;
+        if (tagged && ID.equals(member)) {
+            left = true;
+            return slot;
+        }
+        JsonObject copy = slot.deepCopy();
+        if (result) {
+            replaced = id;
+            results++;
+        }
+        else { ingredients++; }
+        if (tagged) { copy.remove(ITEM); }
+        copy.addProperty(tagged ? TAG : member, to.toString());
+        return copy;
+    }
+
+    private JsonElement tagSlot(JsonObject slot, ResourceLocation tag, boolean result) {
+        if (tagged || !tagHits(tag)) { return slot; }
+        if (result || slot.size() != 1) {
+            left = true;
+            return slot;
+        }
+        return slot(slot);
+    }
+
+    private boolean mentions(JsonObject object) {
+        ResourceLocation id = slotId(object);
+        ResourceLocation tag = string(object, TAG);
+        return id != null && from.contains(id) || tag != null && tagHits(tag);
+    }
+
+    @Nullable private static ResourceLocation slotId(JsonObject object) {
+        ResourceLocation item = string(object, ITEM);
+        return item != null ? item : string(object, ID);
+    }
+
     @Nullable private JsonArray listed(@Nullable JsonElement element) {
         if (element == null || !element.isJsonArray()) { return null; }
         JsonArray next = new JsonArray();
@@ -92,6 +256,7 @@ final class RecipeSwapJson {
     }
 
     private JsonElement slot(JsonElement slot) {
+        if (tagged && writtenAsTag(slot)) { taggedSlot = true; return slot; }
         Set<ResourceLocation> members = new LinkedHashSet<>();
         if (!readable(slot, tags, members)) {
             if (names(slot)) { left = true; }
@@ -105,11 +270,27 @@ final class RecipeSwapJson {
         }
         if (!hit) { return slot; }
         ingredients++;
-        if (others.isEmpty()) { return entry(to); }
-        others.add(to);
+        if (others.isEmpty()) { return ingredientEntry(); }
         JsonArray array = new JsonArray();
         for (ResourceLocation id : others) { array.add(entry(id)); }
+        if (tagged || !others.contains(to)) { array.add(ingredientEntry()); }
         return array;
+    }
+
+    private boolean writtenAsTag(JsonElement slot) {
+        if (slot.isJsonArray()) {
+            for (JsonElement each : slot.getAsJsonArray()) {
+                if (writtenAsTag(each)) { return true; }
+            }
+            return false;
+        }
+        return slot.isJsonObject() && slot.getAsJsonObject().has(TAG);
+    }
+
+    private JsonObject ingredientEntry() {
+        JsonObject entry = new JsonObject();
+        entry.addProperty(tagged ? TAG : ITEM, to.toString());
+        return entry;
     }
 
     @Nullable private JsonElement result(@Nullable JsonElement element) {
@@ -117,6 +298,10 @@ final class RecipeSwapJson {
         JsonObject stack = element.getAsJsonObject();
         ResourceLocation id = string(stack, ID);
         if (id == null || !from.contains(id)) { return null; }
+        if (tagged) {
+            taggedResult = true;
+            return null;
+        }
         JsonObject made = new JsonObject();
         made.addProperty(ID, to.toString());
         if (stack.has(COUNT)) { made.add(COUNT, stack.get(COUNT)); }

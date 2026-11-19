@@ -8,7 +8,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -39,6 +42,8 @@ public final class ContentGates {
     private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
     private static final List<GateDef> USABLE = new ArrayList<>();
+    private static final List<GateDef> STAYING = new ArrayList<>();
+    private static final Map<ResourceLocation, GateDef> LOOTING = new HashMap<>();
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -53,6 +58,8 @@ public final class ContentGates {
         DEFS.clear();
         BY_DIMENSION.clear();
         USABLE.clear();
+        STAYING.clear();
+        LOOTING.clear();
         if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
@@ -64,9 +71,22 @@ public final class ContentGates {
             USABLE.add(def);
             ResourceLocation dimension = def.dimension();
             if (dimension != null) { BY_DIMENSION.computeIfAbsent(dimension, id -> new ArrayList<>()).add(def); }
+            if (def.stay().active()) { STAYING.add(def); }
+            if (def.loot().active()) { LOOTING.putIfAbsent(dimension, def); }
         }
-        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)"); }
+        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)" + extras()); }
     }
+
+    private static String extras() {
+        String more = STAYING.isEmpty() ? "" : ", " + STAYING.size() + " with a time budget";
+        return LOOTING.isEmpty() ? more : more + ", " + LOOTING.size() + " dropping marked loot";
+    }
+
+    public static boolean timed() { return !STAYING.isEmpty() || !LOOTING.isEmpty(); }
+
+    static List<GateDef> staying() { return STAYING; }
+
+    @Nullable static GateDef lootDimension(ResourceLocation dimension) { return LOOTING.isEmpty() ? null : LOOTING.get(dimension); }
 
     @Nullable private static GateDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "gate file");
@@ -86,7 +106,9 @@ public final class ContentGates {
                 Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Json.choice(unlock, "killedTally", GateDef.PLAYER, owner, TALLIES),
                 ContentRanks.key(key.getNamespace(), Json.getString(unlock, "killedRank", "").trim()), Standing.parse(unlock), Json.choice(unlock, "teamAndScore", GateDef.ALONE, owner, STANDINGS), Json.strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"), Json.getString(json, "unlockedMessage", "%dim% is now open"),
-                Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
+                Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"), WornCheck.parse(unlock, key, "Gate"),
+                GateStay.parse(json, key, dimension), GateLoot.parse(json, key, dimension),
+                unlock.has("data") ? DataCheck.parse(unlock.get("data"), "Gate", "unlock", key) : Collections.emptyList());
     }
 
     public static boolean idle() { return USABLE.isEmpty(); }
@@ -117,19 +139,22 @@ public final class ContentGates {
     }
 
     public static boolean bars(ServerPlayer player, GateDef def) {
-        if (turnedAway(player, def)) { return true; }
+        if (turnedAway(player, def) || GateStay.spent(player, def)) { return true; }
+        if (!def.data().isEmpty() && !DataCheck.met(def.data(), DataReader.server(player))) { return true; }
         return def.standsAlone() ? !(openFor(player, def) || def.standing().earnedBy(player)) : !(openFor(player, def) && def.standing().met(player));
     }
 
     public static boolean admits(ServerPlayer player, GateDef def) {
         if (bars(player, def)) { return false; }
         if (def.standsAlone() && !openFor(player, def)) { unlock(player, def, true); }
+        if (def.worn().present() && !def.worn().each() && def.worn().met(player) && !GateStorage.unlocked(player, def)) { unlock(player, def, true); }
         return true;
     }
 
     private static boolean openFor(ServerPlayer player, GateDef def) {
         if (def.open()) { return true; }
         if (!def.hold().isEmpty() && carrying(player, def.hold())) { return true; }
+        if (def.worn().present() && def.worn().met(player)) { return true; }
         if (!def.advancement().isEmpty() && earned(player, def.advancement())) { return true; }
         return GateStorage.unlocked(player, def);
     }
@@ -154,12 +179,17 @@ public final class ContentGates {
     public static void lock(ServerPlayer player, GateDef def) { GateStorage.lock(player, def); }
 
     public static void refuse(ServerPlayer player, GateDef def) {
+        if (GateStay.spent(player, def)) {
+            GateStay.refused(player, def);
+            return;
+        }
         if (def.blockedMessage().isEmpty()) { return; }
         String needed = def.consume().isEmpty() ? def.craft() : def.consume();
         if (needed.isEmpty()) { needed = def.hold(); }
+        Component shown = needed.isEmpty() && def.worn().present() ? def.worn().describe() : describe(needed);
         String[] parts = def.blockedMessage().replace("%dim%", def.name()).split("%item%", -1);
         MutableComponent message = Component.literal(parts[0]);
-        for (int at = 1; at < parts.length; at++) { message.append(describe(needed)).append(parts[at]); }
+        for (int at = 1; at < parts.length; at++) { message.append(shown).append(parts[at]); }
         Says.bar(player, CardIds.GATE_BLOCKED, ChatFormatting.RED, message);
     }
 

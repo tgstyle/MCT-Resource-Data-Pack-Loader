@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.client.util.ClientEarned;
 import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import javax.annotation.Nullable;
 import net.minecraft.advancements.AdvancementHolder;
@@ -31,11 +32,13 @@ public final class Advancements {
         return FMLEnvironment.dist == Dist.CLIENT && ClientEarned.has(Settings.lower(name));
     }
 
-    public static boolean grant(ServerPlayer player, String name) {
+    public static void grant(ServerPlayer player, String name, String asking) {
         AdvancementHolder advancement = find(player.server, name);
-        if (advancement == null) { return false; }
+        if (advancement == null) {
+            ContentLog.LOGGER.error("{} grants the advancement {}, which no pack provides, so nothing is earned", asking, name);
+            return;
+        }
         for (String criterion : advancement.value().criteria().keySet()) { player.getAdvancements().award(advancement, criterion); }
-        return true;
     }
 
     public static String title(MinecraftServer server, String name) {

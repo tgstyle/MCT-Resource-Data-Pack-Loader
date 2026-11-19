@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -75,4 +76,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         Mob self = (Mob) (Object) this;
         if (cir.getReturnValue() == null && ContentEntities.steerable(self) && self.getFirstPassenger() instanceof Player player) { cir.setReturnValue(player); }
     }
+
+    @Inject(method = "checkDespawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;discard()V"), require = 3) private void rdpl$despawned(CallbackInfo ci) { ScriptEventHandlers.despawn((Mob) (Object) this); }
 }

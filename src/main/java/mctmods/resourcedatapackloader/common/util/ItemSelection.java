@@ -15,10 +15,13 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -72,6 +75,15 @@ public final class ItemSelection {
     public boolean unnamed() { return names.isEmpty() && prefixes.isEmpty() && tags.isEmpty(); }
 
     public Set<ResourceLocation> tags() { return Collections.unmodifiableSet(tags); }
+
+    public boolean matches(ItemStack stack) {
+        if (stack.isEmpty()) { return false; }
+        if (named(BuiltInRegistries.ITEM.getKey(stack.getItem()))) { return true; }
+        for (ResourceLocation tag : tags) {
+            if (stack.is(TagKey.create(Registries.ITEM, tag))) { return true; }
+        }
+        return false;
+    }
 
     public Set<ResourceLocation> items() {
         Set<ResourceLocation> ids = new LinkedHashSet<>();

@@ -25,6 +25,8 @@ import mctmods.resourcedatapackloader.common.cards.CardEvents;
 import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+import mctmods.resourcedatapackloader.common.command.custom.CommandGuards;
+import mctmods.resourcedatapackloader.common.command.custom.PackCommands;
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
 import mctmods.resourcedatapackloader.common.containers.ContentStorageSwap;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
@@ -40,6 +42,7 @@ import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
+import mctmods.resourcedatapackloader.common.entities.HurtRules;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentBlink;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
@@ -63,6 +66,7 @@ import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
 import mctmods.resourcedatapackloader.common.gates.GateEvents;
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
 import mctmods.resourcedatapackloader.common.gates.GateSync;
 import mctmods.resourcedatapackloader.common.gates.VanillaPortalLink;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
@@ -74,6 +78,7 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
+import mctmods.resourcedatapackloader.common.items.derived.ComponentPatch;
 import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
 import mctmods.resourcedatapackloader.common.leafdecay.LeafDecayQueue;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
@@ -103,6 +108,7 @@ import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.raids.base.BaseSignals;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.recipes.RecipeTransfer;
 import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
@@ -114,8 +120,14 @@ import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
+import mctmods.resourcedatapackloader.common.schedules.PackSchedules;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
+import mctmods.resourcedatapackloader.common.syncdata.SyncDataEvents;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEvents;
+import mctmods.resourcedatapackloader.common.scripts.ScriptRegistries;
+import mctmods.resourcedatapackloader.common.scripts.ScriptScheduler;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
@@ -128,6 +140,12 @@ import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
+import mctmods.resourcedatapackloader.common.zones.ZoneDamage;
+import mctmods.resourcedatapackloader.common.zones.ZoneFly;
+import mctmods.resourcedatapackloader.common.zones.ZoneGuard;
+import mctmods.resourcedatapackloader.common.zones.ZoneRules;
+import mctmods.resourcedatapackloader.common.zones.ZoneScreens;
+import mctmods.resourcedatapackloader.common.zones.ZoneTools;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
@@ -173,6 +191,7 @@ public class ModSetup {
         ContentEntities.load();
         SpawnLocks.load();
         SpawnSwaps.load();
+        HurtRules.load();
         ContentWorldTemplates.load();
         WorldgenSetup.loadDefinitions();
         ContentEnchantments.load();
@@ -182,11 +201,14 @@ public class ModSetup {
         ContentGates.load();
         CardRules.load();
         ContentDialogs.load();
+        CommandGuards.load();
         ContentPortalFrames.load();
         ContentPortals.prepare();
         ContentWorldIntro.load();
         WorldgenSetup.loadGenerators();
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
+        modBus.addListener(EventPriority.LOWEST, ScriptRegistries::onRegister);
+        modBus.addListener(ComponentPatch::onModify);
         modBus.addListener(ContentEvents::onBuildTab);
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(event.getBuilder()));
         NeoForge.EVENT_BUS.addListener(ContentFireworks::onUseBlock);
@@ -208,6 +230,16 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentScoring::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onPlayerDeath);
         OwnershipEvents.register();
+        NeoForge.EVENT_BUS.register(ZoneGuard.class);
+        NeoForge.EVENT_BUS.register(ZoneFly.class);
+        NeoForge.EVENT_BUS.register(ZoneDamage.class);
+        NeoForge.EVENT_BUS.register(ZoneScreens.class);
+        NeoForge.EVENT_BUS.register(ZoneTools.class);
+        NeoForge.EVENT_BUS.register(PackSchedules.class);
+        NeoForge.EVENT_BUS.register(CommandGuards.class);
+        NeoForge.EVENT_BUS.register(SyncDataEvents.class);
+        NeoForge.EVENT_BUS.register(ScriptEventHandlers.class);
+        NeoForge.EVENT_BUS.register(ScriptScheduler.class);
         RespawnEvents.register();
         NeoForge.EVENT_BUS.addListener(ModSetup::onServerStarting);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onRespawn);
@@ -326,6 +358,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJoin);
         NeoForge.EVENT_BUS.addListener(SpawnSwaps::onFinalizeSpawn);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, SpawnSwaps::onJoinRuns);
+        NeoForge.EVENT_BUS.addListener(HurtRules::onHurt);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onShot);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onLeave);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onInteract);
@@ -366,6 +400,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(GateEvents::onCraft);
         NeoForge.EVENT_BUS.addListener(GateEvents::onRightClick);
         NeoForge.EVENT_BUS.addListener(GateEvents::onAdvancement);
+        GateLoot.register(NeoForge.EVENT_BUS);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onCanContinue);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onWakeUp);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onLogout);
@@ -396,6 +431,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(PortalEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onBroken);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onLit);
+        NeoForge.EVENT_BUS.addListener(PortalEvents::onFluid);
         NeoForge.EVENT_BUS.addListener(ContentThreat::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentThreat::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentThreat::onLevelUnload);
@@ -512,6 +548,7 @@ public class ModSetup {
         ContentFtbChunks.install();
         ContentAdAstra.install();
         event.enqueueWork(ContentRegistry::resolveStacks);
+        event.enqueueWork(ScriptRegistries::report);
         event.enqueueWork(ContentRegistry::resolveFluidReactions);
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
@@ -527,6 +564,7 @@ public class ModSetup {
                 ContentEnchanting.load();
                 ContentSleep.load();
                 FireworkDispensing.register();
+                ContentFluids.registerDispensing();
                 if (ContentOrders.load()) {
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
@@ -550,13 +588,13 @@ public class ModSetup {
         throw new IllegalStateException(message);
     }
 
-    private static void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> { WeightStacks.release(); return barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2); }); }
+    private static void onAddReloadListeners(AddReloadListenerEvent event) { RecipeTransfer.attach(event.getServerResources().getRecipeManager(), event.getRegistryAccess()); event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> { WeightStacks.release(); return barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2); }); }
 
-    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); ContentWeights.load(); } }
+    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); RecipeTransfer.apply(); VanillaFluidRules.tagsUpdated(); ContentWeights.load(); } }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 
-    private static void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
+    private static void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); PackCommands.register(event.getDispatcher()); }
 
     private static void onServerStarting(ServerStartingEvent event) { ContentFtbTeams.serverStarting(); ClaimSettings.announceForeign(); }
 
@@ -585,6 +623,10 @@ public class ModSetup {
         ContentHearts.load();
         CardRules.load();
         ContentDialogs.load();
+        CommandGuards.load();
+        ZoneRules.load();
+        PackSchedules.load();
+        ScriptEvents.load();
         PackOptionsWorld.beforeWorldsLoad(event.getServer());
         ContentPristine.beforeWorldsLoad(event.getServer());
         StructureSetup.beginCity();
