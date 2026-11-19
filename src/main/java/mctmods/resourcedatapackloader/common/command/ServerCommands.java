@@ -73,7 +73,7 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "sneak", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry", "tree");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "data", "environment", "game", "raid", "portway", "talk", "sneak", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry", "tree");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -172,6 +172,7 @@ public class ServerCommands extends CommandBase {
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
+        if (args.length >= 2 && "data".equals(args[0])) { return DataCommand.complete(server, args); }
         if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
         if (args.length >= 2 && "environment".equals(args[0])) { return EnvironmentCommand.complete(args); }
         if (args.length >= 2 && "gate".equals(args[0])) { return GateCommand.complete(server, args); }
@@ -221,7 +222,7 @@ public class ServerCommands extends CommandBase {
             else if ("back".equals(direction)) { allowGoto(sender, neededFor(place, "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
         }
-        else if ("card".equals(args[0]) || "talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
+        else if ("card".equals(args[0]) || "data".equals(args[0]) || "talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
         else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
         else if (ClaimCommand.handles(args[0])) { allow(sender, ClaimSettings.commandLevel()); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
@@ -252,6 +253,7 @@ public class ServerCommands extends CommandBase {
         else if ("goto".equals(args[0])) { goWhere(sender, args); }
         else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
         else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
+        else if ("data".equals(args[0])) { DataCommand.run(server, sender, args, getUsage(sender)); }
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }

@@ -72,8 +72,9 @@ public final class BlockDef {
     @Nullable public final TallDef tall;
     @Nullable public final SpawnShieldDef blocksSpawns;
     @Nullable public final WeatherShieldDef blocksWeather;
+    public final boolean tagged;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, @Nullable SeasonSensorDef sensor, List<String> spreadsOnto, boolean needsOxygen, @Nullable PortwayDef portway, int weight, @Nullable TallDef tall, @Nullable SpawnShieldDef blocksSpawns, @Nullable WeatherShieldDef blocksWeather) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, @Nullable SeasonSensorDef sensor, List<String> spreadsOnto, boolean needsOxygen, @Nullable PortwayDef portway, int weight, @Nullable TallDef tall, @Nullable SpawnShieldDef blocksSpawns, @Nullable WeatherShieldDef blocksWeather, boolean tagged) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -126,6 +127,7 @@ public final class BlockDef {
         this.tall = tall;
         this.blocksSpawns = blocksSpawns;
         this.blocksWeather = blocksWeather;
+        this.tagged = tagged;
     }
 
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }

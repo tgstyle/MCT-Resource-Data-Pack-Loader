@@ -92,6 +92,12 @@ public final class PackManager {
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
     public static final String SPAWN_SWAPS = "spawn_swaps";
+    public static final String HURT_RULES = "hurt_rules";
+    public static final String ZONES = "zones";
+    public static final String SCHEDULES = "schedules";
+    public static final String COMMANDS = "commands";
+    public static final String COMMAND_GUARDS = "command_guards";
+    public static final String SCRIPTS = "scripts";
     public static final String MOB_DROPS = "mob_drops";
     public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
@@ -107,6 +113,7 @@ public final class PackManager {
     public static final String SLEEPING = "sleeping";
     public static final String VEINS = "veins";
     public static final String COLUMNS = "columns";
+    public static final String SYNCDATA = "syncdata";
     public static final String PAIRED_DOORS = "paired_doors";
     public static final String LEAF_DECAY = "leaf_decay";
     public static final String FLOWER_SPREADS = "flower_spreads";
@@ -134,7 +141,7 @@ public final class PackManager {
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
-    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, FLUID_RULES, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, PACKLIST, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, DUNGEONS, DUNGEONTHEMES, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, SLEEPING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, SOULBOUND, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, COLUMNS, PAIRED_DOORS, LEAF_DECAY, FLOWER_SPREADS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_SWAPS, RECIPE_LOCKS, ITEM_LOCKS, SPAWN_LOCKS, SPAWN_SWAPS, MOB_DROPS, WEIGHTS, LOOT_INJECTIONS, LOOT_REMOVALS, CARDS, DIALOGS, CELESTIAL, DISABLED, "tree_growth")));
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, FLUID_RULES, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, PACKLIST, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, DUNGEONS, DUNGEONTHEMES, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, SLEEPING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, SOULBOUND, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, COLUMNS, PAIRED_DOORS, LEAF_DECAY, FLOWER_SPREADS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_SWAPS, RECIPE_LOCKS, ITEM_LOCKS, SPAWN_LOCKS, SPAWN_SWAPS, HURT_RULES, ZONES, SCHEDULES, MOB_DROPS, WEIGHTS, LOOT_INJECTIONS, LOOT_REMOVALS, CARDS, DIALOGS, CELESTIAL, DISABLED, COMMANDS, COMMAND_GUARDS, SYNCDATA, "tree_growth")));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();

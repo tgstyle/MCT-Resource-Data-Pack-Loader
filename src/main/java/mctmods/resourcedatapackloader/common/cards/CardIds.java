@@ -31,9 +31,12 @@ public final class CardIds {
     public static final String PORTWAY_ACTIVATED = "rdpl:portway_activated";
     public static final String PORTWAY_REFUSED = "rdpl:portway_refused";
     public static final String PORTWAY_FORGOT = "rdpl:portway_forgot";
+    public static final String GATE_STAY = "rdpl:gate_stay";
+    public static final String GATE_EXPIRED = "rdpl:gate_expired";
+    public static final String GATE_LOOT_LEFT = "rdpl:gate_loot_left";
     public static final List<String> ALL = Collections.unmodifiableList(Arrays.asList(GATE_UNLOCKED, GATE_BLOCKED, TEAM_JOINED, TEAM_LEAD, TEAM_PICKED, TEAM_ROUND_ENDED, DOWNED, REVIVED,
             LOBBY_JOINS, LOBBY_NOTE, SCORING_RESULTS, SCORING_OUT, RESET_LEAD, RESET_VOTE, RESET_PASS, RESET_FAIL, ANVIL_WAITS, THREAT, PROSPECT, PROSPECT_NONE, PREGEN_ENDED, PREGEN_RUNNING,
-            BOARD_RESULT, PORTWAY_ACTIVATED, PORTWAY_REFUSED, PORTWAY_FORGOT));
+            BOARD_RESULT, PORTWAY_ACTIVATED, PORTWAY_REFUSED, PORTWAY_FORGOT, GATE_STAY, GATE_EXPIRED, GATE_LOOT_LEFT));
 
     private CardIds() {}
 }

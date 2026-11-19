@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.PlayerAdvancements;
 import net.minecraft.block.BlockAnvil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
@@ -291,7 +290,7 @@ public final class ContentAnvils {
     @SubscribeEvent public static void onTaken(AnvilRepairEvent event) {
         AnvilDef def = OFFERED.get(event.getItemResult());
         if (def == null || def.grants.isEmpty() || !(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
-        grant((EntityPlayerMP) event.getEntityPlayer(), def);
+        Advancements.grant((EntityPlayerMP) event.getEntityPlayer(), def.grants, "Anvil work " + def.registryName);
     }
 
     public static ItemStack leftAfterWork(EntityPlayer player, ItemStack taken) {
@@ -302,18 +301,6 @@ public final class ContentAnvils {
         ItemStack kept = left.copy();
         kept.shrink(def.itemCount);
         return kept;
-    }
-
-    private static void grant(EntityPlayerMP player, AnvilDef def) {
-        MinecraftServer server = player.getServer();
-        if (server == null) { return; }
-        Advancement advancement = server.getAdvancementManager().getAdvancement(new ResourceLocation(def.grants));
-        if (advancement == null) {
-            ContentLog.LOGGER.error("Anvil work {} grants the advancement {}, which no pack provides, so nothing is earned", def.registryName, def.grants);
-            return;
-        }
-        PlayerAdvancements progress = player.getAdvancements();
-        for (String criterion : advancement.getCriteria().keySet()) { progress.grantCriterion(advancement, criterion); }
     }
 
     @SubscribeEvent public static void onHeld(LivingEquipmentChangeEvent event) {

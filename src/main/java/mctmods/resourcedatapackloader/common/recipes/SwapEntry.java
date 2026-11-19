@@ -54,8 +54,17 @@ final class SwapEntry {
 
     private static void readFile(ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!json.has("swaps") && (json.has("remainder") || json.has("transfer"))) { return; }
         if (!json.has("swaps")) {
-            ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key);
+            boolean template = json.has("template");
+            boolean edit = json.has("edit");
+            boolean scriptFile = json.has("scriptFile");
+            boolean script = json.has("script");
+            if (template) { ContentLog.LOGGER.error("Recipe swap file {} has a template, which 1.12.2 does not read, ignoring it", key); }
+            if (edit) { ContentLog.LOGGER.error("Recipe swap file {} has an edit, which 1.12.2 does not read, ignoring it", key); }
+            if (scriptFile) { ContentLog.LOGGER.error("Recipe swap file {} has a scriptFile, which 1.12.2 does not read, ignoring it", key); }
+            if (script) { ContentLog.LOGGER.error("Recipe swap file {} has a script, which 1.12.2 does not read, ignoring it", key); }
+            if (!template && !edit && !scriptFile && !script) { ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key); }
             return;
         }
         for (JsonElement element : Json.getJsonArray(json, "swaps")) {
@@ -73,7 +82,14 @@ final class SwapEntry {
             ContentLog.LOGGER.error("A swap in {} needs a from object, skipping it", key);
             return null;
         }
-        ItemStack to = ContentStacks.parse(key, Json.getString(json, "to", ""), 1);
+        if (json.has("types")) { ContentLog.LOGGER.error("A swap in {} has types, which 1.12.2 does not read, ignoring it", key); }
+        if (json.has("paths")) { ContentLog.LOGGER.error("A swap in {} has paths, which 1.12.2 does not read, ignoring it", key); }
+        String target = Json.getString(json, "to", "");
+        if (target.startsWith("#")) {
+            ContentLog.LOGGER.error("A swap in {} swaps to the tag {}, which 1.12.2 does not do, skipping it", key, target.substring(1));
+            return null;
+        }
+        ItemStack to = ContentStacks.parse(key, target, 1);
         if (to.isEmpty()) {
             ContentLog.LOGGER.error("A swap in {} needs a valid to item, skipping it", key);
             return null;

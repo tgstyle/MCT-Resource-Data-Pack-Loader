@@ -134,8 +134,9 @@ final class Blockstates {
         void make() {
             String first = variants.get(0);
             switch (type) {
-                case "log": log(); break;
+                case "log": case "pillar": log(); break;
                 case "leaves": leaves(); break;
+                case "carpet": carpet(); break;
                 case "slab": slab(); break;
                 case "fence": fence(); break;
                 case "wall": wall(); break;
@@ -208,6 +209,15 @@ final class Blockstates {
             json.getAsJsonObject("variants").add("inventory", one(new JsonObject()));
             json.getAsJsonObject("variants").add("axis", axis);
             state(json);
+        }
+
+        private void carpet() {
+            JsonObject blocks = new JsonObject();
+            for (String variant : variants) {
+                String texture = face(variant);
+                blocks.add(variant, obj("textures", obj("wool", texture, "particle", texture)));
+            }
+            state(forge(obj("transform", "forge:default-block", "model", "carpet"), blocks, true));
         }
 
         private void slab() {

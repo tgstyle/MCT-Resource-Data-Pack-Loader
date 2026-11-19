@@ -1,0 +1,148 @@
+package mctmods.resourcedatapackloader.common.tooltips;
+
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
+import mctmods.resourcedatapackloader.common.syncdata.DataText;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTPrimitive;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.text.TextFormatting;
+
+public final class TooltipText {
+    private static final String NBT = "nbt";
+    private static final String ITEM = "item";
+    private static final String NBT_OPEN = "{nbt:";
+    private static final String ITEM_OPEN = "{item:";
+    private static final int MAX_DIGITS = 9;
+    private static final int BYTE = 1;
+    private static final int LONG = 4;
+    private static final int FLOAT = 5;
+    private static final int DOUBLE = 6;
+    private static final int STRING = 8;
+    private final String[] literal;
+    private final String[][] keys;
+    private final int[][] index;
+
+    private final String[] fallback;
+
+    private TooltipText(String[] literal, String[][] keys, int[][] index, String[] fallback) {
+        this.literal = literal;
+        this.keys = keys;
+        this.index = index;
+        this.fallback = fallback;
+    }
+
+    public static TooltipText parse(Object file, String raw) {
+        List<String> literals = new ArrayList<>();
+        List<String[]> paths = new ArrayList<>();
+        List<int[]> indexes = new ArrayList<>();
+        List<String> fallbacks = new ArrayList<>();
+        int kept = 0;
+        int from = 0;
+        while (true) {
+            int nbt = raw.indexOf(NBT_OPEN, from);
+            int item = raw.indexOf(ITEM_OPEN, from);
+            int data = DataText.token(raw, from);
+            if (nbt < 0 && item < 0 && data < 0) { break; }
+            int start = first(first(nbt, item), data);
+            boolean isData = start == data;
+            boolean isNbt = start == nbt;
+            String open = isData ? DataText.OPEN : isNbt ? NBT_OPEN : ITEM_OPEN;
+            int begin = start + open.length();
+            int end = raw.indexOf('}', begin);
+            if (end < 0) { break; }
+            String body = raw.substring(begin, end);
+            if (isData ? DataText.name(body).isEmpty() : end == begin) {
+                ContentLog.LOGGER.error("A tooltip line in {} has an empty {} {}, keeping it as text", file, isData ? "data" : isNbt ? NBT : ITEM, isData ? "name" : "path");
+                from = end + 1;
+                continue;
+            }
+            literals.add(raw.substring(kept, start));
+            if (isData) {
+                paths.add(new String[] {DataText.name(body)});
+                indexes.add(new int[] {-1});
+                fallbacks.add(DataText.fallback(body));
+            }
+            else {
+                split(body, paths, indexes);
+                fallbacks.add(null);
+            }
+            kept = end + 1;
+            from = kept;
+        }
+        literals.add(raw.substring(kept));
+        return new TooltipText(literals.toArray(new String[0]), paths.toArray(new String[0][]), indexes.toArray(new int[0][]), fallbacks.toArray(new String[0]));
+    }
+
+    private static int first(int a, int b) { return a < 0 ? b : b < 0 ? a : Math.min(a, b); }
+
+    private static void split(String path, List<String[]> paths, List<int[]> indexes) {
+        List<String> parts = new ArrayList<>();
+        int from = 0;
+        while (true) {
+            int dot = path.indexOf('.', from);
+            if (dot < 0) { break; }
+            parts.add(path.substring(from, dot));
+            from = dot + 1;
+        }
+        parts.add(path.substring(from));
+        String[] names = parts.toArray(new String[0]);
+        int[] numbers = new int[names.length];
+        for (int at = 0; at < names.length; at++) { numbers[at] = number(names[at]); }
+        paths.add(names);
+        indexes.add(numbers);
+    }
+
+    private static int number(String part) {
+        if (part.isEmpty() || part.length() > MAX_DIGITS) { return -1; }
+        int value = 0;
+        for (int at = 0; at < part.length(); at++) {
+            char c = part.charAt(at);
+            if (c < '0' || c > '9') { return -1; }
+            value = value * 10 + (c - '0');
+        }
+        return value;
+    }
+
+    public boolean plain() { return keys.length == 0; }
+
+    public String fill(ItemStack stack) {
+        StringBuilder out = new StringBuilder(literal[0]);
+        for (int at = 0; at < keys.length; at++) {
+            out.append(fallback[at] == null ? read(stack, keys[at], index[at]) : DataText.value(DataReader.client(), keys[at][0], fallback[at])).append(literal[at + 1]);
+        }
+        return out.toString();
+    }
+
+    static String read(ItemStack stack, String[] keys, int[] index) {
+        NBTBase current = stack.getTagCompound();
+        for (int at = 0; at < keys.length && current != null; at++) {
+            if (current instanceof NBTTagCompound) { current = ((NBTTagCompound) current).getTag(keys[at]); }
+            else if (current instanceof NBTTagList && index[at] >= 0 && index[at] < ((NBTTagList) current).tagCount()) { current = ((NBTTagList) current).get(index[at]); }
+            else { current = null; }
+        }
+        return format(current);
+    }
+
+    static String format(@Nullable NBTBase tag) {
+        if (tag == null) { return ""; }
+        int id = tag.getId();
+        if (id >= BYTE && id <= LONG) { return String.valueOf(((NBTPrimitive) tag).getLong()); }
+        if (id == FLOAT) {
+            float value = ((NBTPrimitive) tag).getFloat();
+            return value == (long) value ? String.valueOf((long) value) : String.valueOf(value);
+        }
+        if (id == DOUBLE) { return number(((NBTPrimitive) tag).getDouble()); }
+        if (id == STRING) { return TextFormatting.getTextWithoutFormattingCodes(((NBTTagString) tag).getString()); }
+        return "";
+    }
+
+    public static String number(double value) { return value == (long) value ? String.valueOf((long) value) : String.valueOf(value); }
+}

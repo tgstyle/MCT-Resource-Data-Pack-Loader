@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
+import mctmods.resourcedatapackloader.common.blocks.shape.ContentCarpetBlock;
 import mctmods.resourcedatapackloader.common.blocks.shape.ContentDoorBlock;
 import mctmods.resourcedatapackloader.common.blocks.shape.ContentFenceBlock;
 import mctmods.resourcedatapackloader.common.blocks.shape.ContentFenceGateBlock;
@@ -43,6 +44,7 @@ import net.minecraft.util.BlockRenderLayer;
 
 public final class ContentBlockTypes {
     public static final String DEFAULT = "basic";
+    private static final String PILLAR = "pillar";
     private static final NamedRegistry<IBlockType> TYPES = new NamedRegistry<>("Block", DEFAULT);
 
     private ContentBlockTypes() {}
@@ -120,10 +122,13 @@ public final class ContentBlockTypes {
             }
             @Override public int maxVariants() { return ContentCropBlock.MAX_VARIANTS; }
         });
-        register("log", new IBlockType() {
+        IBlockType log = new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentLogBlock.create(def)); }
             @Override public int maxVariants() { return ContentLogBlock.MAX_VARIANTS; }
-        });
+        };
+        register("log", log);
+        register(PILLAR, log);
+        register("carpet", def -> Collections.singletonList(ContentCarpetBlock.create(def)));
         register("leaves", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentLeavesBlock.create(def)); }
             @Override public int maxVariants() { return ContentLeavesBlock.MAX_VARIANTS; }
@@ -177,6 +182,8 @@ public final class ContentBlockTypes {
             @Override public int maxVariants() { return ContentStairsBlock.MAX_VARIANTS; }
         });
     }
+
+    @Nullable public static String logTag(BlockDef def) { return def.tagged && !PILLAR.equals(def.type) ? "logWood" : null; }
 
     public static boolean plant(String type) {
         switch (type) {

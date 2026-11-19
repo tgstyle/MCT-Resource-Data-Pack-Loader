@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.portals;
 
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidTouch;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalFrameDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
@@ -18,6 +19,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.Fluid;
 
 public final class ContentPortalFrames {
     private static final int BUDGET = 20000;
@@ -45,7 +47,9 @@ public final class ContentPortalFrames {
 
     @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame) { return fit(world, candidate, frame, null); }
 
-    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken) {
+    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken) { return fit(world, candidate, frame, broken, null); }
+
+    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken, @Nullable Fluid wet) {
         int[] budget = { BUDGET };
         for (List<String> shape : PortalShapes.spread(frame)) {
             int rows = shape.size();
@@ -64,7 +68,7 @@ public final class ContentPortalFrames {
                             if (line.charAt(column) != PortalFrameDef.HOLE) { continue; }
                             BlockPos offset = PortalShapes.at(BlockPos.ORIGIN, column, row, rows, alongX, flat, mirrored);
                             BlockPos origin = candidate.subtract(offset);
-                            PortalFit found = check(world, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget, broken);
+                            PortalFit found = check(world, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget, broken, wet);
                             if (found != null) { return found; }
                             if (budget[0] <= 0) {
                                 ContentLog.LOGGER.debug("Looking for portal frame {} at {} gave up after {} tries, which a smaller limit would avoid", frame.registryName, candidate, BUDGET);
@@ -78,7 +82,7 @@ public final class ContentPortalFrames {
         return null;
     }
 
-    @Nullable private static PortalFit check(World world, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget, @Nullable BlockPos broken) {
+    @Nullable private static PortalFit check(World world, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget, @Nullable BlockPos broken, @Nullable Fluid wet) {
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, IBlockState> edge = new LinkedHashMap<>();
         for (int row = 0; row < rows; row++) {
@@ -92,7 +96,7 @@ public final class ContentPortalFrames {
                 if (!world.isBlockLoaded(at)) { return null; }
                 IBlockState found = at.equals(broken) ? Blocks.AIR.getDefaultState() : world.getBlockState(at);
                 if (held == PortalFrameDef.HOLE) {
-                    if (!found.getBlock().isAir(found, world, at) && !(found.getBlock() instanceof ContentPortalBlock)) { return null; }
+                    if (!found.getBlock().isAir(found, world, at) && !(found.getBlock() instanceof ContentPortalBlock) && (wet == null || FluidTouch.fluidOf(found.getBlock()) != wet)) { return null; }
                     holes.add(at);
                     continue;
                 }

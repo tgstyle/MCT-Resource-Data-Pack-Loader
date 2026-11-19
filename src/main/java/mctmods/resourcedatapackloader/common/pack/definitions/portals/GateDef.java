@@ -1,6 +1,10 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.portals;
 
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
+import mctmods.resourcedatapackloader.common.gates.GateStay;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 
 import java.util.List;
 import net.minecraft.util.ResourceLocation;
@@ -36,8 +40,12 @@ public final class GateDef {
     public final String unlockedMessage;
     public final boolean safeReturn;
     public final List<String> requires;
+    public final WornCheck worn;
+    public final GateStay stay;
+    public final GateLoot loot;
+    public final List<DataCheck> data;
 
-    public GateDef(ResourceLocation registryName, int dimension, String name, String scope, String teamless, boolean open, String craft, String consume, int consumeCount, String hold, String advancement, String killed, int killedCount, String killedDrops, String killedTally, String killedRank, Standing standing, String teamAndScore, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires) {
+    public GateDef(ResourceLocation registryName, int dimension, String name, String scope, String teamless, boolean open, String craft, String consume, int consumeCount, String hold, String advancement, String killed, int killedCount, String killedDrops, String killedTally, String killedRank, Standing standing, String teamAndScore, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires, WornCheck worn, GateStay stay, GateLoot loot, List<DataCheck> data) {
         this.registryName = registryName;
         this.dimension = dimension;
         this.name = name;
@@ -61,6 +69,10 @@ public final class GateDef {
         this.unlockedMessage = unlockedMessage;
         this.safeReturn = safeReturn;
         this.requires = requires;
+        this.worn = worn;
+        this.stay = stay;
+        this.loot = loot;
+        this.data = data;
     }
 
     public String getKey() { return registryName.toString(); }

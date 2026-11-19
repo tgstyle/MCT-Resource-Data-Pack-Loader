@@ -17,7 +17,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.LocatorDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.scripts.ScriptRef;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
@@ -144,7 +146,8 @@ public final class ContentParser {
                 ContentParserWeights.weight(json, key),
                 ContentParserCrops.tall(json, key, maxAge),
                 ContentParserShields.spawns(json, key),
-                ContentParserShields.weather(json));
+                ContentParserShields.weather(json),
+                Json.getBoolean(json, "tagged", true));
     }
 
     @Nullable private static BellDef bell(JsonObject json) {
@@ -307,6 +310,7 @@ public final class ContentParser {
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "item definition");
         if (json == null) { return null; }
+        if (json.has("item")) { return ContentParserDerived.item(key, json); }
         JsonObject variants = Json.getJsonObject(json, "variants", new JsonObject());
         Map<Integer, ItemVariant> byMeta = new LinkedHashMap<>();
         List<ItemVariant> visible = new ArrayList<>();
@@ -338,6 +342,7 @@ public final class ContentParser {
         }
         String type = Json.getString(json, "type", ContentItemTypes.DEFAULT);
         ContentItemTypes.get(type, key);
+        LocatorDef locator = ContentParserLocator.parse(key, json);
         return new ItemDef(key, type,
                 Json.getString(json, "creativeTab", ""),
                 Json.getBoolean(json, "alwaysEdible", false),
@@ -358,7 +363,7 @@ public final class ContentParser {
                 Json.getString(json, "rolls", "").trim(),
                 Json.getString(json, "rollStore", "").trim(),
                 Json.getBoolean(json, "passesTurn", false),
-                Json.getString(json, "locates", "").trim(),
+                locator,
                 ContentParserContainers.bauble(json),
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
                 Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
@@ -368,15 +373,18 @@ public final class ContentParser {
                 ContentParserContainers.upgrade(key, type, json),
                 ContentParserWeights.weight(json, key),
                 ContentParserFireworks.firework(key, json),
-                ContentParserSeasons.clock(json));
+                ContentParserSeasons.clock(json),
+                Json.getString(json, "runs", "").trim(),
+                ScriptRef.read(key, json),
+                ContentParserRecords.record(key, type, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "fluid definition");
         if (json == null) { return null; }
         String name = Json.getString(json, "name", key.getPath());
-        JsonObject block = Json.getJsonObject(json, "block", new JsonObject());
-        boolean createBlock = json.has("block");
+        JsonObject block = ContentParserFluids.blockObject(json);
+        boolean createBlock = ContentParserFluids.blockWanted(json);
         return new FluidDef(key, name,
                 ContentTypes.color(Json.getString(json, "color", ""), key.toString()),
                 new ResourceLocation(Json.getString(json, "still", DEFAULT_STILL)),

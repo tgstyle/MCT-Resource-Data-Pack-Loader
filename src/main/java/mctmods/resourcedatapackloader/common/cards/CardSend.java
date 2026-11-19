@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.cards;
 
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
+import mctmods.resourcedatapackloader.common.syncdata.DataText;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
@@ -16,8 +18,10 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.server.SPacketCustomSound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 
 public final class CardSend {
     private static final int FADE_IN = 10;
@@ -27,15 +31,18 @@ public final class CardSend {
 
     private CardSend() {}
 
-    static void dress(CardLook look, CardRule rule, EntityPlayerMP subject) {
+    static void dress(CardLook look, CardRule rule, EntityPlayerMP subject) { dress(look, rule, subject, Collections.emptyMap()); }
+
+    static void dress(CardLook look, CardRule rule, EntityPlayerMP subject, Map<String, String> args) {
         List<String> said = look.lines;
-        if (rule.title != null) { look.title = fill(rule.title, subject, said); }
-        else { look.title = fill(look.title, subject, said); }
+        if (rule.title != null) { look.title = fill(rule.title, subject, said, args); }
+        else { look.title = fill(look.title, subject, said, args); }
+        if (!rule.sound.isEmpty()) { look.sound = rule.sound; }
         if (rule.lines != null) {
             List<String> lines = new ArrayList<>();
             for (String line : rule.lines) {
                 if (TEXT.equals(line.trim())) { lines.addAll(said); }
-                else { lines.add(fill(line, subject, said)); }
+                else { lines.add(fill(line, subject, said, args)); }
             }
             look.lines = lines;
         }
@@ -48,13 +55,18 @@ public final class CardSend {
         if (rule.ticks > 0) { look.ticks = rule.ticks; }
     }
 
-    public static String fill(String line, EntityPlayerMP subject, List<String> said) {
+    public static String fill(String line, EntityPlayerMP subject, List<String> said) { return fill(line, subject, said, Collections.emptyMap()); }
+
+    private static String fill(String line, EntityPlayerMP subject, List<String> said, Map<String, String> args) {
         if (line.indexOf('{') < 0) { return line; }
-        return line.replace(TEXT, String.join(" ", said))
+        String given = line;
+        for (Map.Entry<String, String> arg : args.entrySet()) { given = given.replace("{" + arg.getKey() + "}", arg.getValue()); }
+        String done = given.replace(TEXT, String.join(" ", said))
                 .replace("{player}", subject.getName())
                 .replace("{dim}", CardPlace.dimensionName(subject.dimension))
                 .replace("{biome}", CardPlace.biomeName(subject))
                 .replace("{day}", Long.toString(CardPlace.day(subject.world)));
+        return done.contains(DataText.OPEN) ? DataText.fill(done, DataReader.server(subject)) : done;
     }
 
     static List<EntityPlayerMP> audience(CardRule rule, EntityPlayerMP subject) {
@@ -75,6 +87,7 @@ public final class CardSend {
             HELD.computeIfAbsent(player.getUniqueID(), k -> new ArrayList<>()).add(look);
             return;
         }
+        if (!look.sound.isEmpty()) { player.connection.sendPacket(new SPacketCustomSound(look.sound, SoundCategory.MASTER, player.posX, player.posY, player.posZ, 1.0F, 1.0F)); }
         switch (look.style) {
             case CardLook.CHAT:
                 chat(look, player);

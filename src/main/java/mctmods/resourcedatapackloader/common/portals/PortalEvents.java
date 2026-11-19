@@ -22,6 +22,12 @@ public final class PortalEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBroken(BlockEvent.BreakEvent event) { if (!mctmods.resourcedatapackloader.common.carry.ContentCarry.probing()) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); } }
 
+    @SubscribeEvent public static void onFluid(BlockEvent.NeighborNotifyEvent event) {
+        World world = event.getWorld();
+        if (world.isRemote || !ContentPortals.fluidLit()) { return; }
+        ContentPortals.lightByFluid(world, event.getPos(), event.getState());
+    }
+
     @SubscribeEvent public static void onLit(PlayerInteractEvent.RightClickBlock event) {
         World world = event.getWorld();
         ItemStack held = event.getItemStack();

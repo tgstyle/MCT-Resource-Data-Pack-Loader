@@ -116,6 +116,7 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "amphibious", false),
                 Json.getBoolean(json, "despawns", true),
                 Math.max(0, Json.getInt(json, "despawnAfter", 0)) * 20,
+                dropsLead(key, json),
                 Json.getBoolean(json, "noAI", false),
                 Json.getBoolean(json, "leftHanded", false),
                 Json.getBoolean(json, "fireproof", false),
@@ -319,6 +320,13 @@ public final class ContentParserEntities {
             entries.add(new FilterDef.Entry(key, item, oreDict, fluid, Math.max(least, Json.getInt(entry, amount, least))));
         }
         return entries;
+    }
+
+    private static boolean dropsLead(ResourceLocation key, JsonObject json) {
+        String leash = Json.getString(json, "leash", "drop");
+        if ("delete".equals(leash)) { return false; }
+        if (!"drop".equals(leash)) { ContentLog.LOGGER.error("The leash '{}' in {} is not drop or delete, using drop", leash, key); }
+        return true;
     }
 
     private static float baby(JsonObject json) {

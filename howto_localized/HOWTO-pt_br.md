@@ -2,7 +2,7 @@
 
 **Uma pasta que substitui qualquer coisa que o Minecraft ou um mod fornece, define conteúdo novo a partir de JSON e controla o que é gerado, em todos os mundos, em clientes e servidores, sem nada para os jogadores ativarem.**
 
-Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo é escrito.
+Quinze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo é escrito.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) cobre a maioria dos recursos, blocos, itens, biomas, uma dimensão, um modelo de mundo e todas as formas de worldgen.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) transforma o overworld em um vazio, com worldgen suspensa no ar, uma forma por faixa de altura, de modo que cada uma seja fácil de ver isoladamente.
@@ -18,6 +18,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) exige o Galacticraft e coloca um sistema estelar próprio no mapa estelar, com um planeta alcançado por um foguete de nível 2 que tem céu, gravidade, duração do dia, clima e atmosfera próprios, um planeta para apenas observar e nunca pousar e, com o GalaxySpace, um planeta de gelo em torno de Tau Ceti.
 - [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) transforma um mundo plano em um salão de jogos: dados ponderados do próprio pacote, um baralho de mobs que se embaralha sozinho e um baralho da sorte que fica vazio até ser embaralhado, um Copo de Dados que rola 2d6 com um clique direito, um Duelo de dados em turnos contra a Casa que resolve um empate por sorteio, e xadrez e damas jogados com mobs contra o computador.
 - [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) constrói sozinho um pátio de trabalho ao fechar a introdução e põe aldeões para fazer todo tipo de ordem de trabalho: um minerador cujo alcance cresce com a picareta, um lenhador que guarda o que corta, um fazendeiro que mantém um estoque fixo de trigo e um carregador que transporta pedregulho, cada ordem aberta por uma placa, uma ferramenta, uma contratação ou um baú de estoque.
+- [RDPLExampleScripts.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleScripts.zip) mostra todas as formas de script em um pequeno santuário: entradas de evento com scripts embutidos e em arquivo para os seis eventos, cada filtro, `every`, eventos que um script cancela, dois itens que executam um script ao usar, e quase tudo o que o `rdpl` alcança, de dados salvos e estágios até pontuações, cartas e uma estrutura.
 ---
 
 ## Conteúdo
@@ -48,6 +49,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Blockstates por tipo](#blockstates-por-tipo)
 - [Fazendo o vanilla tratar seu bloco corretamente](#fazendo-o-vanilla-tratar-seu-bloco-corretamente)
 - [Itens](#itens)
+  - [Itens derivados](#itens-derivados)
 - [Fogos de artifício](#fogos-de-artifício)
 - [Fluidos](#fluidos)
 - [Materiais, abas, sons, dicionário de minérios](#materiais-abas-sons-dicionário-de-minérios)
@@ -59,6 +61,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Bloqueios de itens](#bloqueios-de-itens)
 - [Pesos de itens](#pesos-de-itens)
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
+- [Remoções de receitas](#remoções-de-receitas)
 - [Trocas de receitas](#trocas-de-receitas)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
@@ -124,6 +127,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Dados e baralhos](#dados-e-baralhos)
 
 **Controle**
+- [Scripts](#scripts)
 - [A camada de controle](#a-camada-de-controle)
 - [O que cada grupo faz](#o-que-cada-grupo-faz)
 
@@ -209,6 +213,14 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/recipe_locks/*.json`                                                               | Receitas que continuam fechadas até o jogador conquistar um avanço. [Bloqueios de receitas](#bloqueios-de-receitas)                                                                                                    |
 | `<namespace>/spawn_locks/*.json`                                                                | Mobs que não surgem até que as condições sejam cumpridas. [Bloqueios de spawn](#bloqueios-de-spawn)                                                                                                                    |
 | `<namespace>/spawn_swaps/*.json`                                                                | Mobs que surgem são trocados por outros, com cópias extras. [Trocas de spawn](#trocas-de-spawn)                                                                                                                        |
+| `<namespace>/hurt_rules/*.json`                                                                 | Mobs que ferem outros mobs são cancelados ou executam uma função. [Regras de dano](#regras-de-dano)                                                                                                                    |
+| `<namespace>/zones/*.json`                                                                      | Áreas fixas onde os jogadores não podem quebrar, colocar, usar, abrir ou voar. [Regras de zona](#regras-de-zona)                                                                                                       |
+| `<namespace>/schedules/*.json`                                                                  | Uma função executada num temporizador, uma vez ou repetidamente, como o servidor. [Agendamentos](#agendamentos)                                                                                                        |
+| `<namespace>/scripts/events/*.json`                                                             | Um script executado quando um evento do jogo acontece, como um bloco colocado ou um jogador entrando. [Scripts](#scripts)                                                                                              |
+| `<namespace>/scripts/registries/*.json`                                                         | Um script executado enquanto o jogo registra coisas, para acrescentar objetos a um registro. [Scripts de registro](#scripts-de-registro)                                                                               |
+| `<namespace>/commands/*.json`                                                                   | Comandos que um pacote acrescenta, executados por uma função ou um script. [Comandos do pacote](#comandos-do-pacote)                                                                                                   |
+| `<namespace>/syncdata/*.json`                                                                   | Valores nomeados guardados para cada jogador e para o mundo, definidos e mostrados por cartas, diálogos, comandos e scripts. [Dados sincronizados](#dados-sincronizados)                                               |
+| `<namespace>/command_guards/*.json`                                                             | Bloqueia outro comando para os jogadores até que uma condição valha. [Guardas de comando](#guardas-de-comando)                                                                                                         |
 | `<namespace>/item_locks/*.json`                                                                 | Itens ocultos nas listas do jogador até ele conquistar um avanço. [Bloqueios de itens](#bloqueios-de-itens)                                                                                                            |
 | `<namespace>/weights/*.json`                                                                    | Pesos de itens, um limite de carga e níveis de sobrecarga. [Pesos de itens](#pesos-de-itens)                                                                                                                           |
 | `<namespace>/disabled/*.json`                                                                   | Blocos e itens retirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                                                                            |
@@ -847,6 +859,8 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `portway`    | Adiciona-se à lista de paradas de quem a usa e abre um menu para viajar até qualquer uma delas, inclusive entre dimensões. Sua entidade de bloco guarda apenas um nome                                                                                             |
 | `bell`       | Um sino como o que as vilas têm a partir da 1.14: toca quando usado pelo lado, por redstone ou quando um projétil o atinge, balança em sua estrutura e faz saqueadores próximos brilharem. Uma variante, os metadados carregam a direção e como ele está pendurado |
 | `log`        | Gira para a face contra a qual você o coloca e é registrado como `logWood` no dicionário de minérios, para que o corte de árvores e o Blast Plaster o tratem como tronco                                                                                           |
+| `pillar`     | Gira para a face em que você o coloca, como `log`, mas não é registrado no dicionário de minérios, então o corte de árvores e o Blast Plaster o ignoram                                                                                                            |
+| `carpet`     | Uma camada fina com um dezesseis avos de bloco de altura, como o tapete do vanilla. Não pode ser colocado sobre o ar, e quebra e solta o item quando o bloco de baixo some                                                                                         |
 | `leaves`     | Apodrece, é cortada com tesoura, é tingida e solta uma muda, e é registrada como `treeLeaves` no dicionário de minérios                                                                                                                                            |
 | `sapling`    | Cresce até virar uma árvore ou uma das suas estruturas                                                                                                                                                                                                             |
 | `crop`       | Cresce por estágios, solta uma semente e um item de colheita; com `tall`, vários blocos de altura                                                                                                                                                                  |
@@ -908,6 +922,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `container`                  | apenas container                         | objeto                                            | nenhum                                                                                                        | Veja [Contêineres](#contêineres)                                                                                                                                                                                                                                                                                                                                        |
 | `portway`                    | apenas portway                           | objeto                                            | nenhum                                                                                                        | Veja [Rotas](#rotas)                                                                                                                                                                                                                                                                                                                                                    |
 | `bell`                       | apenas bell                              | objeto                                            | nenhum                                                                                                        | Veja [Sinos](#sinos)                                                                                                                                                                                                                                                                                                                                                    |
+| `tagged`                     | não                                      | `true` ou `false`                                 | `true`                                                                                                        | Só para `log`: `false` deixa o bloco fora do nome `logWood` do dicionário de minérios, que é o que `pillar` faz                                                                                                                                                                                                                                                         |
 | `weight`                     | não                                      | número a partir de 0                              | nenhum                                                                                                        | Peso carregado do item do bloco, na unidade dos arquivos de pesos. Prevalece sobre cada entrada dos arquivos de pesos. Veja [Pesos de itens](#pesos-de-itens)                                                                                                                                                                                                           |
 
 ### Camadas comprimidas
@@ -1687,7 +1702,8 @@ Duas coisas decidem o que um arquivo de blockstate precisa conter: se o tipo car
 | `fence`, `pane`           | um bloco                                         | `blocks`, `north`, `east`, `south`, `west`                                                                                          | 16        |
 | `wall`                    | um bloco                                         | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                    | 16        |
 | `slab`                    | dois, `<nome>` e `<nome>_double`                 | a meia laje `blocks` e `half`; a dupla apenas `blocks`                                                                              | 8         |
-| `log`                     | um bloco                                         | `blocks`, `axis`, que é `x`, `y`, `z` ou `none`                                                                                     | 4         |
+| `log`, `pillar`           | um bloco                                         | `blocks`, `axis`, que é `x`, `y`, `z` ou `none`                                                                                     | 4         |
+| `carpet`                  | um bloco                                         | `blocks`; o modelo é o `block/carpet` do vanilla, com a textura chamada `wool`                                                      | 16        |
 | `leaves`                  | um bloco                                         | `blocks`                                                                                                                            | 4         |
 | `stairs`                  | um bloco                                         | `facing`, `half`, `shape`                                                                                                           | 1         |
 | `door`                    | um bloco                                         | `facing`, `half`, `hinge`, `open`                                                                                                   | 1         |
@@ -2132,10 +2148,30 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `potion_bottle`     | Guarda os seus tipos de poção e os mostra em uma aba criativa                                                                         |
 | `container_upgrade` | Transforma um contêiner colocado em um maior, mantendo o que há dentro dele. Veja [Melhorando um contêiner](#melhorando-um-contêiner) |
 | `rocket`            | Coloca uma das suas variantes de foguete do Galacticraft em uma plataforma de lançamento                                              |
+| `record`            | Um disco de música que toca numa jukebox. As suas chaves `jukebox` estão descritas abaixo                                             |
 
 Um `potion_bottle` lista o que pode guardar com `potionTypes`, uma lista de nomes de tipos de poção como `["mypack:ruby_tonic"]`. Um com a lista vazia não registra nada, e o log avisa.
 
 Um `rocket` cita a variante de entidade que coloca com `rocket`. Ele precisa do Galacticraft e, sem ele ou sem `rocket`, não registra nada, e o log avisa. Veja os foguetes do Galacticraft em Variantes de entidades.
+
+Um `record` é um disco de música. O seu objeto `jukebox` dá nome à música e define como ela se comporta numa jukebox.
+
+```json
+{
+  "type": "record",
+  "jukebox": {
+    "sound": "mypack:song_one",
+    "ticks": 2400,
+    "comparator": 7
+  }
+}
+```
+
+| Chave                | Obrigatória | Valor          | Padrão                         | O que faz                                                                                                                                                                                            |
+| -------------------- | ----------- | -------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jukebox.sound`      | sim         | id de som      | nenhum                         | A música que a jukebox toca. Sem ela um erro é registrado no log e o item não é registrado                                                                                                           |
+| `jukebox.ticks`      | não         | int, 1 ou mais | a música nunca termina sozinha | A duração da música em ticks. A 1.12.2 ignora, já que uma jukebox da 1.12.2 nunca encerra uma música                                                                                                 |
+| `jukebox.comparator` | não         | 0 a 15         | veja abaixo                    | O nível que um comparador lê de uma jukebox com o disco. Omitido, a 1.12.2 mantém o nível do vanilla, e a 1.20.1 em diante dão 1. Um valor fora de 0 a 15 é registrado no log e tratado como omitido |
 
 Um item simples com `locates` é uma bússola localizadora. O clique direito procura o lugar mais próximo com esse nome e aponta o item para ele, e quem o segura é informado de onde a agulha parou. O nome é uma estrutura vanilla como `Village`, o id de um bioma como `minecraft:river` ou um nome registrado com `locateAs`. O item empilha até 1, e `cooldown` define por quanto tempo ele recusa outra busca.
 
@@ -2178,41 +2214,70 @@ Um item simples com `sleepingBag` é um saco de dormir. Com um clique direito na
 
 *itens*
 
-| Chave            | Obrigatória       | Valor                                                        | Padrão                          | O que faz                                                                                                                                                                                                                                                                          |
-| ---------------- | ----------------- | ------------------------------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`       | sim               | objeto de nome de variante para variante                     |                                 | Uma entrada por valor de metadados. A chave dá nome a esse valor no blockstate, no caminho do modelo e na chave de idioma. O nome de registro vem do próprio caminho do arquivo                                                                                                    |
-| `type`           | não               | um dos tipos acima                                           | `basic`                         | Qual tipo o item assume                                                                                                                                                                                                                                                            |
-| `creativeTab`    | não               | nome da aba                                                  | nenhum                          | A aba em que aparece                                                                                                                                                                                                                                                               |
-| `material`       | tool, armor       | nome do material                                             | nenhum                          | De qual dos seus materiais é feito                                                                                                                                                                                                                                                 |
-| `toolClass`      | tool              | `pickaxe`, `axe`, `shovel`, `sword`                          | nenhum                          | Qual ferramenta é                                                                                                                                                                                                                                                                  |
-| `slot`           | armor             | `head`, `chest`, `legs`, `feet`                              | nenhum                          | Onde é vestido. `helmet`, `chestplate`, `leggings` e `boots` também funcionam                                                                                                                                                                                                      |
-| `eat`            | food              | booleano                                                     | `false`                         | `true`: usa a animação de comer. `false`: sem animação de comer                                                                                                                                                                                                                    |
-| `alwaysEdible`   | food              | booleano                                                     | `false`                         | `true`: pode ser comido com a barra de fome cheia. `false`: só com fome, como no vanilla                                                                                                                                                                                           |
-| `useDuration`    | drink, potion     | int, ticks                                                   | `32`                            | Para `drink` e `potion`: quanto tempo leva para beber, em ticks (20 ticks = 1 segundo). Os outros tipos ignoram                                                                                                                                                                    |
-| `attackReach`    | não               | float, blocos                                                | `3.0`                           | Até onde chega um golpe com o item na mão principal. Vale também para o clique direito em criaturas. Veja [Armas](#armas)                                                                                                                                                          |
-| `sweep`          | não               | objeto                                                       | nenhum                          | Fere também outras criaturas ao redor de um golpe com força total. Veja [Armas](#armas)                                                                                                                                                                                            |
-| `combo`          | não               | objeto                                                       | nenhum                          | Golpes dados com no máximo `window` ticks entre si percorrem `steps`. Veja [Armas](#armas)                                                                                                                                                                                         |
-| `fireSeconds`    | não               | int, 0 ou mais                                               | `0`                             | Um golpe que acerta põe o alvo em chamas por este número de segundos. Veja [Armas](#armas)                                                                                                                                                                                         |
-| `finisher`       | não               | objeto                                                       | nenhum                          | Um golpe de acabamento contra os mobs listados, dado depois do golpe no fim do tick. Veja [Armas](#armas)                                                                                                                                                                          |
-| `attackSpeed`    | não               | float                                                        | conforme a classe da ferramenta | Para `tool`, o atributo de velocidade de ataque, como em uma espada, que é `-2.4`                                                                                                                                                                                                  |
-| `cooldown`       | não               | int, ticks                                                   | `0`                             | Para `food`, `drink` e `potion`, por quanto tempo o item recusa novo uso depois de consumido; num item com `rolls`, o tempo entre rolagens                                                                                                                                         |
-| `container`      | drink             | nome de item                                                 | nenhum                          | O que sobra, como uma garrafa                                                                                                                                                                                                                                                      |
-| `crop`           | seed              | nome de bloco                                                | nenhum                          | A plantação que planta                                                                                                                                                                                                                                                             |
-| `soil`           | seed              | nome de bloco                                                | `minecraft:farmland`            | Onde pode ser plantada                                                                                                                                                                                                                                                             |
-| `portway`        | portway           | objeto                                                       | nenhum                          | As configurações de um item de viagem: as [chaves de rota](#rotas) que valem para uma viagem, mais `consume` e `bind`. Veja [Itens de viagem](#itens-de-viagem)                                                                                                                    |
-| `upgrade`        | container_upgrade | objeto                                                       | nenhum                          | As configurações de um item de melhoria de contêiner: `paths`, `consume` e `unopenedLoot`. Veja [Melhorando um contêiner](#melhorando-um-contêiner)                                                                                                                                |
-| `rocket`         | rocket            | `namespace:nome`                                             | nenhum                          | A variante de entidade que coloca                                                                                                                                                                                                                                                  |
-| `rolls`          | não               | `coin`, `d6`, `2d6+1`, um dado ou um baralho                 | nenhum                          | Num item simples, um clique direito rola como `/rdplserver game` faria e conta ao público padrão do pacote. Veja [Dados e baralhos](#dados-e-baralhos)                                                                                                                             |
-| `rollStore`      | não               | nome de um objetivo                                          | nenhum                          | Para um item com `rolls`, o objetivo do placar que recebe o total da rolagem como pontuação de quem o segura a cada uso. Um objetivo que não existe faz a rolagem ser recusada com uma linha no chat                                                                               |
-| `bauble`         | não               | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | nenhum                          | O espaço do Baubles em que o item pode ser equipado, para qualquer tipo de item. Ignorado se o Baubles não estiver instalado                                                                                                                                                       |
-| `wornEffects`    | não               | lista de efeitos                                             | nenhum                          | Efeitos de poção mantidos em quem usa o item enquanto ele estiver no seu espaço do Curios, como `potion`, `amplifier`, `ambient` e `showParticles`                                                                                                                                 |
-| `wornAttributes` | não               | lista de alterações de atributos                             | nenhum                          | Alterações de atributos mantidas em quem usa o item enquanto ele estiver no seu espaço do Baubles, como `attribute`, `amount` e `operation`                                                                                                                                        |
-| `locates`        | não               | `Village`, `minecraft:river`                                 | nenhum                          | Em um item simples, o clique direito procura o lugar mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registrado com `locateAs`. O item empilha até 1. Veja o parágrafo da bússola localizadora acima |
-| `passesTurn`     | não               | booleano                                                     | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos)                                                                                                                                                         |
-| `wornAttributes` | não               | lista de alterações de atributos                             | nenhum                          | Alterações de atributos mantidas em quem usa o item enquanto ele estiver no seu espaço do Curios, como `attribute`, `amount` e `operation`                                                                                                                                         |
-| `firework`       | não               | objeto                                                       | nenhum                          | Um clique direito lança ou explode um fogo de artifício, para qualquer tipo de item. Veja [Fogos de artifício](#fogos-de-artifício)                                                                                                                                                |
-| `requires`       | não               | lista de ids de mods ou namespaces de pacotes                | nenhum                          | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                           |
-| `weight`         | não               | número a partir de 0                                         | nenhum                          | Peso carregado de um item (para um bloco, do seu item), na unidade dos arquivos de pesos. Prevalece sobre cada entrada dos arquivos de pesos. Veja [Pesos de itens](#pesos-de-itens)                                                                                               |
+`<namespace>/items/*.json`
+
+```json
+{
+  "runs": "mypack:ping",
+  "cooldown": 100
+}
+```
+
+```json
+{
+  "locates": "Village",
+  "locatesEye": true,
+  "locatesSound": "minecraft:entity.endereye.launch",
+  "locatesRange": 2000,
+  "variants": {
+    "seeker": { "meta": 0, "maxSize": 1 }
+  }
+}
+```
+
+Um nome de `locates` que começa com `#` é uma tag, e esta versão não tem tags de estrutura: o item é registrado sem `locates` e o log avisa.
+
+| Chave            | Obrigatória       | Valor                                                        | Padrão                          | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------- | ----------------- | ------------------------------------------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | sim               | objeto de nome de variante para variante                     |                                 | Uma entrada por valor de metadados. A chave dá nome a esse valor no blockstate, no caminho do modelo e na chave de idioma. O nome de registro vem do próprio caminho do arquivo                                                                                                                                                                                                                                                                                |
+| `type`           | não               | um dos tipos acima                                           | `basic`                         | Qual tipo o item assume                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `creativeTab`    | não               | nome da aba                                                  | nenhum                          | A aba em que aparece                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `material`       | tool, armor       | nome do material                                             | nenhum                          | De qual dos seus materiais é feito                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `toolClass`      | tool              | `pickaxe`, `axe`, `shovel`, `sword`                          | nenhum                          | Qual ferramenta é                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `slot`           | armor             | `head`, `chest`, `legs`, `feet`                              | nenhum                          | Onde é vestido. `helmet`, `chestplate`, `leggings` e `boots` também funcionam                                                                                                                                                                                                                                                                                                                                                                                  |
+| `eat`            | food              | booleano                                                     | `false`                         | `true`: usa a animação de comer. `false`: sem animação de comer                                                                                                                                                                                                                                                                                                                                                                                                |
+| `alwaysEdible`   | food              | booleano                                                     | `false`                         | `true`: pode ser comido com a barra de fome cheia. `false`: só com fome, como no vanilla                                                                                                                                                                                                                                                                                                                                                                       |
+| `useDuration`    | drink, potion     | int, ticks                                                   | `32`                            | Para `drink` e `potion`: quanto tempo leva para beber, em ticks (20 ticks = 1 segundo). Os outros tipos ignoram                                                                                                                                                                                                                                                                                                                                                |
+| `attackReach`    | não               | float, blocos                                                | `3.0`                           | Até onde chega um golpe com o item na mão principal. Vale também para o clique direito em criaturas. Veja [Armas](#armas)                                                                                                                                                                                                                                                                                                                                      |
+| `sweep`          | não               | objeto                                                       | nenhum                          | Fere também outras criaturas ao redor de um golpe com força total. Veja [Armas](#armas)                                                                                                                                                                                                                                                                                                                                                                        |
+| `combo`          | não               | objeto                                                       | nenhum                          | Golpes dados com no máximo `window` ticks entre si percorrem `steps`. Veja [Armas](#armas)                                                                                                                                                                                                                                                                                                                                                                     |
+| `fireSeconds`    | não               | int, 0 ou mais                                               | `0`                             | Um golpe que acerta põe o alvo em chamas por este número de segundos. Veja [Armas](#armas)                                                                                                                                                                                                                                                                                                                                                                     |
+| `finisher`       | não               | objeto                                                       | nenhum                          | Um golpe de acabamento contra os mobs listados, dado depois do golpe no fim do tick. Veja [Armas](#armas)                                                                                                                                                                                                                                                                                                                                                      |
+| `attackSpeed`    | não               | float                                                        | conforme a classe da ferramenta | Para `tool`, o atributo de velocidade de ataque, como em uma espada, que é `-2.4`                                                                                                                                                                                                                                                                                                                                                                              |
+| `cooldown`       | não               | int, ticks                                                   | `0`                             | Para `food`, `drink` e `potion`, por quanto tempo o item recusa novo uso depois de consumido; num item com `rolls`, o tempo entre rolagens; num item com `runs`, o tempo até o próximo clique direito, mostrado como a varredura de recarga do item vanilla                                                                                                                                                                                                    |
+| `container`      | drink             | nome de item                                                 | nenhum                          | O que sobra, como uma garrafa                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `crop`           | seed              | nome de bloco                                                | nenhum                          | A plantação que planta                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `soil`           | seed              | nome de bloco                                                | `minecraft:farmland`            | Onde pode ser plantada                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `portway`        | portway           | objeto                                                       | nenhum                          | As configurações de um item de viagem: as [chaves de rota](#rotas) que valem para uma viagem, mais `consume` e `bind`. Veja [Itens de viagem](#itens-de-viagem)                                                                                                                                                                                                                                                                                                |
+| `upgrade`        | container_upgrade | objeto                                                       | nenhum                          | As configurações de um item de melhoria de contêiner: `paths`, `consume` e `unopenedLoot`. Veja [Melhorando um contêiner](#melhorando-um-contêiner)                                                                                                                                                                                                                                                                                                            |
+| `rocket`         | rocket            | `namespace:nome`                                             | nenhum                          | A variante de entidade que coloca                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `rolls`          | não               | `coin`, `d6`, `2d6+1`, um dado ou um baralho                 | nenhum                          | Num item simples, um clique direito rola como `/rdplserver game` faria e conta ao público padrão do pacote. Veja [Dados e baralhos](#dados-e-baralhos)                                                                                                                                                                                                                                                                                                         |
+| `rollStore`      | não               | nome de um objetivo                                          | nenhum                          | Para um item com `rolls`, o objetivo do placar que recebe o total da rolagem como pontuação de quem o segura a cada uso. Um objetivo que não existe faz a rolagem ser recusada com uma linha no chat                                                                                                                                                                                                                                                           |
+| `bauble`         | não               | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | nenhum                          | O espaço do Baubles em que o item pode ser equipado, para qualquer tipo de item. Ignorado se o Baubles não estiver instalado                                                                                                                                                                                                                                                                                                                                   |
+| `wornEffects`    | não               | lista de efeitos                                             | nenhum                          | Efeitos de poção mantidos em quem usa o item enquanto ele estiver no seu espaço do Baubles, como `potion`, `amplifier`, `ambient` e `showParticles`                                                                                                                                                                                                                                                                                                            |
+| `wornAttributes` | não               | lista de alterações de atributos                             | nenhum                          | Alterações de atributos mantidas em quem usa o item enquanto ele estiver no seu espaço do Baubles, como `attribute`, `amount` e `operation`                                                                                                                                                                                                                                                                                                                    |
+| `locates`        | não               | `Village`, `minecraft:river`                                 | nenhum                          | Em um item simples, o clique direito procura o lugar mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registrado com `locateAs`. O item empilha até 1. Veja o parágrafo da bússola localizadora acima                                                                                                                                                                             |
+| `locatesEye`     | não               | booleano                                                     | `false`                         | `true`: para um item que `locates`, um clique direito que encontra o lugar também lança um olho de Ender do portador em direção a ele, voando como um olho de Ender comum                                                                                                                                                                                                                                                                                      |
+| `locatesSound`   | não               | identificador de som                                         | nenhum                          | Para um item que `locates`, um som tocado ao portador a cada clique direito, como `minecraft:entity.endereye.launch`                                                                                                                                                                                                                                                                                                                                           |
+| `locatesRange`   | não               | inteiro, em blocos                                           | `0`                             | Para um item que `locates`, a que distância o lugar pode estar, medida na horizontal a partir do portador. Um lugar mais distante conta como não encontrado. `0` não define limite                                                                                                                                                                                                                                                                             |
+| `passesTurn`     | não               | booleano                                                     | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos)                                                                                                                                                                                                                                                                                                                                     |
+| `sleepingBag`    | não               | booleano                                                     | `false`                         | `true`: num item simples, um clique direito sobre um bloco deita quem o segura para dormir, pulando a noite como uma cama faz. Nunca define o ponto de renascimento e não é gasto. Vale só onde dormir é permitido. Ignorado com `locates`, `rolls` ou `passesTurn`. `false`: um clique direito não deita quem o segura                                                                                                                                        |
+| `firework`       | não               | objeto                                                       | nenhum                          | Um clique direito lança ou explode um fogo de artifício, para qualquer tipo de item. Veja [Fogos de artifício](#fogos-de-artifício)                                                                                                                                                                                                                                                                                                                            |
+| `runs`           | não               | id de função                                                 | nenhum                          | Um clique direito, no ar ou sobre um bloco, executa a função como e no lugar do portador, no servidor. Funciona em itens simples, e roda depois do uso fixo de `rolls`, `locates`, `passesTurn` ou `sleepingBag` quando o item tem um; comida, bebida, poção, ferramenta, armadura e itens de contêiner mantêm o próprio clique direito. Uma função que nenhum pacote fornece é registrada no log e nada roda. Sem ela, o clique direito faz o que fazia antes |
+| `script`         | não               | texto                                                        | nenhum                          | Um script a rodar no clique direito, veja [Scripts](#scripts). Pode ser definido junto com `runs`. Um script cujo resultado é `"cancel"` pula a recarga do item                                                                                                                                                                                                                                                                                                |
+| `scriptFile`     | não               | caminho                                                      | nenhum                          | O mesmo, como um caminho sob `scripts/` terminando em `.js`, veja [Scripts](#scripts)                                                                                                                                                                                                                                                                                                                                                                          |
+| `requires`       | não               | lista de ids de mods ou namespaces de pacotes                | nenhum                          | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `weight`         | não               | número a partir de 0                                         | nenhum                          | Peso carregado de um item (para um bloco, do seu item), na unidade dos arquivos de pesos. Prevalece sobre cada entrada dos arquivos de pesos. Veja [Pesos de itens](#pesos-de-itens)                                                                                                                                                                                                                                                                           |
 
 ### Fogos de artifício
 
@@ -2298,6 +2363,150 @@ Um objeto `firework` em qualquer item, seja qual for o seu `type`, faz o clique 
 ```
 
 **O gatilho é um clique direito.** Arremessar e bater não são gatilhos, pois nenhuma chave de item os descreve. `cooldown` é a chave de item comum e vale depois de um lançamento. Um foguete com `explosions` fere as criaturas próximas exatamente como um foguete vanilla, e com uma lista vazia não causa dano algum. Estrelas de fogos de artifício, fabricação e o impulso do élitro não estão cobertos.
+
+### Itens derivados
+
+*itens*
+
+`<namespace>/items/*.json`
+
+Um item derivado é um item próprio que roda sobre o comportamento de outro item. Dê o nome da base com `item`, do mesmo jeito que uma variante de entidade nomeia a sua com `entity`, e o arquivo recebe uma cópia da classe e dos campos desse item sob o nome de registro próprio. O item base não muda. A partir daí você altera campos com `set`, faz métodos devolverem valores fixos com `returns` e põe o item numa coleção de outra classe do mod com `addTo`. Funciona só com itens: um item de bloco como base é registrado no log e deixado de fora, e não existem blocos derivados. O item pega o modelo de `assets/<ns>/models/item/<name>.json` como qualquer outro item.
+
+```json
+{
+  "item": "minecraft:iron_pickaxe",
+  "name": "Tempered Pickaxe",
+  "set": {
+    "maxDamage": 2000,
+    "efficiency": 9.0,
+    "toolMaterial": { "set": { "enchantability": 30 } }
+  },
+  "returns": {
+    "hasEffect": true,
+    "getRarity": "EPIC"
+  }
+}
+```
+
+| Chave         | Obrigatória | Valor                                           | Padrão | O que faz                                                                                                                                        |
+| ------------- | ----------- | ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `item`        | sim         | `<mod>:<item>`                                  |        | O item a copiar. Ele precisa estar registrado quando o item derivado carrega, então use `requires` para um mod que o fornece                     |
+| `set`         | não         | objeto de caminho de campo com ponto para valor | nenhum | Escreve campos da cópia. Veja `set` abaixo                                                                                                       |
+| `returns`     | não         | objeto de nome de método para constante         | nenhum | Faz métodos da cópia devolverem uma constante. Veja `returns` abaixo                                                                             |
+| `addTo`       | não         | `<fully.qualified.Class>.<member>`              | nenhum | Adiciona o item novo a uma coleção estática de outra classe. Veja `addTo` abaixo                                                                 |
+| `name`        | não         | texto                                           | nenhum | O nome de exibição, como nas variantes de entidade. Uma entrada `returns` para `getItemStackDisplayName` tem prioridade sobre ele, e o log avisa |
+| `creativeTab` | não         | nome da aba                                     | nenhum | A aba em que aparece                                                                                                                             |
+| `requires`    | não         | lista de ids de mods                            | nenhum | Deixa o item de fora quando um mod listado não está carregado                                                                                    |
+| `inherits`    | não         | o arquivo do item pai                           | nenhum | Pega as chaves do pai. Um `set` do filho substitui o do pai inteiro, não é mesclado                                                              |
+
+Estas chaves mantêm o sentido habitual em um item derivado: `bauble`, `wornEffects`, `wornAttributes`, `attackReach`, `sweep`, `combo`, `fireSeconds` e `finisher`.
+
+Estas chaves não fazem nada em um item derivado, pois pertencem a uma classe de item do RDPL que a cópia não tem. Cada uma presente é registrada no log uma vez e ignorada: `type`, `variants`, `runs`, `script`, `cooldown`, `rolls`, `rollStore`, `locates`, `sleepingBag`, `firework`, `container`, `containerItem`, `upgrade`, `portway`, `eat`, `alwaysEdible`, `useDuration`, `material`, `toolClass`, `slot`, `crop`, `soil`, `potionTypes`, `attackSpeed`, `rocket` e `passesTurn`. O efeito delas, quando existe, já está no item base, ou você o escreve com `set` e `returns`.
+
+#### Nomeando campos e métodos
+
+Campos e métodos são escritos com os nomes legíveis do vanilla, não com os ofuscados: `maxDamage`, `efficiency`, `getRarity`. O nome é procurado primeiro na classe do item base, depois em cada superclasse acima dela, e vale a primeira correspondência.
+
+Um método que existe com várias listas de parâmetros precisa ser nomeado com os tipos dos parâmetros entre parênteses, usando os nomes simples das classes e sem espaços: `getItemStackDisplayName(ItemStack)`, ou `name(type,type)` para dois parâmetros. Um nome simples basta quando só um método tem esse nome. Se o nome for ambíguo, o log lista as opções. Um nome que não corresponde a nada é registrado no log e aquela entrada é pulada.
+
+#### `set`
+
+`set` é um objeto de caminhos de campo com ponto para valores. `"maxDamage": 2000` escreve o campo `maxDamage` na cópia. `"toolMaterial.enchantability": 30` entra no objeto guardado por `toolMaterial` e escreve ali. Campos estáticos nunca são escritos, porque todos os itens compartilhariam a mudança.
+
+| Valor JSON           | Tipo do campo                                          | Observações                                                                                                     |
+| -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| número               | `int`, `long`, `short`, `byte`, `float`, `double`      | Só números inteiros para os tipos inteiros, e o valor precisa caber no tipo                                     |
+| `true`, `false`      | `boolean`                                              |                                                                                                                 |
+| string               | `String`, `char`                                       | Um `char` aceita uma string de um caractere                                                                     |
+| string               | um enum                                                | Um nome de constante, em maiúsculas ou minúsculas                                                               |
+| string               | `ResourceLocation`                                     | `mod:name`                                                                                                      |
+| string               | `ItemStack`                                            | Uma pilha escrita do jeito que os arquivos do pacote escrevem pilhas em outros lugares. Ela não pode sair vazia |
+| string               | uma entrada de registro como `Item`, `Block`, `Potion` | O nome de registro. Ela precisa estar registrada                                                                |
+| array                | um array, ou uma `List`, `Set` ou `Collection`         | Cada elemento segue esta tabela. Um campo de coleção é substituído inteiro, nunca acrescentado                  |
+| objeto               | qualquer outro objeto                                  | Um objeto aninhado, veja abaixo                                                                                 |
+| string `<ns>:<item>` | qualquer outro objeto                                  | Reaproveita o objeto que o item derivado construiu naquele mesmo caminho, veja abaixo                           |
+
+**Objetos aninhados.** Um objeto JSON em `set` tem as mesmas três chaves do arquivo: `set`, `returns` e `addTo`. Ele altera uma cópia do objeto que o campo guarda, então o item base e tudo o mais que compartilha esse objeto mantêm o original. É cópia na escrita: só os objetos ao longo de um caminho que você escreve são copiados, e cada outro campo continua apontando para o mesmo objeto da base.
+
+Um material de ferramenta ou de armadura é copiado como uma nova constante de enum, com o item de reparo mantido. Qualquer outro enum como objeto aninhado é recusado, assim como um objeto de pacote `java.`. Arrays e coleções não são percorridos: um caminho não pode passar por eles, e um campo de coleção é substituído inteiro a partir de um array JSON.
+
+Uma string `"<ns>:<item>"` no lugar de um objeto reaproveita o objeto daquele item derivado no mesmo caminho. Dois itens derivados podem compartilhar um mesmo material desse jeito, e o citado é construído primeiro.
+
+**O que os construtores já copiaram.** `ItemTool`, `ItemSword` e `ItemArmor` leem o material uma vez no construtor e guardam os números em seus próprios campos. Mudar o material aninhado não muda esses. Defina-os no item: `maxDamage`, `efficiency`, `attackDamage`, `damageReduceAmount`, `toughness` e o nível de colheita dentro de `toolClasses`. Um material aninhado muda só o que é lido dele depois: a encantabilidade, o item de reparo e o nome do material da ferramenta.
+
+#### `returns`
+
+`returns` é um objeto de nome de método para a constante que o método passa a devolver. A cópia sobrescreve o método e devolve esse valor. Números, booleanos e strings são escritos direto. Um enum recebe o nome da constante, e uma pilha de item ou uma entrada de registro recebe o nome como string; eles são procurados depois que todos os itens foram registrados, então podem citar um item que carrega depois. Um nome que ainda não está registrado no fim é registrado no log e o comportamento base continua.
+
+Um método é recusado, e a entrada deixada de fora, quando é estático, final, privado, de pacote fora do pacote da base, ou não tem valor de retorno. Uma constante do tipo errado também é recusada. Um objeto aninhado em `returns` funciona só para métodos sem argumentos: é uma cópia do que o método devolve, ajustada como um objeto de `set` aninhado, e a cópia é o que o método devolve.
+
+#### `addTo`
+
+`addTo` é `<fully.qualified.Class>.<member>`. O membro é um campo estático `Collection`, ou um getter estático sem argumentos escrito com os parênteses vazios, como `com.example.Registry.items()`. Quando tudo estiver registrado, o item novo é adicionado a essa coleção se ainda não estiver nela, e só quando o tipo de elemento da coleção aceita o item. Use para um mod que mantém a sua própria lista de itens, para que a cópia seja tratada como o original.
+
+#### O que uma cópia não recebe
+
+Uma cópia é um objeto separado com os campos da base copiados, então o seguinte não passa para ela:
+
+- Verificações de identidade como `== ModItems.X`, e comparações de `getClass`. Código que testa pelo item base não reconhece a cópia.
+- Registros indexados pelo item base: o modelo, o manipulador de cor, as entradas no dicionário de minérios, os subtipos do JEI e as receitas. Dê à cópia os seus próprios.
+- Efeitos colaterais do construtor, como um registro que o construtor da base fez.
+- Campos que não aparecem em `set`. Os mutáveis continuam compartilhados com a base, então uma lista ou mapa em um é a mesma lista ou mapa no outro.
+
+Uma base com subtipos os mantém, com um modelo no metadado 0. Defina `"hasSubtypes": false` em `set` se a cópia for um item único.
+
+#### Ordem e requires
+
+Um item derivado cuja base é outro item derivado, ou que reaproveita o objeto de outro, é construído depois dele. Se itens derivados dependerem uns dos outros em um ciclo, todos são registrados no log e deixados de fora. Um item derivado cujo `requires` não é atendido é pulado, então uma base de outro mod precisa do mesmo `requires`. Um nome de item já registrado é pulado.
+
+Três coisas deixam o item inteiro de fora: a base não existe, a base é um item de bloco, ou a classe base é final. Uma classe carregada por um class loader que não enxerga o RDPL também fica de fora.
+
+#### Mensagens do log
+
+`{}` representa um nome ou valor que o log preenche.
+
+| Mensagem                                                                                                                  | O que significa                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Derived item {} names no item to copy, ignoring it`                                                                      | `item` está ausente ou não é um nome de item                                      |
+| `The {} of derived item {} is not an object, so it is treated as empty`                                                   | `set` ou `returns` não é um objeto                                                |
+| `The derived item {} sets {}, which needs an RDPL item class, so the key is ignored`                                      | Uma chave da lista acima está num item derivado                                   |
+| `An item named {} is already registered, skipping the pack definition`                                                    | O nome de registro já está em uso                                                 |
+| `Derived item {} is based on {}, which nothing registers, leaving it out`                                                 | O item base não existe; adicione `requires` para o mod dele                       |
+| `Derived item {} is based on {}, a block item, and derived blocks are not supported, leaving it out`                      | A base é um item de bloco                                                         |
+| `Derived item {} is based on {}, a final class, so it cannot be copied`                                                   | A classe base é final                                                             |
+| `Derived item {} is based on {}, which is loaded by a class loader that cannot see RDPL, so it cannot be copied`          | A classe base vem de um loader que o RDPL não alcança                             |
+| `Could not make a class for derived item {}`                                                                              | Falhou a definição da classe da cópia; o stack trace segue                        |
+| `Derived item {} could not be made, leaving it out`                                                                       | Outro erro impediu o item; o stack trace segue                                    |
+| `Derived items depend on each other in a loop, {}{}, leaving them out`                                                    | Um ciclo entre bases ou objetos reaproveitados; cada item nele é deixado de fora  |
+| `Derived item {} gives both a name and returns for {}, the returns wins`                                                  | `name` e uma entrada `getItemStackDisplayName` em `returns` estão ambos definidos |
+| `{} has no field named {}`                                                                                                | Um caminho em `set` não nomeia campo algum                                        |
+| `{} has no method named {}`                                                                                               | Um nome em `returns` não corresponde a método algum                               |
+| `{} has several methods named {} ({}), name one with its parameter types`                                                 | Um método sobrecarregado precisa de `name(type,type)`                             |
+| `Derived item {} returns a constant for {} twice, leaving the second out`                                                 | Duas chaves de `returns` nomeiam o mesmo método                                   |
+| `Derived item {} returns a constant for {}, which {}, leaving it out`                                                     | O método é recusado: é estático, final, privado, de pacote, ou não devolve nada   |
+| `Derived item {} returns {} for {}, which is {}, leaving it out`                                                          | A constante é do tipo errado para o método                                        |
+| `Derived item {} returns {}, which is not registered, the base behavior stays`                                            | Uma pilha ou entrada de registro em `returns` cita algo que nunca foi registrado  |
+| `Derived item {} returns an object for {}, which takes arguments, and only methods without arguments can, leaving it out` | Um objeto aninhado em um método com parâmetros                                    |
+| `Derived item {} returns an object for {}, which has no object to copy, leaving it out`                                   | Não há objeto de origem para copiar                                               |
+| `Derived item {} returns an object for {}, which returns nothing to copy, leaving it out`                                 | O método devolveu null na base                                                    |
+| `Derived item {} could not read {} to copy it, leaving it out: {}`                                                        | Chamar o método na base falhou                                                    |
+| `Derived item {} could not set {}, leaving it out: {}`                                                                    | Escrever um campo falhou; a causa segue                                           |
+| `Derived item {} sets below {}, which holds nothing, leaving it out`                                                      | Um caminho passa por um campo que é null                                          |
+| `Derived item {} sets {}, but static fields are shared by every item, not written, leaving it out`                        | O caminho termina em um campo estático                                            |
+| `Derived item {} sets {} to an object, but it holds nothing to copy, leaving it out`                                      | Um objeto aninhado em um campo que é null                                         |
+| `{} sets {} to {}, which is {}, leaving it out`                                                                           | O valor não cabe no tipo do campo; veja a tabela de valores                       |
+| `Derived item {} sets {} to the object of {}, which is no derived item that built a {} there, leaving it out`             | Um objeto reaproveitado não existe naquele caminho                                |
+| `Derived item {} reaches {} through an array or collection, but paths do not go through arrays, leaving it out`           | Um caminho ou objeto aninhado entra em um array ou coleção                        |
+| `Derived item {} changes {}, a {}, which cannot be copied, leaving it out`                                                | Um enum que não é material, ou um objeto `java.`, como objeto aninhado            |
+| `Derived item {} has an unknown key {} under {}, ignoring it`                                                             | Um objeto aninhado tem uma chave além de `set`, `returns` e `addTo`               |
+| `The {} of {} in derived item {} is not an object, so it is treated as empty`                                             | Um `set` ou `returns` aninhado não é um objeto                                    |
+| `Could not make a material named {} for derived item {}`                                                                  | Falhou a cópia do material de ferramenta ou armadura                              |
+| `Derived item {} adds itself to {}, which is not written <Class>.<member>, leaving it out`                                | `addTo` não tem classe e membro                                                   |
+| `Derived item {} adds itself to {}, which is no static field or static getter without arguments, leaving it out`          | O membro não foi encontrado                                                       |
+| `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | O membro não é uma coleção                                                        |
+| `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | O tipo de elemento da coleção não aceita o item                                   |
+| `Derived item {} could not be added to {}: {}`                                                                            | `addTo` falhou, por exemplo a classe não existe                                   |
+| `Registered {} derived item(s) from packs`                                                                                | A linha de resumo, com a quantidade de itens criados                              |
 
 ### Chaves de variantes de itens
 
@@ -2424,21 +2633,32 @@ O caminho do arquivo é o nome de registro do fluido, a menos que `name` o subst
 }
 ```
 
-| Chave         | Obrigatória | Valor                                         | Padrão                   | O que faz                                                                                                                                                                                                                                                                                          |
-| ------------- | ----------- | --------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | não         | texto                                         | o nome do arquivo        | O nome de registro do fluido                                                                                                                                                                                                                                                                       |
-| `still`       | não         | caminho de textura                            | água parada do vanilla   | Textura do fluido parado                                                                                                                                                                                                                                                                           |
-| `flow`        | não         | caminho de textura                            | água corrente do vanilla | Textura do fluido corrente                                                                                                                                                                                                                                                                         |
-| `color`       | não         | cor hex                                       | nenhum                   | Cor aplicada a essas texturas                                                                                                                                                                                                                                                                      |
-| `bucket`      | não         | booleano                                      | `true`                   | `true`: registra um balde para ele. `false`: nenhum balde é registrado                                                                                                                                                                                                                             |
-| `luminosity`  | não         | 0 a 15                                        | `0`                      | Luz emitida                                                                                                                                                                                                                                                                                        |
-| `density`     | não         | int                                           | `1000`                   | Negativa flutua para cima, como um gás                                                                                                                                                                                                                                                             |
-| `temperature` | não         | int, kelvin                                   | `300`                    | A água é 300, a lava 1300                                                                                                                                                                                                                                                                          |
-| `viscosity`   | não         | int                                           | `1000`                   | Quão devagar ele flui. A água é 1000, a lava 6000                                                                                                                                                                                                                                                  |
-| `gaseous`     | não         | booleano                                      | `false`                  | `true`: tratado como gás. `false`: não é                                                                                                                                                                                                                                                           |
-| `creativeTab` | não         | nome da aba                                   | nenhum                   | A aba em que o balde aparece                                                                                                                                                                                                                                                                       |
-| `block`       | não         | objeto                                        |                          | O bloco do fluido. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (nenhum, uma lista de efeitos dados a tudo o que estiver nele, cada um escrito como `potion,duration,amplifier` com uma quarta parte opcional `true` para um efeito ambiente) |
-| `requires`    | não         | lista de ids de mods ou namespaces de pacotes | nenhum                   | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                           |
+| Chave         | Obrigatória | Valor                                         | Padrão                   | O que faz                                                                                                                                                                                                                                                                                                                                                              |
+| ------------- | ----------- | --------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | não         | texto                                         | o nome do arquivo        | O nome de registro do fluido                                                                                                                                                                                                                                                                                                                                           |
+| `still`       | não         | caminho de textura                            | água parada do vanilla   | Textura do fluido parado                                                                                                                                                                                                                                                                                                                                               |
+| `flow`        | não         | caminho de textura                            | água corrente do vanilla | Textura do fluido corrente                                                                                                                                                                                                                                                                                                                                             |
+| `color`       | não         | cor hex                                       | nenhum                   | Cor aplicada a essas texturas                                                                                                                                                                                                                                                                                                                                          |
+| `bucket`      | não         | booleano                                      | `true`                   | `true`: registra um balde para ele. `false`: nenhum balde é registrado                                                                                                                                                                                                                                                                                                 |
+| `luminosity`  | não         | 0 a 15                                        | `0`                      | Luz emitida                                                                                                                                                                                                                                                                                                                                                            |
+| `density`     | não         | int                                           | `1000`                   | Negativa flutua para cima, como um gás                                                                                                                                                                                                                                                                                                                                 |
+| `temperature` | não         | int, kelvin                                   | `300`                    | A água é 300, a lava 1300                                                                                                                                                                                                                                                                                                                                              |
+| `viscosity`   | não         | int                                           | `1000`                   | Quão devagar ele flui. A água é 1000, a lava 6000                                                                                                                                                                                                                                                                                                                      |
+| `gaseous`     | não         | booleano                                      | `false`                  | `true`: tratado como gás. `false`: não é                                                                                                                                                                                                                                                                                                                               |
+| `creativeTab` | não         | nome da aba                                   | nenhum                   | A aba em que o balde aparece                                                                                                                                                                                                                                                                                                                                           |
+| `block`       | não         | objeto ou `false`                             |                          | `false`: o fluido não ganha bloco no mundo, veja abaixo. Um objeto: o bloco do fluido. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (nenhum, uma lista de efeitos dados a tudo o que estiver nele, cada um escrito como `potion,duration,amplifier` com uma quarta parte opcional `true` para um efeito ambiente) |
+| `requires`    | não         | lista de ids de mods ou namespaces de pacotes | nenhum                   | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                               |
+
+Um fluido com `"block": false` não tem bloco no mundo. Ele existe para tanques, receitas e baldes, e o seu balde não pode ser esvaziado no mundo. Deixar `block` de fora, ou escrever um objeto, se comporta como antes.
+
+```json
+{
+  "name": "mist",
+  "block": false,
+  "still": "mypack:blocks/mist_still",
+  "flow": "mypack:blocks/mist_flow"
+}
+```
 
 ### Fluxo
 
@@ -2682,6 +2902,24 @@ Você escolhe o nome do arquivo, pois só a pasta é lida, e vários arquivos se
 Acrescenta nomes do dicionário de minérios a itens que já existem. Cada chave é um nome do dicionário de minérios e seu valor, os itens registrados sob ele, então um arquivo não tem chaves fixas próprias. Os blocos e itens do próprio pacote citam os seus em `oreDict` na variante.
 
 Uma chave começando com `-` remove em vez de acrescentar: `"-ingotCopper": ["thermalfoundation:material:128"]` tira esse item do nome, e `["*"]` esvazia o nome. As receitas que usavam o nome deixam de combinar com o item imediatamente, que é justamente a intenção. Um nome que nada registra é recusado com um erro, e o mesmo vale para um item que o nome não contém. Uma entrada registrada para todos os metadados, como o vanilla registra `plankWood`, é removida inteira qualquer que seja o metadado citado, e o log avisa; cite-a com `:*` para dizer o mesmo de forma explícita.
+
+**Cópia por padrão.** Um arquivo com uma chave `tag` não lista nomes. Ele acrescenta, a um só nome do dicionário de minérios, todo item cujo nome de registro casa com um padrão, então um pacote pode preencher um nome sem listar cada membro. As outras chaves desse arquivo não são lidas como nomes do dicionário de minérios.
+
+```json
+{
+  "tag": "logWoodAll",
+  "matches": "^minecraft:log2?$",
+  "from": "logWood"
+}
+```
+
+| Chave     | Obrigatória | Valor                          | Padrão | O que faz                                                                                                                                                                                                                                                             |
+| --------- | ----------- | ------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tag`     | sim         | nome do dicionário de minérios |        | O nome que recebe os itens. Um nome com dois-pontos, como `forge:ingots/copper`, vira o seu nome do dicionário de minérios onde existir um. Do contrário o log diz que não há nome do dicionário de minérios nesta versão e o arquivo é ignorado                      |
+| `matches` | sim         | expressão regular              |        | Um padrão Java testado com busca contra o nome de registro de cada item, escrito `namespace:path`, então casa em qualquer parte do nome a menos que comece com `^` ou termine com `$`. Um arquivo sem padrão, ou com uma expressão inválida, é ignorado e o log avisa |
+| `from`    | não         | nome do dicionário de minérios | nenhum | Copia só dos itens já registrados sob este nome, com os metadados que eles trazem ali. Omitido, todo item do jogo é testado e cada casamento entra em `tag` para todo metadado. Um nome `from` sem membros registra um erro no log e não copia nada                   |
+
+A cópia roda uma vez, depois que todo mod registrou os seus itens e depois que os arquivos simples acima foram aplicados. Um padrão que não casa com nada é registrado no log como aviso e o arquivo não faz nada. `content.oreDictionary` na configuração desliga a pasta inteira.
 
 ```json
 {
@@ -3001,16 +3239,22 @@ Tira blocos e itens de jogo sem desregistrá-los, então os mundos mantêm seus 
   "requires": ["thermalfoundation"],
   "names": ["thermalfoundation:ore", "thermalfoundation:material:128", "mekanism:salt*"],
   "namespaces": ["bigreactors"],
-  "oreDict": ["oreTin"]
+  "oreDict": ["oreTin"],
+  "hideOnly": false,
+  "untag": ["minecraft:stick"]
 }
 ```
 
-| Chave        | Obrigatória | Valor                                    | Padrão | O que faz                                                                                                                                                                                                           |
-| ------------ | ----------- | ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `names`      | não         | lista de nomes de blocos e itens         | nenhum | O que é desativado. Metadados como terceira parte, `"thermalfoundation:material:128"`, desativam apenas esse item, e `:*` todos os metadados. Um nome terminado em `*` casa com todo nome que começa com o restante |
-| `namespaces` | não         | lista de ids de mods                     | nenhum | Todo bloco e item do mod                                                                                                                                                                                            |
-| `oreDict`    | não         | lista de nomes do dicionário de minérios | nenhum | Todo item registrado sob o nome, e o nome fica vazio                                                                                                                                                                |
-| `requires`   | não         | lista de ids de mods                     | nenhum | O arquivo é ignorado a menos que todos estejam carregados. Entradas `config:` e `file:` funcionam como em todo o resto                                                                                              |
+| Chave            | Obrigatória | Valor                                    | Padrão  | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------- | ----------- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`          | não         | lista de nomes de blocos e itens         | nenhum  | O que é desativado. Metadados como terceira parte, `"thermalfoundation:material:128"`, desativam apenas esse item, e `:*` todos os metadados. Um nome terminado em `*` casa com todo nome que começa com o restante                                                                                                                                                                                                                               |
+| `namespaces`     | não         | lista de ids de mods                     | nenhum  | Todo bloco e item do mod                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `oreDict`        | não         | lista de nomes do dicionário de minérios | nenhum  | Todo item registrado sob o nome, e o nome fica vazio                                                                                                                                                                                                                                                                                                                                                                                              |
+| `hideOnly`       | não         | `true` ou `false`                        | `false` | Com `true`, o arquivo esconde o que lista apenas no JEI e no HEI. Esses blocos e itens continuam fabricáveis, colocáveis e utilizáveis                                                                                                                                                                                                                                                                                                            |
+| `untag`          | não         | lista de nomes de blocos e itens         | nenhum  | Tira os itens listados de todos os nomes do dicionário de minérios de uma vez. Eles continuam no jogo, ao contrário dos desativados. Os nomes se escrevem como em `names`                                                                                                                                                                                                                                                                         |
+| `hideCategories` | não         | lista de ids de categorias do JEI        | nenhum  | Categorias de receitas do JEI a esconder, pelo id que o JEI dá à categoria, como `minecraft.smelting` para receitas de fornalha. Toda categoria listada some do JEI e do HEI, com as suas receitas. Lida de todo arquivo, qualquer que seja o `hideOnly`, e não muda nada para o próprio jogo. Um id que nenhum plugin carregado registra é registrado no log como erro e a categoria continua aparecendo como antes. Não faz nada sem JEI ou HEI |
+| `fluids`         | não         | lista de nomes de fluidos                | nenhum  | Aceito para que um pacote compartilhe o arquivo com as linhas modernas, e ignorado aqui, já que o 1.12.2 não tem tags de fluidos. O log recebe um aviso                                                                                                                                                                                                                                                                                           |
+| `requires`       | não         | lista de ids de mods                     | nenhum  | O arquivo é ignorado a menos que todos estejam carregados. Entradas `config:` e `file:` funcionam como em todo o resto                                                                                                                                                                                                                                                                                                                            |
 
 Um bloco ou item desativado:
 
@@ -3185,6 +3429,35 @@ Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se a
 | `oreDict`  | uma das duas | nome do dicionário de minérios | nenhum | Tudo sob esse nome queima      |
 | `burnTime` | sim          | int, ticks                     | `0`    | O carvão é 1600, uma tábua 300 |
 
+## Remoções de receitas
+
+*criação, saque e comércio*
+
+`<namespace>/recipe_removals/*.json`
+
+O nome do arquivo é de sua escolha, só a pasta é lida, e vários arquivos se acumulam. Apaga receitas de criação. Uma receita sai quando qualquer um dos seletores casa com ela.
+
+```json
+{
+  "names": ["minecraft:bow", "thermalfoundation:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword", "#ingotCopper"],
+  "inputs": ["minecraft:string", "#plankWood"],
+  "regex": ["^minecraft:.*_slab$"]
+}
+```
+
+| Chave        | Obrigatória | Valor                  | Padrão | O que faz                                                                                                                                                              |
+| ------------ | ----------- | ---------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`      | não         | lista                  | nenhum | Nomes de receitas a remover. Um `*` no fim casa com todo nome que começa com aquele texto                                                                              |
+| `namespaces` | não         | lista                  | nenhum | Toda receita desses namespaces                                                                                                                                         |
+| `outputs`    | não         | lista de nomes de item | nenhum | Toda receita que cria um desses itens. Um nome que começa com `#` é um nome de dicionário de minérios e casa com toda receita cujo resultado está nele                 |
+| `inputs`     | não         | lista de nomes de item | nenhum | Toda receita com um ingrediente em que um desses itens encaixa. Um nome que começa com `#` é um nome de dicionário de minérios                                         |
+| `regex`      | não         | lista de texto         | nenhum | Uma expressão regular Java que casa com qualquer parte do nome da receita (encontrada, não uma correspondência inteira; ancore com `^` e `$`), como `minecraft:oak_.*` |
+| `types`      | não         | lista                  | nenhum | Não disponível no 1.12.2, que não tem tipos de receita. O log avisa e a chave é ignorada                                                                               |
+
+Receitas registradas por outro mod depois do próprio mod, e as de CraftTweaker, KubeJS e GroovyScript, são poupadas.
+
 ## Trocas de receitas
 
 *criação, saque e comércio*
@@ -3211,10 +3484,23 @@ O nome do arquivo é de sua escolha, só a pasta é lida, e vários arquivos se 
 }
 ```
 
-| Chave      | Obrigatória | Valor                | Padrão | O que faz                                                    |
-| ---------- | ----------- | -------------------- | ------ | ------------------------------------------------------------ |
-| `requires` | não         | lista de ids de mods | nenhum | O arquivo só é lido quando todos esses mods estão carregados |
-| `swaps`    | sim         | lista                | nenhum | As trocas, aplicadas em ordem                                |
+Um arquivo que define restos em vez de trocas:
+
+```json
+{
+  "recipes": { "names": ["minecraft:mushroom_stew"] },
+  "remainder": [
+    { "ingredient": "minecraft:potion", "returns": "minecraft:glass_bottle" }
+  ]
+}
+```
+
+| Chave       | Obrigatória | Valor                | Padrão | O que faz                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------- | ----------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`  | não         | lista de ids de mods | nenhum | O arquivo só é lido quando todos esses mods estão carregados                                                                                                                                                                                                                                                                                                                                  |
+| `swaps`     | sim         | lista                | nenhum | As trocas, aplicadas em ordem                                                                                                                                                                                                                                                                                                                                                                 |
+| `transfer`  | não         | objeto               | nenhum | Um arquivo com `transfer` e um objeto `recipes`, e sem `swaps`, faz as receitas de criação indicadas levarem dados da grade para o resultado, como descrito em Transferência abaixo                                                                                                                                                                                                           |
+| `remainder` | não         | lista                | nenhum | Um arquivo com `remainder` e um objeto `recipes`, e sem `swaps`, define o que as receitas de criação indicadas deixam na grade: cada entrada tem um `ingredient` (nome de item ou nome de dicionário com `#`) e um item `returns`. Cada `ingredient` consumido deixa `returns`, no lugar do que deixava antes. `recipes` aceita os seletores de [Remoções de receitas](#remoções-de-receitas) |
 
 Entradas em `swaps`:
 
@@ -3224,14 +3510,37 @@ Entradas em `swaps`:
 | `to`      | sim         | nome de item | nenhum       | O que ocupa o lugar, com um valor de metadados opcional, como `thermalfoundation:material:128`. Um curinga ou item desconhecido pula a entrada e o log avisa                                                                                                                |
 | `output`  | não         | booleano     | `false`      | `true`: também substitui `from` onde ele é o que uma receita produz. A quantidade permanece. `false`: as saídas ficam como estão                                                                                                                                            |
 | `recipes` | não         | objeto       | cada receita | Limita a troca a estas receitas de criação: `names`, com um `*` no final casando com todo nome que começa com esse texto, e `namespaces`. Uma entrada com `recipes` deixa as receitas de fornalha em paz, já que elas não têm nome; `outputs` não é lido aqui e o log avisa |
+| `types`   | não         | lista        | nenhum       | Não é lida na 1.12.2, que não tem tipos de receita. A entrada continua funcionando para receitas de criação e de fornalha, e o log diz `A swap in <file> has types, which 1.12.2 does not read, ignoring it`                                                                |
+| `paths`   | não         | lista        | nenhum       | Não é lida na 1.12.2. A entrada continua funcionando para receitas de criação e de fornalha, e o log diz `A swap in <file> has paths, which 1.12.2 does not read, ignoring it`                                                                                              |
 
 Um slot que aceita só itens `from` vira `to`. Um slot que também aceita outros itens mantém esses e passa a aceitar `to` também, mas perde a ligação com o dicionário de minérios, então um item adicionado depois a esse nome não é pego ali. Um item oculto nas abas criativas também sai desse slot.
+
+Na 1.12.2 um `to` que começa com `#` pula a entrada inteira, e o log diz `A swap in <file> swaps to the tag <tag>, which 1.12.2 does not do, skipping it`. A 1.12.2 alcança apenas receitas de criação e de fornalha. Não há tipos de receita, então nada fora delas é reescrito.
 
 Uma entrada cujo `to` é igual ao próprio `from` é pulada, e o log avisa. Um ingrediente de fornalha não é trocado quando `to` já vira outra coisa na fornalha, e o log indica essa receita.
 
 As trocas rodam quando o carregamento termina, depois que remoções e bloqueios de receitas escolheram suas receitas, então eles ainda julgam uma receita pelo que ela produzia antes da troca. [Blocos e itens desativados](#blocos-e-itens-desativados) e os [bloqueios de receitas](#bloqueios-de-receitas) enxergam a receita já trocada.
 
 Receitas de criação com forma e sem forma, do vanilla e do Forge, são reescritas, além da fornalha. Uma receita de outro mod com tipo próprio que cite um item trocado fica como está, e o log cita o tipo uma vez com um exemplo. O log resume: `Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`, e `Left N recipe(s) of N type(s) alone` quando alguma ficou.
+
+Transferência: um arquivo que faz o resultado manter os dados de um ingrediente e pegar partes de outro:
+
+```json
+{
+  "recipes": { "names": ["mypack:enchant_armor"] },
+  "transfer": { "from": "armor", "take": ["enchantments"], "source": "book" }
+}
+```
+
+| Chave    | Obrigatória | Valor                                     | Padrão | O que faz                                                                                                                                                                                                                                                                                                                       |
+| -------- | ----------- | ----------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`   | sim         | `armor`, `tool`, `weapon`, item ou `#ore` | nenhum | O ingrediente cujos dados o resultado mantém inteiros, o dano incluído. `armor`, `tool` e `weapon` casam pelo tipo de item; um nome de item ou um nome de dicionário de minérios com `#` casa com esse item                                                                                                                     |
+| `source` | sim         | `book`, item ou `#ore`                    | nenhum | O ingrediente de onde vêm as partes de `take`. `book` é um livro encantado, cujos encantamentos guardados contam como os encantamentos dele                                                                                                                                                                                     |
+| `take`   | sim         | lista                                     | nenhum | As partes tiradas de `source`: `enchantments` se juntam ao resultado, valendo o nível mais alto, e um encantamento que o resultado não aceita, ou que briga com um que ele já tem, é pulado, como faz uma bigorna; `name` define o nome personalizado; `damage` define o dano; `nbt` junta o resto da tag, sem os encantamentos |
+
+O primeiro ingrediente que casa na grade é usado para cada parte, e os dois precisam estar em slots diferentes. A receita é embrulhada, então a prévia do slot de resultado, um clique normal e um shift-clique dão o mesmo resultado, e um cliente vanilla vê isso pela atualização do slot. O log resume: `Gave N crafting recipe(s) a transfer`.
+
+Reescritas de receitas: um arquivo em `recipe_swaps` com `template` ou `edit` no lugar de `swaps` reescreve as receitas que ele cobre, sem uma troca. A 1.12.2 não lê essas chaves: o log diz `Recipe swap file <file> has a template, which 1.12.2 does not read, ignoring it` (ou `has an edit`), e o arquivo é pulado. Um arquivo com `swaps` e um `template` ou `edit` ao lado tem o `template` e o `edit` pulados na 1.12.2, sem linha no log.
 
 ## Bloqueios de receitas
 
@@ -3249,7 +3558,8 @@ Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se a
   "scoreAtLeast": 5,
   "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
   "namespaces": ["tconstruct"],
-  "outputs": ["minecraft:diamond_sword"]
+  "outputs": ["minecraft:diamond_sword", "#ingotCopper"],
+  "regex": ["^tconstruct:.*_pickaxe$"]
 }
 ```
 
@@ -3258,7 +3568,8 @@ Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se a
 | `advancement`               | não         | `namespace:path`       | nenhum | O avanço de que o jogador precisa para que essas receitas funcionem. Um bloqueio precisa deste ou de uma condição de equipe ou pontuação (`team`, ou `objective` com `scoreAtLeast`); se os dois forem definidos, o jogador precisa dos dois. Um arquivo com nenhum dos dois é ignorado e o registro avisa |
 | `names`                     | não         | lista                  | nenhum | Nomes de receitas a segurar. Um `*` no fim corresponde a todo nome que começa com aquele texto, como `thermalfoundation:*`                                                                                                                                                                                 |
 | `namespaces`                | não         | lista                  | nenhum | Toda receita desses namespaces                                                                                                                                                                                                                                                                             |
-| `outputs`                   | não         | lista de nomes de item | nenhum | Toda receita que cria um desses itens                                                                                                                                                                                                                                                                      |
+| `outputs`                   | não         | lista de nomes de item | nenhum | Toda receita que cria um desses itens. Um nome que começa com `#` é um nome de dicionário de minérios e casa com toda receita cujo resultado está nele                                                                                                                                                     |
+| `regex`                     | não         | lista de texto         | nenhum | Uma expressão regular Java que casa com qualquer parte do nome da receita (encontrada, não uma correspondência inteira; ancore com `^` e `$`). Bloqueios não aceitam `inputs`                                                                                                                              |
 | `team`                      | não         | texto                  | nenhum | A equipe do placar em que o jogador precisa estar                                                                                                                                                                                                                                                          |
 | `objective`, `scoreAtLeast` | não         | texto, int             | nenhum | A pontuação do jogador no objetivo precisa ser pelo menos esta. Os dois são necessários                                                                                                                                                                                                                    |
 
@@ -3275,7 +3586,7 @@ Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se a
 ```json
 {
   "items": [
-    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground. Stage {data:quest.stage|0}."], "when": { "data": { "name": "quest.stage", "atLeast": 1 } } }
   ],
   "enchantments": [
     { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
@@ -3290,11 +3601,29 @@ Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se a
 
 Uma entrada de `items` ou `enchantments` aceita estas chaves.
 
-| Chave         | Obrigatória | Valor                | Padrão | O que faz                                                                              |
-| ------------- | ----------- | -------------------- | ------ | -------------------------------------------------------------------------------------- |
-| `item`        | sim         | nome de item         | nenhum | O item, ou o item de um bloco. `:meta` depois do nome escolhe uma variante, `:*` todas |
-| `enchantment` | sim         | nome de encantamento | nenhum | O encantamento que recebe as linhas                                                    |
-| `lines`       | sim         | lista de textos      | nenhum | Chaves de idioma ou texto simples, em ordem                                            |
+| Chave         | Obrigatória | Valor                | Padrão  | O que faz                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ----------- | -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | sim         | nome de item         | nenhum  | O item, ou o item de um bloco. `:meta` depois do nome escolhe uma variante, `:*` todas                                                                                                                                                                                                                                                                                          |
+| `enchantment` | sim         | nome de encantamento | nenhum  | O encantamento que recebe as linhas                                                                                                                                                                                                                                                                                                                                             |
+| `lines`       | sim         | lista de textos      | nenhum  | Chaves de idioma ou texto simples, em ordem                                                                                                                                                                                                                                                                                                                                     |
+| `shift`       | não         | booleano             | `false` | `true`: as linhas só aparecem enquanto o jogador segura Shift, então um item pode trazer uma dica curta e o resto sob demanda. `false`: elas sempre aparecem                                                                                                                                                                                                                    |
+| `position`    | não         | int, 0 ou mais       | nenhum  | Onde as linhas vão. `0` as põe logo abaixo do nome do item, ou logo abaixo do nome do encantamento numa entrada de encantamento; `1` as põe uma linha mais abaixo. Um número além do fim da dica adiciona as linhas no fim. Omitido, as linhas de item vão por último e as de encantamento vão logo depois do nome. Um número negativo é registrado no log e a entrada é pulada |
+| `replace`     | não         | booleano             | `false` | `true`: a primeira linha da entrada toma o lugar da linha que já está em `position`, e as linhas seguintes são adicionadas depois dela. `false`: as linhas são adicionadas sem remover nada. Precisa de `position`: sem ele o log avisa e as linhas são adicionadas no fim. Nada é substituído quando `position` está além do fim da dica                                       |
+| `when`        | não         | objeto               | nenhum  | Mostra as linhas só enquanto as verificações valerem. Só `data` é lida, uma verificação ou uma lista, como em [Dados sincronizados](#dados-sincronizados); qualquer outra chave é registrada no log e a entrada é pulada                                                                                                                                                        |
+
+**Valores do item.** Uma linha pode mostrar um valor guardado no item que está sendo olhado. `{nbt:path}` é trocado pelo valor encontrado naquele caminho na tag do próprio item, e `{item:path}` faz o mesmo na 1.12.2. O caminho é escrito como nomes separados por pontos, e uma parte que é um número inteiro escolhe aquela posição de uma lista, contando a partir de 0. Isso funciona tanto em chaves de idioma quanto em texto simples.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby_ring", "lines": ["Charge {nbt:mypack.charge} of {nbt:mypack.max}", "First gem: {nbt:gems.0.id}"] }
+  ]
+}
+```
+
+Um número aparece como inteiro quando não tem fração, e um valor de texto aparece sem seus códigos de cor. Algo que não existe, uma posição além do fim de uma lista, ou uma parte que traz mais de um valor em vez de um número ou texto não mostra nada. Um `{nbt:}` sem caminho, e um `{nbt:` aberto que nunca é fechado com `}`, ficam na linha como escritos, e o vazio é registrado no log.
+
+Uma linha pode mostrar um valor sincronizado com `{data:name|fallback}`. O cliente lê os valores sincronizados que o servidor lhe enviou, então um cliente sem o mod, ou um servidor com `vanillaClients` ligado, nunca mostra uma entrada com `when`, e mostra a reserva numa linha.
 
 ## Passagens de idioma
 
@@ -3740,13 +4069,15 @@ Os blocos do vanilla 1.12 não têm tabelas de saque, então um pacote podia acr
 }
 ```
 
-| Chave         | Obrigatória | Valor            | Padrão  | O que faz                                                                                                                          |
-| ------------- | ----------- | ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `block`       | sim         | id de bloco      |         | O bloco que a regra observa                                                                                                        |
-| `meta`        | não         | int              | `-1`    | Apenas estes metadados do bloco; `-1` é todo estado                                                                                |
-| `replace`     | não         | booleano         | `false` | Se os drops habituais são descartados antes de estes serem sorteados: `true` são descartados, `false` são mantidos junto com estes |
-| `advancement` | não         | `namespace:path` | nenhum  | A regra só vale para um jogador que tenha esse avanço, de modo que o mesmo bloco pode soltar uma coisa antes e outra depois        |
-| `drops`       | sim         | lista de drops   |         | Cada um sorteado separadamente quando um jogador quebra o bloco                                                                    |
+| Chave         | Obrigatória | Valor            | Padrão  | O que faz                                                                                                                                                                                                                     |
+| ------------- | ----------- | ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `block`       | sim         | id de bloco      |         | O bloco que a regra observa                                                                                                                                                                                                   |
+| `meta`        | não         | int              | `-1`    | Apenas estes metadados do bloco; `-1` é todo estado                                                                                                                                                                           |
+| `replace`     | não         | booleano         | `false` | Se os drops habituais são descartados antes de estes serem sorteados: `true` são descartados, `false` são mantidos junto com estes                                                                                            |
+| `advancement` | não         | `namespace:path` | nenhum  | A regra só vale para um jogador que tenha esse avanço, de modo que o mesmo bloco pode soltar uma coisa antes e outra depois                                                                                                   |
+| `once`        | não         | objeto           | nenhum  | Faz a regra valer uma vez para cada jogador. `per` tem de ser `player` e `grant` o id de um avanço. A regra se aplica a um jogador que ainda não tem esse avanço, e o avanço é dado a ele assim que a regra roda. Veja abaixo |
+| `runs`        | não         | id de função     | nenhum  | Uma função executada cada vez que a regra se aplica, como o jogador que quebrou o bloco, ou no bloco quando nenhum jogador o quebrou. Uma função que nenhum pacote fornece é registrada no log                                |
+| `drops`       | sim         | lista de drops   |         | Cada um sorteado separadamente quando um jogador quebra o bloco                                                                                                                                                               |
 
 Cada drop:
 
@@ -3760,6 +4091,20 @@ Cada drop:
 | `silkTouch`  | não                                | `either`, `only` ou `never` | `either` | Se o drop exige uma ferramenta com Toque Suave, a recusa, ou tanto faz                                                                                      |
 
 As regras só enxergam a colheita de um jogador; explosões, pistões e o grief de mobs não sorteiam nada. Várias regras para um mesmo bloco se aplicam todas, e um `replace` em qualquer uma delas limpa antes os drops habituais.
+
+**Uma tag em `block`.** Escreva um nome do dicionário de minérios (ore dictionary) com um `#` na frente, como `"#oreIron"`, e a regra vale para todo bloco que tiver um item sob esse nome no dicionário. Um nome com dois-pontos, como `"#forge:ores/iron"`, vira o seu nome do dicionário de minérios onde ele existir. Um nome que não tem entrada no dicionário nesta versão, ou que não tem membros, é registrado no log e o arquivo é ignorado. `meta` ainda vale para os blocos que casarem. Os membros são calculados na primeira vez que a regra é necessária e de novo depois de um recarregamento.
+
+**Uma vez por jogador.** `once` entrega uma recompensa uma única vez a cada jogador, usando um avanço para lembrar quem já a recebeu. `per` (que tem de ser `player`) e `grant` são obrigatórios, e o arquivo é ignorado com uma linha no log quando algum deles falta ou quando `once` não é um objeto. A regra só conta para um jogador real num servidor, nunca para uma explosão, uma máquina ou um jogador falso, e só enquanto esse jogador não tiver o avanço `grant`. Depois que a regra larga os seus itens e executa a sua função, o jogador recebe o avanço, então a próxima quebra não faz nada. Se nenhum pacote fornece o avanço, o log diz que a regra é pulada, e ela nunca vale. `once` pode ser combinado com `advancement`, que também tem de valer.
+
+```json
+{
+  "block": "minecraft:dirt",
+  "replace": true,
+  "once": { "per": "player", "grant": "mypack:first_dirt" },
+  "runs": "mypack:first_dirt",
+  "drops": [ { "item": "minecraft:diamond" } ]
+}
+```
 
 ## Colheita com clique direito
 
@@ -4423,6 +4768,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo de verdade escreve só as de q
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
   "despawns": true,
   "despawnAfter": 600,
+  "leash": "delete",
   "noAI": false,
   "leftHanded": false,
   "fireproof": false,
@@ -4861,15 +5207,16 @@ A coluna `Lista` diz onde a tarefa vive. `tasks` é o que a criatura faz; `targe
 
 *variantes de entidades*
 
-| Chave               | Obrigatória | Valor                        | Padrão          | O que faz                                                                                                     |
-| ------------------- | ----------- | ---------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `spawns`            | não         | lista de objetos             | nenhum          | `creatureType`, `weight`, `min` e `max`, o mesmo formato que um bioma usa                                     |
-| `biomes`            | não         | lista de nomes de biomas     | todos os biomas | Onde esses spawns são adicionados                                                                             |
-| `biomeTypes`        | não         | lista de tipos do dicionário | nenhum          | O mesmo, por tipo                                                                                             |
-| `ignoresSpawnRules` | não         | booleano                     | `false`         | `true`: surge onde for colocada, ignorando as regras que herdou. `false`: segue as regras que herdou          |
-| `despawns`          | não         | booleano                     | `true`          | `true`: ela é removida como normalmente seria. `false`: ela permanece mesmo quando normalmente seria removida |
-| `despawnAfter`      | não         | int, segundos                | nenhum          | Some em silêncio depois de passar esse tempo no mundo, por mais longe que esteja qualquer jogador             |
-| `persistent`        | não         | booleano                     | `false`         | `true`: nunca sofre despawn. `false`: sofre despawn como de costume                                           |
+| Chave               | Obrigatória | Valor                        | Padrão          | O que faz                                                                                                                                |
+| ------------------- | ----------- | ---------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `spawns`            | não         | lista de objetos             | nenhum          | `creatureType`, `weight`, `min` e `max`, o mesmo formato que um bioma usa                                                                |
+| `biomes`            | não         | lista de nomes de biomas     | todos os biomas | Onde esses spawns são adicionados                                                                                                        |
+| `biomeTypes`        | não         | lista de tipos do dicionário | nenhum          | O mesmo, por tipo                                                                                                                        |
+| `ignoresSpawnRules` | não         | booleano                     | `false`         | `true`: surge onde for colocada, ignorando as regras que herdou. `false`: segue as regras que herdou                                     |
+| `despawns`          | não         | booleano                     | `true`          | `true`: ela é removida como normalmente seria. `false`: ela permanece mesmo quando normalmente seria removida                            |
+| `despawnAfter`      | não         | int, segundos                | nenhum          | Some em silêncio depois de passar esse tempo no mundo, por mais longe que esteja qualquer jogador                                        |
+| `leash`             | não         | `drop` ou `delete`           | `drop`          | O que acontece com a guia de uma criatura que `despawnAfter` retira. `drop`: a guia cai como item. `delete`: a guia some junto, sem item |
+| `persistent`        | não         | booleano                     | `false`         | `true`: nunca sofre despawn. `false`: sofre despawn como de costume                                                                      |
 
 **Uma criatura com prazo de validade.** `despawnAfter` conta em segundos a partir do momento em que a criatura entra no mundo pela primeira vez e a remove em silêncio quando o tempo acaba: sem morte, sem drops, sem som, exatamente como se ela tivesse se afastado e sido removida. O relógio é gravado na própria criatura, então continua correndo ao salvar e recarregar, em vez de recomeçar cada vez que um chunk volta.
 
@@ -4963,22 +5310,169 @@ Um segundo arquivo acrescenta esqueletos wither extras aos que uma fortaleza do 
 }
 ```
 
-| Chave                                                                                                                        | Obrigatória | Valor                                                        | Padrão    | O que faz                                                                                                                                                                                                                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entities`                                                                                                                   | sim         | lista de nomes ou tipos de entidade                          | nenhum    | Os mobs a trocar, como em Bloqueios de spawn. Um arquivo sem ela é pulado e o log avisa                                                                                                                                                                                |
-| `becomes`                                                                                                                    | sim         | lista de ids de entidade, ou objetos com `entity` e `weight` | nenhum    | O que toma o lugar deles, escolhido por peso, qualquer entidade ou variante de entidade registrada. Um arquivo sem ela é pulado e o log avisa                                                                                                                          |
-| `biomes`, `biomeTypes`                                                                                                       | não         | listas de texto                                              | nenhum    | Biomas em que a troca vale, escritos como numa variante de entidade                                                                                                                                                                                                    |
-| `blocks`                                                                                                                     | não         | lista de nomes de bloco                                      | nenhum    | A troca vale quando o bloco sob o ponto de surgimento é um destes, como `minecraft:nether_brick`. Os nomes de bloco são escritos como nas outras listas de blocos, e um arquivo que não nomeia nenhum bloco registrado é pulado                                        |
-| `requireAll`                                                                                                                 | não         | booleano                                                     | `false`   | Com `false`, basta um entre `biomes`, `biomeTypes` e `blocks`. Com `true`, todos os informados precisam valer. Sem nenhum, a troca vale em todo lugar em que as outras condições valem                                                                                 |
-| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | não         | como em Condições de spawn                                   | nenhum    | As mesmas chaves, com o mesmo significado que em Condições de spawn. Todas precisam valer, e valem também para `elsewhere`                                                                                                                                             |
-| `elsewhere`                                                                                                                  | não         | objeto                                                       | desligado | Onde as chaves de lugar acima falham, ainda troca com `chance`, dentro dos limites abaixo                                                                                                                                                                              |
-| `elsewhere.chance`                                                                                                           | não         | float de 0 a 1                                               | `1.0`     | A chance de troca em cada surgimento                                                                                                                                                                                                                                   |
-| `elsewhere.lightBelow`                                                                                                       | não         | int de 1 a 16                                                | nenhum    | Troca só onde a luz combinada no ponto é menor que isto                                                                                                                                                                                                                |
-| `elsewhere.night`                                                                                                            | não         | booleano                                                     | `false`   | `true`: só durante a janela da noite, ticks `13000` a `23000` do relógio do dia. `false`: a qualquer hora do dia                                                                                                                                                       |
-| `extra`                                                                                                                      | não         | int de 0 a 16                                                | `0`       | Este número de mobs a mais surge no mesmo ponto, cada um escolhido de `becomes` por sua própria rolagem e com o próprio equipamento inicial. Uma cópia que não cabe no espaço é pulada, e as cópias contam no limite de mobs a partir da próxima passada de surgimento |
-| `fromSpawners`                                                                                                               | não         | booleano                                                     | `false`   | `false`: os surgimentos naturais, inclusive os de fortaleza, e os que um chunk faz ao ser gerado (só criaturas) são trocados. `true` acrescenta os blocos geradores. Ovos, `/summon` e mobs colocados com uma estrutura nunca são trocados                             |
+Um arquivo com `runs` e sem `becomes` só executa uma função quando a entidade surge, o que também vale para coisas que não são mobs:
+
+```json
+{
+  "entities": ["minecraft:eye_of_ender"],
+  "runs": "mypack:eye_spawned"
+}
+```
+
+| Chave                                                                                                                        | Obrigatória | Valor                                                        | Padrão    | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | sim         | lista de nomes ou tipos de entidade                          | nenhum    | Os mobs a trocar, como em Bloqueios de spawn. Um arquivo sem ela é pulado e o log avisa                                                                                                                                                                                                                                                                                                                                                               |
+| `becomes`                                                                                                                    | não         | lista de ids de entidade, ou objetos com `entity` e `weight` | nenhum    | O que toma o lugar deles, escolhido por peso, qualquer entidade ou variante de entidade registrada. Um arquivo sem ela nem `runs` é pulado e o log avisa                                                                                                                                                                                                                                                                                              |
+| `biomes`, `biomeTypes`                                                                                                       | não         | listas de texto                                              | nenhum    | Biomas em que a troca vale, escritos como numa variante de entidade                                                                                                                                                                                                                                                                                                                                                                                   |
+| `blocks`                                                                                                                     | não         | lista de nomes de bloco                                      | nenhum    | A troca vale quando o bloco sob o ponto de surgimento é um destes, como `minecraft:nether_brick`. Os nomes de bloco são escritos como nas outras listas de blocos, e um arquivo que não nomeia nenhum bloco registrado é pulado                                                                                                                                                                                                                       |
+| `requireAll`                                                                                                                 | não         | booleano                                                     | `false`   | Com `false`, basta um entre `biomes`, `biomeTypes` e `blocks`. Com `true`, todos os informados precisam valer. Sem nenhum, a troca vale em todo lugar em que as outras condições valem                                                                                                                                                                                                                                                                |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | não         | como em Condições de spawn                                   | nenhum    | As mesmas chaves, com o mesmo significado que em Condições de spawn. Todas precisam valer, e valem também para `elsewhere`                                                                                                                                                                                                                                                                                                                            |
+| `elsewhere`                                                                                                                  | não         | objeto                                                       | desligado | Onde as chaves de lugar acima falham, ainda troca com `chance`, dentro dos limites abaixo                                                                                                                                                                                                                                                                                                                                                             |
+| `elsewhere.chance`                                                                                                           | não         | float de 0 a 1                                               | `1.0`     | A chance de troca em cada surgimento                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `elsewhere.lightBelow`                                                                                                       | não         | int de 1 a 16                                                | nenhum    | Troca só onde a luz combinada no ponto é menor que isto                                                                                                                                                                                                                                                                                                                                                                                               |
+| `elsewhere.night`                                                                                                            | não         | booleano                                                     | `false`   | `true`: só durante a janela da noite, ticks `13000` a `23000` do relógio do dia. `false`: a qualquer hora do dia                                                                                                                                                                                                                                                                                                                                      |
+| `extra`                                                                                                                      | não         | int de 0 a 16                                                | `0`       | Este número de mobs a mais surge no mesmo ponto, cada um escolhido de `becomes` por sua própria rolagem e com o próprio equipamento inicial. Uma cópia que não cabe no espaço é pulada, e as cópias contam no limite de mobs a partir da próxima passada de surgimento                                                                                                                                                                                |
+| `fromSpawners`                                                                                                               | não         | booleano                                                     | `false`   | `false`: os surgimentos naturais, inclusive os de fortaleza, e os que um chunk faz ao ser gerado (só criaturas) são trocados. `true` acrescenta os blocos geradores. Ovos, `/summon` e mobs colocados com uma estrutura nunca são trocados                                                                                                                                                                                                            |
+| `runs`                                                                                                                       | não         | id de função                                                 | nenhum    | Executa esta função quando uma entidade correspondente entra no mundo, como e no lugar dessa entidade, para qualquer tipo de entidade (inclusive `minecraft:eye_of_ender`), uma vez por entidade: um recarregamento de chunk não a executa de novo. Sem `becomes`, o arquivo só executa a função e não troca nada. Ela não é executada para um surgimento que o arquivo troca. Um id que nenhum pacote fornece é registrado no log e nada é executado |
 
 Sem um arquivo, nada é trocado. Um surgimento cancelado por qualquer outra coisa nunca entra no mundo, então nunca é trocado. Uma troca que nomeia uma entidade que nada registra deixa o surgimento como está, e o log avisa.
+
+### Regras de dano
+
+*variantes de entidades*
+
+`<namespace>/hurt_rules/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Cancela ou reage a um mob ferindo outro, como guardas de um pacote que nunca ferem os aldeões dele. Jogadores ficam de fora: use os gatilhos de carta `player_hurt_entity` e `entity_hurt_player` para eles.
+
+```json
+{
+  "attacker": ["minecraft:skeleton", "#monster"],
+  "victim": "minecraft:zombie",
+  "cancel": true,
+  "runs": "mypack:hurt"
+}
+```
+
+| Chave      | Obrigatória | Valor                                       | Padrão  | O que faz                                                                                                                                                                                                                                                     |
+| ---------- | ----------- | ------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `attacker` | sim         | nome de entidade ou lista de nomes ou tipos | nenhum  | Os mobs que causam o golpe, como em Bloqueios de spawn. Um tiro conta para quem o disparou. Um arquivo sem ela é pulado e o log avisa                                                                                                                         |
+| `victim`   | sim         | nome de entidade ou lista de nomes ou tipos | nenhum  | Os mobs que são atingidos. Um arquivo sem ela é pulado e o log avisa                                                                                                                                                                                          |
+| `cancel`   | não         | booleano                                    | `false` | `true`: o golpe não faz nada                                                                                                                                                                                                                                  |
+| `runs`     | não         | id de função                                | nenhum  | Executa esta função como e no lugar da vítima cada vez que o golpe é tentado, antes de qualquer dano, então um golpe que acerta durante os quadros de invulnerabilidade da vítima também a executa. Um arquivo sem `cancel` nem `runs` é pulado e o log avisa |
+
+### Agendamentos
+
+`<namespace>/schedules/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Executa uma função num temporizador, uma vez ou repetidamente, como o servidor. Nada é salvo: cada agendamento começa a contar de novo quando o servidor inicia e quando `/rdplserver reload` é executado.
+
+```json
+{
+  "id": "mypack:airdrop",
+  "after": 1200,
+  "every": 6000,
+  "runs": "mypack:airdrop"
+}
+```
+
+| Chave   | Obrigatória | Valor        | Padrão | O que faz                                                                                                                                                        |
+| ------- | ----------- | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | não         | texto        | nenhum | Um nome para sua própria referência, não lido pelo mod                                                                                                           |
+| `after` | não         | int, ticks   | `0`    | Ticks depois que o servidor inicia, ou depois de um recarregamento, antes da primeira execução. `0` executa no primeiro tick                                     |
+| `every` | não         | int, ticks   | `0`    | Ticks entre as execuções depois da primeira. `0` ou omitido executa uma vez                                                                                      |
+| `runs`  | sim         | id de função | nenhum | A função a executar, como o servidor. Um arquivo sem ela é pulado e o log avisa. Uma função que nenhum pacote fornece é registrada no log cada vez que ela vence |
+
+### Dados sincronizados
+
+`<namespace>/syncdata/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Dados sincronizados são um armazenamento de valores nomeados, cada um um texto, um número ou verdadeiro ou falso, guardado no servidor para cada jogador e para o mundo inteiro. Uma carta, uma resposta de diálogo, um comando ou um script define um valor, e cartas, diálogos, passagens e dicas de ferramenta testam esse valor ou o mostram no texto. Um valor não precisa de arquivo: qualquer nome válido pode ser definido. Um arquivo declara um nome para fixar seu tipo, dar um padrão, limitar seu tamanho ou mantê-lo fora do save. Um nome tem de 1 a 64 caracteres: `a` a `z`, `0` a `9`, `_`, `.`, `:`, `/` e `-`, sem maiúsculas nem espaços.
+
+```json
+{
+  "values": [
+    { "name": "quest.stage", "type": "number", "default": 0 },
+    { "name": "quest.title", "type": "text", "max": 40, "default": "Newcomer" },
+    { "name": "quest.met_smith", "type": "bool" },
+    { "name": "event.banner", "type": "text", "persist": false }
+  ]
+}
+```
+
+| Chave    | Obrigatória | Valor            | Padrão | O que faz                                                              |
+| -------- | ----------- | ---------------- | ------ | ---------------------------------------------------------------------- |
+| `values` | sim         | lista de objetos | nenhum | As declarações. Uma entrada que não é um objeto é pulada e o log avisa |
+
+Cada declaração aceita estas chaves.
+
+| Chave     | Obrigatória | Valor                             | Padrão | O que faz                                                                                                                                                                                                              |
+| --------- | ----------- | --------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`    | sim         | texto                             | nenhum | O nome do valor. Uma entrada cujo nome não é válido é pulada e o log avisa. Um nome já declarado num arquivo anterior mantém a primeira declaração, e o log informa esse arquivo                                       |
+| `type`    | não         | `text`, `number`, `bool`          | `text` | O que o valor guarda. Qualquer outra coisa é registrada no log e a entrada é pulada                                                                                                                                    |
+| `default` | não         | texto, número ou verdadeiro/falso | nenhum | O que uma leitura devolve enquanto nada estiver definido, para um jogador ou para o mundo. Conta como definido quando uma verificação pergunta. Um padrão do tipo errado é registrado no log e o valor fica sem padrão |
+| `max`     | não         | int, 1 a 256                      | `256`  | O maior tamanho que um valor de texto pode ter. Um valor fora de 1 a 256 é registrado no log e usa-se `256`                                                                                                            |
+| `persist` | não         | booleano                          | `true` | `true`: o valor é salvo com o mundo. `false`: nunca é salvo, então um valor do mundo some depois de um reinício e o valor de um jogador some quando ele sai do servidor                                                |
+
+Um jogador tem seus próprios valores e o mundo tem os seus: cada um guarda no máximo 64. Um jogador lê primeiro o seu próprio valor, depois o do mundo, depois o padrão. Uma definição que quebra um limite é recusada e registrada no log, e não muda nada: um nome que não é válido, um tipo diferente do declarado, um texto maior que `max` (ou 256 para um nome sem arquivo), um valor que não é texto, número nem verdadeiro ou falso, ou um armazenamento cheio. Definir um valor igual ao que ele já tem não faz nada. Depois de um recarregamento, um valor guardado que não cabe mais na sua declaração é removido e o log avisa.
+
+#### Verificações
+
+Uma verificação testa um valor. `data` aceita uma verificação ou uma lista delas, e todas precisam valer. Ela é lida no `when` de uma carta, no `when` de uma resposta num diálogo, no `when` de uma entrada de dica de ferramenta e no `unlock` de uma passagem.
+
+```json
+{
+  "when": {
+    "data": [
+      { "name": "quest.stage", "atLeast": 2, "atMost": 4 },
+      { "name": "quest.title", "isNot": "Newcomer" },
+      { "name": "quest.met_smith", "is": true },
+      { "name": "event.banner", "set": false }
+    ]
+  }
+}
+```
+
+| Chave     | Obrigatória | Valor                             | Padrão | O que faz                                                                                                                                                                                            |
+| --------- | ----------- | --------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`    | sim         | texto                             | nenhum | O valor a testar. Uma verificação sem nome é pulada e o log avisa                                                                                                                                    |
+| `is`      | não         | texto, número ou verdadeiro/falso | nenhum | O valor tem de ser igual a este. Texto é comparado exatamente, com maiúsculas. Um valor de outro tipo nunca é igual a ele                                                                            |
+| `isNot`   | não         | texto, número ou verdadeiro/falso | nenhum | O valor não pode ser igual a este                                                                                                                                                                    |
+| `atLeast` | não         | número                            | nenhum | O valor tem de ser um número, e pelo menos este. Um valor que não é número falha                                                                                                                     |
+| `atMost`  | não         | número                            | nenhum | O valor tem de ser um número, e no máximo este                                                                                                                                                       |
+| `set`     | não         | booleano                          | `true` | `true`: o valor tem de estar definido, por padrão também, e as outras chaves então o testam. `false`: a verificação só vale enquanto o valor não estiver definido, e as outras chaves não são usadas |
+
+Uma dica de ferramenta testa os valores que o cliente guarda, veja abaixo. Uma carta, um diálogo ou uma passagem testa os valores do servidor para o jogador a quem se destina.
+
+#### Definindo valores
+
+Uma carta, uma resposta de diálogo, um comando e um script definem valores. Num arquivo de carta e numa resposta, `sets` guarda valores para o jogador e `worldSets` valores para o mundo inteiro, como `name: value`.
+
+```json
+{
+  "trigger": "command",
+  "lines": ["Stage {data:quest.stage|0}, {data:quest.title|nobody}"],
+  "sets": { "quest.stage": 1, "quest.title": "Apprentice" },
+  "worldSets": { "event.banner": "A stranger arrived" }
+}
+```
+
+| Chave       | Obrigatória | Valor  | Padrão | O que faz                                                                                                                                     |
+| ----------- | ----------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sets`      | não         | objeto | nenhum | Valores definidos para o jogador. Um valor que não é texto, número nem verdadeiro/falso é registrado no log e pulado, e os demais ainda valem |
+| `worldSets` | não         | objeto | nenhum | Valores definidos para o mundo, na mesma forma                                                                                                |
+
+Só arquivos de carta e respostas de diálogo leem essas chaves. Uma definição que as regras recusam é registrada no log e as outras seguem.
+
+#### Mostrando valores no texto
+
+`{data:name|fallback}` num texto é trocado pelo valor. Sem valor, usa-se o texto depois de `|`, ou nada quando não há `|`. A reserva termina no primeiro `}`, então não pode conter um. O nome é aparado, e um nome vazio é registrado no log numa dica de ferramenta e o texto fica como escrito. Um número aparece sem `.0`, e verdadeiro ou falso aparece como essa palavra. Funciona no `title` e nas `lines` de uma carta, no `title` de um diálogo, no `title` e nas `lines` de um nó, no `text` de uma resposta e nas `lines` de uma dica de ferramenta. Uma carta ou um diálogo mostra o valor do servidor para o jogador a quem é mostrado.
+
+#### O que é guardado
+
+Os valores são salvos no save do mundo, os de um jogador sob o id dele, exceto os declarados com `persist` como `false`. Quando o jogador sai, seus valores são mantidos, exceto esses. Um cliente com o mod recebe, ao entrar, os valores do mundo, os do próprio jogador e todos os padrões, o mesmo de novo depois de um recarregamento, e cada mudança assim que acontece. Ele esquece tudo ao desconectar. É isso que uma dica de ferramenta lê. Um valor de texto chega ao cliente sem os códigos de formatação. Um cliente sem o mod, ou qualquer cliente enquanto `vanillaClients` estiver ligado, não recebe nada, então uma dica com `when` ou `{data:}` cai no padrão ali; cartas, diálogos e passagens rodam no servidor e não dependem disso.
+
+`/rdplserver data` lê e define valores, veja [Comandos de dados sincronizados](#comandos-de-dados-sincronizados), e um script os alcança com `sync` e `synced`, veja [O objeto rdpl](#o-objeto-rdpl).
 
 ### Rede
 
@@ -6572,13 +7066,12 @@ Um ambiente também pode levar um bloco `raids`, que muda as [invasões](#invas�
 | `environments.<name>.growth.water.height`              | não          | número inteiro de 0 a 4                      | `1`                                         | Quantas camadas acima e abaixo da planta são procuradas                                                                                                                                                                                                             |
 | `environments.<name>.growth.water.shape`               | não          | `"box"`, `"diamond"`                         | `"box"`                                     | `box` procura num quadrado em volta da planta; `diamond`, num losango                                                                                                                                                                                               |
 | `environments.<name>.growth.water.farmland`            | não          | `true` ou `false`                            | `false`                                     | `true` conta a terra agrícola hidratada sob a planta como água, quando água está entre os fluidos. `false`: a terra agrícola hidratada não conta                                                                                                                    |
-| `environments.<name>.growth.sneak.particles`           | não          | `true` ou `false`                            | `true`                                      | `true`: faísca de farinha de ossos nas plantas que cresceram. `false`: sem faísca                                                                                                                                                                                   |
-| `environments.<name>.growth.water.bonemeal`            | não          | `true` ou `false`                            | `false`                                     | `true` recusa a farinha de ossos numa planta coberta sem água, e a farinha não é gasta                                                                                                                                                                              |
-| `environments.<name>.growth.water.waiver`              | não          | `true` ou `false`                            | `false`                                     | `true` levanta a exigência de água enquanto o `waiver` do ambiente vale para a planta                                                                                                                                                                               |
 | `environments.<name>.growth.water.breaks`              | não          | `true` ou `false`                            | `false`                                     | `true` faz uma planta coberta sem água se soltar e largar o seu saque na próxima tentativa de crescimento. `false`: a planta coberta sem água fica como está                                                                                                        |
 | `environments.<name>.growth.sneak`                     | não          | objeto                                       | nenhum                                      | Agachar faz crescer plantas próximas; todas as chaves abaixo são opcionais                                                                                                                                                                                          |
 | `environments.<name>.growth.sneak.chance`              | não          | número maior que 0, até 1                    | `0.25`                                      | Chance de uma planta crescer por agachada                                                                                                                                                                                                                           |
 | `environments.<name>.growth.sneak.radius`              | não          | número inteiro de 1 a 16                     | `3`                                         | Blocos para cada lado do jogador                                                                                                                                                                                                                                    |
+| `environments.<name>.growth.sneak.height`              | não          | número inteiro de 0 a 2                      | `1`                                         | Blocos acima e abaixo dos pés do jogador                                                                                                                                                                                                                            |
+| `environments.<name>.growth.sneak.blocks`              | não          | lista de ids de bloco ou `#nome`             | cultivos e mudas                            | As plantas que crescem (`#nome` é um nome do dicionário de minérios)                                                                                                                                                                                                |
 | `environments.<name>.growth.sneak.grass`               | não          | `true` ou `false`                            | `false`                                     | `true`: com um bloco de grama na mão secundária, a terra na área vira grama. `false`: a terra não vira grama                                                                                                                                                        |
 | `environments.<name>.growth.sneak.toggle`              | não          | `true` ou `false`                            | `false`                                     | `true`: jogadores podem ligar e desligar o efeito para si com `/rdplserver sneak`. `false`: jogadores não podem desligá-lo                                                                                                                                          |
 | `environments.<name>.growth.sneak.except`              | não          | lista de ids de bloco ou `#nome`             | nenhum                                      | Blocos que nunca crescem                                                                                                                                                                                                                                            |
@@ -6592,10 +7085,11 @@ Um ambiente também pode levar um bloco `raids`, que muda as [invasões](#invas�
 | `environments.<name>.growth.sneak.gameModes`           | não          | lista de `survival`, `creative`, `adventure` | os três                                     | Modos de jogo em que o agachar conta                                                                                                                                                                                                                                |
 | `environments.<name>.growth.sneak.items`               | não          | lista de ids de item ou `#nome`              | nenhum                                      | O agachar só conta enquanto um item correspondente estiver em uma das mãos (`#nome` é um nome do dicionário de minérios)                                                                                                                                            |
 | `environments.<name>.growth.sneak.equipment`           | não          | objeto de slot para id de item ou `#nome`    | nenhum                                      | Cada slot listado (`head`, `chest`, `legs`, `feet`, `mainhand`, `offhand`) precisa ter um item correspondente                                                                                                                                                       |
+| `environments.<name>.growth.sneak.enchantment`         | não          | id de encantamento                           | nenhum                                      | Cada item correspondente precisa tê-lo                                                                                                                                                                                                                              |
+| `environments.<name>.growth.sneak.damage`              | não          | número inteiro de 0 a 64                     | `0`                                         | Durabilidade tirada de cada item correspondente por planta que cresce                                                                                                                                                                                               |
 | `environments.<name>.growth.water.rain`                | não          | `true` ou `false`                            | `false`                                     | `true`: conta a chuva que cai sobre a planta como água. `false`: a chuva não conta                                                                                                                                                                                  |
 | `environments.<name>.growth.water.bonemeal`            | não          | `true` ou `false`                            | `false`                                     | `true`: recusa a farinha de ossos numa planta coberta sem água, e a farinha não é gasta. `false`: a farinha de ossos funciona nela sem água, e é gasta como de costume                                                                                              |
 | `environments.<name>.growth.water.waiver`              | não          | `true` ou `false`                            | `false`                                     | `true`: levanta a exigência de água onde o `waiver` do ambiente se aplica à planta. `false`: a exigência de água continua                                                                                                                                           |
-| `environments.<name>.growth.sneak.toggle`              | não          | `true` ou `false`                            | `false`                                     | Jogadores podem ligar e desligar o efeito para si com `/rdplserver sneak`                                                                                                                                                                                           |
 | `environments.<name>.mobs`                             | não          | objeto                                       | nenhum                                      | Muda os mobs enquanto o ambiente está ligado                                                                                                                                                                                                                        |
 | `environments.<name>.mobs.entities`                    | não          | lista de ids de entidade ou tipos            | `["#monster"]`                              | Ids como `minecraft:zombie`, ou `#monster`, `#creature`, `#ambient`, `#water_creature`                                                                                                                                                                              |
 | `environments.<name>.mobs.health`                      | não          | número maior que 0                           | `1`                                         | Multiplica a vida máxima                                                                                                                                                                                                                                            |
@@ -7334,6 +7828,7 @@ Uma dimensão se abre por uma moldura ao trazer uma seção `portal`. A moldura 
   "portal": {
     "frames": ["mypack:standing_gate"],
     "ignitedBy": "minecraft:flint_and_steel",
+    "ignitedByFluid": "minecraft:water",
     "color": "#C77DFF",
     "return": "built",
     "gate": "mypack:ruby_gate",
@@ -7347,30 +7842,31 @@ Uma dimensão se abre por uma moldura ao trazer uma seção `portal`. A moldura 
 }
 ```
 
-| Chave             | Obrigatória | Valor                       | Padrão                      | O que faz                                                                                                            |
-| ----------------- | ----------- | --------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `frames`          | sim         | lista de nomes de moldura   | nenhum                      | As molduras que abrem esta dimensão                                                                                  |
-| `ignitedBy`       | não         | nome de item                | `minecraft:flint_and_steel` | O que o jogador segura para acender uma                                                                              |
-| `color`           | não         | cor hex                     | branco                      | A cor em que o portal é desenhado                                                                                    |
-| `return`          | não         | `built`, `player` ou `none` | `built`                     | Se um caminho de volta é fornecido, construído pelo jogador, ou nenhum                                               |
-| `returnDimension` | não         | int                         | `0`                         | Para onde envia você de volta, ou a alternativa quando a origem não existe mais                                      |
-| `returnTo`        | não         | `fixed` ou `origin`         | `fixed`                     | `origin` envia você de volta para onde estava, Nether e End incluídos                                                |
-| `gate`            | não         | nome de passagem            | nenhum                      | Uma passagem que precisa estar aberta para atravessar                                                                |
-| `cooldown`        | não         | int, ticks                  | `60`                        | Tempo até o mesmo jogador poder atravessar de novo                                                                   |
-| `landing`         | não         | `surface` ou `same`         | `surface`                   | `same` chega na altura de onde você saiu, em uma sala com piso                                                       |
-| `torches`         | não         | booleano                    | `false`                     | `true`: com `landing` `same` e `platform` `true`, duas tochas na sala. `false`: nenhuma tocha na sala                |
-| `useRange`        | não         | int, blocos                 | `0`                         | Se acima de 0, o jogador precisa estar perto da altura do portal para usá-lo                                         |
-| `mounted`         | não         | booleano                    | `true`                      | `true`: um jogador montado em algo pode usá-lo. `false`: ele não pode                                                |
-| `platform`        | não         | booleano                    | `true`                      | `true`: constrói uma plataforma de pouso na chegada. `false`: nenhuma plataforma de pouso é construída na chegada    |
-| `platformBlock`   | não         | nome de bloco               | pedra                       | De que a plataforma é feita                                                                                          |
-| `sound`           | não         | nome de som                 | nenhum                      | Tocado ao atravessar                                                                                                 |
-| `owned`           | não         | booleano                    | `false`                     | `true`: apenas quem o acendeu, e aqueles que essa pessoa permitir, pode usá-lo. `false`: qualquer pessoa pode usá-lo |
+| Chave             | Obrigatória | Valor                       | Padrão                      | O que faz                                                                                                                                                                                      |
+| ----------------- | ----------- | --------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frames`          | sim         | lista de nomes de moldura   | nenhum                      | As molduras que abrem esta dimensão                                                                                                                                                            |
+| `ignitedBy`       | não         | nome de item                | `minecraft:flint_and_steel` | O que o jogador segura para acender uma                                                                                                                                                        |
+| `ignitedByFluid`  | não         | nome de bloco de fluido     | nenhum                      | Um bloco de fluido que para na abertura da moldura ou flui para dentro dela acende o portal. Com `ignitedBy` também definido, qualquer um dos dois acende. Sem `ignitedBy`, só o fluido acende |
+| `color`           | não         | cor hex                     | branco                      | A cor em que o portal é desenhado                                                                                                                                                              |
+| `return`          | não         | `built`, `player` ou `none` | `built`                     | Se um caminho de volta é fornecido, construído pelo jogador, ou nenhum                                                                                                                         |
+| `returnDimension` | não         | int                         | `0`                         | Para onde envia você de volta, ou a alternativa quando a origem não existe mais                                                                                                                |
+| `returnTo`        | não         | `fixed` ou `origin`         | `fixed`                     | `origin` envia você de volta para onde estava, Nether e End incluídos                                                                                                                          |
+| `gate`            | não         | nome de passagem            | nenhum                      | Uma passagem que precisa estar aberta para atravessar                                                                                                                                          |
+| `cooldown`        | não         | int, ticks                  | `60`                        | Tempo até o mesmo jogador poder atravessar de novo                                                                                                                                             |
+| `landing`         | não         | `surface` ou `same`         | `surface`                   | `same` chega na altura de onde você saiu, em uma sala com piso                                                                                                                                 |
+| `torches`         | não         | booleano                    | `false`                     | `true`: com `landing` `same` e `platform` `true`, duas tochas na sala. `false`: nenhuma tocha na sala                                                                                          |
+| `useRange`        | não         | int, blocos                 | `0`                         | Se acima de 0, o jogador precisa estar perto da altura do portal para usá-lo                                                                                                                   |
+| `mounted`         | não         | booleano                    | `true`                      | `true`: um jogador montado em algo pode usá-lo. `false`: ele não pode                                                                                                                          |
+| `platform`        | não         | booleano                    | `true`                      | `true`: constrói uma plataforma de pouso na chegada. `false`: nenhuma plataforma de pouso é construída na chegada                                                                              |
+| `platformBlock`   | não         | nome de bloco               | pedra                       | De que a plataforma é feita                                                                                                                                                                    |
+| `sound`           | não         | nome de som                 | nenhum                      | Tocado ao atravessar                                                                                                                                                                           |
+| `owned`           | não         | booleano                    | `false`                     | `true`: apenas quem o acendeu, e aqueles que essa pessoa permitir, pode usá-lo. `false`: qualquer pessoa pode usá-lo                                                                           |
 
 O bloco que fica no vão não é escrito pelo pacote. Uma dimensão com uma seção `portal` ganha um próprio, chamado `<namespace>:portal_<dimension>`, desenhado com a textura de portal do próprio jogo sob `color`, atravessado ao andar para dentro em vez de usado com a mão, e inquebrável. A cor multiplica a textura, como um `tintindex` faz, então `#C77DFF` mantém o violeta do nether e `#4CFFB0` o torna venenoso. Para um portal que não use a textura do vanilla de forma alguma, escreva um bloco `portal` comum seu, com modelo próprio e uma textura desenhada como [mapa de pixels](#texturas-escritas-como-mapas-de-pixels), onde `tint` pode fazer uma transição entre duas cores.
 
 `return` decide o que acontece do outro lado. `built` ergue a mesma moldura, no tamanho que o jogador construiu, e a acende, que é como o vanilla se comporta. `player` não constrói nada, mas permite que a mesma moldura seja acesa lá, então o caminho de casa precisa ser encontrado e feito. `none` recusa acender a moldura naquela dimensão, e a viagem é só de ida.
 
-**Uma moldura, várias dimensões.** O par formado por uma moldura e o item que a acende é o que escolhe a dimensão, então o mesmo `standing_gate` aceso com isqueiro e aceso com um acendedor próprio do pacote abre dois lugares diferentes, cada um com sua cor. Duas dimensões reivindicarem a mesma moldura *e* o mesmo item é um erro do pacote: a segunda é recusada e isso é dito no log, em vez de uma delas vencer em silêncio.
+**Uma moldura, várias dimensões.** O par formado por uma moldura e o item que a acende é o que escolhe a dimensão, então o mesmo `standing_gate` aceso com isqueiro e aceso com um acendedor próprio do pacote abre dois lugares diferentes, cada um com sua cor. O mesmo vale para `ignitedByFluid`: duas dimensões não podem reivindicar a mesma moldura com o mesmo fluido. Duas dimensões reivindicarem a mesma moldura *e* o mesmo item é um erro do pacote: a segunda é recusada e isso é dito no log, em vez de uma delas vencer em silêncio.
 
 Quebrar qualquer bloco da moldura apaga o portal, como no vanilla.
 
@@ -7406,31 +7902,71 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve só as de que pre
     "team": "red",
     "objective": "quests",
     "scoreAtLeast": 5,
-    "teamAndScore": "alone"
+    "teamAndScore": "alone",
+    "data": { "name": "quest.stage", "atLeast": 2 }
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
   "safeReturn": true,
+  "stayMinutes": 20,
+  "stayReset": "day",
+  "stayMessage": "%dim%: %time% left",
+  "stayWarn": [60, 30, 10, 5],
+  "onExpire": { "exit": true, "function": "mypack:time_up", "message": "Your time in %dim% is up" },
+  "dropOnLeave": { "keep": ["mypack:ruby_key"], "enderChest": true, "message": "Loot from %dim% stays behind" },
   "portalBlocks": ["mypack:ruby_portal"],
   "requires": ["mypack"]
 }
 ```
 
-| Chave             | Obrigatória | Valor                                         | Padrão                           | O que faz                                                                                                                                                                                                                                                                                                                                                                                                |
-| ----------------- | ----------- | --------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dimension`       | não         | int                                           | nenhum                           | A dimensão que ela guarda. Uma passagem sem ela não guarda nenhuma dimensão e apenas tranca as [rotas](#rotas) que a citam                                                                                                                                                                                                                                                                               |
-| `name`            | não         | texto                                         | o nome do arquivo                | Mostrado ao jogador                                                                                                                                                                                                                                                                                                                                                                                      |
-| `scope`           | não         | `player`, `global`, `team`                    | `player`                         | Um jogador por vez, o mundo inteiro de uma vez, ou toda a equipe de quem o abriu (uma equipe é um lado da pasta `<namespace>/teams` do pacote; os jogadores entram nele se constarem em seu `players`, com `/rdpl team join <nome>` a menos que o lado defina `joinable` como false, com `/rdpl team join` sozinho no menor lado com `balance`, ou pelo sorteio de `picks`, veja [Equipes](#quem-entra)) |
-| `teamless`        | não         | `player`, `refuse`                            | `player`                         | Com o escopo `team`, o que recebe um jogador sem equipe: um desbloqueio só seu ou a recusa                                                                                                                                                                                                                                                                                                               |
-| `open`            | não         | booleano                                      | `false`                          | `true`: ela começa aberta. `false`: ela começa fechada                                                                                                                                                                                                                                                                                                                                                   |
-| `unlock`          | não         | objeto                                        |                                  | O que a abre. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                |
-| `unlockedMessage` | não         | texto                                         | `%dim% is now open`              | Mostrada quando ela abre                                                                                                                                                                                                                                                                                                                                                                                 |
-| `blockedMessage`  | não         | texto                                         | `You need %item% to enter %dim%` | Mostrada quando ela recusa                                                                                                                                                                                                                                                                                                                                                                               |
-| `safeReturn`      | não         | booleano                                      | `false`                          | `true`: um retorno bloqueado ainda pousa em um lugar seguro em vez de recusar. `false`: um retorno bloqueado é recusado                                                                                                                                                                                                                                                                                  |
-| `requires`        | não         | lista de ids de mods ou namespaces de pacotes | nenhum                           | A passagem é ignorada a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                |
-| `portalBlocks`    | não         | lista de nomes de blocos                      | todo portal                      | Limita a passagem a estes blocos de portal, de modo que uma dimensão pode ter uma porta guardada e uma aberta                                                                                                                                                                                                                                                                                            |
+| Chave             | Obrigatória | Valor                                         | Padrão                           | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------- | ----------- | --------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension`       | não         | int                                           | nenhum                           | A dimensão que ela guarda. Uma passagem sem ela não guarda nenhuma dimensão e apenas tranca as [rotas](#rotas) que a citam                                                                                                                                                                                                                                                                                                                        |
+| `name`            | não         | texto                                         | o nome do arquivo                | Mostrado ao jogador                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `scope`           | não         | `player`, `global`, `team`                    | `player`                         | Um jogador por vez, o mundo inteiro de uma vez, ou toda a equipe de quem o abriu (uma equipe é um lado da pasta `<namespace>/teams` do pacote; os jogadores entram nele se constarem em seu `players`, com `/rdpl team join <nome>` a menos que o lado defina `joinable` como false, com `/rdpl team join` sozinho no menor lado com `balance`, ou pelo sorteio de `picks`, veja [Equipes](#quem-entra))                                          |
+| `teamless`        | não         | `player`, `refuse`                            | `player`                         | Com o escopo `team`, o que recebe um jogador sem equipe: um desbloqueio só seu ou a recusa                                                                                                                                                                                                                                                                                                                                                        |
+| `open`            | não         | booleano                                      | `false`                          | `true`: ela começa aberta. `false`: ela começa fechada                                                                                                                                                                                                                                                                                                                                                                                            |
+| `unlock`          | não         | objeto                                        |                                  | O que a abre. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `unlockedMessage` | não         | texto                                         | `%dim% is now open`              | Mostrada quando ela abre                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `blockedMessage`  | não         | texto                                         | `You need %item% to enter %dim%` | Mostrada quando ela recusa                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `safeReturn`      | não         | booleano                                      | `false`                          | `true`: um retorno bloqueado ainda pousa em um lugar seguro em vez de recusar. `false`: um retorno bloqueado é recusado                                                                                                                                                                                                                                                                                                                           |
+| `requires`        | não         | lista de ids de mods ou namespaces de pacotes | nenhum                           | A passagem é ignorada a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                                                         |
+| `portalBlocks`    | não         | lista de nomes de blocos                      | todo portal                      | Limita a passagem a estes blocos de portal, de modo que uma dimensão pode ter uma porta guardada e uma aberta                                                                                                                                                                                                                                                                                                                                     |
+| `stayMinutes`     | não         | int                                           | nenhum                           | Um orçamento de tempo em minutos para a `dimension` da passagem. O tempo conta para trás enquanto o jogador está nessa dimensão, um segundo por vez, e é guardado com o jogador entre saídas e reinícios. Quando se esgota, o jogador é mandado para fora e uma nova ida à dimensão é recusada até o orçamento voltar (veja `stayReset`). Precisa de `dimension`; sem ela, ou com um valor 0 ou menor, o log avisa e a passagem não tem orçamento |
+| `stayReset`       | não         | `never`, `day`, `visit`                       | `never`                          | Quando o tempo usado é devolvido. `never`: não é. `day`: no começo de cada novo dia do overworld. `visit`: cada vez que o jogador esteve fora da dimensão, então cada visita começa com o orçamento cheio. Qualquer outra palavra é registrada no log e `never` é usado                                                                                                                                                                           |
+| `stayMessage`     | não         | texto                                         | `%dim%: %time% left`             | Mostrada na barra de ação conforme o orçamento diminui. `%dim%` é o `name` da passagem e `%time%` o tempo restante em minutos e segundos, como `0:30`                                                                                                                                                                                                                                                                                             |
+| `stayWarn`        | não         | lista de ints                                 | `[60, 30, 10, 5, 4, 3, 2, 1]`    | Os segundos restantes em que `stayMessage` é mostrada. Uma lista vazia nunca a mostra. Uma entrada que não é número é ignorada                                                                                                                                                                                                                                                                                                                    |
+| `onExpire`        | não         | objeto                                        | nenhum                           | O que acontece quando o orçamento se esgota. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                          |
+| `dropOnLeave`     | não         | `true` ou objeto                              | nenhum                           | Marca o que o jogador ganha na dimensão e o larga quando ele sai. `true` usa todos os padrões abaixo. Precisa de `dimension`; sem ela o log avisa e nada é marcado                                                                                                                                                                                                                                                                                |
 
 `unlock` aceita `hold` (um item que precisa estar na mão), `consume` com `consumeCount` (`1`), `craft` (um item que precisa ter sido fabricado), `advancement` e `killed` (um nome de entidade; a passagem se abre para quem matar uma, de modo que um chefe pode guardar a chave de um mundo) com `killedCount` (`1`) quando uma não basta, contabilizado por jogador ou para o mundo inteiro conforme o escopo. `killedRank` (o nome de um nível de mob) só conta as mortes de um mob que tirou esse nível. Adicionar `killedDrops` (um nome de item) faz as mortes contadas largarem esse item aos pés de quem matou em vez de abrir a passagem, e zera a contagem, de modo que uma chave pode ser conquistada de novo e entregue a alguém que nunca lutou por ela; use `hold` ou `consume` do mesmo item como condição para torná-lo a chave. `%item%`, `%mob%` e `%dim%` são preenchidos para você. Uma chave que um mob solta não precisa de nada especial aqui: dê o drop ao mob e use `hold` ou `consume` como condição. `team`, e `objective` com `scoreAtLeast`, abrem a passagem para um jogador dessa equipe do placar cuja pontuação nesse objetivo seja pelo menos esse valor, as mesmas condições que o `when` de um cartão aceita; cada uma também funciona sozinha. Elas são verificadas quando o jogador atravessa, e a passagem então se abre no seu escopo como em qualquer outro desbloqueio. Com o escopo `team`, o desbloqueio pertence à equipe de quem a abriu: todos dela passam, inclusive quem entrar depois, e um jogador sem equipe a desbloqueia só para si. `teamAndScore` define como essas duas contam: `alone` (o padrão) deixa que elas abram a passagem sozinhas, enquanto `with` as torna uma condição a mais, e a passagem só se abre quando outra chave de desbloqueio for cumprida e o jogador também estiver nessa equipe com essa pontuação. `killedTally` em `team` soma para `killedCount` todos os abates da equipe de quem mata, em vez dos de cada jogador separadamente (`player`, o padrão); quem não tem equipe continua contando sozinho. `teamless` em `refuse` barra numa passagem de escopo `team` um jogador sem equipe, em vez de deixá-lo desbloqueá-la só para si (`player`, o padrão).
+
+`unlock` também aceita `worn`, um nome de item que o jogador precisa vestir: em um slot de armadura, ou com o Baubles instalado em qualquer slot do Baubles. Um nome sem metadados significa metadados 0. Um nome com metadados, como `"mypack:ruby_ring:1"`, precisa desses metadados, e `:*` aceita qualquer um. Enquanto o jogador o veste, a passagem fica aberta para ele. Por padrão, passar por um portal ou rota vestindo o item também desbloqueia a passagem de vez no seu escopo, como qualquer outro desbloqueio. Definir `each` em `unlock` como `true` desliga isso: o item precisa estar vestido toda vez, nada é lembrado, e tirá-lo fecha a passagem de novo. `%item%` em `blockedMessage` mostra o nome do item quando `worn` é a única coisa que a passagem pede. Um nome de item que não existe é registrado no log, e então a passagem não pode ser aberta vestindo-o. `each` sem `worn` é registrado no log e não faz nada.
+
+```json
+{
+  "dimension": 12,
+  "unlock": { "worn": "minecraft:iron_helmet", "each": true }
+}
+```
+
+`unlock` também aceita `data`, uma verificação ou uma lista delas como em [Dados sincronizados](#dados-sincronizados). Ela não abre a passagem: é uma condição a mais, verificada toda vez que um jogador tenta passar, então uma passagem aberta, ou já desbloqueada para o jogador, ainda o devolve com `blockedMessage` enquanto uma verificação falha.
+
+**Orçamento de tempo.** `onExpire` aceita estas chaves.
+
+| Chave      | Obrigatória | Valor        | Padrão                     | O que faz                                                                                                                                                                                                                               |
+| ---------- | ----------- | ------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit`     | não         | booleano     | `true`                     | `true`: manda o jogador para a cama dele ou para o spawn do mundo no overworld. Ele desce de qualquer veículo antes, e os itens do baú de um veículo vão com ele. `false`: o jogador não é movido. Se a movimentação falha, o log avisa |
+| `function` | não         | id de função | nenhum                     | Executa esta função como o jogador depois da mensagem                                                                                                                                                                                   |
+| `message`  | não         | texto        | `Your time in %dim% is up` | Mostrada na barra de ação quando o orçamento acaba, e de novo cada vez que um jogador tenta entrar enquanto ele está esgotado. `%dim%` é o `name` da passagem. Vazio não mostra nada                                                    |
+
+**Loot que fica.** Com `dropOnLeave`, um item que o jogador pega, fabrica, funde ou tira de um contêiner enquanto está na dimensão é marcado. Quando o jogador sai da dimensão, cada item marcado que ele carrega é largado onde ele estava, com um pequeno atraso antes que possa ser pego de novo, e `message` é mostrada. Um item marcado dentro de uma caixa shulker ou de outro contêiner de itens conta, e um barco ou carrinho levando itens marcados não pode sair. Um item marcado carrega uma tag até ser largado, então não empilha com um não marcado. Um jogador que morre com `keepInventory` ligado larga os itens marcados onde morreu. O que o jogador carrega significa o seu inventário, armadura e mãos, um baú no veículo em que ele anda e, com o Baubles instalado, os slots que o Baubles usa. `dropOnLeave` aceita estas chaves.
+
+| Chave        | Obrigatória | Valor                   | Padrão                         | O que faz                                                                                                                                                                                                   |
+| ------------ | ----------- | ----------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keep`       | não         | lista de nomes de itens | nenhum                         | Itens que nunca são marcados, escritos `modid:name`, e casam com o item qualquer que seja o seu valor de dano. Um nome que não é um item conhecido, ou que não tem `modid:`, é registrado no log e ignorado |
+| `enderChest` | não         | booleano                | `true`                         | `true`: itens marcados no baú do ender do jogador também são largados quando ele sai. `false`: ficam nele. Uma morte com `keepInventory` nunca larga o baú do ender                                         |
+| `message`    | não         | texto                   | `Loot from %dim% stays behind` | Mostrada na barra de ação quando pelo menos um item foi largado. `%dim%` é o `name` da passagem e `%count%` o número de itens. Vazio não mostra nada                                                        |
 
 **Passagens para rotas.** Uma [rota](#rotas) cita uma passagem em `gate` e fica trancada para um jogador até a passagem estar aberta para ele, com os mesmos escopos, regras de desbloqueio e mensagens de um portal. Dê a mesma passagem a todas as rotas de uma rede para trancar a rede inteira. Para abrir uma passagem gastando um item em uma rota, liste o bloco da rota em `portalBlocks` e dê à passagem um item `consume`. Esta passagem não tem `dimension`, e um bloco de rota a cita com `"gate": "mypack:northgate_network"`:
 
@@ -9598,6 +10134,101 @@ Uma equipe ou um jogador pode reivindicar chunks de terreno. Um chunk reivindica
 
 **FTB Utilities.** `ftbPolicy` é lida à parte, e as reivindicações do RDPL e as do FTB Utilities são registros separados. `independent` (o padrão) ignora as reivindicações do FTB. `yield` recusa uma reivindicação sobre um chunk que o FTB detém e deixa a proteção ali com o FTB, então uma reivindicação feita antes de o FTB tomar o chunk deixa de proteger enquanto o FTB o mantiver. `exclusive` recusa toda reivindicação do RDPL, aponta o jogador para o comando de reivindicação do FTB, e desliga a proteção do RDPL enquanto houver reivindicações do FTB ativas. Sem reivindicações do FTB ativas, `yield` e `exclusive` agem como `independent`, e uma linha é registrada no início do servidor. Em modo `yield`, as mensagens de entrada e saída ignoram os terrenos que o FTB detém. Com `teamSource` `ftb`, os limites `perMember` e `score` contam os membros do grupo do FTB, e `claim for` e `claims` aceitam o ID ou o título de um grupo.
 
+### Regras de zona
+
+*equipes*
+
+`<namespace>/zones/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, uma zona por arquivo, e vários arquivos se acumulam. Uma zona é uma área fixa de uma dimensão em que os jogadores não podem quebrar, colocar, usar ou abrir certas coisas, nem voar. É uma regra estática e não precisa de reivindicação.
+
+```json
+{
+  "id": "rift_rules",
+  "where": { "dimension": "ftb:rift", "box": [-256, -64, -207, 192, 320, 256], "claim": false },
+  "except": { "creative": true, "tag": "builder" },
+  "break": { "allow": ["#minecraft:logs"] },
+  "place": { "deny": "all", "on": ["#mypack:altar_base"] },
+  "use": { "deny": ["minecraft:ender_pearl"] },
+  "open": { "allow": ["minecraft:chest"] },
+  "fly": false,
+  "message": "mypack.rift.nope"
+}
+```
+
+Um segundo arquivo de zona, que mantém ferramentas e dano fora de uma caixa para todos, exceto jogadores no modo criativo. Jogadores no modo criativo ainda podem arar e machucar animais ali:
+
+```json
+{
+  "id": "farm_guard",
+  "where": { "dimension": "minecraft:overworld", "box": [100, 0, 100, 140, 255, 140] },
+  "except": { "creative": true },
+  "denyToolActions": ["hoe_till", "axe_strip", "shovel_flatten"],
+  "damage": { "entities": ["minecraft:cow", "minecraft:pig", "#creature"], "unlessAttackerInside": true },
+  "open": { "allow": ["minecraft:chest"], "close": true }
+}
+```
+
+| Chave             | Obrigatória | Valor          | Padrão             | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------- | ----------- | -------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | não         | texto          | o nome do arquivo  | O nome que o log usa para a zona                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `where`           | não         | objeto         | o mundo inteiro    | Onde fica a zona. Um jogador está na zona quando todos os escopos informados casam. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `except`          | não         | objeto         | ninguém            | Os jogadores que a zona deixa em paz. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `break`           | não         | objeto         | nenhuma regra      | Quais blocos um jogador pode quebrar. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `place`           | não         | objeto         | nenhuma regra      | Quais blocos um jogador pode colocar, e em cima de quais pode ficar. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `use`             | não         | objeto         | nenhuma regra      | Quais itens um jogador pode usar com um clique direito                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `open`            | não         | objeto         | nenhuma regra      | Quais contêineres um jogador pode abrir                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `denyToolActions` | não         | texto ou lista | nenhum             | Ações de ferramenta recusadas dentro da zona. No 1.12.2 funcionam `hoe_till` (uma enxada transformando terra, grama ou caminho de grama em terra arada) e `shovel_flatten` (uma pá transformando um bloco de grama em caminho). `axe_strip` é registrado no log como `denies axe_strip, which 1.12.2 cannot do since logs cannot be stripped; ignoring that entry`, porque toras do 1.12.2 não podem ser descascadas. Os nomes não diferenciam maiúsculas de minúsculas. O bloco trabalhado precisa estar dentro da zona, e o jogador recusado vê a `message` da zona. Um valor que não é texto nem lista, uma entrada que não é texto e um nome que não é nenhum dos três são cada um registrado no log e ignorado |
+| `damage`          | não         | objeto         | nenhum             | Protege seres vivos de dano dentro da zona. Veja abaixo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `fly`             | não         | booleano       | `true`             | `false`: uma vez por segundo, um jogador dentro da zona que esteja voando é trazido ao chão e perde a capacidade de voar, a menos que esteja no modo criativo ou espectador, caso em que só o voo para                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `message`         | não         | texto          | `rdpl.zone.denied` | Uma chave de idioma mostrada acima da barra de itens ao jogador recusado, no máximo a cada dois segundos. O padrão diz `Você não pode fazer isso aqui`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+| Chave de `where` | Valor                 | O que faz                                                                                                                                        |
+| ---------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dimension`      | nome de dimensão      | Só esta dimensão, escrita como em todo o RDPL: um número, ou o nome com ou sem o seu namespace. Omitida: todas as dimensões                      |
+| `box`            | seis números de bloco | `[x1, y1, z1, x2, y2, z2]`, dois cantos opostos em qualquer ordem, ambos incluídos. O bloco trabalhado precisa estar dentro. Omitido: sem limite |
+| `claim`          | booleano              | `true`: só dentro dos chunks reivindicados em [Chunks reivindicados](#chunks-reivindicados). `false` ou omitido: as reivindicações não importam  |
+
+| Chave de `except` | Valor    | O que faz                                                          |
+| ----------------- | -------- | ------------------------------------------------------------------ |
+| `creative`        | booleano | `true`: jogadores no modo criativo são pulados                     |
+| `tag`             | texto    | Jogadores com esta tag de placar, definida com `/tag`, são pulados |
+
+`break`, `place`, `use` e `open` aceitam cada uma destas chaves. Todas são opcionais, e uma regra sem nenhuma delas é ignorada e o log avisa.
+
+| Chave   | Valor                 | O que faz                                                                                                                                                                                  |
+| ------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `allow` | lista de ids ou nomes | Só estes são permitidos, todo o resto é recusado                                                                                                                                           |
+| `deny`  | lista, ou `"all"`     | Estes são recusados. `"all"` recusa tudo                                                                                                                                                   |
+| `on`    | lista de ids ou nomes | Só em `place`: um bloco só pode ser colocado quando o bloco embaixo dele é um destes. Vale em cima de `allow` e `deny`, então uma colocação que as outras chaves recusam continua recusada |
+| `close` | booleano              | `open` apenas: também fecha um contêiner que já está aberto. Padrão `false`. Veja abaixo                                                                                                   |
+
+Uma entrada é um id de bloco ou item, como `minecraft:chest`, um id com valor de dano, como `minecraft:log:2`, um id que termina em `*` para um namespace inteiro, como `minecraft:*`, ou `#nome` para um nome do dicionário de minérios, já que o 1.12.2 não tem tags. Um nome de dicionário de minérios que nada registra é registrado no log como erro e não casa com nada. `break`, `place` e `open` casam com blocos, `use` casa com o item na mão do jogador, e `on` casa com o bloco de baixo.
+
+**`open`** identifica os contêineres pelo bloco do contêiner clicado, já que o 1.12.2 não tem nomes de contêiner, e o log avisa quando uma zona tem uma regra `open`. A regra só vale para um bloco que guarda itens (um baú, uma fornalha, um funil), uma bancada de trabalho ou uma bigorna. Qualquer outro bloco nunca é recusado por `open`, seja o que for que `allow` liste. Um clique recusado não faz nada, então o contêiner nunca abre.
+
+**`use`** recusa só o item. Um clique direito num bloco com um item recusado ainda aciona o bloco, como apertar um botão. O bloco sob o clique não faz parte da regra.
+
+**`damage`** recusa dano aos seres vivos listados enquanto eles estão dentro da zona, não importa onde esteja o atacante. O bloco da própria entidade é o que é testado contra `where`. Uma entrada em `entities` é um id de entidade como `minecraft:pig`, com ou sem o namespace `minecraft:`, ou um tipo: `#monster`, `#creature`, `#ambient` ou `#water_creature`. Dano que passa pelo modo criativo, como o vazio ou `/kill`, nunca é recusado. Um jogador que ataca e casa com `except` nunca é recusado, então uma zona que exclui jogadores criativos mantém os ataques deles funcionando. Um atacante recusado que é jogador vê a `message` da zona; outros atacantes são parados sem mensagem. Um `damage` que não é objeto, um `entities` que não é lista, um tipo que não é um dos quatro, uma entrada que não é texto, ou uma lista `entities` sem nada utilizável são registrados no log e o `damage` é ignorado.
+
+| Chave                  | Obrigatória | Valor                 | Padrão  | O que faz                                                                                                    |
+| ---------------------- | ----------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `entities`             | sim         | lista de ids ou tipos | nenhum  | Os seres vivos que a zona protege                                                                            |
+| `unlessAttackerInside` | não         | booleano              | `false` | `true`: dano de um atacante que também está dentro da zona é permitido, e só o dano vindo de fora é recusado |
+| `allowNoAttacker`      | não         | booleano              | `false` | `true`: dano sem atacante, como uma queda, fogo ou lava, é permitido. `false`: também é recusado             |
+
+Um valor de `unlessAttackerInside` ou `allowNoAttacker` que não seja `true` ou `false` é registrado no log e conta como `false`.
+
+**`close`** faz `open` julgar mais do que o bloco clicado. Com ele, um contêiner que um jogador abriu clicando num bloco fora da zona é fechado de novo na hora, enquanto o jogador está dentro da zona, se a regra `open` recusa esse bloco. O jogador vê a `message` da zona. Sem ele, só o bloco clicado decide. `close` é lido só em `open` e conta como `false`, a menos que seja `true` ou `false`, o que é registrado no log de outro modo. Ele fecha contêineres abertos clicando num bloco, não os abertos de outra forma.
+
+Um arquivo de zona sem nenhuma das chaves `break`, `place`, `use`, `open`, `damage`, `denyToolActions` ou `fly: false` é ignorado, e o log diz isso. Um `where.box` com um número de valores diferente de seis é registrado no log como `gives a box of N numbers, it needs 6 (x1, y1, z1, x2, y2, z2), ignoring the zone`, e a zona não é carregada.
+
+**Quem está na zona.** `break`, `place` e `open` olham o bloco que é quebrado, colocado ou clicado, então um jogador de fora não pode trabalhar blocos dentro da zona, e um jogador de dentro pode trabalhar blocos de fora. `use` num bloco funciona do mesmo jeito, enquanto `use` no ar e `fly` olham o bloco em que o jogador está. Uma zona sem `where` cobre todos no mundo. Jogadores que casam com `except` nunca são recusados nem trazidos ao chão.
+
+**Voo.** `fly: false` só desliga o voo. Um jogador que sai da zona continua com o voo desligado até que outra coisa o conceda de novo, como o modo criativo ou um comando.
+
+Sem um arquivo, nada é restrito. O log mostra `Loaded N zone(s)` quando os arquivos carregam, e `/rdplserver reload` os carrega de novo.
+
 ## Pontuação
 
 *modos de jogo*
@@ -10073,10 +10704,32 @@ O terceiro saúda um jogador na primeira entrada com uma carta central sem paine
 
 *cartas*
 
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "login",
+  "title": "Welcome back, {player}",
+  "sound": "minecraft:entity.player.levelup",
+  "runs": "mypack:login_news"
+}
+```
+
+```json
+{
+  "trigger": "command",
+  "title": "{player} found {item}",
+  "lines": ["Worth {value} coins."]
+}
+```
+
+`login` dispara a cada login, `first_join` só no primeiro. O comando `/rdplserver card mypack:found Steve item=Ruby value=50` mostra a segunda carta, com `{item}` e `{value}` preenchidos a partir dos pares `key=value`.
+
 | Gatilho              | Precisa de             | Dispara quando                                                                                                                                                                                                                                                         |
 | -------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `command`            | nada                   | `/rdplserver card <rule> [players]` é executado. O comando ignora `when`, `repeat` e `cooldown`, e ainda executa `runs`. Qualquer regra pode ser mostrada assim, seja qual for o seu gatilho                                                                           |
 | `first_join`         | nada                   | Um jogador entra no mundo pela primeira vez                                                                                                                                                                                                                            |
+| `login`              | nenhum                 | Um jogador entra no jogo, sempre e não só na primeira vez. `runs` roda como para qualquer outro gatilho                                                                                                                                                                |
 | `dimension_enter`    | `dimension`            | Um jogador chega a essa dimensão                                                                                                                                                                                                                                       |
 | `biome_enter`        | `biomes`               | Um jogador entra em um desses biomas vindo de outro lugar                                                                                                                                                                                                              |
 | `structure_enter`    | `structures`           | Um jogador entra em uma dessas estruturas vindo de fora dela                                                                                                                                                                                                           |
@@ -10107,12 +10760,25 @@ O terceiro saúda um jogador na primeira entrada com uma carta central sem paine
 | `exposure_level`     | nada, ou `exposure`    | O nível de um jogador em um perigo muda, para cima ou para baixo. Com `exposure`, só esse perigo; com `level`, só uma mudança que chegue a esse nível. A primeira verificação após a entrada nunca a dispara                                                           |
 | `round_start`        | nada                   | Uma rodada começa, depois da contagem: uma vez para cada jogador, ou uma vez para a `audience`. Vale tanto depois de uma redefinição quanto de `/rdplserver round start`                                                                                               |
 | `environment_change` | nada, ou `environment` | Um ambiente é ativado em uma dimensão, por um comando ou uma estação, ou `default` volta: uma vez para cada jogador lá, ou uma vez para a `audience`. Com `environment`, só esse ambiente. Carregar um mundo salvo nunca a dispara                                     |
+| `worn`               | `when.worn`            | Não é um momento, mas um medidor: enquanto um jogador veste o item de `when.worn`, a carta é mostrada de novo a ele a cada `every` ticks. Veja abaixo. Uma regra sem `when.worn` é pulada, e o log avisa                                                               |
 
 Os níveis de perigo são lidos a cada varredura, então uma carta dispara dentro do `scanInterval` do perigo após a mudança.
 
 Bioma, estrutura, altura, tempo de jogo e pontuação são verificados uma vez por segundo para cada jogador, e disparam na mudança de fora para dentro, nunca na primeira verificação após uma entrada. Uma regra `time_of_day` ou `day` cujo público não seja `player` dispara uma vez para a dimensão, em vez de uma vez para cada jogador nela.
 
 Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aberta espera e é mostrada quando a introdução fecha, seja qual for o seu gatilho, inclusive o `command`. Ela é descartada se o jogador sair antes disso.
+
+Uma regra `worn` é um medidor ao vivo, para uma barra de durabilidade ou uma linha de estado. A cada `every` ticks ela olha cada jogador e, para quem veste o item de `when.worn`, mostra a carta só para esse jogador, qualquer que seja o `audience`. Ela não aparece enquanto o jogador tem a introdução do mundo aberta. O resto de `when` e `dimension` ainda precisa valer. `repeat` e `cooldown` não têm sentido para um medidor, e o log avisa quando são definidos; `sets` e `runs` rodam a cada atualização. Vestido quer dizer em um slot de armadura, ou em um slot de Baubles quando o Baubles está instalado. O texto da carta pode usar `{worn}`, o nome do item, `{percent}`, a durabilidade restante de 0 a 100, `{left}`, os usos restantes, `{max}`, a durabilidade total, e `{bar}`, um medidor de dez caracteres `|` para o que resta e `.` para o que foi usado. Um item sem durabilidade mostra 100 por cento, 0 em `{left}` e `{max}`, e uma barra cheia. Com `style` `bar`, a linha se substitui na barra de ação.
+
+```json
+{
+  "trigger": "worn",
+  "when": { "worn": "minecraft:iron_helmet" },
+  "every": 40,
+  "style": "bar",
+  "lines": ["{worn} {bar} {percent}%"]
+}
+```
 
 ### Configurações de gatilhos
 
@@ -10145,6 +10811,7 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
   "atMost": 12,
   "objective": "kills",
   "score": 5,
+  "every": 40,
   "requires": ["mypack"]
 }
 ```
@@ -10173,6 +10840,7 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 | `environment`        | texto                                         | nenhum              | Para `environment_change`: o nome do ambiente que foi ativado, como `night`, ou `default`. Sem ele, todo ambiente que é ativado dispara a regra                                                                                   |
 | `atLeast`, `atMost`  | int                                           | nenhum              | Para `roll`: o menor e o maior total que dispara a regra. Uma moeda conta 1 para cara e 0 para coroa; um dado ou baralho de um pacote, a posição do resultado no seu arquivo, a partir de 1                                       |
 | `objective`, `score` | texto, int                                    | nenhum, `1`         | Para `score`: o objetivo e o valor a atingir                                                                                                                                                                                      |
+| `every`              | int, ticks                                    | `40`                | Para `worn`: ticks entre as atualizações do medidor. Um valor que não é múltiplo de 20 é arredondado para cima, até o próximo, e o log avisa. O menor é `20`                                                                      |
 | `portway`            | texto                                         | nenhum              | Nos gatilhos `portway_*`: o id de bloco da rota, como `mypack:northgate`. Sem ele, qualquer rota                                                                                                                                  |
 | `network`            | texto                                         | nenhum              | Nos gatilhos `portway_*`: a rede da rota. Sem ela, qualquer rede                                                                                                                                                                  |
 | `reason`             | texto                                         | nenhum              | Em `portway_refused`: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel` ou `item`. Em `portway_forget`: `gone`, `player` ou `command`. Sem ele, qualquer motivo                                             |
@@ -10185,28 +10853,39 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 `when` contém condições que devem ser todas verdadeiras no momento em que o gatilho dispara.
 
 ```json
-{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike" } }
+{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike", "worn": "mypack:miner_helmet", "data": { "name": "quest.stage", "atLeast": 2 } } }
 ```
 
-| Configuração                | Tipo       | O que verifica                                                                                                                                                                                                 |
-| --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | lista      | O jogador está em um destes biomas, escritos como no gatilho                                                                                                                                                   |
-| `environments`              | lista      | Um destes ambientes está ativo na dimensão do jogador, `default` incluído                                                                                                                                      |
-| `season`                    | lista      | A dimensão está em uma destas estações pelo relógio das estações, mesmo que um ambiente tenha sido trocado à mão. O nome de uma estação é o primeiro nome de ambiente de uma entrada de `order` das estações   |
-| `dimension`                 | texto      | A dimensão cuja estação `season` lê, um nome do registro de dimensões como `rdpl:overworldlike`. Sem ele, vale a dimensão do jogador                                                                           |
-| `timeFrom`, `timeTo`        | int        | O relógio do dia está dentro desta janela, que pode passar da meia-noite, como `13000` a `1000`                                                                                                                |
-| `dayAtLeast`                | int        | O número do dia é pelo menos este                                                                                                                                                                              |
-| `advancement`               | texto      | O jogador tem este avanço                                                                                                                                                                                      |
-| `portway`, `network`        | texto      | O jogador tem uma rota com esse id de bloco, ou dessa rede, na lista ou entre as globais. Qualquer um dos dois pode ser omitido                                                                                |
-| `gameMode`                  | texto      | O jogador está neste modo de jogo: `survival`, `creative`, `adventure` ou `spectator`                                                                                                                          |
-| `team`                      | texto      | O jogador está nesta equipe do placar                                                                                                                                                                          |
-| `dietAtLeast`               | int        | As refeições lembradas do jogador têm pelo menos essa quantidade de comidas diferentes, ou, com `dietCount` `lifetime`, todas as comidas que o jogador já comeu (precisa de um arquivo de Variedade de comida) |
-| `dietCount`                 | texto      | `memory` (padrão) ou `lifetime`: o que `dietAtLeast` conta                                                                                                                                                     |
-| `objective`, `scoreAtLeast` | texto, int | A pontuação do jogador no objetivo é pelo menos esta                                                                                                                                                           |
+| Configuração                | Tipo            | O que verifica                                                                                                                                                                                                         |
+| --------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | lista           | O jogador está em um destes biomas, escritos como no gatilho                                                                                                                                                           |
+| `environments`              | lista           | Um destes ambientes está ativo na dimensão do jogador, `default` incluído                                                                                                                                              |
+| `season`                    | lista           | A dimensão está em uma destas estações pelo relógio das estações, mesmo que um ambiente tenha sido trocado à mão. O nome de uma estação é o primeiro nome de ambiente de uma entrada de `order` das estações           |
+| `dimension`                 | texto           | A dimensão cuja estação `season` lê, um nome do registro de dimensões como `rdpl:overworldlike`. Sem ele, vale a dimensão do jogador                                                                                   |
+| `timeFrom`, `timeTo`        | int             | O relógio do dia está dentro desta janela, que pode passar da meia-noite, como `13000` a `1000`                                                                                                                        |
+| `dayAtLeast`                | int             | O número do dia é pelo menos este                                                                                                                                                                                      |
+| `advancement`               | texto           | O jogador tem este avanço                                                                                                                                                                                              |
+| `portway`, `network`        | texto           | O jogador tem uma rota com esse id de bloco, ou dessa rede, na lista ou entre as globais. Qualquer um dos dois pode ser omitido                                                                                        |
+| `gameMode`                  | texto           | O jogador está neste modo de jogo: `survival`, `creative`, `adventure` ou `spectator`                                                                                                                                  |
+| `team`                      | texto           | O jogador está nesta equipe do placar                                                                                                                                                                                  |
+| `dietAtLeast`               | int             | As refeições lembradas do jogador têm pelo menos essa quantidade de comidas diferentes, ou, com `dietCount` `lifetime`, todas as comidas que o jogador já comeu (precisa de um arquivo de Variedade de comida)         |
+| `dietCount`                 | texto           | `memory` (padrão) ou `lifetime`: o que `dietAtLeast` conta                                                                                                                                                             |
+| `objective`, `scoreAtLeast` | texto, int      | A pontuação do jogador no objetivo é pelo menos esta                                                                                                                                                                   |
+| `worn`                      | texto           | O jogador veste este item em um slot de armadura, ou em um slot de Baubles quando o Baubles está instalado. Escrito como item em outros lugares do pacote, como `minecraft:iron_helmet`. O gatilho `worn` precisa dele |
+| `data`                      | objeto ou lista | Todas estas verificações de valor sincronizado valem. Veja [Dados sincronizados](#dados-sincronizados)                                                                                                                 |
 
 ### A carta
 
 *cartas*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "sound": "minecraft:block.note.chime"
+}
+```
 
 | Configuração | Tipo     | Padrão           | O que faz                                                                                                                                                                                                                                |
 | ------------ | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10218,13 +10897,18 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 | `image`      | texto    | `saysImage`      | Um PNG dos assets de cliente do pacote, esticado sobre a carta como fundo                                                                                                                                                                |
 | `background` | booleano | `saysBackground` | `true`: desenha o painel, sua borda e a faixa de cor. `false`: remove o painel, sua borda e a faixa de cor; o texto mantém a sombra, e uma `image` ainda é desenhada                                                                     |
 | `font`       | texto    | `saysFont`       | A fonte em que o texto da carta é desenhado, como `namespace:name`. Vazio usa a fonte RDPL                                                                                                                                               |
+| `sound`      | texto    | nenhum           | Identificador de som, como `minecraft:entity.player.levelup`, tocado para cada jogador a quem a carta é mostrada. Vazio não toca nenhum som                                                                                              |
 | `ticks`      | int      | `0`              | Quanto tempo a carta permanece, incluindo o esmaecimento. `0` mantém o padrão `160`                                                                                                                                                      |
 | `audience`   | texto    | `player`         | Quem a vê: `player`, `everyone`, `dimension` (todos na dimensão do jogador) ou `team` (a equipe do placar do jogador)                                                                                                                    |
 | `repeat`     | texto    | `always`         | `always`, `once_per_player`, `once_per_world` ou `once_per_session` (de novo depois que o jogador entra outra vez)                                                                                                                       |
 | `cooldown`   | int      | `0`              | Segundos antes de a regra disparar de novo para o mesmo jogador                                                                                                                                                                          |
 | `runs`       | texto    | nenhum           | Uma função executada como o jogador quando a regra dispara                                                                                                                                                                               |
+| `sets`       | objeto   | nenhum           | Valores sincronizados a definir para o jogador para quem a regra dispara, como `name: value`. Veja [Dados sincronizados](#dados-sincronizados)                                                                                           |
+| `worldSets`  | objeto   | nenhum           | Valores sincronizados a definir para o mundo inteiro, na mesma forma                                                                                                                                                                     |
 
 Uma carta de canto vai para o chat quando `saysCard` for `false`. O que um jogador já viu é guardado com o jogador, de modo que sobrevive à morte e à passagem entre dimensões; `once_per_world` é guardado com o mundo.
+
+`sets` e `worldSets` são aplicados quando a regra dispara, depois que as suas condições passam e antes de a carta ser montada, então o próprio texto da carta já mostra os novos valores. `title` e `lines` podem mostrar um valor sincronizado com `{data:name|fallback}`, veja [Dados sincronizados](#dados-sincronizados).
 
 A fonte RDPL, `resourcedatapackloader:rdpl`, é a padrão para todo texto: cartas, mensagens de Says, as notas de boas-vindas e de espera, a introdução do mundo, e os menus, o chat, o HUD e as dicas do próprio jogo. Seus estilos negrito e itálico são `resourcedatapackloader:rdpl_bold` e `resourcedatapackloader:rdpl_italic`. As letras da mesa de encantamento continuam as do jogo.
 
@@ -10246,34 +10930,37 @@ Títulos e linhas de cartas, mensagens de Says e as notas de boas-vindas e de es
 
 *cartas*
 
-| Id                       | A mensagem                                                             | De onde vem o texto                                                                                                                    |
-| ------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `rdpl:gate_unlocked`     | Uma passagem abre                                                      | `unlockedMessage` em [Passagens](#passagens)                                                                                           |
-| `rdpl:gate_blocked`      | Uma passagem fechada faz um jogador voltar, na barra de ação           | `blockedMessage` em [Passagens](#passagens)                                                                                            |
-| `rdpl:team_joined`       | Um jogador entra em um lado                                            | o `displayName` do lado                                                                                                                |
-| `rdpl:team_lead`         | A liderança de um lado chega a um jogador                              | `leadSays` em [Equipes](#equipes)                                                                                                      |
-| `rdpl:team_picked`       | Um jogador é sorteado para um lado                                     | o `displayName` do lado                                                                                                                |
-| `rdpl:team_round_ended`  | A rodada terminou, então um jogador é movido para um lado              | o `displayName` do lado                                                                                                                |
-| `rdpl:downed`            | Um jogador cai em vez de morrer                                        | `down.says` em [Equipes](#equipes)                                                                                                     |
-| `rdpl:revived`           | Um colega reanima um jogador caído                                     | `down.revivedSays` em [Equipes](#equipes)                                                                                              |
-| `rdpl:lobby_joins`       | Um jogador que entra no meio de uma rodada é enviado ao lobby          | `opens.joinsSays` em [O lobby](#o-lobby)                                                                                               |
-| `rdpl:lobby_note`        | A linha do lobby no meio da tela                                       | `opens.says`, `opens.leaderSays` em [O lobby](#o-lobby)                                                                                |
-| `rdpl:scoring_results`   | A classificação no fim de uma rodada, para cada jogador                | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` em [Resultados](#resultados) |
-| `rdpl:scoring_out`       | Um jogador eliminado                                                   | `ends.outSays` em [Como uma rodada termina](#como-uma-rodada-termina)                                                                  |
-| `rdpl:reset_lead`        | O líder redefine a rodada                                              | `reset.leadSays` em [Redefinindo uma rodada](#redefinindo-uma-rodada)                                                                  |
-| `rdpl:reset_vote`        | Uma votação de redefinição é convocada                                 | `reset.voteSays`                                                                                                                       |
-| `rdpl:reset_pass`        | A votação passa                                                        | `reset.passSays`                                                                                                                       |
-| `rdpl:reset_fail`        | A votação fracassa                                                     | `reset.failSays`                                                                                                                       |
-| `rdpl:anvil_waits`       | O trabalho de uma bigorna espera por um avanço                         | [Trabalho na bigorna](#trabalho-na-bigorna)                                                                                            |
-| `rdpl:threat`            | A faixa de ameaça de um jogador muda                                   | `threatSays`                                                                                                                           |
-| `rdpl:prospect`          | Cada linha que uma descoberta de prospecção relata                     | a descoberta                                                                                                                           |
-| `rdpl:prospect_none`     | A prospecção não encontrou nada                                        | o arquivo de idioma                                                                                                                    |
-| `rdpl:portway_activated` | Um jogador adiciona uma rota à lista, na barra de ação                 | o arquivo de idioma                                                                                                                    |
-| `rdpl:portway_refused`   | Uma rota manda um jogador de volta, na barra de ação                   | o arquivo de idioma                                                                                                                    |
-| `rdpl:portway_forgot`    | Uma parada sai da lista de um jogador, na barra de ação                | o arquivo de idioma                                                                                                                    |
-| `rdpl:board_result`      | Uma partida de tabuleiro termina                                       | o arquivo de idioma                                                                                                                    |
-| `rdpl:pregen_ended`      | A pré-geração termina ou para                                          | `pregenFinishedSays`, `pregenStoppedSays` em [Pré-geração](#pré-geração)                                                               |
-| `rdpl:pregen_running`    | A linha de progresso que um jogador vê ao entrar durante a pré-geração | `pregenRunningSays`                                                                                                                    |
+| Id                       | A mensagem                                                                               | De onde vem o texto                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked`     | Uma passagem abre                                                                        | `unlockedMessage` em [Passagens](#passagens)                                                                                           |
+| `rdpl:gate_blocked`      | Uma passagem fechada faz um jogador voltar, na barra de ação                             | `blockedMessage` em [Passagens](#passagens)                                                                                            |
+| `rdpl:gate_stay`         | O tempo que resta na dimensão de uma passagem, na barra de ação                          | `stayMessage` em [Passagens](#passagens)                                                                                               |
+| `rdpl:gate_expired`      | O orçamento de tempo de uma passagem se esgota, ou um jogador é mandado de volta por ele | `onExpire.message` em [Passagens](#passagens)                                                                                          |
+| `rdpl:gate_loot_left`    | Itens marcados ficam para trás quando o jogador deixa a dimensão de uma passagem         | `dropOnLeave.message` em [Passagens](#passagens)                                                                                       |
+| `rdpl:team_joined`       | Um jogador entra em um lado                                                              | o `displayName` do lado                                                                                                                |
+| `rdpl:team_lead`         | A liderança de um lado chega a um jogador                                                | `leadSays` em [Equipes](#equipes)                                                                                                      |
+| `rdpl:team_picked`       | Um jogador é sorteado para um lado                                                       | o `displayName` do lado                                                                                                                |
+| `rdpl:team_round_ended`  | A rodada terminou, então um jogador é movido para um lado                                | o `displayName` do lado                                                                                                                |
+| `rdpl:downed`            | Um jogador cai em vez de morrer                                                          | `down.says` em [Equipes](#equipes)                                                                                                     |
+| `rdpl:revived`           | Um colega reanima um jogador caído                                                       | `down.revivedSays` em [Equipes](#equipes)                                                                                              |
+| `rdpl:lobby_joins`       | Um jogador que entra no meio de uma rodada é enviado ao lobby                            | `opens.joinsSays` em [O lobby](#o-lobby)                                                                                               |
+| `rdpl:lobby_note`        | A linha do lobby no meio da tela                                                         | `opens.says`, `opens.leaderSays` em [O lobby](#o-lobby)                                                                                |
+| `rdpl:scoring_results`   | A classificação no fim de uma rodada, para cada jogador                                  | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` em [Resultados](#resultados) |
+| `rdpl:scoring_out`       | Um jogador eliminado                                                                     | `ends.outSays` em [Como uma rodada termina](#como-uma-rodada-termina)                                                                  |
+| `rdpl:reset_lead`        | O líder redefine a rodada                                                                | `reset.leadSays` em [Redefinindo uma rodada](#redefinindo-uma-rodada)                                                                  |
+| `rdpl:reset_vote`        | Uma votação de redefinição é convocada                                                   | `reset.voteSays`                                                                                                                       |
+| `rdpl:reset_pass`        | A votação passa                                                                          | `reset.passSays`                                                                                                                       |
+| `rdpl:reset_fail`        | A votação fracassa                                                                       | `reset.failSays`                                                                                                                       |
+| `rdpl:anvil_waits`       | O trabalho de uma bigorna espera por um avanço                                           | [Trabalho na bigorna](#trabalho-na-bigorna)                                                                                            |
+| `rdpl:threat`            | A faixa de ameaça de um jogador muda                                                     | `threatSays`                                                                                                                           |
+| `rdpl:prospect`          | Cada linha que uma descoberta de prospecção relata                                       | a descoberta                                                                                                                           |
+| `rdpl:prospect_none`     | A prospecção não encontrou nada                                                          | o arquivo de idioma                                                                                                                    |
+| `rdpl:portway_activated` | Um jogador adiciona uma rota à lista, na barra de ação                                   | o arquivo de idioma                                                                                                                    |
+| `rdpl:portway_refused`   | Uma rota manda um jogador de volta, na barra de ação                                     | o arquivo de idioma                                                                                                                    |
+| `rdpl:portway_forgot`    | Uma parada sai da lista de um jogador, na barra de ação                                  | o arquivo de idioma                                                                                                                    |
+| `rdpl:board_result`      | Uma partida de tabuleiro termina                                                         | o arquivo de idioma                                                                                                                    |
+| `rdpl:pregen_ended`      | A pré-geração termina ou para                                                            | `pregenFinishedSays`, `pregenStoppedSays` em [Pré-geração](#pré-geração)                                                               |
+| `rdpl:pregen_running`    | A linha de progresso que um jogador vê ao entrar durante a pré-geração                   | `pregenRunningSays`                                                                                                                    |
 
 `welcomeSays` não é uma regra e mantém o seu logotipo; uma regra `first_join` ou `dimension_enter` se soma a ele. As contagens regressivas e os totais na barra de ação de uma rodada permanecem como as suas configurações os fazem.
 
@@ -10354,8 +11041,12 @@ A primeira resposta vai para o nó `who`, que tem um `title` próprio e uma resp
 | `when`       | objeto   | nenhum              | As condições de [Quando](#quando). Uma resposta que não as cumpre fica oculta                                                                                                                                                                                                         |
 | `close`      | booleano | `true` sem `goto`   | `true`: encerra a conversa depois da escolha. Não faz nada quando `goto` está definido. `false`: a conversa continua aberta depois da escolha                                                                                                                                         |
 | `trade`      | booleano | `false`             | `true`: abre as próprias trocas do interlocutor depois da escolha e encerra a conversa, então `goto` é ignorado. Um interlocutor que não é comerciante ou já está negociando não abre nada, e a conversa termina do mesmo jeito. `false`: nenhuma troca abre, e `goto` não é ignorado |
+| `sets`       | objeto   | nenhum              | Valores sincronizados a definir para o jogador que escolheu, como `name: value`. Veja [Dados sincronizados](#dados-sincronizados)                                                                                                                                                     |
+| `worldSets`  | objeto   | nenhum              | Valores sincronizados a definir para o mundo inteiro, na mesma forma                                                                                                                                                                                                                  |
 
 Uma escolha executa primeiro `runs`, depois mostra `card` e então vai para `goto` ou encerra a conversa. Um diálogo não guarda estado próprio: ele não é salvo, e uma conversa que foi fechada, ou cortada quando o jogador saiu do jogo, não pode ser retomada. Um ramo que precise lembrar algo define uma pontuação ou uma tag na sua função.
+
+Uma escolha define primeiro `sets` e `worldSets`, depois executa `runs`. O `title` de um diálogo, o `title` e as `lines` de um nó, e o `text` de uma resposta podem mostrar um valor sincronizado com `{data:name|fallback}`, e o `when` de uma resposta pode testar um deles com `data`, veja [Dados sincronizados](#dados-sincronizados). Um nó mostra os valores como estão quando é desenhado, então uma resposta que define um valor e vai para outro nó mostra o novo valor ali.
 
 Um cliente com o mod mostra um diálogo como um painel perto da borda inferior da tela, com uma linha para cada resposta. Clique em uma linha ou pressione o número dela, de 1 a 8; Esc ou a tecla do inventário fecha a conversa. Um cliente vanilla recebe o mesmo texto como linhas de chat, em que cada resposta é um `[n]` clicável que executa `/rdplserver talk n`. O servidor só aceita uma escolha enquanto a entidade estiver viva e a no máximo 8 blocos do jogador, e ignora um número que o nó atual não tem; a tela se fecha sozinha quando o jogador se afasta mais de 8 blocos. Um `start` ausente, uma resposta sem `text` e um `goto` desconhecido são registrados no log e descartam o diálogo ou a resposta; uma variante de entidade cujo `dialog` nenhum pacote fornece é registrada e fica sem diálogo.
 
@@ -10579,6 +11270,150 @@ No fim, `result` paga o detentor de cada lado no seu objetivo, como linha de jog
 ---
 
 # Controle
+
+## Scripts
+
+Um script roda quando um JSON do pack o nomeia, com `scriptFile` (um arquivo `.js` do pack) ou `script` (JavaScript escrito direto no JSON). Um arquivo `.js` que nenhum JSON nomeia nunca roda. Os scripts são JavaScript em um nível de ES6 aproximado. O RDPL os executa com o motor Rhino embutido no mod, como código interpretado.
+
+### Eventos de script
+
+`<namespace>/scripts/events/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Cada arquivo é uma entrada: o evento a escutar, um filtro opcional, e o script a rodar quando o evento dispara.
+
+```json
+{
+  "event": "block_place",
+  "filter": { "block": "#ftb:trophies" },
+  "scriptFile": "scripts/trophy_altar.js"
+}
+```
+
+| Chave        | Obrigatória    | Valor             | Padrão                                     | O que faz                                                                                                                                         |
+| ------------ | -------------- | ----------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `event`      | sim            | um tipo de evento | nenhum                                     | O evento a escutar, da tabela abaixo                                                                                                              |
+| `every`      | não            | int, ticks        | `1`; `20` em `player_tick` e `server_tick` | Roda só nos ticks em que o tempo do mundo é múltiplo deste. Checado antes de o script rodar. Abaixo de 1 é registrado no log e a entrada é pulada |
+| `filter`     | não            | objeto            | todos                                      | Restringe o evento aos que casam. Checado antes de o script rodar, veja as chaves de filtro abaixo                                                |
+| `script`     | uma das duas   | texto             | nenhum                                     | JavaScript inline a rodar                                                                                                                         |
+| `scriptFile` | uma das duas   | caminho           | nenhum                                     | Um caminho sob `scripts/` no mesmo namespace, terminando em `.js`                                                                                 |
+| `class`      | só `mod_event` | texto             | nenhum                                     | O nome completo da classe de evento que uma entrada `mod_event` escuta. Veja abaixo                                                               |
+
+Uma entrada com `script` e `scriptFile` juntos, ou com nenhum dos dois, é pulada, e o log recebe uma linha de erro para ela.
+
+Chaves de filtro:
+
+| Chave       | Valor                              | Casa com                            |
+| ----------- | ---------------------------------- | ----------------------------------- |
+| `dimension` | id de dimensão, ou uma lista deles | A dimensão em que o evento acontece |
+| `block`     | id de bloco, ou uma forma com `#`  | O bloco colocado ou quebrado        |
+| `entity`    | id de entidade                     | A entidade a que o evento se refere |
+| `item`      | id de item, ou uma forma com `#`   | O item que o jogador segura         |
+
+Tipos de evento:
+
+| Evento             | Quando dispara                                                                    | Valores que o script recebe                          | `"cancel"` funciona                        |
+| ------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------ |
+| `block_place`      | Um bloco é colocado                                                               | `rdpl`, `pos`, `state`, `entity` (quem colocou)      | Sim                                        |
+| `block_break`      | Um jogador quebra um bloco                                                        | `rdpl`, `pos`, `state`, `player`                     | Sim                                        |
+| `entity_hurt`      | Qualquer entidade viva, jogadores inclusive, está prestes a levar dano            | `rdpl`, `entity`, `attacker`, `damageType`, `amount` | Sim                                        |
+| `entity_spawn`     | Um mob entra no mundo pela primeira vez (não jogadores)                           | `rdpl`, `entity`                                     | Sim, e a entidade nunca aparece            |
+| `entity_despawn`   | Um mob desaparece, ou a remoção temporizada de uma variante de entidade o termina | `rdpl`, `entity`                                     | Não                                        |
+| `player_login`     | Um jogador entra                                                                  | `rdpl`, `player`                                     | Não                                        |
+| `player_tick`      | A cada `every` ticks, para cada jogador, depois do tick                           | `rdpl`, `player`, `pos`                              | Não                                        |
+| `server_tick`      | A cada `every` ticks, uma vez, depois do tick                                     | `rdpl` (a overworld), `tick` (o tempo do mundo)      | Não                                        |
+| `dimension_change` | Um jogador chegou a outra dimensão                                                | `rdpl`, `player`, `from`, `to` (números de dimensão) | Não                                        |
+| `loot_drop`        | Um mob morreu e os seus drops estão para aparecer                                 | `rdpl`, `entity`, `attacker`, `damageType`, `drops`  | Não                                        |
+| `entity_travel`    | Uma entidade está para ir a outra dimensão                                        | `rdpl`, `entity`, `from`, `to` (números de dimensão) | Sim, e a entidade fica onde está           |
+| `mod_event`        | O evento nomeado por `class` dispara no servidor                                  | `rdpl`, `event`, `player`                            | Sim, quando esse evento pode ser cancelado |
+
+Um script cujo valor final é o texto `"cancel"` cancela o evento onde a tabela diz que funciona. Um evento que uma regra de zona ou outro mod já cancelou nunca chega a um script. `entity_despawn` não dispara para mortes, descarregamento de chunks nem `/kill`.
+
+Os novos tipos leem só algumas chaves de filtro. `player_tick` e `dimension_change` leem `dimension` e `item`. `loot_drop` e `entity_travel` leem `dimension`, `entity` e `item`. `server_tick` e `mod_event` não leem nenhuma. Uma chave de filtro que o evento não lê faz a entrada ser pulada, e o log diz `the <event> event does not read the filter key '<key>', skipping the entry`. `entity` aceita ids e os tipos `#monster`, `#creature`, `#ambient` e `#water_creature`. Em `loot_drop`, `entity` é o mob que morreu e `item` é o que o seu assassino segura; em `entity_travel`, `entity` é quem viaja. `player_tick` e `server_tick` rodam a cada 20 ticks, a menos que `every` diga outra coisa. `server_tick` roda uma vez para o servidor, no relógio da overworld, e não tem jogador.
+
+Um script de um tipo novo (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`) que falha ou passa do limite de tempo é desligado até o próximo recarregamento, e o log diz `Script <name> is turned off until the next reload`. Scripts dos tipos antigos continuam rodando.
+
+`drops`, em `loot_drop`, é a lista do que o mob larga. `drops.size()` conta essas pilhas, `drops.stack(index)` é a pilha naquele índice, `drops.remove(index)` tira uma, `drops.clear()` tira todas, e `drops.add(item, count)` adiciona uma pilha que aparece onde o mob morreu. Um script pode adicionar no máximo 32 pilhas por morte. Adicionar mais para o script com `A loot_drop script can add at most 32 stacks`, e um item desconhecido ou uma quantidade abaixo de 1 o para com `Unknown item`, como qualquer erro de script.
+
+`mod_event` deixa um script escutar um evento de outro mod, ou de um do próprio jogo, pelo nome da sua classe. Coloque o nome completo da classe em `class`. Uma entrada é ignorada, e o log diz isso, quando `class` falta (`a mod_event needs a class`), quando não existe tal classe (`the class <name> was not found`), e quando não é uma classe de evento que pode ser escutada (`the class <name> is not a Forge event`). Só conta essa classe exata: um evento que a estende não dispara o script. O script roda só na thread do servidor, no mundo da entidade ou do evento, ou na overworld quando o evento não tem nenhum dos dois, e um evento da mesma classe que o próprio script causa não o roda de novo. Ele recebe `rdpl`, `event` (o objeto do evento) e `player` (o jogador a quem o evento se refere, ou nada). `every` e as outras chaves funcionam como em qualquer evento. Um resultado `"cancel"` cancela o evento quando ele pode ser cancelado.
+
+### Scripts de registro
+
+`<namespace>/scripts/registries/*.json`
+
+Você escolhe o nome do arquivo, só a pasta é lida, e vários arquivos se acumulam. Um script de registro adiciona objetos a um registro do jogo enquanto o jogo carrega, o que um pacote não consegue fazer de outro modo. Ele precisa da categoria `content` com `load` ligado e `vanillaClients` desligado, o mesmo que blocos e itens.
+
+```json
+{
+  "registry": "minecraft:items",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Food = java("net.minecraft.item.ItemFood");
+registry.register("mypack:script_food", new Food(4, 0.3, false));
+```
+
+| Chave        | Obrigatória  | Valor            | Padrão | O que faz                                                                                                 |
+| ------------ | ------------ | ---------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `registry`   | sim          | nome do registro | nenhum | O registro ao qual adicionar, nomeado como o Forge o nomeia, como `minecraft:items` ou `minecraft:blocks` |
+| `script`     | uma das duas | texto            | nenhum | JavaScript em linha a executar                                                                            |
+| `scriptFile` | uma das duas | caminho          | nenhum | Um caminho dentro de `scripts/` no mesmo namespace, terminando em `.js`                                   |
+
+O script roda uma vez, quando esse registro abre para registro, depois que todos os mods registraram os seus. Ele recebe duas coisas. `registry` tem um método, `register(name, object)`, que adiciona `object` sob `name`. `java(className)` devolve uma classe Java pelo seu nome completo, para que o script possa montar o objeto; uma classe que não existe falha com `The class <name> was not found`. O script não recebe `rdpl`, porque ainda não existe mundo.
+
+`register` recusa e registra no log, e o script continua, quando o objeto não é o tipo que o registro guarda (`is not a <type>, not registering it`), quando o nome não está no namespace do pacote (`is not in the pack namespace <namespace>, not registering it`), quando o nome já está em uso (`is already registered in <registry>, skipping it`), e quando o próprio registro o rejeita (`could not be registered`). Um sucesso registra `Script <name> registered <id> in <registry>`. A entrada em si é registrada no log e ignorada quando `registry` falta (`needs a registry`), quando não tem script (`needs script or scriptFile`), e quando nenhum mod fornece o registro (`no mod provides the registry '<name>', ignoring it`). Um script que falha ou passa do limite é desligado até o próximo recarregamento. Um objeto registrado assim tem só o que o script lhe deu: um bloco ou item ainda precisa do seu próprio modelo, textura e entradas de idioma.
+
+### Onde ficam os arquivos de script
+
+Tudo o que é de script fica na pasta `scripts/` do pack. As entradas de evento ficam em `scripts/events/`. Um arquivo `.js` pode ficar em qualquer lugar sob `scripts/`, e é nomeado pelo seu caminho no pack, então `"scriptFile": "scripts/trophy_altar.js"` lê `<namespace>/scripts/trophy_altar.js`. Um item nomeia o seu script do mesmo jeito, com `script` ou `scriptFile` (veja [Itens](#itens)).
+
+### O objeto rdpl
+
+Um script alcança o jogo pelo `rdpl`. Os membros dele:
+
+```js
+if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
+```
+
+| Membro                                               | O que faz                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | O jogador, ou nada quando o evento não tem um                                                                                                                                                                                                                                     |
+| `level`                                              | O mundo                                                                                                                                                                                                                                                                           |
+| `runCommand(command)`                                | Roda um comando como o jogador, ou no spawn do mundo quando não há jogador, no nível de permissão 2. Retorna true em caso de sucesso                                                                                                                                              |
+| `give(item, count)`                                  | Dá ao jogador uma quantidade de um item                                                                                                                                                                                                                                           |
+| `actionbar(text)`                                    | Mostra texto na barra de ação do jogador                                                                                                                                                                                                                                          |
+| `cooldown(item, ticks)`                              | Põe o item em recarga para o jogador, por este número de ticks                                                                                                                                                                                                                    |
+| `card(id, "key=value", ...)`                         | Lança uma carta, com os seus argumentos                                                                                                                                                                                                                                           |
+| `schedule(ticks, function)`                          | Roda a função depois dos ticks. No máximo 1000 esperam ao mesmo tempo. A fila é limpa no recarregamento                                                                                                                                                                           |
+| `data()`, `data(player)`, `teamData(name)`           | Um armazenamento salvo com `get`, `set`, `has` e `remove`. Guarda texto, números e verdadeiro/falso, e fica no save do mundo. `data()` é o do mundo, `data(player)` o do jogador, `teamData(name)` o de uma equipe                                                                |
+| `sync(name, value)`                                  | Define um valor sincronizado para o jogador, ou para o mundo quando o evento não tem jogador. O valor é texto, um número ou verdadeiro/falso. Retorna true quando é definido e false quando as regras o recusam, o que o log informa. Qualquer outro valor gera um erro de script |
+| `syncTo(player, name, value)`                        | O mesmo para outro jogador                                                                                                                                                                                                                                                        |
+| `syncAll(name, value)`                               | O mesmo para o mundo                                                                                                                                                                                                                                                              |
+| `unsync(name)`                                       | Remove o valor do jogador, ou o do mundo quando o evento não tem jogador. Retorna true quando havia um                                                                                                                                                                            |
+| `synced(name)`                                       | O valor que uma leitura devolve: o do próprio jogador, depois o do mundo, depois o padrão, ou o do mundo e o padrão quando o evento não tem jogador. Nada quando nenhum está definido                                                                                             |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Verifica, adiciona ou remove uma tag do jogador                                                                                                                                                                                                                                   |
+| `score(objective)`, `setScore(objective, value)`     | Lê ou define a pontuação do jogador num objetivo do placar                                                                                                                                                                                                                        |
+| `hasAdvancement(id)`                                 | Verdadeiro quando o jogador tem o avanço                                                                                                                                                                                                                                          |
+| `world.scan(player, match)`                          | Conta os itens que casam no inventário do jogador e nas caixas de shulker nele. `match` é um id de item, uma forma com `#`, ou uma função que recebe cada pilha                                                                                                                   |
+| `world.scanAt(x, y, z, match)`                       | O mesmo, para um bloco de contêiner nessa posição                                                                                                                                                                                                                                 |
+| `world.capability(x, y, z, type)`                    | O manipulador do bloco nessa posição para `"items"`, `"fluids"` ou `"energy"`                                                                                                                                                                                                     |
+| `world.placeStructure(template, x, y, z)`            | Coloca um modelo de estrutura na posição                                                                                                                                                                                                                                          |
+| `world.summon(id, x, y, z, nbt)`                     | Gera uma entidade na posição, com NBT opcional                                                                                                                                                                                                                                    |
+
+### O que um script pode alcançar
+
+Um script vê só o objeto `rdpl`, os valores que cada evento lhe entrega (veja a tabela de tipos de evento) e os tipos do jogo que esses valores devolvem. `java` e `Packages` não existem num script. Pedir qualquer outra coisa é recusado, e a recusa é registrada no log uma vez.
+
+Um script pode usar qualquer classe Java, pelo nome completo, como `java.util.UUID` ou `net.minecraft.item.ItemStack`.
+
+### Limites
+
+- Uma execução para depois de 50 ms. O erro do log nomeia o script.
+- Um `try`/`catch` não consegue manter uma execução viva além desse limite.
+- Os erros são registrados com o caminho do script no pack. Nunca derrubam o jogo.
+- `every` e os filtros são checados antes de um script rodar, o que mantém o custo baixo.
+- Os scripts são compilados uma vez e guardados em cache até `/rdplserver reload`.
 
 ## A camada de controle
 
@@ -12522,7 +13357,7 @@ Todas as pastas, com o caminho completo e um link para a seção que as descreve
 
 *comandos*
 
-Num servidor dedicado, `/rdplserver` faz o mesmo para a cópia da pasta do próprio servidor. A coluna Nível é o nível de permissão de que um remetente precisa: `3` é operador, `2` admite também blocos de comando, `0` é qualquer jogador e `4` fica acima de operador e não alcança ninguém. Apenas `intro`, `team`, `card` e as três formas de `goto` estão abertas abaixo de operador, e `goto` é a que um pacote pode mover.
+Num servidor dedicado, `/rdplserver` faz o mesmo para a cópia da pasta do próprio servidor. A coluna Nível é o nível de permissão de que um remetente precisa: `3` é operador, `2` admite também blocos de comando, `0` é qualquer jogador e `4` fica acima de operador e não alcança ninguém. Apenas `intro`, `team`, `card`, `data` e as três formas de `goto` estão abertas abaixo de operador, e `goto` é a que um pacote pode mover.
 
 #### Pacotes e arquivos
 
@@ -12569,6 +13404,21 @@ Num servidor dedicado, `/rdplserver` faz o mesmo para a cópia da pasta do próp
 | `/rdplserver gate grant <player> <gate>`  | 3     | Abre uma passagem para um jogador     |
 | `/rdplserver gate revoke <player> <gate>` | 3     | Fecha uma novamente                   |
 
+#### Comandos de dados sincronizados
+
+*comandos de servidor*
+
+`<target>` é `world`, ou um jogador: um nome, ou um seletor que escolhe um jogador. `<name>` é o nome do valor. Cada comando responde no chat, e uma definição que as regras recusam avisa isso ali e no log.
+
+| Comando                                               | Nível | O que faz                                                                                                                                                                               |
+| ----------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver data set <target> <name> <value>`        | 2     | Define um valor declarado, do tipo com que foi declarado. O texto pode ter espaços                                                                                                      |
+| `/rdplserver data set <target> <name> <type> <value>` | 2     | Define um valor informando o seu tipo, `text`, `number` ou `bool`. Um nome sem arquivo precisa do tipo, e um com arquivo precisa do próprio tipo. Um bool é `true`, `false`, `1` ou `0` |
+| `/rdplserver data add <target> <name> <amount>`       | 2     | Soma um número a um valor numérico, partindo do padrão ou de 0. Um valor que não é número é recusado                                                                                    |
+| `/rdplserver data remove <target> <name>`             | 2     | Remove o valor, para que o padrão, ou nada, volte a aparecer                                                                                                                            |
+| `/rdplserver data get <target> <name>`                | 2     | Diz o que uma leitura devolve: para um jogador o próprio valor, depois o do mundo, depois o padrão; para o mundo o seu valor, depois o padrão                                           |
+| `/rdplserver data list [target]`                      | 2     | Lista os valores definidos para um alvo, o mundo quando omitido. Os padrões não são listados                                                                                            |
+
 #### Comandos de rota
 
 *comandos de servidor*
@@ -12606,6 +13456,7 @@ Num servidor dedicado, `/rdplserver` faz o mesmo para a cópia da pasta do próp
 | `/rdplserver round start`                                                                | 0     | O mesmo que `/rdpl round start`, que é repassado a ele                                                                                                                                                                                                                                                                                                                                        |
 | `/rdplserver round reset`, `round vote yes`, `round vote no`                             | 0     | O mesmo que as formas de `/rdpl round` acima, que são repassadas a estas                                                                                                                                                                                                                                                                                                                      |
 | `/rdplserver card <rule> [players]`                                                      | 2     | Mostra uma [regra de carta](#cartas) aos jogadores indicados, ou a você mesmo, pelo id ou nome de arquivo. `when`, `repeat` e `cooldown` são ignorados                                                                                                                                                                                                                                        |
+| `/rdplserver card <rule> [players] key=value...`                                         | 2     | Como o comando acima, e cada `key=value` substitui `{key}` no título e nas linhas da carta. Palavras depois de um par sem `=` pertencem ao valor dele                                                                                                                                                                                                                                         |
 | `/rdplserver talk <number>`                                                              | 0     | Escolhe uma resposta pelo número no diálogo aberto. As respostas clicáveis de um cliente vanilla o executam. [Diálogos](#diálogos)                                                                                                                                                                                                                                                            |
 | `/rdplserver talk open <players> <dialog> <npc>`                                         | 2     | Abre um diálogo para os jogadores indicados, com a entidade indicada como interlocutor, pelo id do diálogo ou pelo nome do arquivo. O interlocutor precisa estar no mesmo mundo e a no máximo 8 blocos. [Diálogos](#diálogos)                                                                                                                                                                 |
 | `/rdplserver raid <invasão> [jogador ou x y z]`                                          | 3     | Inicia a [invasão](#invasões) indicada em um jogador, em uma posição ou, sem nenhum dos dois, em você, sem vila. É recusado enquanto outra invasão estiver em andamento dentro de `reach`                                                                                                                                                                                                     |
@@ -12733,6 +13584,95 @@ Cada parte de `game` tem o seu próprio nível: 0 para cada rolagem, e 2 para `d
 | `gameLevels` | Uma parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` ou `board` com a sua ação, como `board move` |
 
 A escala é a de `goto`, e `4` fecha uma parte para todos. O preenchimento com Tab oferece só as partes que um remetente pode usar. `gameLevels` fica no grupo `commands` junto às configurações de `goto`.
+
+### Comandos do pacote
+
+*comandos*
+
+`<namespace>/commands/*.json`
+
+Você escolhe o nome do arquivo, e vários arquivos se acumulam. Um arquivo acrescenta um comando de barra que qualquer pessoa autorizada por `permission` pode digitar, com argumentos tipados, e executa uma função quando ele é usado. A função roda como o jogador que digitou o comando, com nível de permissão 2 para os comandos dentro dela e sem saída no chat, ou como o servidor quando o comando vem do console ou de um bloco de comando. Os comandos são adicionados quando o servidor inicia, então um arquivo novo ou alterado precisa de reinício.
+
+```json
+{
+  "name": "giveruby",
+  "permission": 2,
+  "args": [
+    { "name": "who", "type": "player", "optional": true },
+    { "name": "count", "type": "int", "optional": true, "default": "1" },
+    { "name": "note", "type": "text", "optional": true }
+  ],
+  "runs": "mypack:giveruby"
+}
+```
+
+e a função `mypack/functions/giveruby.mcfunction`:
+
+```
+give $(who) mypack:ruby $(count)
+say Gave $(count) ruby to $(who): $(note)
+```
+
+| Chave        | Obrigatória                           | Valor                | Padrão            | O que faz                                                                                                                                                                                         |
+| ------------ | ------------------------------------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | não                                   | texto                | o nome do arquivo | A palavra digitada depois da barra: letras minúsculas, dígitos e sublinhados. Qualquer outra coisa é registrada no log e o arquivo é ignorado. Também é ignorado um nome que outro comando já usa |
+| `runs`       | uma de `runs`, `script`, `scriptFile` | id de função         | nenhum            | A função a executar. Um arquivo sem nenhum dos três é ignorado e o log informa isso. Uma função que nenhum pacote fornece é registrada no log cada vez que o comando é usado                      |
+| `permission` | não                                   | int `0` a `4`        | `2`               | O nível de permissão necessário. `0` deixa todo jogador usar, `2` também admite blocos de comando, `3` é um operador. Um número fora de `0` a `4` é registrado no log e `2` é usado               |
+| `args`       | não                                   | lista de objetos     | nenhum            | Os argumentos, na ordem em que são digitados. Veja abaixo                                                                                                                                         |
+| `requires`   | não                                   | lista de ids de mods | nenhum            | O arquivo é pulado a menos que todos estejam carregados. As entradas `config:` e `file:` funcionam como em todos os outros lugares                                                                |
+| `script`     | uma de `runs`, `script`, `scriptFile` | texto                | nenhum            | JavaScript em linha a executar no lugar de uma função.                                                                                                                                            |
+| `scriptFile` | uma de `runs`, `script`, `scriptFile` | caminho              | nenhum            | Um caminho dentro de `scripts/` no mesmo namespace, terminando em `.js`.                                                                                                                          |
+
+Um arquivo de comando precisa de exatamente um de `runs`, `script` e `scriptFile`. Um arquivo sem nenhum deles é ignorado, e também o que tiver mais de um, e o log informa isso. Um comando de script recebe cada argumento como uma variável de mesmo nome: um número inteiro para `int`, um número decimal para `number`, texto para o resto, e nada quando o argumento foi deixado de fora ou não é um número. Nenhum argumento pode se chamar `rdpl` ou `sender`, porque o script recebe esses dois também. `sender.reply(text)` responde a quem usou o comando, `sender.getName()` é o nome dele, `sender.isPlayer()` diz se é um jogador e `sender.player()` é esse jogador, ou nada. Um script que falha, não compila ou passa do limite faz o comando responder `The command /<name> failed; the server log names the script`, e o script não é desligado.
+
+```json
+{
+  "name": "greet",
+  "permission": 0,
+  "args": [{ "name": "who", "type": "player", "optional": true }],
+  "scriptFile": "scripts/greet.js"
+}
+```
+
+```js
+sender.reply("Hello " + who);
+```
+
+Cada argumento:
+
+| Chave      | Obrigatória | Valor                                       | Padrão   | O que faz                                                                                                                                                                                                                                                                                                                          |
+| ---------- | ----------- | ------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | sim         | texto                                       |          | O nome que a função usa, `$(name)`, em letras minúsculas, dígitos e sublinhados. Um argumento sem um nome utilizável, ou um segundo com o mesmo nome, é registrado no log e deixado de fora                                                                                                                                        |
+| `type`     | não         | `player`, `int`, `number`, `string`, `text` | `string` | `player` é o nome de um jogador que está online, completado com Tab. `int` é um número inteiro e `number` qualquer número. `string` é uma palavra. `text` é o resto da linha, com espaços, e só pode ser o último argumento, senão o log avisa e ele vira um `string`. Um tipo desconhecido é registrado no log e `string` é usado |
+| `optional` | não         | booleano                                    | `false`  | `true`: o jogador pode deixar de fora. Um argumento obrigatório escrito depois de um opcional é registrado no log e também fica opcional                                                                                                                                                                                           |
+| `default`  | não         | texto                                       | vazio    | O que a função recebe quando um argumento opcional é deixado de fora. Um argumento `player` deixado de fora é o jogador que digitou o comando, ou uma mensagem de uso incorreto para o console, e ignora `default`                                                                                                                 |
+
+Digitar poucos argumentos, ou muitos quando o último não é `text`, mostra a linha de uso, como `/giveruby [who] [count] [note]`, com os argumentos obrigatórios entre colchetes angulares e os opcionais entre colchetes. Um valor `string` ou `text` que começa com `@` ou contém um dos caracteres `{ } " \` ou uma quebra de linha é recusado com a linha de uso, para que um jogador não consiga encaixar um seletor ou texto extra de comando na função. Um `number` é passado escrito em dígitos simples. Antes de a função rodar, cada `$(name)` nela é substituído pelo valor do argumento, linha por linha, e uma linha que começa com `$` perde esse `$`. Um `$(name)` para o qual o comando não tem argumento fica como está escrito, e o log o indica quando os comandos são carregados. Uma função que deixa de ser interpretada depois que os valores entram é registrada no log e nada é executado.
+
+### Guardas de comando
+
+*comandos*
+
+`<namespace>/command_guards/*.json`
+
+Você escolhe o nome do arquivo, só a pasta é lida, e vários arquivos se acumulam. Uma guarda impede um jogador de usar um comando, vindo do jogo ou de outro mod, enquanto uma condição vale. Ela é lida na inicialização e de novo por `/rdplserver reload`.
+
+```json
+{
+  "guard": "home",
+  "unless": { "advancement": "mypack:first_camp" },
+  "message": "Build a camp before you use /home"
+}
+```
+
+| Chave     | Obrigatória | Valor                    | Padrão                         | O que faz                                                                                                                                                                                                                 |
+| --------- | ----------- | ------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard`   | sim         | nome do comando          |                                | O comando a parar, escrito sem a barra, como `home` ou `tp`. Um alias do comando também conta. Um arquivo sem nome é ignorado. `rdpl` e `rdplserver` não podem ser protegidos e o arquivo é ignorado com uma linha no log |
+| `when`    | não         | objeto                   | sempre                         | A guarda para o comando só enquanto estas condições valerem. As mesmas chaves do [Quando](#quando) de uma carta                                                                                                           |
+| `unless`  | não         | objeto                   | nenhum                         | A guarda deixa o comando passar enquanto estas condições valerem, e o para caso contrário. As mesmas chaves de `when`                                                                                                     |
+| `message` | não         | chave de idioma ou texto | o erro de permissão do vanilla | Mostrada em vermelho ao jogador que é parado. Texto sem espaço e que contém um ponto é lido como chave de idioma; qualquer outro é mostrado como está                                                                     |
+
+Um comando é parado quando `when` vale, ou não foi dado, e `unless` não vale, ou não foi dado. Um arquivo sem nenhuma das duas chaves para o comando para todos, e o log avisa sobre isso. Um `when` ou `unless` vazio é registrado no log e ignorado. As guardas valem só para jogadores: o console e os blocos de comando nunca são parados, e o log registra cada parada com o arquivo, o comando e o jogador. A primeira guarda que para um comando é a única que fala. Em `unless`, informe a condição que o jogador precisa cumprir para usar o comando; em `when`, a condição sob a qual ele fica fechado.
 
 ## Bom saber
 

@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserEntities;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
@@ -315,6 +316,8 @@ public final class ContentEntities {
             return;
         }
         if (def.despawnTicks > 0 && timeIsUp(living, def)) {
+            if (!def.despawnDropsLead && living instanceof EntityLiving) { ((EntityLiving) living).clearLeashed(true, false); }
+            ScriptEventHandlers.despawn((EntityLiving) living);
             living.setDead();
             return;
         }

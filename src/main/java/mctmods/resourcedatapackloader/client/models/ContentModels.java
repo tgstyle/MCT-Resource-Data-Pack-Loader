@@ -109,6 +109,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
             ItemDef def = ContentRegistry.itemDef(entry.getKey());
             if (def == null) { continue; }
             Item item = entry.getValue();
+            if (def.derived != null) {
+                ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(entry.getKey(), INVENTORY));
+                continue;
+            }
             if (!item.getHasSubtypes()) {
                 ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(entry.getKey(), INVENTORY));
                 continue;

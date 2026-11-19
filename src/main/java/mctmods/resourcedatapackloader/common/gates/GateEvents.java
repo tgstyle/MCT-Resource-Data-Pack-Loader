@@ -43,6 +43,8 @@ public final class GateEvents {
     private static final long QUIET_MILLIS = 2000L;
     private static final Map<UUID, Long> SPOKEN = new HashMap<>();
     private static final int TURN_BACK_TICKS = 60;
+    private static final int TIMED_EVERY = 20;
+    private static int ticks;
     private static final Map<UUID, TurnBack> TURNING = new HashMap<>();
 
     private GateEvents() {}
@@ -63,7 +65,9 @@ public final class GateEvents {
     }
 
     @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || TURNING.isEmpty()) { return; }
+        if (event.phase != TickEvent.Phase.END) { return; }
+        if (ContentGates.timed() && ++ticks % TIMED_EVERY == 0) { timed(); }
+        if (TURNING.isEmpty()) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             UUID id = player.getUniqueID();
@@ -83,21 +87,33 @@ public final class GateEvents {
         }
     }
 
+    private static void timed() {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        GateStay.tick(server);
+        GateLoot.track(server);
+    }
+
     private static void turnBack(MinecraftServer server, EntityPlayerMP player, TurnBack back) {
-        World from = worldOf(back.from);
-        BlockPos spot = from == null ? null : landing(player, from, back.from);
+        sendOut(server, player, back.from);
+        if (player.dimension == back.to) { ContentLog.LOGGER.warn("Gate {} could not send {} back from dimension {}", back.def.getKey(), player.getName(), back.to); }
+        else { ContentLog.LOGGER.info("Gate {} sent {} back to dimension {}, reached without passing the gate", back.def.getKey(), player.getName(), player.dimension); }
+    }
+
+    static void sendOut(MinecraftServer server, EntityPlayerMP player, int fromDimension) {
+        World from = worldOf(fromDimension);
+        BlockPos spot = from == null ? null : landing(player, from, fromDimension);
         List<ItemStack> returned = new ArrayList<>();
         Entity vehicle = player.getRidingEntity();
         if (vehicle instanceof IInventory) {
             IInventory inventory = (IInventory) vehicle;
             for (int slot = 0; slot < inventory.getSizeInventory(); slot++) {
-                ItemStack stack = inventory.removeStackFromSlot(slot);
-                if (!stack.isEmpty()) { returned.add(stack); }
+                ItemStack stack = inventory.getStackInSlot(slot);
+                if (!stack.isEmpty() && !GateLoot.stays(player, stack)) { returned.add(inventory.removeStackFromSlot(slot)); }
             }
         }
         if (ContentCelestial.present()) { returned.addAll(GcCamera.chestCargo(player)); }
         player.dismountRidingEntity();
-        boolean sent = spot != null && spot.getY() > 0 && Travel.to(player, back.from, spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, player.rotationYaw, player.rotationPitch);
+        boolean sent = spot != null && spot.getY() > 0 && Travel.to(player, fromDimension, spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, player.rotationYaw, player.rotationPitch);
         if (!sent) {
             World overworld = server.getWorld(0);
             BlockPos home = ground(overworld, overworld.getSpawnPoint());
@@ -105,8 +121,6 @@ public final class GateEvents {
         }
         if (vehicle != null && ContentCelestial.present()) { GcCamera.restore(player, vehicle); }
         for (ItemStack stack : returned) { ItemHandlerHelper.giveItemToPlayer(player, stack); }
-        if (player.dimension == back.to) { ContentLog.LOGGER.warn("Gate {} could not send {} back from dimension {}", back.def.getKey(), player.getName(), back.to); }
-        else { ContentLog.LOGGER.info("Gate {} sent {} back to dimension {}, reached without passing the gate", back.def.getKey(), player.getName(), player.dimension); }
     }
 
     @Nullable private static World worldOf(int dimension) { return DimensionManager.getWorld(dimension); }

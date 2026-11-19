@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.entity;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
 
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
@@ -29,6 +30,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Redirect(method = "despawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;canDespawn()Z")) private boolean rdpl$despawn(EntityLiving self) { return ContentEntities.despawns(self, canDespawn()); }
+
+    @Inject(method = "despawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;setDead()V")) private void rdpl$despawned(CallbackInfo ci) { ScriptEventHandlers.despawn((EntityLiving) (Object) this); }
 
     @Inject(method = "canBeLeashedTo", at = @At("RETURN"), cancellable = true) private void rdpl$leashable(EntityPlayer player, CallbackInfoReturnable<Boolean> cir) {
         if (ContentEntities.leashable((EntityLiving) (Object) this)) { cir.setReturnValue(Boolean.TRUE); }

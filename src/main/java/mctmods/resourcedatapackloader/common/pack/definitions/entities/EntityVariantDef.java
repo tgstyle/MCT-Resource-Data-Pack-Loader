@@ -43,6 +43,7 @@ public final class EntityVariantDef {
     public final boolean amphibious;
     public final boolean despawns;
     public final int despawnTicks;
+    public final boolean despawnDropsLead;
     public final boolean noAI;
     public final boolean leftHanded;
     public final boolean fireproof;
@@ -138,7 +139,7 @@ public final class EntityVariantDef {
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, boolean keepsBaseBaby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, boolean hitEffects, List<String> ignoresEffects, float soundVolume, float soundPitch, float waterSlowdown,
-                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns, int despawnTicks,
+                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns, int despawnTicks, boolean despawnDropsLead,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
@@ -177,6 +178,7 @@ public final class EntityVariantDef {
         this.amphibious = amphibious;
         this.despawns = despawns;
         this.despawnTicks = despawnTicks;
+        this.despawnDropsLead = despawnDropsLead;
         this.noAI = noAI;
         this.leftHanded = leftHanded;
         this.fireproof = fireproof;

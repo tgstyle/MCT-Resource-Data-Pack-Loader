@@ -7,6 +7,8 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorlds;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
@@ -33,6 +35,8 @@ public final class ContentGates {
     private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
     private static final Map<Integer, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
     private static final List<GateDef> USABLE = new ArrayList<>();
+    private static final List<GateDef> STAYING = new ArrayList<>();
+    private static final Map<Integer, GateDef> LOOTING = new HashMap<>();
     private static final Map<ResourceLocation, GateDef> ALL = Collections.unmodifiableMap(DEFS);
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
@@ -45,6 +49,8 @@ public final class ContentGates {
         DEFS.clear();
         BY_DIMENSION.clear();
         USABLE.clear();
+        STAYING.clear();
+        LOOTING.clear();
         STACKS.clear();
         if (!Config.content.load) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
@@ -56,11 +62,26 @@ public final class ContentGates {
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
             USABLE.add(def);
             if (def.guardsDimension()) { BY_DIMENSION.computeIfAbsent(def.dimension, k -> new ArrayList<>()).add(def); }
+            if (def.stay.active()) { STAYING.add(def); }
+            if (def.loot.active()) { LOOTING.putIfAbsent(def.dimension, def); }
         }
-        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)"); }
+        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)" + extras()); }
+    }
+
+    private static String extras() {
+        String more = STAYING.isEmpty() ? "" : ", " + STAYING.size() + " with a time budget";
+        return LOOTING.isEmpty() ? more : more + ", " + LOOTING.size() + " dropping marked loot";
     }
 
     public static boolean enabled() { return !USABLE.isEmpty(); }
+
+    public static boolean timed() { return !STAYING.isEmpty() || !LOOTING.isEmpty(); }
+
+    public static boolean looting() { return !LOOTING.isEmpty(); }
+
+    static List<GateDef> staying() { return STAYING; }
+
+    @Nullable static GateDef lootDimension(int dimension) { return LOOTING.isEmpty() ? null : LOOTING.get(dimension); }
 
     public static List<GateDef> forDimension(int dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
@@ -79,7 +100,8 @@ public final class ContentGates {
     }
 
     public static boolean bars(EntityPlayer player, GateDef def) {
-        if (turnedAway(player, def)) { return true; }
+        if (turnedAway(player, def) || GateStay.spent(player, def)) { return true; }
+        if (!def.data.isEmpty() && !DataCheck.met(def.data, DataReader.server(player))) { return true; }
         if (def.standsAlone()) { return !(openFor(player, def) || def.standing.earnedBy(player)); }
         return !(openFor(player, def) && def.standing.met(player));
     }
@@ -94,12 +116,14 @@ public final class ContentGates {
     public static boolean admits(EntityPlayer player, GateDef def) {
         if (bars(player, def)) { return false; }
         if (def.standsAlone() && !openFor(player, def)) { unlock(player, def, true); }
+        if (def.worn.present() && !def.worn.each() && def.worn.met(player) && !GateStorage.unlocked(player, def)) { unlock(player, def, true); }
         return true;
     }
 
     private static boolean openFor(EntityPlayer player, GateDef def) {
         if (def.open) { return true; }
         if (!def.hold.isEmpty() && carrying(player, def.hold)) { return true; }
+        if (def.worn.present() && def.worn.met(player)) { return true; }
         if (!def.advancement.isEmpty() && earned(player, def.advancement)) { return true; }
         return GateStorage.unlocked(player, def);
     }
@@ -119,10 +143,15 @@ public final class ContentGates {
     public static void lock(EntityPlayer player, GateDef def) { GateStorage.lock(player, def); }
 
     public static void refuse(EntityPlayer player, GateDef def) {
+        if (GateStay.spent(player, def)) {
+            GateStay.refused(player, def);
+            return;
+        }
         if (def.blockedMessage.isEmpty()) { return; }
         String needed = def.consume.isEmpty() ? def.craft : def.consume;
         if (needed.isEmpty()) { needed = def.hold; }
-        String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", describe(needed));
+        String shown = needed.isEmpty() && def.worn.present() ? def.worn.describe() : describe(needed);
+        String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", shown);
         Says.bar(player, CardIds.GATE_BLOCKED, TextFormatting.RED, message);
     }
 

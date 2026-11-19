@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
+import mctmods.resourcedatapackloader.common.gates.GateStay;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.DimensionPortalDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
@@ -21,9 +23,11 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldIntroD
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.portals.PortalShapes;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -116,7 +120,9 @@ public final class ContentParserWorlds {
         int color = ContentTypes.color(Json.getString(entry, "color", "#FFFFFF"), key + " portal color");
         String back = Json.choice(entry, "return", DimensionPortalDef.BUILT, "Dimension " + key + " portal", RETURNS);
         PortalDef travel = ContentParser.portal(entry, Json.getInt(json, "id"), false, true);
-        return new DimensionPortalDef(frames, Json.getString(entry, "ignitedBy", "minecraft:flint_and_steel"), color, back, travel);
+        String fluid = Json.getString(entry, "ignitedByFluid", "").trim();
+        String item = entry.has("ignitedBy") ? Json.getString(entry, "ignitedBy", "").trim() : fluid.isEmpty() ? "minecraft:flint_and_steel" : "";
+        return new DimensionPortalDef(frames, item, fluid, color, back, travel);
     }
 
     private static Map<Character, IBlockState> legend(ResourceLocation key, JsonObject json, String forbidden, String what) {
@@ -540,8 +546,9 @@ public final class ContentParserWorlds {
         String owner = "Gate " + key;
         String scope = Json.choice(json, "scope", GateDef.PLAYER, owner, SCOPES);
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
+        int dimension = Json.getInt(json, "dimension", GateDef.NO_DIMENSION);
         return new GateDef(key,
-                Json.getInt(json, "dimension", GateDef.NO_DIMENSION),
+                dimension,
                 Json.getString(json, "name", key.getPath()),
                 scope,
                 Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS),
@@ -562,6 +569,10 @@ public final class ContentParserWorlds {
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"),
                 Json.getString(json, "unlockedMessage", "%dim% is now open"),
                 Json.getBoolean(json, "safeReturn", false),
-                strings(json, "requires"));
+                strings(json, "requires"),
+                WornCheck.parse(unlock, key, "Gate"),
+                GateStay.parse(json, key, dimension),
+                GateLoot.parse(json, key, dimension),
+                unlock.has("data") ? DataCheck.parse(unlock.get("data"), "Gate", "unlock", key) : Collections.emptyList());
     }
 }

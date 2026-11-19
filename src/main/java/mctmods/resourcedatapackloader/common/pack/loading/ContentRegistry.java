@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
+import mctmods.resourcedatapackloader.common.items.derived.DerivedItems;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
@@ -302,6 +303,7 @@ public final class ContentRegistry {
                 continue;
             }
             ItemDef def = entry.getValue();
+            if (def.derived != null) { continue; }
             if (!available(def.requires, key)) { continue; }
             ContentOwners.as(key.getNamespace(), () -> {
                 for (Item item : ContentItemTypes.get(def.type, key).create(def)) {
@@ -311,6 +313,7 @@ public final class ContentRegistry {
                 }
             });
         }
+        DerivedItems.register(event.getRegistry());
         resolve();
         resolveCrops();
         ContentSpawning.resolve();
@@ -467,6 +470,7 @@ public final class ContentRegistry {
             }
             entry.getValue().setEffects(effects);
         }
+        DerivedItems.resolveLate();
     }
 
     @Nullable private static PotionEffect potion(ResourceLocation key, String name, String value) {
@@ -498,7 +502,7 @@ public final class ContentRegistry {
             BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
             if (def == null) { continue; }
             if (Item.getItemFromBlock(entry.getValue()) == Items.AIR) { continue; }
-            String tree = entry.getValue() instanceof ContentLogBlock ? "logWood" : entry.getValue() instanceof ContentLeavesBlock ? "treeLeaves" : null;
+            String tree = entry.getValue() instanceof ContentLogBlock ? ContentBlockTypes.logTag(def) : entry.getValue() instanceof ContentLeavesBlock ? "treeLeaves" : null;
             for (BlockVariant variant : def.visible) {
                 for (String name : variant.oreDict) {
                     OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
@@ -521,6 +525,10 @@ public final class ContentRegistry {
         }
         if (count > 0) { Summary.info("content_oredict", "Registered " + count + " ore dictionary entry/entries from packs"); }
     }
+
+    public static Collection<ItemDef> itemDefs() { return ITEM_DEFS.values(); }
+
+    public static void indexItem(ResourceLocation key, Item item) { ITEMS_BY_NAME.put(key, item); }
 
     public static Set<Map.Entry<ResourceLocation, Block>> registeredBlocks() { return BLOCKS_BY_NAME.entrySet(); }
 

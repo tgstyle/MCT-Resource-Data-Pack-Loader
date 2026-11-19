@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.util;
 
+import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
@@ -12,18 +13,27 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import javax.annotation.Nullable;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentOreDict {
+    private static final List<Copy> COPIES = new ArrayList<>();
     private static boolean applied;
+    private static boolean copied;
 
     private ContentOreDict() {}
 
@@ -40,6 +50,10 @@ public final class ContentOreDict {
     private static void read(ResourceLocation key, String contents, int[] count) {
         JsonObject json = Json.object(key, contents, "ore dictionary file");
         if (json == null) { return; }
+        if (json.has("tag") && json.get("tag").isJsonPrimitive()) {
+            copy(key, json);
+            return;
+        }
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String name = entry.getKey();
             if (name.startsWith("_")) { continue; }
@@ -57,6 +71,98 @@ public final class ContentOreDict {
                 OreDictionary.registerOre(name, stack);
                 count[0]++;
             }
+        }
+    }
+
+    private static void copy(ResourceLocation key, JsonObject json) {
+        String tag = oreOf(json.get("tag").getAsString());
+        if (tag == null) {
+            ContentLog.LOGGER.error("Ore dictionary copy in {} names tag '{}', which has no ore dictionary name on this version, ignoring it", key, json.get("tag").getAsString());
+            return;
+        }
+        String matches = json.has("matches") && json.get("matches").isJsonPrimitive() ? json.get("matches").getAsString() : "";
+        if (matches.isEmpty()) {
+            ContentLog.LOGGER.error("Ore dictionary copy in {} has no matches pattern, ignoring it", key);
+            return;
+        }
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(matches);
+        }
+        catch (PatternSyntaxException ex) {
+            ContentLog.LOGGER.error("Ore dictionary copy in {} has the pattern '{}', which is not a regular expression ({}), ignoring it", key, matches, ex.getDescription());
+            return;
+        }
+        String from = null;
+        if (json.has("from") && json.get("from").isJsonPrimitive()) {
+            String text = json.get("from").getAsString();
+            from = oreOf(text);
+            if (from == null) {
+                ContentLog.LOGGER.error("Ore dictionary copy in {} names tag '{}', which has no ore dictionary name on this version, ignoring it", key, text);
+                return;
+            }
+        }
+        COPIES.add(new Copy(key, tag, pattern, from));
+    }
+
+    @Nullable private static String oreOf(String text) {
+        return text.indexOf(':') < 0 ? text.trim() : Ids.oreName(text);
+    }
+
+    public static void copyMatching() {
+        if (copied) { return; }
+        copied = true;
+        int added = 0;
+        Set<String> tags = new HashSet<>();
+        for (Copy copy : COPIES) {
+            int before = added;
+            boolean matched = false;
+            if (copy.from == null) {
+                for (Item item : ForgeRegistries.ITEMS) {
+                    if (item == Items.AIR || copy.rejects(item)) { continue; }
+                    matched = true;
+                    added += join(copy.tag, new ItemStack(item, 1, OreDictionary.WILDCARD_VALUE));
+                }
+            }
+            else if (!OreDictionary.doesOreNameExist(copy.from) || OreDictionary.getOres(copy.from, false).isEmpty()) {
+                ContentLog.LOGGER.error("Ore dictionary copy in {} takes from '{}', which has no members, so nothing is copied", copy.key, copy.from);
+                continue;
+            }
+            else {
+                for (ItemStack stack : new ArrayList<>(OreDictionary.getOres(copy.from, false))) {
+                    if (copy.rejects(stack.getItem())) { continue; }
+                    matched = true;
+                    added += join(copy.tag, stack);
+                }
+            }
+            if (added > before) { tags.add(copy.tag); }
+            if (!matched) { ContentLog.LOGGER.warn("Ore dictionary copy in {} matched no item for '{}'", copy.key, copy.pattern.pattern()); }
+        }
+        if (added > 0) { Summary.info("oredict_copied", "Copied " + added + " item(s) into " + tags.size() + " ore dictionary name(s) by pattern"); }
+    }
+
+    private static int join(String tag, ItemStack stack) {
+        int before = OreDictionary.getOres(tag, false).size();
+        OreDictionary.registerOre(tag, stack);
+        return OreDictionary.getOres(tag, false).size() - before;
+    }
+
+    private static final class Copy {
+        final ResourceLocation key;
+        final String tag;
+        final Pattern pattern;
+        @Nullable final String from;
+
+        Copy(ResourceLocation key, String tag, Pattern pattern, @Nullable String from) {
+            this.key = key;
+            this.tag = tag;
+            this.pattern = pattern;
+            this.from = from;
+        }
+
+        boolean rejects(Item item) {
+            ResourceLocation id = item.getRegistryName();
+            return id == null || !pattern.matcher(id.toString()).find();
         }
     }
 

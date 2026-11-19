@@ -43,6 +43,18 @@ public final class FluidTouch {
         return material == Material.WATER ? FluidRegistry.WATER : material == Material.LAVA ? FluidRegistry.LAVA : null;
     }
 
+    @Nullable public static Fluid named(String name) {
+        ResourceLocation id = new ResourceLocation(name);
+        Fluid fluid;
+        if (ForgeRegistries.BLOCKS.containsKey(id)) {
+            Block block = ForgeRegistries.BLOCKS.getValue(id);
+            fluid = block == null ? null : fluidOf(block);
+        } else {
+            fluid = FluidRegistry.getFluid(id.getPath());
+        }
+        return fluid == null || fluid.getBlock() == null ? null : fluid;
+    }
+
     public boolean matches(IBlockState state) {
         Block block = state.getBlock();
         if (blocks.contains(block)) { return true; }

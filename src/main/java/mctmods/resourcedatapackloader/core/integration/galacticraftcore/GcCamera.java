@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.integration.galacticraftcore;
 
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
 import micdoodle8.mods.galacticraft.api.entity.ICameraZoomEntity;
 import micdoodle8.mods.galacticraft.api.vector.Vector3;
 import micdoodle8.mods.galacticraft.core.GalacticraftCore;
@@ -26,10 +27,17 @@ public final class GcCamera {
         if (spot == null) { return cargo; }
         AxisAlignedBB box = new AxisAlignedBB(spot.x - CHEST_REACH, 0.0D, spot.z - CHEST_REACH, spot.x + CHEST_REACH, CHEST_HEIGHT, spot.z + CHEST_REACH);
         for (EntityParachest chest : player.world.getEntitiesWithinAABB(EntityParachest.class, box)) {
-            for (ItemStack stack : chest.cargo) {
-                if (!stack.isEmpty()) { cargo.add(stack); }
+            boolean left = false;
+            for (int slot = 0; slot < chest.cargo.size(); slot++) {
+                ItemStack stack = chest.cargo.get(slot);
+                if (stack.isEmpty()) { continue; }
+                if (GateLoot.stays(player, stack)) { left = true; }
+                else {
+                    cargo.add(stack);
+                    chest.cargo.set(slot, ItemStack.EMPTY);
+                }
             }
-            chest.setDead();
+            if (!left) { chest.setDead(); }
         }
         return cargo;
     }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 import mctmods.resourcedatapackloader.common.util.ContentOreDict;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -17,11 +18,18 @@ public final class RecipeDisabled {
 
     public static void apply() {
         ContentDisabled.load();
+        untag();
         if (!ContentDisabled.any()) { return; }
         List<ResourceLocation> crafting = RecipeRemovals.removeWhere(ForgeRegistries.RECIPES, (key, recipe) -> recipe != null && uses(recipe));
         RecipeTolerance.removedOnPurpose(crafting);
         int unlinked = ContentOreDict.strip(ContentDisabled::disabled, ContentDisabled.oreNames());
         Summary.info("disabled.recipes", "Removed " + crafting.size() + " crafting and " + furnace() + " furnace recipe(s) and " + unlinked + " ore dictionary entry/entries for disabled blocks and items");
+    }
+
+    private static void untag() {
+        if (!ContentDisabled.anyUntagged()) { return; }
+        int unlinked = ContentOreDict.strip(ContentDisabled::untagged, Collections.emptySet());
+        Summary.info("untagged", "Removed " + unlinked + " ore dictionary entry/entries for untagged items");
     }
 
     public static int furnace() {

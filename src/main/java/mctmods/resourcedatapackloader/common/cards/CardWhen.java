@@ -6,8 +6,11 @@ import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.environment.SeasonState;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.portways.Portways;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 
 import java.util.Collections;
@@ -28,6 +31,8 @@ public final class CardWhen {
     public String portway = "";
     public String network = "";
     public Standing standing = Standing.NONE;
+    public WornCheck worn = WornCheck.NONE;
+    public List<DataCheck> data = Collections.emptyList();
 
     public boolean fails(EntityPlayerMP player) {
         if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.world.getBiome(player.getPosition()))) { return true; }
@@ -38,6 +43,8 @@ public final class CardWhen {
         if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }
         if (!gameMode.isEmpty() && !gameMode.equalsIgnoreCase(player.interactionManager.getGameType().getName())) { return true; }
         if ((!portway.isEmpty() || !network.isEmpty()) && Portways.unknown(player, portway, network)) { return true; }
+        if (!worn.met(player)) { return true; }
+        if (!DataCheck.met(data, DataReader.server(player))) { return true; }
         return !standing.met(player);
     }
 

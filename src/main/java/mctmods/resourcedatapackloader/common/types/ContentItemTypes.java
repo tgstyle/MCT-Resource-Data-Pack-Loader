@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.items.ContentDrinkItem;
 import mctmods.resourcedatapackloader.common.items.ContentFoodItem;
 import mctmods.resourcedatapackloader.common.items.ContentItem;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.items.ContentRecordItem;
 import mctmods.resourcedatapackloader.common.items.ContentRocketItem;
 import mctmods.resourcedatapackloader.common.items.ContentSeedItem;
 import mctmods.resourcedatapackloader.common.items.ContentToolItem;
@@ -59,6 +60,7 @@ public final class ContentItemTypes {
             }
             return Collections.singletonList(new ContentRocketItem(def));
         });
+        register("record", def -> def.record == null ? Collections.emptyList() : Collections.singletonList(new ContentRecordItem(def, def.record)));
         register("armor", def -> {
             MaterialDef material = ContentMaterials.find(def.material, def.registryName);
             EntityEquipmentSlot slot = ContentToolTypes.slot(def.slot, def.registryName);

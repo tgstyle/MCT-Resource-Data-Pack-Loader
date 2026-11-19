@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
 import javax.annotation.Nullable;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -46,5 +45,5 @@ public final class RecipeRemovals {
 
     @Nullable static IForgeRegistryModifiable<IRecipe> modifiable(IForgeRegistry<IRecipe> registry) { return registry instanceof IForgeRegistryModifiable ? (IForgeRegistryModifiable<IRecipe>) registry : null; }
 
-    private static boolean matches(ResourceLocation key, IRecipe recipe) { return SELECTOR.matches(key, recipe == null ? ItemStack.EMPTY : recipe.getRecipeOutput()); }
+    private static boolean matches(ResourceLocation key, IRecipe recipe) { return SELECTOR.matches(key, recipe); }
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.core.integration.jei;
 
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,7 +56,7 @@ import net.minecraft.item.ItemStack;
     }
 
     private static void clearCategoryCache(IRecipeRegistry recipes) {
-        recipes.getRecipeCategories().stream().findFirst().ifPresent(category -> {
+        recipes.getRecipeCategories().stream().filter(category -> !ContentDisabled.hiddenCategories().contains(category.getUid())).findFirst().ifPresent(category -> {
             recipes.hideRecipeCategory(category.getUid());
             recipes.unhideRecipeCategory(category.getUid());
         });

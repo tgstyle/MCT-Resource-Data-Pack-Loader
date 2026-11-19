@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.villages;
 
 import mctmods.resourcedatapackloader.common.cards.CardWhen;
+import mctmods.resourcedatapackloader.common.syncdata.DataSets;
 
 import java.util.List;
 import java.util.Map;
@@ -63,8 +64,9 @@ public final class DialogDef {
         @Nullable public final CardWhen when;
         public final boolean close;
         public final boolean trade;
+        public final DataSets sets;
 
-        public Reply(String text, String target, String card, String runs, @Nullable CardWhen when, boolean close, boolean trade) {
+        public Reply(String text, String target, String card, String runs, @Nullable CardWhen when, boolean close, boolean trade, DataSets sets) {
             this.text = text;
             this.target = target;
             this.card = card;
@@ -72,6 +74,7 @@ public final class DialogDef {
             this.when = when;
             this.close = close;
             this.trade = trade;
+            this.sets = sets;
         }
     }
 }

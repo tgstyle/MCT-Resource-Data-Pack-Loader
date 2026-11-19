@@ -27,5 +27,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         ContentItemLocks.load();
         ContentWeights.load();
         RecipeBlocking.apply(event.getRegistry());
+        RecipeRemainders.apply(event.getRegistry());
+        RecipeTransfer.apply(event.getRegistry());
     }
 }

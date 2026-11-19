@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnSwap
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -34,6 +35,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class SpawnSwaps {
     private static final String MARK = "rdplSwapFresh";
+    private static final String RAN = "rdplSpawnRan";
     private static final byte NATURAL = 1;
     private static final byte SPAWNER = 2;
     private static final int NIGHT_FROM = 13000;
@@ -88,15 +90,29 @@ public final class SpawnSwaps {
 
     private static boolean involved(Entity entity) {
         for (SpawnSwapDef rule : RULES) {
-            if (MobStats.targets(rule.entities, entity)) { return true; }
+            if (rule.swaps() && MobStats.targets(rule.entities, entity)) { return true; }
         }
         return false;
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW) public static void onJoinRuns(EntityJoinWorldEvent event) {
+        if (RULES.isEmpty() || event.getWorld().isRemote) { return; }
+        Entity entity = event.getEntity();
+        List<String> functions = null;
+        for (SpawnSwapDef rule : RULES) {
+            if (rule.runs.isEmpty() || !MobStats.targets(rule.entities, entity)) { continue; }
+            if (functions == null) { functions = new ArrayList<>(); }
+            functions.add(rule.runs);
+        }
+        if (functions == null || entity.getEntityData().hasKey(RAN)) { return; }
+        entity.getEntityData().setBoolean(RAN, true);
+        for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName()); }
     }
 
     private static List<SpawnSwapDef> matching(Entity entity, byte kind) {
         List<SpawnSwapDef> found = null;
         for (SpawnSwapDef rule : RULES) {
-            if (!MobStats.targets(rule.entities, entity) || kind == SPAWNER && !rule.fromSpawners) { continue; }
+            if (!rule.swaps() || !MobStats.targets(rule.entities, entity) || kind == SPAWNER && !rule.fromSpawners) { continue; }
             if (found == null) { found = new ArrayList<>(); }
             found.add(rule);
         }
@@ -140,8 +156,9 @@ public final class SpawnSwaps {
             return;
         }
         List<PickDef> becomes = ContentParser.picks(json, "becomes", "entity");
-        if (becomes.isEmpty()) {
-            ContentLog.LOGGER.error("Spawn swap file {} names nothing it becomes, ignoring it", key);
+        String runs = Json.getString(json, "runs", "");
+        if (becomes.isEmpty() && runs.isEmpty()) {
+            ContentLog.LOGGER.error("Spawn swap file {} names nothing it becomes and no function it runs, ignoring it", key);
             return;
         }
         BlockGroup blocks = new BlockGroup();
@@ -154,6 +171,6 @@ public final class SpawnSwaps {
         RULES.add(new SpawnSwapDef(entities, becomes, Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), blocks, Json.getBoolean(json, "requireAll", false),
                 SpawnGateDef.read(key, json, "Spawn swap file"), json.has("elsewhere"), MathHelper.clamp(Json.getFloat(elsewhere, "chance", 1.0F), 0.0F, 1.0F),
                 MathHelper.clamp(Json.getInt(elsewhere, "lightBelow", 0), 0, 16), Json.getBoolean(elsewhere, "night", false), MathHelper.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA),
-                Json.getBoolean(json, "fromSpawners", false)));
+                Json.getBoolean(json, "fromSpawners", false), runs));
     }
 }

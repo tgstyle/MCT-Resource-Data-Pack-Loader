@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.portals;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidTouch;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.DimensionPortalDef;
@@ -12,6 +13,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +28,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentPortals {
@@ -35,6 +38,8 @@ public final class ContentPortals {
     private static final String PREFIX = "portal_";
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
     private static volatile List<Binding> bound = Collections.emptyList();
+    private static volatile Set<Fluid> litFluids = Collections.emptySet();
+    private static volatile Set<Block> frameBlocks = Collections.emptySet();
 
     private ContentPortals() {}
 
@@ -106,35 +111,49 @@ public final class ContentPortals {
             DimensionDef dimension = entry.getValue();
             DimensionPortalDef portal = dimension.portal;
             if (portal == null) { continue; }
-            Item igniter = ForgeRegistries.ITEMS.getValue(new ResourceLocation(portal.ignitedBy));
-            if (igniter == null) {
-                ContentLog.LOGGER.error("Dimension {} is lit by {}, which no mod registers, so nothing can open it", entry.getKey(), portal.ignitedBy);
-                continue;
-            }
+            Item igniter = portal.ignitedBy.isEmpty() ? null : ForgeRegistries.ITEMS.getValue(new ResourceLocation(portal.ignitedBy));
+            if (igniter == null && !portal.ignitedBy.isEmpty()) { ContentLog.LOGGER.error("Dimension {} is lit by {}, which no mod registers, so nothing can open it", entry.getKey(), portal.ignitedBy); }
+            Fluid fluid = portal.ignitedByFluid.isEmpty() ? null : FluidTouch.named(portal.ignitedByFluid);
+            if (fluid == null && !portal.ignitedByFluid.isEmpty()) { ContentLog.LOGGER.error("Dimension {} is lit by fluid {}, which is not a loaded fluid with a block, so lighting it that way is off", entry.getKey(), portal.ignitedByFluid); }
+            if (igniter == null && fluid == null) { continue; }
             Block block = ForgeRegistries.BLOCKS.getValue(blockName(entry.getKey()));
             if (!(block instanceof ContentPortalBlock)) {
                 ContentLog.LOGGER.error("Dimension {} has no portal block of its own, so it was never registered and cannot be opened", entry.getKey());
                 continue;
             }
             List<PortalFrameDef> frames = new ArrayList<>();
+            List<PortalFrameDef> itemFrames = new ArrayList<>();
+            List<PortalFrameDef> fluidFrames = new ArrayList<>();
             for (String name : portal.frames) {
                 PortalFrameDef frame = ContentPortalFrames.byName(name);
                 if (frame == null) {
                     ContentLog.LOGGER.error("Dimension {} asks for portal frame {}, which no pack provides", entry.getKey(), name);
                     continue;
                 }
-                String mark = frame.registryName + " lit by " + portal.ignitedBy;
-                if (!claimed.add(mark)) {
-                    ContentLog.LOGGER.error("Portal frame {} lit by {} is already claimed by another dimension, so {} leaves it alone", frame.registryName, portal.ignitedBy, entry.getKey());
-                    continue;
-                }
-                frames.add(frame);
+                boolean byItem = igniter != null && claimed.add(frame.registryName + " lit by " + portal.ignitedBy);
+                boolean byFluid = fluid != null && claimed.add(frame.registryName + " lit by fluid " + portal.ignitedByFluid);
+                if (igniter != null && !byItem) { ContentLog.LOGGER.error("Portal frame {} lit by {} is already claimed by another dimension, so {} leaves it alone", frame.registryName, portal.ignitedBy, entry.getKey()); }
+                if (fluid != null && !byFluid) { ContentLog.LOGGER.error("Portal frame {} lit by fluid {} is already claimed by another dimension, so {} leaves it alone", frame.registryName, portal.ignitedByFluid, entry.getKey()); }
+                if (byItem) { itemFrames.add(frame); }
+                if (byFluid) { fluidFrames.add(frame); }
+                if (byItem || byFluid) { frames.add(frame); }
             }
             if (frames.isEmpty()) { continue; }
-            made.add(new Binding(entry.getKey(), dimension, portal, igniter, frames, (ContentPortalBlock) block));
+            made.add(new Binding(entry.getKey(), dimension, portal, igniter, fluid, frames, itemFrames, fluidFrames, (ContentPortalBlock) block));
         }
         if (!made.isEmpty()) { ContentLog.LOGGER.info("{} dimension(s) can be opened by building a frame and lighting it", made.size()); }
         bound = Collections.unmodifiableList(made);
+        Set<Fluid> lit = new HashSet<>();
+        Set<Block> walls = new HashSet<>();
+        for (Binding binding : made) {
+            if (binding.fluid == null) { continue; }
+            lit.add(binding.fluid);
+            for (PortalFrameDef frame : binding.fluidFrames) {
+                for (IBlockState wanted : frame.legend.values()) { walls.add(wanted.getBlock()); }
+            }
+        }
+        litFluids = lit;
+        frameBlocks = walls;
     }
 
     public static List<Binding> bindings() { return bound; }
@@ -149,9 +168,9 @@ public final class ContentPortals {
     @Nullable public static Lighting find(World world, BlockPos clicked, @Nullable EnumFacing face, ItemStack held) {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
-            if (held.getItem() != binding.igniter) { continue; }
+            if (binding.igniter == null || held.getItem() != binding.igniter) { continue; }
             if (world.provider.getDimension() == binding.dimension.id && binding.portal.noLightBack()) { continue; }
-            for (PortalFrameDef frame : binding.frames) {
+            for (PortalFrameDef frame : binding.itemFrames) {
                 for (BlockPos candidate : candidates(world, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(world, candidate, frame);
                     if (fit != null) { return new Lighting(binding, fit, candidate); }
@@ -160,6 +179,32 @@ public final class ContentPortals {
             if (!world.isRemote) { ContentLog.LOGGER.debug("{} was held against {} and nothing there answers a frame of {}", held.getItem().getRegistryName(), clicked, binding.name); }
         }
         return null;
+    }
+
+    public static boolean fluidLit() { return !litFluids.isEmpty(); }
+
+    public static void lightByFluid(World world, BlockPos at, IBlockState state) {
+        Fluid fluid = FluidTouch.fluidOf(state.getBlock());
+        if (fluid == null || !litFluids.contains(fluid) || !besideFrame(world, at)) { return; }
+        for (Binding binding : bindings()) {
+            if (binding.fluid != fluid) { continue; }
+            if (world.provider.getDimension() == binding.dimension.id && binding.portal.noLightBack()) { continue; }
+            for (PortalFrameDef frame : binding.fluidFrames) {
+                PortalFit fit = ContentPortalFrames.fit(world, at, frame, null, fluid);
+                if (fit == null) { continue; }
+                fill(world, fit, binding);
+                ContentLog.LOGGER.debug("{} was lit by {} at {} and opened {}", fit.frame.name, binding.portal.ignitedByFluid, at, binding.name);
+                return;
+            }
+        }
+    }
+
+    private static boolean besideFrame(World world, BlockPos at) {
+        for (EnumFacing side : EnumFacing.VALUES) {
+            BlockPos beside = at.offset(side);
+            if (world.isBlockLoaded(beside) && frameBlocks.contains(world.getBlockState(beside).getBlock())) { return true; }
+        }
+        return false;
     }
 
     public static boolean lightFailed(World world, BlockPos clicked, @Nullable EnumFacing face, ItemStack held) {
@@ -245,16 +290,22 @@ public final class ContentPortals {
         public final ResourceLocation name;
         public final DimensionDef dimension;
         public final DimensionPortalDef portal;
-        public final Item igniter;
+        @Nullable public final Item igniter;
+        @Nullable public final Fluid fluid;
         public final List<PortalFrameDef> frames;
+        public final List<PortalFrameDef> itemFrames;
+        public final List<PortalFrameDef> fluidFrames;
         public final ContentPortalBlock block;
 
-        private Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, Item igniter, List<PortalFrameDef> frames, ContentPortalBlock block) {
+        private Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, @Nullable Item igniter, @Nullable Fluid fluid, List<PortalFrameDef> frames, List<PortalFrameDef> itemFrames, List<PortalFrameDef> fluidFrames, ContentPortalBlock block) {
             this.name = name;
             this.dimension = dimension;
             this.portal = portal;
             this.igniter = igniter;
+            this.fluid = fluid;
             this.frames = frames;
+            this.itemFrames = itemFrames;
+            this.fluidFrames = fluidFrames;
             this.block = block;
         }
     }

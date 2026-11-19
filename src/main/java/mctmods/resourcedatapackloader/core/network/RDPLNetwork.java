@@ -12,12 +12,14 @@ import mctmods.resourcedatapackloader.client.renderer.FireworkBurstParticle;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientSyncData;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.core.network.handler.IdleHandler;
 import mctmods.resourcedatapackloader.core.network.world.ColumnMessage;
@@ -87,6 +89,7 @@ public final class RDPLNetwork {
         registerClient(() -> ClientDiet.Handler.class, EatenMessage.class);
         registerClient(() -> FireworkBurstParticle.Handler.class, FireworkBurstMessage.class);
         registerMessage(SeasonClockMessage.Handler.class, SeasonClockMessage.class);
+        registerClient(() -> ClientSyncData.Handler.class, SyncDataMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -117,6 +120,12 @@ public final class RDPLNetwork {
     public static void sendTo(IMessage message, EntityPlayerMP player) {
         if (unreachable(player)) { return; }
         channel.sendTo(message, player);
+    }
+
+    public static boolean sendSyncData(EntityPlayerMP player, SyncDataMessage message) {
+        if (Config.content.vanillaClients || unreachable(player)) { return false; }
+        channel.sendTo(message, player);
+        return true;
     }
 
     public static void playIntro(EntityPlayerMP player) { sendTo(new IntroPlayMessage(ContentPregen.busy()), player); }

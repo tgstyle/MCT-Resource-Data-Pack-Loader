@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSnowTint;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchantments;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.scripts.ScriptRegistries;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.StrayPacks;
 import mctmods.resourcedatapackloader.common.portals.PortalEvents;
@@ -73,6 +74,7 @@ import zone.rong.mixinbooter.IEarlyMixinLoader;
         if (Config.registersToClients()) {
             ContentRegistry.registerFluids();
             MinecraftForge.EVENT_BUS.register(ContentRegistry.class);
+            MinecraftForge.EVENT_BUS.register(ScriptRegistries.class);
             MinecraftForge.EVENT_BUS.register(ContentSounds.class);
             if (ContentPotions.load()) { MinecraftForge.EVENT_BUS.register(ContentPotions.class); }
             if (ContentEnchantments.load()) { MinecraftForge.EVENT_BUS.register(ContentEnchantments.class); }

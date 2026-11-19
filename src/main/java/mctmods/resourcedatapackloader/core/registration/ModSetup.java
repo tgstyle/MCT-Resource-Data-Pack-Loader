@@ -26,6 +26,7 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
+import mctmods.resourcedatapackloader.common.command.custom.CommandGuards;
 import mctmods.resourcedatapackloader.common.containers.ContentStorageSwap;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dialogs.DialogEvents;
@@ -38,6 +39,7 @@ import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
+import mctmods.resourcedatapackloader.common.entities.HurtRules;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentBlink;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
@@ -61,7 +63,10 @@ import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.functions.FunctionOverrides;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
 import mctmods.resourcedatapackloader.common.gates.GateEvents;
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
 import mctmods.resourcedatapackloader.common.gates.GateSync;
+import mctmods.resourcedatapackloader.common.syncdata.SyncData;
+import mctmods.resourcedatapackloader.common.syncdata.SyncDataEvents;
 import mctmods.resourcedatapackloader.common.gates.VanillaPortalLink;
 import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
@@ -123,12 +128,20 @@ import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
+import mctmods.resourcedatapackloader.common.command.custom.PackCommands;
+import mctmods.resourcedatapackloader.common.schedules.PackSchedules;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEvents;
+import mctmods.resourcedatapackloader.common.scripts.ScriptModEvents;
+import mctmods.resourcedatapackloader.common.scripts.ScriptRegistries;
+import mctmods.resourcedatapackloader.common.scripts.ScriptScheduler;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentTradeGate;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
+import mctmods.resourcedatapackloader.common.util.ContentOreDict;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.villages.ContentPierCargo;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -138,6 +151,12 @@ import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeClock;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
+import mctmods.resourcedatapackloader.common.zones.ZoneDamage;
+import mctmods.resourcedatapackloader.common.zones.ZoneFly;
+import mctmods.resourcedatapackloader.common.zones.ZoneGuard;
+import mctmods.resourcedatapackloader.common.zones.ZoneRules;
+import mctmods.resourcedatapackloader.common.zones.ZoneScreens;
+import mctmods.resourcedatapackloader.common.zones.ZoneTools;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
@@ -266,6 +285,21 @@ public class ModSetup {
         SpawnLocks.load();
         SpawnSwaps.load();
         MinecraftForge.EVENT_BUS.register(SpawnSwaps.class);
+        HurtRules.load();
+        MinecraftForge.EVENT_BUS.register(HurtRules.class);
+        PackSchedules.load();
+        MinecraftForge.EVENT_BUS.register(PackSchedules.class);
+        CommandGuards.load();
+        MinecraftForge.EVENT_BUS.register(CommandGuards.class);
+        ScriptEvents.load();
+        MinecraftForge.EVENT_BUS.register(ScriptEventHandlers.class);
+        MinecraftForge.EVENT_BUS.register(ScriptModEvents.class);
+        MinecraftForge.EVENT_BUS.register(ScriptScheduler.class);
+        MinecraftForge.EVENT_BUS.register(ZoneGuard.class);
+        MinecraftForge.EVENT_BUS.register(ZoneFly.class);
+        MinecraftForge.EVENT_BUS.register(ZoneTools.class);
+        MinecraftForge.EVENT_BUS.register(ZoneDamage.class);
+        MinecraftForge.EVENT_BUS.register(ZoneScreens.class);
         MobDrops.load();
         MinecraftForge.EVENT_BUS.register(MobDrops.class);
         ContentDiet.load();
@@ -287,7 +321,9 @@ public class ModSetup {
         ContentFtbUtilities.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
+        if (ContentGates.looting()) { MinecraftForge.EVENT_BUS.register(GateLoot.class); }
         MinecraftForge.EVENT_BUS.register(GateSync.class);
+        MinecraftForge.EVENT_BUS.register(SyncDataEvents.class);
         MinecraftForge.EVENT_BUS.register(ItemLockSync.class);
         MinecraftForge.EVENT_BUS.register(ContentSleepingBags.class);
         MinecraftForge.EVENT_BUS.register(ContentSleep.class);
@@ -348,6 +384,7 @@ public class ModSetup {
     public static void loadComplete() {
         ContentVillagers.applyTrades();
         if (ContentTradeGate.active()) { MinecraftForge.EVENT_BUS.register(ContentTradeGate.class); }
+        ContentOreDict.copyMatching();
         RecipeSwaps.apply();
         RecipeDisabled.apply();
         FurnaceBlocking.apply();
@@ -355,10 +392,12 @@ public class ModSetup {
         ContentSpawners.apply();
         ContentPortals.bind();
         ContentCelestial.loadComplete();
+        ScriptRegistries.report();
         ContentRanks.verify();
         ContentRegistry.resolveFluidReactions();
         VanillaFluidRules.resolve();
         ShieldIndexes.resolve();
+        ZoneRules.load();
     }
 
     public static void beforeServerStart(MinecraftServer server) {
@@ -391,17 +430,20 @@ public class ModSetup {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientProxy.reload(); }
         CardRules.load();
         ContentDialogs.load();
+        CommandGuards.load();
         ContentHearts.load();
         StructureSetup.villages();
     }
 
     public static void serverCommands(FMLServerStartingEvent event) {
         event.registerServerCommand(new ServerCommands());
+        PackCommands.register(event);
         ContentFtbLib.serverStarting();
         ClaimSettings.announceForeign();
     }
 
     public static void onServerStarted() {
+        PackSchedules.restart();
         ContentCelestial.serverStarted();
         ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
         ContentEnvironments.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
@@ -427,6 +469,7 @@ public class ModSetup {
         ContentTradeSwitch.serverStopped();
         FunctionOverrides.serverStopped();
         GateEvents.serverStopped();
+        SyncData.stopped();
         DissolvePass.clear();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
         PackManager.get().close();

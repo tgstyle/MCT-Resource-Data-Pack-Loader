@@ -1,14 +1,20 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.FunctionObject;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +24,7 @@ import net.minecraft.world.World;
 
 public final class Functions {
     private static final int LEVEL = 2;
+    public static final Pattern PLACEHOLDER = Pattern.compile("\\$\\(([a-z0-9_]+)\\)");
 
     private Functions() {}
 
@@ -26,7 +33,7 @@ public final class Functions {
         if (function != null) { server.getFunctionManager().execute(function, server); }
     }
 
-    public static void runAs(EntityPlayerMP player, String named, String asking) {
+    public static void runAs(Entity player, String named, String asking) {
         MinecraftServer server = player.getServer();
         FunctionObject function = server == null ? null : find(server, named, asking);
         if (function != null) { server.getFunctionManager().execute(function, new As(player, server)); }
@@ -36,6 +43,45 @@ public final class Functions {
         MinecraftServer server = world.getMinecraftServer();
         FunctionObject function = server == null ? null : find(server, named, asking);
         if (function != null) { server.getFunctionManager().execute(function, new At(world, pos, server)); }
+    }
+
+    public static void runWith(ICommandSender sender, String named, String asking, Map<String, String> values) {
+        MinecraftServer server = sender.getServer();
+        if (server == null) { return; }
+        ResourceLocation id = new ResourceLocation(named);
+        String text = PackManager.get().read(id.getNamespace(), id.getPath(), PackManager.FUNCTIONS, PackManager.MCFUNCTION);
+        if (text == null) {
+            ContentLog.LOGGER.error("{} asks to run the function {}, which no pack provides, so nothing is run", asking, named);
+            return;
+        }
+        List<String> lines = new ArrayList<>();
+        for (String line : text.split("\r\n|\r|\n", -1)) { lines.add(fill(line.trim(), values)); }
+        FunctionObject function;
+        try { function = FunctionObject.create(server.getFunctionManager(), lines); }
+        catch (IllegalArgumentException ex) {
+            ContentLog.LOGGER.error("{} runs the function {}, which does not parse after its arguments are filled in ({}), so nothing is run", asking, named, ex.getMessage());
+            return;
+        }
+        ICommandSender runner = sender.getCommandSenderEntity() instanceof EntityPlayerMP ? new As(sender.getCommandSenderEntity(), server) : server;
+        server.getFunctionManager().execute(function, runner);
+    }
+
+    private static String fill(String line, Map<String, String> values) {
+        String body = line.startsWith("$") && !line.startsWith("$(") ? line.substring(1) : line;
+        Matcher matcher = PLACEHOLDER.matcher(body);
+        StringBuffer filled = new StringBuffer();
+        while (matcher.find()) {
+            String value = values.get(matcher.group(1));
+            matcher.appendReplacement(filled, Matcher.quoteReplacement(value == null ? matcher.group() : value));
+        }
+        return matcher.appendTail(filled).toString();
+    }
+
+    public static boolean command(World world, @Nullable Entity player, String command) {
+        MinecraftServer server = world.getMinecraftServer();
+        if (server == null) { return false; }
+        ICommandSender sender = player == null ? new At(world, world.getSpawnPoint(), server) : new As(player, server);
+        return server.getCommandManager().executeCommand(sender, command) > 0;
     }
 
     @Nullable private static FunctionObject find(MinecraftServer server, String named, String asking) {
@@ -71,10 +117,10 @@ public final class Functions {
     }
 
     private static final class As implements ICommandSender {
-        private final EntityPlayerMP player;
+        private final Entity player;
         private final MinecraftServer server;
 
-        private As(EntityPlayerMP player, MinecraftServer server) {
+        private As(Entity player, MinecraftServer server) {
             this.player = player;
             this.server = server;
         }
@@ -94,8 +140,6 @@ public final class Functions {
         @Override @Nonnull public World getEntityWorld() { return player.world; }
 
         @Override public Entity getCommandSenderEntity() { return player; }
-
-        @Override public boolean sendCommandFeedback() { return server.worlds[0].getGameRules().getBoolean("commandBlockOutput"); }
 
         @Override public void setCommandStat(@Nonnull CommandResultStats.Type type, int amount) { player.setCommandStat(type, amount); }
 

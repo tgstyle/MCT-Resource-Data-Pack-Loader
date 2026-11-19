@@ -22,6 +22,7 @@ public final class CardFire {
     static void fire(CardRule rule, EntityPlayerMP subject) {
         if (blocked(rule, subject)) { return; }
         CardLook look = CardLook.plain();
+        sets(rule, subject);
         CardSend.dress(look, rule, subject);
         for (EntityPlayerMP player : CardSend.audience(rule, subject)) { CardSend.send(look, player); }
         ContentLog.LOGGER.debug("Card rule {} fired for {}", rule.key, subject.getName());
@@ -31,21 +32,33 @@ public final class CardFire {
     public static void builtin(String key, EntityPlayerMP subject, CardLook look) {
         CardRule rule = CardRules.builtin(key);
         if (rule == null || blocked(rule, subject)) { return; }
+        sets(rule, subject);
         CardSend.dress(look, rule, subject);
         CardSend.send(look, subject);
         runs(rule, subject);
     }
 
-    public static void show(CardRule rule, EntityPlayerMP subject) {
+    public static void show(CardRule rule, EntityPlayerMP subject) { show(rule, subject, Collections.emptyMap()); }
+
+    public static void show(CardRule rule, EntityPlayerMP subject, Map<String, String> args) {
         CardLook look = CardLook.plain();
-        CardSend.dress(look, rule, subject);
+        sets(rule, subject);
+        CardSend.dress(look, rule, subject, args);
         CardSend.send(look, subject);
         runs(rule, subject);
+    }
+
+    static void meter(CardRule rule, EntityPlayerMP subject, Map<String, String> args) {
+        if (!offPlace(rule, subject)) { show(rule, subject, args); }
+    }
+
+    private static boolean offPlace(CardRule rule, EntityPlayerMP subject) {
+        if (CardPlace.elsewhere(rule.dimension, subject.dimension)) { return true; }
+        return rule.when != null && rule.when.fails(subject);
     }
 
     private static boolean blocked(CardRule rule, EntityPlayerMP subject) {
-        if (CardPlace.elsewhere(rule.dimension, subject.dimension)) { return true; }
-        if (rule.when != null && rule.when.fails(subject)) { return true; }
+        if (offPlace(rule, subject)) { return true; }
         long now = clock(subject.world);
         String key = rule.key;
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }
@@ -62,6 +75,8 @@ public final class CardFire {
         World overworld = DimensionManager.getWorld(0);
         return (overworld == null ? world : overworld).getTotalWorldTime();
     }
+
+    private static void sets(CardRule rule, EntityPlayerMP subject) { if (!rule.sets.isEmpty()) { rule.sets.apply(subject, "Card rule " + rule.key); } }
 
     private static void runs(CardRule rule, EntityPlayerMP subject) { if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); } }
 

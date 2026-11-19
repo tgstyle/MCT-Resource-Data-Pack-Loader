@@ -2,7 +2,7 @@
 
 **一個資料夾，即可覆寫 Minecraft 或任何模組提供的內容，以 JSON 定義新內容，並控制世界的生成方式；在每個世界、用戶端與伺服器上皆能生效，不需要玩家開啟任何開關。**
 
-十四個可直接運作的範例。將其中任何一個直接放進 `rdploader`，看看每個檔案是怎麼寫的。
+十五個可直接運作的範例。將其中任何一個直接放進 `rdploader`，看看每個檔案是怎麼寫的。
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) 涵蓋大部分功能：方塊、物品、生態域、一個維度、一個世界範本，以及所有世界生成形狀。
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) 將主世界變成一片空無一物的虛空，世界生成的內容懸浮在半空中，每個高度帶各有一種形狀，方便單獨觀察每一種。
@@ -18,6 +18,7 @@
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) 需要 Galacticraft，會在星圖上加入一個自己的星系，其中有一顆搭乘二級火箭即可抵達的行星，擁有自己的天空、重力、晝長、天氣與大氣；還有一顆只能觀賞、無法降落的行星，並且在搭配 GalaxySpace 時，於天倉五周圍多出一顆冰凍行星。
 - [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) 將一個平坦世界變成遊戲大廳：資源包自帶的加權骰子、一副會自動重新洗牌的生物牌，以及一副在洗牌前一直為空的命運牌、一個右鍵即可擲出 2d6 的骰盅、與莊家輪流擲骰、平手時以抽牌決勝的骰子對決，以及以生物作棋子、與電腦對弈的西洋棋和跳棋。
 - [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) 會在關閉介紹後自動建起一座工作場地，讓村民工人承擔每一種工作訂單：作業範圍隨鎬子提升的礦工、把砍下的木頭留在身上的伐木工、始終保持固定小麥庫存的農夫，以及搬運鵝卵石的搬運工；每個訂單都可透過告示牌、工具、雇用或庫存箱來開啟。
+- [RDPLExampleScripts.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleScripts.zip) 在一座小神龕上展示了每一種腳本寫法：六個事件的事件項目，各自帶有內嵌腳本與檔案腳本；每一種過濾器；`every`；會被腳本取消的事件；兩件使用時執行腳本的物品；以及 `rdpl` 所能觸及的大部分內容，從儲存的資料與階段，到分數、卡片和一座結構。
 ---
 
 ## 目錄
@@ -48,6 +49,7 @@
 - [依類型區分的方塊狀態](#依類型區分的方塊狀態)
 - [讓原版正確對待你的方塊](#讓原版正確對待你的方塊)
 - [物品](#物品)
+  - [衍生物品](#衍生物品)
 - [煙火](#煙火)
 - [流體](#流體)
 - [材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)
@@ -59,6 +61,7 @@
 - [物品鎖](#物品鎖)
 - [物品重量](#物品重量)
 - [熔爐配方與燃料](#熔爐配方與燃料)
+- [配方移除](#配方移除)
 - [配方替換](#配方替換)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
@@ -124,6 +127,7 @@
 - [骰子與牌組](#骰子與牌組)
 
 **控制**
+- [腳本](#腳本)
 - [控制層](#控制層)
 - [各群組的作用](#各群組的作用)
 
@@ -209,6 +213,14 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/recipe_locks/*.json`                                                               | 玩家取得進度之前保持鎖定的配方。[配方鎖](#配方鎖)                                                                   |
 | `<namespace>/spawn_locks/*.json`                                                                | 條件滿足之前不會生成的生物。[生成鎖](#生成鎖)                                                                       |
 | `<namespace>/spawn_swaps/*.json`                                                                | 生成時把生物替換成其他生物，並可額外生成更多個體。[生成替換](#生成替換)                                             |
+| `<namespace>/hurt_rules/*.json`                                                                 | 生物傷害其他生物時被取消，或執行一個函數。[傷害規則](#傷害規則)                                                     |
+| `<namespace>/zones/*.json`                                                                      | 玩家不可破壞、放置、使用、開啟或飛行的固定區域。[區域規則](#區域規則)                                               |
+| `<namespace>/schedules/*.json`                                                                  | 以伺服器身分依計時器執行一次或反覆執行的函數。[排程](#排程)                                                         |
+| `<namespace>/scripts/events/*.json`                                                             | 遊戲事件觸發時執行的腳本，例如方塊被放置或玩家登入。[腳本](#腳本)                                                   |
+| `<namespace>/scripts/registries/*.json`                                                         | 遊戲登錄物件時執行的腳本，用來把物件加入登錄表。[登錄表腳本](#登錄表腳本)                                           |
+| `<namespace>/commands/*.json`                                                                   | 整合包新增的指令，由函數或腳本執行。[資料包指令](#資料包指令)                                                       |
+| `<namespace>/syncdata/*.json`                                                                   | 為每位玩家與整個世界保存的具名值，由卡片、對話、指令與腳本設定與顯示。[同步資料](#同步資料)                         |
+| `<namespace>/command_guards/*.json`                                                             | 在條件成立之前，阻擋玩家執行另一個指令。[指令防護](#指令防護)                                                       |
 | `<namespace>/item_locks/*.json`                                                                 | 玩家取得進度之前，在其清單中隱藏的物品。[物品鎖](#物品鎖)                                                           |
 | `<namespace>/weights/*.json`                                                                    | 物品重量、負重上限與負重階段。[物品重量](#物品重量)                                                                 |
 | `<namespace>/disabled/*.json`                                                                   | 退出遊戲的方塊與物品。[停用的方塊與物品](#停用的方塊與物品)                                                         |
@@ -847,6 +859,8 @@ thatmod.jar
 | `portway`    | 會把自己加入使用者的站點清單，並開啟一個選單，可前往其中任一站點，包括其他維度。方塊實體只儲存名稱                                                 |
 | `bell`       | 一座像 1.14 起村莊所擁有的鐘：從側面使用、以紅石或被拋射物擊中時會鳴響，會在框架中擺盪，並使附近的突襲者發光。一個變體，中繼資料存放朝向與懸掛方式 |
 | `log`        | 會旋轉到你放置時所靠的那一面，並在礦物辭典中註冊為 `logWood`，因此伐木與 Blast Plaster 會將其視為樹幹                                              |
+| `pillar`     | 和 `log` 一樣會朝向放置時所對的面旋轉，但不會註冊到礦物辭典，因此砍樹功能與 Blast Plaster 不會處理它                                               |
+| `carpet`     | 和原版地毯一樣的薄層，高度為方塊的十六分之一。不能放在空氣上，下方方塊消失時會破碎並掉落物品                                                       |
 | `leaves`     | 會腐朽、可用剪刀剪取、可染色並掉落樹苗，且在礦物辭典中註冊為 `treeLeaves`                                                                          |
 | `sapling`    | 長成一棵樹，或長成你自己的某個結構                                                                                                                 |
 | `crop`       | 經過多個階段生長，掉落種子與收成物品；有 `tall` 時為多格高                                                                                         |
@@ -908,6 +922,7 @@ thatmod.jar
 | `container`                  | 僅限容器                            | 物件                                              | 無                                                                                               | 見[容器](#容器)                                                                                                                                                                                                                                                                 |
 | `portway`                    | 僅限傳送通道                        | 物件                                              | 無                                                                                               | 見[傳送通道](#傳送通道)                                                                                                                                                                                                                                                         |
 | `bell`                       | 僅限鐘                              | 物件                                              | 無                                                                                               | 見[鐘](#鐘)                                                                                                                                                                                                                                                                     |
+| `tagged`                     | 否                                  | `true` 或 `false`                                 | `true`                                                                                           | 僅用於 `log`：設為 `false` 時，方塊不會加入礦物辭典名稱 `logWood`，`pillar` 就是這樣做的                                                                                                                                                                                        |
 | `weight`                     | 否                                  | 0 或更大的數字                                    | 無                                                                                               | 方塊物品的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量)                                                                                                                                                                                         |
 
 ### 壓縮層
@@ -1687,7 +1702,8 @@ assets/mypack/lang/en_us.lang
 | `fence`、`pane`           | 一個方塊                                         | `blocks`、`north`、`east`、`south`、`west`                                                                      | 16     |
 | `wall`                    | 一個方塊                                         | `blocks`、`up`、`north`、`east`、`south`、`west`                                                                | 16     |
 | `slab`                    | 兩個，`<name>` 與 `<name>_double`                | 半磚是 `blocks` 與 `half`；雙層磚只有 `blocks`                                                                  | 8      |
-| `log`                     | 一個方塊                                         | `blocks`、`axis`，其值為 `x`、`y`、`z` 或 `none`                                                                | 4      |
+| `log`, `pillar`           | 一個方塊                                         | `blocks`、`axis`，其值為 `x`、`y`、`z` 或 `none`                                                                | 4      |
+| `carpet`                  | 一個方塊                                         | `blocks`；模型為原版的 `block/carpet`，紋理以 `wool` 傳入                                                       | 16     |
 | `leaves`                  | 一個方塊                                         | `blocks`                                                                                                        | 4      |
 | `stairs`                  | 一個方塊                                         | `facing`、`half`、`shape`                                                                                       | 1      |
 | `door`                    | 一個方塊                                         | `facing`、`half`、`hinge`、`open`                                                                               | 1      |
@@ -2132,10 +2148,30 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 | `potion_bottle`     | 存放你的藥水類型，並顯示在創造模式分頁中                                          |
 | `container_upgrade` | 把已放置的容器變成更大的容器，並保留其中的內容。見[升級容器](#升級容器)           |
 | `rocket`            | 在發射台上放置你的 Galacticraft 火箭變體                                          |
+| `record`            | 放入播放器中播放的音樂唱片。其 `jukebox` 物件見下文                               |
 
 `potion_bottle` 以 `potionTypes` 列出它能存放的內容，這是藥水類型名稱的陣列，例如 `["mypack:ruby_tonic"]`。清單為空的會什麼都不登錄，日誌會說明。
 
 `rocket` 以 `rocket` 指定它放置的實體變體。它需要 Galacticraft，沒有它或沒有 `rocket` 時什麼都不登錄，日誌會說明。見實體變體下的 Galacticraft 火箭。
+
+`record` 是一張音樂唱片。其 `jukebox` 物件指定歌曲名稱，以及它在播放器中的行為。
+
+```json
+{
+  "type": "record",
+  "jukebox": {
+    "sound": "mypack:song_one",
+    "ticks": 2400,
+    "comparator": 7
+  }
+}
+```
+
+| 鍵                   | 必填 | 值             | 預設             | 作用                                                                                                                                  |
+| -------------------- | ---- | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `jukebox.sound`      | 是   | 音效 id        | 無               | 播放器播放的歌曲。沒有它時會記錄錯誤，且該物品不會登錄                                                                                |
+| `jukebox.ticks`      | 否   | 整數，1 或以上 | 歌曲不會自行結束 | 歌曲的長度，以刻為單位。1.12.2 忽略此鍵，因為 1.12.2 的播放器不會自行結束歌曲                                                         |
+| `jukebox.comparator` | 否   | 0 到 15        | 見下文           | 比較器從放有此唱片的播放器讀取的等級。省略時，1.12.2 保留原版等級，1.20.1 及之後的版本為 1。超出 0 到 15 的值會記錄於日誌，並視為省略 |
 
 帶有 `locates` 的一般物品就是定位指南針。右鍵會尋找該名稱最近的地點並讓物品指向那裡，持有者會得知指針停在了哪裡。名稱可以是像 `Village` 這樣的原版結構、像 `minecraft:river` 這樣的生物群系 ID，或用 `locateAs` 註冊的名稱。該物品的堆疊上限為 1，`cooldown` 決定它在多長時間內拒絕再次搜尋。
 
@@ -2178,41 +2214,70 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 
 *物品*
 
-| 鍵               | 必填              | 值                                                           | 預設                 | 作用                                                                                                                                                                                       |
-| ---------------- | ----------------- | ------------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `variants`       | 是                | 變體名稱對應變體的物件                                       |                      | 每個中繼資料值一個項目。鍵在方塊狀態、模型路徑與語言鍵中為該值命名。登錄名稱來自檔案自己的路徑                                                                                             |
-| `type`           | 否                | 上述類型之一                                                 | `basic`              | 物品採用的類型                                                                                                                                                                             |
-| `creativeTab`    | 否                | 分頁名稱                                                     | 無                   | 它出現的分頁                                                                                                                                                                               |
-| `material`       | tool、armor       | 材料名稱                                                     | 無                   | 它由你的哪種材料製成                                                                                                                                                                       |
-| `toolClass`      | tool              | `pickaxe`、`axe`、`shovel`、`sword`                          | 無                   | 是哪種工具                                                                                                                                                                                 |
-| `slot`           | armor             | `head`、`chest`、`legs`、`feet`                              | 無                   | 穿戴的位置。`helmet`、`chestplate`、`leggings` 與 `boots` 也可用                                                                                                                           |
-| `eat`            | 食物              | 布林值                                                       | `false`              | `true`：使用食用動畫。`false`：沒有食用動畫                                                                                                                                                |
-| `alwaysEdible`   | 食物              | 布林值                                                       | `false`              | `true`：飢餓值已滿時也能食用。`false`：只有飢餓時才能食用，與原版相同                                                                                                                      |
-| `useDuration`    | drink、potion     | 整數，單位為刻                                               | `32`                 | 對 `drink` 與 `potion` 而言，是喝下它所需的時間，單位為刻（20 刻 = 1 秒）。其他類型會忽略它                                                                                                |
-| `attackReach`    | 否                | 浮點數，格                                                   | `3.0`                | 用主手物品攻擊時能打到的距離。對生物按右鍵時同樣適用。請參閱[武器](#武器)                                                                                                                  |
-| `sweep`          | 否                | 物件                                                         | 無                   | 同時傷害滿力度一擊周圍的其他生物。請參閱[武器](#武器)                                                                                                                                      |
-| `combo`          | 否                | 物件                                                         | 無                   | 間隔不超過 `window` 刻的連續攻擊依序走過 `steps`。請參閱[武器](#武器)                                                                                                                      |
-| `fireSeconds`    | 否                | 整數，0 或更大                                               | `0`                  | 命中的攻擊會讓目標著火，持續指定的秒數。請參閱[武器](#武器)                                                                                                                                |
-| `finisher`       | 否                | 物件                                                         | 無                   | 對列出的生物追加的一次補刀，在遊戲自身的攻擊之後、刻結束時造成。請參閱[武器](#武器)                                                                                                        |
-| `attackSpeed`    | 否                | 浮點數                                                       | 依工具類別而定       | 對 `tool` 而言是攻擊速度屬性，劍為 `-2.4`                                                                                                                                                  |
-| `cooldown`       | 否                | 整數，單位為刻                                               | `0`                  | 對 `food`、`drink` 與 `potion` 而言，是物品被消耗後拒絕再次使用的時間；對有 `rolls` 的物品而言，是兩次擲出之間的間隔                                                                       |
-| `container`      | drink             | 物品名稱                                                     | 無                   | 留下的東西，例如瓶子                                                                                                                                                                       |
-| `crop`           | seed              | 方塊名稱                                                     | 無                   | 它種下的農作物                                                                                                                                                                             |
-| `soil`           | seed              | 方塊名稱                                                     | `minecraft:farmland` | 可以種在什麼上面                                                                                                                                                                           |
-| `portway`        | portway           | 物件                                                         | 無                   | 傳送物品的設定：適用於一次傳送的[傳送通道鍵](#傳送通道)，加上 `consume` 與 `bind`。見[傳送物品](#傳送物品)                                                                                 |
-| `upgrade`        | container_upgrade | 物件                                                         | 無                   | 容器升級物品的設定：`paths`、`consume` 與 `unopenedLoot`。見[升級容器](#升級容器)                                                                                                          |
-| `rocket`         | rocket            | `namespace:name`                                             | 無                   | 它放置的實體變體                                                                                                                                                                           |
-| `rolls`          | 否                | `coin`、`d6`、`2d6+1`、骰子或牌組                            | 無                   | 對一般物品而言，右鍵會像 `/rdplserver game` 一樣擲出，並通知資源包的預設對象。見[骰子與牌組](#骰子與牌組)                                                                                  |
-| `rollStore`      | 否                | 目標名稱                                                     | 無                   | 用於帶 `rolls` 的物品：每次使用時，把擲骰總和作為持有者的分數記入這個計分板目標。目標不存在時，擲骰會被拒絕並在聊天中提示一行                                                              |
-| `bauble`         | 否                | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | 無                   | 物品可配戴的 Baubles 欄位，適用於任何類型的物品。未安裝 Baubles 時會被忽略                                                                                                                 |
-| `wornEffects`    | 否                | 效果清單                                                     | 無                   | 物品位於其 Curios 欄位期間持續作用於配戴者的藥水效果，寫作 `potion`、`amplifier`、`ambient` 與 `showParticles`                                                                             |
-| `wornAttributes` | 否                | 屬性修改清單                                                 | 無                   | 物品位於其 Baubles 欄位期間持續作用於配戴者的屬性修改，寫作 `attribute`、`amount` 與 `operation`                                                                                           |
-| `locates`        | 否                | `Village`, `minecraft:river`                                 | 無                   | 對一般物品而言，右鍵會尋找該名稱最近的地點，並像指南針一樣讓物品指向那裡。名稱可以是原版結構或生物群系，也可以是用 `locateAs` 註冊的名稱。該物品的堆疊上限為 1。請參閱上方的定位指南針段落 |
-| `passesTurn`     | 否                | 布林值                                                       | `false`              | 對一般物品而言，右鍵會像 `/rdplserver game pass` 一樣跳過持有者的回合。見[輪流行動](#輪流行動)                                                                                             |
-| `wornAttributes` | 否                | 屬性修改清單                                                 | 無                   | 物品位於其 Curios 欄位期間持續作用於配戴者的屬性修改，寫作 `attribute`、`amount` 與 `operation`                                                                                            |
-| `firework`       | 否                | 物件                                                         | 無                   | 對任何類型的物品，右鍵會發射或引爆煙火。見[煙火](#煙火)                                                                                                                                    |
-| `requires`       | 否                | 模組 id 或資源包命名空間清單                                 | 無                   | 除非全部存在，否則略過此檔案                                                                                                                                                               |
-| `weight`         | 否                | 0 或更大的數字                                               | 無                   | 該物品（若為方塊則為其物品）的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量)                                                                                |
+`<namespace>/items/*.json`
+
+```json
+{
+  "runs": "mypack:ping",
+  "cooldown": 100
+}
+```
+
+```json
+{
+  "locates": "Village",
+  "locatesEye": true,
+  "locatesSound": "minecraft:entity.endereye.launch",
+  "locatesRange": 2000,
+  "variants": {
+    "seeker": { "meta": 0, "maxSize": 1 }
+  }
+}
+```
+
+以 `#` 開頭的 `locates` 名稱是標籤，但本版本沒有結構標籤，因此該物品會在沒有 `locates` 的情況下註冊，並在日誌中說明。
+
+| 鍵               | 必填              | 值                                                           | 預設                 | 作用                                                                                                                                                                                                                                                                                                                                   |
+| ---------------- | ----------------- | ------------------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | 是                | 變體名稱對應變體的物件                                       |                      | 每個中繼資料值一個項目。鍵在方塊狀態、模型路徑與語言鍵中為該值命名。登錄名稱來自檔案自己的路徑                                                                                                                                                                                                                                         |
+| `type`           | 否                | 上述類型之一                                                 | `basic`              | 物品採用的類型                                                                                                                                                                                                                                                                                                                         |
+| `creativeTab`    | 否                | 分頁名稱                                                     | 無                   | 它出現的分頁                                                                                                                                                                                                                                                                                                                           |
+| `material`       | tool、armor       | 材料名稱                                                     | 無                   | 它由你的哪種材料製成                                                                                                                                                                                                                                                                                                                   |
+| `toolClass`      | tool              | `pickaxe`、`axe`、`shovel`、`sword`                          | 無                   | 是哪種工具                                                                                                                                                                                                                                                                                                                             |
+| `slot`           | armor             | `head`、`chest`、`legs`、`feet`                              | 無                   | 穿戴的位置。`helmet`、`chestplate`、`leggings` 與 `boots` 也可用                                                                                                                                                                                                                                                                       |
+| `eat`            | 食物              | 布林值                                                       | `false`              | `true`：使用食用動畫。`false`：沒有食用動畫                                                                                                                                                                                                                                                                                            |
+| `alwaysEdible`   | 食物              | 布林值                                                       | `false`              | `true`：飢餓值已滿時也能食用。`false`：只有飢餓時才能食用，與原版相同                                                                                                                                                                                                                                                                  |
+| `useDuration`    | drink、potion     | 整數，單位為刻                                               | `32`                 | 對 `drink` 與 `potion` 而言，是喝下它所需的時間，單位為刻（20 刻 = 1 秒）。其他類型會忽略它                                                                                                                                                                                                                                            |
+| `attackReach`    | 否                | 浮點數，格                                                   | `3.0`                | 用主手物品攻擊時能打到的距離。對生物按右鍵時同樣適用。請參閱[武器](#武器)                                                                                                                                                                                                                                                              |
+| `sweep`          | 否                | 物件                                                         | 無                   | 同時傷害滿力度一擊周圍的其他生物。請參閱[武器](#武器)                                                                                                                                                                                                                                                                                  |
+| `combo`          | 否                | 物件                                                         | 無                   | 間隔不超過 `window` 刻的連續攻擊依序走過 `steps`。請參閱[武器](#武器)                                                                                                                                                                                                                                                                  |
+| `fireSeconds`    | 否                | 整數，0 或更大                                               | `0`                  | 命中的攻擊會讓目標著火，持續指定的秒數。請參閱[武器](#武器)                                                                                                                                                                                                                                                                            |
+| `finisher`       | 否                | 物件                                                         | 無                   | 對列出的生物追加的一次補刀，在遊戲自身的攻擊之後、刻結束時造成。請參閱[武器](#武器)                                                                                                                                                                                                                                                    |
+| `attackSpeed`    | 否                | 浮點數                                                       | 依工具類別而定       | 對 `tool` 而言是攻擊速度屬性，劍為 `-2.4`                                                                                                                                                                                                                                                                                              |
+| `cooldown`       | 否                | 整數，單位為刻                                               | `0`                  | 對 `food`、`drink` 與 `potion` 而言，是物品被消耗後拒絕再次使用的時間；對有 `rolls` 的物品而言，是兩次擲出之間的間隔；對有 `runs` 的物品而言，是下一次右鍵前需等待的時間，以原版物品冷卻的扇形掃過顯示                                                                                                                                 |
+| `container`      | drink             | 物品名稱                                                     | 無                   | 留下的東西，例如瓶子                                                                                                                                                                                                                                                                                                                   |
+| `crop`           | seed              | 方塊名稱                                                     | 無                   | 它種下的農作物                                                                                                                                                                                                                                                                                                                         |
+| `soil`           | seed              | 方塊名稱                                                     | `minecraft:farmland` | 可以種在什麼上面                                                                                                                                                                                                                                                                                                                       |
+| `portway`        | portway           | 物件                                                         | 無                   | 傳送物品的設定：適用於一次傳送的[傳送通道鍵](#傳送通道)，加上 `consume` 與 `bind`。見[傳送物品](#傳送物品)                                                                                                                                                                                                                             |
+| `upgrade`        | container_upgrade | 物件                                                         | 無                   | 容器升級物品的設定：`paths`、`consume` 與 `unopenedLoot`。見[升級容器](#升級容器)                                                                                                                                                                                                                                                      |
+| `rocket`         | rocket            | `namespace:name`                                             | 無                   | 它放置的實體變體                                                                                                                                                                                                                                                                                                                       |
+| `rolls`          | 否                | `coin`、`d6`、`2d6+1`、骰子或牌組                            | 無                   | 對一般物品而言，右鍵會像 `/rdplserver game` 一樣擲出，並通知資源包的預設對象。見[骰子與牌組](#骰子與牌組)                                                                                                                                                                                                                              |
+| `rollStore`      | 否                | 目標名稱                                                     | 無                   | 用於帶 `rolls` 的物品：每次使用時，把擲骰總和作為持有者的分數記入這個計分板目標。目標不存在時，擲骰會被拒絕並在聊天中提示一行                                                                                                                                                                                                          |
+| `bauble`         | 否                | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | 無                   | 物品可配戴的 Baubles 欄位，適用於任何類型的物品。未安裝 Baubles 時會被忽略                                                                                                                                                                                                                                                             |
+| `wornEffects`    | 否                | 效果清單                                                     | 無                   | 物品位於其 Baubles 欄位期間持續作用於配戴者的藥水效果，寫作 `potion`、`amplifier`、`ambient` 與 `showParticles`                                                                                                                                                                                                                        |
+| `wornAttributes` | 否                | 屬性修改清單                                                 | 無                   | 物品位於其 Baubles 欄位期間持續作用於配戴者的屬性修改，寫作 `attribute`、`amount` 與 `operation`                                                                                                                                                                                                                                       |
+| `locates`        | 否                | `Village`, `minecraft:river`                                 | 無                   | 對一般物品而言，右鍵會尋找該名稱最近的地點，並像指南針一樣讓物品指向那裡。名稱可以是原版結構或生物群系，也可以是用 `locateAs` 註冊的名稱。該物品的堆疊上限為 1。請參閱上方的定位指南針段落                                                                                                                                             |
+| `locatesEye`     | 否                | 布林值                                                       | `false`              | `true`：對可以 `locates` 的物品，右鍵找到地點時，還會從持有者處朝該地點拋出一顆末影之眼，飛行方式與原版末影之眼相同                                                                                                                                                                                                                    |
+| `locatesSound`   | 否                | 音效事件 ID                                                  | 無                   | 對可以 `locates` 的物品，每次右鍵時播放給持有者的聲音，例如 `minecraft:entity.endereye.launch`                                                                                                                                                                                                                                         |
+| `locatesRange`   | 否                | 整數，格                                                     | `0`                  | 對可以 `locates` 的物品，地點可以距離持有者多遠，以與持有者的水平距離計算。超出此距離的地點視為未找到。`0` 表示不設限制                                                                                                                                                                                                                |
+| `passesTurn`     | 否                | 布林值                                                       | `false`              | 對一般物品而言，右鍵會像 `/rdplserver game pass` 一樣跳過持有者的回合。見[輪流行動](#輪流行動)                                                                                                                                                                                                                                         |
+| `sleepingBag`    | 否                | 布林值                                                       | `false`              | `true`：對一般物品而言，右鍵點在方塊頂面上時，持有者會躺下睡覺，像床一樣跳過夜晚。它不會設定重生點，也不會被用掉。只在允許睡覺的地方有效。與 `locates`、`rolls` 或 `passesTurn` 一起設定時會被忽略。`false`：右鍵不會讓持有者躺下                                                                                                      |
+| `firework`       | 否                | 物件                                                         | 無                   | 對任何類型的物品，右鍵會發射或引爆煙火。見[煙火](#煙火)                                                                                                                                                                                                                                                                                |
+| `runs`           | 否                | 函數 ID                                                      | 無                   | 右鍵（空中或方塊上皆可）時，以持有者的身分並在其位置、於伺服器上執行此函數。適用於一般物品；若物品有 `rolls`、`locates`、`passesTurn` 或 `sleepingBag`，則在其固定用途之後執行。食物、飲料、藥水、工具、護甲與容器物品保留各自的右鍵行為。沒有任何整合包提供的函數會記錄於日誌，且不執行任何內容。沒有 `runs` 時，右鍵的行為與以前相同 |
+| `script`         | 否                | 文字                                                         | 無                   | 右鍵時執行的腳本，見[腳本](#腳本)。可與 `runs` 同時設定。結果為 `"cancel"` 的腳本會略過物品的冷卻                                                                                                                                                                                                                                      |
+| `scriptFile`     | 否                | 路徑                                                         | 無                   | 同上，但為 `scripts/` 下以 `.js` 結尾的路徑，見[腳本](#腳本)                                                                                                                                                                                                                                                                           |
+| `requires`       | 否                | 模組 id 或資源包命名空間清單                                 | 無                   | 除非全部存在，否則略過此檔案                                                                                                                                                                                                                                                                                                           |
+| `weight`         | 否                | 0 或更大的數字                                               | 無                   | 該物品（若為方塊則為其物品）的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量)                                                                                                                                                                                                                            |
 
 ### 煙火
 
@@ -2298,6 +2363,150 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 ```
 
 **觸發方式是右鍵。** 投擲與攻擊不是觸發方式，因為沒有物品鍵能表示它們。`cooldown` 是一般的物品鍵，在發射後生效。帶 `explosions` 的火箭對附近生物造成的傷害與原版火箭完全相同，清單為空時不造成傷害。煙火之星、合成與鞘翅加速不在此範圍內。
+
+### 衍生物品
+
+*物品*
+
+`<namespace>/items/*.json`
+
+衍生物品是一個獨立的真正物品，其行為取自另一個物品。用 `item` 指定基礎物品，寫法與實體變體用 `entity` 指定基礎實體相同：該檔案會得到基礎物品的類別和欄位的一份複本，並以自己的登錄名稱登錄。基礎物品保持不變。之後可以用 `set` 修改欄位，用 `returns` 讓方法回傳固定值，並用 `addTo` 把該物品加入模組的某個集合。它只適用於物品：以方塊物品為基礎時會記錄日誌並略過，沒有衍生方塊。該物品的模型與其他物品一樣，取自 `assets/<ns>/models/item/<name>.json`。
+
+```json
+{
+  "item": "minecraft:iron_pickaxe",
+  "name": "Tempered Pickaxe",
+  "set": {
+    "maxDamage": 2000,
+    "efficiency": 9.0,
+    "toolMaterial": { "set": { "enchantability": 30 } }
+  },
+  "returns": {
+    "hasEffect": true,
+    "getRarity": "EPIC"
+  }
+}
+```
+
+| 鍵            | 必填 | 值                                 | 預設值 | 作用                                                                                                      |
+| ------------- | ---- | ---------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `item`        | 是   | `<mod>:<item>`                     |        | 要複製的物品。衍生物品載入時它必須已經登錄，因此對於提供它的模組請使用 `requires`                         |
+| `set`         | 否   | 點分欄位路徑到值的物件             | 無     | 寫入複本的欄位。見下方的 `set`                                                                            |
+| `returns`     | 否   | 方法名稱到常數的物件               | 無     | 讓複本的方法回傳一個常數。見下方的 `returns`                                                              |
+| `addTo`       | 否   | `<fully.qualified.Class>.<member>` | 無     | 把新物品加入另一個類別的靜態集合。見下方的 `addTo`                                                        |
+| `name`        | 否   | 文字                               | 無     | 顯示名稱，與實體變體相同。`returns` 中針對 `getItemStackDisplayName` 的設定優先於它，並會在日誌中給出警告 |
+| `creativeTab` | 否   | 分頁名稱                           | 無     | 它出現在哪個分頁中                                                                                        |
+| `requires`    | 否   | 模組 ID 的陣列                     | 無     | 列出的模組未載入時，該物品會被略過                                                                        |
+| `inherits`    | 否   | 父物品檔案                         | 無     | 繼承父層的鍵。子層的 `set` 會整體取代父層的 `set`，而不是合併                                             |
+
+這些鍵在衍生物品上保持其通常的含義：`bauble`、`wornEffects`、`wornAttributes`、`attackReach`、`sweep`、`combo`、`fireSeconds` 和 `finisher`。
+
+以下鍵在衍生物品上不起作用，因為它們屬於複本所沒有的 RDPL 物品類別。每個出現的鍵都會記錄一次日誌並被忽略：`type`、`variants`、`runs`、`script`、`cooldown`、`rolls`、`rollStore`、`locates`、`sleepingBag`、`firework`、`container`、`containerItem`、`upgrade`、`portway`、`eat`、`alwaysEdible`、`useDuration`、`material`、`toolClass`、`slot`、`crop`、`soil`、`potionTypes`、`attackSpeed`、`rocket` 和 `passesTurn`。它們的效果（如果有）已經在基礎物品中，或者你可以用 `set` 和 `returns` 自行撰寫。
+
+#### 欄位與方法的命名
+
+欄位和方法使用可讀的原版名稱來撰寫，而不是混淆後的名稱：`maxDamage`、`efficiency`、`getRarity`。系統先在基礎物品的類別中尋找該名稱，然後依序在其上層的每個父類別中尋找，並使用第一個符合的項目。
+
+有多個參數列表的方法，必須在括號中寫明參數型別，使用簡單類別名稱且不加空格：`getItemStackDisplayName(ItemStack)`，兩個參數則寫作 `name(type,type)`。如果只有一個方法使用該名稱，直接寫名稱即可。名稱有歧義時，日誌會列出所有可選項。與任何方法都不符的名稱會記錄日誌，並略過該項目。
+
+#### `set`
+
+`set` 是一個物件，鍵為點分的欄位路徑，值為要寫入的數值。`"maxDamage": 2000` 會在複本上寫入欄位 `maxDamage`。`"toolMaterial.enchantability": 30` 會進入 `toolMaterial` 所持有的物件並在其中寫入。靜態欄位永遠不會被寫入，因為那樣所有物品都會共用這項改動。
+
+| JSON 值            | 欄位型別                                          | 說明                                               |
+| ------------------ | ------------------------------------------------- | -------------------------------------------------- |
+| 數字               | `int`、`long`、`short`、`byte`、`float`、`double` | 整數型別只接受整數，且值必須在該型別的範圍內       |
+| `true`、`false`    | `boolean`                                         |                                                    |
+| 字串               | `String`、`char`                                  | `char` 接受只含一個字元的字串                      |
+| 字串               | 列舉                                              | 常數名稱，大小寫皆可                               |
+| 字串               | `ResourceLocation`                                | `mod:name`                                         |
+| 字串               | `ItemStack`                                       | 以資源包其他地方撰寫堆疊的方式來寫。不能為空       |
+| 字串               | 登錄項目，如 `Item`、`Block`、`Potion`            | 登錄名稱。必須已經登錄                             |
+| 陣列               | 陣列，或 `List`、`Set`、`Collection`              | 每個元素都遵循本表。集合欄位會被整體取代，從不附加 |
+| 物件               | 其他任何物件                                      | 巢狀物件，見下文                                   |
+| 字串 `<ns>:<item>` | 其他任何物件                                      | 重用該衍生物品在同一路徑上建立的物件，見下文       |
+
+**巢狀物件。** `set` 下的 JSON 物件與檔案本身有相同的三個鍵：`set`、`returns` 和 `addTo`。它修改的是欄位所持物件的一份複本，因此基礎物品以及與之共用該物件的其他一切都保持原樣。這是寫入時複製：只有你所寫路徑上的物件會被複製，其他欄位仍指向與基礎物品相同的物件。
+
+工具材料或盔甲材料會被複製為一個新的列舉常數，並保留修復物品。其他任何列舉作為巢狀物件都會被拒絕，來自 `java.` 套件的物件同樣如此。不會深入陣列和集合：路徑無法穿過它們，集合欄位則由 JSON 陣列整體取代。
+
+在物件的位置上寫入字串 `"<ns>:<item>"`，會重用該衍生物品在同一路徑上的物件。這樣兩個衍生物品可以共用同一種材料，且被指名的那個會先建立。
+
+**建構函式已經複製的內容。** `ItemTool`、`ItemSword` 和 `ItemArmor` 在建構函式中只讀取一次材料，並把數值保存在自己的欄位裡。修改巢狀材料不會改變這些數值。請直接在物品上設定它們：`maxDamage`、`efficiency`、`attackDamage`、`damageReduceAmount`、`toughness`，以及 `toolClasses` 中的採集等級。巢狀材料只會改變之後才讀取的內容：附魔能力、修復物品和工具材料名稱。
+
+#### `returns`
+
+`returns` 是一個物件，鍵為方法名稱，值為該方法現在回傳的常數。複本會覆寫該方法並回傳這個值。數字、布林值和字串直接寫入。列舉寫其常數名稱；物品堆疊或登錄項目則以字串形式寫出其名稱。它們會在所有物品登錄完成後再查找，因此可以指向一個之後才載入的物品。到最後仍未登錄的名稱會記錄日誌，基礎行為保持不變。
+
+當方法是靜態的、final 的、私有的、位於基礎物品套件之外的套件私有方法，或沒有回傳值時，該方法會被拒絕，並略過該項目。型別不符的常數同樣會被拒絕。`returns` 下的巢狀物件僅適用於無參數的方法：它是該方法回傳值的複本，修改方式與巢狀的 `set` 物件相同，而方法回傳的就是這份複本。
+
+#### `addTo`
+
+`addTo` 的寫法為 `<fully.qualified.Class>.<member>`。成員可以是靜態的 `Collection` 欄位，也可以是不帶參數的靜態 getter，並寫上空括號，例如 `com.example.Registry.items()`。所有物品登錄完成後，若新物品尚未在該集合中，則將其加入；並且只有當集合的元素型別接受該物品時才會加入。當模組自行維護一份物品清單時使用它，這樣複本就會被與原物品同樣對待。
+
+#### 複本不會取得的內容
+
+複本是一個獨立的物件，只複製了基礎物品的欄位，因此以下內容不會被帶過去：
+
+- 同一性檢查，如 `== ModItems.X`，以及 `getClass` 比較。檢測基礎物品的程式碼無法辨識該複本。
+- 以基礎物品為鍵的登錄：它的模型、顏色處理器、礦物辭典項目、JEI 子類型和配方。請為複本單獨提供。
+- 建構函式的副作用，例如基礎物品建構函式所做的登錄。
+- 未在 `set` 中指名的欄位。可變欄位仍與基礎物品共用，因此一方的清單或對應表就是另一方的同一個清單或對應表。
+
+帶子類型的基礎物品會保留它們，並在中繼資料 0 處使用一個模型。如果複本是單一物品，請在 `set` 中設定 `"hasSubtypes": false`。
+
+#### 順序與 requires
+
+以另一個衍生物品為基礎，或重用了另一個衍生物品物件的衍生物品，會在它之後建立。若衍生物品之間形成循環依賴，它們全部都會記錄日誌並被略過。`requires` 不符合的衍生物品會被跳過，因此來自其他模組的基礎物品需要相同的 `requires`。已登錄的物品名稱會被跳過。
+
+有三種情況會整體略過該物品：基礎物品不存在、基礎物品是方塊物品，或基礎類別是 final 的。由無法存取 RDPL 的類別載入器載入的類別同樣會被略過。
+
+#### 日誌訊息
+
+`{}` 代表日誌填入的名稱或數值。
+
+| 訊息                                                                                                                      | 含義                                                               |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `Derived item {} names no item to copy, ignoring it`                                                                      | `item` 缺漏或不是物品名稱                                          |
+| `The {} of derived item {} is not an object, so it is treated as empty`                                                   | `set` 或 `returns` 不是物件                                        |
+| `The derived item {} sets {}, which needs an RDPL item class, so the key is ignored`                                      | 衍生物品上有上表中的某個鍵                                         |
+| `An item named {} is already registered, skipping the pack definition`                                                    | 登錄名稱已被佔用                                                   |
+| `Derived item {} is based on {}, which nothing registers, leaving it out`                                                 | 基礎物品不存在，為其模組加上 `requires`                            |
+| `Derived item {} is based on {}, a block item, and derived blocks are not supported, leaving it out`                      | 基礎物品是方塊物品                                                 |
+| `Derived item {} is based on {}, a final class, so it cannot be copied`                                                   | 基礎類別是 final 的                                                |
+| `Derived item {} is based on {}, which is loaded by a class loader that cannot see RDPL, so it cannot be copied`          | 基礎類別來自 RDPL 無法存取的類別載入器                             |
+| `Could not make a class for derived item {}`                                                                              | 複本的類別定義失敗，堆疊追蹤緊接其後                               |
+| `Derived item {} could not be made, leaving it out`                                                                       | 其他錯誤導致該物品無法產生，堆疊追蹤緊接其後                       |
+| `Derived items depend on each other in a loop, {}{}, leaving them out`                                                    | 基礎或重用物件形成循環，其中每個物品都被略過                       |
+| `Derived item {} gives both a name and returns for {}, the returns wins`                                                  | 同時設定了 `name` 和 `returns` 中的 `getItemStackDisplayName`      |
+| `{} has no field named {}`                                                                                                | `set` 中的某個路徑沒有對應欄位                                     |
+| `{} has no method named {}`                                                                                               | `returns` 中的某個名稱與任何方法都不符                             |
+| `{} has several methods named {} ({}), name one with its parameter types`                                                 | 多載方法需要寫成 `name(type,type)`                                 |
+| `Derived item {} returns a constant for {} twice, leaving the second out`                                                 | 兩個 `returns` 鍵指向同一個方法                                    |
+| `Derived item {} returns a constant for {}, which {}, leaving it out`                                                     | 方法被拒絕：它是靜態的、final 的、私有的、套件私有的，或沒有回傳值 |
+| `Derived item {} returns {} for {}, which is {}, leaving it out`                                                          | 常數的型別與方法不符                                               |
+| `Derived item {} returns {}, which is not registered, the base behavior stays`                                            | `returns` 中的物品堆疊或登錄項目指向從未登錄的內容                 |
+| `Derived item {} returns an object for {}, which takes arguments, and only methods without arguments can, leaving it out` | 在帶參數的方法上使用了巢狀物件                                     |
+| `Derived item {} returns an object for {}, which has no object to copy, leaving it out`                                   | 沒有可複製的來源物件                                               |
+| `Derived item {} returns an object for {}, which returns nothing to copy, leaving it out`                                 | 方法在基礎物品上回傳了 null                                        |
+| `Derived item {} could not read {} to copy it, leaving it out: {}`                                                        | 在基礎物品上呼叫該方法失敗                                         |
+| `Derived item {} could not set {}, leaving it out: {}`                                                                    | 寫入欄位失敗，原因緊接其後                                         |
+| `Derived item {} sets below {}, which holds nothing, leaving it out`                                                      | 路徑經過一個為 null 的欄位                                         |
+| `Derived item {} sets {}, but static fields are shared by every item, not written, leaving it out`                        | 路徑終止於靜態欄位                                                 |
+| `Derived item {} sets {} to an object, but it holds nothing to copy, leaving it out`                                      | 巢狀物件所在的欄位為 null                                          |
+| `{} sets {} to {}, which is {}, leaving it out`                                                                           | 值與欄位型別不符，見值表                                           |
+| `Derived item {} sets {} to the object of {}, which is no derived item that built a {} there, leaving it out`             | 被重用的物件在該路徑上不存在                                       |
+| `Derived item {} reaches {} through an array or collection, but paths do not go through arrays, leaving it out`           | 路徑或巢狀物件穿入了陣列或集合                                     |
+| `Derived item {} changes {}, a {}, which cannot be copied, leaving it out`                                                | 作為巢狀物件的、非材料的列舉，或 `java.` 物件                      |
+| `Derived item {} has an unknown key {} under {}, ignoring it`                                                             | 巢狀物件中有 `set`、`returns` 和 `addTo` 之外的鍵                  |
+| `The {} of {} in derived item {} is not an object, so it is treated as empty`                                             | 巢狀的 `set` 或 `returns` 不是物件                                 |
+| `Could not make a material named {} for derived item {}`                                                                  | 工具或盔甲材料的複本建立失敗                                       |
+| `Derived item {} adds itself to {}, which is not written <Class>.<member>, leaving it out`                                | `addTo` 缺少類別和成員                                             |
+| `Derived item {} adds itself to {}, which is no static field or static getter without arguments, leaving it out`          | 找不到該成員                                                       |
+| `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | 該成員不是集合                                                     |
+| `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | 集合的元素型別不接受該物品                                         |
+| `Derived item {} could not be added to {}: {}`                                                                            | `addTo` 失敗，例如類別不存在                                       |
+| `Registered {} derived item(s) from packs`                                                                                | 彙總行，含產生的物品數量                                           |
 
 ### 物品變體鍵
 
@@ -2424,21 +2633,32 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 }
 ```
 
-| 鍵            | 必填 | 值                           | 預設         | 作用                                                                                                                                                                                                                            |
-| ------------- | ---- | ---------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | 否   | 字串                         | 檔案名稱     | 流體的登錄名稱                                                                                                                                                                                                                  |
-| `still`       | 否   | 材質路徑                     | 原版靜止的水 | 靜止流體的材質                                                                                                                                                                                                                  |
-| `flow`        | 否   | 材質路徑                     | 原版流動的水 | 流動流體的材質                                                                                                                                                                                                                  |
-| `color`       | 否   | 十六進位色碼                 | 無           | 套用在這些材質上的色調                                                                                                                                                                                                          |
-| `bucket`      | 否   | 布林值                       | `true`       | `true`：為它登錄一個桶。`false`：不登錄桶                                                                                                                                                                                       |
-| `luminosity`  | 否   | 0 到 15                      | `0`          | 發出的光                                                                                                                                                                                                                        |
-| `density`     | 否   | 整數                         | `1000`       | 負值會像氣體一樣向上浮                                                                                                                                                                                                          |
-| `temperature` | 否   | 整數，單位為克耳文           | `300`        | 水為 300，熔岩為 1300                                                                                                                                                                                                           |
-| `viscosity`   | 否   | 整數                         | `1000`       | 流動有多慢。水為 1000，熔岩為 6000                                                                                                                                                                                              |
-| `gaseous`     | 否   | 布林值                       | `false`      | `true`：視為氣體。`false`：不視為氣體                                                                                                                                                                                           |
-| `creativeTab` | 否   | 分頁名稱                     | 無           | 桶出現的分頁                                                                                                                                                                                                                    |
-| `block`       | 否   | 物件                         |              | 流體方塊。`material`（`water`）、`flammability`（`0`）、`fireSpread`（`0`）、`quantaPerBlock`（`0`）、`potions`（無，給予站在其中的任何東西的效果清單，每個寫成 `potion,duration,amplifier`，可選的第四段 `true` 代表環境效果） |
-| `requires`    | 否   | 模組 id 或資源包命名空間清單 | 無           | 除非全部存在，否則略過此檔案                                                                                                                                                                                                    |
+| 鍵            | 必填 | 值                           | 預設         | 作用                                                                                                                                                                                                                                                                           |
+| ------------- | ---- | ---------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | 否   | 字串                         | 檔案名稱     | 流體的登錄名稱                                                                                                                                                                                                                                                                 |
+| `still`       | 否   | 材質路徑                     | 原版靜止的水 | 靜止流體的材質                                                                                                                                                                                                                                                                 |
+| `flow`        | 否   | 材質路徑                     | 原版流動的水 | 流動流體的材質                                                                                                                                                                                                                                                                 |
+| `color`       | 否   | 十六進位色碼                 | 無           | 套用在這些材質上的色調                                                                                                                                                                                                                                                         |
+| `bucket`      | 否   | 布林值                       | `true`       | `true`：為它登錄一個桶。`false`：不登錄桶                                                                                                                                                                                                                                      |
+| `luminosity`  | 否   | 0 到 15                      | `0`          | 發出的光                                                                                                                                                                                                                                                                       |
+| `density`     | 否   | 整數                         | `1000`       | 負值會像氣體一樣向上浮                                                                                                                                                                                                                                                         |
+| `temperature` | 否   | 整數，單位為克耳文           | `300`        | 水為 300，熔岩為 1300                                                                                                                                                                                                                                                          |
+| `viscosity`   | 否   | 整數                         | `1000`       | 流動有多慢。水為 1000，熔岩為 6000                                                                                                                                                                                                                                             |
+| `gaseous`     | 否   | 布林值                       | `false`      | `true`：視為氣體。`false`：不視為氣體                                                                                                                                                                                                                                          |
+| `creativeTab` | 否   | 分頁名稱                     | 無           | 桶出現的分頁                                                                                                                                                                                                                                                                   |
+| `block`       | 否   | 物件或 `false`               |              | `false`：流體在世界中不會有方塊，見下文。物件：流體方塊。`material`（`water`）、`flammability`（`0`）、`fireSpread`（`0`）、`quantaPerBlock`（`0`）、`potions`（無，給予站在其中的任何東西的效果清單，每個寫成 `potion,duration,amplifier`，可選的第四段 `true` 代表環境效果） |
+| `requires`    | 否   | 模組 id 或資源包命名空間清單 | 無           | 除非全部存在，否則略過此檔案                                                                                                                                                                                                                                                   |
+
+帶有 `"block": false` 的流體在世界中沒有方塊。它用於儲槽、配方與桶，其桶無法倒出。省略 `block`，或寫成物件，行為與以前相同。
+
+```json
+{
+  "name": "mist",
+  "block": false,
+  "still": "mypack:blocks/mist_still",
+  "flow": "mypack:blocks/mist_flow"
+}
+```
 
 ### 流動
 
@@ -2682,6 +2902,24 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 為已存在的物品加上礦物辭典名稱。每個鍵是一個礦物辭典名稱，其值是登錄在該名稱下的物品，因此檔案沒有自己固定的鍵。資源包自己的方塊與物品則改在變體的 `oreDict` 中指定它們的名稱。
 
 以 `-` 開頭的鍵表示移除：`"-ingotCopper": ["thermalfoundation:material:128"]` 會把該物品從該名稱上拿掉，而 `["*"]` 會清空該名稱。使用該名稱的配方會立刻不再比對到該物品，這正是目的所在。沒有任何東西登錄的名稱會被拒絕並回報錯誤，名稱底下沒有的物品也一樣。以所有中繼資料登錄的項目（原版對 `plankWood` 就是這樣登錄）會整個被移除，不論你指定哪個中繼資料，日誌會說明；用 `:*` 指定就是直白地表達同一件事。
+
+**依樣式複製。** 含有 `tag` 鍵的檔案不列出名稱，而是把登錄名稱符合某個樣式的每個物品加入同一個礦物辭典名稱，因此整合包可以填滿一個名稱，而不必列出每個成員。該檔案的其他鍵不會被讀作礦物辭典名稱。
+
+```json
+{
+  "tag": "logWoodAll",
+  "matches": "^minecraft:log2?$",
+  "from": "logWood"
+}
+```
+
+| 鍵        | 必填 | 值           | 預設 | 作用                                                                                                                                                                                                        |
+| --------- | ---- | ------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tag`     | 是   | 礦物辭典名稱 |      | 接收物品的名稱。含冒號的名稱，例如 `forge:ingots/copper`，若存在對應的礦物辭典名稱，會轉換為它。否則日誌會說明此版本沒有該礦物辭典名稱，並忽略該檔案                                                        |
+| `matches` | 是   | 正規表示式   |      | Java 樣式，以 `namespace:path` 書寫的登錄名稱為搜尋比對的對象，因此除非以 `^` 開頭或以 `$` 結尾，否則會比對名稱中的任何位置。沒有樣式，或樣式不是有效運算式的檔案會被忽略，且日誌會說明                     |
+| `from`    | 否   | 礦物辭典名稱 | 無   | 只從已登錄在此名稱下的物品中複製，並帶上它們在該名稱下的中繼資料。省略時，遊戲中每個物品都會被測試，每個符合的物品都會為每個中繼資料加入 `tag`。`from` 名稱沒有任何成員時，日誌會記錄錯誤，且不複製任何東西 |
+
+複製在每個模組都登錄完物品，且上面的一般檔案都套用之後執行一次。沒有比對到任何東西的樣式會以警告記錄於日誌，該檔案不做任何事。設定中的 `content.oreDictionary` 會關閉整個資料夾。
 
 ```json
 {
@@ -3001,16 +3239,22 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "requires": ["thermalfoundation"],
   "names": ["thermalfoundation:ore", "thermalfoundation:material:128", "mekanism:salt*"],
   "namespaces": ["bigreactors"],
-  "oreDict": ["oreTin"]
+  "oreDict": ["oreTin"],
+  "hideOnly": false,
+  "untag": ["minecraft:stick"]
 }
 ```
 
-| 鍵           | 必填 | 值                   | 預設 | 作用                                                                                                                                                              |
-| ------------ | ---- | -------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `names`      | 否   | 方塊與物品名稱的清單 | 無   | 要停用的內容。中繼資料作為第三部分，`"thermalfoundation:material:128"` 只停用那一個物品，`:*` 則涵蓋所有中繼資料。以 `*` 結尾的名稱會比對所有以其餘部分開頭的名稱 |
-| `namespaces` | 否   | 模組 id 的清單       | 無   | 該模組的每個方塊和物品                                                                                                                                            |
-| `oreDict`    | 否   | 礦物辭典名稱的清單   | 無   | 登錄在該名稱下的每個物品，且該名稱會被清空                                                                                                                        |
-| `requires`   | 否   | 模組 id 的清單       | 無   | 除非每一個模組都已載入，否則會略過該檔案。`config:` 和 `file:` 項目的作用與其他地方相同                                                                           |
+| 鍵               | 必填 | 值                   | 預設    | 作用                                                                                                                                                                                                                                                                                          |
+| ---------------- | ---- | -------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`          | 否   | 方塊與物品名稱的清單 | 無      | 要停用的內容。中繼資料作為第三部分，`"thermalfoundation:material:128"` 只停用那一個物品，`:*` 則涵蓋所有中繼資料。以 `*` 結尾的名稱會比對所有以其餘部分開頭的名稱                                                                                                                             |
+| `namespaces`     | 否   | 模組 id 的清單       | 無      | 該模組的每個方塊和物品                                                                                                                                                                                                                                                                        |
+| `oreDict`        | 否   | 礦物辭典名稱的清單   | 無      | 登錄在該名稱下的每個物品，且該名稱會被清空                                                                                                                                                                                                                                                    |
+| `hideOnly`       | 否   | `true` 或 `false`    | `false` | 設為 `true` 時，該檔案列出的內容只在 JEI 與 HEI 中隱藏，這些方塊和物品仍可合成、放置與使用                                                                                                                                                                                                    |
+| `untag`          | 否   | 方塊與物品名稱的清單 | 無      | 一次把列出的物品從所有礦物辭典名稱中移除。與被停用的不同，它們仍留在遊戲中。名稱的寫法與 `names` 相同                                                                                                                                                                                         |
+| `hideCategories` | 否   | JEI 分類 id 的清單   | 無      | 要隱藏的 JEI 配方分類，以 JEI 給該分類的 id 書寫，例如熔爐配方為 `minecraft.smelting`。列出的每個分類都會連同其配方一起從 JEI 與 HEI 中消失。無論 `hideOnly` 為何，都會從每個檔案讀取，且不影響遊戲本身。沒有任何已載入外掛註冊的 id 會記錄為錯誤，該分類照常顯示。沒有 JEI 或 HEI 時不起作用 |
+| `fluids`         | 否   | 流體名稱的清單       | 無      | 為了讓整合包能與新版本共用同一個檔案而接受，在此會被忽略，因為 1.12.2 沒有流體標籤。記錄檔中會出現一則警告                                                                                                                                                                                    |
+| `requires`       | 否   | 模組 id 的清單       | 無      | 除非每一個模組都已載入，否則會略過該檔案。`config:` 和 `file:` 項目的作用與其他地方相同                                                                                                                                                                                                       |
 
 被停用的方塊或物品：
 
@@ -3185,6 +3429,35 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `oreDict`  | 二擇一 | 礦物辭典名稱   | 無   | 該名稱下的一切都會燃燒  |
 | `burnTime` | 是     | 整數，單位為刻 | `0`  | 煤炭是 1600，木板是 300 |
 
+## 配方移除
+
+*合成、戰利品與交易*
+
+`<namespace>/recipe_removals/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，多個檔案會疊加。刪除合成配方。只要任一選擇條件符合，配方就會被刪除。
+
+```json
+{
+  "names": ["minecraft:bow", "thermalfoundation:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword", "#ingotCopper"],
+  "inputs": ["minecraft:string", "#plankWood"],
+  "regex": ["^minecraft:.*_slab$"]
+}
+```
+
+| 鍵           | 必需 | 值           | 預設值 | 作用                                                                                                             |
+| ------------ | ---- | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `names`      | 否   | 清單         | 無     | 要刪除的配方名稱。結尾的 `*` 符合所有以該文字開頭的名稱                                                          |
+| `namespaces` | 否   | 清單         | 無     | 這些命名空間的所有配方                                                                                           |
+| `outputs`    | 否   | 物品名稱清單 | 無     | 合成其中任一物品的所有配方。以 `#` 開頭的名稱為礦物辭典名，符合產出屬於該辭典的所有配方                          |
+| `inputs`     | 否   | 物品名稱清單 | 無     | 含有能符合其中任一物品之原料的所有配方。以 `#` 開頭的名稱為礦物辭典名                                            |
+| `regex`      | 否   | 文字清單     | 無     | Java 正規表示式，符合配方名稱的任何部分（是找到符合，不是整體符合；用 `^` 和 `$` 錨定），例如 `minecraft:oak_.*` |
+| `types`      | 否   | 清單         | 無     | 1.12.2 沒有配方類型，此鍵不可用。日誌會說明，該鍵會被忽略                                                        |
+
+由其他模組在本模組之後註冊的配方，以及 CraftTweaker、KubeJS 和 GroovyScript 的配方，都會被保留。
+
 ## 配方替換
 
 *合成、戰利品與交易*
@@ -3211,10 +3484,23 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 }
 ```
 
-| 鍵         | 必需 | 值                  | 預設值 | 作用                                 |
-| ---------- | ---- | ------------------- | ------ | ------------------------------------ |
-| `requires` | 否   | 清單，內容為模組 id | 無     | 只有這些模組全部載入時才會讀取該檔案 |
-| `swaps`    | 是   | 清單                | 無     | 替換項目，依序套用                   |
+只設定 remainder 而不設定 swaps 的檔案：
+
+```json
+{
+  "recipes": { "names": ["minecraft:mushroom_stew"] },
+  "remainder": [
+    { "ingredient": "minecraft:potion", "returns": "minecraft:glass_bottle" }
+  ]
+}
+```
+
+| 鍵          | 必需 | 值                  | 預設值 | 作用                                                                                                                                                                                                                                                                                       |
+| ----------- | ---- | ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `requires`  | 否   | 清單，內容為模組 id | 無     | 只有這些模組全部載入時才會讀取該檔案                                                                                                                                                                                                                                                       |
+| `swaps`     | 是   | 清單                | 無     | 替換項目，依序套用                                                                                                                                                                                                                                                                         |
+| `transfer`  | 否   | 物件                | 無     | 同時設定 `transfer` 與 `recipes` 物件且不設定 `swaps` 的檔案，會讓所選合成配方把格子中的資料帶到結果上，如下方「傳遞」所述                                                                                                                                                                 |
+| `remainder` | 否   | 清單                | 無     | 同時設定 `recipes` 物件且不設定 `swaps` 的檔案，用來指定所選合成配方在格子中留下的物品：每個項目有 `ingredient`（物品名稱或以 `#` 開頭的礦物辭典名）和 `returns` 物品。每個被消耗的 `ingredient` 都會留下 `returns`，取代它原本留下的物品。`recipes` 接受[配方移除](#配方移除)中的選擇條件 |
 
 `swaps` 下的項目：
 
@@ -3224,14 +3510,37 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `to`      | 是   | 物品名稱 | 無       | 替換後的物品，可帶中繼資料值，例如 `thermalfoundation:material:128`。萬用字元或未知的物品會跳過該項目，日誌會說明                                                                         |
 | `output`  | 否   | 布林值   | `false`  | 當 `from` 是配方的產出時，也一併替換。數量維持不變                                                                                                                                        |
 | `recipes` | 否   | 物件     | 所有配方 | 將替換限定在這些合成配方內：`names`（結尾的 `*` 符合所有以該文字開頭的名稱）和 `namespaces`。帶有 `recipes` 的項目不影響燒煉配方，因為燒煉配方沒有名稱；此處不讀取 `outputs`，日誌會說明  |
+| `types`   | 否   | 清單     | 無       | 1.12.2 不讀取，因為它沒有配方類型。該項目對合成與熔爐配方仍然有效，日誌會顯示 `A swap in <file> has types, which 1.12.2 does not read, ignoring it`                                       |
+| `paths`   | 否   | 清單     | 無       | 1.12.2 不讀取。該項目對合成與熔爐配方仍然有效，日誌會顯示 `A swap in <file> has paths, which 1.12.2 does not read, ignoring it`                                                           |
 
 只接受 `from` 物品的槽位會變成 `to`。同時接受其他物品的槽位會保留那些物品並同時接受 `to`，但會失去礦物辭典的連結，因此之後加入該名稱的物品不會在此處被取用。在創造模式分頁中隱藏的物品也會從此類槽位中移除。
+
+在 1.12.2 上，以 `#` 開頭的 `to` 會略過整個項目，日誌會顯示 `A swap in <file> swaps to the tag <tag>, which 1.12.2 does not do, skipping it`。1.12.2 只處理合成與熔爐配方，沒有配方類型，因此這些配方之外的內容都不會被改寫。
 
 `to` 與自身 `from` 相同的項目會被跳過，日誌會說明。當 `to` 已經會被燒煉成其他東西時，燒煉輸入不會被替換，日誌會指出該配方。
 
 替換會在載入完成後執行，此時配方移除和配方封鎖已經選定了各自的配方，因此它們仍依替換前的產出判定配方。[停用的方塊與物品](#停用的方塊與物品)和[配方鎖](#配方鎖)看到的是替換後的配方。
 
 原版與 Forge 的有形與無形合成配方，以及熔爐配方會被改寫。其他模組自訂類型中引用了被替換物品的配方維持不變，日誌會對該類型記錄一次並附上範例配方。日誌會彙總為：`Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`，若有剩餘則還會出現 `Left N recipe(s) of N type(s) alone`。
+
+傳遞：讓結果保留一種原料的資料，並取得另一種原料部分資料的檔案：
+
+```json
+{
+  "recipes": { "names": ["mypack:enchant_armor"] },
+  "transfer": { "from": "armor", "take": ["enchantments"], "source": "book" }
+}
+```
+
+| 鍵       | 必需 | 值                                              | 預設值 | 作用                                                                                                                                                                                                |
+| -------- | ---- | ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`   | 是   | `armor`、`tool`、`weapon`、物品或 `#礦物辭典名` | 無     | 結果完整保留其資料（包括損耗值）的原料。`armor`、`tool` 與 `weapon` 依物品種類比對；物品名稱或 `#` 礦物辭典名則比對該物品                                                                           |
+| `source` | 是   | `book`、物品或 `#礦物辭典名`                    | 無     | `take` 的各部分取自的原料。`book` 是附魔書，其儲存的附魔視為它的附魔                                                                                                                                |
+| `take`   | 是   | 清單                                            | 無     | 取自 `source` 的部分：`enchantments` 合併到結果上，等級較高者勝出，結果無法承載或與已有附魔衝突的附魔會被略過，與鐵砧相同；`name` 設定自訂名稱；`damage` 設定損耗值；`nbt` 合併其餘的標籤，不含附魔 |
+
+格子中第一個符合的原料會用於每一項，兩者必須是不同的格位。配方會被包裝，因此結果格的預覽、一般點擊與 shift 點擊給出的結果相同，原版用戶端也會從格位更新中看到它。日誌會彙總為：`Gave N crafting recipe(s) a transfer`。
+
+配方改寫：`recipe_swaps` 中的檔案若用 `template` 或 `edit` 取代 `swaps`，會改寫其涵蓋的配方，但不進行替換。1.12.2 不讀取這些鍵：日誌會顯示 `Recipe swap file <file> has a template, which 1.12.2 does not read, ignoring it`（或 `has an edit`），並略過該檔案。同時有 `swaps` 與 `template` 或 `edit` 的檔案，會在 1.12.2 上略過 `template` 與 `edit`，且不寫入日誌。
 
 ## 配方鎖
 
@@ -3249,7 +3558,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "scoreAtLeast": 5,
   "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
   "namespaces": ["tconstruct"],
-  "outputs": ["minecraft:diamond_sword"]
+  "outputs": ["minecraft:diamond_sword", "#ingotCopper"],
+  "regex": ["^tconstruct:.*_pickaxe$"]
 }
 ```
 
@@ -3258,7 +3568,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `advancement`               | 否   | `namespace:path` | 無   | 玩家合成這些配方所需的進度。一個鎖需要它或一項身分條件（`team`，或 `objective` 加 `scoreAtLeast`）；兩者都設定時，玩家需要同時滿足。兩者都沒有的檔案會被略過，日誌會註明 |
 | `names`                     | 否   | 清單             | 無   | 要攔下的配方名稱。結尾的 `*` 會比對所有以該文字開頭的名稱，例如 `thermalfoundation:*`                                                                                    |
 | `namespaces`                | 否   | 清單             | 無   | 這些命名空間的所有配方                                                                                                                                                   |
-| `outputs`                   | 否   | 物品名稱清單     | 無   | 合成其中任一物品的所有配方                                                                                                                                               |
+| `outputs`                   | 否   | 物品名稱清單     | 無   | 合成其中任一物品的所有配方。以 `#` 開頭的名稱為礦物辭典名，符合產出屬於該辭典的所有配方                                                                                  |
+| `regex`                     | 否   | 文字清單         | 無   | Java 正規表示式，符合配方名稱的任何部分（是找到符合，不是整體符合；用 `^` 和 `$` 錨定）。鎖不接受 `inputs`                                                               |
 | `team`                      | 否   | 文字             | 無   | 玩家必須所在的計分板隊伍                                                                                                                                                 |
 | `objective`、`scoreAtLeast` | 否   | 文字，整數       | 無   | 玩家在該計分項上的分數至少要達到此值。兩者都需要                                                                                                                         |
 
@@ -3275,7 +3586,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 ```json
 {
   "items": [
-    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground. Stage {data:quest.stage|0}."], "when": { "data": { "name": "quest.stage", "atLeast": 1 } } }
   ],
   "enchantments": [
     { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
@@ -3290,11 +3601,29 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 
 `items` 或 `enchantments` 中的每個項目接受以下鍵。
 
-| 鍵            | 必填 | 值       | 預設 | 作用                                                                 |
-| ------------- | ---- | -------- | ---- | -------------------------------------------------------------------- |
-| `item`        | 是   | 物品名稱 | 無   | 物品，或方塊對應的物品。名稱後加 `:meta` 選擇一個變體，`:*` 選擇全部 |
-| `enchantment` | 是   | 附魔名稱 | 無   | 獲得這些行的附魔                                                     |
-| `lines`       | 是   | 文字清單 | 無   | 語言鍵或純文字，依序顯示                                             |
+| 鍵            | 必填 | 值             | 預設    | 作用                                                                                                                                                                                            |
+| ------------- | ---- | -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | 是   | 物品名稱       | 無      | 物品，或方塊對應的物品。名稱後加 `:meta` 選擇一個變體，`:*` 選擇全部                                                                                                                            |
+| `enchantment` | 是   | 附魔名稱       | 無      | 獲得這些行的附魔                                                                                                                                                                                |
+| `lines`       | 是   | 文字清單       | 無      | 語言鍵或純文字，依序顯示                                                                                                                                                                        |
+| `shift`       | 否   | 布林值         | `false` | `true`：這些行只在玩家按住 Shift 時顯示，因此物品可以帶一句簡短提示，其餘內容按需顯示。`false`：一律顯示                                                                                        |
+| `position`    | 否   | 整數，0 或以上 | 無      | 行的位置。`0` 放在物品名稱正下方，附魔條目則放在附魔名稱正下方；`1` 再往下一行。數字超過提示末尾時，會加在最後。省略時，物品的行放在最後，附魔的行緊接在名稱後。負數會記錄於日誌，該項目略過    |
+| `replace`     | 否   | 布林值         | `false` | `true`：條目的第一行取代 `position` 所在的既有行，其餘行加在其後。`false`：直接加入，不移除任何內容。需要 `position`，沒有時日誌會說明，並把行加在最後。`position` 超過提示末尾時不取代任何內容 |
+| `when`        | 否   | 物件           | 無      | 只有條件成立時才顯示這些行。只讀取 `data`，可以是一項檢查或一個列表，寫法同[同步資料](#同步資料)；其他鍵會記錄於日誌，並略過該條目                                                              |
+
+**從物品取值。** 行中可以顯示被查看物品本身的值。`{nbt:path}` 會被物品自己標籤中該路徑的值取代，1.12.2 上 `{item:path}` 也有相同作用。路徑以句點分隔的名稱書寫，若某部分是整數，則取列表中該位置的項目，從 0 開始計算。這在語言鍵與純文字中都適用。
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby_ring", "lines": ["Charge {nbt:mypack.charge} of {nbt:mypack.max}", "First gem: {nbt:gems.0.id}"] }
+  ]
+}
+```
+
+數字沒有小數部分時顯示為整數，文字值顯示時不含顏色碼。不存在的內容、超出列表末尾的位置，或包含多個值而非單一數字或文字的部分，都不顯示任何內容。沒有路徑的 `{nbt:}`，以及未以 `}` 結束的開頭 `{nbt:`，會保持原樣寫在行中，其中空白的那種會記錄於日誌。
+
+行中可以用 `{data:name|fallback}` 顯示同步值。用戶端讀取的是伺服器傳來的同步值，因此沒有此模組的用戶端，或開啟 `vanillaClients` 的伺服器，永遠不會顯示帶有 `when` 的條目，並會在行中顯示備用內容。
 
 ## 語言閘門
 
@@ -3740,13 +4069,15 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 }
 ```
 
-| 鍵            | 必填 | 值               | 預設    | 作用                                                                                    |
-| ------------- | ---- | ---------------- | ------- | --------------------------------------------------------------------------------------- |
-| `block`       | 是   | 方塊 id          |         | 規則所監看的方塊                                                                        |
-| `meta`        | 否   | 整數             | `-1`    | 僅限該方塊的這個中繼資料；`-1` 表示所有狀態                                             |
-| `replace`     | 否   | 布林值           | `false` | `true`：在擲出這些掉落物之前，先丟棄常規掉落物。`false`：常規掉落物與這些掉落物一併保留 |
-| `advancement` | 否   | `namespace:path` | 無      | 規則只對擁有該進度的玩家生效，因此同一個方塊在取得進度之前和之後可以掉落不同的東西      |
-| `drops`       | 是   | 掉落物清單       |         | 玩家破壞方塊時，每一項各自獨立擲出                                                      |
+| 鍵            | 必填 | 值               | 預設    | 作用                                                                                                                                              |
+| ------------- | ---- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `block`       | 是   | 方塊 id          |         | 規則所監看的方塊                                                                                                                                  |
+| `meta`        | 否   | 整數             | `-1`    | 僅限該方塊的這個中繼資料；`-1` 表示所有狀態                                                                                                       |
+| `replace`     | 否   | 布林值           | `false` | `true`：在擲出這些掉落物之前，先丟棄常規掉落物。`false`：常規掉落物與這些掉落物一併保留                                                           |
+| `advancement` | 否   | `namespace:path` | 無      | 規則只對擁有該進度的玩家生效，因此同一個方塊在取得進度之前和之後可以掉落不同的東西                                                                |
+| `once`        | 否   | 物件             | 無      | 讓規則對每位玩家只生效一次。`per` 必須是 `player`，`grant` 為進度的 ID。規則只對尚未取得 `grant` 進度的玩家生效，並在規則執行後授予該進度。見下文 |
+| `runs`        | 否   | 函數 ID          | 無      | 每次規則生效時執行的函數，執行者為破壞方塊的玩家；沒有玩家時則在方塊處執行。沒有任何整合包提供的函數會記錄於日誌                                  |
+| `drops`       | 是   | 掉落物清單       |         | 玩家破壞方塊時，每一項各自獨立擲出                                                                                                                |
 
 每一項掉落物：
 
@@ -3760,6 +4091,20 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `silkTouch`  | 否                      | `either`、`only` 或 `never` | `either` | 掉落是否需要絲綢之觸工具、是否拒絕這類工具，或是不在意                                                   |
 
 規則只處理玩家的採集；爆炸、活塞和生物破壞不會擲出任何東西。同一方塊的多條規則會全部生效，其中任何一條的 `replace` 都會先清除一般掉落物。
+
+**方塊中的標籤。** 在礦物辭典名稱前面加上 `#`，例如 `"#oreIron"`，規則就會套用到礦物辭典中帶有該名稱物品的每一個方塊。含有冒號的名稱，例如 `"#forge:ores/iron"`，會在存在對應的礦物辭典名稱時轉換為它。若該版本沒有此礦物辭典名稱，或名稱下沒有任何成員，會記錄於日誌並忽略該檔案。`meta` 仍然套用於相符的方塊。成員在首次需要規則時計算，重新載入後再計算一次。
+
+**每位玩家一次。** `once` 讓獎勵每位玩家只發放一次，並以進度記住誰已經領取過。`per`（必須為 `player`）與 `grant` 都是必填，缺少任一項或 `once` 不是物件時，該檔案會被忽略並記錄於日誌。這項規則只計算伺服器上的真實玩家，不適用於爆炸、機器或假玩家，且僅在該玩家尚未取得 `grant` 進度時生效。規則掉落物品並執行函數後，玩家會取得該進度，因此下一次破壞不會有任何效果。若沒有任何整合包提供該進度，日誌會說明規則已略過，且永遠不會生效。`once` 可與 `advancement` 併用，後者同樣必須成立。
+
+```json
+{
+  "block": "minecraft:dirt",
+  "replace": true,
+  "once": { "per": "player", "grant": "mypack:first_dirt" },
+  "runs": "mypack:first_dirt",
+  "drops": [ { "item": "minecraft:diamond" } ]
+}
+```
 
 ## 右鍵收穫
 
@@ -4423,6 +4768,7 @@ Dynamic Trees 樹苗永遠交給 Dynamic Trees 處理。指向它們的規則會
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
   "despawns": true,
   "despawnAfter": 600,
+  "leash": "delete",
   "noAI": false,
   "leftHanded": false,
   "fireproof": false,
@@ -4861,15 +5207,16 @@ Dynamic Trees 樹苗永遠交給 Dynamic Trees 處理。指向它們的規則會
 
 *實體變體*
 
-| 鍵                  | 必填 | 值             | 預設       | 作用                                                                            |
-| ------------------- | ---- | -------------- | ---------- | ------------------------------------------------------------------------------- |
-| `spawns`            | 否   | 物件清單       | 無         | `creatureType`、`weight`、`min` 和 `max`，與生態域使用的結構相同                |
-| `biomes`            | 否   | 生態域名稱清單 | 所有生態域 | 在哪些生態域中加入這些生成項目                                                  |
-| `biomeTypes`        | 否   | 辭典類型清單   | 無         | 同上，但依類型指定                                                              |
-| `ignoresSpawnRules` | 否   | 布林值         | `false`    | `true`：被放在哪裡就在哪裡生成，忽略它繼承來的規則。`false`：遵守它繼承來的規則 |
-| `despawns`          | 否   | 布林值         | `true`     | `true`：照常消失。`false`：即使通常會被清除，它也會留下                         |
-| `despawnAfter`      | 否   | 整數，單位為秒 | 無         | 在世界中存在這麼久之後悄然消失，無論周圍有沒有玩家                              |
-| `persistent`        | 否   | 布林值         | `false`    | `true`：永不消失。`false`：照常消失                                             |
+| 鍵                  | 必填 | 值                 | 預設       | 作用                                                                                                                 |
+| ------------------- | ---- | ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `spawns`            | 否   | 物件清單           | 無         | `creatureType`、`weight`、`min` 和 `max`，與生態域使用的結構相同                                                     |
+| `biomes`            | 否   | 生態域名稱清單     | 所有生態域 | 在哪些生態域中加入這些生成項目                                                                                       |
+| `biomeTypes`        | 否   | 辭典類型清單       | 無         | 同上，但依類型指定                                                                                                   |
+| `ignoresSpawnRules` | 否   | 布林值             | `false`    | `true`：被放在哪裡就在哪裡生成，忽略它繼承來的規則。`false`：遵守它繼承來的規則                                      |
+| `despawns`          | 否   | 布林值             | `true`     | `true`：照常消失。`false`：即使通常會被清除，它也會留下                                                              |
+| `despawnAfter`      | 否   | 整數，單位為秒     | 無         | 在世界中存在這麼久之後悄然消失，無論周圍有沒有玩家                                                                   |
+| `leash`             | 否   | `drop` 或 `delete` | `drop`     | 生物被 `despawnAfter` 移除時，它身上的拴繩會怎樣。`drop`：拴繩作為物品掉落。`delete`：拴繩隨生物一同消失，不掉落物品 |
+| `persistent`        | 否   | 布林值             | `false`    | `true`：永不消失。`false`：照常消失                                                                                  |
 
 **有保存期限的生物。** `despawnAfter` 從生物首次進入世界的那一刻起以秒計時，時間一到就悄然將其移除：沒有死亡，沒有掉落物，沒有聲音，就像它自己走開後被清除了一樣。計時資訊會寫入生物本身，所以存檔並重新載入後仍會繼續計時，而不是每次區塊重新載入時從頭開始。
 
@@ -4963,22 +5310,169 @@ Dynamic Trees 樹苗永遠交給 Dynamic Trees 處理。指向它們的規則會
 }
 ```
 
-| 鍵                                                                                                                           | 必填 | 值                                               | 預設值  | 作用                                                                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entities`                                                                                                                   | 是   | 實體名稱或種類列表                               | 無      | 要被取代的生物，同生怪鎖。缺少該鍵的檔案會被跳過，並在日誌中說明                                                                                        |
-| `becomes`                                                                                                                    | 是   | 實體 ID 列表，或帶有 `entity` 和 `weight` 的物件 | 無      | 取代它們的生物，依權重選取，可以是任何已註冊的實體或實體變體。缺少該鍵的檔案會被跳過，並在日誌中說明                                                    |
-| `biomes`, `biomeTypes`                                                                                                       | 否   | 文字列表                                         | 無      | 取代生效的生態域，寫法與實體變體相同                                                                                                                    |
-| `blocks`                                                                                                                     | 否   | 方塊名稱列表                                     | 無      | 生成位置下方的方塊為其中之一時取代生效，例如 `minecraft:nether_brick`。方塊名稱的寫法與其他方塊列表相同，未指定任何已註冊方塊的檔案會被跳過             |
-| `requireAll`                                                                                                                 | 否   | 布林值                                           | `false` | 為 `false` 時，`biomes`、`biomeTypes` 和 `blocks` 中任一滿足即可；為 `true` 時，所有給出的條件都必須滿足。若均未設定，則在其他條件成立的任何地方都取代  |
-| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 否   | 同生成條件                                       | 無      | 與生成條件相同的鍵，含義相同。它們都必須成立，`elsewhere` 也同樣適用                                                                                    |
-| `elsewhere`                                                                                                                  | 否   | 物件                                             | 關閉    | 在上面的地點鍵不成立時，仍以 `chance` 的機率取代，但受以下限制                                                                                          |
-| `elsewhere.chance`                                                                                                           | 否   | 0 到 1 之間的小數                                | `1.0`   | 每次生成時取代的機率                                                                                                                                    |
-| `elsewhere.lightBelow`                                                                                                       | 否   | 1 到 16 之間的整數                               | 無      | 僅在該位置的綜合光照低於此值時取代                                                                                                                      |
-| `elsewhere.night`                                                                                                            | 否   | 布林值                                           | `false` | 僅在夜間時段，即日間時鐘的刻 `13000` 到 `23000` 之間                                                                                                    |
-| `extra`                                                                                                                      | 否   | 0 到 16 之間的整數                               | `0`     | 在同一位置額外生成這麼多個生物，每個都從 `becomes` 中獨立抽取，並擁有各自的初始裝備。放不下的副本會被跳過，副本從下一輪生成起計入生物上限               |
-| `fromSpawners`                                                                                                               | 否   | 布林值                                           | `false` | `false`：自然生成（包括地獄要塞的生物）以及區塊生成時產生的生物（僅生物類）會被取代。`true`：加入生怪磚方塊。生怪蛋、`/summon` 和結構放置的生物永不取代 |
+只有 `runs` 而沒有 `becomes` 的檔案，只在生物出現時執行函數，對非生物的實體也適用：
+
+```json
+{
+  "entities": ["minecraft:eye_of_ender"],
+  "runs": "mypack:eye_spawned"
+}
+```
+
+| 鍵                                                                                                                           | 必填 | 值                                               | 預設值  | 作用                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | 是   | 實體名稱或種類列表                               | 無      | 要被取代的生物，同生怪鎖。缺少該鍵的檔案會被跳過，並在日誌中說明                                                                                                                                                                                                                                     |
+| `becomes`                                                                                                                    | 否   | 實體 ID 列表，或帶有 `entity` 和 `weight` 的物件 | 無      | 取代它們的生物，依權重選取，可以是任何已註冊的實體或實體變體。既沒有它也沒有 `runs` 的檔案會被跳過，並在日誌中說明                                                                                                                                                                                   |
+| `biomes`, `biomeTypes`                                                                                                       | 否   | 文字列表                                         | 無      | 取代生效的生態域，寫法與實體變體相同                                                                                                                                                                                                                                                                 |
+| `blocks`                                                                                                                     | 否   | 方塊名稱列表                                     | 無      | 生成位置下方的方塊為其中之一時取代生效，例如 `minecraft:nether_brick`。方塊名稱的寫法與其他方塊列表相同，未指定任何已註冊方塊的檔案會被跳過                                                                                                                                                          |
+| `requireAll`                                                                                                                 | 否   | 布林值                                           | `false` | 為 `false` 時，`biomes`、`biomeTypes` 和 `blocks` 中任一滿足即可；為 `true` 時，所有給出的條件都必須滿足。若均未設定，則在其他條件成立的任何地方都取代                                                                                                                                               |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 否   | 同生成條件                                       | 無      | 與生成條件相同的鍵，含義相同。它們都必須成立，`elsewhere` 也同樣適用                                                                                                                                                                                                                                 |
+| `elsewhere`                                                                                                                  | 否   | 物件                                             | 關閉    | 在上面的地點鍵不成立時，仍以 `chance` 的機率取代，但受以下限制                                                                                                                                                                                                                                       |
+| `elsewhere.chance`                                                                                                           | 否   | 0 到 1 之間的小數                                | `1.0`   | 每次生成時取代的機率                                                                                                                                                                                                                                                                                 |
+| `elsewhere.lightBelow`                                                                                                       | 否   | 1 到 16 之間的整數                               | 無      | 僅在該位置的綜合光照低於此值時取代                                                                                                                                                                                                                                                                   |
+| `elsewhere.night`                                                                                                            | 否   | 布林值                                           | `false` | 僅在夜間時段，即日間時鐘的刻 `13000` 到 `23000` 之間                                                                                                                                                                                                                                                 |
+| `extra`                                                                                                                      | 否   | 0 到 16 之間的整數                               | `0`     | 在同一位置額外生成這麼多個生物，每個都從 `becomes` 中獨立抽取，並擁有各自的初始裝備。放不下的副本會被跳過，副本從下一輪生成起計入生物上限                                                                                                                                                            |
+| `fromSpawners`                                                                                                               | 否   | 布林值                                           | `false` | `false`：自然生成（包括地獄要塞的生物）以及區塊生成時產生的生物（僅生物類）會被取代。`true`：加入生怪磚方塊。生怪蛋、`/summon` 和結構放置的生物永不取代                                                                                                                                              |
+| `runs`                                                                                                                       | 否   | 函數 ID                                          | 無      | 符合的實體加入世界時，以該實體的身分並在其位置執行此函數，適用於任何實體（包括 `minecraft:eye_of_ender`），每個實體只執行一次：區塊重新載入時不會再次執行。沒有 `becomes` 時，檔案只執行函數，不取代任何東西。被該檔案取代掉的生成不會執行它。沒有任何整合包提供的函數會記錄於日誌，且不執行任何內容 |
 
 沒有檔案時，不會取代任何內容。被其他原因取消的生成不會進入世界，因此也不會被取代。指向未註冊實體的取代會保留原生成，並在日誌中說明。
+
+### 傷害規則
+
+*實體變體*
+
+`<namespace>/hurt_rules/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，多個檔案會疊加。取消或回應一隻生物傷害另一隻生物的情況，例如整合包的守衛永遠不傷害自己的村民。玩家不在此列：這類情況請改用 `player_hurt_entity` 與 `entity_hurt_player` 卡片觸發器。
+
+```json
+{
+  "attacker": ["minecraft:skeleton", "#monster"],
+  "victim": "minecraft:zombie",
+  "cancel": true,
+  "runs": "mypack:hurt"
+}
+```
+
+| 鍵         | 必需 | 值                           | 預設值  | 作用                                                                                                                                                                           |
+| ---------- | ---- | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `attacker` | 是   | 實體名稱，或名稱或種類的清單 | 無      | 造成傷害的生物，寫法同生怪鎖。射出的箭算在射手身上。缺少該鍵的檔案會被跳過，並在日誌中說明                                                                                     |
+| `victim`   | 是   | 實體名稱，或名稱或種類的清單 | 無      | 被傷害的生物。缺少該鍵的檔案會被跳過，並在日誌中說明                                                                                                                           |
+| `cancel`   | 否   | 布林值                       | `false` | `true`：該次傷害不產生任何效果                                                                                                                                                 |
+| `runs`     | 否   | 函數 ID                      | 無      | 每次嘗試傷害時，以受害者的身分並在其位置執行此函數，在任何傷害之前執行，因此在受害者無敵幀中落空的傷害也會執行它。既沒有 `cancel` 也沒有 `runs` 的檔案會被跳過，並在日誌中說明 |
+
+### 排程
+
+`<namespace>/schedules/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，多個檔案會疊加。依計時器執行一次或反覆執行函數，以伺服器身分執行。不會儲存任何內容：每個排程都會在伺服器啟動時，以及執行 `/rdplserver reload` 時重新開始計時。
+
+```json
+{
+  "id": "mypack:airdrop",
+  "after": 1200,
+  "every": 6000,
+  "runs": "mypack:airdrop"
+}
+```
+
+| 鍵      | 必需 | 值       | 預設值 | 作用                                                                                                               |
+| ------- | ---- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| `id`    | 否   | 文字     | 無     | 供你自己參考的名稱，模組不會讀取                                                                                   |
+| `after` | 否   | 整數，刻 | `0`    | 伺服器啟動後，或重新載入後，第一次執行前的刻數。`0` 表示在第一刻執行                                               |
+| `every` | 否   | 整數，刻 | `0`    | 第一次之後，每隔多少刻執行一次。`0` 或省略表示只執行一次                                                           |
+| `runs`  | 是   | 函數 ID  | 無     | 以伺服器身分執行的函數。缺少該鍵的檔案會被跳過，並在日誌中說明。沒有任何整合包提供的函數，每次到期時都會記錄於日誌 |
+
+### 同步資料
+
+`<namespace>/syncdata/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，多個檔案會疊加。同步資料是一組具名值的儲存區，每個值可以是文字、數字或布林值，伺服器會為每位玩家與整個世界分別保存。卡片、對話回覆、指令或腳本會設定值，卡片、對話、閘門與提示則會檢測值，或把值顯示在文字中。值不需要檔案：任何合法名稱都可以直接設定。檔案用來宣告名稱，以固定其型別、給予預設值、限制長度，或不存入存檔。名稱為 1 到 64 個字元，只能使用 `a` 到 `z`、`0` 到 `9`、`_`、`.`、`:`、`/` 與 `-`，不得含大寫字母或空白。
+
+```json
+{
+  "values": [
+    { "name": "quest.stage", "type": "number", "default": 0 },
+    { "name": "quest.title", "type": "text", "max": 40, "default": "Newcomer" },
+    { "name": "quest.met_smith", "type": "bool" },
+    { "name": "event.banner", "type": "text", "persist": false }
+  ]
+}
+```
+
+| 鍵       | 必填 | 值       | 預設 | 作用                                       |
+| -------- | ---- | -------- | ---- | ------------------------------------------ |
+| `values` | 是   | 物件列表 | 無   | 宣告。不是物件的項目會被略過，並記錄於日誌 |
+
+每個宣告可使用以下鍵。
+
+| 鍵        | 必填 | 值                       | 預設   | 作用                                                                                                                 |
+| --------- | ---- | ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `name`    | 是   | 文字                     | 無     | 值的名稱。名稱不合法的項目會被略過，並記錄於日誌。名稱已在較早的檔案中宣告時，保留第一次的宣告，並在日誌中指出該檔案 |
+| `type`    | 否   | `text`、`number`、`bool` | `text` | 值的型別。其他內容會記錄於日誌，該項目略過                                                                           |
+| `default` | 否   | 文字、數字或 true/false  | 無     | 玩家或世界尚未設定時讀取到的值，檢測時視為已設定。型別錯誤的預設值會記錄於日誌，該值沒有預設                         |
+| `max`     | 否   | 整數，1 到 256           | `256`  | 文字值最長的字元數。超出 1 到 256 的值會記錄於日誌，改用 `256`                                                       |
+| `persist` | 否   | 布林值                   | `true` | `true`：值隨世界存檔。`false`：永不存檔，因此世界值在重新啟動後消失，玩家的值則在該玩家登出後消失                    |
+
+每位玩家有自己的值，世界也有自己的值，各自最多 64 個。玩家會先讀取自己的值，其次是世界的值，最後是預設值。設定時若違反限制，會被拒絕並記錄於日誌，且不做任何變更：名稱不合法、型別與宣告不符、文字長於 `max`（沒有檔案的名稱為 256）、值不是文字、數字或布林值，或儲存區已滿。把值設為目前已有的值不會有任何作用。重新載入後，若已存的值不再符合其宣告，會被移除並記錄於日誌。
+
+#### 檢查
+
+檢查只測試一個值。`data` 接受一項檢查或一個列表，且每項檢查都必須成立。它會在卡片的 `when`、對話回覆的 `when`、提示項目的 `when`，以及閘門的 `unlock` 中讀取。
+
+```json
+{
+  "when": {
+    "data": [
+      { "name": "quest.stage", "atLeast": 2, "atMost": 4 },
+      { "name": "quest.title", "isNot": "Newcomer" },
+      { "name": "quest.met_smith", "is": true },
+      { "name": "event.banner", "set": false }
+    ]
+  }
+}
+```
+
+| 鍵        | 必填 | 值                      | 預設   | 作用                                                                                                            |
+| --------- | ---- | ----------------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| `name`    | 是   | 文字                    | 無     | 要測試的值。沒有名稱的檢查會被略過，並記錄於日誌                                                                |
+| `is`      | 否   | 文字、數字或 true/false | 無     | 值必須等於此值。文字逐字比較，包括大小寫。型別不同的值永遠不會相等                                              |
+| `isNot`   | 否   | 文字、數字或 true/false | 無     | 值必須不等於此值                                                                                                |
+| `atLeast` | 否   | 數字                    | 無     | 值必須是數字，且不小於此值。非數字的值會失敗                                                                    |
+| `atMost`  | 否   | 數字                    | 無     | 值必須是數字，且不大於此值                                                                                      |
+| `set`     | 否   | 布林值                  | `true` | `true`：值必須已設定（包括由預設值設定），其他鍵才會測試它。`false`：只有在值未設定時檢查才成立，其他鍵不會使用 |
+
+提示會測試用戶端持有的值，見下文。卡片、對話或閘門測試的是伺服器上該玩家的值。
+
+#### 設定值
+
+卡片、對話回覆、指令與腳本都可以設定值。在卡片檔案與回覆中，`sets` 為玩家設定值，`worldSets` 為整個世界設定值，格式都是 `name: value`。
+
+```json
+{
+  "trigger": "command",
+  "lines": ["Stage {data:quest.stage|0}, {data:quest.title|nobody}"],
+  "sets": { "quest.stage": 1, "quest.title": "Apprentice" },
+  "worldSets": { "event.banner": "A stranger arrived" }
+}
+```
+
+| 鍵          | 必填 | 值   | 預設 | 作用                                                                       |
+| ----------- | ---- | ---- | ---- | -------------------------------------------------------------------------- |
+| `sets`      | 否   | 物件 | 無   | 為玩家設定的值。值不是文字、數字或布林值時會記錄於日誌並略過，其餘照常套用 |
+| `worldSets` | 否   | 物件 | 無   | 為世界設定的值，格式相同                                                   |
+
+只有卡片檔案與對話回覆會讀取這些鍵。規則拒絕的設定會記錄於日誌，其他設定照常進行。
+
+#### 在文字中顯示值
+
+文字中的 `{data:name|fallback}` 會被值取代。若沒有值，則使用 `|` 之後的文字；沒有 `|` 時則不顯示任何內容。備用文字在第一個 `}` 處結束，因此不能包含 `}`。名稱會去除前後空白，名稱留空時在提示中會記錄於日誌，且文字保持原樣。數字不顯示 `.0`，布林值則顯示為 true 或 false。此功能可用於卡片的 `title` 與 `lines`、對話的 `title`、節點的 `title` 與 `lines`、回覆的 `text`，以及提示的 `lines`。卡片或對話顯示的是伺服器上該玩家的值。
+
+#### 保存內容
+
+值會保存在世界存檔中，玩家的值以其 ID 儲存，但 `persist` 設為 `false` 的值除外。玩家登出後會保留其值，上述例外除外。加入時，裝有此模組的用戶端會收到世界的值、該玩家自己的值，以及所有預設值；重新載入後會再收到一次，之後每次變動都會即時送出。斷線時用戶端會忘記這些值。提示讀取的就是這些值。文字值送到用戶端時會去除格式碼。沒有此模組的用戶端，或開啟 `vanillaClients` 時的任何用戶端，都收不到任何內容，因此帶有 `when` 或 `{data:}` 的提示會在那裡改用備用內容；卡片、對話與閘門在伺服器上執行，不依賴用戶端。
+
+`/rdplserver data` 可讀取與設定值，見[同步資料指令](#同步資料指令)；腳本透過 `sync` 與 `synced` 存取，見 [rdpl 物件](#rdpl-物件)。
 
 ### 網路
 
@@ -7334,6 +7828,7 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
   "portal": {
     "frames": ["mypack:standing_gate"],
     "ignitedBy": "minecraft:flint_and_steel",
+    "ignitedByFluid": "minecraft:water",
     "color": "#C77DFF",
     "return": "built",
     "gate": "mypack:ruby_gate",
@@ -7347,30 +7842,31 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
 }
 ```
 
-| 鍵                | 必填 | 值                          | 預設                        | 作用                                                                                      |
-| ----------------- | ---- | --------------------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
-| `frames`          | 是   | 框架名稱清單                | 無                          | 開啟該維度的框架                                                                          |
-| `ignitedBy`       | 否   | 物品名稱                    | `minecraft:flint_and_steel` | 玩家手持何物來點燃框架                                                                    |
-| `color`           | 否   | 十六進位色碼                | 白色                        | 傳送門繪製所用的顏色                                                                      |
-| `return`          | 否   | `built`、`player` 或 `none` | `built`                     | 是否提供返程：自動建造、由玩家建造，或完全不提供                                          |
-| `returnDimension` | 否   | 整數                        | `0`                         | 返回時傳送到的維度，或出發地已不存在時的備用維度                                          |
-| `returnTo`        | 否   | `fixed` 或 `origin`         | `fixed`                     | `origin` 把你送回來時的維度，地獄與終界也算在內                                           |
-| `gate`            | 否   | 閘門名稱                    | 無                          | 必須處於開啟狀態才能通過的閘門                                                            |
-| `cooldown`        | 否   | 整數，單位為刻              | `60`                        | 同一名玩家再次通過前的冷卻時間                                                            |
-| `landing`         | 否   | `surface` 或 `same`         | `surface`                   | `same` 落在離開時的高度，位於帶地板的房間裡                                               |
-| `torches`         | 否   | 布林值                      | `false`                     | `landing` 為 `same` 且 `platform` 為 `true` 時，房間裡放兩支火把。`false`：房間裡不放火把 |
-| `useRange`        | 否   | 整數，單位為格              | `0`                         | 大於 0 時，玩家必須站在傳送門高度附近才能使用                                             |
-| `mounted`         | 否   | 布林值                      | `true`                      | `true`：騎乘著東西的玩家能使用它。`false`：騎乘著東西的玩家不能使用它                     |
-| `platform`        | 否   | 布林值                      | `true`                      | `true`：抵達時建造著陸平台。`false`：抵達時不建造平台                                     |
-| `platformBlock`   | 否   | 方塊名稱                    | 石頭                        | 該平台的組成方塊                                                                          |
-| `sound`           | 否   | 音效名稱                    | 無                          | 通過時播放                                                                                |
-| `owned`           | 否   | 布林值                      | `false`                     | `true`：只有點燃者及其允許的人可以使用。`false`：任何人都可以使用                         |
+| 鍵                | 必填 | 值                          | 預設                        | 作用                                                                                                                         |
+| ----------------- | ---- | --------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `frames`          | 是   | 框架名稱清單                | 無                          | 開啟該維度的框架                                                                                                             |
+| `ignitedBy`       | 否   | 物品名稱                    | `minecraft:flint_and_steel` | 玩家手持何物來點燃框架                                                                                                       |
+| `ignitedByFluid`  | 否   | 流體方塊名稱                | 無                          | 流進或停留在框架開口中的流體方塊會點亮傳送門。同時設定 `ignitedBy` 時，兩者任一皆可點亮。省略 `ignitedBy` 時，只有流體能點亮 |
+| `color`           | 否   | 十六進位色碼                | 白色                        | 傳送門繪製所用的顏色                                                                                                         |
+| `return`          | 否   | `built`、`player` 或 `none` | `built`                     | 是否提供返程：自動建造、由玩家建造，或完全不提供                                                                             |
+| `returnDimension` | 否   | 整數                        | `0`                         | 返回時傳送到的維度，或出發地已不存在時的備用維度                                                                             |
+| `returnTo`        | 否   | `fixed` 或 `origin`         | `fixed`                     | `origin` 把你送回來時的維度，地獄與終界也算在內                                                                              |
+| `gate`            | 否   | 閘門名稱                    | 無                          | 必須處於開啟狀態才能通過的閘門                                                                                               |
+| `cooldown`        | 否   | 整數，單位為刻              | `60`                        | 同一名玩家再次通過前的冷卻時間                                                                                               |
+| `landing`         | 否   | `surface` 或 `same`         | `surface`                   | `same` 落在離開時的高度，位於帶地板的房間裡                                                                                  |
+| `torches`         | 否   | 布林值                      | `false`                     | `landing` 為 `same` 且 `platform` 為 `true` 時，房間裡放兩支火把。`false`：房間裡不放火把                                    |
+| `useRange`        | 否   | 整數，單位為格              | `0`                         | 大於 0 時，玩家必須站在傳送門高度附近才能使用                                                                                |
+| `mounted`         | 否   | 布林值                      | `true`                      | `true`：騎乘著東西的玩家能使用它。`false`：騎乘著東西的玩家不能使用它                                                        |
+| `platform`        | 否   | 布林值                      | `true`                      | `true`：抵達時建造著陸平台。`false`：抵達時不建造平台                                                                        |
+| `platformBlock`   | 否   | 方塊名稱                    | 石頭                        | 該平台的組成方塊                                                                                                             |
+| `sound`           | 否   | 音效名稱                    | 無                          | 通過時播放                                                                                                                   |
+| `owned`           | 否   | 布林值                      | `false`                     | `true`：只有點燃者及其允許的人可以使用。`false`：任何人都可以使用                                                            |
 
 洞口中的方塊不必由資源包編寫。帶有 `portal` 區段的維度會獲得一個專屬方塊，名為 `<namespace>:portal_<dimension>`，使用遊戲內建的傳送門材質並依 `color` 著色，走進去即可傳送而無須手動使用，且無法破壞。顏色會與材質相乘，原理與 `tintindex` 相同，所以 `#C77DFF` 保留了地獄的紫色，而 `#4CFFB0` 會讓它變成毒綠色。若想要完全不是原版材質的傳送門，請自行編寫一個一般的 `portal` 方塊，搭配自己的模型，以及用[像素圖](#以像素圖編寫的材質)繪製的材質，其中 `tint` 可以在兩種顏色之間漸變。
 
 `return` 決定另一側會發生什麼。`built` 會依玩家搭建的尺寸立起同樣的框架並將其點亮，這與原版的行為一致。`player` 不會建造任何東西，但允許在那邊點亮同樣的框架，因此回家的路需要自己去找並自己搭。`none` 則完全拒絕在該維度中點亮該框架，這趟旅程只能單程。
 
-**一個框架，多個維度。** 框架與點燃它的物品這一組合決定了維度，所以同一個 `standing_gate`，用打火石點燃與用資源包自己的點火器點燃，會開啟兩個不同的地方，各有各的顏色。兩個維度認領同一個框架*且*同一個物品是資源包的錯誤：第二個會被拒絕並在日誌中說明，而不是悄悄讓其中一個勝出。
+**一個框架，多個維度。** 框架與點燃它的物品這一組合決定了維度，所以同一個 `standing_gate`，用打火石點燃與用資源包自己的點火器點燃，會開啟兩個不同的地方，各有各的顏色。`ignitedByFluid` 也適用同樣的規則：兩個維度不能以相同的液體認領同一個框架。兩個維度認領同一個框架*且*同一個物品是資源包的錯誤：第二個會被拒絕並在日誌中說明，而不是悄悄讓其中一個勝出。
 
 破壞框架的任何一個方塊都會使傳送門熄滅，與原版一樣。
 
@@ -7406,11 +7902,18 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
     "team": "red",
     "objective": "quests",
     "scoreAtLeast": 5,
-    "teamAndScore": "alone"
+    "teamAndScore": "alone",
+    "data": { "name": "quest.stage", "atLeast": 2 }
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
   "safeReturn": true,
+  "stayMinutes": 20,
+  "stayReset": "day",
+  "stayMessage": "%dim%: %time% left",
+  "stayWarn": [60, 30, 10, 5],
+  "onExpire": { "exit": true, "function": "mypack:time_up", "message": "Your time in %dim% is up" },
+  "dropOnLeave": { "keep": ["mypack:ruby_key"], "enderChest": true, "message": "Loot from %dim% stays behind" },
   "portalBlocks": ["mypack:ruby_portal"],
   "requires": ["mypack"]
 }
@@ -7429,8 +7932,41 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
 | `safeReturn`      | 否   | 布林值                         | `false`                          | `true`：被擋下的返程仍會降落在安全的地方，而不是被拒絕。`false`：被擋下的返程會被拒絕                                                                                                                                                                                                                                         |
 | `requires`        | 否   | 模組 id 或資源包命名空間的清單 | 無                               | 除非全部存在，否則略過此閘門                                                                                                                                                                                                                                                                                                  |
 | `portalBlocks`    | 否   | 方塊名稱清單                   | 所有傳送門                       | 將閘門限定於這些傳送門方塊，讓一個維度可以同時有受守衛的門與開放的門                                                                                                                                                                                                                                                          |
+| `stayMinutes`     | 否   | 整數                           | 無                               | 在閘門的 `dimension` 中可停留的時間，以分鐘計。玩家在該維度中時逐秒倒數，並隨玩家保存於登出與重新啟動之間。用盡後玩家會被送出，且在額度恢復之前（見 `stayReset`），再次進入該維度的嘗試會被擋回。需要 `dimension`；沒有 `dimension`，或值為 0 以下，日誌會說明，且該閘門沒有額度                                              |
+| `stayReset`       | 否   | `never`、`day`、`visit`        | `never`                          | 已用時間何時恢復。`never`：不恢復。`day`：每個新的主世界日開始時。`visit`：每次玩家離開該維度後，因此每次造訪都以完整額度開始。其他任何字都會寫入日誌，並改用 `never`                                                                                                                                                         |
+| `stayMessage`     | 否   | 字串                           | `%dim%: %time% left`             | 額度減少時顯示在動作列上。`%dim%` 為閘門的 `name`，`%time%` 為剩餘的分與秒，例如 `0:30`                                                                                                                                                                                                                                       |
+| `stayWarn`        | 否   | 整數列表                       | `[60, 30, 10, 5, 4, 3, 2, 1]`    | 剩餘秒數達到這些值時顯示 `stayMessage`。空列表表示永不顯示。不是數字的項目會被略過                                                                                                                                                                                                                                            |
+| `onExpire`        | 否   | 物件                           | 無                               | 額度用盡時會發生什麼。見下方                                                                                                                                                                                                                                                                                                  |
+| `dropOnLeave`     | 否   | `true` 或物件                  | 無                               | 標記玩家在該維度中取得的物品，並在其離開時丟棄。`true` 採用下方所有預設值。需要 `dimension`；沒有 `dimension` 時日誌會說明，且不標記任何東西                                                                                                                                                                                  |
 
 `unlock` 接受 `hold`（必須持有的物品）、`consume` 搭配 `consumeCount`（`1`）、`craft`（必須已合成過的物品）、`advancement`，以及 `killed`（實體名稱，誰擊殺一隻，閘門就為誰開啟，所以頭目可以掌握通往一個世界的鑰匙）搭配 `killedCount`（`1`，一隻不夠時使用），依範圍設定按每名玩家或整個世界累計。`killedRank`（生物等級名稱）只計入抽到該等級的生物的擊殺。加上 `killedDrops`（物品名稱）後，計入的擊殺會把該物品放在擊殺者腳邊，而不是開啟閘門，並且重新開始計數，所以鑰匙可以再次取得，並交給從未參與戰鬥的人；對同一個物品設定 `hold` 或 `consume` 的條件，即可讓它成為鑰匙。`%item%`、`%mob%` 和 `%dim%` 會自動填入。生物掉落的鑰匙在這裡不需要任何特殊處理：讓生物掉落該物品，再以 `hold` 或 `consume` 設定條件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，會為屬於該計分板隊伍、且在該目標中分數不低於該值的玩家開啟閘門，這與卡片的 `when` 所用的條件相同；兩者也可以單獨使用。條件在玩家穿過時檢查，符合後閘門會像其他解鎖方式一樣依其範圍開啟。範圍為 `team` 時，解鎖歸開啟者的隊伍所有：隊伍中的每個人都能通過，包括之後加入的玩家；不屬於任何隊伍的玩家開啟時，只對自己開放。`teamAndScore` 決定這兩項如何計算：`alone`（預設）時它們單獨就能開啟閘門；`with` 時它們成為附加條件，只有在滿足另一個解鎖鍵之後，且玩家同時屬於該隊伍並達到該分數，閘門才會開啟。`killedTally` 設為 `team` 時，`killedCount` 會合計擊殺者所屬隊伍的全部擊殺，而不是依每名玩家各自計算（`player`，預設）；不屬於任何隊伍的擊殺者仍單獨計數。`teamless` 設為 `refuse` 時，範圍為 `team` 的閘門會拒絕不屬於任何隊伍的玩家，而不是讓其只為自己解鎖（`player`，預設）。
+
+`unlock` 也接受 `worn`，即玩家必須穿著的物品名稱：在護甲欄中，或安裝了 Baubles 時在任何 Baubles 欄位中。不帶 metadata 的名稱表示 metadata 0。帶有 metadata 的名稱（例如 `"mypack:ruby_ring:1"`）需要該 metadata，`:*` 則接受任何 metadata。玩家穿著時，閘門即為其開啟。預設情況下，穿著該物品通過傳送門或傳送通道，也會像其他解鎖一樣，為其在範圍內永久開啟閘門。把 `unlock` 中的 `each` 設為 `true` 可關閉此行為：每次都必須穿著該物品，不會記住任何東西，脫下後閘門會再次關閉。當 `worn` 是閘門唯一的條件時，`blockedMessage` 中的 `%item%` 會顯示該物品的名稱。不存在的物品名稱會寫入日誌，此時穿著它無法開啟閘門。沒有 `worn` 的 `each` 會寫入日誌，且不起任何作用。
+
+```json
+{
+  "dimension": 12,
+  "unlock": { "worn": "minecraft:iron_helmet", "each": true }
+}
+```
+
+`unlock` 也接受 `data`，即一個同步值檢查或其列表，寫法與[同步資料](#同步資料)相同。它不會開啟閘門：它是每次玩家嘗試通過時都會再次檢查的額外條件，因此即使閘門已開啟，或玩家已經解鎖，只要檢查失敗，仍會以 `blockedMessage` 把玩家擋回。
+
+**時間額度。** `onExpire` 接受以下的鍵。
+
+| 鍵         | 必填 | 值      | 預設                       | 作用                                                                                                                                        |
+| ---------- | ---- | ------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit`     | 否   | 布林值  | `true`                     | `true`：把玩家送回其床邊，或主世界的世界出生點。玩家會先下載具，載具箱子中的物品也會一起帶走。`false`：不移動玩家。移動失敗時日誌會發出警告 |
+| `function` | 否   | 函式 ID | 無                         | 在訊息之後，以該玩家身分執行此函式                                                                                                          |
+| `message`  | 否   | 字串    | `Your time in %dim% is up` | 時間額度用盡時顯示在動作列上，玩家在額度用盡時每次嘗試進入也會再次顯示。`%dim%` 為閘門的 `name`。留空則不顯示任何東西                       |
+
+**留下的戰利品。** 使用 `dropOnLeave` 時，玩家在該維度中撿起、合成、熔煉或從容器取出的物品會被標記。玩家離開該維度時，身上每件被標記的物品都會掉在其站立的位置，之後有短暫延遲才能再次撿起，並顯示 `message`。放在界伏盒或其他物品容器中的被標記物品也會計入，而運載被標記物品的船或礦車無法離開。被標記的物品在被丟棄之前帶有一個標籤，因此不會與未標記的物品堆疊。死亡時若開啟了 `keepInventory`，玩家身上被標記的物品會掉在死亡的位置。玩家攜帶的物品指物品欄、護甲與雙手，以及其所騎載具上的箱子；安裝了 Baubles 時，還包括 Baubles 所佔用的欄位。`dropOnLeave` 接受以下的鍵。
+
+| 鍵           | 必填 | 值           | 預設                           | 作用                                                                                                                     |
+| ------------ | ---- | ------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `keep`       | 否   | 物品名稱清單 | 無                             | 永遠不會被標記的物品，寫成 `modid:name`，且不論損耗值都會比對該物品。不是已知物品或沒有 `modid:` 的名稱會寫入日誌並忽略  |
+| `enderChest` | 否   | 布林值       | `true`                         | `true`：離開時，玩家終界箱中被標記的物品也會被丟棄。`false`：它們留在箱中。開啟 `keepInventory` 的死亡永遠不會丟棄終界箱 |
+| `message`    | 否   | 字串         | `Loot from %dim% stays behind` | 至少丟棄一件物品時顯示在動作列上。`%dim%` 為閘門的 `name`，`%count%` 為物品數量。留空則不顯示任何東西                    |
 
 **傳送通道用的閘門。** [傳送通道](#傳送通道)在 `gate` 中指定一個閘門，在該閘門對玩家開啟之前一直對其鎖定，範圍、解鎖規則與訊息和傳送門相同。為同一網路的所有傳送通道指定同一個閘門，就能把整個網路當作一體鎖上。要透過在傳送通道處消耗物品來開啟閘門，請把該傳送通道方塊列入 `portalBlocks`，並給閘門設定 `consume` 物品。下面這個閘門沒有 `dimension`，傳送通道方塊用 `"gate": "mypack:northgate_network"` 指定它：
 
@@ -9598,6 +10134,101 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 **FTB Utilities。** `ftbPolicy` 單獨讀取，RDPL 的宣告與 FTB Utilities 的宣告是各自獨立的紀錄。`independent`（預設）忽略 FTB 的宣告。`yield` 拒絕對 FTB 所持有區塊的宣告，並把該處的保護交給 FTB，因此在 FTB 持有該區塊期間，之前的宣告不再提供保護。`exclusive` 拒絕所有 RDPL 宣告，並指引玩家使用 FTB 的宣告指令，且在 FTB 宣告生效期間關閉 RDPL 的保護。若沒有生效的 FTB 宣告，`yield` 和 `exclusive` 都依 `independent` 運作，並在伺服器啟動時記錄一行日誌。在 `yield` 模式下，進入和離開的訊息會忽略 FTB 所持有的領地。當 `teamSource` 為 `ftb` 時，`perMember` 和 `score` 限制統計 FTB 隊伍的成員，`claim for` 和 `claims` 接受隊伍的 ID 或名稱。
 
+### 區域規則
+
+*隊伍*
+
+`<namespace>/zones/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，每個檔案一個區域，多個檔案會疊加。區域是某一維度中的固定範圍，玩家在其中不得破壞、放置、使用或開啟特定物件，也不得飛行。它是靜態規則，不需要宣告領地。
+
+```json
+{
+  "id": "rift_rules",
+  "where": { "dimension": "ftb:rift", "box": [-256, -64, -207, 192, 320, 256], "claim": false },
+  "except": { "creative": true, "tag": "builder" },
+  "break": { "allow": ["#minecraft:logs"] },
+  "place": { "deny": "all", "on": ["#mypack:altar_base"] },
+  "use": { "deny": ["minecraft:ender_pearl"] },
+  "open": { "allow": ["minecraft:chest"] },
+  "fly": false,
+  "message": "mypack.rift.nope"
+}
+```
+
+第二個區域檔會把工具與傷害擋在一個方盒之外，對所有人生效，只有創造模式的玩家例外。創造模式的玩家仍可以在那裡用鋤頭耕地，也能傷害動物：
+
+```json
+{
+  "id": "farm_guard",
+  "where": { "dimension": "minecraft:overworld", "box": [100, 0, 100, 140, 255, 140] },
+  "except": { "creative": true },
+  "denyToolActions": ["hoe_till", "axe_strip", "shovel_flatten"],
+  "damage": { "entities": ["minecraft:cow", "minecraft:pig", "#creature"], "unlessAttackerInside": true },
+  "open": { "allow": ["minecraft:chest"], "close": true }
+}
+```
+
+| 鍵                | 必需 | 值         | 預設值             | 作用                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------- | ---- | ---------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | 否   | 文字       | 檔案名稱           | 日誌中用來稱呼該區域的名稱                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `where`           | 否   | 物件       | 整個世界           | 區域的位置。玩家位於區域內時，所有給出的範圍都必須符合。見下文                                                                                                                                                                                                                                                                                                                                                                                            |
+| `except`          | 否   | 物件       | 無人               | 區域不管的玩家。見下文                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `break`           | 否   | 物件       | 無規則             | 玩家可以破壞哪些方塊                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `place`           | 否   | 物件       | 無規則             | 玩家可以放置哪些方塊，以及方塊可以放在什麼上面。見下文                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `use`             | 否   | 物件       | 無規則             | 玩家右鍵時可以使用哪些物品                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `open`            | 否   | 物件       | 無規則             | 玩家可以開啟哪些容器                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `denyToolActions` | 否   | 文字或列表 | 無                 | 區域內拒絕的工具動作。1.12.2 上，`hoe_till`（鋤頭把泥土、草方塊或草徑變成耕地）與 `shovel_flatten`（鏟子把草方塊變成小徑）可以運作。`axe_strip` 會以 `denies axe_strip, which 1.12.2 cannot do since logs cannot be stripped; ignoring that entry` 寫入日誌，因為 1.12.2 的原木無法剝皮。名稱不分大小寫。被操作的方塊必須位於區域內，被拒絕的玩家會看到區域的 `message`。值既不是文字也不是列表、項目不是文字，或名稱不屬於這三者，都會分別寫入日誌並忽略 |
+| `damage`          | 否   | 物件       | 無                 | 保護區域內的生物免於受傷。見下方                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `fly`             | 否   | 布林值     | `true`             | `false`：每秒一次，區域內飛行中的玩家會被帶回地面並失去飛行能力；若該玩家處於創造或旁觀模式，則只停止飛行                                                                                                                                                                                                                                                                                                                                                 |
+| `message`         | 否   | 文字       | `rdpl.zone.denied` | 顯示給被拒絕玩家的語言鍵，會出現在快捷欄上方，至多每兩秒一次。預設內容為「你不能在這裡這麼做」                                                                                                                                                                                                                                                                                                                                                            |
+
+| `where` 鍵  | 值           | 作用                                                                                                     |
+| ----------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| `dimension` | 維度名稱     | 只限此維度，寫法與 RDPL 其他地方相同：數字，或名稱（可帶或不帶命名空間）。省略則涵蓋所有維度             |
+| `box`       | 六個方塊座標 | `[x1, y1, z1, x2, y2, z2]`，兩個對角，順序任意，兩端皆包含在內。被操作的方塊必須位於其中。省略則不設限制 |
+| `claim`     | 布林值       | `true`：只限於[已宣告的區塊](#已宣告的區塊)中的區塊內。`false` 或省略：宣告與否無關緊要                  |
+
+| `except` 鍵 | 值     | 作用                                         |
+| ----------- | ------ | -------------------------------------------- |
+| `creative`  | 布林值 | `true`：創造模式的玩家略過                   |
+| `tag`       | 文字   | 帶有此計分板標籤（以 `/tag` 設定）的玩家略過 |
+
+`break`、`place`、`use` 與 `open` 各自接受以下鍵。每個鍵都是可選的，沒有任何鍵的規則會被忽略，並在日誌中說明。
+
+| 鍵      | 值               | 作用                                                                                                                          |
+| ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `allow` | ID 或名稱的清單  | 只允許這些，其餘一律拒絕                                                                                                      |
+| `deny`  | 清單，或 `"all"` | 拒絕這些。`"all"` 拒絕一切                                                                                                    |
+| `on`    | ID 或名稱的清單  | 僅限 `place`：只有當其下方的方塊是這些之一時，才能放置方塊。它疊加在 `allow` 與 `deny` 之上，因此被其他鍵拒絕的放置仍然被拒絕 |
+| `close` | 布林值           | 僅限 `open`：也會關閉已經打開的容器。預設 `false`。見下方                                                                     |
+
+項目是方塊或物品 ID，例如 `minecraft:chest`；可帶損耗值的 ID，例如 `minecraft:log:2`；以 `*` 結尾、涵蓋整個命名空間的 ID，例如 `minecraft:*`；或 `#名稱` 礦物辭典名，因為 1.12.2 沒有標籤。沒有任何模組註冊的礦物辭典名會在日誌中記為錯誤，且不符合任何東西。`break`、`place` 和 `open` 比對方塊，`use` 比對玩家手上的物品，`on` 比對其下方的方塊。
+
+**`open`** 以所點擊容器的方塊來指定容器，因為 1.12.2 沒有容器名稱，區域有 `open` 規則時日誌會說明這一點。此規則只適用於會存放物品的方塊（箱子、熔爐、漏斗）、工作台與鐵砧。其他方塊永遠不會被 `open` 拒絕，無論 `allow` 列出什麼。被拒絕的點擊不會有任何效果，因此容器不會打開。
+
+**`use`** 只拒絕物品本身。以被拒絕的物品右鍵點擊方塊時，仍會作用於該方塊，例如按下按鈕。點擊處的方塊不屬於此規則。
+
+**`damage`** 會在被列出的生物位於區域內時，拒絕對其造成的傷害，無論攻擊者位於何處。被測試的是實體自己的方塊，以 `where` 判定。`entities` 中的項目是實體 ID，例如 `minecraft:pig`，可帶或不帶 `minecraft:` 命名空間；也可以是種類：`#monster`、`#creature`、`#ambient` 或 `#water_creature`。透過創造模式才能造成的傷害，例如虛空或 `/kill`，永遠不會被拒絕。符合 `except` 的攻擊玩家永遠不會被拒絕，因此排除創造玩家的區域，會讓他們的攻擊照常生效。被拒絕的攻擊者若是玩家，會看到區域的 `message`；其他攻擊者會被阻止，但不顯示訊息。`damage` 不是物件、`entities` 不是列表、種類不是那四種之一、項目不是文字，或 `entities` 列表中沒有任何可用項目時，都會寫入日誌，並忽略該 `damage`。
+
+| `damage` 鍵            | 必需 | 值                   | 預設值  | 作用                                                                            |
+| ---------------------- | ---- | -------------------- | ------- | ------------------------------------------------------------------------------- |
+| `entities`             | 是   | 生物 ID 或種類的清單 | 無      | 區域保護的生物                                                                  |
+| `unlessAttackerInside` | 否   | 布林值               | `false` | `true`：攻擊者同樣位於區域內時允許傷害，只有來自區域外的傷害會被拒絕            |
+| `allowNoAttacker`      | 否   | 布林值               | `false` | `true`：沒有攻擊者的傷害，例如摔落、火焰或岩漿，會被允許。`false`：同樣會被拒絕 |
+
+`unlessAttackerInside` 或 `allowNoAttacker` 的值若不是 `true` 或 `false`，會寫入日誌並視為 `false`。
+
+**`close`** 讓 `open` 的判斷不止於被點擊的方塊。啟用時，若 `open` 規則拒絕了玩家在區域外點擊方塊所打開的容器，該容器會在玩家站在區域內時立即關閉。玩家會看到區域的 `message`。未設定時，只有被點擊的方塊會影響結果。`close` 只在 `open` 中讀取；若不是 `true` 或 `false`，會寫入日誌並視為 `false`。它只關閉以點擊方塊打開的容器，不影響以其他方式打開的容器。
+
+沒有 `break`、`place`、`use`、`open`、`damage`、`denyToolActions` 或 `fly: false` 任何一項的區域檔會被忽略，日誌會說明。`where.box` 的數值個數不是六個時，日誌會寫入 `gives a box of N numbers, it needs 6 (x1, y1, z1, x2, y2, z2), ignoring the zone`，且不會載入該區域。
+
+**誰在區域內。** `break`、`place` 與 `open` 看的是被破壞、被放置或被點擊的方塊，因此區域外的玩家無法操作區域內的方塊，區域內的玩家則可以操作區域外的方塊。對方塊使用 `use` 也是如此，而在空中使用 `use` 與 `fly` 看的是玩家所站的方塊。沒有 `where` 的區域涵蓋世界中的所有人。符合 `except` 的玩家永遠不會被拒絕，也不會被帶回地面。
+
+**飛行。** `fly: false` 只會關閉飛行。離開區域的玩家會維持關閉的飛行狀態，直到其他方式再次授予，例如創造模式或指令。
+
+沒有檔案時不會限制任何東西。檔案載入時日誌會印出 `Loaded N zone(s)`，`/rdplserver reload` 會重新載入它們。
+
 ## 計分
 
 *遊戲模式*
@@ -10073,10 +10704,32 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 *卡片*
 
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "login",
+  "title": "Welcome back, {player}",
+  "sound": "minecraft:entity.player.levelup",
+  "runs": "mypack:login_news"
+}
+```
+
+```json
+{
+  "trigger": "command",
+  "title": "{player} found {item}",
+  "lines": ["Worth {value} coins."]
+}
+```
+
+`login` 在每次登入時觸發，`first_join` 只在第一次加入時觸發。指令 `/rdplserver card mypack:found Steve item=Ruby value=50` 會顯示第二張卡片，並以 `key=value` 配對中的值填入 `{item}` 和 `{value}`。
+
 | 觸發器               | 需要                 | 觸發時機                                                                                                                                                                                |
 | -------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `command`            | 無                   | 執行 `/rdplserver card <rule> [players]`。該指令會略過 `when`、`repeat` 和 `cooldown`，但仍會執行 `runs`。任何規則都可以這樣顯示，無論其觸發器為何                                      |
 | `first_join`         | 無                   | 玩家第一次加入世界                                                                                                                                                                      |
+| `login`              | 無                   | 玩家每次登入時都會觸發，不只是第一次。`runs` 與其他任何觸發器一樣執行                                                                                                                   |
 | `dimension_enter`    | `dimension`          | 玩家抵達該維度                                                                                                                                                                          |
 | `biome_enter`        | `biomes`             | 玩家從別處走進其中一個生態域                                                                                                                                                            |
 | `structure_enter`    | `structures`         | 玩家從外面走進其中一個結構                                                                                                                                                              |
@@ -10107,12 +10760,25 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `exposure_level`     | 無，或 `exposure`    | 玩家在某種危險中的等級發生變化，無論升高還是降低。帶有 `exposure` 時，只對該危險生效；帶有 `level` 時，只有達到該等級的變化才會觸發。加入後的第一次檢查絕不會觸發                       |
 | `round_start`        | 無                   | 倒數結束後回合開啟：對每位玩家各觸發一次，或對 `audience` 觸發一次。重設之後和 `/rdplserver round start` 之後都會觸發                                                                   |
 | `environment_change` | 無，或 `environment` | 維度中的某個環境因指令或季節而啟用，或 `default` 恢復時：對其中每位玩家各觸發一次，或對 `audience` 觸發一次。帶有 `environment` 時，只對該環境生效。載入已儲存的世界絕不會觸發          |
+| `worn`               | `when.worn`          | 不是一個時刻，而是一個儀表：玩家穿著 `when.worn` 的物品時，卡片會每隔 `every` 刻再次顯示給該玩家。見下方。沒有 `when.worn` 的規則會被略過，日誌會說明                                   |
 
 危險等級在每次掃描時讀取，因此卡片會在變化後該危險的 `scanInterval` 之內觸發。
 
 生態域、結構、高度、遊玩時間和分數每秒對每位玩家檢查一次，並在從外到內的變化時觸發，絕不會在加入後的第一次檢查時觸發。對象不是 `player` 的 `time_of_day` 或 `day` 規則，會為該維度觸發一次，而不是對其中每位玩家各觸發一次。
 
 玩家仍開著世界介紹時觸發的卡片會等待，並在介紹關閉時顯示，無論其觸發器為何，包括 `command` 在內。如果玩家在那之前離開，它就會被丟棄。
+
+`worn` 規則是一個即時儀表，適合用來顯示耐久條或狀態列。每 `every` 刻，它會檢查每位玩家；對穿著 `when.worn` 物品的玩家，只向該玩家顯示卡片，無論 `audience` 為何。玩家開著世界介紹時不會顯示。`when` 與 `dimension` 的其餘條件仍須成立。`repeat` 與 `cooldown` 對儀表沒有意義，設定時日誌會警告；`sets` 與 `runs` 會在每次刷新時執行。穿著是指在護甲欄中，或安裝了 Baubles 時在 Baubles 欄位中。卡片文字可以使用 `{worn}`（物品名稱）、`{percent}`（剩餘耐久，0 至 100）、`{left}`（剩餘次數）、`{max}`（完整耐久），以及 `{bar}`，一個由十個字元組成的量表：剩餘的部分為 `|`，已用的部分為 `.`。沒有耐久的物品顯示 100%，`{left}` 與 `{max}` 為 0，量表是滿的。`style` 為 `bar` 時，該行會在動作列上取代自身。
+
+```json
+{
+  "trigger": "worn",
+  "when": { "worn": "minecraft:iron_helmet" },
+  "every": 40,
+  "style": "bar",
+  "lines": ["{worn} {bar} {percent}%"]
+}
+```
 
 ### 觸發器設定
 
@@ -10145,6 +10811,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "atMost": 12,
   "objective": "kills",
   "score": 5,
+  "every": 40,
   "requires": ["mypack"]
 }
 ```
@@ -10173,6 +10840,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `environment`        | 文字                         | 無       | 用於 `environment_change`：啟用的環境名稱，例如 `night`，或 `default`。不填時，每個啟用的環境都會觸發該規則                                                                         |
 | `atLeast`, `atMost`  | 整數                         | 無       | 用於 `roll`：能觸發該規則的最小和最大總和。硬幣正面算 1、反面算 0，資料包裡的骰子或牌組則按結果在其檔案中的位置計，從 1 開始                                                        |
 | `objective`, `score` | 文字，整數                   | 無，`1`  | 對 `score` 而言：目標，以及要達到的值                                                                                                                                               |
+| `every`              | 整數，刻                     | `40`     | 用於 `worn`：數值刷新之間的刻數。不是 20 倍數的值會向上進位到下一個倍數，日誌會說明。最小值為 `20`                                                                                  |
 | `portway`            | 文字                         | 無       | 用於 `portway_*` 觸發器：傳送通道的方塊 id，例如 `mypack:northgate`。省略則任意傳送通道都可                                                                                         |
 | `network`            | 文字                         | 無       | 用於 `portway_*` 觸發器：傳送通道所屬的網路。省略則任意網路都可                                                                                                                     |
 | `reason`             | 文字                         | 無       | 用於 `portway_refused`：`gate`、`dimension`、`cost`、`cooldown`、`nowhere`、`network`、`travel` 或 `item`。用於 `portway_forget`：`gone`、`player` 或 `command`。省略則任意原因都可 |
@@ -10185,46 +10853,62 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 `when` 包含在觸發器觸發的當下必須全部成立的條件。
 
 ```json
-{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike" } }
+{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike", "worn": "mypack:miner_helmet", "data": { "name": "quest.stage", "atLeast": 2 } } }
 ```
 
-| 設定                        | 類型       | 檢查內容                                                                                                              |
-| --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | 清單       | 玩家位於這些生態域之一，寫法與觸發器相同                                                                              |
-| `environments`              | 清單       | 玩家所在維度中，這些環境之一處於啟用狀態，包括 `default`                                                              |
-| `season`                    | 清單       | 依季節時鐘，該維度處於這些季節之一，即使環境是手動切換的。季節名稱是季節 `order` 中某一項的第一個環境名稱             |
-| `dimension`                 | 文字       | `season` 讀取季節所用的維度，寫維度的註冊名稱，例如 `rdpl:overworldlike`。不寫時為玩家所在的維度                      |
-| `timeFrom`, `timeTo`        | 整數       | 日夜時鐘在此區間內，區間可以跨越午夜，例如 `13000` 到 `1000`                                                          |
-| `dayAtLeast`                | 整數       | 天數至少為此值                                                                                                        |
-| `advancement`               | 文字       | 玩家擁有此進度                                                                                                        |
-| `portway`, `network`        | 文字       | 玩家的清單或全域傳送通道中，有該方塊 id 或該網路的傳送通道。兩者可只寫其一                                            |
-| `gameMode`                  | 文字       | 玩家處於此遊戲模式：`survival`、`creative`、`adventure` 或 `spectator`                                                |
-| `team`                      | 文字       | 玩家屬於此計分板隊伍                                                                                                  |
-| `dietAtLeast`               | 整數       | 玩家記住的餐食中至少有這麼多種不同的食物，或在 `dietCount` 為 `lifetime` 時為玩家吃過的每種食物（需要飲食多樣性檔案） |
-| `dietCount`                 | 文字       | `memory`（預設）或 `lifetime`：`dietAtLeast` 統計什麼                                                                 |
-| `objective`, `scoreAtLeast` | 文字，整數 | 玩家在該目標上的分數至少為此值                                                                                        |
+| 設定                        | 類型       | 檢查內容                                                                                                                                                |
+| --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | 清單       | 玩家位於這些生態域之一，寫法與觸發器相同                                                                                                                |
+| `environments`              | 清單       | 玩家所在維度中，這些環境之一處於啟用狀態，包括 `default`                                                                                                |
+| `season`                    | 清單       | 依季節時鐘，該維度處於這些季節之一，即使環境是手動切換的。季節名稱是季節 `order` 中某一項的第一個環境名稱                                               |
+| `dimension`                 | 文字       | `season` 讀取季節所用的維度，寫維度的註冊名稱，例如 `rdpl:overworldlike`。不寫時為玩家所在的維度                                                        |
+| `timeFrom`, `timeTo`        | 整數       | 日夜時鐘在此區間內，區間可以跨越午夜，例如 `13000` 到 `1000`                                                                                            |
+| `dayAtLeast`                | 整數       | 天數至少為此值                                                                                                                                          |
+| `advancement`               | 文字       | 玩家擁有此進度                                                                                                                                          |
+| `portway`, `network`        | 文字       | 玩家的清單或全域傳送通道中，有該方塊 id 或該網路的傳送通道。兩者可只寫其一                                                                              |
+| `gameMode`                  | 文字       | 玩家處於此遊戲模式：`survival`、`creative`、`adventure` 或 `spectator`                                                                                  |
+| `team`                      | 文字       | 玩家屬於此計分板隊伍                                                                                                                                    |
+| `dietAtLeast`               | 整數       | 玩家記住的餐食中至少有這麼多種不同的食物，或在 `dietCount` 為 `lifetime` 時為玩家吃過的每種食物（需要飲食多樣性檔案）                                   |
+| `dietCount`                 | 文字       | `memory`（預設）或 `lifetime`：`dietAtLeast` 統計什麼                                                                                                   |
+| `objective`, `scoreAtLeast` | 文字，整數 | 玩家在該目標上的分數至少為此值                                                                                                                          |
+| `worn`                      | 文字       | 玩家在護甲欄中穿著此物品，或安裝了 Baubles 時在 Baubles 欄位中穿著。在資源包其他地方以物品寫法書寫，例如 `minecraft:iron_helmet`。`worn` 觸發器需要此項 |
+| `data`                      | 物件或列表 | 以下每一項同步值檢查都必須成立。見[同步資料](#同步資料)                                                                                                 |
 
 ### 該卡片
 
 *卡片*
 
-| 設定         | 類型   | 預設             | 作用                                                                                                                                                  |
-| ------------ | ------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`      | 文字   | 無               | 第一行，在中央卡片上以較大字級繪製                                                                                                                    |
-| `lines`      | 清單   | 無               | 最多十六行。除了內建規則外，規則需要標題或行。`{player}`、`{dim}`、`{biome}` 和 `{day}` 會被填入；`{text}` 是內建訊息，單獨放在一行時會給出它的每一行 |
-| `style`      | 文字   | `corner`         | `corner` 是 `saysCard` 所顯示的右下角卡片；`center` 是畫面中央的卡片；`chat` 是聊天行；`bar` 是動作列                                                 |
-| `icon`       | 文字   | `saysIcon`       | 繪製在角落卡片上的一個物品。留空則不繪製                                                                                                              |
-| `color`      | 文字   | `saysColor`      | 卡片的背景顏色，十六進位                                                                                                                              |
-| `image`      | 文字   | `saysImage`      | 來自資源包用戶端資源的一張 PNG，拉伸後鋪滿卡片作為其背景                                                                                              |
-| `background` | 布林值 | `saysBackground` | `true`：繪製面板、其邊框和顏色條。`false`：去掉面板、其邊框和顏色條；文字保留其陰影，`image` 仍會繪製                                                 |
-| `font`       | 文字   | `saysFont`       | 繪製卡片文字所用的字型，格式為 `namespace:name`。留空則使用 RDPL 字型                                                                                 |
-| `ticks`      | 整數   | `0`              | 卡片停留多久，包括淡出。`0` 保持標準的 `160`                                                                                                          |
-| `audience`   | 文字   | `player`         | 誰會看到：`player`、`everyone`、`dimension`（玩家所在維度中的所有人）或 `team`（玩家的計分板隊伍）                                                    |
-| `repeat`     | 文字   | `always`         | `always`、`once_per_player`、`once_per_world` 或 `once_per_session`（玩家重新登入後再次出現）                                                         |
-| `cooldown`   | 整數   | `0`              | 同一位玩家再次觸發該規則之前的秒數                                                                                                                    |
-| `runs`       | 文字   | 無               | 規則觸發時以該玩家的身分執行的函式                                                                                                                    |
+`<namespace>/cards/*.json`
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "sound": "minecraft:block.note.chime"
+}
+```
+
+| 設定         | 類型    | 預設             | 作用                                                                                                                                                  |
+| ------------ | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`      | 文字    | 無               | 第一行，在中央卡片上以較大字級繪製                                                                                                                    |
+| `lines`      | 清單    | 無               | 最多十六行。除了內建規則外，規則需要標題或行。`{player}`、`{dim}`、`{biome}` 和 `{day}` 會被填入；`{text}` 是內建訊息，單獨放在一行時會給出它的每一行 |
+| `style`      | 文字    | `corner`         | `corner` 是 `saysCard` 所顯示的右下角卡片；`center` 是畫面中央的卡片；`chat` 是聊天行；`bar` 是動作列                                                 |
+| `icon`       | 文字    | `saysIcon`       | 繪製在角落卡片上的一個物品。留空則不繪製                                                                                                              |
+| `color`      | 文字    | `saysColor`      | 卡片的背景顏色，十六進位                                                                                                                              |
+| `image`      | 文字    | `saysImage`      | 來自資源包用戶端資源的一張 PNG，拉伸後鋪滿卡片作為其背景                                                                                              |
+| `background` | 布林值  | `saysBackground` | `true`：繪製面板、其邊框和顏色條。`false`：去掉面板、其邊框和顏色條；文字保留其陰影，`image` 仍會繪製                                                 |
+| `font`       | 文字    | `saysFont`       | 繪製卡片文字所用的字型，格式為 `namespace:name`。留空則使用 RDPL 字型                                                                                 |
+| `sound`      | 音效 ID | 無               | 卡片顯示給每位玩家時播放的音效事件 ID，例如 `minecraft:entity.player.levelup`。留空則不播放                                                           |
+| `ticks`      | 整數    | `0`              | 卡片停留多久，包括淡出。`0` 保持標準的 `160`                                                                                                          |
+| `audience`   | 文字    | `player`         | 誰會看到：`player`、`everyone`、`dimension`（玩家所在維度中的所有人）或 `team`（玩家的計分板隊伍）                                                    |
+| `repeat`     | 文字    | `always`         | `always`、`once_per_player`、`once_per_world` 或 `once_per_session`（玩家重新登入後再次出現）                                                         |
+| `cooldown`   | 整數    | `0`              | 同一位玩家再次觸發該規則之前的秒數                                                                                                                    |
+| `runs`       | 文字    | 無               | 規則觸發時以該玩家的身分執行的函式                                                                                                                    |
+| `sets`       | 物件    | 無               | 規則觸發時為該玩家設定的同步值，格式為 `name: value`。見[同步資料](#同步資料)                                                                         |
+| `worldSets`  | 物件    | 無               | 為整個世界設定的同步值，格式相同                                                                                                                      |
 
 當 `saysCard` 為 `false` 時，角落卡片會改走聊天。玩家看過什麼會隨玩家保存，所以死亡和在維度之間移動後依然保留；`once_per_world` 則隨世界保存。
+
+`sets` 與 `worldSets` 在規則觸發時套用，即在其條件通過之後、卡片建立之前，因此卡片本身的文字已經顯示新的值。`title` 與 `lines` 可以用 `{data:name|fallback}` 顯示同步值，見[同步資料](#同步資料)。
 
 RDPL 字型 `resourcedatapackloader:rdpl` 是所有文字的預設：卡片、Says 訊息、歡迎與保持提示、世界介紹，以及遊戲自己的選單、聊天、HUD 和工具提示。它的粗體和斜體字形是 `resourcedatapackloader:rdpl_bold` 和 `resourcedatapackloader:rdpl_italic`。附魔台的文字仍保持遊戲原有的。
 
@@ -10250,6 +10934,9 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
 | ------------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `rdpl:gate_unlocked`     | 閘門開啟                               | [閘門](#閘門)中的 `unlockedMessage`                                                                                         |
 | `rdpl:gate_blocked`      | 關閉的閘門把玩家擋回，顯示在動作列上   | [閘門](#閘門)中的 `blockedMessage`                                                                                          |
+| `rdpl:gate_stay`         | 閘門維度中剩餘的時間，顯示在動作列上   | [閘門](#閘門)中的 `stayMessage`                                                                                             |
+| `rdpl:gate_expired`      | 閘門的時間額度用盡，或玩家因此被擋回   | [閘門](#閘門)中的 `onExpire.message`                                                                                        |
+| `rdpl:gate_loot_left`    | 玩家離開閘門維度時，留下被標記的戰利品 | [閘門](#閘門)中的 `dropOnLeave.message`                                                                                     |
 | `rdpl:team_joined`       | 玩家加入一個陣營                       | 該陣營的 `displayName`                                                                                                      |
 | `rdpl:team_lead`         | 陣營的主導者交到某位玩家手上           | [隊伍](#隊伍)中的 `leadSays`                                                                                                |
 | `rdpl:team_picked`       | 玩家被選入一個陣營                     | 該陣營的 `displayName`                                                                                                      |
@@ -10345,17 +11032,21 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
 
 *對話*
 
-| 設定    | 類型   | 預設                    | 作用                                                                                                                                                               |
-| ------- | ------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`  | 文字   | 無，必填                | 玩家讀到的回覆文字。沒有 `text` 的回覆會被捨棄                                                                                                                     |
-| `goto`  | 文字   | 無                      | 接下來前往的節點名稱。`goto` 沒有指向任何節點的回覆會被捨棄                                                                                                        |
-| `card`  | 文字   | 無                      | 選擇該回覆時顯示的 [卡片](#卡片) 中的規則 id。其 `when`、`repeat` 和 `cooldown` 會被略過，`runs` 仍會執行                                                          |
-| `runs`  | 文字   | 無                      | 選擇該回覆時以玩家身分執行的函式。回覆就是這樣執行指令的                                                                                                           |
-| `when`  | 物件   | 無                      | [時機](#時機) 中的條件。不符合條件的回覆會被隱藏                                                                                                                   |
-| `close` | 布林值 | 沒有 `goto` 時為 `true` | `true`：選擇後結束對話。設定了 `goto` 時不起作用。`false`：選擇後對話不會結束                                                                                      |
-| `trade` | 布林值 | `false`                 | `true`：選擇後開啟說話者自己的交易並結束對話，因此 `goto` 會被忽略。不是商人或正在交易的說話者什麼也不會開啟，對話仍然結束。`false`：不開啟交易，`goto` 不會被忽略 |
+| 設定        | 類型   | 預設                    | 作用                                                                                                                                                               |
+| ----------- | ------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `text`      | 文字   | 無，必填                | 玩家讀到的回覆文字。沒有 `text` 的回覆會被捨棄                                                                                                                     |
+| `goto`      | 文字   | 無                      | 接下來前往的節點名稱。`goto` 沒有指向任何節點的回覆會被捨棄                                                                                                        |
+| `card`      | 文字   | 無                      | 選擇該回覆時顯示的 [卡片](#卡片) 中的規則 id。其 `when`、`repeat` 和 `cooldown` 會被略過，`runs` 仍會執行                                                          |
+| `runs`      | 文字   | 無                      | 選擇該回覆時以玩家身分執行的函式。回覆就是這樣執行指令的                                                                                                           |
+| `when`      | 物件   | 無                      | [時機](#時機) 中的條件。不符合條件的回覆會被隱藏                                                                                                                   |
+| `close`     | 布林值 | 沒有 `goto` 時為 `true` | `true`：選擇後結束對話。設定了 `goto` 時不起作用。`false`：選擇後對話不會結束                                                                                      |
+| `trade`     | 布林值 | `false`                 | `true`：選擇後開啟說話者自己的交易並結束對話，因此 `goto` 會被忽略。不是商人或正在交易的說話者什麼也不會開啟，對話仍然結束。`false`：不開啟交易，`goto` 不會被忽略 |
+| `sets`      | 物件   | 無                      | 選擇者為該玩家設定的同步值，格式為 `name: value`。見[同步資料](#同步資料)                                                                                          |
+| `worldSets` | 物件   | 無                      | 為整個世界設定的同步值，格式相同                                                                                                                                   |
 
 選擇一個回覆時，先執行 `runs`，再顯示 `card`，然後前往 `goto` 或結束對話。對話本身不保存任何狀態：它不會被存檔，已關閉的對話，或因玩家登出而中斷的對話，都無法恢復。需要記住某件事的分支，應在其函式中設定一個分數或標籤。
+
+選擇回覆後，會先套用 `sets` 與 `worldSets`，再執行 `runs`。對話的 `title`、節點的 `title` 與 `lines`，以及回覆的 `text`，都可以用 `{data:name|fallback}` 顯示同步值；回覆上的 `when` 也能以 `data` 檢測同步值，見[同步資料](#同步資料)。節點在繪製時顯示當時的值，因此設定某值後前往另一個節點的回覆，會在該節點顯示新值。
 
 安裝了本模組的用戶端會把對話顯示為靠近畫面底部的面板，每個回覆佔一行。點擊某一行，或按它的編號（1 到 8）；按 Esc 或物品欄鍵可關閉對話。原版用戶端會以聊天行收到同樣的文字，每個回覆是可點擊的 `[n]`，會執行 `/rdplserver talk n`。只有在實體存活且離玩家不超過 8 格時，伺服器才接受選擇，並忽略目前節點沒有的編號；玩家離開超過 8 格時，畫面會自行關閉。缺少 `start`、沒有 `text` 的回覆和未知的 `goto` 會寫入日誌，並捨棄該對話或該回覆；`dialog` 沒有任何資源包提供的實體變體也會寫入日誌，並保持沒有對話。
 
@@ -10579,6 +11270,150 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
 ---
 
 # 控制
+
+## 腳本
+
+只有當資源包的 JSON 指定了腳本時才會執行：指定方式是 `scriptFile`（資源包中的 `.js` 檔）或 `script`（直接寫在 JSON 中的 JavaScript）。沒有任何 JSON 指定的 `.js` 檔永遠不會執行。腳本採用約 ES6 等級的 JavaScript，RDPL 以模組內建的 Rhino 引擎以直譯方式執行。
+
+### 腳本事件
+
+`<namespace>/scripts/events/*.json`
+
+檔案名稱由你決定，只會讀取資料夾，多個檔案會疊加。每個檔案是一個項目：要監聽的事件、一個可選的篩選器，以及事件觸發時要執行的腳本。
+
+```json
+{
+  "event": "block_place",
+  "filter": { "block": "#ftb:trophies" },
+  "scriptFile": "scripts/trophy_altar.js"
+}
+```
+
+| 鍵           | 必需             | 值       | 預設值                                      | 作用                                                                                |
+| ------------ | ---------------- | -------- | ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `event`      | 是               | 事件種類 | 無                                          | 要監聽的事件，見下表                                                                |
+| `every`      | 否               | 整數，刻 | `1`；`player_tick` 與 `server_tick` 為 `20` | 只在世界時間為此數值倍數的刻執行。在腳本執行前檢查。小於 1 時會寫入日誌並略過該項目 |
+| `filter`     | 否               | 物件     | 全部                                        | 把事件限定於符合的事件。在腳本執行前檢查，見下方的篩選鍵                            |
+| `script`     | 兩者擇一         | 文字     | 無                                          | 要執行的內嵌 JavaScript                                                             |
+| `scriptFile` | 兩者擇一         | 路徑     | 無                                          | `scripts/` 下同一命名空間中的路徑，以 `.js` 結尾                                    |
+| `class`      | 僅限 `mod_event` | 文字     | 無                                          | `mod_event` 項目所監聽的事件類別完整名稱，見下方                                    |
+
+同時有 `script` 與 `scriptFile`，或兩者都沒有的項目會被跳過，日誌會記錄一行錯誤。
+
+篩選鍵：
+
+| 鍵          | 值                   | 比對                 |
+| ----------- | -------------------- | -------------------- |
+| `dimension` | 維度 ID，或其清單    | 事件發生的維度       |
+| `block`     | 方塊 ID，或 `#` 形式 | 被放置或被破壞的方塊 |
+| `entity`    | 實體 ID              | 事件涉及的實體       |
+| `item`      | 物品 ID，或 `#` 形式 | 玩家手持的物品       |
+
+事件種類：
+
+| 事件               | 觸發時機                                        | 腳本取得的值                                         | `"cancel"` 是否有效    |
+| ------------------ | ----------------------------------------------- | ---------------------------------------------------- | ---------------------- |
+| `block_place`      | 方塊被放置                                      | `rdpl`、`pos`、`state`、`entity`（放置者）           | 是                     |
+| `block_break`      | 玩家破壞方塊                                    | `rdpl`、`pos`、`state`、`player`                     | 是                     |
+| `entity_hurt`      | 任何活體（包括玩家）即將受到傷害                | `rdpl`、`entity`、`attacker`、`damageType`、`amount` | 是                     |
+| `entity_spawn`     | 生物第一次進入世界（不含玩家）                  | `rdpl`、`entity`                                     | 是，且該實體永不出現   |
+| `entity_despawn`   | 生物消失，或實體變體的計時移除結束              | `rdpl`、`entity`                                     | 否                     |
+| `player_login`     | 玩家加入                                        | `rdpl`、`player`                                     | 否                     |
+| `player_tick`      | 每 `every` 刻一次，對每位玩家，於該刻之後       | `rdpl`、`player`、`pos`                              | 否                     |
+| `server_tick`      | 每 `every` 刻一次，對伺服器執行一次，於該刻之後 | `rdpl`（主世界）、`tick`（世界時間）                 | 否                     |
+| `dimension_change` | 玩家已抵達另一個維度                            | `rdpl`、`player`、`from`、`to`（維度編號）           | 否                     |
+| `loot_drop`        | 生物已死亡，掉落物即將出現                      | `rdpl`、`entity`、`attacker`、`damageType`、`drops`  | 否                     |
+| `entity_travel`    | 實體即將前往另一個維度                          | `rdpl`、`entity`、`from`、`to`（維度編號）           | 是，且該實體留在原地   |
+| `mod_event`        | 由 `class` 指定的事件在伺服器上觸發             | `rdpl`、`event`、`player`                            | 是，當該事件可以取消時 |
+
+腳本的最後一個值若為文字 `"cancel"`，便會在上表標示有效的情況下取消該事件。已被區域規則或其他模組取消的事件永遠不會到達腳本。`entity_despawn` 不會因擊殺、區塊卸載或 `/kill` 而觸發。
+
+新種類的篩選鍵讀取範圍較窄。`player_tick` 與 `dimension_change` 讀取 `dimension` 與 `item`。`loot_drop` 與 `entity_travel` 讀取 `dimension`、`entity` 與 `item`。`server_tick` 與 `mod_event` 不讀取任何篩選鍵。事件不讀取的篩選鍵會讓該項目被略過，日誌會顯示 `the <event> event does not read the filter key '<key>', skipping the entry`。`entity` 接受 ID，以及 `#monster`、`#creature`、`#ambient` 與 `#water_creature` 這些種類。在 `loot_drop` 中，`entity` 是死亡的生物，`item` 是擊殺者手持的物品；在 `entity_travel` 中，`entity` 是旅行的實體。除非 `every` 另有設定，`player_tick` 與 `server_tick` 每 20 刻執行一次。`server_tick` 對伺服器執行一次，以主世界的時鐘為準，且沒有玩家。
+
+新種類（`player_tick`、`server_tick`、`dimension_change`、`loot_drop`、`entity_travel`、`mod_event`）的腳本若失敗或超過時間限制，會被關閉直到下次重新載入，日誌會顯示 `Script <name> is turned off until the next reload`。舊種類的腳本則照常執行。
+
+在 `loot_drop` 中，`drops` 是生物掉落物的清單。`drops.size()` 計算數量，`drops.stack(index)` 為某個索引的物品堆疊，`drops.remove(index)` 取出其中一個，`drops.clear()` 全部取出，`drops.add(item, count)` 新增一個堆疊，該堆疊會出現在生物死亡的位置。每次死亡，腳本最多可新增 32 個堆疊。超過時會以 `A loot_drop script can add at most 32 stacks` 停止腳本；未知的物品或小於 1 的數量則以 `Unknown item` 停止，與任何腳本錯誤相同。
+
+`mod_event` 讓腳本以類別名稱監聽其他模組或遊戲本身的事件。將完整類別名稱填入 `class`。項目在以下情況會被忽略，且日誌會說明：缺少 `class`（`a mod_event needs a class`）、類別不存在（`the class <name> was not found`），以及類別不是可監聽的 Forge 事件（`the class <name> is not a Forge event`）。只有該確切的類別才算數：繼承它的事件不會觸發腳本。腳本只在伺服器執行緒上執行，位於事件實體或世界所在的世界中；若事件兩者皆無，則在主世界中執行。由腳本本身引發的同類別事件不會再次執行它。腳本會取得 `rdpl`、`event`（事件物件）與 `player`（事件相關的玩家，若無則為空）。`every` 與其他鍵的作用與任何事件相同。事件可以取消時，`"cancel"` 的結果會取消該事件。
+
+### 登錄表腳本
+
+`<namespace>/scripts/registries/*.json`
+
+檔名由你決定，只讀取該資料夾，多個檔案會疊加。登錄表腳本會在遊戲載入時把物件加入遊戲登錄表，這是資源包本身做不到的。它需要 `content` 類別的 `load` 開啟、`vanillaClients` 關閉，與方塊和物品相同。
+
+```json
+{
+  "registry": "minecraft:items",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Food = java("net.minecraft.item.ItemFood");
+registry.register("mypack:script_food", new Food(4, 0.3, false));
+```
+
+| 鍵           | 必填   | 值         | 預設 | 作用                                                                            |
+| ------------ | ------ | ---------- | ---- | ------------------------------------------------------------------------------- |
+| `registry`   | 是     | 登錄表名稱 | 無   | 要加入的登錄表，名稱與 Forge 相同，例如 `minecraft:items` 或 `minecraft:blocks` |
+| `script`     | 二擇一 | 文字       | 無   | 要執行的行內 JavaScript                                                         |
+| `scriptFile` | 二擇一 | 路徑       | 無   | `scripts/` 之下同一命名空間內的路徑，結尾為 `.js`                               |
+
+腳本會在登錄表開放註冊時執行一次，那時每個模組都已完成自己的註冊。它會取得兩樣東西。`registry` 只有一個方法 `register(name, object)`，會以 `name` 加入 `object`。`java(className)` 依完整類別名稱回傳一個 Java 類別，讓腳本建立物件；類別不存在則以 `The class <name> was not found` 失敗。腳本不會取得 `rdpl`，因為此時還沒有世界。
+
+`register` 在以下情況會拒絕並寫入日誌，腳本則繼續執行：物件不是登錄表所要的種類（`is not a <type>, not registering it`）、名稱不在資源包自己的命名空間中（`is not in the pack namespace <namespace>, not registering it`）、名稱已被佔用（`is already registered in <registry>, skipping it`），以及登錄表本身拒絕它（`could not be registered`）。成功時日誌會寫入 `Script <name> registered <id> in <registry>`。項目本身在 `registry` 缺少（`needs a registry`）、沒有腳本（`needs script or scriptFile`），或沒有模組提供該登錄表（`no mod provides the registry '<name>', ignoring it`）時，會被寫入日誌並忽略。失敗或超過時間限制的腳本會被關閉，直到下次重新載入。以此方式註冊的物件只具備腳本給它的內容：方塊或物品仍需要自己的模型、材質與語言項目。
+
+### 腳本檔放在哪裡
+
+所有腳本都位於資源包的 `scripts/` 資料夾下。事件項目放在 `scripts/events/`。`.js` 檔可以放在 `scripts/` 下的任何位置，並以其資源包路徑命名，因此 `"scriptFile": "scripts/trophy_altar.js"` 會讀取 `<namespace>/scripts/trophy_altar.js`。物品同樣以 `script` 或 `scriptFile` 指定腳本（見[物品](#物品)）。
+
+### rdpl 物件
+
+腳本透過 `rdpl` 與遊戲互動。它的成員如下：
+
+```js
+if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
+```
+
+| 成員                                                 | 作用                                                                                                                                                                    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | 玩家；事件沒有玩家時為空                                                                                                                                                |
+| `level`                                              | 世界                                                                                                                                                                    |
+| `runCommand(command)`                                | 以玩家身分執行指令；沒有玩家時以世界出生點的身分執行，權限等級為 2。成功時回傳 true                                                                                     |
+| `give(item, count)`                                  | 給予玩家指定數量的物品                                                                                                                                                  |
+| `actionbar(text)`                                    | 在玩家的動作列上顯示文字                                                                                                                                                |
+| `cooldown(item, ticks)`                              | 讓該玩家的此物品進入冷卻，持續指定的刻數                                                                                                                                |
+| `card(id, "key=value", ...)`                         | 以給定的參數顯示一張卡片                                                                                                                                                |
+| `schedule(ticks, function)`                          | 在指定刻數後執行函數。同時最多等待 1000 個。重新載入時會清空佇列                                                                                                        |
+| `data()`, `data(player)`, `teamData(name)`           | 可儲存的資料，具有 `get`、`set`、`has` 與 `remove`。可存放文字、數字與真假值，並保存於世界存檔中。`data()` 為世界的，`data(player)` 為玩家的，`teamData(name)` 為隊伍的 |
+| `sync(name, value)`                                  | 為玩家設定同步值；若事件沒有玩家，則設定世界的值。值可以是文字、數字或真假值。設定成功時回傳 true，被規則拒絕時回傳 false，日誌會說明原因。其他型別的值會拋出腳本錯誤   |
+| `syncTo(player, name, value)`                        | 對另一名玩家做相同的事                                                                                                                                                  |
+| `syncAll(name, value)`                               | 對世界做相同的事                                                                                                                                                        |
+| `unsync(name)`                                       | 移除玩家的值；若事件沒有玩家，則移除世界的值。原本有值時回傳 true                                                                                                       |
+| `synced(name)`                                       | 讀取得到的值：先是玩家自己的值，再來是世界的值，最後是預設值；若事件沒有玩家，則為世界的值與預設值。都沒有設定時為空                                                    |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 檢查、新增或移除玩家身上的標籤                                                                                                                                          |
+| `score(objective)`, `setScore(objective, value)`     | 讀取或設定玩家在計分板目標上的分數                                                                                                                                      |
+| `hasAdvancement(id)`                                 | 玩家擁有該進度時為真                                                                                                                                                    |
+| `world.scan(player, match)`                          | 計算玩家物品欄及其中潛影盒內符合的物品數量。`match` 為物品 ID、`#` 形式，或會逐一接收每個堆疊的函數                                                                     |
+| `world.scanAt(x, y, z, match)`                       | 同上，但針對該位置的容器方塊                                                                                                                                            |
+| `world.capability(x, y, z, type)`                    | 該位置方塊對 `"items"`、`"fluids"` 或 `"energy"` 的處理器                                                                                                               |
+| `world.placeStructure(template, x, y, z)`            | 在該位置放置結構範本                                                                                                                                                    |
+| `world.summon(id, x, y, z, nbt)`                     | 在該位置生成實體，可附帶 NBT                                                                                                                                            |
+
+### 腳本能觸及什麼
+
+腳本只看得到 `rdpl` 物件、每個事件交給它的值（見事件種類表），以及這些值所回傳的遊戲型別。腳本中不存在 `java` 與 `Packages`。要求其他任何東西都會被拒絕，且拒絕會記錄一次。
+
+腳本可以使用任何 Java 類別，依完整類別名稱引用，例如 `java.util.UUID` 或 `net.minecraft.item.ItemStack`。
+
+### 限制
+
+- 每次執行在 50 毫秒後停止。日誌中的錯誤會指出該腳本。
+- `try`/`catch` 無法讓執行在超過該限制後繼續。
+- 錯誤會以腳本的資源包路徑記錄，永遠不會使遊戲崩潰。
+- `every` 與篩選器會在腳本執行前檢查，以降低成本。
+- 腳本會被編譯一次並快取，直到 `/rdplserver reload`。
 
 ## 控制層
 
@@ -12522,7 +13357,7 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 
 *指令*
 
-在專用伺服器上，`/rdplserver` 對伺服器自己那份資料夾做同樣的事。「等級」欄是傳送者所需的權限等級：`3` 是管理員，`2` 也允許指令方塊，`0` 是任何玩家，而 `4` 高於管理員，沒有人達得到。只有 `intro`、`team`、`card` 和三種 `goto` 形式對管理員以下開放，其中 `goto` 是資源包可以調整的那一個。
+在專用伺服器上，`/rdplserver` 對伺服器自己那份資料夾做同樣的事。「等級」欄是傳送者所需的權限等級：`3` 是管理員，`2` 也允許指令方塊，`0` 是任何玩家，而 `4` 高於管理員，沒有人達得到。只有 `intro`、`team`、`card`、`data` 和三種 `goto` 形式對管理員以下開放，其中 `goto` 是資源包可以調整的那一個。
 
 #### 資源包與檔案
 
@@ -12569,6 +13404,21 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 | `/rdplserver gate grant <player> <gate>`  | 3    | 為玩家開啟一個閘門       |
 | `/rdplserver gate revoke <player> <gate>` | 3    | 再把它關上               |
 
+#### 同步資料指令
+
+*伺服器指令*
+
+`<target>` 為 `world`，或一名玩家：可以是名稱，也可以是挑出一名玩家的選擇器。`<name>` 是該值的名稱。每個指令都會在聊天中回覆，若設定被規則拒絕，聊天與日誌都會說明。
+
+| 指令                                                  | 等級 | 作用                                                                                                                                                        |
+| ----------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver data set <target> <name> <value>`        | 2    | 設定一個已宣告的值，型別與宣告時相同。文字可以含有空白                                                                                                      |
+| `/rdplserver data set <target> <name> <type> <value>` | 2    | 設定一個指定型別的值，型別為 `text`、`number` 或 `bool`。沒有檔案的名稱需要指定型別，有檔案的名稱則須使用它自己的型別。布林值為 `true`、`false`、`1` 或 `0` |
+| `/rdplserver data add <target> <name> <amount>`       | 2    | 對數字值加上一個數字，從其預設值或 0 開始。不是數字的值會被拒絕                                                                                             |
+| `/rdplserver data remove <target> <name>`             | 2    | 移除該值，因此會重新顯示預設值，或什麼都不顯示                                                                                                              |
+| `/rdplserver data get <target> <name>`                | 2    | 說明讀取會得到什麼：對玩家是其自己的值，再來是世界的值，最後是預設值；對世界則是其值，再來是預設值                                                          |
+| `/rdplserver data list [target]`                      | 2    | 列出目標已設定的值，省略時列出世界的。預設值不列出                                                                                                          |
+
 #### 傳送通道指令
 
 *伺服器指令*
@@ -12606,6 +13456,7 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 | `/rdplserver round start`                                                                | 0    | 與 `/rdpl round start` 相同，該指令會轉交到這裡                                                                                                                                                                                                    |
 | `/rdplserver round reset`、`round vote yes`、`round vote no`                             | 0    | 與上文的 `/rdpl round` 各形式相同，那些指令會轉交到這裡                                                                                                                                                                                            |
 | `/rdplserver card <rule> [players]`                                                      | 2    | 依 id 或檔名，向指定的玩家或你自己顯示一條[卡片規則](#卡片)。`when`、`repeat` 和 `cooldown` 會被略過                                                                                                                                               |
+| `/rdplserver card <rule> [players] key=value...`                                         | 2    | 與上方的指令相同，每個 `key=value` 都會取代卡片標題和行中的 `{key}`。緊跟在沒有 `=` 的配對之後的詞，屬於該配對的值                                                                                                                                 |
 | `/rdplserver talk <number>`                                                              | 0    | 在已開啟的對話中依編號選擇一個回覆。原版用戶端中可點擊的回覆會執行它。[對話](#對話)                                                                                                                                                                |
 | `/rdplserver talk open <players> <dialog> <npc>`                                         | 2    | 為指定的玩家開啟對話，並以指定的實體作為說話者，對話可依 ID 或檔名指定。說話者必須與玩家在同一世界，且相距不超過 8 格。[對話](#對話)                                                                                                               |
 | `/rdplserver raid <突襲> [玩家 或 x y z]`                                                | 3    | 在指定玩家處、指定位置，或兩者都不填時在你自己處開始指定的[突襲](#突襲)，無需村莊。若 `reach` 範圍內已有另一場突襲正在進行則會被拒絕                                                                                                               |
@@ -12733,6 +13584,95 @@ Tab 自動補全遵循相同的規則，因此在 `goto` 之後，發送者只�
 | `gameLevels` | `game` 的一個部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak`、`last`、`pass`，或 `board` 加其動作，例如 `board move` |
 
 等級刻度與 `goto` 相同，`4` 會對所有人關閉某個部分。Tab 自動補全只提供發送者可以使用的部分。`gameLevels` 與 `goto` 的設定一起位於 `commands` 群組中。
+
+### 資料包指令
+
+*指令*
+
+`<namespace>/commands/*.json`
+
+檔名由你決定，多個檔案會疊加。每個檔案新增一個斜線指令，任何符合 `permission` 的人都能輸入，指令可帶有型別化的參數，使用時執行一個函式。函式以輸入指令的玩家身分執行，其中的指令使用權限等級 2 且沒有聊天輸出；若指令來自主控台或指令方塊，則以伺服器身分執行。指令在伺服器啟動時加入，因此新增或變更的檔案需要重新啟動。
+
+```json
+{
+  "name": "giveruby",
+  "permission": 2,
+  "args": [
+    { "name": "who", "type": "player", "optional": true },
+    { "name": "count", "type": "int", "optional": true, "default": "1" },
+    { "name": "note", "type": "text", "optional": true }
+  ],
+  "runs": "mypack:giveruby"
+}
+```
+
+以及函式 `mypack/functions/giveruby.mcfunction`：
+
+```
+give $(who) mypack:ruby $(count)
+say Gave $(count) ruby to $(who): $(note)
+```
+
+| 鍵           | 必填   | 值              | 預設 | 作用                                                                                                                   |
+| ------------ | ------ | --------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
+| `name`       | 否     | 文字            | 檔名 | 斜線之後輸入的字：小寫英文字母、數字與底線。其他字元會寫入日誌並忽略該檔案。與另一個指令已使用的名稱重複時也一樣       |
+| `runs`       | 三擇一 | 函式 id         | 無   | 要執行的函式。三者都沒有的檔案會被忽略，日誌會註明。沒有任何資料包提供的函式，每次使用指令時都會寫入日誌               |
+| `permission` | 否     | 整數 `0` 至 `4` | `2`  | 所需的權限等級。`0` 讓每位玩家都能使用，`2` 也允許指令方塊，`3` 為管理員。超出 `0` 至 `4` 的數字會寫入日誌，並改用 `2` |
+| `args`       | 否     | 物件列表        | 無   | 參數，依輸入的順序排列。見下方                                                                                         |
+| `requires`   | 否     | 模組 id 列表    | 無   | 除非每一個都已載入，否則略過該檔案。`config:` 與 `file:` 項目的作用與其他地方相同                                      |
+| `script`     | 三擇一 | 文字            | 無   | 以行內 JavaScript 取代函式來執行。                                                                                     |
+| `scriptFile` | 三擇一 | 路徑            | 無   | `scripts/` 之下同一命名空間內的路徑，結尾為 `.js`。                                                                    |
+
+指令檔必須恰好包含 `runs`、`script` 與 `scriptFile` 其中一個。三者都沒有的檔案會被忽略，同時包含兩個以上的檔案也會被忽略，日誌都會註明。腳本指令會把每個參數當作同名的變數：`int` 為整數，`number` 為小數，其餘為文字；參數被省略或不是數字時則為空值。參數不能命名為 `rdpl` 或 `sender`，因為腳本也會取得這兩個。`sender.reply(text)` 回覆使用指令的人，`sender.getName()` 為其名稱，`sender.isPlayer()` 判斷是否為玩家，`sender.player()` 為該玩家，若不是玩家則為空。腳本失敗、無法編譯或超過時間限制時，指令會回覆 `The command /<name> failed; the server log names the script`，且該腳本不會被關閉。
+
+```json
+{
+  "name": "greet",
+  "permission": 0,
+  "args": [{ "name": "who", "type": "player", "optional": true }],
+  "scriptFile": "scripts/greet.js"
+}
+```
+
+```js
+sender.reply("Hello " + who);
+```
+
+每個參數：
+
+| 鍵         | 必填 | 值                                          | 預設     | 作用                                                                                                                                                                                                                                      |
+| ---------- | ---- | ------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | 是   | 文字                                        |          | 函式使用的名稱，即 `$(name)`，小寫英文字母、數字與底線。沒有可用名稱的參數，或與另一個參數同名的參數，會寫入日誌並排除                                                                                                                    |
+| `type`     | 否   | `player`、`int`、`number`、`string`、`text` | `string` | `player` 是目前在線的玩家名稱，可用 Tab 自動補全。`int` 為整數，`number` 為任意數字。`string` 為單一個字。`text` 為該行剩餘的部分，可含空白，且只能是最後一個參數，否則日誌會說明，並改為 `string`。未知的型別會寫入日誌，並改用 `string` |
+| `optional` | 否   | 布林值                                      | `false`  | `true`：玩家可以省略此參數。排在選擇性參數之後的必填參數會寫入日誌，並同樣改為選擇性                                                                                                                                                      |
+| `default`  | 否   | 文字                                        | 空       | 選擇性參數被省略時，函式取得的值。被省略的 `player` 參數是輸入指令的玩家，若來自主控台則為錯誤用法訊息，且會忽略 `default`                                                                                                                |
+
+參數給得太少，或最後一個參數不是 `text` 而給得太多時，會顯示用法行，例如 `/giveruby [who] [count] [note]`，必填參數用尖括號、選擇性參數用方括號。以 `@` 開頭，或含有 `{ } " \` 或換行的 `string` 或 `text` 值會被拒絕並顯示用法行，因此玩家無法把選擇器或額外的指令文字塞進函式。`number` 以純數字的形式傳入。函式執行前，其中每個 `$(name)` 會逐行被替換為參數的值，以 `$` 開頭的行會去掉該 `$`。指令沒有對應參數的 `$(name)` 保持原樣，且指令載入時日誌會列出它。代入值後無法解析的函式會寫入日誌，且不執行任何東西。
+
+### 指令防護
+
+*指令*
+
+`<namespace>/command_guards/*.json`
+
+檔名由你決定，只會讀取該資料夾，多個檔案會疊加。防護會在某個條件成立時，阻止玩家使用指令，無論指令來自遊戲或其他模組。它在啟動時讀取，並由 `/rdplserver reload` 再次讀取。
+
+```json
+{
+  "guard": "home",
+  "unless": { "advancement": "mypack:first_camp" },
+  "message": "Build a camp before you use /home"
+}
+```
+
+| 鍵        | 必填 | 值           | 預設         | 作用                                                                                                                                               |
+| --------- | ---- | ------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard`   | 是   | 指令名稱     |              | 要阻止的指令，不含斜線，例如 `home` 或 `tp`。指令的別名也算在內。沒有名稱的檔案會被忽略。`rdpl` 與 `rdplserver` 無法設防，該檔案會被忽略並寫入日誌 |
+| `when`    | 否   | 物件         | 永遠         | 只有在這些條件成立時，防護才阻止指令。與卡片的 [時機](#時機) 相同的鍵                                                                              |
+| `unless`  | 否   | 物件         | 無           | 這些條件成立時，防護放行指令，否則阻止。與 `when` 相同的鍵                                                                                         |
+| `message` | 否   | 語言鍵或文字 | 原版權限錯誤 | 以紅色顯示給被阻止的玩家。不含空格且含有點號的文字會被視為語言鍵，其他一律照原樣顯示                                                               |
+
+符合以下情況時指令會被阻止：`when` 成立或未給定，且 `unless` 不成立或未給定。兩個鍵都沒有的檔案會對所有人阻止該指令，且日誌會發出警告。空的 `when` 或 `unless` 會寫入日誌並忽略。防護只作用於玩家：主控台與指令方塊永遠不會被阻止，日誌會記錄每次阻止，並註明檔案、指令與玩家。第一個阻止指令的防護是唯一會發出訊息的防護。對 `unless` 而言，請填寫玩家使用該指令必須符合的條件；對 `when` 而言，則是指令被關閉時的條件。
 
 ## 須知
 

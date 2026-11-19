@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.tooltips;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -13,17 +14,24 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentTooltips {
+    public static final int NO_POSITION = Integer.MIN_VALUE;
+    private static final String SHIFT = "shift";
+    private static final String POSITION = "position";
+    private static final String REPLACE = "replace";
+    private static final String DATA = "data";
     private static final List<Entry> ITEMS = new ArrayList<>();
-    private static final Map<Enchantment, List<String>> ENCHANTMENTS = new HashMap<>();
+    private static final Map<Enchantment, List<Rule>> ENCHANTMENTS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentTooltips() {}
@@ -42,6 +50,32 @@ public final class ContentTooltips {
 
     private static boolean wanted() { return !ITEMS.isEmpty() || !ENCHANTMENTS.isEmpty(); }
 
+    @Nullable private static Rule rule(ResourceLocation key, JsonObject entry, String kind, List<String> lines) {
+        boolean shift = Json.getBoolean(entry, SHIFT, false);
+        boolean replace = Json.getBoolean(entry, REPLACE, false);
+        int position = Json.getInt(entry, POSITION, NO_POSITION);
+        if (position < 0 && position != NO_POSITION) {
+            ContentLog.LOGGER.error("An {} entry in {} has position {}, which is not a whole number of 0 or more, skipping it", kind, key, position);
+            return null;
+        }
+        if (replace && position == NO_POSITION) {
+            ContentLog.LOGGER.error("An {} entry in {} sets replace without position, so its lines are added at the end", kind, key);
+            replace = false;
+        }
+        List<DataCheck> data = Collections.emptyList();
+        JsonObject when = Json.object(entry, "when");
+        for (Map.Entry<String, JsonElement> each : when.entrySet()) {
+            if (!DATA.equals(each.getKey())) {
+                ContentLog.LOGGER.error("A tooltip entry in {} has a when key '{}', which tooltips cannot test, skipping the entry", key, each.getKey());
+                return null;
+            }
+            data = DataCheck.parse(each.getValue(), "A tooltip entry", "when", key);
+        }
+        List<Line> parsed = new ArrayList<>();
+        for (String raw : lines) { parsed.add(new Line(key, raw)); }
+        return new Rule(parsed, shift, position, replace, data);
+    }
+
     private static void read(ResourceLocation key, JsonObject json) {
         for (JsonElement element : Json.getJsonArray(json, "items", new JsonArray())) {
             if (!element.isJsonObject()) {
@@ -55,7 +89,8 @@ public final class ContentTooltips {
                 continue;
             }
             ItemStack stack = ContentStacks.parse(key, Json.getString(entry, "item", ""), 1);
-            if (!stack.isEmpty()) { ITEMS.add(new Entry(stack, lines)); }
+            Rule rule = stack.isEmpty() ? null : rule(key, entry, "items", lines);
+            if (rule != null) { ITEMS.add(new Entry(stack, rule)); }
         }
         for (JsonElement element : Json.getJsonArray(json, "enchantments", new JsonArray())) {
             if (!element.isJsonObject()) {
@@ -70,27 +105,69 @@ public final class ContentTooltips {
                 ContentLog.LOGGER.error("An enchantments entry in {} needs a known enchantment and at least one line, skipping '{}'", key, name);
                 continue;
             }
-            ENCHANTMENTS.computeIfAbsent(enchantment, ignored -> new ArrayList<>()).addAll(lines);
+            Rule rule = rule(key, entry, "enchantments", lines);
+            if (rule != null) { ENCHANTMENTS.computeIfAbsent(enchantment, ignored -> new ArrayList<>()).add(rule); }
         }
     }
 
-    public static List<String> forItem(ItemStack stack) {
-        List<String> lines = new ArrayList<>();
+    public static List<Rule> forItem(ItemStack stack) {
+        List<Rule> rules = new ArrayList<>();
         for (Entry entry : ITEMS) {
-            if (ContentStacks.matches(stack, entry.stack.getItem(), entry.stack.getMetadata())) { lines.addAll(entry.lines); }
+            if (ContentStacks.matches(stack, entry.stack.getItem(), entry.stack.getMetadata())) { rules.add(entry.rule); }
         }
-        return lines;
+        return rules;
     }
 
-    public static List<String> forEnchantment(Enchantment enchantment) { return ENCHANTMENTS.getOrDefault(enchantment, new ArrayList<>()); }
+    public static List<Rule> forEnchantment(Enchantment enchantment) { return ENCHANTMENTS.getOrDefault(enchantment, new ArrayList<>()); }
+
+    public static final class Line {
+        private final Object file;
+        private final String raw;
+        private String seen;
+        private TooltipText seenText;
+
+        private Line(Object file, String raw) {
+            this.file = file;
+            this.raw = raw;
+            this.seen = raw;
+            this.seenText = TooltipText.parse(file, raw);
+        }
+
+        public String raw() { return raw; }
+
+        public String render(ItemStack stack, String translated) {
+            if (translated.indexOf('{') < 0) { return translated; }
+            if (!translated.equals(seen)) {
+                seen = translated;
+                seenText = TooltipText.parse(file, translated);
+            }
+            return seenText.plain() ? translated : seenText.fill(stack);
+        }
+    }
+
+    public static final class Rule {
+        public final List<Line> lines;
+        public final boolean shift;
+        public final int position;
+        public final boolean replace;
+        public final List<DataCheck> data;
+
+        private Rule(List<Line> lines, boolean shift, int position, boolean replace, List<DataCheck> data) {
+            this.data = data;
+            this.lines = lines;
+            this.shift = shift;
+            this.position = position;
+            this.replace = replace;
+        }
+    }
 
     private static final class Entry {
         private final ItemStack stack;
-        private final List<String> lines;
+        private final Rule rule;
 
-        private Entry(ItemStack stack, List<String> lines) {
+        private Entry(ItemStack stack, Rule rule) {
             this.stack = stack;
-            this.lines = lines;
+            this.rule = rule;
         }
     }
 }
