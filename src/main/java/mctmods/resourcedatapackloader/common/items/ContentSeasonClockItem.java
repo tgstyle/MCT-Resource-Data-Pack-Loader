@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.common.items;
 
-import mctmods.resourcedatapackloader.common.pack.definitions.items.SeasonClockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 
 import javax.annotation.Nonnull;
 import net.minecraft.world.InteractionHand;
@@ -11,16 +11,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public final class ContentSeasonClockItem extends Item {
-    private final SeasonClockDef clock;
+    private final ItemDef def;
 
-    public ContentSeasonClockItem(SeasonClockDef clock, Properties properties) {
+    public ContentSeasonClockItem(ItemDef def, Properties properties) {
         super(properties);
-        this.clock = clock;
+        this.def = def;
     }
 
     @Override @Nonnull public InteractionResultHolder<ItemStack> use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
-        if (!clock.message()) { return super.use(level, player, hand); }
-        if (!level.isClientSide()) { ContentSeasonClock.tell(clock, player); }
+        boolean message = def.seasonClock() != null && def.seasonClock().message();
+        if (!message && !def.acts()) { return super.use(level, player, hand); }
+        if (message && !level.isClientSide()) { ContentSeasonClock.tell(def.seasonClock(), player); }
+        if (def.acts()) { ContentItemRuns.finish(level, player, hand, this, def); }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 }

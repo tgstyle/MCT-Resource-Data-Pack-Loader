@@ -89,6 +89,7 @@ public final class DialogTalk {
         }
         DialogDef.Reply reply = session.shown.get(number - 1);
         ContentLog.LOGGER.info("Dialog {} {} picked {} -> {}", session.def.key(), who, number, reply.target().isEmpty() ? (reply.close() ? "closed" : session.node) : reply.target());
+        if (!reply.sets().isEmpty()) { reply.sets().apply(player, "Dialog " + session.def.key()); }
         if (!reply.runs().isEmpty()) { Functions.runAs(player, reply.runs(), "Dialog " + session.def.key()); }
         if (!reply.card().isEmpty()) { card(player, session, reply.card()); }
         if (!reply.target().isEmpty()) { session.node = reply.target(); }

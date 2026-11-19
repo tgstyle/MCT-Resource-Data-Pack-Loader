@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
 import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.common.util.entity.Goals;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -378,6 +379,8 @@ public final class ContentEntities {
             ContentAnvils.gather(mob);
         }
         if (def.despawnTicks() > 0 && timeIsUp(mob, def)) {
+            mob.dropLeash(true, def.despawnDropsLead());
+            ScriptEventHandlers.despawn(mob);
             mob.discard();
             return;
         }

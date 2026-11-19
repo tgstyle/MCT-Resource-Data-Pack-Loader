@@ -16,6 +16,7 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 
 public final class ContentParserFluids {
     public static final int MAX_SPREAD = 15;
@@ -26,6 +27,10 @@ public final class ContentParserFluids {
     private static boolean clamped;
 
     private ContentParserFluids() {}
+
+    static boolean blockOff(JsonObject json) { return GsonHelper.isBooleanValue(json, "block") && !json.get("block").getAsBoolean(); }
+
+    static JsonObject blockSection(JsonObject json) { return GsonHelper.isBooleanValue(json, "block") ? new JsonObject() : Json.getJsonObject(json, "block", new JsonObject()); }
 
     public static FluidBehaviorDef behavior(ResourceLocation key, JsonObject block) {
         FluidBehaviorDef.Creatures creatures = creatures(key, Json.object(block, "creatures"));

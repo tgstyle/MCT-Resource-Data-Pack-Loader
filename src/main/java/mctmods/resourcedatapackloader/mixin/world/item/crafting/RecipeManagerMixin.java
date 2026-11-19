@@ -3,18 +3,23 @@ package mctmods.resourcedatapackloader.mixin.world.item.crafting;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.recipes.RecipeRemainders;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CookingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -22,6 +27,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.spongepowered.asm.mixin.Final;
@@ -31,6 +37,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(RecipeManager.class) public abstract class RecipeManagerMixin implements IRecipeFilter {
     @Unique private static final RegistryAccess rdpl$REGISTRIES = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
@@ -59,12 +67,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         RecipeLoading.attach(this);
     }
 
+    @Inject(method = "getRemainingItemsFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/Container;Lnet/minecraft/world/level/Level;)Lnet/minecraft/core/NonNullList;", at = @At("RETURN"), locals = LocalCapture.CAPTURE_FAILHARD) private void rdpl$leaveReturns(RecipeType<?> recipeType, Container inventory, Level level, CallbackInfoReturnable<NonNullList<ItemStack>> cir, Optional<? extends Recipe<?>> optional) {
+        if (level.isClientSide || recipeType != RecipeType.CRAFTING || !(inventory instanceof CraftingContainer crafting) || RecipeRemainders.noneMarked()) { return; }
+        optional.ifPresent(recipe -> RecipeRemainders.leaveReturns(recipe.getId(), crafting, cir.getReturnValue()));
+    }
+
     @Unique private void rdpl$rebuild(boolean late) {
+        RecipeRemainders.begin();
         Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> kept = new LinkedHashMap<>();
         Map<ResourceLocation, Recipe<?>> named = new LinkedHashMap<>();
         for (Recipe<?> recipe : byName.values()) {
             ItemStack result = rdpl$result(recipe);
             if (late ? RecipeLoading.late(recipe.getId(), recipe, result) : RecipeLoading.doomed(recipe.getId(), recipe, result)) { continue; }
+            RecipeLoading.remaindered(recipe.getId(), recipe, result);
             rdpl$keep(kept, named, recipe);
         }
         if (late) {

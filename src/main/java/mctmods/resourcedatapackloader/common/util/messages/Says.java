@@ -71,6 +71,12 @@ public final class Says {
         else { CardFire.builtin(rule, player, CardLook.says(said.getString(), color, CardLook.BAR)); }
     }
 
+    public static void bar(ServerPlayer player, String rule, ChatFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        if (CardRules.unset(rule)) { player.displayClientMessage(marked(said, color), true); }
+        else { CardFire.builtin(rule, player, CardLook.says(said, color, CardLook.BAR)); }
+    }
+
     public static void title(ServerPlayer player, int fadeIn, int stay, int fadeOut, String title, String subtitle, ChatFormatting style) {
         player.connection.send(new ClientboundSetTitlesAnimationPacket(fadeIn, stay, fadeOut));
         if (!subtitle.isEmpty()) { player.connection.send(new ClientboundSetSubtitleTextPacket(marked(subtitle, style))); }

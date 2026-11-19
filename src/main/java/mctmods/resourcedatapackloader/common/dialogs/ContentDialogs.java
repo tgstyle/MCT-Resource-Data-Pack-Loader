@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.DialogDef
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.CardParser;
+import mctmods.resourcedatapackloader.common.syncdata.DataSets;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -122,8 +123,8 @@ public final class ContentDialogs {
             ContentLog.LOGGER.error("Dialog {} node {} has a reply '{}' that goes to '{}', which is not one of its nodes, so it is skipped", key, node, text, target);
             return null;
         }
-        CardWhen when = json.has("when") ? CardParser.when(Json.getJsonObject(json, "when")) : null;
-        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade);
+        CardWhen when = json.has("when") ? CardParser.when(Json.getJsonObject(json, "when"), ResourceLocation.tryParse(key), "Dialog") : null;
+        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade, DataSets.parse(json, "Dialog", key, "node " + node));
     }
 
     @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }

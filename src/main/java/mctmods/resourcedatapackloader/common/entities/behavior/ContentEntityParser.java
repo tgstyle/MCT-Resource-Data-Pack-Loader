@@ -85,6 +85,7 @@ public final class ContentEntityParser {
                 effects(key, json),
                 Json.getBoolean(json, "despawns", true),
                 Math.max(0, Json.getInt(json, "despawnAfter", 0)) * SharedConstants.TICKS_PER_SECOND,
+                dropsLead(key, json),
                 new EntityVariantDef.Flags(Json.getBoolean(json, "noAI", false), Json.getBoolean(json, "leftHanded", false), Json.getBoolean(json, "fireproof", false),
                         Json.getBoolean(json, "invulnerable", false), Json.getBoolean(json, "glowing", false), Json.getBoolean(json, "invisible", false),
                         Json.getBoolean(json, "persistent", false), Json.getBoolean(json, "silent", false), Json.getBoolean(json, "picksUpLoot", false),
@@ -176,6 +177,13 @@ public final class ContentEntityParser {
         }
         phases.sort((a, b) -> Float.compare(b.below(), a.below()));
         return phases;
+    }
+
+    private static boolean dropsLead(ResourceLocation key, JsonObject json) {
+        String leash = Json.getString(json, "leash", "drop");
+        if ("delete".equals(leash)) { return false; }
+        if (!"drop".equals(leash)) { ContentLog.LOGGER.error("The leash '{}' in {} is not drop or delete, using drop", leash, key); }
+        return true;
     }
 
     @Nullable private static RocketDef rocket(ResourceLocation key, JsonObject json) {

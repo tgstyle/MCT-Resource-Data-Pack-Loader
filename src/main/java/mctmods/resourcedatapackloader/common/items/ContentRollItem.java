@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.items;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.board.ContentTurns;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
-import mctmods.resourcedatapackloader.common.util.ContentEffects;
 
 import javax.annotation.Nonnull;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,7 +26,7 @@ public final class ContentRollItem extends Item {
             if (def.passesTurn()) { ContentTurns.byItem(server); }
             else { ContentDice.byItem(server, def.rolls(), def.rollStore()); }
         }
-        ContentEffects.cooldown(player, this, def.cooldown());
+        ContentItemRuns.finish(level, player, hand, this, def);
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 }

@@ -23,6 +23,7 @@ import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientSyncData;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
@@ -106,6 +107,7 @@ public class ClientSetup {
             ContentSkyGates.clear();
             ClientItemLocks.clear();
             ClientDiet.clear();
+            ClientSyncData.clear();
             ClientWeights.clear();
             SleepScreen.clear();
         });

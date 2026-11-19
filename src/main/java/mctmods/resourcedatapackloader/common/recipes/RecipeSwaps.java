@@ -88,7 +88,7 @@ public final class RecipeSwaps {
             if (id.getPath().startsWith("_") || !each.getValue().isJsonObject()) { continue; }
             JsonObject current = each.getValue().getAsJsonObject();
             for (Swap swap : swaps) {
-                if (!swap.entry().inScope(id)) { continue; }
+                if (!swap.entry().inScope(id) && !swap.entry().foreign(type(current))) { continue; }
                 JsonObject next = swap(swap, id, current, parse);
                 if (next != null) { current = next; }
             }
@@ -105,16 +105,21 @@ public final class RecipeSwaps {
                 ContentLog.LOGGER.error("A recipe swap to {} names item tags, but the item tags were not built for this reload, skipping it", entry.to());
                 continue;
             }
+            Set<ResourceLocation> targets = entry.tagged() ? active.get(entry.to()) : Set.of(entry.to());
+            if (targets == null) {
+                ContentLog.LOGGER.error("The to tag {} of a swap in {} is no item tag, skipping it", entry.to(), entry.key());
+                continue;
+            }
             for (ResourceLocation tag : entry.tags()) {
                 Set<ResourceLocation> held = active.get(tag);
                 if (held == null) { ContentLog.LOGGER.debug("Recipe swap tag {} is no item tag", tag); }
                 else { matched.addAll(held); }
             }
-            if (matched.contains(entry.to())) {
+            if (!entry.tagged() && matched.contains(entry.to())) {
                 ContentLog.LOGGER.error("The to item {} of a recipe swap is matched by its own from tags, skipping it", entry.to());
                 continue;
             }
-            if (!matched.isEmpty()) { swaps.add(new Swap(entry, new RecipeSwapJson(matched, entry.to(), entry.output(), active))); }
+            if (!matched.isEmpty()) { swaps.add(new Swap(entry, new RecipeSwapJson(matched, entry.to(), entry.output(), entry.tagged(), active), targets)); }
         }
         return swaps;
     }
@@ -122,26 +127,29 @@ public final class RecipeSwaps {
     @Nullable private static JsonObject swap(Swap swap, ResourceLocation id, JsonObject current, BiFunction<ResourceLocation, JsonElement, Recipe<?>> parse) {
         SwapEntry entry = swap.entry();
         RecipeSwapJson walker = swap.walker();
-        JsonObject copy = walker.walk(current);
+        String type = type(current);
+        JsonObject copy = entry.foreign(type) ? walker.walkForeign(current, entry.paths()) : walker.walk(current);
+        for (String path : walker.missing()) { ContentLog.LOGGER.debug("Recipe {} has no {} for the swap in {}, leaving that path", id, path, entry.key()); }
+        if (walker.taggedResult()) { ContentLog.LOGGER.info("Left the result of {} alone, a swap in {} to the tag {} cannot make a result", id, entry.key(), entry.to()); }
+        if (walker.taggedSlot()) { ContentLog.LOGGER.info("Left a slot of {} alone, it is written as a tag and a swap in {} to the tag {} does not rewrite a tag slot", id, entry.key(), entry.to()); }
         if (copy == null) {
-            if (walker.left() && accepted(id, current, parse, entry)) { markLeft(id, current); }
+            if (walker.left() && accepted(id, current, parse, entry, type)) { markLeft(id, current); }
             return null;
         }
-        Recipe<?> made = parsed(id, copy, parse);
+        Recipe<?> made = parsed(id, copy, parse, "swap");
         if (made == null) {
-            if (accepted(id, current, parse, entry)) {
+            if (accepted(id, current, parse, entry, type)) {
                 ContentLog.LOGGER.error("Left {} alone, its swapped form does not parse", id);
                 markLeft(id, current);
             }
             return null;
         }
-        if (!inScope(made, entry)) {
+        if (!inScope(made, entry, type)) {
             ContentLog.LOGGER.debug("Recipe {} is not a crafting or cooking recipe this swap touches, leaving it", id);
             return null;
         }
-        String type = type(current);
         boolean smelting = made instanceof AbstractCookingRecipe && walker.ingredients() > 0;
-        if (smelting && collides(type, id, entry.to())) {
+        if (smelting && collides(type, id, swap.targets())) {
             ContentLog.LOGGER.info("Did not swap the ingredient of {}: {} already smelts in another {} recipe", id, entry.to(), type);
             return null;
         }
@@ -158,20 +166,20 @@ public final class RecipeSwaps {
         return copy;
     }
 
-    private static boolean accepted(ResourceLocation id, JsonObject json, BiFunction<ResourceLocation, JsonElement, Recipe<?>> parse, SwapEntry entry) {
-        Recipe<?> kept = parsed(id, json, parse);
-        return kept != null && inScope(kept, entry);
+    private static boolean accepted(ResourceLocation id, JsonObject json, BiFunction<ResourceLocation, JsonElement, Recipe<?>> parse, SwapEntry entry, String type) {
+        Recipe<?> kept = parsed(id, json, parse, "swap");
+        return kept != null && inScope(kept, entry, type);
     }
 
-    private static boolean inScope(Recipe<?> recipe, SwapEntry entry) {
+    private static boolean inScope(Recipe<?> recipe, SwapEntry entry, String type) {
         boolean cooking = recipe instanceof AbstractCookingRecipe;
-        return recipe.getType() == RecipeType.CRAFTING || cooking && !entry.scoped();
+        return recipe.getType() == RecipeType.CRAFTING || cooking && !entry.scoped() || entry.foreign(type);
     }
 
-    @Nullable private static Recipe<?> parsed(ResourceLocation id, JsonObject json, BiFunction<ResourceLocation, JsonElement, Recipe<?>> parse) {
+    @Nullable static Recipe<?> parsed(ResourceLocation id, JsonObject json, BiFunction<ResourceLocation, JsonElement, Recipe<?>> parse, String pass) {
         try { return parse.apply(id, json); }
         catch (RuntimeException ex) {
-            ContentLog.LOGGER.debug("Recipe {} did not parse during the swap pass: {}", id, ex.getMessage());
+            ContentLog.LOGGER.debug("Recipe {} did not parse during the {} pass: {}", id, pass, ex.getMessage());
             return null;
         }
     }
@@ -182,7 +190,7 @@ public final class RecipeSwaps {
         if (LEFT_TYPES.add(type)) { ContentLog.LOGGER.info("Left {} alone, a recipe of type {} names a replaced item where RDPL cannot rewrite it", id, type); }
     }
 
-    private static String type(JsonObject json) { return json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : ""; }
+    static String type(JsonObject json) { return json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : ""; }
 
     private static void index(JsonObject json, ResourceLocation id, Map<ResourceLocation, Set<ResourceLocation>> tags) {
         Map<ResourceLocation, Set<ResourceLocation>> byItem = null;
@@ -198,12 +206,15 @@ public final class RecipeSwaps {
         for (Set<ResourceLocation> holders : byItem.values()) { holders.remove(id); }
     }
 
-    private static boolean collides(String type, ResourceLocation id, ResourceLocation to) {
+    private static boolean collides(String type, ResourceLocation id, Set<ResourceLocation> targets) {
         Map<ResourceLocation, Set<ResourceLocation>> byItem = INPUTS.get(type);
-        Set<ResourceLocation> holders = byItem == null ? null : byItem.get(to);
-        if (holders == null) { return false; }
-        for (ResourceLocation holder : holders) {
-            if (!holder.equals(id)) { return true; }
+        if (byItem == null) { return false; }
+        for (ResourceLocation target : targets) {
+            Set<ResourceLocation> holders = byItem.get(target);
+            if (holders == null) { continue; }
+            for (ResourceLocation holder : holders) {
+                if (!holder.equals(id)) { return true; }
+            }
         }
         return false;
     }
@@ -213,5 +224,5 @@ public final class RecipeSwaps {
         if (!LEFT.isEmpty()) { Summary.info("recipes.swapped.left", "Left " + LEFT.size() + " recipe(s) alone, they name a replaced item in a form RDPL cannot rewrite"); }
     }
 
-    private record Swap(SwapEntry entry, RecipeSwapJson walker) {}
+    private record Swap(SwapEntry entry, RecipeSwapJson walker, Set<ResourceLocation> targets) {}
 }

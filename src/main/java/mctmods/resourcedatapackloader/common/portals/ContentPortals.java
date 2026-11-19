@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.portals;
 
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidTouch;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
@@ -14,6 +15,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,10 +30,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 
 public final class ContentPortals {
     private static final String PREFIX = "portal_";
     private static volatile List<Binding> bound = List.of();
+    private static volatile Set<Fluid> litFluids = Set.of();
 
     private ContentPortals() {}
 
@@ -106,35 +110,69 @@ public final class ContentPortals {
             DimensionDef dimension = entry.getValue();
             DimensionPortalDef portal = dimension.portal();
             if (portal == null) { continue; }
-            Item igniter = ContentStacks.item(ResourceLocation.tryParse(portal.ignitedBy()));
-            if (igniter == null) {
-                ContentLog.LOGGER.error("Dimension {} is lit by {}, which no mod registers, so nothing can open it", entry.getKey(), portal.ignitedBy());
-                continue;
-            }
+            Item igniter = portal.ignitedBy().isEmpty() ? null : ContentStacks.item(ResourceLocation.tryParse(portal.ignitedBy()));
+            if (igniter == null && !portal.ignitedBy().isEmpty()) { ContentLog.LOGGER.error("Dimension {} is lit by {}, which no mod registers, so nothing can open it that way", entry.getKey(), portal.ignitedBy()); }
+            Fluid fluid = portal.ignitedByFluid().isEmpty() ? null : FluidTouch.named(portal.ignitedByFluid());
+            if (fluid == null && !portal.ignitedByFluid().isEmpty()) { ContentLog.LOGGER.error("Dimension {} is lit by fluid {}, which is not a loaded fluid with a block, so lighting it that way is off", entry.getKey(), portal.ignitedByFluid()); }
+            if (igniter == null && fluid == null) { continue; }
             ContentRegistry.BlockEntry held = ContentRegistry.block(blockName(entry.getKey()));
             if (held == null || !(held.block() instanceof ContentPortalBlock block)) {
                 ContentLog.LOGGER.error("Dimension {} has no portal block of its own, so it was never registered and cannot be opened", entry.getKey());
                 continue;
             }
             List<PortalFrameDef> frames = new ArrayList<>();
+            List<PortalFrameDef> itemFrames = new ArrayList<>();
+            List<PortalFrameDef> fluidFrames = new ArrayList<>();
             for (String name : portal.frames()) {
                 PortalFrameDef frame = ContentPortalFrames.byName(name);
                 if (frame == null) {
                     ContentLog.LOGGER.error("Dimension {} asks for portal frame {}, which no pack provides", entry.getKey(), name);
                     continue;
                 }
-                String mark = frame.key() + " lit by " + portal.ignitedBy();
-                if (!claimed.add(mark)) {
-                    ContentLog.LOGGER.error("Portal frame {} lit by {} is already claimed by another dimension, so {} leaves it alone", frame.key(), portal.ignitedBy(), entry.getKey());
-                    continue;
-                }
-                frames.add(frame);
+                boolean byItem = igniter != null && claimed.add(frame.key() + " lit by " + portal.ignitedBy());
+                boolean byFluid = fluid != null && claimed.add(frame.key() + " lit by fluid " + portal.ignitedByFluid());
+                if (igniter != null && !byItem) { ContentLog.LOGGER.error("Portal frame {} lit by {} is already claimed by another dimension, so {} leaves it alone", frame.key(), portal.ignitedBy(), entry.getKey()); }
+                if (fluid != null && !byFluid) { ContentLog.LOGGER.error("Portal frame {} lit by fluid {} is already claimed by another dimension, so {} leaves it alone", frame.key(), portal.ignitedByFluid(), entry.getKey()); }
+                if (byItem) { itemFrames.add(frame); }
+                if (byFluid) { fluidFrames.add(frame); }
+                if (byItem || byFluid) { frames.add(frame); }
             }
             if (frames.isEmpty()) { continue; }
-            made.add(new Binding(entry.getKey(), dimension, portal, igniter, frames, block));
+            made.add(new Binding(entry.getKey(), dimension, portal, igniter, fluid, frames, itemFrames, fluidFrames, block));
         }
         if (!made.isEmpty()) { ContentLog.LOGGER.info("{} dimension(s) can be opened by building a frame and lighting it", made.size()); }
+        Set<Fluid> lit = new HashSet<>();
+        for (Binding binding : made) {
+            if (binding.fluid() != null) { lit.add(binding.fluid()); }
+        }
+        litFluids = Set.copyOf(lit);
         bound = List.copyOf(made);
+    }
+
+    public static boolean fluidLit() { return !litFluids.isEmpty(); }
+
+    public static void lightByFluid(Level level, BlockPos at, BlockState state) {
+        Fluid fluid = FluidTouch.fluidOf(state.getBlock());
+        if (fluid == null || !litFluids.contains(fluid) || !besideFrame(level, at)) { return; }
+        for (Binding binding : bindings()) {
+            if (binding.fluid() != fluid) { continue; }
+            if (level.dimension().location().equals(binding.name()) && binding.portal().noLightBack()) { continue; }
+            for (PortalFrameDef frame : binding.fluidFrames()) {
+                PortalFit fit = ContentPortalFrames.fit(level, at, frame, null, fluid);
+                if (fit == null) { continue; }
+                fill(level, fit, binding);
+                ContentLog.LOGGER.debug("{} was lit by {} at {} and opened {}", fit.frame().name(), fluid, at, binding.name());
+                return;
+            }
+        }
+    }
+
+    private static boolean besideFrame(Level level, BlockPos at) {
+        for (Direction side : Direction.values()) {
+            BlockPos beside = at.relative(side);
+            if (level.isLoaded(beside) && frameBlock(level.getBlockState(beside))) { return true; }
+        }
+        return false;
     }
 
     public static List<Binding> bindings() { return bound; }
@@ -149,9 +187,9 @@ public final class ContentPortals {
     @Nullable public static Lighting find(Level level, BlockPos clicked, @Nullable Direction face, ItemStack held) {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
-            if (held.getItem() != binding.igniter()) { continue; }
+            if (binding.igniter() == null || held.getItem() != binding.igniter()) { continue; }
             if (level.dimension().location().equals(binding.name()) && binding.portal().noLightBack()) { continue; }
-            for (PortalFrameDef frame : binding.frames()) {
+            for (PortalFrameDef frame : binding.itemFrames()) {
                 for (BlockPos candidate : candidates(level, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(level, candidate, frame);
                     if (fit != null) { return new Lighting(binding, fit, candidate); }
@@ -230,5 +268,5 @@ public final class ContentPortals {
 
     public record Lighting(Binding binding, PortalFit fit, BlockPos at) {}
 
-    public record Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, Item igniter, List<PortalFrameDef> frames, ContentPortalBlock block) {}
+    public record Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, @Nullable Item igniter, @Nullable Fluid fluid, List<PortalFrameDef> frames, List<PortalFrameDef> itemFrames, List<PortalFrameDef> fluidFrames, ContentPortalBlock block) {}
 }

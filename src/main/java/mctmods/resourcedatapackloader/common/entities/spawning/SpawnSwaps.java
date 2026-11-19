@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -28,6 +29,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -37,6 +39,7 @@ import net.minecraftforge.event.entity.living.MobSpawnEvent;
 
 public final class SpawnSwaps {
     private static final String MARK = "rdplSwapFresh";
+    private static final String RAN = "rdplSpawnRan";
     private static final String NATURAL = "natural";
     private static final String SPAWNER = "spawner";
     private static final int NIGHT_FROM = 13000;
@@ -61,7 +64,7 @@ public final class SpawnSwaps {
         if (type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION && !spawner) { return; }
         Mob mob = event.getEntity();
         for (Rule rule : RULES) {
-            if (MobStats.targets(rule.def().entities(), mob) && (!spawner || rule.def().fromSpawners())) {
+            if (rule.def().swaps() && MobStats.targets(rule.def().entities(), mob) && (!spawner || rule.def().fromSpawners())) {
                 mob.getPersistentData().putString(MARK, spawner ? SPAWNER : NATURAL);
                 return;
             }
@@ -76,7 +79,7 @@ public final class SpawnSwaps {
         data.remove(MARK);
         if (EntitySwap.active()) { return false; }
         for (Rule rule : RULES) {
-            if (!MobStats.targets(rule.def().entities(), mob) || spawner && !rule.def().fromSpawners() || !applies(rule, level, mob)) { continue; }
+            if (!rule.def().swaps() || !MobStats.targets(rule.def().entities(), mob) || spawner && !rule.def().fromSpawners() || !applies(rule, level, mob)) { continue; }
             EntityType<?> chosen = pick(rule.def(), level);
             if (chosen == null) { return false; }
             boolean swapped = chosen != mob.getType() && EntitySwap.spawn(level, chosen, mob, false);
@@ -90,6 +93,21 @@ public final class SpawnSwaps {
             return swapped;
         }
         return false;
+    }
+
+    public static void runs(EntityJoinLevelEvent event) {
+        if (RULES.isEmpty() || event.getLevel().isClientSide()) { return; }
+        Entity entity = event.getEntity();
+        List<String> functions = null;
+        for (Rule rule : RULES) {
+            if (rule.def().runs().isEmpty() || !MobStats.targets(rule.def().entities(), entity)) { continue; }
+            if (functions == null) { functions = new ArrayList<>(); }
+            functions.add(rule.def().runs());
+        }
+        CompoundTag data = functions == null ? null : entity.getPersistentData();
+        if (data == null || data.contains(RAN)) { return; }
+        data.putBoolean(RAN, true);
+        for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName().getString()); }
     }
 
     private static boolean applies(Rule rule, ServerLevel level, Mob mob) {
@@ -148,8 +166,9 @@ public final class SpawnSwaps {
             return;
         }
         List<PickDef> becomes = ContentWorldgenParser.picks(json, "becomes", "entity");
-        if (becomes.isEmpty()) {
-            ContentLog.LOGGER.error("{} names nothing under becomes, ignoring it", owner);
+        String runs = Json.getString(json, "runs", "").trim();
+        if (becomes.isEmpty() && runs.isEmpty()) {
+            ContentLog.LOGGER.error("{} names nothing under becomes and no function it runs, ignoring it", owner);
             return;
         }
         List<String> types = Json.strings(json, "biomeTypes");
@@ -163,7 +182,7 @@ public final class SpawnSwaps {
         RULES.add(new Rule(new SpawnSwapDef(key, entities, becomes, Json.strings(json, "biomes"), types, blocks, Json.getBoolean(json, "requireAll", false),
                 SpawnGateDef.read(key, json, "Spawn swap file"), elsewhere, elsewhere ? Json.ranged(where, "chance", 1.0F, 0.0F, 1.0F, owner) : 1.0F,
                 elsewhere && where.has("lightBelow") ? Math.max(1, Math.min(BRIGHTEST, Json.getInt(where, "lightBelow", BRIGHTEST))) : 0, elsewhere && Json.getBoolean(where, "night", false),
-                Math.max(0, Math.min(MOST_EXTRA, Json.getInt(json, "extra", 0))), Json.getBoolean(json, "fromSpawners", false))));
+                Math.max(0, Math.min(MOST_EXTRA, Json.getInt(json, "extra", 0))), Json.getBoolean(json, "fromSpawners", false), runs)));
     }
 
     private static final class Rule {

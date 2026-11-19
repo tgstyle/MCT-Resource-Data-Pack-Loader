@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.tags;
 import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.recipes.RecipeSwaps;
 import mctmods.resourcedatapackloader.common.util.ContentDisabled;
+import mctmods.resourcedatapackloader.common.util.ContentTagCopies;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow @Final Function<ResourceLocation, Optional<? extends T>> idToValue;
 
     @Inject(method = "build(Ljava/util/Map;)Ljava/util/Map;", at = @At("RETURN")) private void rdpl$disable(Map<ResourceLocation, List<TagLoader.EntryWithSource>> builders, CallbackInfoReturnable<Map<ResourceLocation, Collection<T>>> cir) {
+        ContentTagCopies.apply(directory, cir.getReturnValue(), idToValue);
         ContentDisabled.strip(directory, cir.getReturnValue(), idToValue);
         ContentItemLocks.strip(directory, cir.getReturnValue(), idToValue);
         RecipeSwaps.tags(directory, cir.getReturnValue());

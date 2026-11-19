@@ -173,6 +173,7 @@ public final class ContentGenerated {
         if (def != null) {
             for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
             if (def.slotted()) { tag(itemTags, "curios:" + def.curioSlot(), entry.id()); }
+            if (def.disc() != null) { tag(itemTags, "minecraft:music_discs", entry.id()); }
         }
     }
 
@@ -328,7 +329,9 @@ public final class ContentGenerated {
             case ContentBlockTypes.TRAPDOOR -> both(blockTags, itemTags, hasItem, "minecraft:trapdoors", id);
             case ContentBlockTypes.FENCE_GATE -> both(blockTags, itemTags, hasItem, "minecraft:fence_gates", id);
             case ContentBlockTypes.LEAVES -> both(blockTags, itemTags, hasItem, "minecraft:leaves", id);
-            case ContentBlockTypes.LOG -> both(blockTags, itemTags, hasItem, "minecraft:logs", id);
+            case ContentBlockTypes.LOG -> {
+                if (def.tagged()) { both(blockTags, itemTags, hasItem, "minecraft:logs", id); }
+            }
             case ContentBlockTypes.SAPLING -> both(blockTags, itemTags, hasItem, "minecraft:saplings", id);
             case ContentBlockTypes.FLOWER -> {
                 both(blockTags, itemTags, hasItem, "minecraft:small_flowers", id);

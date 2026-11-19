@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.common.items;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
-import mctmods.resourcedatapackloader.common.util.ContentEffects;
 
 import javax.annotation.Nonnull;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +20,7 @@ public final class ContentSleepingBagItem extends Item {
     @Override @Nonnull public InteractionResult useOn(@Nonnull UseOnContext context) {
         if (context.getLevel().isClientSide() || !(context.getPlayer() instanceof ServerPlayer player)) { return InteractionResult.PASS; }
         InteractionResult result = ContentSleepingBags.use(player, context.getClickedPos(), context.getClickedFace());
-        if (result.consumesAction()) { ContentEffects.cooldown(player, this, def.cooldown()); }
+        if (result.consumesAction()) { ContentItemRuns.finish(context.getLevel(), player, context.getHand(), this, def); }
         return result;
     }
 }

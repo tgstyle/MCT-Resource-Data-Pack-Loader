@@ -15,6 +15,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -26,6 +28,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -150,12 +153,49 @@ public final class PackTooltips {
         if (ContentTooltips.none()) { return; }
         List<Component> tooltip = event.getToolTip();
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(event.getItemStack()).entrySet()) {
-            List<String> lines = ContentTooltips.forEnchantment(entry.getKey());
-            int at = lines.isEmpty() ? -1 : tooltip.indexOf(entry.getKey().getFullname(entry.getValue()));
-            if (at < 0) { continue; }
-            for (String line : lines) { tooltip.add(++at, text(line)); }
+            List<ContentTooltips.Rule> rules = ContentTooltips.forEnchantment(entry.getKey());
+            int name = rules.isEmpty() ? -1 : tooltip.indexOf(entry.getKey().getFullname(entry.getValue()));
+            if (name < 0) { continue; }
+            int cursor = name + 1;
+            for (ContentTooltips.Rule rule : rules) {
+                if (!shown(rule)) { continue; }
+                int before = tooltip.size();
+                int next = place(tooltip, rule, event.getItemStack(), name + 1, cursor);
+                if (rule.position == ContentTooltips.NO_POSITION) { cursor = next; }
+                else if (next - rule.lines.size() == cursor) { cursor = next; }
+                else if (next - rule.lines.size() < cursor) { cursor += tooltip.size() - before; }
+            }
         }
-        for (String line : ContentTooltips.forItem(event.getItemStack())) { tooltip.add(text(line)); }
+        for (ContentTooltips.Rule rule : ContentTooltips.forItem(event.getItemStack())) {
+            if (shown(rule)) { place(tooltip, rule, event.getItemStack(), 1, tooltip.size()); }
+        }
+    }
+
+    private static boolean shown(ContentTooltips.Rule rule) { return (!rule.shift || Screen.hasShiftDown()) && (rule.data.isEmpty() || DataCheck.met(rule.data, DataReader.client())); }
+
+    private static Component line(ContentTooltips.Line line, ItemStack stack) {
+        String translated = translated(line.raw());
+        String rendered = line.render(stack, translated);
+        return rendered.equals(translated) ? text(line.raw()) : Component.literal(rendered).withStyle(ChatFormatting.GRAY);
+    }
+
+    private static int place(List<Component> tooltip, ContentTooltips.Rule rule, ItemStack stack, int from, int fallback) {
+        int at = rule.position == ContentTooltips.NO_POSITION ? fallback : from + rule.position;
+        boolean replace = rule.replace;
+        if (at >= tooltip.size()) {
+            at = tooltip.size();
+            replace = false;
+        }
+        for (ContentTooltips.Line line : rule.lines) {
+            if (replace) {
+                tooltip.set(at, line(line, stack));
+                replace = false;
+            } else {
+                tooltip.add(at, line(line, stack));
+            }
+            at++;
+        }
+        return at;
     }
 
     private static void affixes(ItemStack stack, List<Component> tooltip) {

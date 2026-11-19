@@ -326,7 +326,7 @@ public final class ContentAnvils {
     public static void onTaken(AnvilRepairEvent event) {
         AnvilDef def = OFFERED.get(event.getOutput());
         if (def == null || def.grants().isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
-        if (!Advancements.grant(player, def.grants())) { ContentLog.LOGGER.error("Anvil work {} grants the advancement {}, which no pack provides, so nothing is earned", def.key(), def.grants()); }
+        Advancements.grant(player, def.grants(), "Anvil work " + def.key());
     }
 
     public static ItemStack leftAfterWork(AnvilMenu menu, ItemStack taken) {

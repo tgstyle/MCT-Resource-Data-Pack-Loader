@@ -24,6 +24,7 @@ public final class CardLook {
     ChatFormatting chat;
     int ticks;
     String style;
+    String sound = "";
 
     private CardLook(List<String> lines, ChatFormatting color, String style) {
         this.lines = lines;

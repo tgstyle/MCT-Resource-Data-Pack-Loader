@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public record EntityVariantDef(ResourceLocation key, ResourceLocation base, String name, boolean showName, String texture, String lootTable, String profession, int career, float baby,
                                List<PickDef> becomes, Sounds sounds, List<String> immuneTo, List<String> ignoresEffects, Physics physics, int experience, float absorption, String creatureAttribute, Map<String, Integer> effects,
-                               boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
+                               boolean despawns, int despawnTicks, boolean despawnDropsLead, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,
                                Combat combat, Stalk stalk, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
                                List<String> requires, List<TaskDef> tasks, @Nullable StorageDef storage, @Nullable RocketDef rocket, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {

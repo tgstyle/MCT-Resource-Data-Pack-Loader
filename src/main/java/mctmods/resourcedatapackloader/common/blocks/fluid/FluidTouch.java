@@ -72,9 +72,21 @@ public final class FluidTouch {
             else { blocks.add(block); }
             return;
         }
+        Fluid fluid = registered(entry);
+        if (fluid == null) { ContentLog.LOGGER.error("{} touches {}, which is neither a block nor a fluid, so that entry is skipped", owner, entry); }
+        else { fluids.add(fluid); }
+    }
+
+    @Nullable private static Fluid registered(String entry) {
         Fluid fluid = Registered.find(ForgeRegistries.FLUIDS, ResourceLocation.tryParse(Settings.lower(entry)));
-        if (fluid == null || fluid == Fluids.EMPTY) { ContentLog.LOGGER.error("{} touches {}, which is neither a block nor a fluid, so that entry is skipped", owner, entry); }
-        else { fluids.add(fluid instanceof FlowingFluid flowing ? flowing.getSource() : fluid); }
+        if (fluid == null || fluid == Fluids.EMPTY) { return null; }
+        return fluid instanceof FlowingFluid flowing ? flowing.getSource() : fluid;
+    }
+
+    @Nullable public static Fluid named(String id) {
+        Block block = ContentStates.registered(id);
+        Fluid fluid = block != null ? fluidOf(block) : registered(id);
+        return fluid != null && fluid.defaultFluidState().createLegacyBlock().getBlock() instanceof LiquidBlock ? fluid : null;
     }
 
     private void addTag(String name, String entry, Object owner) {

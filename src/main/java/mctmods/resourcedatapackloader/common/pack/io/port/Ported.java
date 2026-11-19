@@ -158,7 +158,7 @@ public final class Ported extends PortBase<Ported.Source> {
                     dropped++;
                     note("'" + path + "' has no twin on this version and is left out");
                 }
-                case OREDICT -> expandOreDict(real, path);
+                case OREDICT -> expandOreDict(namespace, real, path);
                 case BLOCKSTATE -> {
                     Banner banner = banner(namespace, path);
                     if (banner != null) { bannerState(namespace, real, path, banner); }
@@ -370,9 +370,31 @@ public final class Ported extends PortBase<Ported.Source> {
         note("'" + path + "' runs a gameLoopFunction, which is the #minecraft:tick function tag now, so it became " + tagPath + " under minecraft");
     }
 
-    private void expandOreDict(Path real, String path) {
+    private void tagCopy(String namespace, Path real, String path, JsonObject json) {
+        JsonObject copy = new JsonObject();
+        copy.addProperty("tag", copyTag(json.get("tag").getAsString()));
+        copy.add("matches", json.get("matches"));
+        if (json.has("from") && json.get("from").isJsonPrimitive()) { copy.addProperty("from", copyTag(json.get("from").getAsString())); }
+        String tagPath = PackManager.TAG_COPIES + "/item/" + path.substring("oredict/".length());
+        cache.put(key(PackType.SERVER_DATA, namespace, tagPath), GSON.toJson(copy).getBytes(StandardCharsets.UTF_8));
+        expose(PackType.SERVER_DATA, namespace, tagPath, new Source(real, Port.Kind.OREDICT));
+        rewritten++;
+        moved++;
+        note("'" + path + "' is a tag copy, so it became " + tagPath + " under " + namespace);
+    }
+
+    private static String copyTag(String text) {
+        String trimmed = text.trim();
+        return trimmed.indexOf(':') < 0 ? Ids.oreDictTag(trimmed) : trimmed;
+    }
+
+    private void expandOreDict(String owner, Path real, String path) {
         JsonObject json = readJson(real);
         if (json == null) { return; }
+        if (json.has("tag") && json.get("tag").isJsonPrimitive() && json.has("matches")) {
+            tagCopy(owner, real, path, json);
+            return;
+        }
         Map<String, JsonObject> tags = ConvertRecipes.oreDict(json, this);
         for (Map.Entry<String, JsonObject> tag : tags.entrySet()) {
             String id = tag.getKey();

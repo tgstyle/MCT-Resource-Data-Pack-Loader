@@ -33,7 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -147,12 +149,23 @@ public final class ContentOverrides {
                 intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
                 effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
-                Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
+                Json.strings(json, "requires"), ContentParserWeights.weight(json, source), json.has("tool") ? tool(source, Json.object(json, "tool")) : null);
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
         }
         return def;
+    }
+
+    @Nullable private static OverrideDef.ToolDef tool(ResourceLocation source, JsonObject json) {
+        String named = Json.getString(json, "minesWith", "").trim();
+        ResourceLocation tag = ContentParser.location(named.startsWith("#") ? named.substring(1) : named);
+        float speed = Json.getFloat(json, "speed", 0.0F);
+        if (tag == null || speed <= 0.0F) {
+            ContentLog.LOGGER.error("Override file {} has a tool that needs a speed above 0 and a minesWith block tag such as #minecraft:mineable/pickaxe, leaving it out", source);
+            return null;
+        }
+        return new OverrideDef.ToolDef(speed, tag);
     }
 
     private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
@@ -202,6 +215,7 @@ public final class ContentOverrides {
         OverrideDef.FoodDef food = def.food();
         if (food != null) { item.foodProperties = food(def, food, item.foodProperties); }
         if (def.weight() >= 0) { ContentWeights.override(def.target(), def.weight()); }
+        if (def.tool() != null) { ContentToolOverrides.put(item, new ContentToolOverrides.Rule(def.tool().speed(), TagKey.create(Registries.BLOCK, def.tool().minesWith()))); }
         return true;
     }
 
@@ -251,6 +265,7 @@ public final class ContentOverrides {
         ITEMS.forEach((item, held) -> held.restore(item));
         POTIONS.forEach((potion, held) -> potion.effects = held);
         ContentWeights.clearOverrides();
+        ContentToolOverrides.clear();
         BLOCKS.clear();
         FIRE.clear();
         ITEMS.clear();

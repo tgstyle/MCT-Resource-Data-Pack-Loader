@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraftforge.fluids.DispenseFluidContainer;
 import net.minecraftforge.fluids.ForgeFlowingFluid;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -83,6 +85,12 @@ public final class ContentFluids {
         }
     }
 
+    public static void registerDispensing() {
+        for (Made made : MADE.values()) {
+            if (made.bucket != null) { DispenserBlock.registerBehavior(made.bucket, DispenseFluidContainer.getInstance()); }
+        }
+    }
+
     public static final class Made {
         public final FluidDef def;
         public final ContentFluidType type;
@@ -104,7 +112,7 @@ public final class ContentFluids {
             this.still = def.density() < 0 ? new ContentRisingFluid.Source(properties, def) : new ContentFlowingFluid.Source(properties, def);
             this.flowing = def.density() < 0 ? new ContentRisingFluid.Flowing(properties, def) : new ContentFlowingFluid.Flowing(properties, def);
             this.block = def.createBlock() ? new ContentLiquidBlock(def, this::getStill, blockProperties(def)) : null;
-            this.bucket = def.bucket() ? new ContentBucketItem(this::getStill, type, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
+            this.bucket = def.bucket() ? new ContentBucketItem(this::getStill, type, def.createBlock(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
         }
 
         public ForgeFlowingFluid getStill() { return still; }

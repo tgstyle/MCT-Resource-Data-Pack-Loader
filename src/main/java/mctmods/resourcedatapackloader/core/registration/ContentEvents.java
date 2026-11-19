@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpaw
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.items.derived.DerivedItems;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
@@ -232,6 +233,7 @@ public final class ContentEvents {
             count++;
         }
         for (ItemDef def : ContentRegistry.itemDefs()) {
+            if (def.derived() != null) { continue; }
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             for (ItemVariant variant : def.variants()) {
                 if (registered(ForgeRegistries.ITEMS.containsKey(variant.id()), "An item", variant.id(), "definition")) { continue; }
@@ -249,6 +251,7 @@ public final class ContentEvents {
                 if (made.bucket == item) { ContentRegistry.addItem(id, item, null, null, null, made.def.creativeTab()); }
             }
         });
+        count += DerivedItems.register(helper);
         resolveSoils();
         if (count > 0) { Summary.info("content.items", "Registered " + count + " item(s) from packs"); }
         generateData();

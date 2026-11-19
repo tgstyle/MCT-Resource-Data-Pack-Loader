@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -19,9 +22,17 @@ public final class MobStats {
     public static final String MONSTER = "#monster";
     private static final List<String> KINDS = List.of("#monster", "#creature", "#ambient", "#water_creature");
 
+    public static boolean unknownKind(String entry) {
+        return entry.startsWith("#") && entry.indexOf(':') < 0 && !KINDS.contains(entry);
+    }
+
     private MobStats() {}
 
-    @Nullable public static List<String> entities(String owner, String label, JsonElement element) {
+    @Nullable public static List<String> entities(String owner, String label, JsonElement element) { return entities(owner, label, element, false); }
+
+    @Nullable public static List<String> entitiesOrTags(String owner, String label, JsonElement element) { return entities(owner, label, element, true); }
+
+    @Nullable private static List<String> entities(String owner, String label, JsonElement element, boolean tags) {
         if (!element.isJsonArray()) {
             ContentLog.LOGGER.error("{} gives {} that is not a list of entity ids and kinds, ignoring it", owner, label);
             return null;
@@ -34,7 +45,7 @@ public final class MobStats {
             }
             String id = Settings.lower(item.getAsString());
             if (id.startsWith("#")) {
-                if (KINDS.contains(id)) { listed.add(id); }
+                if (KINDS.contains(id) || tags && ResourceLocation.tryParse(id.substring(1)) != null) { listed.add(id); }
                 else { ContentLog.LOGGER.error("{} gives {} '{}', which is not a kind, ignoring it", owner, label, id); }
             }
             else { listed.add(id.indexOf(':') < 0 ? "minecraft:" + id : id); }
@@ -46,7 +57,17 @@ public final class MobStats {
         if (entities.isEmpty()) { return false; }
         String id = String.valueOf(ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()));
         String kind = "#" + mob.getType().getCategory().getName();
-        return entities.contains(id) || entities.contains(kind);
+        return entities.contains(id) || entities.contains(kind) || tagged(entities, mob);
+    }
+
+    private static boolean tagged(List<String> entities, Entity mob) {
+        for (String entry : entities) {
+            if (entry.startsWith("#") && !KINDS.contains(entry)) {
+                ResourceLocation tag = ResourceLocation.tryParse(entry.substring(1));
+                if (tag != null && mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, tag))) { return true; }
+            }
+        }
+        return false;
     }
 
     public static boolean scale(Mob mob, Attribute attribute, UUID id, float multiplier, String name) {

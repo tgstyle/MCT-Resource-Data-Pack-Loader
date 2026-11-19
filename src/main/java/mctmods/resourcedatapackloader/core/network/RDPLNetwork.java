@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.BlastHush;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientSyncData;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.util.ToastFilter;
@@ -27,6 +28,7 @@ import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import java.util.List;
 import java.util.Set;
@@ -99,7 +101,10 @@ public final class RDPLNetwork {
         }).add();
         channel.messageBuilder(EatenMessage.class, 21, NetworkDirection.PLAY_TO_CLIENT).encoder(EatenMessage::write).decoder(EatenMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientDiet.receive(message.eaten()); } }).add();
         channel.messageBuilder(SeasonClockMessage.class, 22, NetworkDirection.PLAY_TO_CLIENT).encoder(SeasonClockMessage::write).decoder(SeasonClockMessage::read).consumerMainThread((message, context) -> SeasonClock.received(message.ticks())).add();
+        channel.messageBuilder(SyncDataMessage.class, 23, NetworkDirection.PLAY_TO_CLIENT).encoder(SyncDataMessage::write).decoder(SyncDataMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientSyncData.receive(message); } }).add();
     }
+
+    public static boolean sendSyncData(ServerPlayer player, SyncDataMessage message) { return !Config.content.vanillaClients() && toPlayer(player, message); }
 
     public static void sendSeasonClock(ServerPlayer player, long ticks) { toPlayer(player, new SeasonClockMessage(ticks)); }
 

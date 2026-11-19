@@ -135,7 +135,7 @@ public final class ContentTypes {
 
     public static String materialName(BlockDef def) {
         return switch (def.type()) {
-            case ContentBlockTypes.LOG -> "wood";
+            case ContentBlockTypes.LOG, ContentBlockTypes.PILLAR -> "wood";
             case ContentBlockTypes.LEAVES -> "leaves";
             case ContentBlockTypes.VINE -> "vine";
             case ContentBlockTypes.TORCH, ContentBlockTypes.LADDER -> "circuits";
@@ -155,7 +155,7 @@ public final class ContentTypes {
         if (ContentBlockTypes.borrowsModel(type)) { return modelled(ContentBlockTypes.base(def), type); }
         Preset preset = material(materialName(def), def.key());
         return switch (type) {
-            case ContentBlockTypes.LOG -> preset.sounding(SoundType.WOOD);
+            case ContentBlockTypes.LOG, ContentBlockTypes.PILLAR -> preset.sounding(SoundType.WOOD);
             case ContentBlockTypes.LEAVES, ContentBlockTypes.CROP -> preset.sounding(SoundType.GRASS);
             default -> preset;
         };
