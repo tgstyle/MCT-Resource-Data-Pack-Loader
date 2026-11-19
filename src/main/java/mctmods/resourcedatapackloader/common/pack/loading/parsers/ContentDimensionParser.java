@@ -342,7 +342,9 @@ public final class ContentDimensionParser {
             back = DimensionPortalDef.BUILT;
         }
         PortalDef travel = ContentParser.portal(key, json, key, false, true);
-        return travel == null ? null : new DimensionPortalDef(frames, Json.getString(entry, "ignitedBy", "minecraft:flint_and_steel").trim(), color, back, travel);
+        String fluid = Json.getString(entry, "ignitedByFluid", "").trim();
+        String item = entry.has("ignitedBy") ? Json.getString(entry, "ignitedBy", "").trim() : fluid.isEmpty() ? "minecraft:flint_and_steel" : "";
+        return travel == null ? null : new DimensionPortalDef(frames, item, fluid, color, back, travel);
     }
 
     private static List<String> flatOptions(JsonObject terrain) {

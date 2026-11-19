@@ -32,6 +32,7 @@ public final class CardEvents {
     private CardEvents() {}
 
     public static void joined(ServerPlayer player) {
+        for (CardRule rule : CardRules.on(CardRule.LOGIN)) { CardFire.fire(rule, player); }
         List<CardRule> rules = CardRules.on(CardRule.FIRST_JOIN);
         if (rules.isEmpty() || player.getStats().getValue(Stats.CUSTOM.get(Stats.LEAVE_GAME)) > 0) { return; }
         for (CardRule rule : rules) { CardFire.fire(rule, player); }

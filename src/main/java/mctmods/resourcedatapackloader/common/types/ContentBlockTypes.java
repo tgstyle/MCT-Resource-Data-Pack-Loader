@@ -47,6 +47,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.StandingAndWallBlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CarpetBlock;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
@@ -75,6 +76,8 @@ public final class ContentBlockTypes {
     public static final String LADDER = "ladder";
     public static final String TORCH = "torch";
     public static final String LOG = "log";
+    public static final String PILLAR = "pillar";
+    public static final String CARPET = "carpet";
     public static final String LEAVES = "leaves";
     public static final String SAPLING = "sapling";
     public static final String CONTAINER = "container";
@@ -87,9 +90,9 @@ public final class ContentBlockTypes {
     public static final String BELL = "bell";
     public static final String PORTWAY = "portway";
     public static final String SEASON_SENSOR = "seasonsensor";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL, PORTWAY, SEASON_SENSOR);
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, PILLAR, CARPET, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL, PORTWAY, SEASON_SENSOR);
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
-    private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL, PORTWAY);
+    private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, PILLAR, FALLING, SLAB, WALL, PORTWAY);
 
     private ContentBlockTypes() {}
 
@@ -135,7 +138,8 @@ public final class ContentBlockTypes {
             case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
             case SEASON_SENSOR -> List.of(new Created(id, new ContentSeasonSensorBlock(def, properties), ContentRegistry.MAIN));
             case PORTWAY -> List.of(new Created(id, ContentPortwayBlock.create(def, properties), ContentRegistry.MAIN));
-            case LOG -> List.of(new Created(id, new ContentLogBlock(properties), ContentRegistry.MAIN));
+            case LOG, PILLAR -> List.of(new Created(id, new ContentLogBlock(properties), ContentRegistry.MAIN));
+            case CARPET -> List.of(new Created(id, new CarpetBlock(properties), ContentRegistry.MAIN));
             case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, LineCompat.notViewBlocking(properties.randomTicks().isSuffocating((_, _, _) -> false))), ContentRegistry.MAIN));
             case SAPLING -> {
                 if (def.sapling() == null) {

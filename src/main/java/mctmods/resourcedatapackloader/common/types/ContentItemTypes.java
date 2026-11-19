@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.items.ContentLocatorItem;
 import mctmods.resourcedatapackloader.common.items.ContentPortwayItem;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
 import mctmods.resourcedatapackloader.common.items.ContentRollItem;
+import mctmods.resourcedatapackloader.common.items.ContentRunItem;
 import mctmods.resourcedatapackloader.common.items.ContentSeasonClockItem;
 import mctmods.resourcedatapackloader.common.items.ContentSleepingBagItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
@@ -56,7 +57,8 @@ public final class ContentItemTypes {
     public static final String CONTAINER = "container";
     public static final String CONTAINER_UPGRADE = "container_upgrade";
     public static final String PORTWAY = "portway";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY);
+    public static final String RECORD = "record";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY, RECORD);
     private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0, false);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, Identifier.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorType> SLOTS = Map.of("helmet", ArmorType.HELMET, "head", ArmorType.HELMET, "chestplate", ArmorType.CHESTPLATE, "chest", ArmorType.CHESTPLATE,
@@ -84,7 +86,8 @@ public final class ContentItemTypes {
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
             case CONTAINER_UPGRADE -> new ContentContainerUpgradeItem(def, properties);
             case PORTWAY -> portway(def, properties);
-            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : def.seasonClock() != null ? new ContentSeasonClockItem(def.seasonClock(), properties) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
+            case RECORD -> def.record() == null ? null : new Item(properties.stacksTo(1).jukeboxPlayable(ResourceKey.create(Registries.JUKEBOX_SONG, variant.id())));
+            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : def.seasonClock() != null ? new ContentSeasonClockItem(def, properties) : !def.acts() ? new Item(properties) : new ContentRunItem(def, properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };
     }
 

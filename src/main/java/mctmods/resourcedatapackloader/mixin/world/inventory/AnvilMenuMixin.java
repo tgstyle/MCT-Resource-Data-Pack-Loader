@@ -37,9 +37,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         rdpl$rightKept = ContentAnvils.rightAfterWork(menu, carried);
     }
 
-    @ModifyArg(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Container;setItem(ILnet/minecraft/world/item/ItemStack;)V", ordinal = 0), index = 1) private ItemStack rdpl$keepWhatStays(ItemStack emptied) { return rdpl$leftKept; }
+    @ModifyArg(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Container;setItem(ILnet/minecraft/world/item/ItemStack;)V", ordinal = 3), index = 1) private ItemStack rdpl$keepWhatStays(ItemStack emptied) { return rdpl$leftKept; }
 
     @Inject(method = "onTake", at = @At("RETURN")) private void rdpl$offerTheNext(Player player, ItemStack carried, CallbackInfo ci) {
+        ContentAnvils.onTaken(player, carried);
         if (!rdpl$rightKept.isEmpty()) {
             getSlot(1).set(rdpl$rightKept);
             rdpl$rightKept = ItemStack.EMPTY;

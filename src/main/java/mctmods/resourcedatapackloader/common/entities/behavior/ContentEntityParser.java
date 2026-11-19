@@ -90,7 +90,7 @@ public final class ContentEntityParser {
                         Json.getBoolean(json, "hideArmor", false), Json.getBoolean(json, "hideHeld", false), Json.getBoolean(json, "leashable", false),
                         Json.getBoolean(json, "steerable", false), Json.getBoolean(json, "ignoresSpawnRules", false),
                         Json.getBoolean(json, "bright", false), Json.getBoolean(json, "keepsBaseBaby", false),
-                        Json.getBoolean(json, "collectsExperience", false)),
+                        Json.getBoolean(json, "collectsExperience", false), dropsLead(key, json)),
                 Mth.clamp(Json.getFloat(json, "dropChance", 0.0F), 0.0F, 1.0F),
                 scale,
                 Math.max(0.05F, Json.getFloat(json, "angryScale", scale)),
@@ -127,6 +127,13 @@ public final class ContentEntityParser {
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
                 ContentTasks.parse(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
                 Json.getString(json, "dialog", "").trim());
+    }
+
+    private static boolean dropsLead(Identifier key, JsonObject json) {
+        String leash = Json.getString(json, "leash", "drop");
+        if ("delete".equals(leash)) { return false; }
+        if (!"drop".equals(leash)) { ContentLog.LOGGER.error("The leash '{}' in {} is not drop or delete, using drop", leash, key); }
+        return true;
     }
 
     private static List<PhaseDef> phases(Identifier key, JsonObject json, boolean hasBar) {

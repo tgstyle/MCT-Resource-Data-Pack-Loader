@@ -1,0 +1,77 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.scripts;
+
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonObject;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.resources.Identifier;
+
+public final class ScriptEventDef {
+    public static final String KIND = "event";
+    public static final String BLOCK_PLACE = "block_place";
+    public static final String BLOCK_BREAK = "block_break";
+    public static final String ENTITY_HURT = "entity_hurt";
+    public static final String ENTITY_SPAWN = "entity_spawn";
+    public static final String ENTITY_DESPAWN = "entity_despawn";
+    public static final String PLAYER_LOGIN = "player_login";
+    public static final String PLAYER_TICK = "player_tick";
+    public static final String SERVER_TICK = "server_tick";
+    public static final String DIMENSION_CHANGE = "dimension_change";
+    public static final String LOOT_DROP = "loot_drop";
+    public static final String ENTITY_TRAVEL = "entity_travel";
+    public static final String MOD_EVENT = "mod_event";
+    private static final Set<String> KINDS = Set.of(BLOCK_PLACE, BLOCK_BREAK, ENTITY_HURT, ENTITY_SPAWN, ENTITY_DESPAWN, PLAYER_LOGIN,
+        PLAYER_TICK, SERVER_TICK, DIMENSION_CHANGE, LOOT_DROP, ENTITY_TRAVEL, MOD_EVENT);
+    private static final Set<String> NEW_KINDS = Set.of(PLAYER_TICK, SERVER_TICK, DIMENSION_CHANGE, LOOT_DROP, ENTITY_TRAVEL, MOD_EVENT);
+
+    public final String kind;
+    public final int every;
+    public final EventFilter filter;
+    public final ScriptRef script;
+    @Nullable public final String className;
+
+    private ScriptEventDef(String kind, int every, EventFilter filter, ScriptRef script, @Nullable String className) {
+        this.kind = kind;
+        this.every = every;
+        this.filter = filter;
+        this.script = script;
+        this.className = className;
+    }
+
+    public static boolean disablesOnError(String kind) { return NEW_KINDS.contains(kind); }
+
+    private static int defaultEvery(String kind) { return PLAYER_TICK.equals(kind) || SERVER_TICK.equals(kind) ? 20 : 1; }
+
+    @Nullable private static Set<String> filterKeys(String kind) {
+        return switch (kind) {
+            case PLAYER_TICK, DIMENSION_CHANGE -> Set.of("dimension", "item");
+            case LOOT_DROP, ENTITY_TRAVEL -> Set.of("dimension", "entity", "item");
+            case SERVER_TICK, MOD_EVENT -> Set.of();
+            default -> null;
+        };
+    }
+
+    @Nullable public static ScriptEventDef read(Identifier owner, JsonObject json) {
+        String kind = Json.text(json, KIND, "");
+        if (!KINDS.contains(kind)) {
+            ContentLog.LOGGER.error("{}: unknown or missing event '{}', ignoring it", owner, kind);
+            return null;
+        }
+        int every = Json.number(json, "every", defaultEvery(kind));
+        if (every < 1) {
+            ContentLog.LOGGER.error("{}: every must be at least 1, ignoring it", owner);
+            return null;
+        }
+        EventFilter filter = EventFilter.read(owner, json.has("filter") ? Json.object(json, "filter") : null, kind, filterKeys(kind));
+        if (filter == null) { return null; }
+        ScriptRef script = ScriptRef.read(owner, json);
+        if (script == null) {
+            ContentLog.LOGGER.error("{}: needs script or scriptFile", owner);
+            return null;
+        }
+        String className = MOD_EVENT.equals(kind) ? Json.text(json, "class", "").trim() : null;
+        return new ScriptEventDef(kind, every, filter, script, className);
+    }
+}

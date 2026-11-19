@@ -82,14 +82,21 @@ public final class RecipeSwaps {
                 continue;
             }
             Map<Identifier, List<Identifier>> known = tags == null ? Map.of() : tags;
+            List<Identifier> held = entry.tagged() ? known.get(entry.to()) : null;
+            if (entry.tagged() && held == null) {
+                ContentLog.LOGGER.error("The to tag {} of a swap in {} is no item tag, skipping it", entry.to(), entry.key());
+                continue;
+            }
             Set<Identifier> from = entry.members(known);
-            if (from.contains(entry.to())) {
-                ContentLog.LOGGER.error("The to item {} of a recipe swap is matched by its own from, skipping it", entry.to());
+            if (!entry.tagged() && from.contains(entry.to())) {
+                ContentLog.LOGGER.error("The to item {} of a recipe swap is matched by its own from tags, skipping it", entry.to());
                 continue;
             }
             if (from.isEmpty()) { continue; }
             if (!indexed) { index(recipes, known); }
-            for (Map.Entry<Identifier, JsonElement> each : recipes.entrySet()) { swap(entry, from, each, parse, known); }
+            Set<Identifier> targets = held == null ? Set.of(entry.to()) : Set.copyOf(held);
+            RecipeSwapJson walker = new RecipeSwapJson(from, entry.to(), entry.output(), entry.tagged(), known);
+            for (Map.Entry<Identifier, JsonElement> each : recipes.entrySet()) { swap(entry, walker, targets, each, parse, known); }
         }
     }
 
@@ -102,7 +109,7 @@ public final class RecipeSwaps {
     public static void scripted() {
         if (noted || SwapEntry.all().isEmpty()) { return; }
         noted = true;
-        ContentLog.LOGGER.info("The recipe swap ran on the recipe JSON only, recipes made by a script are not swapped");
+        ContentLog.LOGGER.info("Recipe swaps ran on the recipe files only, recipes made by a script are not swapped");
     }
 
     private static void index(Map<Identifier, JsonElement> recipes, Map<Identifier, List<Identifier>> tags) {
@@ -117,17 +124,22 @@ public final class RecipeSwaps {
         for (Identifier item : RecipeSwapJson.inputs(json, tags)) { input(type(json), item, id); }
     }
 
-    private static String type(JsonObject json) { return json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : ""; }
+    static String type(JsonObject json) { return json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : ""; }
 
-    private static void swap(SwapEntry entry, Set<Identifier> from, Map.Entry<Identifier, JsonElement> each, Function<JsonElement, Optional<Recipe<?>>> parse, Map<Identifier, List<Identifier>> tags) {
+    private static void swap(SwapEntry entry, RecipeSwapJson walker, Set<Identifier> targets, Map.Entry<Identifier, JsonElement> each, Function<JsonElement, Optional<Recipe<?>>> parse, Map<Identifier, List<Identifier>> tags) {
         Identifier id = each.getKey();
-        if (id.getPath().startsWith("_") || !each.getValue().isJsonObject() || !entry.inScope(id)) { return; }
+        if (id.getPath().startsWith("_") || !each.getValue().isJsonObject()) { return; }
+        String type = type(each.getValue().getAsJsonObject());
+        if (!entry.inScope(id) && !entry.foreign(type)) { return; }
         JsonObject copy = each.getValue().deepCopy().getAsJsonObject();
-        RecipeSwapJson.Outcome found = RecipeSwapJson.rewrite(copy, from, entry.to(), entry.output(), tags);
+        RecipeSwapJson.Outcome found = entry.foreign(type) ? walker.rewriteForeign(copy, entry.paths()) : walker.rewrite(copy);
+        for (String path : found.missing) { ContentLog.LOGGER.debug("Recipe {} has no {} for the swap in {}, leaving that path", id, path, entry.key()); }
+        if (found.taggedResult) { ContentLog.LOGGER.info("Left the result of {} alone, a swap in {} to the tag {} cannot make a result", id, entry.key(), entry.to()); }
+        if (found.taggedSlot) { ContentLog.LOGGER.info("Left a slot of {} alone, it is written as a tag and a swap in {} to the tag {} does not rewrite a tag slot", id, entry.key(), entry.to()); }
         if (!found.changed() && !found.typed) { return; }
-        Optional<Recipe<?>> held = parsed(id, copy, parse);
+        Optional<Recipe<?>> held = parsed(id, copy, parse, "swap");
         if (held.isEmpty()) {
-            if (found.changed() && accepted(id, each.getValue().getAsJsonObject(), parse, entry)) {
+            if (found.changed() && accepted(id, each.getValue().getAsJsonObject(), parse, entry, type)) {
                 ContentLog.LOGGER.error("Left {} alone, its swapped form does not parse", id);
                 left(id, type(copy));
             }
@@ -135,37 +147,35 @@ public final class RecipeSwaps {
         }
         Recipe<?> parsed = held.get();
         boolean cooking = parsed instanceof AbstractCookingRecipe;
-        if (!inScope(parsed, entry)) {
+        if (!inScope(parsed, entry, type)) {
             ContentLog.LOGGER.debug("Recipe {} is of type {}, which a recipe swap does not touch", id, type(copy));
             return;
         }
         if (found.typed) { left(id, type(copy)); }
         if (!found.changed()) { return; }
-        if (cooking && found.slots > 0 && collides(type(copy), entry.to(), id)) {
+        if (cooking && found.slots > 0 && collides(type(copy), targets, id)) {
             ContentLog.LOGGER.info("Did not swap the ingredient of {}: {} already smelts in another {} recipe", id, entry.to(), type(copy));
             return;
         }
         each.setValue(copy);
         TOUCHED.add(id);
         ingredients += found.slots;
-        if (found.made != null) {
-            results++;
-            ORIGINALS.putIfAbsent(id, found.made);
-        }
+        results += found.results;
+        if (found.made != null) { ORIGINALS.putIfAbsent(id, found.made); }
         if (cooking && found.slots > 0) {
             unindex(type(copy), id);
             index(copy, id, tags);
         }
     }
 
-    private static boolean accepted(Identifier id, JsonObject json, Function<JsonElement, Optional<Recipe<?>>> parse, SwapEntry entry) {
-        Optional<Recipe<?>> kept = parsed(id, json, parse);
-        return kept.isPresent() && inScope(kept.get(), entry);
+    private static boolean accepted(Identifier id, JsonObject json, Function<JsonElement, Optional<Recipe<?>>> parse, SwapEntry entry, String type) {
+        Optional<Recipe<?>> kept = parsed(id, json, parse, "swap");
+        return kept.isPresent() && inScope(kept.get(), entry, type);
     }
 
-    private static boolean inScope(Recipe<?> recipe, SwapEntry entry) {
+    private static boolean inScope(Recipe<?> recipe, SwapEntry entry, String type) {
         boolean cooking = recipe instanceof AbstractCookingRecipe;
-        return recipe.getType() == RecipeType.CRAFTING || cooking && !entry.scoped();
+        return recipe.getType() == RecipeType.CRAFTING || cooking && !entry.scoped() || entry.foreign(type);
     }
 
     private static void unindex(String type, Identifier id) {
@@ -176,30 +186,33 @@ public final class RecipeSwaps {
 
     private static void input(String type, Identifier item, Identifier id) { INPUTS.computeIfAbsent(type, _ -> new HashMap<>()).computeIfAbsent(item, _ -> new HashSet<>()).add(id); }
 
-    private static Optional<Recipe<?>> parsed(Identifier id, JsonObject copy, Function<JsonElement, Optional<Recipe<?>>> parse) {
+    static Optional<Recipe<?>> parsed(Identifier id, JsonObject copy, Function<JsonElement, Optional<Recipe<?>>> parse, String pass) {
         try {
             Optional<Recipe<?>> recipe = parse.apply(copy);
-            if (recipe.isEmpty()) { ContentLog.LOGGER.debug("Recipe {} gave no recipe during the swap pass, conditions dropped it", id); }
+            if (recipe.isEmpty()) { ContentLog.LOGGER.debug("Recipe {} gave no recipe during the {} pass, conditions dropped it", id, pass); }
             return recipe;
         }
         catch (IllegalArgumentException | JsonParseException ex) {
-            ContentLog.LOGGER.debug("Recipe {} did not parse during the swap pass: {}", id, ex.getMessage());
+            ContentLog.LOGGER.debug("Recipe {} did not parse during the {} pass: {}", id, pass, ex.getMessage());
             return Optional.empty();
         }
     }
 
-    private static boolean collides(String type, Identifier to, Identifier id) {
+    private static boolean collides(String type, Set<Identifier> targets, Identifier id) {
         Map<Identifier, Set<Identifier>> inputs = INPUTS.get(type);
-        Set<Identifier> held = inputs == null ? null : inputs.get(to);
-        if (held == null) { return false; }
-        for (Identifier other : held) {
-            if (!other.equals(id)) { return true; }
+        if (inputs == null) { return false; }
+        for (Identifier target : targets) {
+            Set<Identifier> held = inputs.get(target);
+            if (held == null) { continue; }
+            for (Identifier other : held) {
+                if (!other.equals(id)) { return true; }
+            }
         }
         return false;
     }
 
     private static void left(Identifier id, String type) {
         if (!LEFT.add(id) || !LEFT_TYPES.add(type)) { return; }
-        ContentLog.LOGGER.info("Left {} alone, a recipe of type {} names a replaced item in a form RDPL cannot rewrite", id, type);
+        ContentLog.LOGGER.info("Left {} alone, a recipe of type {} names a replaced item where RDPL cannot rewrite it", id, type);
     }
 }

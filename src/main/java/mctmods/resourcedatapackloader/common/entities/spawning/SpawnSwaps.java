@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -33,10 +34,12 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.biome.Biome;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 
 public final class SpawnSwaps {
     private static final String FRESH = "rdplSwapFresh";
+    private static final String RAN = "rdplSpawnRan";
     private static final int NIGHT_FROM = 13000;
     private static final int NIGHT_TO = 23000;
     private static final int MAX_EXTRA = 16;
@@ -57,7 +60,7 @@ public final class SpawnSwaps {
         if (!spawner && reason != EntitySpawnReason.NATURAL && reason != EntitySpawnReason.CHUNK_GENERATION) { return; }
         Mob mob = event.getEntity();
         for (SpawnSwapDef swap : SWAPS) {
-            if ((!spawner || swap.fromSpawners()) && MobStats.targets(swap.ids(), swap.kinds(), mob)) {
+            if (swap.swaps() && (!spawner || swap.fromSpawners()) && MobStats.targets(swap.ids(), swap.kinds(), mob)) {
                 mob.getPersistentData().putBoolean(FRESH, spawner);
                 return;
             }
@@ -72,9 +75,21 @@ public final class SpawnSwaps {
         data.remove(FRESH);
         if (EntitySwap.active()) { return false; }
         for (SpawnSwapDef swap : SWAPS) {
-            if ((!fresh.get() || swap.fromSpawners()) && MobStats.targets(swap.ids(), swap.kinds(), entity) && ContentSpawnGate.holds(swap.gate(), entity) && applies(swap, level, entity)) { return swap(level, entity, swap); }
+            if (swap.swaps() && (!fresh.get() || swap.fromSpawners()) && MobStats.targets(swap.ids(), swap.kinds(), entity) && ContentSpawnGate.holds(swap.gate(), entity) && applies(swap, level, entity)) { return swap(level, entity, swap); }
         }
         return false;
+    }
+
+    public static void onJoinRuns(EntityJoinLevelEvent event) {
+        if (SWAPS.isEmpty() || event.getLevel().isClientSide()) { return; }
+        Entity entity = event.getEntity();
+        List<String> functions = new ArrayList<>();
+        for (SpawnSwapDef swap : SWAPS) {
+            if (!swap.runs().isEmpty() && MobStats.targets(swap.ids(), swap.kinds(), entity)) { functions.add(swap.runs()); }
+        }
+        if (functions.isEmpty() || entity.getPersistentData().getBooleanOr(RAN, false)) { return; }
+        entity.getPersistentData().putBoolean(RAN, true);
+        for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName().getString()); }
     }
 
     private static boolean swap(ServerLevel level, Entity was, SpawnSwapDef swap) {
@@ -135,8 +150,9 @@ public final class SpawnSwaps {
             if (Compat.entityType(pick.name()) == null) { ContentLog.LOGGER.error("{} can become {}, which nothing registers, leaving it out", owner, pick.name()); }
             else { becomes.add(pick); }
         }
-        if (becomes.isEmpty()) {
-            ContentLog.LOGGER.error("{} has no becomes entry that can be made, ignoring it", owner);
+        String runs = Json.getString(json, "runs", "");
+        if (becomes.isEmpty() && runs.isEmpty()) {
+            ContentLog.LOGGER.error("{} has no becomes entry that can be made and no function it runs, ignoring it", owner);
             return;
         }
         BlockGroup blocks = new BlockGroup();
@@ -147,7 +163,7 @@ public final class SpawnSwaps {
         }
         SpawnGateDef gate = SpawnGateDef.read(key, json, "Spawn swap file");
         SWAPS.add(new SpawnSwapDef(ids, kinds, gate, List.copyOf(becomes), Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), blocks, Json.getBoolean(json, "requireAll", false),
-                elsewhere(owner, json), Mth.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA), Json.getBoolean(json, "fromSpawners", false)));
+                elsewhere(owner, json), Mth.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA), Json.getBoolean(json, "fromSpawners", false), runs));
     }
 
     @Nullable private static SpawnSwapDef.Elsewhere elsewhere(String owner, JsonObject json) {

@@ -2,7 +2,7 @@
 
 **하나의 폴더로 Minecraft나 모드가 제공하는 모든 것을 재정의하고, JSON으로 새로운 콘텐츠를 정의하며, 클라이언트와 서버를 가리지 않고 모든 월드에서 생성되는 내용을 제어합니다. 플레이어가 따로 켜야 하는 것은 없습니다.**
 
-동작하는 예시 13개입니다. 아무거나 그대로 `rdploader`에 넣고 각 파일이 어떻게 쓰였는지 살펴보세요.
+동작하는 예시 14개입니다. 아무거나 그대로 `rdploader`에 넣고 각 파일이 어떻게 쓰였는지 살펴보세요.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip)은 로더가 읽는 거의 모든 종류의 파일을 사용합니다: 블록, 아이템, 유체, 크리에이티브 탭, 생물 군계, 월드 템플릿, 게이트 뒤의 차원, 월드젠, 물약과 그 양조, 주민과 거래, 레시피, 전리품, 바닐라 재정의, 소리, 발전 과제, 함수. readme에 게임에서 확인할 내용이 적혀 있습니다.
 - [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip)은 오버월드를 텅 빈 공허로 만들고 높이 구간마다 모양 하나씩 월드젠을 허공에 띄워, 각각을 따로 보기 쉽게 했습니다.
@@ -17,6 +17,7 @@
 - [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip)은 게임의 마을 하나를 둘러싼 평지 월드를 만들고 접속하면 플레이어에게 흉조를 줍니다. 바닐라 일리저, 마녀, 팩 자체의 약탈자, 습격 대장, 도끼 투척병, 파괴수로 이루어진 다섯 웨이브, 픽셀 맵 아이콘이 있는 팩 자체 효과로서의 흉조와 마을의 영웅, 팩 자체의 종 블록, 흉조를 다시 얻게 하는 음료, 습격을 끝내는 함수가 들어 있습니다.
 - [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip)은 평지 월드를 게임장으로 바꿉니다. 가중치가 있는 팩 주사위, 스스로 다시 섞이는 몹 덱과 섞기 전에는 비어 있는 운세 덱, 우클릭으로 2d6을 굴리는 주사위 컵, 하우스를 상대로 턴마다 진행하며 비기면 동점 결정 뽑기로 승부를 가르는 주사위 대결, 몹을 말로 쓰며 컴퓨터와 두는 체스와 체커가 있습니다.
 - [RDPLExampleColony.zip](../example/RDPLExampleColony.zip)은 소개를 닫으면 작업장을 스스로 짓고 주민 일꾼을 모든 종류의 작업 지시에 투입합니다. 곡괭이에 따라 작업 범위가 넓어지는 광부, 베어 낸 것을 간직하는 벌목꾼, 밀을 일정량 비축해 두는 농부, 조약돌을 나르는 운반꾼이 있으며, 각각 표지판, 도구, 고용, 비축 상자로 시작합니다.
+- [RDPLExampleScripts.zip](../example/RDPLExampleScripts.zip)은 작은 사당에서 모든 스크립트 형태를 보여 줍니다. 여섯 이벤트 모두의 인라인 스크립트와 파일 스크립트가 든 이벤트 항목, 각 필터, `every`, 스크립트가 취소하는 이벤트, 사용할 때 스크립트를 실행하는 아이템 두 개, 그리고 `rdpl`이 닿는 것 대부분을 다룹니다. 저장된 데이터와 단계부터 점수, 카드, 구조물까지입니다.
 
 이 문서는 26.x 빌드용으로 26.1.2, 26.2, 26.3을 다루며, 셋 모두 같은 팩을 읽습니다.
 
@@ -51,6 +52,7 @@
 - [모델, 블록 상태, 텍스처](#모델-블록-상태-텍스처)
 - [바닐라가 블록을 제대로 처리하게 하기](#바닐라가-블록을-제대로-처리하게-하기)
 - [아이템](#아이템)
+  - [파생 아이템](#파생-아이템)
 - [폭죽](#폭죽)
 - [유체](#유체)
 - [재질, 탭, 소리, 태그](#재질-탭-소리-태그)
@@ -62,6 +64,7 @@
 - [아이템 잠금](#아이템-잠금)
 - [아이템 무게](#아이템-무게)
 - [화로 레시피와 연료](#화로-레시피와-연료)
+- [레시피 제거](#레시피-제거)
 - [레시피 교체](#레시피-교체)
 - [레시피 잠금](#레시피-잠금)
 - [툴팁](#툴팁)
@@ -126,6 +129,7 @@
 - [주사위와 덱](#주사위와-덱)
 
 **제어**
+- [스크립팅](#스크립팅)
 - [제어 계층](#제어-계층)
 - [그룹별 역할](#그룹별-역할)
 
@@ -163,88 +167,96 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 
 `data/` 아래:
 
-| 경로                                         | 내용                                                                                                                                                |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                  | 블록 정의. [블록](#블록)                                                                                                                            |
-| `<namespace>/curioslots/*.json`              | 아이템을 착용할 수 있는 Curios 슬롯 종류. [Curios 슬롯 종류](#curios-슬롯-종류)                                                                     |
-| `<namespace>/items/*.json`                   | 아이템 정의. [아이템](#아이템)                                                                                                                      |
-| `<namespace>/fluids/*.json`                  | 블록과 양동이가 딸린 유체. [유체](#유체)                                                                                                            |
-| `<namespace>/fluid_rules/*.json`             | 바닐라 물과 용암에 반응을 붙입니다. [물과 용암의 규칙](#물과-용암의-규칙)                                                                           |
-| `<namespace>/materials/*.json`               | 도구와 방어구 재질. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                      |
-| `<namespace>/tabs/*.json`                    | 크리에이티브 탭. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                         |
-| `<namespace>/sounds/*.json`                  | 소리 이벤트. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                             |
-| `<namespace>/biomes/*.json`                  | 생물 군계 정의. [생물 군계](#생물-군계)                                                                                                             |
-| `<namespace>/worldgen/*.json`                | 무엇이 어디에 생성되는지. [월드젠 항목](#월드젠-항목)                                                                                               |
-| `<namespace>/caveregions/*.json`             | 지하에 덧칠하는 이름 붙은 지역. [동굴 지역](#동굴-지역)                                                                                             |
-| `<namespace>/dimensions/*.json`              | 차원 정의. [차원](#차원)                                                                                                                            |
-| `<namespace>/worldtemplates/*.json`          | 월드 하나의 설정 전체를 한 파일에 담은 것. [월드 템플릿](#월드-템플릿)                                                                              |
-| `<namespace>/worldintro/*.json`              | 플레이어가 월드에 들어올 때 보여 주는 페이지. [월드 소개](#월드-소개)                                                                               |
-| `<namespace>/gates/*.json`                   | 포털과 차원에 거는 조건. [포털과 게이트](#포털과-게이트)                                                                                            |
-| `<namespace>/gamerules/*.json`               | 새 월드의 게임 규칙. [게임 규칙](#게임-규칙)                                                                                                        |
-| `<namespace>/teams/*.json`                   | 바닐라 스코어보드의 진영과 거기에 합류하는 대상. [팀](#팀)                                                                                          |
-| `<namespace>/scoring/*.json`                 | 목표, 점수, 경기가 끝나는 방식. [점수 계산](#점수-계산)                                                                                             |
-| `<namespace>/raids/*.json`                   | 플레이어가 흉조를 마을에 가져오면 몰려오는 웨이브. [습격](#습격)                                                                                    |
-| `<namespace>/entities/*.json`                | 이미 있는 엔티티를 바탕으로 만든 엔티티 변형. [엔티티 변형](#엔티티-변형)                                                                           |
-| `<namespace>/hardness/*.json`                | 블록 그룹의 채굴 시간과 폭발 배율. [경도 그룹](#경도-그룹)                                                                                          |
-| `<namespace>/affixes/*.json`                 | 플레이어가 처음 들었을 때 아이템이 굴리는 무작위 속성 보너스와 소켓. [접사와 소켓](#접사와-소켓)                                                    |
-| `<namespace>/gems/*.json`                    | 모루가 속성 보너스를 위해 소켓에 끼우는 아이템. [접사와 소켓](#접사와-소켓)                                                                         |
-| `<namespace>/anvils/*.json`                  | 모루가 이름 붙은 아이템에 부여하는 마법 부여, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                         |
-| `<namespace>/enchanting/*.json`              | 마법 부여대가 내놓고 요구하고 가져가는 것. 마법마다, 아이템마다, 그리고 전체. [마법 부여대](#마법-부여대)                                           |
-| `<namespace>/sleeping/*.json`                | 침대가 리스폰 지점을 정할지, 밤을 건너뛰려면 몇 명이 자야 하는지, 플레이어가 잠들고 깨고 아침이 올 때 나오는 줄. [수면](#수면)                      |
-| `<namespace>/cards/*.json`                   | 트리거에 따라 화면에 표시되는 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                                                                    |
-| `<namespace>/dialogs/*.json`                 | 엔티티 변형과 함께 쓰는 갈래 대화: 텍스트 노드와 선택지. [대화](#대화)                                                                              |
-| `<namespace>/dice/*.json`                    | 면마다 가중치가 있는 팩 주사위, 카드 덱, 굴림을 누가 듣는지, 결과의 문구. [주사위와 덱](#주사위와-덱)                                               |
-| `<namespace>/games/*.json`                   | 몹을 말로 쓰는 보드 게임: 판, 말과 그 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                                          |
-| `<namespace>/ranks/*.json`                   | 몹이 스폰될 때 뽑을 수 있는 무작위 단계: 추가 체력, 피해, 효과, 전리품, 이름표. [몹 등급](#몹-등급)                                                 |
-| `<namespace>/hearts/*.json`                  | 플레이어가 발전 과제, 다양한 식단, 팀 점수로 얻는 추가 체력. 플레이어와 함께 저장되며, 다시 잃는 방법도 있습니다. [최대 체력 보상](#최대-체력-보상) |
-| `<namespace>/orders/*.json`                  | 엔티티 변형이 상자 앞의 플레이어를 위해 하는 일. [작업 지시](#작업-지시)                                                                            |
-| `<namespace>/exposures/*.json`               | 지정한 블록 근처, 지정한 아이템을 지녔을 때, 지정한 차원, 생물 군계, 구조물, 동굴 지역, 높이에서 플레이어를 노출시키는 위험 요소. [노출](#노출)     |
-| `<namespace>/overrides/<target>/<name>.json` | 기존 블록, 아이템, 물약 유형의 속성을 그 자리에서 바꾸는 것. [속성 재정의](#속성-재정의)                                                            |
-| `<namespace>/villages/*.json`                | 도시나 마을이 지을 수 있는 구획. [마을 구획](#마을-구획)                                                                                            |
-| `<namespace>/pathintersects/*.json`          | 마을 도로가 만나는 곳에 칠하는 디자인. [마을 도로](#마을-도로)                                                                                      |
-| `<namespace>/structuremaps/*.json`           | 격자 위에서 하나의 큰 건물로 조합하는 템플릿. [구조물 맵](#구조물-맵)                                                                               |
-| `<namespace>/citymaps/*.json`                | 도시를 무작위로 만드는 대신 그것을 바탕으로 배치하는, 손으로 그린 거리 계획. [도시 배치 맵](#도시-배치-맵)                                          |
-| `<namespace>/portalframes/*.json`            | 플레이어가 짓고 점화할 수 있는 프레임. [포털 프레임](#포털-프레임)                                                                                  |
-| `<namespace>/blastplaster/*.json`            | 폭발 뒤 Blast Plaster가 하는 일, 차원별. [Blast Plaster 연동](#blast-plaster-연동)                                                                  |
-| `<namespace>/structures/*.nbt`               | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                              |
-| `<namespace>/recipes/*.json`                 | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                    |
-| `<namespace>/recipe_removals/*.json`         | 이름, 네임스페이스, 결과물로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                       |
-| `<namespace>/recipe_swaps/*.json`            | 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체)                                                         |
-| `<namespace>/item_locks/*.json`              | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                            |
-| `<namespace>/weights/*.json`                 | 아이템 무게, 짐 한도와 무게 단계. [아이템 무게](#아이템-무게)                                                                                       |
-| `<namespace>/recipe_locks/*.json`            | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                  |
-| `<namespace>/spawn_locks/*.json`             | 조건이 충족될 때까지 스폰되지 않는 몹. [스폰 잠금](#스폰-잠금)                                                                                      |
-| `<namespace>/spawn_swaps/*.json`             | 다른 것으로 스폰되는 몹과, 그 옆에 생기는 추가 복사본. [스폰 교체](#스폰-교체)                                                                      |
-| `<namespace>/disabled/*.json`                | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                                |
-| `<namespace>/furnace/*.json`                 | 추가하거나 제거하는 화로 레시피. [화로 레시피와 연료](#화로-레시피와-연료)                                                                          |
-| `<namespace>/tooltips/*.json`                | 추가 툴팁 줄. [툴팁](#툴팁)                                                                                                                         |
-| `<namespace>/fuels/*.json`                   | 연소 시간. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                                |
-| `<namespace>/brewing/*.json`                 | 양조기 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                        |
-| `<namespace>/potions/*.json`                 | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                            |
-| `<namespace>/potion_types/*.json`            | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                        |
-| `<namespace>/enchantments/*.json`            | 사용자 지정 마법. [마법 부여](#마법-부여)                                                                                                           |
-| `<namespace>/villagers/*.json`               | 주민 직업. [주민과 거래](#주민과-거래)                                                                                                              |
-| `<namespace>/trades/*.json`                  | 직업이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                     |
-| `<namespace>/loot_tables/*.json`             | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                             |
-| `<namespace>/loot_injections/*.json`         | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                     |
-| `<namespace>/loot_removals/*.json`           | 이미 있는 테이블에서 빼는 항목, 또는 테이블 전체를 비운 것. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                         |
-| `<namespace>/block_drops/*.json`             | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                         |
-| `<namespace>/harvests/*.json`                | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                                     |
-| `<namespace>/veins/*.json`                   | 도구 하나로 한 번에 캐는 블록 그룹으로, 제한과 허기 비용을 정합니다. [광맥 채굴](#광맥-채굴)                                                        |
-| `<namespace>/carries/*.json`                 | 웅크린 플레이어가 들어 올렸다가 다시 내려놓는 블록과 몹. [들기](#들기)                                                                              |
-| `<namespace>/mob_drops/*.json`               | 이름이 지정된 몹의 드롭에서 빼거나 더하는 아이템. [몹 드롭](#몹-드롭)                                                                               |
-| `<namespace>/player_loot/*.json`             | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                                        |
-| `<namespace>/soulbound/*.json`               | 죽어도 플레이어가 계속 지니는 아이템. [영혼 귀속 아이템](#영혼-귀속-아이템)                                                                         |
-| `<namespace>/diets/*.json`                   | 같은 음식을 반복하면 덜 채우고 다양하게 먹으면 더 채우도록 만드는 규칙. [음식 다양성](#음식-다양성)                                                 |
-| `<namespace>/columns/*.json`                 | 플레이어가 부순 블록 위에 이어진 떨어지는 블록들을 함께 부숩니다. [떨어지는 기둥](#떨어지는-기둥)                                                   |
-| `<namespace>/leaf_decay/*.json`              | 변하는 블록 옆의 나뭇잎은 짧은 타이머로 소멸합니다. [나뭇잎 소멸](#나뭇잎-소멸)                                                                     |
-| `<namespace>/tree_growth/*.json`             | 바닐라와 다른 모드의 묘목이 나무를 몇 블록씩 나눠 키웁니다. [나무 성장 규칙](#나무-성장-규칙)                                                       |
-| `<namespace>/flower_spreads/*.json`          | 풀이나 다른 블록에 뼛가루를 쓸 때 주변에 추가로 놓이는 꽃. [꽃 퍼뜨리기](#꽃-퍼뜨리기)                                                              |
-| `<namespace>/paired_doors/*.json`            | 문 옆에 경첩이 좌우 대칭인 이웃 문이 함께 열리고 닫힙니다. [짝 문](#짝-문)                                                                          |
-| `<namespace>/advancements/*.json`            | 발전 과제. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
-| `<namespace>/functions/*.mcfunction`         | 함수 파일. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
-| `<namespace>/tags/<kind>/*.json`             | 태그, 게임 자체 형식. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                    |
-| `<namespace>/registry_remap/*.json`          | 옛 이름을 새 이름에 대응시킨 것. [레지스트리 이름 변경](#레지스트리-이름-변경)                                                                      |
+| 경로                                         | 내용                                                                                                                                                         |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<namespace>/blocks/*.json`                  | 블록 정의. [블록](#블록)                                                                                                                                     |
+| `<namespace>/curioslots/*.json`              | 아이템을 착용할 수 있는 Curios 슬롯 종류. [Curios 슬롯 종류](#curios-슬롯-종류)                                                                              |
+| `<namespace>/items/*.json`                   | 아이템 정의. [아이템](#아이템)                                                                                                                               |
+| `<namespace>/fluids/*.json`                  | 블록과 양동이가 딸린 유체. [유체](#유체)                                                                                                                     |
+| `<namespace>/fluid_rules/*.json`             | 바닐라 물과 용암에 반응을 붙입니다. [물과 용암의 규칙](#물과-용암의-규칙)                                                                                    |
+| `<namespace>/materials/*.json`               | 도구와 방어구 재질. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                               |
+| `<namespace>/tabs/*.json`                    | 크리에이티브 탭. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                                  |
+| `<namespace>/sounds/*.json`                  | 소리 이벤트. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                                      |
+| `<namespace>/biomes/*.json`                  | 생물 군계 정의. [생물 군계](#생물-군계)                                                                                                                      |
+| `<namespace>/worldgen/*.json`                | 무엇이 어디에 생성되는지. [월드젠 항목](#월드젠-항목)                                                                                                        |
+| `<namespace>/caveregions/*.json`             | 지하에 덧칠하는 이름 붙은 지역. [동굴 지역](#동굴-지역)                                                                                                      |
+| `<namespace>/dimensions/*.json`              | 차원 정의. [차원](#차원)                                                                                                                                     |
+| `<namespace>/worldtemplates/*.json`          | 월드 하나의 설정 전체를 한 파일에 담은 것. [월드 템플릿](#월드-템플릿)                                                                                       |
+| `<namespace>/worldintro/*.json`              | 플레이어가 월드에 들어올 때 보여 주는 페이지. [월드 소개](#월드-소개)                                                                                        |
+| `<namespace>/gates/*.json`                   | 포털과 차원에 거는 조건. [포털과 게이트](#포털과-게이트)                                                                                                     |
+| `<namespace>/gamerules/*.json`               | 새 월드의 게임 규칙. [게임 규칙](#게임-규칙)                                                                                                                 |
+| `<namespace>/teams/*.json`                   | 바닐라 스코어보드의 진영과 거기에 합류하는 대상. [팀](#팀)                                                                                                   |
+| `<namespace>/scoring/*.json`                 | 목표, 점수, 경기가 끝나는 방식. [점수 계산](#점수-계산)                                                                                                      |
+| `<namespace>/raids/*.json`                   | 플레이어가 흉조를 마을에 가져오면 몰려오는 웨이브. [습격](#습격)                                                                                             |
+| `<namespace>/entities/*.json`                | 이미 있는 엔티티를 바탕으로 만든 엔티티 변형. [엔티티 변형](#엔티티-변형)                                                                                    |
+| `<namespace>/hardness/*.json`                | 블록 그룹의 채굴 시간과 폭발 배율. [경도 그룹](#경도-그룹)                                                                                                   |
+| `<namespace>/affixes/*.json`                 | 플레이어가 처음 들었을 때 아이템이 굴리는 무작위 속성 보너스와 소켓. [접사와 소켓](#접사와-소켓)                                                             |
+| `<namespace>/gems/*.json`                    | 모루가 속성 보너스를 위해 소켓에 끼우는 아이템. [접사와 소켓](#접사와-소켓)                                                                                  |
+| `<namespace>/anvils/*.json`                  | 모루가 이름 붙은 아이템에 부여하는 마법 부여, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                                  |
+| `<namespace>/enchanting/*.json`              | 마법 부여대가 내놓고 요구하고 가져가는 것. 마법마다, 아이템마다, 그리고 전체. [마법 부여대](#마법-부여대)                                                    |
+| `<namespace>/sleeping/*.json`                | 침대가 리스폰 지점을 정할지, 밤을 건너뛰려면 몇 명이 자야 하는지, 플레이어가 잠들고 깨고 아침이 올 때 나오는 줄. [수면](#수면)                               |
+| `<namespace>/cards/*.json`                   | 트리거에 따라 화면에 표시되는 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                                                                             |
+| `<namespace>/dialogs/*.json`                 | 엔티티 변형과 함께 쓰는 갈래 대화: 텍스트 노드와 선택지. [대화](#대화)                                                                                       |
+| `<namespace>/dice/*.json`                    | 면마다 가중치가 있는 팩 주사위, 카드 덱, 굴림을 누가 듣는지, 결과의 문구. [주사위와 덱](#주사위와-덱)                                                        |
+| `<namespace>/games/*.json`                   | 몹을 말로 쓰는 보드 게임: 판, 말과 그 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                                                   |
+| `<namespace>/ranks/*.json`                   | 몹이 스폰될 때 뽑을 수 있는 무작위 단계: 추가 체력, 피해, 효과, 전리품, 이름표. [몹 등급](#몹-등급)                                                          |
+| `<namespace>/hearts/*.json`                  | 플레이어가 발전 과제, 다양한 식단, 팀 점수로 얻는 추가 체력. 플레이어와 함께 저장되며, 다시 잃는 방법도 있습니다. [최대 체력 보상](#최대-체력-보상)          |
+| `<namespace>/orders/*.json`                  | 엔티티 변형이 상자 앞의 플레이어를 위해 하는 일. [작업 지시](#작업-지시)                                                                                     |
+| `<namespace>/exposures/*.json`               | 지정한 블록 근처, 지정한 아이템을 지녔을 때, 지정한 차원, 생물 군계, 구조물, 동굴 지역, 높이에서 플레이어를 노출시키는 위험 요소. [노출](#노출)              |
+| `<namespace>/overrides/<target>/<name>.json` | 기존 블록, 아이템, 물약 유형의 속성을 그 자리에서 바꾸는 것. [속성 재정의](#속성-재정의)                                                                     |
+| `<namespace>/villages/*.json`                | 도시나 마을이 지을 수 있는 구획. [마을 구획](#마을-구획)                                                                                                     |
+| `<namespace>/pathintersects/*.json`          | 마을 도로가 만나는 곳에 칠하는 디자인. [마을 도로](#마을-도로)                                                                                               |
+| `<namespace>/structuremaps/*.json`           | 격자 위에서 하나의 큰 건물로 조합하는 템플릿. [구조물 맵](#구조물-맵)                                                                                        |
+| `<namespace>/citymaps/*.json`                | 도시를 무작위로 만드는 대신 그것을 바탕으로 배치하는, 손으로 그린 거리 계획. [도시 배치 맵](#도시-배치-맵)                                                   |
+| `<namespace>/portalframes/*.json`            | 플레이어가 짓고 점화할 수 있는 프레임. [포털 프레임](#포털-프레임)                                                                                           |
+| `<namespace>/blastplaster/*.json`            | 폭발 뒤 Blast Plaster가 하는 일, 차원별. [Blast Plaster 연동](#blast-plaster-연동)                                                                           |
+| `<namespace>/structures/*.nbt`               | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                       |
+| `<namespace>/recipes/*.json`                 | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                             |
+| `<namespace>/recipe_removals/*.json`         | 이름, 네임스페이스, 결과물로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                |
+| `<namespace>/recipe_swaps/*.json`            | 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체)                                                                  |
+| `<namespace>/zones/*.json`                   | 플레이어가 부수거나, 놓거나, 쓰거나, 열거나, 날 수 없는 고정된 구역입니다. [구역 규칙](#구역-규칙)                                                           |
+| `<namespace>/schedules/*.json`               | 타이머에 따라 한 번 또는 반복해서, 서버로서 실행되는 함수입니다. [예약 실행](#예약-실행)                                                                     |
+| `<namespace>/commands/*.json`                | 함수나 스크립트를 실행하는, 타입 있는 인자를 받는 나만의 슬래시 명령어입니다. [팩 명령어](#팩-명령어)                                                        |
+| `<namespace>/syncdata/*.json`                | 이름 붙은 값으로, 플레이어마다, 그리고 월드 전체에 대해 보관됩니다. 카드, 대화, 명령어, 스크립트가 값을 설정하고 표시합니다. [동기화 데이터](#동기화-데이터) |
+| `<namespace>/command_guards/*.json`          | 조건이 맞을 때까지 플레이어의 다른 명령어를 막습니다. [명령어 가드](#명령어-가드)                                                                            |
+| `<namespace>/scripts/events/*.json`          | 블록이 놓이거나 플레이어가 접속하는 등 게임 이벤트가 일어날 때 실행되는 스크립트입니다. [스크립팅](#스크립팅)                                                |
+| `<namespace>/scripts/registries/*.json`      | 게임이 무언가를 등록하는 동안 실행되어 레지스트리에 객체를 추가하는 스크립트입니다. [레지스트리 스크립트](#레지스트리-스크립트)                              |
+| `<namespace>/item_locks/*.json`              | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                                     |
+| `<namespace>/weights/*.json`                 | 아이템 무게, 짐 한도와 무게 단계. [아이템 무게](#아이템-무게)                                                                                                |
+| `<namespace>/recipe_locks/*.json`            | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                           |
+| `<namespace>/spawn_locks/*.json`             | 조건이 충족될 때까지 스폰되지 않는 몹. [스폰 잠금](#스폰-잠금)                                                                                               |
+| `<namespace>/spawn_swaps/*.json`             | 다른 것으로 스폰되는 몹과, 그 옆에 생기는 추가 복사본. [스폰 교체](#스폰-교체)                                                                               |
+| `<namespace>/hurt_rules/*.json`              | 다른 몹을 해치는 몹의 공격을 취소하거나 함수를 실행합니다. [피해 규칙](#피해-규칙)                                                                           |
+| `<namespace>/disabled/*.json`                | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                                         |
+| `<namespace>/furnace/*.json`                 | 추가하거나 제거하는 화로 레시피. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                   |
+| `<namespace>/tooltips/*.json`                | 추가 툴팁 줄. [툴팁](#툴팁)                                                                                                                                  |
+| `<namespace>/fuels/*.json`                   | 연소 시간. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                                         |
+| `<namespace>/brewing/*.json`                 | 양조기 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                 |
+| `<namespace>/potions/*.json`                 | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                     |
+| `<namespace>/potion_types/*.json`            | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                 |
+| `<namespace>/enchantments/*.json`            | 사용자 지정 마법. [마법 부여](#마법-부여)                                                                                                                    |
+| `<namespace>/villagers/*.json`               | 주민 직업. [주민과 거래](#주민과-거래)                                                                                                                       |
+| `<namespace>/trades/*.json`                  | 직업이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                              |
+| `<namespace>/loot_tables/*.json`             | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                      |
+| `<namespace>/loot_injections/*.json`         | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                              |
+| `<namespace>/loot_removals/*.json`           | 이미 있는 테이블에서 빼는 항목, 또는 테이블 전체를 비운 것. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                  |
+| `<namespace>/block_drops/*.json`             | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                                  |
+| `<namespace>/harvests/*.json`                | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                                              |
+| `<namespace>/veins/*.json`                   | 도구 하나로 한 번에 캐는 블록 그룹으로, 제한과 허기 비용을 정합니다. [광맥 채굴](#광맥-채굴)                                                                 |
+| `<namespace>/carries/*.json`                 | 웅크린 플레이어가 들어 올렸다가 다시 내려놓는 블록과 몹. [들기](#들기)                                                                                       |
+| `<namespace>/mob_drops/*.json`               | 이름이 지정된 몹의 드롭에서 빼거나 더하는 아이템. [몹 드롭](#몹-드롭)                                                                                        |
+| `<namespace>/player_loot/*.json`             | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                                                 |
+| `<namespace>/soulbound/*.json`               | 죽어도 플레이어가 계속 지니는 아이템. [영혼 귀속 아이템](#영혼-귀속-아이템)                                                                                  |
+| `<namespace>/diets/*.json`                   | 같은 음식을 반복하면 덜 채우고 다양하게 먹으면 더 채우도록 만드는 규칙. [음식 다양성](#음식-다양성)                                                          |
+| `<namespace>/columns/*.json`                 | 플레이어가 부순 블록 위에 이어진 떨어지는 블록들을 함께 부숩니다. [떨어지는 기둥](#떨어지는-기둥)                                                            |
+| `<namespace>/leaf_decay/*.json`              | 변하는 블록 옆의 나뭇잎은 짧은 타이머로 소멸합니다. [나뭇잎 소멸](#나뭇잎-소멸)                                                                              |
+| `<namespace>/tree_growth/*.json`             | 바닐라와 다른 모드의 묘목이 나무를 몇 블록씩 나눠 키웁니다. [나무 성장 규칙](#나무-성장-규칙)                                                                |
+| `<namespace>/flower_spreads/*.json`          | 풀이나 다른 블록에 뼛가루를 쓸 때 주변에 추가로 놓이는 꽃. [꽃 퍼뜨리기](#꽃-퍼뜨리기)                                                                       |
+| `<namespace>/paired_doors/*.json`            | 문 옆에 경첩이 좌우 대칭인 이웃 문이 함께 열리고 닫힙니다. [짝 문](#짝-문)                                                                                   |
+| `<namespace>/advancements/*.json`            | 발전 과제. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                   |
+| `<namespace>/functions/*.mcfunction`         | 함수 파일. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                   |
+| `<namespace>/tags/<kind>/*.json`             | 태그, 게임 자체 형식. [재질, 탭, 소리, 태그](#재질-탭-소리-태그)                                                                                             |
+| `<namespace>/registry_remap/*.json`          | 옛 이름을 새 이름에 대응시킨 것. [레지스트리 이름 변경](#레지스트리-이름-변경)                                                                               |
 
 `assets/` 아래:
 
@@ -614,7 +626,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                 |
 | `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `soulbound`, `advancements`, `functions`, `veins`, `weights`                | `entities`, `villagers`, `portalframes`, `curioslots`                                                                |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`, `spawn_swaps`                              | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `zones`, `schedules`, `raids`, `hardness`, `blastplaster`, `spawn_swaps`        | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                            |                                                                                                                      |
 
 오른쪽 열은 절대적인 한계입니다. 바닐라 클라이언트에 없는 블록, 아이템, 엔티티 유형, 소리, 물약 효과는 클라이언트에 설명할 수 없고, 차원의 자체 포털도 팩의 블록 중 하나이며, 노출은 그 콘텐츠와 함께일 때만 로드됩니다. 왼쪽 열이 동작하는 것은 거기 있는 모든 것이 전부 서버 측에서 돌거나, 바닐라가 이미 읽는 데이터 팩 항목(생물 군계, 동굴 지역, 차원 유형, 인챈트)으로 클라이언트에 전달되거나, 바닐라가 이미 쓰는 패킷(서버가 채우는 제작 결과 칸, 일반 발전 과제 패킷, 상태 메시지로 표시되는 게이트 거부, 바닐라의 게임 모드, 제목, 순간 이동 패킷으로 이루어진 사전 생성 대기)으로 전달되기 때문입니다.
@@ -812,6 +824,8 @@ thatmod.jar
 | `portway`    | 사용한 플레이어의 지점 목록에 자신을 추가하고, 그중 어디로든 이동하는 메뉴를 엽니다. 제한, 비용, 게이트를 정할 수 있습니다. 높이는 1칸이나 2칸이고 플레이어를 향하게 할 수도 있습니다. 블록 엔티티가 있습니다  |
 | `bell`       | 게임의 마을에 있는 것과 같은 종으로, 옆면을 사용하거나 레드스톤이나 발사체가 맞으면 울리고, 틀 안에서 흔들리며, 근처의 습격자를 발광하게 합니다. 블록 상태가 방향과 매달린 방식을 담습니다                     |
 | `log`        | 설치한 면을 향해 회전하며, 나무 베기와 Blast Plaster가 줄기로 취급하도록 `minecraft:logs` 태그를 가집니다                                                                                                      |
+| `pillar`     | `log`처럼 설치한 면을 향해 회전하지만 `minecraft:logs` 태그는 갖지 않으므로, 나무 베기와 Blast Plaster가 건드리지 않습니다                                                                                     |
+| `carpet`     | 블록 높이의 16분의 1인 얇은 층으로, 바닐라 카펫과 같습니다. 공중에는 놓을 수 없고, 아래 블록이 사라지면 부서지며 아이템을 떨어뜨립니다                                                                         |
 | `leaves`     | 썩고, 가위로 깎이고, 색조가 입혀지고, 묘목을 드롭하며, `minecraft:leaves` 태그를 가집니다. `opaque`로 두면 빠른 그래픽의 잎처럼 불투명하게 그려지며, 속이 비쳐 보이게 하려면 `"opaque": false`로 설정하세요    |
 | `sapling`    | 나무나 여러분의 구조물 중 하나로 자랍니다                                                                                                                                                                      |
 | `crop`       | 단계를 거쳐 자라고, 씨앗과 수확물 아이템을 드롭하며, 파일에 빠진 쪽은 밀 씨앗과 밀이 됩니다. `tall`을 쓰면 여러 블록 높이가 됩니다                                                                             |
@@ -870,6 +884,7 @@ thatmod.jar
 | `portal`                     | 포털만                                     | 객체                                              | 없음                                                                                        | [포털과 게이트](#포털과-게이트)를 참고하세요                                                                                                                                                                                                                                                                                                                                                            |
 | `container`                  | 컨테이너만                                 | 객체                                              | 없음                                                                                        | [컨테이너](#컨테이너)를 참고하세요                                                                                                                                                                                                                                                                                                                                                                      |
 | `portway`                    | 포트웨이 전용                              | 객체                                              | 없음                                                                                        | [포트웨이](#포트웨이) 참고                                                                                                                                                                                                                                                                                                                                                                              |
+| `tagged`                     | 아니요                                     | `true` 또는 `false`                               | `true`                                                                                      | `log` 전용입니다. `false`면 블록이 `minecraft:logs` 태그에 들어가지 않으며, `pillar`가 바로 이렇게 동작합니다                                                                                                                                                                                                                                                                                           |
 | `bell`                       | 종만                                       | 객체                                              | 없음                                                                                        | [종](#종)을 참고하세요                                                                                                                                                                                                                                                                                                                                                                                  |
 | `weight`                     | 아니요                                     | 0 이상의 숫자                                     | 없음                                                                                        | 블록 아이템이 들고 다니는 무게. 무게 파일의 단위로 표시합니다. 모든 무게 파일 항목보다 우선합니다. [아이템 무게](#아이템-무게) 참고                                                                                                                                                                                                                                                                     |
 
@@ -1652,7 +1667,8 @@ assets/mypack/lang/en_us.json
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `basic`, `ore`, `falling`, `portway`                           | `<name>`, 위쪽 면과 아래쪽 면은 팩이 제공하면 `<name>_top`과 `<name>_bottom`              | `cube_all`, 위나 아래 텍스처가 있으면 `cube_bottom_top`                                                                                                                                                 |
 | `flower`, `sapling`, `cane`, `leaves`, 상자가 없는 `container` | `<name>`                                                                                  | `cube_all`, `cross`, `leaves`                                                                                                                                                                           |
-| `log`                                                          | 옆면은 `<name>`, 양 끝은 `<name>_top`                                                     | `cube_column`                                                                                                                                                                                           |
+| `log`, `pillar`                                                | 옆면은 `<name>`, 양 끝은 `<name>_top`                                                     | `cube_column`                                                                                                                                                                                           |
+| `carpet`                                                       | `<name>`                                                                                  | 게임의 `carpet`에 텍스처를 `wool`로 쓰며, 꽉 찬 큐브는 절대 아닙니다                                                                                                                                    |
 | `slab`                                                         | `<name>`                                                                                  | `slab`, `slab_top`, `cube_all` 이중 반 블록                                                                                                                                                             |
 | `stairs`                                                       | `<name>`                                                                                  | `stairs`, `inner_stairs`, `outer_stairs`, 마흔 가지 상태를 모두 기록                                                                                                                                    |
 | `fence`                                                        | `<name>`                                                                                  | 멀티파트로서의 `fence_post`와 `fence_side`, 손에 드는 모습용 `fence_inventory`                                                                                                                          |
@@ -2008,14 +2024,16 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 ```json
 {
   "locates": "Village",
-  "cooldown": 100,
+  "locatesEye": true,
+  "locatesSound": "minecraft:entity.ender_eye.launch",
+  "locatesRange": 2000,
   "variants": {
-    "seeker": {
-      "maxSize": 1
-    }
+    "seeker": { "meta": 0, "maxSize": 1 }
   }
 }
 ```
+
+`locates` 이름이 `#`으로 시작하면 구조물 태그입니다. 아이템은 그 태그에 속한 가장 가까운 구조물을 찾습니다.
 
 목표는 `minecraft:lodestone_tracker` 컴포넌트로 스택에 저장되므로 다음에 오른쪽 클릭할 때까지 아이템이 계속 그곳을 가리키고, 다른 차원에서는 바늘이 빙빙 돕니다. 바늘은 아이템 자체의 아이템 정의가 그리며, 바닐라 나침반처럼 대상 `lodestone`인 `minecraft:compass` 속성으로 분기하고 프레임마다 항목 하나씩 둡니다.
 
@@ -2043,39 +2061,57 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 
 *아이템*
 
-| 키               | 필수          | 값                                    | 기본값               | 설명                                                                                                                                                                                                                                                                 |
-| ---------------- | ------------- | ------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`       | 예            | 변형 이름에서 변형으로 가는 객체      |                      | 항목마다 아이템 하나. 키가 레지스트리 이름이며 모델, 텍스처, 언어 키의 이름도 정합니다                                                                                                                                                                               |
-| `type`           | 아니요        | 위 유형 중 하나                       | `basic`              | 아이템이 취하는 유형                                                                                                                                                                                                                                                 |
-| `creativeTab`    | 아니요        | 탭 이름                               | 없음                 | 나타나는 탭이며 [크리에이티브 탭](#크리에이티브-탭)을 참고하세요                                                                                                                                                                                                     |
-| `material`       | 도구, 방어구  | 재질 이름                             | 없음                 | 여러분의 재질 중 무엇으로 만드는지                                                                                                                                                                                                                                   |
-| `toolClass`      | 도구          | `pickaxe`, `axe`, `shovel`, `sword`   | 없음                 | 어떤 도구인지. `sword`는 바닐라 검이 아니라 1.12.2의 도구로, 3에 재질의 `damage`를 더한 피해를 주고, `harvestTool`이 `sword`인 블록을 캐며, 채굴 마법 부여를 받고, 휩쓸기도 거미줄 베기도 하지 않습니다                                                              |
-| `slot`           | 방어구        | `head`, `chest`, `legs`, `feet`       | 없음                 | 착용하는 위치. `helmet`, `chestplate`, `leggings`, `boots`도 됩니다                                                                                                                                                                                                  |
-| `eat`            | 음식          | 불리언                                | `false`              | `true`이면 먹는 애니메이션을 씁니다. `false`이면 쓰지 않습니다                                                                                                                                                                                                       |
-| `alwaysEdible`   | 음식          | 불리언                                | `false`              | `true`이면 허기 막대가 가득 차도 먹을 수 있습니다. `false`이면 배고플 때만 먹을 수 있으며, 바닐라와 같습니다                                                                                                                                                         |
-| `useDuration`    | drink, potion | 정수, 틱                              | `32`                 | `drink`와 `potion`용: 마시는 데 걸리는 시간으로, 단위는 틱입니다(20틱 = 1초). 다른 타입은 무시합니다                                                                                                                                                                 |
-| `attackReach`    | 아니요        | 소수, 블록                            | `3.0`                | 주 손에 든 아이템으로 친 타격이 닿는 거리. 몹을 오른쪽 클릭할 때도 적용됩니다. [무기](#무기) 참고                                                                                                                                                                    |
-| `sweep`          | 아니요        | 객체                                  | 없음                 | 최대 강도의 타격 주변에 있는 다른 몹에게도 피해를 줍니다. [무기](#무기) 참고                                                                                                                                                                                         |
-| `combo`          | 아니요        | 객체                                  | 없음                 | `window`틱 이내에 이어서 친 타격이 `steps`를 차례로 밟습니다. [무기](#무기) 참고                                                                                                                                                                                     |
-| `fireSeconds`    | 아니요        | 정수, 초                              | `0`                  | 공격이 맞으면 대상 몹을 이 시간(초)만큼 불태웁니다. [무기](#무기)를 참조하세요                                                                                                                                                                                       |
-| `finisher`       | 아니요        | 객체                                  | 없음                 | 일반 공격 뒤에 일치하는 몹에게 가하는 마무리 타격. [무기](#무기)를 참조하세요                                                                                                                                                                                        |
-| `attackSpeed`    | 아니요        | 소수                                  | 도구 종류에 맞게     | `tool`에서 공격 속도 속성이며, 검은 `-2.4`입니다                                                                                                                                                                                                                     |
-| `cooldown`       | 아니요        | 정수, 틱                              | `0`                  | `food`, `drink`, `potion`에서는 소비한 뒤 아이템이 재사용을 거부하는 시간이며, `rolls`가 있는 아이템에서는 굴림 사이의 간격입니다                                                                                                                                    |
-| `container`      | 음료          | 아이템 이름                           | 없음                 | 병처럼 남는 것. `container` 아이템에서는 이 키가 주머니 자체의 설정이 되며, [컨테이너](#컨테이너)를 참고하세요                                                                                                                                                       |
-| `crop`           | 씨앗          | 블록 이름                             | 없음                 | 심는 작물                                                                                                                                                                                                                                                            |
-| `soil`           | 씨앗          | 블록 이름                             | `minecraft:farmland` | 심을 수 있는 땅                                                                                                                                                                                                                                                      |
-| `rolls`          | 아니요        | `coin`, `d6`, `2d6+1`, 주사위 또는 덱 | 없음                 | 일반 아이템에서 우클릭하면 `/rdplserver game`처럼 굴리고 팩의 기본 대상에게 알립니다. [주사위와 덱](#주사위와-덱)을 참고하세요                                                                                                                                       |
-| `rollStore`      | 아니요        | 목표 이름                             | 없음                 | `rolls`가 있는 아이템에서, 사용할 때마다 굴림 합계를 들고 있는 사람의 점수로 받는 스코어보드 목표. 없는 목표를 적으면 채팅 한 줄로 굴림을 거부합니다                                                                                                                 |
-| `curioSlot`      | 아니요        | Curios 슬롯 이름                      | 없음                 | 아이템을 착용할 수 있는 Curios 슬롯이며 아이템 유형은 상관없습니다. Curios가 설치되어 있지 않으면 무시됩니다                                                                                                                                                         |
-| `wornEffects`    | 아니요        | 효과 목록                             | 없음                 | 아이템이 Curios 슬롯에 있는 동안 착용자에게 유지되는 물약 효과이며, `potion`, `amplifier`, `ambient`, `showParticles`로 씁니다                                                                                                                                       |
-| `wornAttributes` | 아니요        | 속성 변경 목록                        | 없음                 | 아이템이 Curios 슬롯에 있는 동안 착용자에게 유지되는 속성 변경이며, `attribute`, `amount`, `operation`으로 씁니다                                                                                                                                                    |
-| `firework`       | 아니요        | 객체                                  | 없음                 | 우클릭하면 폭죽을 쏘아 올리거나 터뜨립니다. 어떤 유형의 아이템에도 쓸 수 있습니다. [폭죽](#폭죽) 참고                                                                                                                                                                |
-| `locates`        | 아니요        | `Village`, `minecraft:river`          | 없음                 | 일반 아이템에서 오른쪽 클릭하면 그 이름의 가장 가까운 장소를 찾아 나침반처럼 아이템이 그쪽을 가리킵니다. 이름은 바닐라 구조물이나 바이옴, 또는 `locateAs`로 등록한 이름입니다. 아이템은 1개까지만 겹쳐집니다. 위의 위치 탐색 나침반 문단을 참고하세요                |
-| `passesTurn`     | 아니요        | 불리언                                | `false`              | `true`이면 일반 아이템에서 우클릭할 때 `/rdplserver game pass`처럼 든 사람의 턴을 넘깁니다. `false`이면 넘기지 않습니다. [번갈아 진행하기](#번갈아-진행하기)를 참고하세요                                                                                            |
-| `portway`        | portway       | 객체                                  | 없음                 | 이동 아이템의 설정: 이동에 쓰이는 [포트웨이 키](#포트웨이)와 `consume`, `bind`. [이동 아이템](#이동-아이템) 참고                                                                                                                                                     |
-| `sleepingBag`    | 아니요        | 불리언                                | `false`              | `true`이면 일반 아이템에서 블록 윗면을 우클릭할 때 소지자가 그 위에 누워 자고, 침대처럼 밤을 넘깁니다. `false`이면 눕지 않습니다. 스폰 지점은 바꾸지 않고 소모되지 않습니다. 잠을 잘 수 있는 곳에서만 작동하며, `locates`, `rolls`, `passesTurn`이 있으면 무시됩니다 |
-| `requires`       | 아니요        | 모드 id 또는 팩 네임스페이스 목록     | 없음                 | 모두 있지 않으면 파일을 건너뜁니다                                                                                                                                                                                                                                   |
-| `weight`         | 아니요        | 0 이상의 숫자                         | 없음                 | 이 아이템(블록이면 그 블록의 아이템)이 들고 다니는 무게. 무게 파일의 단위로 표시합니다. 모든 무게 파일 항목보다 우선합니다. [아이템 무게](#아이템-무게) 참고                                                                                                         |
+`<namespace>/items/*.json`
+
+```json
+{
+  "runs": "mypack:ping",
+  "cooldown": 100,
+  "variants": {
+    "commlink": { "meta": 0, "maxSize": 1 }
+  }
+}
+```
+
+| 키               | 필수          | 값                                    | 기본값               | 설명                                                                                                                                                                                                                                                                                                                                  |
+| ---------------- | ------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | 예            | 변형 이름에서 변형으로 가는 객체      |                      | 항목마다 아이템 하나. 키가 레지스트리 이름이며 모델, 텍스처, 언어 키의 이름도 정합니다                                                                                                                                                                                                                                                |
+| `type`           | 아니요        | 위 유형 중 하나                       | `basic`              | 아이템이 취하는 유형                                                                                                                                                                                                                                                                                                                  |
+| `creativeTab`    | 아니요        | 탭 이름                               | 없음                 | 나타나는 탭이며 [크리에이티브 탭](#크리에이티브-탭)을 참고하세요                                                                                                                                                                                                                                                                      |
+| `material`       | 도구, 방어구  | 재질 이름                             | 없음                 | 여러분의 재질 중 무엇으로 만드는지                                                                                                                                                                                                                                                                                                    |
+| `toolClass`      | 도구          | `pickaxe`, `axe`, `shovel`, `sword`   | 없음                 | 어떤 도구인지. `sword`는 바닐라 검이 아니라 1.12.2의 도구로, 3에 재질의 `damage`를 더한 피해를 주고, `harvestTool`이 `sword`인 블록을 캐며, 채굴 마법 부여를 받고, 휩쓸기도 거미줄 베기도 하지 않습니다                                                                                                                               |
+| `slot`           | 방어구        | `head`, `chest`, `legs`, `feet`       | 없음                 | 착용하는 위치. `helmet`, `chestplate`, `leggings`, `boots`도 됩니다                                                                                                                                                                                                                                                                   |
+| `eat`            | 음식          | 불리언                                | `false`              | `true`이면 먹는 애니메이션을 씁니다. `false`이면 쓰지 않습니다                                                                                                                                                                                                                                                                        |
+| `alwaysEdible`   | 음식          | 불리언                                | `false`              | `true`이면 허기 막대가 가득 차도 먹을 수 있습니다. `false`이면 배고플 때만 먹을 수 있으며, 바닐라와 같습니다                                                                                                                                                                                                                          |
+| `useDuration`    | drink, potion | 정수, 틱                              | `32`                 | `drink`와 `potion`용: 마시는 데 걸리는 시간으로, 단위는 틱입니다(20틱 = 1초). 다른 타입은 무시합니다                                                                                                                                                                                                                                  |
+| `attackReach`    | 아니요        | 소수, 블록                            | `3.0`                | 주 손에 든 아이템으로 친 타격이 닿는 거리. 몹을 오른쪽 클릭할 때도 적용됩니다. [무기](#무기) 참고                                                                                                                                                                                                                                     |
+| `sweep`          | 아니요        | 객체                                  | 없음                 | 최대 강도의 타격 주변에 있는 다른 몹에게도 피해를 줍니다. [무기](#무기) 참고                                                                                                                                                                                                                                                          |
+| `combo`          | 아니요        | 객체                                  | 없음                 | `window`틱 이내에 이어서 친 타격이 `steps`를 차례로 밟습니다. [무기](#무기) 참고                                                                                                                                                                                                                                                      |
+| `fireSeconds`    | 아니요        | 정수, 초                              | `0`                  | 공격이 맞으면 대상 몹을 이 시간(초)만큼 불태웁니다. [무기](#무기)를 참조하세요                                                                                                                                                                                                                                                        |
+| `finisher`       | 아니요        | 객체                                  | 없음                 | 일반 공격 뒤에 일치하는 몹에게 가하는 마무리 타격. [무기](#무기)를 참조하세요                                                                                                                                                                                                                                                         |
+| `attackSpeed`    | 아니요        | 소수                                  | 도구 종류에 맞게     | `tool`에서 공격 속도 속성이며, 검은 `-2.4`입니다                                                                                                                                                                                                                                                                                      |
+| `cooldown`       | 아니요        | 정수, 틱                              | `0`                  | `food`, `drink`, `potion`에서는 소비한 뒤 아이템이 재사용을 거부하는 시간이며, `rolls`가 있는 아이템에서는 굴림 사이의 간격이며, `runs`가 있는 아이템에서는 다음 우클릭까지 기다리는 시간으로 바닐라 아이템 쿨다운 표시처럼 보입니다                                                                                                  |
+| `container`      | 음료          | 아이템 이름                           | 없음                 | 병처럼 남는 것. `container` 아이템에서는 이 키가 주머니 자체의 설정이 되며, [컨테이너](#컨테이너)를 참고하세요                                                                                                                                                                                                                        |
+| `crop`           | 씨앗          | 블록 이름                             | 없음                 | 심는 작물                                                                                                                                                                                                                                                                                                                             |
+| `soil`           | 씨앗          | 블록 이름                             | `minecraft:farmland` | 심을 수 있는 땅                                                                                                                                                                                                                                                                                                                       |
+| `rolls`          | 아니요        | `coin`, `d6`, `2d6+1`, 주사위 또는 덱 | 없음                 | 일반 아이템에서 우클릭하면 `/rdplserver game`처럼 굴리고 팩의 기본 대상에게 알립니다. [주사위와 덱](#주사위와-덱)을 참고하세요                                                                                                                                                                                                        |
+| `rollStore`      | 아니요        | 목표 이름                             | 없음                 | `rolls`가 있는 아이템에서, 사용할 때마다 굴림 합계를 들고 있는 사람의 점수로 받는 스코어보드 목표. 없는 목표를 적으면 채팅 한 줄로 굴림을 거부합니다                                                                                                                                                                                  |
+| `curioSlot`      | 아니요        | Curios 슬롯 이름                      | 없음                 | 아이템을 착용할 수 있는 Curios 슬롯이며 아이템 유형은 상관없습니다. Curios가 설치되어 있지 않으면 무시됩니다                                                                                                                                                                                                                          |
+| `wornEffects`    | 아니요        | 효과 목록                             | 없음                 | 아이템이 Curios 슬롯에 있는 동안 착용자에게 유지되는 물약 효과이며, `potion`, `amplifier`, `ambient`, `showParticles`로 씁니다                                                                                                                                                                                                        |
+| `wornAttributes` | 아니요        | 속성 변경 목록                        | 없음                 | 아이템이 Curios 슬롯에 있는 동안 착용자에게 유지되는 속성 변경이며, `attribute`, `amount`, `operation`으로 씁니다                                                                                                                                                                                                                     |
+| `locates`        | 아니요        | `Village`, `minecraft:river`          | 없음                 | 일반 아이템에서 오른쪽 클릭하면 그 이름의 가장 가까운 장소를 찾아 나침반처럼 아이템이 그쪽을 가리킵니다. 이름은 바닐라 구조물이나 바이옴, 또는 `locateAs`로 등록한 이름입니다. 아이템은 1개까지만 겹쳐집니다. 위의 위치 탐색 나침반 문단을 참고하세요                                                                                 |
+| `runs`           | 아니요        | 함수 id                               | 없음                 | 우클릭하면(공중이든 블록 위든) 보유자로서, 보유자 위치에서 서버 함수를 실행합니다. 일반 아이템에서 동작하며, `rolls`, `locates`, `passesTurn`, `sleepingBag`, `seasonClock`이 있으면 그 고정 사용 뒤에 실행됩니다. 팩이 제공하지 않는 함수는 로그에 기록되며 아무것도 실행되지 않습니다. 이 키가 없으면 우클릭은 전과 같이 동작합니다 |
+| `script`         | 아니요        | 텍스트                                | 없음                 | 우클릭할 때 실행할 스크립트입니다. [스크립팅](#스크립팅)을 참고하세요. `runs`와 함께 설정할 수 있습니다. 결과가 `"cancel"`인 스크립트는 아이템의 쿨다운을 건너뜁니다                                                                                                                                                                  |
+| `scriptFile`     | 아니요        | 경로                                  | 없음                 | 위와 같되, `scripts/` 아래의 `.js`로 끝나는 경로입니다. [스크립팅](#스크립팅)을 참고하세요                                                                                                                                                                                                                                            |
+| `firework`       | 아니요        | 객체                                  | 없음                 | 우클릭하면 폭죽을 쏘아 올리거나 터뜨립니다. 어떤 유형의 아이템에도 쓸 수 있습니다. [폭죽](#폭죽) 참고                                                                                                                                                                                                                                 |
+| `locatesEye`     | 아니요        | 불리언                                | `false`              | `true`: `locates`를 가진 아이템에서, 장소를 찾은 우클릭은 보유자에게서 그쪽으로 바닐라 엔더의 눈처럼 날아가는 엔더의 눈도 던집니다                                                                                                                                                                                                    |
+| `locatesSound`   | 아니요        | 사운드 이벤트 id                      | 없음                 | `locates`를 가진 아이템에서, 우클릭할 때마다 보유자에게 재생되는 소리입니다. `minecraft:entity.ender_eye.launch` 같은 값입니다                                                                                                                                                                                                        |
+| `locatesRange`   | 아니요        | 정수, 블록                            | `0`                  | `locates`를 가진 아이템에서, 장소까지 갈 수 있는 거리의 한계입니다. 보유자에게서 수평으로 잽니다. 그보다 먼 장소는 찾지 못한 것으로 칩니다. `0`이면 한계가 없습니다                                                                                                                                                                   |
+| `passesTurn`     | 아니요        | 불리언                                | `false`              | `true`이면 일반 아이템에서 우클릭할 때 `/rdplserver game pass`처럼 든 사람의 턴을 넘깁니다. `false`이면 넘기지 않습니다. [번갈아 진행하기](#번갈아-진행하기)를 참고하세요                                                                                                                                                             |
+| `portway`        | portway       | 객체                                  | 없음                 | 이동 아이템의 설정: 이동에 쓰이는 [포트웨이 키](#포트웨이)와 `consume`, `bind`. [이동 아이템](#이동-아이템) 참고                                                                                                                                                                                                                      |
+| `sleepingBag`    | 아니요        | 불리언                                | `false`              | `true`이면 일반 아이템에서 블록 윗면을 우클릭할 때 소지자가 그 위에 누워 자고, 침대처럼 밤을 넘깁니다. `false`이면 눕지 않습니다. 스폰 지점은 바꾸지 않고 소모되지 않습니다. 잠을 잘 수 있는 곳에서만 작동하며, `locates`, `rolls`, `passesTurn`이 있으면 무시됩니다                                                                  |
+| `requires`       | 아니요        | 모드 id 또는 팩 네임스페이스 목록     | 없음                 | 모두 있지 않으면 파일을 건너뜁니다                                                                                                                                                                                                                                                                                                    |
+| `weight`         | 아니요        | 0 이상의 숫자                         | 없음                 | 이 아이템(블록이면 그 블록의 아이템)이 들고 다니는 무게. 무게 파일의 단위로 표시합니다. 모든 무게 파일 항목보다 우선합니다. [아이템 무게](#아이템-무게) 참고                                                                                                                                                                          |
 
 ### 폭죽
 
@@ -2254,6 +2290,170 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `damage`     | 아니요 | 0보다 큰 소수            | 없음      | 그다음 공격자 없이 이 고정 피해를 줍니다                                                                                      |
 | `damageType` | 아니요 | 피해 유형 이름           | `generic` | 그 피해의 출처입니다. 네임스페이스가 없는 이름은 `minecraft:`로 보며, 등록되지 않은 이름은 `generic`으로 대체됩니다           |
 | `push`       | 아니요 | `{horizontal, vertical}` | `0`, `0`  | 좌우 어느 쪽으로든 `horizontal`까지의 무작위 옆 방향 힘과, 최대 `vertical`까지의 위쪽 힘을 줍니다. 둘 다 0에서 100 사이입니다 |
+
+### 파생 아이템
+
+*아이템*
+
+`<namespace>/items/*.json`
+
+파생 아이템은 다른 아이템의 동작을 그대로 이어받아 움직이는 독립된 아이템입니다. 엔티티 변형이 `entity`로 원본을 지정하듯, 여기서는 `item`으로 원본 아이템을 지정합니다. 파일에는 원본 아이템의 클래스와 필드를 복사한 사본이 들어가며, 그 사본은 자체 레지스트리 이름으로 등록되고 원본의 컴포넌트를 그대로 물려받습니다. 원본 아이템은 바뀌지 않습니다. 이후 `components`로 아이템의 데이터를 바꾸고, `set`으로 실제 필드를 바꾸고, `returns`로 메서드가 고정값을 반환하게 하고, `addTo`로 아이템을 Mod의 컬렉션에 넣을 수 있습니다. 아이템에만 적용되며, 원본이 블록 아이템이면 로그에 기록된 뒤 제외됩니다. 파생 블록은 지원하지 않습니다. 아이템 모델은 다른 아이템과 같이 아이템 모델 정의인 `assets/<ns>/items/<name>.json`에서 가져옵니다.
+
+```json
+{
+  "item": "minecraft:iron_pickaxe",
+  "name": "Tempered Pickaxe",
+  "components": {
+    "minecraft:max_damage": 2000,
+    "minecraft:rarity": "epic",
+    "minecraft:enchantable": { "value": 30 }
+  },
+  "set": {
+    "canCombineRepair": false
+  },
+  "returns": {
+    "isFoil": true
+  }
+}
+```
+
+| 키            | 필수   | 값                                  | 기본값 | 설명                                                                                                                         |
+| ------------- | ------ | ----------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | 예     | `<mod>:<item>`                      |        | 복사할 아이템입니다. 파생 아이템을 읽을 때 이미 등록되어 있어야 하므로, 그 아이템을 제공하는 Mod에는 `requires`를 사용하세요 |
+| `components`  | 아니요 | 컴포넌트 ID와 값의 객체             | 없음   | 아이템의 데이터 컴포넌트를 바꿉니다. 아래 `components` 참고                                                                  |
+| `set`         | 아니요 | 점으로 구분한 필드 경로와 값의 객체 | 없음   | 사본의 필드를 씁니다. 아래 `set` 참고                                                                                        |
+| `returns`     | 아니요 | 메서드 이름과 상수의 객체           | 없음   | 사본의 메서드가 상수를 반환하게 합니다. 아래 `returns` 참고                                                                  |
+| `addTo`       | 아니요 | `<fully.qualified.Class>.<member>`  | 없음   | 새 아이템을 다른 클래스의 정적 컬렉션에 추가합니다. 아래 `addTo` 참고                                                        |
+| `name`        | 아니요 | 텍스트                              | 없음   | 표시 이름입니다. 엔티티 변형과 같습니다. `minecraft:item_name` 컴포넌트가 됩니다. 없으면 아이템은 자체 번역 키를 씁니다      |
+| `creativeTab` | 아니요 | 탭 이름                             | 없음   | 아이템이 나타날 탭입니다                                                                                                     |
+| `requires`    | 아니요 | Mod ID 배열                         | 없음   | 나열된 Mod 중 하나라도 로드되지 않으면 아이템을 제외합니다                                                                   |
+| `inherits`    | 아니요 | 부모 아이템 파일                    | 없음   | 부모의 키를 물려받습니다. 자식의 `components`, `set`, `returns`는 부모의 것을 통째로 대체하며, 병합되지 않습니다             |
+
+파생 아이템에서도 다음 키는 평소와 같은 뜻을 가집니다: `curioSlot`(옛 이름 `bauble` 포함), `wornEffects`, `wornAttributes`, `attackReach`, `sweep`, `combo`, `fireSeconds`, `finisher`, `weight`.
+
+다음 키는 파생 아이템에서 아무 일도 하지 않습니다. RDPL 아이템 클래스에 속하는 키이며, 사본은 그 클래스를 갖고 있지 않기 때문입니다. 들어 있는 키는 각각 한 번만 로그에 남고 무시됩니다: `type`, `variants`, `runs`, `script`, `cooldown`, `rolls`, `rollStore`, `locates`, `sleepingBag`, `firework`, `container`, `upgrade`, `portway`, `eat`, `alwaysEdible`, `useDuration`, `material`, `toolClass`, `slot`, `crop`, `soil`, `potionTypes`, `attackSpeed`, `passesTurn`, `record`, `seasonClock`. 효과가 있는 키라면 그 효과는 이미 원본 아이템의 컴포넌트에 있거나, `components`, `set`, `returns`로 직접 써야 합니다.
+
+#### `components`
+
+이 버전에서 아이템의 동작을 정하는 대부분은 필드가 아니라 데이터 컴포넌트입니다. 내구도, 희귀도, 인챈트 빛, 인챈트 가능 수치, 도구 규칙, 음식, 속성 수정자가 그렇습니다. 이런 것은 컴포넌트 ID와 값의 객체인 `components`에 씁니다. 각 값은 그 컴포넌트의 코덱이 읽으므로, 데이터 팩 아이템이나 `/give` 명령에서 같은 컴포넌트를 쓰는 것과 똑같이 씁니다. ID만 쓰면 컴포넌트를 설정하고, ID 앞에 `!`를 붙이면 값과 상관없이 사본에서 그 컴포넌트를 제거합니다. 예를 들어 `"!minecraft:food": {}`입니다.
+
+사본은 원본의 모든 컴포넌트로 시작합니다. 그 뒤에 아이템의 이름과 아이템 모델(자체 레지스트리 이름)이 설정되고, `components`가 마지막에 적용되므로 그 전부보다 우선합니다. ID를 알 수 없거나 아이템 스택에 저장되지 않는 컴포넌트는 거부됩니다. 코덱이 읽지 못하는 값은 코덱의 메시지와 함께 거부됩니다. 두 경우 모두 그 항목만 제외되고, 나머지 아이템은 만들어집니다.
+
+| 컴포넌트 예시           | 값                                                            | 뜻                                                |
+| ----------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| `minecraft:max_damage`  | 정수                                                          | 내구도                                            |
+| `minecraft:rarity`      | `common`, `uncommon`, `rare`, `epic`                          | 이름 색                                           |
+| `minecraft:enchantable` | `{ "value": 30 }`                                             | 인챈트가 얼마나 쉽게 붙는지                       |
+| `minecraft:tool`        | `rules`, `default_mining_speed`, `damage_per_block`이 든 객체 | 무엇을 얼마나 빨리 캐는지                         |
+| `minecraft:item_name`   | 텍스트 컴포넌트                                               | 이름. `name`보다 우선하며, 로그에 경고가 남습니다 |
+
+그 밖의 영구 컴포넌트도 같은 방식으로 씁니다. `set`은 컴포넌트에 닿을 수 없으므로, 도구 규칙이나 속성 수정자처럼 레코드에 든 값은 `set`이 아니라 여기서 바꿉니다.
+
+#### 필드와 메서드 이름
+
+필드와 메서드는 `canCombineRepair`, `isFoil`처럼 게임이 쓰는 공식 이름으로 씁니다. 이름은 먼저 원본 아이템의 클래스에서 찾고, 그다음 위쪽의 각 상위 클래스에서 찾습니다. 처음 맞는 것을 사용합니다.
+
+매개변수 목록이 다른 메서드가 여러 개 있으면, 괄호 안에 매개변수 타입을 넣어 이름을 지정해야 합니다. 클래스는 단순 이름을 쓰고 공백은 넣지 않습니다: `use(Level,Player,InteractionHand)`, 매개변수가 두 개면 `name(type,type)`. 같은 이름의 메서드가 하나뿐이면 이름만으로 충분합니다. 이름이 모호하면 로그에 후보가 나열됩니다. 어디에도 맞지 않는 이름은 로그에 기록되고 그 항목은 건너뜁니다. 전용 서버에서는 클래스에 없는 `returns` 이름을 로그 없이 건너뜁니다. 그 메서드가 클라이언트에만 있을 수 있기 때문입니다.
+
+#### `set`
+
+`set`은 파생 아이템 클래스의 실제 필드만 받는 점 경로와 값의 객체입니다. `"canCombineRepair": false`는 사본에서 같은 이름의 필드를 씁니다. `"stats.level": 5`는 `stats`가 가진 객체 안으로 들어가 거기에 씁니다. 정적 필드는 쓰지 않습니다. 모든 아이템이 같은 값을 공유하게 되기 때문입니다.
+
+| JSON 값              | 필드 타입                                                                                    | 비고                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 숫자                 | `int`, `long`, `short`, `byte`, `float`, `double`                                            | 정수 타입에는 정수만 쓸 수 있으며, 값이 타입 범위에 들어가야 합니다          |
+| `true`, `false`      | `boolean`                                                                                    |                                                                              |
+| 문자열               | `String`, `char`                                                                             | `char`는 한 글자짜리 문자열을 받습니다                                       |
+| 문자열               | 열거형                                                                                       | 상수 이름입니다. 대문자든 소문자든 상관없습니다                              |
+| 문자열               | `Identifier`                                                                                 | `mod:name`                                                                   |
+| 문자열               | `ItemStack`                                                                                  | 팩 파일에서 다른 곳의 스택을 쓰는 방식과 같습니다. 비어 있으면 안 됩니다     |
+| 문자열               | `Item`, `Block`, `Fluid`, `SoundEvent`, `MobEffect`, `EntityType`, `Potion` 또는 `Attribute` | 레지스트리 이름입니다. 등록되어 있어야 합니다                                |
+| 배열                 | 배열, 또는 `List`, `Set`, `Collection`                                                       | 각 요소는 이 표를 따릅니다. 컬렉션 필드에는 추가되지 않고 통째로 대체됩니다  |
+| 객체                 | 그 밖의 객체                                                                                 | 중첩된 객체입니다. 아래를 참고하세요                                         |
+| 문자열 `<ns>:<item>` | 그 밖의 객체                                                                                 | 같은 위치에서 다른 파생 아이템이 만든 객체를 재사용합니다. 아래를 참고하세요 |
+
+**중첩된 객체.** `set` 아래의 JSON 객체는 파일과 같은 세 키, `set`, `returns`, `addTo`를 가질 수 있습니다. 필드가 가진 객체의 사본을 바꾸므로, 원본 아이템과 그 객체를 공유하는 다른 것은 원래 값을 유지합니다. 이는 쓰기 시점 복사(copy on write)입니다. 쓰는 경로 위의 객체만 복사되고, 나머지 필드는 원본과 같은 객체를 계속 가리킵니다.
+
+배열과 컬렉션 안으로는 들어가지 않습니다. 경로가 그 안을 지날 수 없고, 컬렉션 필드는 JSON 배열로 통째로 대체됩니다. 열거형을 중첩 객체로 지정하면 거부되며, 레코드도 마찬가지입니다. 레코드는 이 버전의 바닐라 데이터가 대부분 취하는 형태이므로 그런 값은 `components`를 쓰세요. `java.` 패키지의 객체도 거부됩니다.
+
+객체 자리에 문자열 `"<ns>:<item>"`을 쓰면, 같은 위치에 있는 그 파생 아이템의 객체를 재사용합니다. 이렇게 하면 두 파생 아이템이 객체 하나를 공유할 수 있으며, 이름이 지정된 쪽이 먼저 만들어집니다.
+
+#### `returns`
+
+`returns`는 메서드 이름과, 그 메서드가 이제 반환할 상수의 객체입니다. 사본은 메서드를 덮어쓰고 그 값을 돌려줍니다. 컴포넌트나 필드로 표현되지 않는 동작, 예를 들어 `isFoil`처럼 메서드인 동작에 씁니다. 숫자, 불리언, 문자열은 그대로 씁니다. 열거형은 상수 이름을, 아이템 스택이나 레지스트리 항목은 이름을 문자열로 씁니다. 이것들은 모든 아이템이 등록된 뒤에 찾으므로, 나중에 로드되는 아이템의 이름도 지정할 수 있습니다. 끝까지 등록되지 않은 이름은 로그에 기록되고 원래 동작이 유지됩니다.
+
+메서드가 정적(static), final, private이거나, 원본 패키지 밖의 패키지 전용이거나, 반환 값이 없으면 그 메서드는 거부되고 항목은 제외됩니다. 잘못된 타입의 상수도 거부됩니다. `returns` 아래의 중첩 객체는 인수가 없는 메서드에서만 쓸 수 있습니다. 메서드가 반환하는 객체의 사본이며, 중첩된 `set` 객체와 같은 방식으로 패치되고, 메서드는 그 사본을 돌려줍니다.
+
+#### `addTo`
+
+`addTo`는 `<fully.qualified.Class>.<member>` 형태입니다. 멤버는 정적 `Collection` 필드이거나, `com.example.Registry.items()`처럼 빈 괄호를 붙여 쓴 인수 없는 정적 getter입니다. 모든 등록이 끝나면, 새 아이템이 아직 그 컬렉션에 없을 때에 한해 추가됩니다. 단, 컬렉션의 요소 타입이 그 아이템을 받아들이는 경우에만 추가됩니다. 자체 아이템 목록을 가진 Mod에서 쓰면 사본이 원본과 같은 방식으로 다뤄집니다.
+
+#### 사본이 받지 못하는 것
+
+사본은 원본의 필드를 복사한 별도의 객체입니다. 따라서 다음은 이어지지 않습니다:
+
+- `== ModItems.X` 같은 동일성 검사와 `getClass` 비교. 원본 아이템을 검사하는 코드는 사본을 알아보지 못합니다.
+- 원본 아이템을 키로 삼는 등록. 태그, 레시피, Mod가 아이템으로 원본에 붙인 것이 여기에 해당합니다. 사본에는 별도로 등록하세요.
+- 생성자의 부수 효과. 예를 들어 원본 생성자가 했던 등록입니다.
+- `set`에서 지정하지 않은 필드. 가변 필드는 원본과 공유된 상태로 남으므로, 한쪽의 리스트나 맵은 다른 쪽과 같은 리스트나 맵이 됩니다.
+
+#### 순서와 requires
+
+원본이 다른 파생 아이템이거나, 다른 파생 아이템의 객체를 재사용하는 파생 아이템은 그 뒤에 만들어집니다. 파생 아이템끼리 순환 참조로 서로 의존하면, 그 전부가 로그에 기록되고 제외됩니다. `requires` 조건을 충족하지 않는 파생 아이템은 건너뛰므로, 다른 Mod의 원본은 같은 `requires`가 필요합니다. 이미 등록된 아이템 이름은 건너뜁니다.
+
+다음 네 경우에는 아이템 전체가 제외됩니다. 원본이 없을 때, 원본이 블록 아이템일 때, 원본 클래스가 final이나 sealed이거나 레코드일 때, 원본 클래스가 RDPL에 닿지 않는 모듈에서 올 때입니다. 복사할 컴포넌트가 없는 원본도 제외됩니다.
+
+서버가 시작된 뒤에는 모든 파생 아이템을 한 번 더 확인합니다. 이름, 모델, 원본의 컴포넌트 중 하나라도 없이 만들어진 아이템은 오류로 로그에 기록됩니다.
+
+#### 로그 메시지
+
+`{}`는 로그가 채우는 이름이나 값을 뜻합니다.
+
+| 메시지                                                                                                                    | 뜻                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Derived item {} names no item to copy, ignoring it`                                                                      | `item`이 없거나 아이템 이름이 아닙니다                                                                     |
+| `The {} of derived item {} is not an object, so it is treated as empty`                                                   | `components`, `set` 또는 `returns`가 객체가 아닙니다                                                       |
+| `The derived item {} sets {}, which needs an RDPL item class, so the key is ignored`                                      | 위 목록에 있는 키가 파생 아이템에 있습니다                                                                 |
+| `An item named {} is already registered, skipping the pack definition`                                                    | 레지스트리 이름이 이미 사용 중입니다                                                                       |
+| `Derived item {} is based on {}, which nothing registers, leaving it out`                                                 | 원본 아이템이 없습니다. 그 Mod의 `requires`를 추가하세요                                                   |
+| `Derived item {} is based on {}, a block item, and derived blocks are not supported, leaving it out`                      | 원본이 블록 아이템입니다                                                                                   |
+| `Derived item {} is based on {}, a final or sealed class or a record, so it cannot be copied`                             | 원본 클래스는 확장할 수 없습니다                                                                           |
+| `Derived item {} is based on {}, whose module cannot see RDPL, so it cannot be copied`                                    | 원본 클래스가 RDPL에 닿지 않는 모듈에서 왔습니다                                                           |
+| `Could not make a class for derived item {}`                                                                              | 사본의 클래스를 정의하지 못했습니다. 스택 트레이스가 이어집니다                                            |
+| `Derived item {} could not be made, leaving it out`                                                                       | 다른 오류로 아이템이 멈췄습니다. 복사할 컴포넌트가 없는 경우가 여기에 해당하며, 스택 트레이스가 이어집니다 |
+| `Derived items depend on each other in a loop, {}{}, leaving them out`                                                    | 원본이나 재사용 객체를 따라가다 순환이 생겼습니다. 그 안의 모든 아이템이 제외됩니다                        |
+| `Derived item {} gives both a name and an item_name component, the component wins`                                        | `name`과 `components`의 `minecraft:item_name` 항목이 둘 다 설정되었습니다                                  |
+| `Derived item {} sets component {}, which is not a persistent component, leaving it out`                                  | `components`의 ID를 알 수 없거나, 그 컴포넌트가 스택과 함께 저장되지 않습니다                              |
+| `Derived item {} sets component {} to {}, which is not valid: {}, leaving it out`                                         | 컴포넌트의 코덱이 값을 거부했습니다. 코덱의 메시지가 이어집니다                                            |
+| `Derived item {} did not get the components of {}, it may be missing its name, model or other data`                       | 서버 시작 후의 확인에서 사본의 컴포넌트가 부족하다고 나왔습니다                                            |
+| `{} has no field named {}`                                                                                                | `set`의 경로가 필드와 맞지 않습니다                                                                        |
+| `{} has no method named {}`                                                                                               | `returns`의 이름과 맞는 메서드가 없습니다                                                                  |
+| `{} has several methods named {} ({}), name one with its parameter types`                                                 | 오버로드된 메서드에는 `name(type,type)`이 필요합니다                                                       |
+| `Derived item {} returns a constant for {} twice, leaving the second out`                                                 | `returns`의 키 두 개가 같은 메서드를 가리킵니다                                                            |
+| `Derived item {} returns a constant for {}, which {}, leaving it out`                                                     | 메서드가 거부되었습니다. 정적, final, private, 패키지 전용이거나 반환 값이 없습니다                        |
+| `Derived item {} returns {} for {}, which is {}, leaving it out`                                                          | 상수의 타입이 메서드와 맞지 않습니다                                                                       |
+| `Derived item {} returns {}, which is not registered, the base behavior stays`                                            | `returns`의 스택이나 레지스트리 항목이 등록되지 않은 것을 가리킵니다                                       |
+| `Derived item {} returns an object for {}, which takes arguments, and only methods without arguments can, leaving it out` | 인수가 있는 메서드에 중첩 객체를 지정했습니다                                                              |
+| `Derived item {} returns an object for {}, which has no object to copy, leaving it out`                                   | 복사할 원본 객체가 없습니다                                                                                |
+| `Derived item {} returns an object for {}, which returns nothing to copy, leaving it out`                                 | 원본에서 메서드가 null을 반환했습니다                                                                      |
+| `Derived item {} could not read {} to copy it, leaving it out: {}`                                                        | 원본에서 메서드를 호출하지 못했습니다                                                                      |
+| `Derived item {} could not set {}, leaving it out: {}`                                                                    | 필드에 쓰지 못했습니다. 원인이 이어집니다                                                                  |
+| `Derived item {} sets below {}, which holds nothing, leaving it out`                                                      | 경로가 null인 필드를 지납니다                                                                              |
+| `Derived item {} sets {}, but static fields are shared by every item, not written, leaving it out`                        | 경로가 정적 필드에서 끝납니다                                                                              |
+| `Derived item {} sets {} to an object, but it holds nothing to copy, leaving it out`                                      | null인 필드에 중첩 객체를 지정했습니다                                                                     |
+| `{} sets {} to {}, which is {}, leaving it out`                                                                           | 값이 필드 타입에 맞지 않습니다. 값 표를 참고하세요                                                         |
+| `Derived item {} sets {} to the object of {}, which is no derived item that built a {} there, leaving it out`             | 재사용할 객체가 그 위치에 없습니다                                                                         |
+| `Derived item {} reaches {} through an array or collection, but paths do not go through arrays, leaving it out`           | 경로나 중첩 객체가 배열 또는 컬렉션 안으로 들어갑니다                                                      |
+| `Derived item {} changes {}, a record, which cannot be copied, use the components key`                                    | 레코드를 중첩 객체로 지정했습니다. `components`를 쓰세요                                                   |
+| `Derived item {} changes {}, a {}, which cannot be copied, leaving it out`                                                | 열거형, 또는 `java.` 객체를 중첩 객체로 지정했습니다                                                       |
+| `Derived item {} has an unknown key {} under {}, ignoring it`                                                             | 중첩 객체에 `set`, `returns`, `addTo` 외의 키가 있습니다                                                   |
+| `The {} of {} in derived item {} is not an object, so it is treated as empty`                                             | 중첩된 `set` 또는 `returns`가 객체가 아닙니다                                                              |
+| `Derived item {} adds itself to {}, which is not written <Class>.<member>, leaving it out`                                | `addTo`에 클래스와 멤버가 없습니다                                                                         |
+| `Derived item {} adds itself to {}, which is no static field or static getter without arguments, leaving it out`          | 멤버를 찾지 못했습니다                                                                                     |
+| `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | 멤버가 컬렉션이 아닙니다                                                                                   |
+| `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | 컬렉션의 요소 타입이 그 아이템을 받아들이지 않습니다                                                       |
+| `Derived item {} could not be added to {}: {}`                                                                            | `addTo`가 실패했습니다. 예를 들어 클래스가 없습니다                                                        |
+| `Registered {} derived item(s) from packs`                                                                                | 요약 줄입니다. 만들어진 파생 아이템 수가 함께 적힙니다                                                     |
 
 ## 유체
 
@@ -2548,6 +2748,24 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 
 1.12.2의 광석 사전을 대체한 것이 태그입니다. 그 이름은 규약 태그에 대응됩니다. `oreRuby`는 1.20.1에서 `forge:ores/ruby`, 1.21.1에서 `c:ores/ruby`이고, `ingotCopper`는 `ingots/copper`, `gemRuby`는 `gems/ruby`, `dustX`는 `dusts/x`, `nuggetX`는 `nuggets/x`, `blockX`는 `storage_blocks/x`이며, `logWood`, `plankWood`, `stickWood`는 게임 자체의 `minecraft:logs`, `minecraft:planks`와 규약의 `rods/wooden`입니다. 태그 파일의 `"remove": [...]`는 태그에서 개별 항목을 빼고, 빈 `"values": []`와 함께 쓴 `"replace": true`는 태그를 비우므로, 더 낮은 팩이나 모드의 태그를 줄이거나 비울 수 있습니다. 모든 태그에서 한꺼번에, 그리고 사용에서 아이템을 빼려면 [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)을 쓰세요.
 
+**패턴으로 복사하기.** 아이템 태그용 `<namespace>/tag_copies/item/*.json`이나 블록 태그용 `<namespace>/tag_copies/block/*.json` 파일은 이름을 나열하지 않습니다(`tag_copies` 아래 다른 곳에 있는 파일은 로그 한 줄과 함께 건너뛰며, 파일 이름은 자유롭게 정할 수 있습니다). ID가 패턴과 맞는 모든 아이템이나 블록을 태그 하나에 넣으므로, 팩은 구성원을 하나하나 적지 않고도 태그를 채울 수 있습니다. `tag`와 `from`은 태그 ID이며 앞에 `#`을 붙여도 됩니다(`#mypack:rubies`). 올바른 ID가 아닌 `from`은 로그에 남고 파일은 건너뜁니다. 로그에는 "Tag copy"라고 표시됩니다.
+
+```json
+{
+  "tag": "mypack:all_logs",
+  "matches": "^minecraft:(oak|birch)_log$",
+  "from": "minecraft:logs"
+}
+```
+
+| Key       | Required | Value   | Default | What it does                                                                                                                                                                                                                |
+| --------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tag`     | 예       | 태그 ID |         | 아이템이나 블록을 받는 태그                                                                                                                                                                                                 |
+| `matches` | 예       | 정규식  |         | `namespace:path` 형식의 각 아이템이나 블록 ID를 검색으로 시험하는 Java 패턴입니다. `^`로 시작하거나 `$`로 끝나지 않는 한 ID 어디에서든 맞으면 됩니다. 패턴이 없거나 올바른 식이 아닌 파일은 무시되며 로그에 그렇게 남습니다 |
+| `from`    | 아니요   | 태그 ID | 없음    | 이 태그에 이미 들어 있는 구성원에서만 복사합니다. 생략하면 게임의 모든 아이템이나 블록을 시험하며, 맞는 것은 모두 `tag`에 들어갑니다. 구성원이 없는 `from` 태그는 로그에 오류를 남기고 아무것도 복사하지 않습니다           |
+
+복사는 한 번만 실행되며, 모든 모드가 아이템을 등록한 뒤와 위의 일반 파일을 적용한 뒤에 이루어집니다. 아무것도 맞추지 못하는 패턴은 경고로 기록되고 파일은 아무 일도 하지 않습니다.
+
 ## 속성 재정의
 
 *블록과 아이템*
@@ -2611,13 +2829,22 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 
 *속성 재정의*
 
-| 키              | 값            | 설명                                                                                                                                                         |
-| --------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `maxStackSize`  | `1`~`64`      | 스택 크기                                                                                                                                                    |
-| `maxDamage`     | 정수          | 내구도                                                                                                                                                       |
-| `containerItem` | 아이템 이름   | 양동이처럼 제작대에 남는 아이템                                                                                                                              |
-| `food`          | 객체          | 아이템을 먹을 수 있게 합니다. 아래를 참고하세요                                                                                                              |
-| `weight`        | 0 이상의 숫자 | 이 아이템(블록이면 그 블록의 아이템)이 들고 다니는 무게. 무게 파일의 단위로 표시합니다. 모든 무게 파일 항목보다 우선합니다. [아이템 무게](#아이템-무게) 참고 |
+아이템에 `tool` 채굴 규칙을 줄 수 있습니다. `overrides/minecraft/iron_pickaxe.json`에 다음을 담으면 철 곡괭이는 원래 캘 수 있던 블록에 더해, 곡괭이 태그에 속한 모든 블록을 속도 6으로 캐고 캔 것을 드롭합니다:
+
+```json
+{
+  "tool": { "speed": 6.0, "minesWith": "#minecraft:mineable/pickaxe" }
+}
+```
+
+| 키              | 값            | 설명                                                                                                                                                                                                                                                 |
+| --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool`          | 객체          | 채굴 규칙을 앞에 더합니다. `minesWith` 블록 태그 아래의 블록을 `speed`로 캐며, 그 블록들의 드롭에 맞는 도구로 칩니다. 아이템이 원래 캐던 블록과 다른 도구 설정(블록당 피해, 기본 속도)은 그대로 남습니다. 두 키가 모두 필요하며 태그가 있어야 합니다 |
+| `maxStackSize`  | `1`~`64`      | 스택 크기                                                                                                                                                                                                                                            |
+| `maxDamage`     | 정수          | 내구도                                                                                                                                                                                                                                               |
+| `containerItem` | 아이템 이름   | 양동이처럼 제작대에 남는 아이템                                                                                                                                                                                                                      |
+| `food`          | 객체          | 아이템을 먹을 수 있게 합니다. 아래를 참고하세요                                                                                                                                                                                                      |
+| `weight`        | 0 이상의 숫자 | 이 아이템(블록이면 그 블록의 아이템)이 들고 다니는 무게. 무게 파일의 단위로 표시합니다. 모든 무게 파일 항목보다 우선합니다. [아이템 무게](#아이템-무게) 참고                                                                                         |
 
 블록이면서 아이템인 이름, 즉 설치할 수 있는 모든 블록의 아이템은 파일 하나에서 두 그룹을 모두 받습니다.
 
@@ -2851,16 +3078,23 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "requires": ["thermal"],
   "names": ["thermal:tin_ore", "thermal:deepslate_tin_ore", "mekanism:salt*"],
   "namespaces": ["bigreactors"],
-  "tags": ["forge:ores/tin"]
+  "tags": ["forge:ores/tin"],
+  "hideOnly": false,
+  "untag": ["minecraft:stick"],
+  "fluids": ["minecraft:water"]
 }
 ```
 
-| 키           | 필수   | 값                         | 기본값 | 설명                                                                                                                        |
-| ------------ | ------ | -------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `names`      | 아니요 | 블록 및 아이템 이름의 목록 | 없음   | 비활성화할 대상. `*`로 끝나는 이름은 나머지로 시작하는 모든 이름과 일치합니다                                               |
-| `namespaces` | 아니요 | 모드 id의 목록             | 없음   | 해당 모드의 모든 블록과 아이템                                                                                              |
-| `tags`       | 아니요 | 태그 이름의 목록           | 없음   | 해당 이름의 아이템 태그에 있는 모든 아이템과 블록 태그에 있는 모든 블록이며, 두 태그는 비워집니다. 앞에 `#`을 붙여도 됩니다 |
-| `requires`   | 아니요 | 모드 id의 목록             | 없음   | 모두 로드되어 있지 않으면 파일을 건너뜁니다. `config:`와 `file:` 항목은 다른 곳과 똑같이 작동합니다                         |
+| 키               | 필수   | 값                         | 기본값  | 설명                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------- | ------ | -------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`          | 아니요 | 블록 및 아이템 이름의 목록 | 없음    | 비활성화할 대상. `*`로 끝나는 이름은 나머지로 시작하는 모든 이름과 일치합니다                                                                                                                                                                                                                                                                                                                                                                                   |
+| `namespaces`     | 아니요 | 모드 id의 목록             | 없음    | 해당 모드의 모든 블록과 아이템                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `tags`           | 아니요 | 태그 이름의 목록           | 없음    | 해당 이름의 아이템 태그에 있는 모든 아이템과 블록 태그에 있는 모든 블록이며, 두 태그는 비워집니다. 앞에 `#`을 붙여도 됩니다                                                                                                                                                                                                                                                                                                                                     |
+| `hideOnly`       | 아니요 | `true` 또는 `false`        | `false` | `true`면 이 파일이 나열한 것을 JEI에서만 숨깁니다. 그 블록과 아이템은 그대로 제작하고 설치하고 사용할 수 있습니다                                                                                                                                                                                                                                                                                                                                               |
+| `untag`          | 아니요 | 블록 및 아이템 이름의 목록 | 없음    | 나열한 아이템을 로드할 때 모든 아이템 태그에서 뺍니다. 비활성화된 것과 달리 게임에는 그대로 남습니다. 이름은 `names`와 같은 방식으로 적습니다                                                                                                                                                                                                                                                                                                                   |
+| `hideCategories` | 아니요 | JEI 레시피 종류 ID의 목록  | 없음    | 숨길 JEI 레시피 카테고리이며, JEI가 카테고리에 붙인 ID로 적습니다(예: 화로 레시피는 `minecraft:smelting`). 나열한 카테고리는 그 레시피와 함께 JEI와 HEI에서 사라집니다. `hideOnly` 값과 관계없이 모든 파일에서 읽으며, 게임 자체에는 아무 영향이 없습니다. 올바른 ID가 아니거나 로드된 플러그인이 등록하지 않은 ID는 오류로 로그에 기록되며("Disabled file hides JEI category"), 그 카테고리는 전과 같이 표시됩니다. JEI나 HEI가 없으면 아무 일도 하지 않습니다 |
+| `fluids`         | 아니요 | 유체 이름의 목록           | 없음    | 나열한 유체를 로드할 때 모든 유체 태그에서 뺍니다. 게임에는 그대로 남습니다                                                                                                                                                                                                                                                                                                                                                                                     |
+| `requires`       | 아니요 | 모드 id의 목록             | 없음    | 모두 로드되어 있지 않으면 파일을 건너뜁니다. `config:`와 `file:` 항목은 다른 곳과 똑같이 작동합니다                                                                                                                                                                                                                                                                                                                                                             |
 
 비활성화된 블록 또는 아이템은 다음과 같이 처리됩니다.
 
@@ -3037,6 +3271,36 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `tag`      | 둘 중 하나 | 태그 id     | 없음   | 해당 태그의 모든 것이 연소합니다 |
 | `burnTime` | 예         | 정수, 틱    | `0`    | 석탄은 1600, 판자는 300          |
 
+## 레시피 제거
+
+*제작, 전리품, 거래*
+
+`<namespace>/recipe_removals/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 여러 파일이 겹쳐 적용됩니다. 레시피를 삭제합니다. 선택 조건 중 하나라도 일치하는 레시피는 삭제됩니다.
+
+```json
+{
+  "names": ["minecraft:bow", "thermal:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword", "#c:ingots/copper"],
+  "inputs": ["minecraft:string", "#minecraft:planks"],
+  "regex": ["^minecraft:.*_slab$"],
+  "types": ["minecraft:smelting", "create:milling"]
+}
+```
+
+| 키           | 필수   | 값               | 기본값 | 설명                                                                                                                                                                     |
+| ------------ | ------ | ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `names`      | 아니요 | 목록             | 없음   | 삭제할 레시피 이름입니다. 끝의 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다                                                                                         |
+| `namespaces` | 아니요 | 목록             | 없음   | 이 네임스페이스의 모든 레시피                                                                                                                                            |
+| `outputs`    | 아니요 | 아이템 이름 목록 | 없음   | 이 아이템 중 하나를 만드는 모든 레시피. `#`으로 시작하는 이름은 아이템 태그이며, 결과물이 그 태그에 든 모든 레시피와 일치합니다                                          |
+| `inputs`     | 아니요 | 아이템 이름 목록 | 없음   | 이 아이템 중 하나가 맞는 재료를 가진 모든 레시피. `#`으로 시작하는 이름은 아이템 태그입니다                                                                              |
+| `regex`      | 아니요 | 텍스트 목록      | 없음   | 레시피 이름의 일부라도 일치하는 자바 정규 표현식입니다(전체 일치가 아니라 찾기이며, `^`와 `$`로 고정할 수 있습니다). 예: `minecraft:oak_.*`                              |
+| `types`      | 아니요 | 목록             | 없음   | 레시피 종류 이름이며, 예: `minecraft:smelting`. 어느 모드가 그 종류를 등록했든 해당 종류의 레시피는 모두 삭제됩니다. 다른 선택 조건과 달리 제작이 아닌 종류에도 닿습니다 |
+
+`names`, `namespaces`, `outputs`, `inputs`와 `regex`는 제작 레시피만 판단합니다. 아이템 태그를 지정한 선택 조건은 레시피보다 조금 뒤, 태그가 로드된 다음에 적용됩니다. KubeJS 같은 스크립트가 만든 레시피는 건드리지 않습니다.
+
 ## 레시피 교체
 
 *제작, 전리품, 거래*
@@ -3063,27 +3327,117 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 }
 ```
 
-| 키         | 필수   | 값             | 기본값 | 설명                                                  |
-| ---------- | ------ | -------------- | ------ | ----------------------------------------------------- |
-| `requires` | 아니요 | 모드 id의 목록 | 없음   | 나열된 모드가 모두 로드되어 있을 때만 파일을 읽습니다 |
-| `swaps`    | 예     | 목록           | 없음   | 교체 항목들이며, 순서대로 적용됩니다                  |
+교체 대신 남은 아이템을 정하는 파일:
+
+```json
+{
+  "recipes": { "names": ["minecraft:mushroom_stew"] },
+  "remainder": [
+    { "ingredient": "minecraft:potion", "returns": "minecraft:glass_bottle" }
+  ]
+}
+```
+
+| 키          | 필수                                                                                | 값             | 기본값 | 설명                                                                                                                                                                                                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------- | -------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`  | 아니요                                                                              | 모드 id의 목록 | 없음   | 나열된 모드가 모두 로드되어 있을 때만 파일을 읽습니다                                                                                                                                                                                                                                                                                           |
+| `swaps`     | `remainder`, `transfer`, `template`, `edit`, `script` 또는 `scriptFile`이 없으면 예 | 목록           | 없음   | 교체 항목들이며, 순서대로 적용됩니다                                                                                                                                                                                                                                                                                                            |
+| `transfer`  | 아니요                                                                              | 오브젝트       | 없음   | `transfer`와 `recipes` 오브젝트가 있고 `swaps`가 없는 파일은 지정한 제작 레시피가 격자의 데이터를 결과물로 옮기게 하며, 아래 전달에서 설명합니다                                                                                                                                                                                                |
+| `remainder` | 아니요                                                                              | 목록           | 없음   | `remainder`와 `recipes` 오브젝트가 있고 `swaps`가 없는 파일은 지정한 제작 레시피가 격자에 남기는 것을 정합니다. 각 항목에는 `ingredient`(아이템 이름 또는 `#` 아이템 태그)와 `returns` 아이템이 있습니다. 소모되는 모든 `ingredient`는 원래 남기던 것 대신 `returns`를 남깁니다. `recipes`는 [레시피 제거](#레시피-제거)의 선택 조건을 받습니다 |
 
 `swaps` 아래의 항목:
 
-| 키        | 필수   | 값          | 기본값      | 설명                                                                                                                                                                                                                                                                                                |
-| --------- | ------ | ----------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `from`    | 예     | 오브젝트    | 없음        | 바꿀 대상입니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다), `namespaces`, `tags`가 있으며, 키는 [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)과 같습니다                                                                                                         |
-| `to`      | 예     | 아이템 이름 | 없음        | 대신 들어갈 아이템입니다. 알 수 없는 아이템이면 항목을 건너뛰고 로그에 기록합니다                                                                                                                                                                                                                   |
-| `output`  | 아니요 | 불리언      | `false`     | `true`이면 레시피가 만드는 결과물이 `from`인 경우에도 `from`을 바꿉니다. `false`이면 재료로 쓰일 때만 `from`을 바꿉니다. 개수는 유지되고, 이전 결과물의 컴포넌트는 제거됩니다                                                                                                                       |
-| `recipes` | 아니요 | 오브젝트    | 모든 레시피 | 교체를 이 제작 레시피로 한정합니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다)와 `namespaces`가 있습니다. `recipes`가 있는 항목은 제련 레시피를 건드리지 않습니다. 1.12.2처럼 화로 레시피에는 이름이 없기 때문입니다. 여기서는 `outputs`를 읽지 않으며, 로그에 기록합니다 |
+| 키        | 필수   | 값                 | 기본값      | 설명                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------- | ------ | ------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | 예     | 오브젝트           | 없음        | 바꿀 대상입니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다), `namespaces`, `tags`가 있으며, 키는 [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)과 같습니다                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `to`      | 예     | 아이템 이름        | 없음        | 대신 들어갈 것입니다. `minecraft:iron_ingot`처럼 아이템 이름이거나, `#c:ingots/iron`처럼 `#`을 붙인 아이템 태그입니다. 태그이면 교체된 아이템을 가진 레시피의 각 슬롯이 그 태그가 되어 구성원이면 무엇이든 받습니다. 태그는 레시피가 만드는 것이 될 수 없습니다. `output`이나 결과 경로가 결과를 태그로 바꾸려 하면 결과는 그대로 두고 로그에 기록합니다. 올바른 아이템이나 태그 이름이 아닌 `to`는 항목을 건너뛰며, 존재하지 않는 태그도 마찬가지입니다                                                                                                                                        |
+| `output`  | 아니요 | 불리언             | `false`     | `true`이면 레시피가 만드는 결과물이 `from`인 경우에도 `from`을 바꿉니다. `false`이면 재료로 쓰일 때만 `from`을 바꿉니다. 개수는 유지되고, 이전 결과물의 컴포넌트는 제거됩니다                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `recipes` | 아니요 | 오브젝트           | 모든 레시피 | 교체를 이 제작 레시피로 한정합니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다)와 `namespaces`가 있습니다. `recipes`가 있는 항목은 제련 레시피를 건드리지 않습니다. 1.12.2처럼 화로 레시피에는 이름이 없기 때문입니다. 여기서는 `outputs`를 읽지 않으며, 로그에 기록합니다                                                                                                                                                                                                                                                                                             |
+| `types`   | 아니요 | 레시피 종류의 목록 | 없음        | 교체가 함께 닿는 레시피 종류이며, `minecraft:smoking`처럼 종류 ID로 적거나 모드 고유의 종류로 적습니다. 끝에 붙은 `*`는 그 앞 텍스트로 시작하는 모든 종류와 일치하므로, `create:*`는 Create의 모든 종류이고 `*`만 쓰면 모든 종류입니다. 그 밖의 위치에 있는 `*`나 올바르지 않은 이름은 로그에 기록되고 건너뜁니다. 나열한 종류의 레시피는 종류별로 파싱하지 않고 JSON을 통째로 검색합니다                                                                                                                                                                                                       |
+| `paths`   | 아니요 | 경로의 목록        | 없음        | `types`가 필요합니다. 그 종류의 레시피에서 검색을 이 자리들로 한정합니다. 각 자리는 레시피 JSON의 맨 위에서부터 점으로 이은 경로이며, 예로 `ingredients.0.item`이나 `results.0.id`가 있습니다. 레시피에 없는 경로는 조용히 건너뜁니다. 빈 부분이 있는 경로는 로그에 기록되고 건너뜁니다. `types` 없이 적은 경로는 `has paths but no types, ignoring its paths`라고 로그에 남고 무시됩니다. 어느 부분에든 `result`나 `output`이 있는 경로는 결과물로 취급되어, `output`이 `false`여도 바뀝니다. 생략하면 레시피의 모든 부분을 검색하며, 키에 `result`나 `output`이 든 부분은 `output`을 따릅니다 |
+
+교체한 결과를 더 이상 파싱할 수 없는 레시피는 전과 같이 남으며, 로그에는 `Left <recipe> alone, its swapped form does not parse`라고 기록됩니다. 교체의 `recipes` 한정은 모든 줄에서 `names`와 `namespaces`만 읽으며, `regex`는 재작성 파일에 속합니다.
 
 `from`만 받는 슬롯은 `to`가 됩니다. 다른 아이템도 받는 슬롯은 그 아이템을 유지하면서 `to`도 받지만, 태그를 잃으므로 나중에 그 태그에 추가된 아이템은 그 슬롯에 들어가지 않습니다. `from` 아이템은 그것을 담고 있는 태그로 적힌 슬롯에 적용되고, `from` 태그는 그 태그의 아이템 중 하나를 지정한 슬롯에 적용됩니다.
+
+`to`를 `#tag`로 적으면 아이템 교체가 아니라 태그 교체입니다. 교체되는 아이템을 받던 슬롯은 그 대신 태그를 받고, 다른 아이템도 받던 슬롯은 그 아이템을 유지하면서 태그가 추가됩니다. 원래 태그로 적힌 슬롯은 그대로 두며, 로그에 그렇게 기록합니다.
 
 `to`가 자기 자신의 `from`과 일치하는 항목은 건너뛰고 로그에 기록합니다. 제련 재료는 `to`가 같은 종류의 다른 레시피(제련, 용광로, 훈연기, 모닥불)의 재료인 경우 교체되지 않으며, 로그에 그 레시피를 기록합니다.
 
 교체는 레시피 파일을 로드할 때 다시 쓰므로 `/reload`마다 다시 실행됩니다. 레시피 제거와 레시피 차단은 교체 전에 만들던 결과물로 레시피를 판단하며, 이는 1.12.2와 같습니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템), [화로 파일](#화로-레시피와-연료), [레시피 잠금](#레시피-잠금)은 교체된 레시피를 봅니다.
 
-제작 레시피와 제련 레시피 네 종류가 다시 쓰입니다. 다른 모드의 기계 레시피처럼 그 밖의 레시피 종류는 건드리지 않습니다. 교체된 아이템을 가리키는 자체 `type` 키를 가진 재료 오브젝트는 그대로 둡니다. KubeJS 레시피 스크립트처럼 스크립트가 만든 레시피는 교체되지 않으며, 로그에 한 번 기록됩니다. 로그는 다음과 같이 요약합니다: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, 남은 것이 있으면 `Left N recipe(s) alone`도 나옵니다.
+제작 레시피와 제련 레시피, 그리고 `types`에 적힌 종류의 모든 레시피가 다시 쓰입니다. 교체된 아이템을 가리키지만 다른 종류인 레시피는 그대로 두며, 로그에 그 종류를 예시 레시피와 함께 한 번 기록합니다. 로그는 이어서 요약합니다: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, 남은 것이 있으면 `Left N recipe(s) alone`도 나옵니다. 스크립트 모드가 만든 레시피는 다시 쓰이지 않으며, 로그에 그렇게 남습니다.
+
+전달: 결과물이 한 재료의 데이터를 통째로 유지하고, 다른 재료에서 일부를 가져가게 하는 파일입니다:
+
+```json
+{
+  "recipes": { "names": ["mypack:enchant_armor"] },
+  "transfer": { "from": "armor", "take": ["enchantments"], "source": "book" }
+}
+```
+
+| 키       | 필수 | 값                                              | 기본값 | 설명                                                                                                                                                                                                                                                            |
+| -------- | ---- | ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`   | 예   | `armor`, `tool`, `weapon`, 아이템 또는 `#` 태그 | 없음   | 결과물이 피해를 포함해 통째로 유지하는 데이터의 재료입니다. `armor`는 방어구 슬롯에 착용할 수 있는 아이템, `tool`은 곡괭이, 도끼, 삽, 괭이, 가위, `weapon`은 검과 활에 맞습니다. 아이템 이름이나 `#` 아이템 태그는 그것에 맞습니다                              |
+| `source` | 예   | `book`, 아이템 또는 `#` 태그                    | 없음   | `take`의 일부를 가져오는 재료입니다. `book`은 마법 부여된 책이며, 책에 저장된 마법이 그 책의 마법 부여로 칩니다                                                                                                                                                 |
+| `take`   | 예   | 목록                                            | 없음   | `source`에서 가져올 일부입니다. `enchantments`는 결과물에 합쳐지며 더 높은 레벨이 이기고, 결과물이 받을 수 없거나 가진 것과 충돌하는 마법은 모루처럼 건너뜁니다. `name`은 사용자 지정 이름을, `damage`는 피해를, `nbt`는 사용자 지정 데이터를 정하거나 합칩니다 |
+
+각각에 쓰이는 재료는 격자에서 처음으로 맞는 것이며, 두 재료는 서로 다른 칸이어야 합니다. 레시피는 감싸져서, 결과물 칸의 미리 보기, 일반 클릭, Shift 클릭이 모두 같은 결과를 주며, 바닐라 클라이언트는 감싸기 전의 레시피를 봅니다. 로그는 `Gave N crafting recipe(s) a transfer`로 요약합니다.
+
+레시피 재작성: `recipe_swaps`의 파일이 `template`, `edit`, `script` 중 하나 이상을 갖고 `swaps`가 필요 없으면, 레시피를 그 JSON으로 바꿉니다. 이 파일의 `recipes` 한정과 `types` 목록이 가리키는 레시피를 대상으로 하며, 둘 다 적혀 있으면 레시피가 둘 모두와 맞아야 합니다.
+
+```json
+{
+  "types": ["minecraft:smelting", "minecraft:blasting"],
+  "recipes": { "namespaces": ["minecraft"], "regex": ["_ore$"] },
+  "edit": [
+    { "op": "multiply", "path": "cookingtime", "by": 0.5, "round": "down" },
+    { "op": "set", "path": "experience", "value": 1.0 }
+  ]
+}
+```
+
+```json
+{
+  "recipes": { "names": ["mypack:iron_rod"] },
+  "template": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [{ "item": "{result.id}" }],
+    "result": { "id": "mypack:rod_bundle", "count": "{result.count}" }
+  }
+}
+```
+
+```json
+{
+  "recipes": { "names": ["minecraft:stick"] },
+  "script": "(function (text) { var recipe = JSON.parse(text); recipe.result.count = 8; return recipe; })"
+}
+```
+
+| Key            | Required                    | Value       | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | --------------------------- | ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`     | 아니요                      | 모드의 목록 | 없음    | 이 모든 모드가 로드되어 있을 때만 파일을 읽습니다                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `recipes`      | 이 항목과 `types` 중 하나   | 객체        | 없음    | 이름으로 고르는 레시피: `names`(끝의 `*`는 그 텍스트로 시작하는 모든 이름과 일치), `namespaces`, 그리고 `regex`(`minecraft:iron_ingot`처럼 레시피 ID 전체에 대해 시험하는 식의 목록이며, 어디든 맞으면 일치로 봅니다). 여기서 `outputs`, `inputs`, `types`는 로그에 기록되고 파일은 건너뜁니다. 올바르지 않은 `regex`는 로그에 기록되고 파일은 건너뜁니다                                                                                                                                           |
+| `types`        | 이 항목과 `recipes` 중 하나 | 목록        | 없음    | 레시피 종류 ID이며, 접두어에는 끝에 `*`를 붙입니다. 교체의 `types`와 같습니다                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `template`     | 아니요                      | 객체        | 없음    | 레시피가 이 객체가 됩니다. 모든 문자열에서 `{path}`는 옛 레시피가 그 점 경로에 가진 값으로 바뀝니다(예: `{result.id}`나 `{ingredients.0.item}`). 자리표시자만 있는 문자열은 값을 그대로 받으며, 숫자, 텍스트, 객체, 목록 무엇이든 됩니다. 더 긴 텍스트 안의 자리표시자는 단일 값이어야 하며, 아니면 레시피는 그대로 두고 로그에 이유가 남습니다. 옛 레시피에 없는 경로는 레시피를 그대로 둡니다. 객체가 아닌 템플릿은 로그에 기록되고 무시됩니다. 템플릿에 조건이 없으면 레시피의 조건은 유지됩니다 |
+| `edit`         | 아니요                      | 목록        | 없음    | 레시피에 가하는 변경이며 순서대로 적용됩니다. 아래를 보세요                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `script`       | 아니요                      | 텍스트      | 없음    | 일치한 각 레시피를 바꾸는 JavaScript입니다. 아래를 보세요. `scriptFile`과 함께 쓸 수 없습니다                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `scriptFile`   | 아니요                      | 경로        | 없음    | 같은 용도이며, 같은 네임스페이스의 `scripts/` 아래 경로로 `.js`로 끝납니다. [스크립팅](#스크립팅)을 보세요                                                                                                                                                                                                                                                                                                                                                                                          |
+| `before_swaps` | 아니요                      | 불리언      | `false` | `true`: 재작성을 아이템 교체 전에 실행합니다. `false`: 교체 뒤에 실행합니다                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+| `edit` 키 | 필수                   | 값          | 기본값    | 설명                                                                                                                                                                                                   |
+| --------- | ---------------------- | ----------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `op`      | 예                     | 텍스트      | 없음      | `set`은 `path`에 `value`를 넣으며, 위 부분이 있는 한 없을 때 추가합니다. `replace`는 `path`에 `value`를 넣으며 그 경로가 있어야 합니다. `multiply`는 `path`의 숫자에 `by`를 곱합니다                   |
+| `path`    | 예                     | 점 경로     | 없음      | 레시피 JSON에서의 위치이며, 예로 `cookingtime`, `result.count`, `ingredients.0.item`이 있습니다. 빈 부분이 있는 경로는 로그에 기록되고 편집은 건너뜁니다                                               |
+| `value`   | `set`과 `replace`일 때 | 임의의 JSON | 없음      | 넣을 값입니다. `value`가 없으면 로그에 기록되고 편집은 건너뜁니다                                                                                                                                      |
+| `by`      | `multiply`일 때        | 숫자        | 없음      | 곱할 배수입니다. `by`가 없거나 숫자가 아니면 로그에 기록되고 편집은 건너뜁니다                                                                                                                         |
+| `round`   | 아니요                 | 텍스트      | `nearest` | 정수에 대한 `multiply`일 때: `nearest`, `down`, `up` 중 하나입니다. 양수는 0으로 반올림되지 않고 1이 됩니다. 소수점으로 적은 숫자는 소수로 남습니다. 그 밖의 값은 로그에 기록되고 `nearest`가 쓰입니다 |
+
+재작성 스크립트는 일치한 레시피마다 한 번씩, 파일의 `edit` 목록과 `template` 뒤에 실행됩니다. 스크립트는 함수로 평가되어야 하므로, 예처럼 괄호로 감쌉니다. 함수는 레시피 JSON을 텍스트로만 받고 다른 것은 받지 않으며, JSON 텍스트나 객체를 돌려줍니다. 그것이 레시피가 됩니다. 함수가 null이나 아무것도 돌려주지 않거나, JSON 객체가 아닌 것을 돌려주거나, 파싱되지 않는 레시피를 돌려주거나, 실패하면 그 레시피는 스크립트 전과 같이 남습니다. 실패하거나 50ms를 넘긴 스크립트는 다음 다시 불러오기 전까지 다시 호출되지 않으므로, 그 파일의 다른 레시피는 그대로 남습니다. 로그에는 다시 불러올 때마다 파일당 경우별로 한 번씩 기록됩니다: `The script of recipe rewrite file <file> <why> (first seen on <recipe>), keeping each such recipe as it was before the script`. `<why>`는 `failed: <message>`, `returned null`, `returned text that is not JSON`, `returned JSON that is not an object`, `returned a recipe that does not parse` 중 하나입니다. `script`와 `scriptFile`을 둘 다 가진 파일은 `Recipe rewrite file <file> has more than one of script and scriptFile, ignoring both`로 기록되며, 그 `edit` 목록과 `template`은 그대로 적용됩니다.
+
+편집을 적용할 수 없을 때(`replace`나 `multiply`에서 경로가 없거나 숫자가 아닐 때)에는 그 레시피를 그대로 두고 로그에 어느 것인지 남깁니다. 재작성한 결과가 파싱되지 않는 레시피는 전과 같이 남으며, 로그에는 `Left <recipe> alone, its rewritten form from <file> does not parse`라고 기록됩니다. 그 세 가지 외의 `op`를 쓰거나 `path`가 없는 편집은 로그에 기록되고 건너뜁니다. 로그는 `Edited N recipe(s) and rewrote N recipe(s) from a template`처럼 합계를 남깁니다. `swaps`, `template`, `edit`, `remainder`, `transfer`가 하나도 없는 `recipe_swaps` 파일은 swaps 배열이 없다고 로그에 기록됩니다. `recipes` 설정에서 `swaps`를 `false`로 두면 재작성도 교체와 함께 꺼집니다. 스크립트 모드가 만든 레시피는 재작성되지 않으며, 로그에 그렇게 남습니다.
 
 ## 레시피 잠금
 
@@ -3101,18 +3455,20 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "scoreAtLeast": 5,
   "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
   "namespaces": ["tconstruct"],
-  "outputs": ["minecraft:diamond_sword"]
+  "outputs": ["minecraft:diamond_sword", "#c:ingots/copper"],
+  "regex": ["^tconstruct:.*_pickaxe$"]
 }
 ```
 
 | 키                          | 필수   | 값               | 기본값 | 설명                                                                                                                                                                                                                         |
 | --------------------------- | ------ | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `advancement`               | 아니요 | `namespace:path` | 없음   | 이 레시피로 제작하려면 플레이어에게 필요한 발전 과제. 잠금에는 이것이나 플레이어의 상태(`team`, 또는 `objective`와 `scoreAtLeast`)가 필요하며, 둘 다 지정하면 둘 다 필요합니다. 둘 다 없는 파일은 건너뛰며 로그에 기록됩니다 |
-| `names`                     | 아니요 | 목록             | 없음   | 막아 둘 레시피 이름. 끝의 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다(예: `thermalfoundation:*`)                                                                                                                       |
-| `namespaces`                | 아니요 | 목록             | 없음   | 이 네임스페이스의 모든 레시피                                                                                                                                                                                                |
-| `outputs`                   | 아니요 | 아이템 이름 목록 | 없음   | 이 아이템 중 하나를 만드는 모든 레시피                                                                                                                                                                                       |
 | `team`                      | 아니요 | 문자열           | 없음   | 플레이어가 속해 있어야 하는 스코어보드 팀                                                                                                                                                                                    |
 | `objective`, `scoreAtLeast` | 아니요 | 문자열, 정수     | 없음   | 이 목표에서 플레이어의 점수가 최소 이 값이어야 합니다. 둘 다 필요합니다                                                                                                                                                      |
+| `names`                     | 아니요 | 목록             | 없음   | 막아 둘 레시피 이름. 끝의 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다(예: `thermalfoundation:*`)                                                                                                                       |
+| `namespaces`                | 아니요 | 목록             | 없음   | 이 네임스페이스의 모든 레시피                                                                                                                                                                                                |
+| `outputs`                   | 아니요 | 아이템 이름 목록 | 없음   | 이 아이템 중 하나를 만드는 모든 레시피. `#`으로 시작하는 이름은 아이템 태그이며, 결과물이 그 태그에 든 모든 레시피와 일치합니다                                                                                              |
+| `regex`                     | 아니요 | 텍스트 목록      | 없음   | 레시피 이름의 일부라도 일치하는 자바 정규 표현식입니다(전체 일치가 아니라 찾기이며, `^`와 `$`로 고정합니다). 잠금에는 `inputs`를 쓸 수 없습니다                                                                              |
 
 발전 과제가 없는 플레이어는 일치하는 레시피의 결과 칸이 비어 보입니다. 제작대, 인벤토리의 2x2 격자, 레시피 책이 격자를 채울 때 모두 마찬가지입니다. 발전 과제를 가진 플레이어는 평소처럼 제작합니다. 화로, 모루, 자동 제작기는 막지 않습니다. 여러 파일은 겹쳐 적용되며, 두 파일에 일치하는 레시피에는 두 발전 과제가 모두 필요합니다. 레시피를 하나도 고르지 못하는 파일은 건너뛰며 로그에 기록됩니다.
 
@@ -3142,11 +3498,29 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 `items` 또는 `enchantments`의 각 항목은 다음 키를 받습니다.
 
-| 키            | 필수 | 값             | 기본값 | 설명                               |
-| ------------- | ---- | -------------- | ------ | ---------------------------------- |
-| `item`        | 예   | 아이템 이름    | 없음   | 아이템 또는 블록의 아이템          |
-| `enchantment` | 예   | 마법 부여 이름 | 없음   | 줄을 받는 마법 부여                |
-| `lines`       | 예   | 텍스트 목록    | 없음   | 언어 키 또는 일반 텍스트, 순서대로 |
+| 키            | 필수   | 값             | 기본값  | 설명                                                                                                                                                                                                                                                                                                          |
+| ------------- | ------ | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`        | 예     | 아이템 이름    | 없음    | 아이템 또는 블록의 아이템                                                                                                                                                                                                                                                                                     |
+| `enchantment` | 예     | 마법 부여 이름 | 없음    | 줄을 받는 마법 부여                                                                                                                                                                                                                                                                                           |
+| `lines`       | 예     | 텍스트 목록    | 없음    | 언어 키 또는 일반 텍스트, 순서대로                                                                                                                                                                                                                                                                            |
+| `shift`       | 아니요 | 불리언         | `false` | `true`: 줄은 플레이어가 Shift를 누르고 있는 동안에만 보입니다. 그래서 아이템에 짧은 힌트를 달고 나머지는 필요할 때 보게 할 수 있습니다. `false`: 항상 보입니다                                                                                                                                                |
+| `position`    | 아니요 | 0 이상의 정수  | 없음    | 줄이 들어갈 자리입니다. `0`이면 아이템 이름 바로 아래에, 마법 부여 항목이면 마법 부여 이름 바로 아래에 넣습니다. `1`이면 한 줄 더 아래에 넣습니다. 툴팁 끝을 넘는 숫자이면 맨 끝에 추가합니다. 빼면 아이템 줄은 맨 뒤에, 마법 부여 줄은 이름 바로 다음에 들어갑니다. 음수는 로그에 기록되고 항목을 건너뜁니다 |
+| `replace`     | 아니요 | 불리언         | `false` | `true`: 항목의 줄 중 첫 줄이 `position`에 이미 있는 줄을 대신합니다. 나머지 줄은 그 뒤에 추가됩니다. `false`: 아무것도 지우지 않고 줄을 추가합니다. `position`이 필요하며, 없으면 로그에 기록되고 줄은 맨 끝에 추가됩니다. `position`이 툴팁 끝을 넘으면 아무것도 대체되지 않습니다                           |
+| `when`        | 아니요 | 객체           | 없음    | 검사가 맞는 동안에만 줄을 보입니다. [동기화 데이터](#동기화-데이터)에서처럼 `data`만 읽으며, 검사 하나 또는 목록입니다. 다른 키는 로그에 기록되고 항목을 건너뜁니다                                                                                                                                           |
+
+줄은 `{data:name|fallback}`으로 동기화 값을 보일 수도 있습니다. 클라이언트는 서버가 보낸 동기화 값을 읽으므로, 모드가 없는 클라이언트나 `vanillaClients`가 켜진 서버에서는 `when`이 있는 항목이 결코 보이지 않으며, 줄에서는 대체 텍스트가 보입니다.
+
+**아이템의 값.** 줄은 바라보고 있는 아이템에 저장된 값을 보여 줄 수 있습니다. `{nbt:path}`는 아이템의 `minecraft:custom_data`에서 그 경로에 있는 값으로 바뀌고, `{item:component.path}`는 `minecraft:damage`나 `minecraft:enchantments` 같은 데이터 컴포넌트 ID로 시작해, 점과 함께 저장된 그대로의 그 컴포넌트 안 경로가 이어집니다. 알 수 없는 컴포넌트나 그 안에 없는 경로는 아무것도 보여 주지 않습니다. 경로는 점으로 구분한 이름으로 적으며, 정수인 부분은 목록에서 그 자리를 0부터 세어 고릅니다. 이는 언어 키와 일반 텍스트 모두에서 작동합니다.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby_ring", "lines": ["Charge {nbt:mypack.charge} of {nbt:mypack.max}", "First gem: {nbt:gems.0.id}"] }
+  ]
+}
+```
+
+숫자는 소수 부분이 없으면 정수로 보이고, 텍스트 값은 색 코드를 뺀 채 보입니다. 없는 것, 목록의 끝을 넘는 자리, 또는 숫자나 텍스트 하나가 아니라 여러 값을 담는 부분은 아무것도 보이지 않습니다. 경로가 없는 `{nbt:}`와 `}`로 닫히지 않은 여는 `{nbt:`는 적힌 그대로 줄에 남으며, 빈 쪽은 로그에 기록됩니다.
 
 ## 언어 게이트
 
@@ -3273,7 +3647,9 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 `<namespace>/enchantments/*.json`
 
-파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다. 영혼 귀속 파일은 마법을 표시로 삼을 수도 있습니다. [영혼 귀속 아이템](#영혼-귀속-아이템)을 참고하세요.
+파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다.
+
+영혼 귀속 파일은 마법을 표시로 삼을 수도 있습니다. [영혼 귀속 아이템](#영혼-귀속-아이템)을 참고하세요.
 
 ```json
 {
@@ -3607,13 +3983,15 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 }
 ```
 
-| 키            | 필수   | 값               | 기본값  | 설명                                                                                                                         |
-| ------------- | ------ | ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `block`       | 예     | 블록 id          |         | 규칙이 지켜보는 블록                                                                                                         |
-| `properties`  | 아니요 | 속성과 값의 객체 | 없음    | 원목의 `{ "axis": "x" }`처럼 이 값을 가진 상태만 해당하며, 없으면 모든 상태입니다. 1.12.2의 `meta`는 읽지 않습니다           |
-| `replace`     | 아니요 | 불리언           | `false` | `true`이면 이것들을 추첨하기 전에 평소 드롭을 버립니다. `false`이면 평소 드롭을 그대로 둡니다                                |
-| `advancement` | 아니요 | `namespace:path` | 없음    | 그 발전 과제를 가진 플레이어에게만 규칙이 적용되므로, 같은 블록이 그 전에는 하나를, 그 후에는 다른 것을 떨어뜨릴 수 있습니다 |
-| `drops`       | 예     | 드롭의 목록      |         | 블록을 부술 때 각각 따로 추첨합니다                                                                                          |
+| 키            | 필수   | 값               | 기본값  | 설명                                                                                                                                                                                                                                      |
+| ------------- | ------ | ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `block`       | 예     | 블록 id          |         | 규칙이 지켜보는 블록                                                                                                                                                                                                                      |
+| `properties`  | 아니요 | 속성과 값의 객체 | 없음    | 원목의 `{ "axis": "x" }`처럼 이 값을 가진 상태만 해당하며, 없으면 모든 상태입니다. 1.12.2의 `meta`는 읽지 않습니다                                                                                                                        |
+| `replace`     | 아니요 | 불리언           | `false` | `true`이면 이것들을 추첨하기 전에 평소 드롭을 버립니다. `false`이면 평소 드롭을 그대로 둡니다                                                                                                                                             |
+| `advancement` | 아니요 | `namespace:path` | 없음    | 그 발전 과제를 가진 플레이어에게만 규칙이 적용되므로, 같은 블록이 그 전에는 하나를, 그 후에는 다른 것을 떨어뜨릴 수 있습니다                                                                                                              |
+| `once`        | 아니요 | 객체             | 없음    | 규칙이 플레이어마다 한 번만 적용되게 합니다. `per`는 `player`이어야 하고 `grant`는 발전 과제의 id입니다. 규칙은 그 발전 과제가 아직 없는 플레이어에게 적용되며, 규칙이 실행되면 그 플레이어에게 발전 과제가 주어집니다. 아래를 참고하세요 |
+| `runs`        | 아니요 | 함수 id          | 없음    | 규칙이 적용될 때마다 실행하는 함수입니다. 블록을 부순 플레이어 자격으로, 플레이어가 없으면 블록 위치에서 실행합니다. 어떤 팩도 제공하지 않는 함수는 로그에 기록됩니다                                                                     |
+| `drops`       | 예     | 드롭의 목록      |         | 블록을 부술 때 각각 따로 추첨합니다                                                                                                                                                                                                       |
 
 각 드롭은 다음과 같습니다.
 
@@ -3627,6 +4005,20 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `silkTouch`  | 아니요                     | `either`, `only`, `never` 중 하나 | `either` | 드롭이 섬세한 손길 수확을 요구하는지, 거부하는지, 상관하지 않는지. 플레이어가 섬세한 손길 도구로, 1.12.2가 정한 방식으로 섬세한 손길 수확이 가능한 블록, 곧 블록 엔티티가 없는 완전한 블록이나 유리판, 철창, 거미줄, 엔더 상자를 부술 때는 수확으로 칩니다 |
 
 규칙은 1.12.2처럼 블록의 전리품을 떨어뜨리는 모든 파괴를 봅니다. 플레이어의 파괴는 물론 폭발, 피스톤, 흐르는 물, 몹, 블록을 파고드는 팩 몹도 해당하며, 이들은 `advancement`가 없는 모든 규칙을 추첨합니다. 폭발이 블록 자체의 드롭을 줄이는 곳에서는 추첨된 각 아이템이 같은 확률로 살아남으며, 경험치는 줄어들지 않습니다. 한 블록에 규칙이 여럿이면 모두 적용되고, 그중 하나라도 `replace`이면 평소 드롭을 먼저 비웁니다.
+
+**`block`의 태그.** `block`에는 `#`을 붙여 적은 블록 태그(예: `"#minecraft:logs"`)도 올 수 있습니다. 태그에 대한 규칙에는 선택 사항인 `properties` 객체를 둘 수 있으며, 이는 블록 하나에 대한 규칙과 같이 그 블록 상태 값을 가진 블록으로 한정합니다. 올바르지 않은 태그 ID는 로그에 기록되고 파일은 무시됩니다. 구성원은 규칙이 처음 필요할 때와 다시 불러온 뒤에 계산됩니다.
+
+**플레이어당 한 번.** `once`는 발전 과제를 써서 누가 이미 받았는지 기억하며, 각 플레이어에게 보상을 한 번만 줍니다. `per`(반드시 `player`)와 `grant`를 모두 적어야 하며, 둘 중 하나가 없거나 `once`가 객체가 아니면 파일은 로그와 함께 무시됩니다. 이 규칙은 서버의 실제 플레이어에게만 적용되며, 폭발, 기계, 가짜 플레이어에게는 결코 적용되지 않습니다. 또한 그 플레이어가 `grant` 발전 과제를 가지고 있지 않을 때에만 적용됩니다. 규칙이 아이템을 떨어뜨리고 함수를 실행한 뒤에는 플레이어에게 발전 과제가 주어지므로, 다음 번 채집에서는 아무 일도 일어나지 않습니다. 발전 과제를 제공하는 팩이 없으면 로그에 규칙을 건너뛴다고 기록되며, 규칙은 결코 적용되지 않습니다. `once`는 `advancement`와 함께 쓸 수 있으며, 그 발전 과제도 맞아야 합니다.
+
+```json
+{
+  "block": "minecraft:dirt",
+  "replace": true,
+  "once": { "per": "player", "grant": "mypack:first_dirt" },
+  "runs": "mypack:first_dirt",
+  "drops": [ { "item": "minecraft:diamond" } ]
+}
+```
 
 ## 우클릭 수확
 
@@ -4279,6 +4671,7 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
   "despawns": true,
   "despawnAfter": 600,
+  "leash": "delete",
   "noAI": false,
   "leftHanded": false,
   "fireproof": false,
@@ -4722,6 +5115,7 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 | ------------------- | ------ | --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `despawns`          | 아니요 | 불리언                | `true`         | `true`이면 평소처럼 디스폰됩니다. `false`이면 평소 치워졌을 때도 그대로 남습니다                                                                                                                                                                                                                             |
 | `despawnAfter`      | 아니요 | 정수, 초              | 없음           | 월드에 이만큼 있었으면 누가 얼마나 멀리 있든 조용히 사라집니다                                                                                                                                                                                                                                               |
+| `leash`             | 아니요 | `drop` 또는 `delete`  | `drop`         | `despawnAfter`가 치우는 생물에 묶인 리드에 무슨 일이 일어나는지. `drop`: 리드가 아이템으로 떨어집니다. `delete`: 리드도 함께 사라지며 아이템은 남지 않습니다                                                                                                                                                 |
 | `persistent`        | 아니요 | 불리언                | `false`        | `true`이면 절대 디스폰되지 않습니다. `false`이면 평소처럼 디스폰됩니다                                                                                                                                                                                                                                       |
 | `ignoresSpawnRules` | 아니요 | 불리언                | `false`        | `true`이면 놓이는 곳 어디에서든 스폰되며 물려받은 규칙을 무시합니다. `false`이면 물려받은 규칙을 따릅니다                                                                                                                                                                                                    |
 | `spawns`            | 아니요 | 객체의 목록           | 없음           | `creatureType`, `weight`, `min`, `max`로, 생물 군계가 쓰는 것과 같은 형태입니다. `weight`의 기본값은 8, `min`은 1, `max`는 4입니다. `creatureType`은 [생물 유형](#값-목록) 중 하나이며 생략하면 `creature`이고, 항목이 합류하는 스폰 목록을 고릅니다. 게임이 모르는 유형의 항목은 아무것도 추가하지 않습니다 |
@@ -4827,22 +5221,169 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 }
 ```
 
-| 키                                                                                                                           | 필수   | 값                                              | 기본값  | 설명                                                                                                                                                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entities`                                                                                                                   | 예     | 엔티티 이름 또는 종류의 목록                    | 없음    | 교체할 몹. `minecraft:skeleton` 같은 ID, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature` 같은 종류입니다. 이것이 없는 파일은 건너뛰며, 로그에 그 내용이 남습니다                             |
-| `becomes`                                                                                                                    | 예     | ID의 목록, 또는 `entity`와 `weight`를 가진 객체 | 없음    | 그 자리를 대신할 것으로, 가중치에 따라 고릅니다. 엔티티 ID 또는 엔티티 변형이며, 변형의 `becomes`와 같은 형태입니다. 만들 수 있는 것이 없는 파일은 건너뛰며, 로그에 그 내용이 남습니다                   |
-| `biomes`, `biomeTypes`                                                                                                       | 아니요 | 변형과 같음                                     | 없음    | 교체가 적용되는 바이옴                                                                                                                                                                                   |
-| `blocks`                                                                                                                     | 아니요 | 블록 이름의 목록                                | 없음    | 스폰 자리 아래의 블록이 이 중 하나일 때 교체가 적용됩니다. 예: `minecraft:nether_brick`                                                                                                                  |
-| `requireAll`                                                                                                                 | 아니요 | 불리언                                          | `false` | `false`이면 `biomes`, `biomeTypes`, `blocks` 중 하나만 맞아도 됩니다. `true`이면 주어진 것이 모두 맞아야 합니다. 셋 다 없으면 다른 조건이 맞는 곳 어디서든 교체가 적용됩니다                             |
-| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 아니요 | 스폰 조건과 같음                                | 없음    | 스폰 조건 아래의 키와 같은 키, 같은 뜻입니다. 모두 맞아야 하며 `elsewhere`도 포함됩니다                                                                                                                  |
-| `elsewhere`                                                                                                                  | 아니요 | 객체                                            | 꺼짐    | 위의 자리 키가 맞지 않는 곳에서도, 이 `chance`만큼 교체가 일어납니다                                                                                                                                     |
-| `elsewhere.chance`                                                                                                           | 아니요 | `0`에서 `1` 사이의 숫자                         | `1.0`   | 교체되는 스폰의 비율. `0.15`이면 약 일곱 번에 한 번입니다                                                                                                                                                |
-| `elsewhere.lightBelow`                                                                                                       | 아니요 | `1`에서 `16` 사이의 정수                        | 없음    | 그 자리의 빛이 이 값보다 낮은 곳에서만                                                                                                                                                                   |
-| `elsewhere.night`                                                                                                            | 아니요 | 불리언                                          | `false` | `true`이면 밤, 즉 그날의 틱 `13000`에서 `23000` 사이에만. `false`이면 하루 중 언제든                                                                                                                     |
-| `extra`                                                                                                                      | 아니요 | `0`에서 `16` 사이의 정수                        | `0`     | 그 자리에 이만큼 몹이 더 생깁니다. 각각 별도의 `becomes` 추첨입니다. 이들은 다시 교체되지 않으며, 공간에 들어가지 않는 것은 건너뜁니다                                                                   |
-| `fromSpawners`                                                                                                               | 아니요 | 불리언                                          | `false` | 청크가 생성되면서 만드는 자연 스폰(요새의 것 포함)이 교체됩니다. `true`이면 스포너 블록에서 나온 몹도 추가되고, `false`이면 그런 몹은 빠집니다. 알, `/summon`, 구조물이 두는 몹은 절대 교체되지 않습니다 |
+`becomes` 없이 `runs`만 있는 파일은 엔티티가 나타날 때 함수만 실행합니다. 몹이 아닌 것에도 쓸 수 있습니다:
+
+```json
+{
+  "entities": ["minecraft:eye_of_ender"],
+  "runs": "mypack:eye_spawned"
+}
+```
+
+| 키                                                                                                                           | 필수   | 값                                              | 기본값  | 설명                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities`                                                                                                                   | 예     | 엔티티 이름 또는 종류의 목록                    | 없음    | 교체할 몹. `minecraft:skeleton` 같은 ID, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature` 같은 종류입니다. 이것이 없는 파일은 건너뛰며, 로그에 그 내용이 남습니다                                                                                                                                                                                                                                       |
+| `becomes`                                                                                                                    | 아니요 | ID의 목록, 또는 `entity`와 `weight`를 가진 객체 | 없음    | 그 자리를 대신할 것으로, 가중치에 따라 고릅니다. 엔티티 ID 또는 엔티티 변형이며, 변형의 `becomes`와 같은 형태입니다. 만들 수 있는 것이 없고 `runs`도 없는 파일은 건너뛰며, 로그에 그 내용이 남습니다                                                                                                                                                                                                               |
+| `biomes`, `biomeTypes`                                                                                                       | 아니요 | 변형과 같음                                     | 없음    | 교체가 적용되는 바이옴                                                                                                                                                                                                                                                                                                                                                                                             |
+| `blocks`                                                                                                                     | 아니요 | 블록 이름의 목록                                | 없음    | 스폰 자리 아래의 블록이 이 중 하나일 때 교체가 적용됩니다. 예: `minecraft:nether_brick`                                                                                                                                                                                                                                                                                                                            |
+| `requireAll`                                                                                                                 | 아니요 | 불리언                                          | `false` | `false`이면 `biomes`, `biomeTypes`, `blocks` 중 하나만 맞아도 됩니다. `true`이면 주어진 것이 모두 맞아야 합니다. 셋 다 없으면 다른 조건이 맞는 곳 어디서든 교체가 적용됩니다                                                                                                                                                                                                                                       |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 아니요 | 스폰 조건과 같음                                | 없음    | 스폰 조건 아래의 키와 같은 키, 같은 뜻입니다. 모두 맞아야 하며 `elsewhere`도 포함됩니다                                                                                                                                                                                                                                                                                                                            |
+| `elsewhere`                                                                                                                  | 아니요 | 객체                                            | 꺼짐    | 위의 자리 키가 맞지 않는 곳에서도, 이 `chance`만큼 교체가 일어납니다                                                                                                                                                                                                                                                                                                                                               |
+| `elsewhere.chance`                                                                                                           | 아니요 | `0`에서 `1` 사이의 숫자                         | `1.0`   | 교체되는 스폰의 비율. `0.15`이면 약 일곱 번에 한 번입니다                                                                                                                                                                                                                                                                                                                                                          |
+| `elsewhere.lightBelow`                                                                                                       | 아니요 | `1`에서 `16` 사이의 정수                        | 없음    | 그 자리의 빛이 이 값보다 낮은 곳에서만                                                                                                                                                                                                                                                                                                                                                                             |
+| `elsewhere.night`                                                                                                            | 아니요 | 불리언                                          | `false` | `true`이면 밤, 즉 그날의 틱 `13000`에서 `23000` 사이에만. `false`이면 하루 중 언제든                                                                                                                                                                                                                                                                                                                               |
+| `extra`                                                                                                                      | 아니요 | `0`에서 `16` 사이의 정수                        | `0`     | 그 자리에 이만큼 몹이 더 생깁니다. 각각 별도의 `becomes` 추첨입니다. 이들은 다시 교체되지 않으며, 공간에 들어가지 않는 것은 건너뜁니다                                                                                                                                                                                                                                                                             |
+| `fromSpawners`                                                                                                               | 아니요 | 불리언                                          | `false` | 청크가 생성되면서 만드는 자연 스폰(요새의 것 포함)이 교체됩니다. `true`이면 스포너 블록에서 나온 몹도 추가되고, `false`이면 그런 몹은 빠집니다. 알, `/summon`, 구조물이 두는 몹은 절대 교체되지 않습니다                                                                                                                                                                                                           |
+| `runs`                                                                                                                       | 아니요 | 함수 id                                         | 없음    | 일치하는 엔티티가 월드에 들어올 때 그 엔티티로서, 그 위치에서 이 함수를 실행합니다. 종류를 가리지 않으며(`minecraft:eye_of_ender`도 포함), 엔티티마다 한 번씩 실행합니다. 청크를 다시 불러와도 다시 실행하지 않습니다. `becomes`가 없으면 파일은 함수만 실행하고 아무것도 교체하지 않습니다. 파일이 교체해서 없애는 스폰에는 실행하지 않습니다. 팩이 제공하지 않는 id는 로그에 기록되며 아무것도 실행되지 않습니다 |
 
 교체 키를 하나도 설정하지 않은 파일은 아무것도 바꾸지 않으며, 파일이 없는 월드도 마찬가지입니다. 교체된 몹과 추가된 몹은 같은 종류의 새 스폰과 같은 장비와 능력치를 가집니다. `SpawnData`에 엔티티 `id` 말고도 더 담긴 스포너는 교체를 일으키지 않습니다.
+
+### 피해 규칙
+
+*엔티티 변형*
+
+`<namespace>/hurt_rules/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 여러 파일이 겹쳐 적용됩니다. 한 몹이 다른 몹을 해치는 것을 취소하거나 그에 반응합니다. 예를 들어 팩의 경비병이 팩의 주민을 해치지 않게 하는 경우입니다. 플레이어는 제외되며, 플레이어에 대해서는 `player_hurt_entity`와 `entity_hurt_player` 카드 트리거를 쓰세요.
+
+```json
+{
+  "attacker": ["minecraft:skeleton", "#monster", "#minecraft:skeletons"],
+  "victim": "minecraft:zombie",
+  "cancel": true,
+  "runs": "mypack:hurt"
+}
+```
+
+| 키         | 필수   | 값                                       | 기본값  | 설명                                                                                                                                                                                                                                                    |
+| ---------- | ------ | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `attacker` | 예     | 엔티티 이름 또는 이름, 종류, 태그의 목록 | 없음    | 타격을 가하는 몹입니다. `minecraft:skeleton` 같은 ID, `#monster`, `#creature`, `#ambient`, `#water_creature` 같은 종류, 또는 `#minecraft:skeletons` 같은 엔티티 태그입니다. 발사한 것은 쏜 쪽으로 칩니다. 이것이 없는 파일은 건너뛰며 로그에 기록됩니다 |
+| `victim`   | 예     | 엔티티 이름 또는 이름, 종류, 태그의 목록 | 없음    | 맞는 몹이며 `attacker`와 같은 방식으로 적습니다. 이것이 없는 파일은 건너뛰며 로그에 기록됩니다                                                                                                                                                          |
+| `cancel`   | 아니요 | 불리언                                   | `false` | `true`이면 그 타격은 아무 일도 일으키지 않습니다                                                                                                                                                                                                        |
+| `runs`     | 아니요 | 함수 id                                  | 없음    | 타격을 시도할 때마다, 피해를 주기 전에 피해자로서 피해자 위치에서 이 함수를 실행합니다. 따라서 피해자의 무적 틱 동안 들어간 타격도 실행합니다. `cancel`도 `runs`도 없는 파일은 건너뛰며 로그에 기록됩니다                                               |
+
+### 예약 실행
+
+`<namespace>/schedules/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 여러 파일이 겹쳐 적용됩니다. 타이머에 따라 한 번 또는 계속해서 서버로서 함수를 실행합니다. 저장되는 것은 없습니다. 서버가 시작될 때와 `/rdplserver reload`를 실행할 때마다 모든 예약이 다시 셈을 시작합니다.
+
+```json
+{
+  "id": "mypack:airdrop",
+  "after": 1200,
+  "every": 6000,
+  "runs": "mypack:airdrop"
+}
+```
+
+| 키      | 필수   | 값       | 기본값 | 설명                                                                                                                                    |
+| ------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | 아니요 | 텍스트   | 없음   | 직접 참고하기 위한 이름이며 모드가 읽지 않습니다                                                                                        |
+| `after` | 아니요 | 정수, 틱 | `0`    | 서버가 시작되거나 리로드된 뒤 첫 실행까지의 틱입니다. `0`이면 첫 틱에 실행합니다                                                        |
+| `every` | 아니요 | 정수, 틱 | `0`    | 첫 실행 이후 실행 사이의 틱입니다. `0`이거나 생략하면 한 번만 실행합니다                                                                |
+| `runs`  | 예     | 함수 id  | 없음   | 서버로서 실행할 함수입니다. 이것이 없는 파일은 건너뛰며 로그에 기록됩니다. 팩이 제공하지 않는 함수는 기한이 될 때마다 로그에 기록됩니다 |
+
+### 동기화 데이터
+
+`<namespace>/syncdata/*.json`
+
+파일 이름은 자유롭게 정할 수 있습니다. 읽히는 것은 폴더뿐이며, 여러 파일은 겹쳐 적용됩니다. 동기화 데이터는 이름이 붙은 값을 보관하는 저장소입니다. 각 값은 텍스트, 숫자, 또는 true 또는 false이며, 서버가 플레이어마다, 그리고 월드 전체에 대해 보관합니다. 카드, 대화 답변, 명령어, 스크립트가 값을 설정하고, 카드, 대화, 게이트, 툴팁은 그 값을 검사하거나 자기 텍스트에 표시합니다. 값에는 파일이 필요하지 않습니다. 올바른 이름이라면 아무 값이나 설정할 수 있습니다. 파일은 이름을 선언해 자료형을 고정하고, 기본값을 주고, 길이를 제한하거나, 저장에서 빼 둘 수 있습니다. 이름은 `a`부터 `z`, `0`부터 `9`, `_`, `.`, `:`, `/`, `-`로 이루어진 1자에서 64자이며, 대문자와 공백은 없습니다.
+
+```json
+{
+  "values": [
+    { "name": "quest.stage", "type": "number", "default": 0 },
+    { "name": "quest.title", "type": "text", "max": 40, "default": "Newcomer" },
+    { "name": "quest.met_smith", "type": "bool" },
+    { "name": "event.banner", "type": "text", "persist": false }
+  ]
+}
+```
+
+| 키       | 필수 | 값        | 기본값 | 설명                                                      |
+| -------- | ---- | --------- | ------ | --------------------------------------------------------- |
+| `values` | 예   | 객체 목록 | 없음   | 선언입니다. 객체가 아닌 항목은 건너뛰고 로그에 기록합니다 |
+
+각 선언에는 다음 키를 씁니다.
+
+| 키        | 필수   | 값                           | 기본값 | 설명                                                                                                                                                                               |
+| --------- | ------ | ---------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`    | 예     | 텍스트                       | 없음   | 값의 이름입니다. 올바르지 않은 이름의 항목은 건너뛰고 로그에 기록합니다. 앞의 파일에서 이미 선언된 이름은 처음 선언을 유지하며, 로그에 그 파일 이름이 기록됩니다                   |
+| `type`    | 아니요 | `text`, `number`, `bool`     | `text` | 값이 담는 자료형입니다. 그 밖의 것은 로그에 기록하고 항목을 건너뜁니다                                                                                                             |
+| `default` | 아니요 | 텍스트, 숫자 또는 true/false | 없음   | 플레이어나 월드에 값이 설정되지 않은 동안 읽으면 얻는 값입니다. 검사가 물을 때는 설정된 것으로 칩니다. 자료형이 맞지 않는 기본값은 로그에 기록하고, 그 값에는 기본값이 없게 됩니다 |
+| `max`     | 아니요 | 정수, 1에서 256              | `256`  | 텍스트 값이 가질 수 있는 가장 긴 길이입니다. 1에서 256 밖의 값은 로그에 기록하고 `256`을 씁니다                                                                                    |
+| `persist` | 아니요 | 불리언                       | `true` | `true`: 값을 월드와 함께 저장합니다. `false`: 절대 저장하지 않으므로, 월드 값은 재시작 뒤에 사라지고 플레이어 값은 그 플레이어가 로그아웃하면 사라집니다                           |
+
+플레이어는 자기 값을, 월드는 자기 값을 따로 가지며, 각각 최대 64개까지 보관합니다. 플레이어는 먼저 자기 값을 읽고, 그다음 월드 값을, 마지막으로 기본값을 읽습니다. 설정이 제한을 어기면 거부되고 로그에 기록되며 아무것도 바뀌지 않습니다. 올바르지 않은 이름, 선언과 다른 자료형, `max`보다 긴 텍스트(이름에 해당하는 파일이 없으면 256), 텍스트, 숫자, true 또는 false가 아닌 값, 또는 가득 찬 저장소가 그런 경우입니다. 값을 이미 가지고 있는 값으로 설정하면 아무 일도 일어나지 않습니다. 다시 불러온 뒤에 저장된 값이 더 이상 선언에 맞지 않으면 그 값은 제거되고 로그에 기록됩니다.
+
+#### 검사
+
+검사는 값 하나를 시험합니다. `data`에는 검사 하나 또는 검사 목록을 쓰며, 모든 검사가 맞아야 합니다. 카드의 `when`, 대화 답변의 `when`, 툴팁 항목의 `when`, 게이트의 `unlock`에서 읽습니다.
+
+```json
+{
+  "when": {
+    "data": [
+      { "name": "quest.stage", "atLeast": 2, "atMost": 4 },
+      { "name": "quest.title", "isNot": "Newcomer" },
+      { "name": "quest.met_smith", "is": true },
+      { "name": "event.banner", "set": false }
+    ]
+  }
+}
+```
+
+| 키        | 필수   | 값                           | 기본값 | 설명                                                                                                                                                                                          |
+| --------- | ------ | ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`    | 예     | 텍스트                       | 없음   | 시험할 값입니다. 이름이 없는 검사는 건너뛰고 로그에 기록합니다                                                                                                                                |
+| `is`      | 아니요 | 텍스트, 숫자 또는 true/false | 없음   | 값이 이것과 같아야 합니다. 텍스트는 대문자를 포함해 정확히 비교합니다. 다른 자료형의 값은 결코 같지 않습니다                                                                                  |
+| `isNot`   | 아니요 | 텍스트, 숫자 또는 true/false | 없음   | 값이 이것과 같으면 안 됩니다                                                                                                                                                                  |
+| `atLeast` | 아니요 | 숫자                         | 없음   | 값은 숫자여야 하며, 이 값 이상이어야 합니다. 숫자가 아닌 값은 실패합니다                                                                                                                      |
+| `atMost`  | 아니요 | 숫자                         | 없음   | 값은 숫자여야 하며, 이 값 이하여야 합니다                                                                                                                                                     |
+| `set`     | 아니요 | 불리언                       | `true` | `true`: 값이 설정되어 있어야 하며, 기본값으로 설정된 것도 포함됩니다. 그러면 다른 키들이 그 값을 검사합니다. `false`: 값이 설정되어 있지 않은 동안에만 검사가 맞으며, 다른 키는 쓰지 않습니다 |
+
+툴팁은 클라이언트가 가진 값을 검사하며, 아래를 참고하세요. 카드, 대화, 게이트는 그것을 가진 플레이어에 대한 서버의 값을 검사합니다.
+
+#### 값 설정하기
+
+카드, 대화 답변, 명령어, 스크립트가 값을 설정합니다. 카드 파일과 답변에서 `sets`는 플레이어의 값을, `worldSets`는 월드 전체의 값을 `이름: 값` 형식으로 담습니다.
+
+```json
+{
+  "trigger": "command",
+  "lines": ["Stage {data:quest.stage|0}, {data:quest.title|nobody}"],
+  "sets": { "quest.stage": 1, "quest.title": "Apprentice" },
+  "worldSets": { "event.banner": "A stranger arrived" }
+}
+```
+
+| 키          | 필수   | 값   | 기본값 | 설명                                                                                                                      |
+| ----------- | ------ | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `sets`      | 아니요 | 객체 | 없음   | 플레이어에게 설정되는 값입니다. 텍스트, 숫자, true/false가 아닌 값은 로그에 기록하고 건너뛰며, 나머지는 그대로 적용됩니다 |
+| `worldSets` | 아니요 | 객체 | 없음   | 같은 형식으로 월드 전체에 설정되는 값입니다                                                                               |
+
+카드 파일과 대화 답변만 이 키를 읽습니다. 규칙이 거부한 설정은 로그에 기록되고, 나머지 설정은 계속 적용됩니다.
+
+#### 텍스트에서 값 보이기
+
+텍스트 안의 `{data:name|fallback}`은 값으로 바뀝니다. 값이 없으면 `|` 뒤의 텍스트를 쓰고, `|`가 없으면 아무것도 쓰지 않습니다. 대체 텍스트는 첫 `}`에서 끝나므로 그 안에 `}`를 넣을 수 없습니다. 이름은 앞뒤 공백을 떼며, 비어 있는 이름은 툴팁에서 로그에 기록되고 텍스트는 적힌 그대로 남습니다. 숫자는 `.0` 없이 표시되고, true 또는 false는 그 단어로 표시됩니다. 카드의 `title`과 `lines`, 대화의 `title`, 노드의 `title`과 `lines`, 답변의 `text`, 툴팁의 `lines`에서 작동합니다. 카드나 대화는 그것을 보는 플레이어에 대한 서버의 값을 보여 줍니다.
+
+#### 저장되는 것
+
+값은 월드 저장에 플레이어의 id 아래에 저장되며, `persist`를 `false`로 선언한 값은 예외입니다. 로그아웃해도 플레이어의 값은 그 예외를 빼고 유지됩니다. 모드가 설치된 클라이언트는 접속할 때 월드 값, 플레이어 자신의 값, 그리고 모든 기본값을 받고, 다시 불러온 뒤에도 같은 방식으로 받으며, 바뀔 때마다 그때그때 받습니다. 연결이 끊기면 그 값을 잊습니다. 툴팁이 읽는 것이 바로 이것입니다. 텍스트 값은 서식 코드를 뺀 채 클라이언트에 전달됩니다. 모드가 없는 클라이언트, 또는 `vanillaClients`가 켜져 있는 클라이언트는 아무것도 받지 못하므로, `when`이 있거나 `{data:}`를 쓴 툴팁은 그곳에서 대체 텍스트로 떨어집니다. 카드, 대화, 게이트는 서버에서 실행되며 이에 의존하지 않습니다.
+
+`/rdplserver data`로 값을 읽고 설정합니다. [동기화 데이터 명령어](#동기화-데이터-명령어)를 참고하세요. 스크립트는 `sync`와 `synced`로 값에 닿으며, [rdpl 객체](#rdpl-객체)를 참고하세요.
 
 ### 네트워크
 
@@ -6756,21 +7297,54 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 }
 ```
 
-| 키                | 필수   | 값                                  | 기본값                           | 설명                                                                                                                                                                                                                                                                                                                                                         |
-| ----------------- | ------ | ----------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `dimension`       | 아니요 | 차원 id                             | 없음                             | 지키는 차원. 차원이 없는 게이트는 어떤 차원도 지키지 않고, 그것을 지정한 [포트웨이](#포트웨이)만 잠급니다                                                                                                                                                                                                                                                    |
-| `name`            | 아니요 | 문자열                              | 파일 이름                        | 플레이어에게 표시됩니다                                                                                                                                                                                                                                                                                                                                      |
-| `scope`           | 아니요 | `player`, `global`, `team`          | `player`                         | 한 번에 플레이어 한 명, 월드 전체 한꺼번에, 또는 연 플레이어의 팀 전체 (팀은 팩의 `<namespace>/teams` 폴더에 있는 진영으로, `players`에 올라 있거나, 진영이 `joinable`을 false로 두지 않았다면 `/rdplserver team join <name>`으로, `/rdplserver team join`만 입력해 `balance`가 켜진 가장 작은 진영에, 또는 `picks` 추첨으로 참가합니다. [팀](#참가자) 참고) |
-| `teamless`        | 아니요 | `player`, `refuse`                  | `player`                         | 범위가 `team`일 때 팀이 없는 플레이어의 처리: 자기만의 해제 또는 통과 거부                                                                                                                                                                                                                                                                                   |
-| `open`            | 아니요 | 불리언                              | `false`                          | `true`이면 처음부터 열려 있습니다. `false`이면 처음부터 닫혀 있습니다                                                                                                                                                                                                                                                                                        |
-| `unlock`          | 아니요 | 객체                                |                                  | 무엇이 여는지. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                             |
-| `unlockedMessage` | 아니요 | 문자열                              | `%dim% is now open`              | 열릴 때 표시됩니다                                                                                                                                                                                                                                                                                                                                           |
-| `blockedMessage`  | 아니요 | 문자열                              | `You need %item% to enter %dim%` | 거부할 때 표시됩니다                                                                                                                                                                                                                                                                                                                                         |
-| `safeReturn`      | 아니요 | 불리언                              | `false`                          | `true`이면 돌려보내진 플레이어는 떠나려던 월드의 안전한 곳에 내려놓입니다. 거기 침대나 충전된 리스폰 앵커가 아직 있으면 그 옆에, 없으면 그 월드의 스폰에 놓입니다. `false`이면 안전한 곳을 찾지 않습니다                                                                                                                                                     |
-| `requires`        | 아니요 | 모드 id 또는 팩 네임스페이스의 목록 | 없음                             | 모두 있지 않으면 게이트를 건너뜁니다                                                                                                                                                                                                                                                                                                                         |
-| `portalBlocks`    | 아니요 | 블록 이름의 목록                    | 모든 포털                        | 게이트를 이 포털 블록으로 한정하므로, 한 차원에 지키는 문과 열린 문을 둘 다 둘 수 있습니다                                                                                                                                                                                                                                                                   |
+| 키                | 필수   | 값                                  | 기본값                           | 설명                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------- | ------ | ----------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension`       | 아니요 | 차원 id                             | 없음                             | 지키는 차원. 차원이 없는 게이트는 어떤 차원도 지키지 않고, 그것을 지정한 [포트웨이](#포트웨이)만 잠급니다                                                                                                                                                                                                                                                           |
+| `name`            | 아니요 | 문자열                              | 파일 이름                        | 플레이어에게 표시됩니다                                                                                                                                                                                                                                                                                                                                             |
+| `scope`           | 아니요 | `player`, `global`, `team`          | `player`                         | 한 번에 플레이어 한 명, 월드 전체 한꺼번에, 또는 연 플레이어의 팀 전체 (팀은 팩의 `<namespace>/teams` 폴더에 있는 진영으로, `players`에 올라 있거나, 진영이 `joinable`을 false로 두지 않았다면 `/rdplserver team join <name>`으로, `/rdplserver team join`만 입력해 `balance`가 켜진 가장 작은 진영에, 또는 `picks` 추첨으로 참가합니다. [팀](#참가자) 참고)        |
+| `teamless`        | 아니요 | `player`, `refuse`                  | `player`                         | 범위가 `team`일 때 팀이 없는 플레이어의 처리: 자기만의 해제 또는 통과 거부                                                                                                                                                                                                                                                                                          |
+| `open`            | 아니요 | 불리언                              | `false`                          | `true`이면 처음부터 열려 있습니다. `false`이면 처음부터 닫혀 있습니다                                                                                                                                                                                                                                                                                               |
+| `unlock`          | 아니요 | 객체                                |                                  | 무엇이 여는지. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                                    |
+| `unlockedMessage` | 아니요 | 문자열                              | `%dim% is now open`              | 열릴 때 표시됩니다                                                                                                                                                                                                                                                                                                                                                  |
+| `blockedMessage`  | 아니요 | 문자열                              | `You need %item% to enter %dim%` | 거부할 때 표시됩니다                                                                                                                                                                                                                                                                                                                                                |
+| `safeReturn`      | 아니요 | 불리언                              | `false`                          | `true`이면 돌려보내진 플레이어는 떠나려던 월드의 안전한 곳에 내려놓입니다. 거기 침대나 충전된 리스폰 앵커가 아직 있으면 그 옆에, 없으면 그 월드의 스폰에 놓입니다. `false`이면 안전한 곳을 찾지 않습니다                                                                                                                                                            |
+| `requires`        | 아니요 | 모드 id 또는 팩 네임스페이스의 목록 | 없음                             | 모두 있지 않으면 게이트를 건너뜁니다                                                                                                                                                                                                                                                                                                                                |
+| `portalBlocks`    | 아니요 | 블록 이름의 목록                    | 모든 포털                        | 게이트를 이 포털 블록으로 한정하므로, 한 차원에 지키는 문과 열린 문을 둘 다 둘 수 있습니다                                                                                                                                                                                                                                                                          |
+| `stayMinutes`     | 아니요 | 정수                                | 없음                             | 게이트의 `dimension`에 대한 시간 예산(분)입니다. 플레이어가 그 차원에 있는 동안 1초씩 줄어들고, 로그아웃과 재시작을 거쳐도 플레이어와 함께 유지됩니다. 다 쓰면 플레이어는 밖으로 보내지고, 예산이 돌아올 때까지 그 차원으로 다시 들어가려는 시도는 되돌려집니다(`stayReset` 참고). `dimension`이 필요하며, 없거나 0 이하이면 로그에 남고 게이트에는 예산이 없습니다 |
+| `stayReset`       | 아니요 | `never`, `day`, `visit`             | `never`                          | 사용한 시간을 언제 돌려주는지 정합니다. `never`: 돌려주지 않습니다. `day`: 오버월드에서 새 날이 시작될 때. `visit`: 플레이어가 그 차원 밖에 나갔다 올 때마다, 그래서 매번의 방문이 가득 찬 예산으로 시작합니다. 그 밖의 단어는 로그에 남고 `never`를 씁니다                                                                                                         |
+| `stayMessage`     | 아니요 | 문자열                              | `%dim%: %time% left`             | 예산이 줄어드는 동안 액션 바에 표시합니다. `%dim%`은 게이트의 `name`이고 `%time%`은 남은 시간을 분과 초로 적은 것으로, 예를 들어 `0:30`입니다                                                                                                                                                                                                                       |
+| `stayWarn`        | 아니요 | 정수 목록                           | `[60, 30, 10, 5, 4, 3, 2, 1]`    | `stayMessage`를 표시할 남은 초입니다. 빈 목록이면 전혀 표시하지 않습니다. 숫자가 아닌 항목은 건너뜁니다                                                                                                                                                                                                                                                             |
+| `onExpire`        | 아니요 | 객체                                | 없음                             | 예산을 다 썼을 때 일어나는 일입니다. 아래를 참고하세요                                                                                                                                                                                                                                                                                                              |
+| `dropOnLeave`     | 아니요 | `true` 또는 객체                    | 없음                             | 플레이어가 차원에서 얻는 것에 표시를 붙이고, 떠날 때 떨어뜨립니다. `true`이면 아래 기본값을 모두 씁니다. `dimension`이 필요하며, 없으면 로그에 남고 아무것도 표시되지 않습니다                                                                                                                                                                                      |
 
 `unlock`에는 `hold`(들고 있어야 하는 아이템), `consumeCount`(`1`)와 함께 쓰는 `consume`, `craft`(제작한 적이 있어야 하는 아이템), `advancement`, 그리고 `killed`(엔티티 이름, 하나를 처치한 사람에게 게이트가 열리므로 보스가 한 월드의 열쇠를 쥘 수 있습니다)를 쓸 수 있으며, 하나로 부족하면 `killedCount`(`1`)를 함께 씁니다. 처치 횟수는 범위(scope)에 따라 플레이어별 또는 월드 전체로 집계됩니다. `killedRank`(몹 등급 이름)를 쓰면 그 등급이 뽑힌 몹의 처치만 셉니다. `killedDrops`(아이템 이름)를 추가하면 집계된 처치가 게이트를 여는 대신 처치한 사람의 발치에 그 아이템을 떨어뜨리고 집계를 처음부터 다시 시작하므로, 열쇠를 다시 얻을 수 있고 싸우지 않은 사람에게 건넬 수도 있습니다. 같은 아이템의 `hold`나 `consume`으로 게이트를 걸면 그것이 열쇠가 됩니다. `%item%`, `%mob%`, `%dim%`은 자동으로 채워집니다. 몹이 떨어뜨리는 열쇠에는 여기서 특별히 할 일이 없습니다. 몹에게 드롭을 주고 `hold`나 `consume`으로 게이트를 거세요. `team`, 그리고 `objective`와 `scoreAtLeast`를 쓰면 해당 스코어보드 팀에 속하고 그 목표의 점수가 지정한 값 이상인 플레이어에게 게이트가 열립니다. 카드의 `when`과 같은 조건이며, 둘 중 하나만 써도 됩니다. 조건은 플레이어가 통과할 때 확인되고, 충족하면 다른 해제와 마찬가지로 범위에 따라 게이트가 열립니다. 범위가 `team`이면 해제는 연 플레이어의 팀에 속하므로, 나중에 합류한 플레이어를 포함해 팀원 모두가 지나갈 수 있습니다. 팀이 없는 플레이어가 열면 그 플레이어에게만 열립니다. `teamAndScore`는 이 두 조건을 어떻게 셀지 정합니다. `alone`(기본값)이면 그것만으로 게이트가 열리고, `with`이면 추가 조건이 되어 다른 해제 키를 충족한 뒤 해당 팀에 속하고 점수도 충족한 플레이어에게만 열립니다. `killedTally`를 `team`으로 하면 `killedCount`에 플레이어마다 따로(`player`, 기본값)가 아니라 처치한 플레이어의 팀 전체 처치 수를 합산합니다. 팀이 없는 플레이어는 계속 혼자 셉니다. `teamless`를 `refuse`로 하면 범위가 `team`인 게이트에서 팀이 없는 플레이어는 자기만 해제하는(`player`, 기본값) 대신 통과를 거부당합니다.
+
+`unlock`에는 `worn`도 쓸 수 있습니다. 이는 플레이어가 입고 있어야 하는 아이템 이름으로, 방어구 네 칸에 있거나 Curios가 설치된 경우 Curios 슬롯에 있어야 합니다. `worn`은 메타데이터가 없는 아이템 ID를 받으며, 데이터가 바뀐 아이템은 이름이 평범한 아이템일 때만 칩니다. 플레이어가 그것을 입고 있는 동안 게이트는 그 플레이어에게 열려 있습니다. 기본적으로는 그 아이템을 입은 채 포털이나 포트웨이를 지나가면, 다른 해금과 마찬가지로 그 범위에서 게이트가 영구히 열립니다. `unlock`의 `each`를 `true`로 두면 이것이 꺼집니다. 아이템을 매번 입고 있어야 하며 아무것도 기억되지 않고, 벗으면 게이트가 다시 닫힙니다. `worn`만 게이트가 요구할 때 `blockedMessage`의 `%item%`은 아이템 이름을 보여 줍니다. 존재하지 않는 아이템 이름은 로그에 기록되며, 그러면 그 아이템을 입는 것으로는 게이트를 열 수 없습니다. `worn` 없이 적은 `each`는 로그에 기록되고 아무 일도 하지 않습니다.
+
+```json
+{
+  "dimension": "mypack:ruby_world",
+  "unlock": { "worn": "minecraft:iron_helmet", "each": true }
+}
+```
+
+`unlock`에는 `data`도 쓸 수 있습니다. 검사 하나 또는 검사 목록이며, [동기화 데이터](#동기화-데이터)에서처럼 적습니다. 이것은 게이트를 열지 않고, 플레이어가 지나가려 할 때마다 확인되는 추가 조건입니다. 그래서 열려 있거나 이미 플레이어에게 해제된 게이트라도, 검사가 실패하는 동안에는 `blockedMessage`와 함께 플레이어를 되돌려 보냅니다.
+
+**시간 예산.** `onExpire`에는 다음 키를 씁니다.
+
+| 키         | 필수   | 값      | 기본값                     | 설명                                                                                                                                                                                                  |
+| ---------- | ------ | ------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit`     | 아니요 | 불리언  | `true`                     | `true`: 플레이어를 침대나 오버월드의 월드 스폰으로 보냅니다. 먼저 탈것에서 내리며, 탈것의 상자에 든 아이템도 함께 갑니다. `false`: 플레이어를 옮기지 않습니다. 이동이 실패하면 로그에 경고가 남습니다 |
+| `function` | 아니요 | 함수 id | 없음                       | 메시지 다음에 이 함수를 플레이어 자격으로 실행합니다                                                                                                                                                  |
+| `message`  | 아니요 | 문자열  | `Your time in %dim% is up` | 예산이 다 떨어지면 액션 바에 표시하며, 예산이 다 떨어진 동안 플레이어가 들어가려 할 때마다 다시 표시합니다. `%dim%`은 게이트의 `name`입니다. 비우면 아무것도 표시하지 않습니다                        |
+
+**남는 전리품.** `dropOnLeave`를 쓰면, 플레이어가 그 차원에 있는 동안 줍거나 제작하거나 제련하거나 용기에서 꺼낸 아이템에 표시가 됩니다. 플레이어가 그 차원을 떠나면, 그가 지닌 표시된 아이템은 모두 서 있던 자리에 떨어지며, 다시 주울 수 있기까지 잠깐의 지연이 있고, `message`가 보입니다. 셜커 상자나 다른 아이템 용기 안의 표시된 아이템도 포함되며, 표시된 아이템을 실은 보트나 광산 수레는 떠날 수 없습니다. 표시된 아이템은 떨어질 때까지 태그를 지니므로, 표시되지 않은 아이템과는 쌓이지 않습니다. `keepInventory`가 켜진 상태로 죽은 플레이어는 표시된 아이템을 죽은 자리에 떨어뜨립니다. 플레이어가 지닌 것이란 인벤토리, 방어구와 손, 그가 탄 탈것 위의 상자, 그리고 Curios가 입히는 슬롯을 뜻합니다. `dropOnLeave`는 이 키들을 받습니다.
+
+| Key          | Required | Value              | Default                        | What it does                                                                                                                                                                        |
+| ------------ | -------- | ------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keep`       | 아니요   | 아이템 이름의 목록 | 없음                           | 절대 표시되지 않는 아이템이며, `modid:name` 형식으로 적고 데이터와 상관없이 그 아이템과 맞습니다. 알려진 아이템이 아니거나 `modid:`가 없는 이름은 로그에 기록되고 무시됩니다        |
+| `enderChest` | 아니요   | 불리언             | `true`                         | `true`: 차원을 떠날 때 플레이어의 엔더 상자에 있는 표시된 아이템도 함께 떨어집니다. `false`: 엔더 상자에 그대로 남습니다. `keepInventory`로 죽을 때는 엔더 상자가 떨어지지 않습니다 |
+| `message`    | 아니요   | 문자열             | `Loot from %dim% stays behind` | 아이템이 하나 이상 떨어지면 액션 바에 표시합니다. `%dim%`은 게이트의 `name`이고 `%count%`는 아이템 수입니다. 비우면 아무것도 표시하지 않습니다                                      |
 
 게이트는 게임 자체의 차원도 지킵니다. `dimension`이 `minecraft:the_nether`인 게이트는 모든 네더 포털 앞에 서 있습니다.
 
@@ -8848,6 +9422,101 @@ pregenBorderLimit = 8192
 
 **FTB 유틸리티.** `ftbPolicy`는 단독으로 읽히며, RDPL의 클레임과 FTB 유틸리티의 클레임은 서로 다른 기록입니다. `independent`(기본값)는 FTB의 클레임을 무시합니다. `yield`는 FTB가 가진 청크에 대한 클레임을 거부하고 그곳의 보호는 FTB에 맡기므로, FTB가 청크를 가져간 뒤에는 그 이전의 클레임이 FTB가 가진 동안 보호하지 않게 됩니다. `exclusive`는 모든 RDPL 클레임을 거부하고 플레이어에게 FTB의 클레임 명령을 안내하며, FTB 클레임이 활성인 동안 RDPL 보호를 끕니다. 활성인 FTB 클레임이 없으면 `yield`와 `exclusive`는 `independent`처럼 동작하며, 서버 시작 시 한 줄이 기록됩니다.
 
+### 구역 규칙
+
+*팀*
+
+`<namespace>/zones/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 구역은 파일 하나에 하나씩이며 여러 파일이 겹쳐 적용됩니다. 구역은 한 차원 안의 고정된 영역이며, 그 안에서 플레이어는 특정한 블록을 부수거나, 놓거나, 사용하거나, 열 수 없고, 날 수도 없습니다. 고정 규칙이므로 클레임이 필요 없습니다.
+
+```json
+{
+  "id": "rift_rules",
+  "where": { "dimension": "ftb:rift", "box": [-256, -64, -207, 192, 320, 256], "claim": false },
+  "except": { "creative": true, "tag": "builder" },
+  "break": { "allow": ["#minecraft:logs"] },
+  "place": { "deny": "all", "on": ["#mypack:altar_base"] },
+  "use": { "deny": ["minecraft:ender_pearl"] },
+  "open": { "allow": ["minecraft:chest"] },
+  "fly": false,
+  "message": "mypack.rift.nope"
+}
+```
+
+두 번째 구역 파일입니다. 이 파일은 창의 모드 플레이어를 뺀 모든 플레이어에게 영역 안에서 도구와 피해를 막습니다. 창의 모드 플레이어는 그곳에서도 여전히 괭이질하고 동물을 해칠 수 있습니다:
+
+```json
+{
+  "id": "farm_guard",
+  "where": { "dimension": "minecraft:overworld", "box": [100, 0, 100, 140, 255, 140] },
+  "except": { "creative": true },
+  "denyToolActions": ["hoe_till", "axe_strip", "shovel_flatten"],
+  "damage": { "entities": ["minecraft:cow", "minecraft:pig", "#creature"], "unlessAttackerInside": true },
+  "open": { "allow": ["minecraft:chest"], "close": true }
+}
+```
+
+| 키                | 필수   | 값               | 기본값             | 설명                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | ------ | ---------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | 아니요 | 텍스트           | 파일 이름          | 로그가 이 구역을 가리키는 이름                                                                                                                                                                                                                                                                                                                                                                                       |
+| `where`           | 아니요 | 객체             | 월드 전체          | 구역이 있는 곳입니다. 주어진 범위가 모두 맞으면 플레이어가 구역 안에 있는 것입니다. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                |
+| `except`          | 아니요 | 객체             | 없음               | 구역이 건드리지 않는 플레이어입니다. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                                                               |
+| `break`           | 아니요 | 객체             | 규칙 없음          | 플레이어가 부술 수 있는 블록입니다. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                                                                |
+| `place`           | 아니요 | 객체             | 규칙 없음          | 플레이어가 놓을 수 있는 블록과 그 위에 설 수 있는 것입니다. 아래를 참고하세요                                                                                                                                                                                                                                                                                                                                        |
+| `use`             | 아니요 | 객체             | 규칙 없음          | 플레이어가 우클릭으로 쓸 수 있는 아이템입니다                                                                                                                                                                                                                                                                                                                                                                        |
+| `open`            | 아니요 | 객체             | 규칙 없음          | 플레이어가 열 수 있는 컨테이너입니다                                                                                                                                                                                                                                                                                                                                                                                 |
+| `denyToolActions` | 아니요 | 텍스트 또는 목록 | 없음               | 구역 안에서 거부되는 도구 동작이며, `hoe_till`(괭이가 흙이나 풀을 농지로 바꿈), `axe_strip`(도끼가 원목의 껍질을 벗김), `shovel_flatten`(삽이 풀을 길로 바꿈)입니다. 이름은 대소문자를 구분하지 않습니다. 작업하는 블록은 구역 안에 있어야 하며, 거부된 플레이어에게는 구역의 `message`가 보입니다. 텍스트도 목록도 아닌 값, 텍스트가 아닌 항목, 이 세 가지 중 어느 것도 아닌 이름은 각각 로그에 기록되고 무시됩니다 |
+| `damage`          | 아니요 | 객체             | 없음               | 구역 안에서 살아 있는 것을 피해로부터 보호합니다. 아래를 보세요                                                                                                                                                                                                                                                                                                                                                      |
+| `fly`             | 아니요 | 불리언           | `true`             | `false`이면 구역 안에서 날고 있는 플레이어는 1초에 한 번씩 내려오며 비행 능력을 잃습니다. 창의 모드나 관전자 모드인 플레이어라면 비행만 멈춥니다                                                                                                                                                                                                                                                                     |
+| `message`         | 아니요 | 텍스트           | `rdpl.zone.denied` | 거부당한 플레이어에게 핫바 위에 보여 주는 언어 키이며, 2초에 한 번을 넘지 않습니다. 기본값은 `여기서는 그렇게 할 수 없습니다`라고 말합니다                                                                                                                                                                                                                                                                           |
+
+| `where` 키  | 값                | 설명                                                                                                                                                                 |
+| ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension` | 차원 이름         | 이 차원만 해당합니다. RDPL의 다른 곳처럼 네임스페이스와 함께 또는 없이 적습니다. 생략하면 모든 차원입니다                                                            |
+| `box`       | 블록 좌표 여섯 개 | `[x1, y1, z1, x2, y2, z2]`이며, 서로 반대쪽 모서리 두 개를 어느 순서로 적어도 되고 둘 다 포함합니다. 작업하는 블록이 그 안에 있어야 합니다. 생략하면 제한이 없습니다 |
+| `claim`     | 불리언            | `true`이면 [클레임한 청크](#클레임한-청크) 안에서만 적용됩니다. `false`이거나 생략하면 클레임은 상관없습니다                                                         |
+
+| `except` 키 | 값     | 설명                                                            |
+| ----------- | ------ | --------------------------------------------------------------- |
+| `creative`  | 불리언 | `true`이면 창의 모드 플레이어는 건너뜁니다                      |
+| `tag`       | 텍스트 | `/tag`로 설정한 이 스코어보드 태그를 가진 플레이어는 건너뜁니다 |
+
+`break`, `place`, `use`, `open`은 각각 아래 키를 받습니다. 모두 선택 사항이며, 키가 하나도 없는 규칙은 무시되고 로그에 기록됩니다.
+
+| 키      | 값                  | 설명                                                                                                                                                              |
+| ------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allow` | id 또는 태그의 목록 | 이것만 허용되며 나머지는 모두 거부합니다                                                                                                                          |
+| `deny`  | 목록 또는 `"all"`   | 이것들은 거부합니다. `"all"`은 모든 것을 거부합니다                                                                                                               |
+| `on`    | id 또는 태그의 목록 | `place`에서만 쓰입니다. 블록은 그 아래 블록이 이것 중 하나일 때만 놓을 수 있습니다. `allow`와 `deny` 위에 적용되므로, 다른 키가 거부하는 놓기는 여전히 거부됩니다 |
+| `close` | 불리언              | `open`에서만: 이미 열린 용기도 닫습니다. 기본값은 `false`입니다. 아래를 보세요                                                                                    |
+
+항목은 `minecraft:chest` 같은 블록 또는 아이템 id, 네임스페이스 전체를 가리키는 `minecraft:*` 같이 `*`로 끝나는 id, 또는 `#name` 형태의 태그입니다. `break`, `place`, `open`은 블록을 id와 블록 태그로 맞추고, `use`는 플레이어 손에 든 아이템을 id와 아이템 태그로 맞추며, `on`은 그 아래 블록을 맞춥니다. 등록되지 않은 id는 로그에 오류로 기록되며 아무것도 맞추지 않습니다.
+
+**`open`**은 상자, 화로, 호퍼, 제작대, 모루처럼 메뉴를 여는 블록과, 메뉴를 제공하는 블록 엔티티에 적용됩니다. 다른 블록은 `allow`가 무엇을 나열하든 `open`으로 거부되지 않습니다. 거부된 클릭은 아무 일도 하지 않으므로 컨테이너가 열리지 않습니다.
+
+**`use`**는 아이템만 거부합니다. 거부된 아이템을 든 채 블록을 우클릭해도 블록은 그대로 작동합니다. 단추를 누르는 것처럼요. 클릭된 블록은 이 규칙의 일부가 아닙니다.
+
+**`damage`**는 나열된 생명체가 구역 안에 서 있는 동안 받는 피해를 거부하며, 공격자가 어디에 있든 상관없습니다. 시험하는 대상은 피해를 받는 엔티티의 블록이며, 이것을 `where`에 대해 시험합니다. `entities`의 항목은 `minecraft:pig`처럼 `minecraft:` 네임스페이스를 붙이거나 생략한 엔티티 ID, 종류(`#monster`, `#creature`, `#ambient`, `#water_creature`), 또는 `#c:bosses`처럼 네임스페이스가 있는 엔티티 타입 태그입니다. 허공이나 `/kill`처럼 무적을 우회하는 피해는 결코 거부되지 않습니다. `except`와 맞는 플레이어의 공격은 절대 거부되지 않으므로, 창의 모드 플레이어를 제외한 구역이라면 그들의 공격은 계속 작동합니다. 플레이어인 거부된 공격자에게는 구역의 `message`가 보이며, 다른 공격자는 메시지 없이 멈춥니다. 객체가 아닌 `damage`, 목록이 아닌 `entities`, 종류도 엔티티 태그도 아닌 `#` 항목, 텍스트가 아닌 항목, 쓸 수 있는 것이 없는 `entities` 목록은 로그에 기록되고 `damage`는 무시됩니다.
+
+| 키                     | 필수   | 값                    | 기본값  | 설명                                                                                    |
+| ---------------------- | ------ | --------------------- | ------- | --------------------------------------------------------------------------------------- |
+| `entities`             | 예     | ID, 종류, 태그의 목록 | 없음    | 구역이 보호하는 생명체                                                                  |
+| `unlessAttackerInside` | 아니요 | 불리언                | `false` | `true`: 구역 안에 있는 공격자가 주는 피해는 허용하고, 밖에서 오는 피해만 막습니다       |
+| `allowNoAttacker`      | 아니요 | 불리언                | `false` | `true`: 낙하, 불, 용암처럼 공격자가 없는 피해는 허용합니다. `false`이면 그것도 막습니다 |
+
+`unlessAttackerInside`나 `allowNoAttacker`의 값이 `true`나 `false`가 아니면 로그에 남고 `false`로 취급합니다.
+
+**`close`** 는 `open`이 클릭한 블록보다 더 많은 것을 판단하게 합니다. 이 키가 있으면, 구역 밖의 블록을 클릭해 플레이어가 연 용기는, 플레이어가 구역 안에 서 있는 동안 `open` 규칙이 그 블록을 거부하면 즉시 다시 닫힙니다. 플레이어에게는 구역의 `message`가 보입니다. 이 키가 없으면 클릭한 블록만 결정합니다. `close`는 `open`에서만 읽으며, `true`나 `false`가 아니면 로그에 남기고 `false`로 취급합니다. 블록을 클릭해서 열린 용기만 닫고, 다른 방식으로 열린 것은 닫지 않습니다.
+
+구역 파일에 `break`, `place`, `use`, `open`, `damage`, `denyToolActions`, `fly: false` 중 어떤 것도 없으면 무시하고 로그에 남깁니다. `where.box`의 값이 여섯 개가 아니면 `gives a box of N numbers, it needs 6 (x1, y1, z1, x2, y2, z2), ignoring the zone`라고 로그에 남기고, 그 구역은 불러오지 않습니다.
+
+**구역 안에 있는 자.** `break`, `place`, `open`은 부수거나, 놓거나, 클릭하는 블록을 봅니다. 그래서 구역 밖의 플레이어는 구역 안의 블록을 다룰 수 없고, 안의 플레이어는 밖의 블록을 다룰 수 있습니다. 블록을 향한 `use`도 같은 방식이고, 공중에서의 `use`와 `fly`는 플레이어가 서 있는 블록을 봅니다. `where`가 없는 구역은 월드의 모든 사람을 덮습니다. `except`에 맞는 플레이어는 절대 거부되지 않으며 땅으로 내려오지도 않습니다.
+
+**비행.** `fly: false`는 비행만 끕니다. 구역을 떠난 플레이어는 창의 모드나 명령어처럼 다른 것이 다시 허용하기 전까지 비행이 꺼진 상태를 유지합니다.
+
+파일이 없으면 아무것도 제한되지 않습니다. 파일을 로드할 때 로그는 `Loaded N zone(s)`를 출력하며, `/rdplserver reload`는 다시 로드합니다.
+
 ## 점수 계산
 
 *게임 모드*
@@ -9308,10 +9977,32 @@ pregenBorderLimit = 8192
 
 *카드*
 
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "login",
+  "title": "Welcome back, {player}",
+  "sound": "minecraft:entity.player.levelup",
+  "runs": "mypack:login_news"
+}
+```
+
+```json
+{
+  "trigger": "command",
+  "title": "{player} found {item}",
+  "lines": ["Worth {value} coins."]
+}
+```
+
+`login`은 로그인할 때마다, `first_join`은 처음 한 번만 발동합니다. `/rdplserver card mypack:found Steve item=Ruby value=50` 명령은 두 번째 카드를 보여 주며, `key=value` 쌍으로 `{item}`과 `{value}`를 채웁니다.
+
 | 트리거               | 필요 값                  | 발동 조건                                                                                                                                                                                                                          |
 | -------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `command`            | 없음                     | `/rdplserver card <rule> [players]`가 실행될 때. 이 명령어는 `when`, `repeat`, `cooldown`을 건너뛰고 `runs`는 그대로 실행합니다. 어떤 규칙이든 트리거와 관계없이 이 방식으로 표시할 수 있습니다                                    |
 | `first_join`         | 없음                     | 플레이어가 월드에 처음 접속할 때                                                                                                                                                                                                   |
+| `login`              | 없음                     | 플레이어가 로그인할 때. 처음뿐 아니라 매번 발동합니다. `runs`는 다른 트리거와 같이 실행됩니다                                                                                                                                      |
 | `dimension_enter`    | `dimension`              | 플레이어가 그 차원에 도착할 때                                                                                                                                                                                                     |
 | `biome_enter`        | `biomes`                 | 플레이어가 다른 곳에서 그 생물 군계 중 하나로 걸어 들어갈 때                                                                                                                                                                       |
 | `structure_enter`    | `structures`             | 플레이어가 그 구조물 중 하나의 바깥에서 안으로 걸어 들어갈 때                                                                                                                                                                      |
@@ -9341,6 +10032,7 @@ pregenBorderLimit = 8192
 | `score`              | `objective`              | 플레이어의 그 목표 점수가 `score`에 이를 때                                                                                                                                                                                        |
 | `exposure_level`     | 없음, 또는 `exposure`    | 플레이어의 위험 요소 수준이 오르거나 내려서 바뀐다. `exposure`가 있으면 그 위험 요소만, `level`이 있으면 그 수준에 이르는 변화만 해당한다. 접속 후 첫 검사에서는 발동하지 않는다                                                   |
 | `round_start`        | 없음                     | 카운트다운이 끝나고 라운드가 열린다. 플레이어마다 한 번, 또는 `audience`에 대해 한 번. 초기화 뒤에도 `/rdplserver round start` 뒤에도 똑같이 발동한다                                                                              |
+| `worn`               | `when.worn`              | 미터입니다. 플레이어가 `when.worn` 아이템을 착용하는 동안, 카드가 `every` 틱마다 그 플레이어에게 다시 보입니다. 아래를 보세요. `when.worn`이 없는 규칙은 건너뛰고 로그에 남깁니다                                                  |
 | `environment_change` | 없음, 또는 `environment` | 차원에서 환경이 명령이나 계절로 켜지거나 `default`로 돌아올 때. 그곳의 플레이어마다 한 번, 또는 `audience`에 한 번 발동한다. `environment`가 있으면 그 환경만 해당한다. 저장된 월드를 불러올 때는 발동하지 않는다                  |
 
 위험 요소 수준은 검사할 때마다 읽으므로, 카드는 변화 뒤 그 위험 요소의 `scanInterval` 안에 발동합니다.
@@ -9348,6 +10040,18 @@ pregenBorderLimit = 8192
 생물 군계, 구조물, 높이, 플레이 시간, 점수는 플레이어마다 초당 한 번 확인하며, 바깥에서 안으로 바뀌는 순간에 발동하고 접속 직후의 첫 확인에서는 발동하지 않습니다. 대상이 `player`가 아닌 `time_of_day`나 `day` 규칙은 그 안의 플레이어마다 한 번씩이 아니라 차원에 대해 한 번 발동합니다.
 
 플레이어가 아직 월드 소개를 열어 둔 상태에서 발동한 카드는 `command` 트리거를 포함해 어떤 트리거든 기다렸다가 소개가 닫히면 표시됩니다. 그전에 플레이어가 나가면 취소됩니다.
+
+`worn` 규칙은 내구도 막대나 상태 줄을 위한 실시간 계기입니다. `every` 틱마다 각 플레이어를 살피며, `when.worn` 아이템을 입은 플레이어에게만 `audience`와 상관없이 그 카드를 보여 줍니다. 플레이어가 세계 소개를 열어 둔 동안에는 보이지 않습니다. `when`과 `dimension`의 나머지도 여전히 맞아야 합니다. `repeat`와 `cooldown`은 계기에 의미가 없으며, 설정하면 로그에 경고가 남습니다. `sets`와 `runs`는 매 새로 고침마다 실행됩니다. 착용이란 방어구 칸에 있거나, Curios가 설치된 경우 Curios 슬롯에 있는 것을 뜻합니다. 카드의 텍스트에는 `{worn}`(아이템 이름), `{percent}`(남은 내구도, 0부터 100), `{left}`(남은 사용 횟수), `{max}`(전체 내구도), `{bar}`(남은 부분은 `|`, 쓴 부분은 `.`으로 된 10칸 게이지)를 쓸 수 있습니다. 내구도가 없는 아이템은 100퍼센트를 보이며, `{left}`와 `{max}`는 0, 막대는 가득 찬 것으로 보입니다. `style`이 `bar`이면 그 줄은 행동 막대에서 스스로 바뀝니다.
+
+```json
+{
+  "trigger": "worn",
+  "when": { "worn": "minecraft:iron_helmet" },
+  "every": 40,
+  "style": "bar",
+  "lines": ["{worn} {bar} {percent}%"]
+}
+```
 
 ### 트리거 설정
 
@@ -9407,6 +10111,7 @@ pregenBorderLimit = 8192
 | `environment`        | 문자열                            | 없음       | `environment_change`용. 켜진 환경의 이름(`night` 또는 `default` 등). 없으면 켜지는 모든 환경이 규칙을 발동시킨다                                                                                                                                         |
 | `atLeast`, `atMost`  | 정수                              | 없음       | `roll`용: 규칙을 발동시키는 가장 낮은 합계와 가장 높은 합계. 동전은 앞면이 1, 뒷면이 0이고, 팩 주사위나 덱은 결과가 파일에서 몇 번째인지(1부터)를 셉니다                                                                                                 |
 | `objective`, `score` | 문자열, 정수                      | 없음, `1`  | `score`용: 목표와 도달해야 하는 값                                                                                                                                                                                                                       |
+| `every`              | 정수, 틱                          | `40`       | `worn`용: 미터를 새로 고치는 사이의 틱입니다. 20의 배수가 아니면 다음 배수로 올리고 로그에 남깁니다. 가장 작은 값은 `20`입니다                                                                                                                           |
 | `portway`            | 문자열                            | 없음       | `portway_*` 트리거용: 포트웨이의 블록 id(예: `mypack:northgate`). 생략하면 모든 포트웨이                                                                                                                                                                 |
 | `network`            | 문자열                            | 없음       | `portway_*` 트리거용: 포트웨이의 네트워크. 생략하면 모든 네트워크                                                                                                                                                                                        |
 | `reason`             | 문자열                            | 없음       | `portway_refused`용: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel`, `item`. `portway_forget`용: `gone`, `player`, `command`. 생략하면 모든 이유                                                                                |
@@ -9422,25 +10127,36 @@ pregenBorderLimit = 8192
 { "when": { "season": ["winter", "spring"], "dimension": "minecraft:overworld" } }
 ```
 
-| 설정                        | 유형         | 확인하는 것                                                                                                                                          |
-| --------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | 목록         | 플레이어가 이 생물 군계 중 하나에 서 있는지 여부이며, 트리거와 같은 방식으로 적습니다                                                                |
-| `environments`              | 목록         | 플레이어가 있는 차원에서 이 환경 중 하나가 켜져 있는지 여부이며, `default`도 포함한다                                                                |
-| `season`                    | 목록         | 환경을 직접 바꿨더라도, 계절 시계로 볼 때 그 차원이 이 계절 중 하나에 있는지 여부입니다. 계절 이름은 계절 `order` 항목의 첫 번째 환경 이름입니다     |
-| `dimension`                 | 텍스트       | `season`이 계절을 읽는 차원이며, `minecraft:overworld`처럼 차원 레지스트리 이름으로 적습니다. 생략하면 플레이어가 있는 차원입니다                    |
-| `timeFrom`, `timeTo`        | 정수         | 하루 시계가 이 구간 안에 있는지 여부이며, `13000`~`1000`처럼 자정을 넘길 수 있습니다                                                                 |
-| `dayAtLeast`                | 정수         | 날짜가 이 값 이상인지 여부                                                                                                                           |
-| `advancement`               | 문자열       | 플레이어가 이 발전 과제를 가지고 있는지 여부                                                                                                         |
-| `portway`, `network`        | 문자열       | 플레이어의 목록이나 글로벌 포트웨이 중에 그 블록 id 또는 그 네트워크의 포트웨이가 있는지 여부입니다. 둘 중 하나는 생략할 수 있습니다                 |
-| `gameMode`                  | 문자열       | 플레이어가 이 게임 모드인지 여부이며, `survival`, `creative`, `adventure`, `spectator` 중 하나입니다                                                 |
-| `team`                      | 문자열       | 플레이어가 이 점수판 팀에 속해 있는지 여부                                                                                                           |
-| `dietAtLeast`               | 정수         | 플레이어가 기억한 식사에 이 수 이상의 서로 다른 음식이 들어 있음, 또는 `dietCount`가 `lifetime`이면 지금까지 먹은 모든 음식(음식 다양성 파일이 필요) |
-| `dietCount`                 | 문자열       | `memory`(기본값) 또는 `lifetime`: `dietAtLeast`가 세는 대상                                                                                          |
-| `objective`, `scoreAtLeast` | 문자열, 정수 | 플레이어의 해당 목표 점수가 이 값 이상인지 여부                                                                                                      |
+| 설정                        | 유형           | 확인하는 것                                                                                                                                                                            |
+| --------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | 목록           | 플레이어가 이 생물 군계 중 하나에 서 있는지 여부이며, 트리거와 같은 방식으로 적습니다                                                                                                  |
+| `environments`              | 목록           | 플레이어가 있는 차원에서 이 환경 중 하나가 켜져 있는지 여부이며, `default`도 포함한다                                                                                                  |
+| `season`                    | 목록           | 환경을 직접 바꿨더라도, 계절 시계로 볼 때 그 차원이 이 계절 중 하나에 있는지 여부입니다. 계절 이름은 계절 `order` 항목의 첫 번째 환경 이름입니다                                       |
+| `dimension`                 | 텍스트         | `season`이 계절을 읽는 차원이며, `minecraft:overworld`처럼 차원 레지스트리 이름으로 적습니다. 생략하면 플레이어가 있는 차원입니다                                                      |
+| `timeFrom`, `timeTo`        | 정수           | 하루 시계가 이 구간 안에 있는지 여부이며, `13000`~`1000`처럼 자정을 넘길 수 있습니다                                                                                                   |
+| `dayAtLeast`                | 정수           | 날짜가 이 값 이상인지 여부                                                                                                                                                             |
+| `advancement`               | 문자열         | 플레이어가 이 발전 과제를 가지고 있는지 여부                                                                                                                                           |
+| `portway`, `network`        | 문자열         | 플레이어의 목록이나 글로벌 포트웨이 중에 그 블록 id 또는 그 네트워크의 포트웨이가 있는지 여부입니다. 둘 중 하나는 생략할 수 있습니다                                                   |
+| `gameMode`                  | 문자열         | 플레이어가 이 게임 모드인지 여부이며, `survival`, `creative`, `adventure`, `spectator` 중 하나입니다                                                                                   |
+| `team`                      | 문자열         | 플레이어가 이 점수판 팀에 속해 있는지 여부                                                                                                                                             |
+| `dietAtLeast`               | 정수           | 플레이어가 기억한 식사에 이 수 이상의 서로 다른 음식이 들어 있음, 또는 `dietCount`가 `lifetime`이면 지금까지 먹은 모든 음식(음식 다양성 파일이 필요)                                   |
+| `dietCount`                 | 문자열         | `memory`(기본값) 또는 `lifetime`: `dietAtLeast`가 세는 대상                                                                                                                            |
+| `objective`, `scoreAtLeast` | 문자열, 정수   | 플레이어의 해당 목표 점수가 이 값 이상인지 여부                                                                                                                                        |
+| `worn`                      | 텍스트         | 플레이어가 이 아이템을 방어구 칸에, 또는 Curios가 설치된 경우 Curios 슬롯에 착용합니다. 팩의 다른 곳에서는 `minecraft:iron_helmet`처럼 아이템으로 적습니다. `worn` 트리거에 필요합니다 |
+| `data`                      | 객체 또는 목록 | 이 동기화 값 검사가 모두 성립하는지 여부입니다. [동기화 데이터](#동기화-데이터)를 보세요                                                                                               |
 
 ### 해당 카드
 
 *카드*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "sound": "minecraft:block.note_block.chime"
+}
+```
 
 | 설정         | 유형   | 기본값           | 설명                                                                                                                                                                                                          |
 | ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -9453,12 +10169,17 @@ pregenBorderLimit = 8192
 | `background` | 불리언 | `saysBackground` | `true`이면 패널, 테두리, 색 띠를 그립니다. `false`이면 패널, 테두리, 색 띠를 없앱니다. 텍스트는 그림자를 유지하며 `image`는 여전히 그려집니다                                                                 |
 | `font`       | 문자열 | `saysFont`       | 카드의 텍스트를 그리는 글꼴로, `namespace:name`으로 지정합니다. 비워 두면 RDPL 글꼴을 씁니다                                                                                                                  |
 | `ticks`      | 정수   | `0`              | 서서히 사라지는 시간을 포함해 카드가 머무는 시간. `0`은 표준값 160을 유지합니다                                                                                                                               |
+| `sound`      | 텍스트 | 없음             | 카드가 표시되는 각 플레이어에게 재생되는 사운드 이벤트 ID입니다. `minecraft:entity.player.levelup` 같은 값입니다. 비우면 재생하지 않습니다                                                                    |
 | `audience`   | 문자열 | `player`         | 보는 대상입니다. `player`, `everyone`, `dimension`(플레이어의 차원에 있는 모든 사람), `team`(플레이어의 점수판 팀) 중 하나입니다                                                                              |
 | `repeat`     | 문자열 | `always`         | `always`, `once_per_player`, `once_per_world`, `once_per_session`(플레이어가 다시 로그인하면 다시 표시) 중 하나                                                                                               |
 | `cooldown`   | 정수   | `0`              | 같은 플레이어에게 규칙이 다시 발동하기까지의 초                                                                                                                                                               |
 | `runs`       | 문자열 | 없음             | 규칙이 발동할 때 플레이어를 실행자로 하여 실행하는 함수                                                                                                                                                       |
+| `sets`       | 객체   | 없음             | 규칙이 발동하는 플레이어에게 설정할 동기화 값으로, `name: value` 형식입니다. [동기화 데이터](#동기화-데이터)를 보세요                                                                                         |
+| `worldSets`  | 객체   | 없음             | 월드 전체에 설정할 동기화 값으로, 같은 형식입니다                                                                                                                                                             |
 
 `saysCard`가 `false`이면 모서리 카드는 채팅으로 갑니다. 플레이어에게 보여 준 내용은 플레이어에 기록되어 사망하거나 차원을 오가도 유지되며, `once_per_world`는 월드에 기록됩니다.
+
+`sets`와 `worldSets`는 규칙이 발동할 때, 검사를 통과한 뒤 카드를 만들기 전에 적용되므로 카드의 글이 이미 새 값을 보여 줍니다. `title`과 `lines`는 `{data:name|fallback}`으로 동기화 값을 보여 줄 수 있습니다. [동기화 데이터](#동기화-데이터)를 보세요.
 
 RDPL 글꼴 `resourcedatapackloader:rdpl`은 모든 텍스트의 기본값입니다. 카드, Says 메시지, 환영 문구와 대기 안내, 월드 소개, 게임 자체의 메뉴, 채팅, HUD, 툴팁이 모두 해당합니다. 굵은 글자체와 기울인 글자체는 `resourcedatapackloader:rdpl_bold`와 `resourcedatapackloader:rdpl_italic`입니다. 마법 부여대의 글자는 게임의 것 그대로입니다.
 
@@ -9480,34 +10201,37 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 
 *카드*
 
-| Id                       | 메시지                                              | 텍스트의 출처                                                                                                             |
-| ------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `rdpl:gate_unlocked`     | 게이트가 열립니다                                   | [게이트](#게이트)의 `unlockedMessage`                                                                                     |
-| `rdpl:gate_blocked`      | 닫힌 게이트가 플레이어를 돌려보냅니다(액션바)       | [게이트](#게이트)의 `blockedMessage`                                                                                      |
-| `rdpl:portway_activated` | 플레이어가 포트웨이를 목록에 추가할 때(액션바)      | 언어 파일                                                                                                                 |
-| `rdpl:portway_refused`   | 포트웨이가 플레이어를 돌려보낼 때(액션바)           | 언어 파일                                                                                                                 |
-| `rdpl:portway_forgot`    | 지점이 플레이어의 목록에서 빠질 때(액션바)          | 언어 파일                                                                                                                 |
-| `rdpl:team_joined`       | 플레이어가 진영에 가입합니다                        | 진영의 `displayName`                                                                                                      |
-| `rdpl:team_lead`         | 진영의 리더 자리가 플레이어에게 옵니다              | [팀](#팀)의 `leadSays`                                                                                                    |
-| `rdpl:team_picked`       | 플레이어가 진영에 뽑힙니다                          | 진영의 `displayName`                                                                                                      |
-| `rdpl:team_round_ended`  | 라운드가 끝나서 플레이어가 진영으로 이동합니다      | 진영의 `displayName`                                                                                                      |
-| `rdpl:downed`            | 플레이어가 죽는 대신 쓰러집니다                     | [팀](#팀)의 `down.says`                                                                                                   |
-| `rdpl:revived`           | 팀원이 쓰러진 플레이어를 살려 냅니다                | [팀](#팀)의 `down.revivedSays`                                                                                            |
-| `rdpl:lobby_joins`       | 라운드 도중에 로그인한 플레이어가 로비로 보내집니다 | [로비](#로비)의 `opens.joinsSays`                                                                                         |
-| `rdpl:lobby_note`        | 화면 가운데에 표시되는 로비 문구                    | [로비](#로비)의 `opens.says`, `opens.leaderSays`                                                                          |
-| `rdpl:scoring_results`   | 라운드가 끝날 때 각 플레이어에게 보여 주는 순위     | [결과](#결과)의 `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` |
-| `rdpl:scoring_out`       | 탈락한 플레이어                                     | [라운드가 끝나는 방식](#라운드가-끝나는-방식)의 `ends.outSays`                                                            |
-| `rdpl:reset_lead`        | 리더가 라운드를 초기화합니다                        | [라운드 초기화](#라운드-초기화)의 `reset.leadSays`                                                                        |
-| `rdpl:reset_vote`        | 초기화 투표가 소집됩니다                            | `reset.voteSays`                                                                                                          |
-| `rdpl:reset_pass`        | 투표가 가결됩니다                                   | `reset.passSays`                                                                                                          |
-| `rdpl:reset_fail`        | 투표가 부결됩니다                                   | `reset.failSays`                                                                                                          |
-| `rdpl:anvil_waits`       | 모루의 작업이 발전 과제를 기다립니다                | [모루 작업](#모루-작업)                                                                                                   |
-| `rdpl:threat`            | 플레이어의 위협 단계가 바뀝니다                     | `threatSays`                                                                                                              |
-| `rdpl:prospect`          | 탐사 결과가 보고하는 각 줄                          | 탐사 결과                                                                                                                 |
-| `rdpl:prospect_none`     | 탐사에서 아무것도 찾지 못했습니다                   | 언어 파일                                                                                                                 |
-| `rdpl:board_result`      | 보드 게임이 끝납니다                                | 언어 파일                                                                                                                 |
-| `rdpl:pregen_ended`      | 사전 생성이 끝나거나 중지됩니다                     | [사전 생성](#사전-생성)의 `pregenFinishedSays`, `pregenStoppedSays`                                                       |
-| `rdpl:pregen_running`    | 사전 생성 중에 접속한 플레이어에게 보이는 진행 문구 | `pregenRunningSays`                                                                                                       |
+| Id                       | 메시지                                                               | 텍스트의 출처                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked`     | 게이트가 열립니다                                                    | [게이트](#게이트)의 `unlockedMessage`                                                                                     |
+| `rdpl:gate_blocked`      | 닫힌 게이트가 플레이어를 돌려보냅니다(액션바)                        | [게이트](#게이트)의 `blockedMessage`                                                                                      |
+| `rdpl:gate_stay`         | 게이트 차원에 남은 시간(액션바)                                      | [게이트](#게이트)의 `stayMessage`                                                                                         |
+| `rdpl:gate_expired`      | 게이트의 시간 예산이 다 쓰였거나, 그 때문에 플레이어가 돌려보내질 때 | [게이트](#게이트)의 `onExpire.message`                                                                                    |
+| `rdpl:gate_loot_left`    | 플레이어가 게이트 차원을 떠날 때 표시된 전리품이 남을 때             | [게이트](#게이트)의 `dropOnLeave.message`                                                                                 |
+| `rdpl:portway_activated` | 플레이어가 포트웨이를 목록에 추가할 때(액션바)                       | 언어 파일                                                                                                                 |
+| `rdpl:portway_refused`   | 포트웨이가 플레이어를 돌려보낼 때(액션바)                            | 언어 파일                                                                                                                 |
+| `rdpl:portway_forgot`    | 지점이 플레이어의 목록에서 빠질 때(액션바)                           | 언어 파일                                                                                                                 |
+| `rdpl:team_joined`       | 플레이어가 진영에 가입합니다                                         | 진영의 `displayName`                                                                                                      |
+| `rdpl:team_lead`         | 진영의 리더 자리가 플레이어에게 옵니다                               | [팀](#팀)의 `leadSays`                                                                                                    |
+| `rdpl:team_picked`       | 플레이어가 진영에 뽑힙니다                                           | 진영의 `displayName`                                                                                                      |
+| `rdpl:team_round_ended`  | 라운드가 끝나서 플레이어가 진영으로 이동합니다                       | 진영의 `displayName`                                                                                                      |
+| `rdpl:downed`            | 플레이어가 죽는 대신 쓰러집니다                                      | [팀](#팀)의 `down.says`                                                                                                   |
+| `rdpl:revived`           | 팀원이 쓰러진 플레이어를 살려 냅니다                                 | [팀](#팀)의 `down.revivedSays`                                                                                            |
+| `rdpl:lobby_joins`       | 라운드 도중에 로그인한 플레이어가 로비로 보내집니다                  | [로비](#로비)의 `opens.joinsSays`                                                                                         |
+| `rdpl:lobby_note`        | 화면 가운데에 표시되는 로비 문구                                     | [로비](#로비)의 `opens.says`, `opens.leaderSays`                                                                          |
+| `rdpl:scoring_results`   | 라운드가 끝날 때 각 플레이어에게 보여 주는 순위                      | [결과](#결과)의 `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` |
+| `rdpl:scoring_out`       | 탈락한 플레이어                                                      | [라운드가 끝나는 방식](#라운드가-끝나는-방식)의 `ends.outSays`                                                            |
+| `rdpl:reset_lead`        | 리더가 라운드를 초기화합니다                                         | [라운드 초기화](#라운드-초기화)의 `reset.leadSays`                                                                        |
+| `rdpl:reset_vote`        | 초기화 투표가 소집됩니다                                             | `reset.voteSays`                                                                                                          |
+| `rdpl:reset_pass`        | 투표가 가결됩니다                                                    | `reset.passSays`                                                                                                          |
+| `rdpl:reset_fail`        | 투표가 부결됩니다                                                    | `reset.failSays`                                                                                                          |
+| `rdpl:anvil_waits`       | 모루의 작업이 발전 과제를 기다립니다                                 | [모루 작업](#모루-작업)                                                                                                   |
+| `rdpl:threat`            | 플레이어의 위협 단계가 바뀝니다                                      | `threatSays`                                                                                                              |
+| `rdpl:prospect`          | 탐사 결과가 보고하는 각 줄                                           | 탐사 결과                                                                                                                 |
+| `rdpl:prospect_none`     | 탐사에서 아무것도 찾지 못했습니다                                    | 언어 파일                                                                                                                 |
+| `rdpl:board_result`      | 보드 게임이 끝납니다                                                 | 언어 파일                                                                                                                 |
+| `rdpl:pregen_ended`      | 사전 생성이 끝나거나 중지됩니다                                      | [사전 생성](#사전-생성)의 `pregenFinishedSays`, `pregenStoppedSays`                                                       |
+| `rdpl:pregen_running`    | 사전 생성 중에 접속한 플레이어에게 보이는 진행 문구                  | `pregenRunningSays`                                                                                                       |
 
 `welcomeSays`는 규칙이 아니며 로고를 유지합니다. `first_join`이나 `dimension_enter` 규칙은 여기에 더해집니다. 라운드의 액션바 카운트다운과 집계는 해당 설정이 정하는 그대로 유지됩니다.
 
@@ -9579,17 +10303,21 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 
 *대화*
 
-| 설정    | 유형   | 기본값                 | 설명                                                                                                                                                                                                             |
-| ------- | ------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text`  | 문자열 | 없음, 필수             | 플레이어가 읽는 선택지 문구. `text`가 없는 선택지는 버려집니다                                                                                                                                                   |
-| `goto`  | 문자열 | 없음                   | 다음으로 갈 노드의 이름. `goto`가 어떤 노드도 가리키지 않는 선택지는 버려집니다                                                                                                                                  |
-| `card`  | 문자열 | 없음                   | 선택했을 때 보여 줄 [카드](#카드)의 규칙 id. 그 규칙의 `when`, `repeat`, `cooldown`은 건너뛰고 `runs`는 그대로 실행됩니다                                                                                        |
-| `runs`  | 문자열 | 없음                   | 선택지를 골랐을 때 플레이어로서 실행되는 함수. 선택지가 명령을 실행하는 방법입니다                                                                                                                               |
-| `when`  | 객체   | 없음                   | [시점](#시점)의 조건. 조건을 만족하지 못하는 선택지는 숨겨집니다                                                                                                                                                 |
-| `close` | 불리언 | `goto`가 없으면 `true` | `true`이면 선택 뒤에 대화를 끝냅니다. `goto`가 있으면 아무 일도 하지 않습니다. `false`이면 선택 뒤에도 대화가 열려 있습니다                                                                                      |
-| `trade` | 불리언 | `false`                | `true`이면 선택한 뒤 대화 상대 자신의 거래를 열고 대화를 끝내므로 `goto`는 무시됩니다. 상인이 아니거나 이미 거래 중인 대화 상대는 아무것도 열지 않으며, 대화는 그대로 끝납니다. `false`이면 거래를 열지 않습니다 |
+| 설정        | 유형   | 기본값                 | 설명                                                                                                                                                                                                             |
+| ----------- | ------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`      | 문자열 | 없음, 필수             | 플레이어가 읽는 선택지 문구. `text`가 없는 선택지는 버려집니다                                                                                                                                                   |
+| `goto`      | 문자열 | 없음                   | 다음으로 갈 노드의 이름. `goto`가 어떤 노드도 가리키지 않는 선택지는 버려집니다                                                                                                                                  |
+| `card`      | 문자열 | 없음                   | 선택했을 때 보여 줄 [카드](#카드)의 규칙 id. 그 규칙의 `when`, `repeat`, `cooldown`은 건너뛰고 `runs`는 그대로 실행됩니다                                                                                        |
+| `runs`      | 문자열 | 없음                   | 선택지를 골랐을 때 플레이어로서 실행되는 함수. 선택지가 명령을 실행하는 방법입니다                                                                                                                               |
+| `when`      | 객체   | 없음                   | [시점](#시점)의 조건. 조건을 만족하지 못하는 선택지는 숨겨집니다                                                                                                                                                 |
+| `close`     | 불리언 | `goto`가 없으면 `true` | `true`이면 선택 뒤에 대화를 끝냅니다. `goto`가 있으면 아무 일도 하지 않습니다. `false`이면 선택 뒤에도 대화가 열려 있습니다                                                                                      |
+| `trade`     | 불리언 | `false`                | `true`이면 선택한 뒤 대화 상대 자신의 거래를 열고 대화를 끝내므로 `goto`는 무시됩니다. 상인이 아니거나 이미 거래 중인 대화 상대는 아무것도 열지 않으며, 대화는 그대로 끝납니다. `false`이면 거래를 열지 않습니다 |
+| `sets`      | 객체   | 없음                   | 플레이어에게 설정할 동기화 값으로, `name: value` 형식입니다. [동기화 데이터](#동기화-데이터)를 보세요                                                                                                            |
+| `worldSets` | 객체   | 없음                   | 월드 전체에 설정할 동기화 값으로, 같은 형식입니다                                                                                                                                                                |
 
 선택하면 먼저 `runs`가 실행되고, 이어서 `card`가 표시된 다음 `goto`로 넘어가거나 대화가 끝납니다. 대화는 자체 상태를 갖지 않습니다. 저장되지 않으며, 닫았거나 플레이어의 로그아웃으로 끊긴 대화는 다시 이어 갈 수 없습니다. 무언가를 기억해야 하는 분기는 그 함수에서 점수나 태그를 설정합니다.
+
+선택지를 고르면 `sets`와 `worldSets`를 먼저 설정하고, 이어서 `runs`를 실행합니다. 대화의 `title`, 노드의 `title`과 `lines`, 응답의 `text`는 `{data:name|fallback}`으로 동기화 값을 보여 줄 수 있고, 응답의 `when`은 `data`로 그것을 검사할 수 있습니다. 노드는 그려질 때의 값을 보여 주므로, 값을 설정하고 다른 노드로 가는 응답은 새 노드에서 새 값을 보여 줍니다. [동기화 데이터](#동기화-데이터)를 보세요.
 
 모드가 있는 클라이언트는 대화를 화면 아래쪽의 패널로 보여 주며, 선택지마다 한 줄이 있습니다. 줄을 클릭하거나 번호(1~8)를 누릅니다. Esc나 인벤토리 키로 대화를 닫습니다. 바닐라 클라이언트는 같은 글을 채팅 줄로 받으며, 각 선택지는 클릭할 수 있는 `[n]`이고 `/rdplserver talk n`을 실행합니다. 서버는 엔티티가 살아 있고 플레이어와 8블록 이내일 때만 선택을 받아들이며, 현재 노드에 없는 번호는 무시합니다. 플레이어가 8블록보다 멀어지면 화면이 스스로 닫힙니다. `start`가 없거나 `text`가 없는 선택지, 알 수 없는 `goto`는 로그에 기록되고 대화나 선택지가 버려집니다. `dialog`를 어떤 팩도 제공하지 않는 엔티티 변형도 기록되며 대화 없이 남습니다. 패널이 길면 오른쪽에 스크롤바가 생기며, 패널 위에서 마우스 휠로도 스크롤할 수 있습니다.
 
@@ -9813,6 +10541,151 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 ---
 
 # 제어
+
+## 스크립팅
+
+스크립트는 팩 JSON이 이름을 댈 때 실행됩니다. 지정은 `scriptFile`(팩 안의 `.js` 파일)이나 `script`(JSON 안에 직접 쓴 JavaScript)로 합니다. JSON이 이름을 대지 않은 `.js` 파일은 결코 실행되지 않습니다. 스크립트는 대략 ES6 수준의 JavaScript이며, RDPL은 모드에 내장된 Rhino 엔진으로 해석된 코드로 실행합니다.
+
+### 스크립트 이벤트
+
+`data/<namespace>/scripts/events/*.json`
+
+파일 이름은 자유롭게 정할 수 있습니다. 읽히는 것은 폴더뿐이며, 여러 파일은 겹쳐 적용됩니다. 파일 하나가 항목 하나입니다. 들을 이벤트, 선택적인 필터, 이벤트가 일어날 때 실행할 스크립트를 적습니다.
+
+```json
+{
+  "event": "block_place",
+  "filter": { "block": "#ftb:trophies" },
+  "scriptFile": "scripts/trophy_altar.js"
+}
+```
+
+| 키           | 필수          | 값          | 기본값                                    | 설명                                                                                                                            |
+| ------------ | ------------- | ----------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `event`      | 예            | 이벤트 종류 | 없음                                      | 들을 이벤트입니다. 아래 표에서 고릅니다                                                                                         |
+| `every`      | 아니요        | 정수, 틱    | `1`; `player_tick`과 `server_tick`은 `20` | 월드 시간이 이 값의 배수인 틱에만 실행합니다. 스크립트가 실행되기 전에 확인합니다. 1보다 작으면 로그에 남기고 항목을 건너뜁니다 |
+| `filter`     | 아니요        | 객체        | 전부                                      | 이벤트를 맞는 것으로 좁힙니다. 스크립트가 실행되기 전에 확인하며, 아래의 필터 키를 보세요                                       |
+| `script`     | 둘 중 하나    | 텍스트      | 없음                                      | 실행할 인라인 JavaScript입니다                                                                                                  |
+| `scriptFile` | 둘 중 하나    | 경로        | 없음                                      | 같은 네임스페이스의 `scripts/` 아래 경로이며 `.js`로 끝납니다                                                                   |
+| `class`      | `mod_event`만 | 텍스트      | 없음                                      | `mod_event` 항목이 듣는 이벤트 클래스의 전체 이름입니다. 아래를 보세요                                                          |
+
+`script`와 `scriptFile`이 둘 다 있거나 둘 다 없는 항목은 건너뛰고, 로그에 그 항목에 대한 오류 줄을 남깁니다.
+
+필터 키:
+
+| 키          | 값                      | 맞는 것                     |
+| ----------- | ----------------------- | --------------------------- |
+| `dimension` | 차원 id 또는 그 목록    | 이벤트가 일어나는 차원      |
+| `block`     | 블록 id 또는 `#` 형식   | 놓이거나 부서진 블록        |
+| `entity`    | 엔티티 id               | 이벤트가 관련된 엔티티      |
+| `item`      | 아이템 id 또는 `#` 형식 | 플레이어가 들고 있는 아이템 |
+
+이벤트 종류:
+
+| 이벤트             | 발생 시점                                                         | 스크립트가 받는 값                                                         | `"cancel"` 작동                       |
+| ------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------- |
+| `block_place`      | 블록이 놓일 때                                                    | `rdpl`, `pos`, `state`, `entity`(놓은 쪽)                                  | 예                                    |
+| `block_break`      | 플레이어가 블록을 부술 때                                         | `rdpl`, `pos`, `state`, `player`                                           | 예                                    |
+| `entity_hurt`      | 플레이어를 포함한 살아 있는 모든 엔티티가 피해를 받기 직전        | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                       | 예                                    |
+| `entity_spawn`     | 몹이 처음으로 월드에 들어올 때(플레이어 제외)                     | `rdpl`, `entity`                                                           | 예, 그리고 엔티티는 나타나지 않습니다 |
+| `entity_despawn`   | 몹이 디스폰될 때, 또는 엔티티 변형의 시간제 제거가 그것을 끝낼 때 | `rdpl`, `entity`                                                           | 아니요                                |
+| `player_login`     | 플레이어가 접속할 때                                              | `rdpl`, `player`                                                           | 아니요                                |
+| `player_tick`      | 플레이어마다 `every` 틱마다, 틱이 끝난 뒤                         | `rdpl`, `player`, `pos`                                                    | 아니요                                |
+| `server_tick`      | 서버에서 `every` 틱마다 한 번, 틱이 끝난 뒤                       | `rdpl`(오버월드), `tick`(월드 시간)                                        | 아니요                                |
+| `dimension_change` | 플레이어가 다른 차원에 도착함                                     | `rdpl`, `player`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 아니요                                |
+| `loot_drop`        | 몹이 죽어 그 드롭이 곧 나타남                                     | `rdpl`, `entity`, `attacker`, `damageType`(피해 종류의 메시지 ID), `drops` | 아니요                                |
+| `entity_travel`    | 엔티티가 다른 차원으로 가려 함                                    | `rdpl`, `entity`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 예, 엔티티는 제자리에 남음            |
+| `mod_event`        | `class`가 가리키는 이벤트가 서버에서 일어날 때                    | `rdpl`, `event`, `player`                                                  | 예, 취소할 수 있는 이벤트일 때        |
+
+최종 값이 텍스트 `"cancel"`인 스크립트는 위 표에서 작동한다고 적힌 곳의 이벤트를 취소합니다. 구역 규칙이나 다른 모드가 이미 취소한 이벤트는 스크립트에 닿지 않습니다. `entity_despawn`은 처치, 청크 언로드, `/kill`로는 실행되지 않습니다.
+
+새 종류는 일부 필터 키만 읽습니다. `player_tick`과 `dimension_change`는 `dimension`과 `item`을 읽고, `loot_drop`과 `entity_travel`은 `dimension`, `entity`, `item`을 읽습니다. `server_tick`과 `mod_event`는 아무것도 읽지 않습니다. 이벤트가 읽지 않는 필터 키가 있으면 그 항목을 건너뛰고, 로그에 `the <event> event does not read the filter key '<key>', skipping the entry`라고 남깁니다. `entity`는 id와 `#monster`, `#creature`, `#ambient`, `#water_creature` 종류를 받습니다. `loot_drop`에서 `entity`는 죽은 몹이고 `item`은 그것을 처치한 쪽이 들고 있는 것입니다. `entity_travel`에서 `entity`는 이동하는 엔티티입니다. `player_tick`과 `server_tick`은 `every`로 달리 정하지 않으면 20틱마다 실행합니다. `server_tick`은 오버월드의 시계에 따라 서버당 한 번 실행하며, 플레이어는 없습니다.
+
+새 종류(`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`)의 스크립트가 실패하거나 제한 시간을 넘기면 다음 리로드 전까지 꺼지고, 로그에 `Script <name> is turned off until the next reload`라고 남습니다. 이전 종류의 스크립트는 계속 실행됩니다.
+
+`loot_drop`의 `drops`는 몹이 떨어뜨리는 것의 목록입니다. `drops.size()`는 개수를 세고, `drops.stack(index)`는 그 자리의 아이템 스택을, `drops.remove(index)`는 하나를 꺼내며, `drops.clear()`는 모두 꺼내고, `drops.add(item, count)`는 몹이 죽은 자리에 나타나는 스택을 추가합니다. 스크립트는 한 번의 죽음에 최대 32개의 스택을 추가할 수 있습니다. 더 추가하려 하면 `A loot_drop script can add at most 32 stacks`라는 메시지로 스크립트가 멈추고, 알 수 없는 아이템이나 1보다 작은 개수는 `Unknown item`으로 멈춥니다. 다른 스크립트 오류와 같습니다.
+
+`mod_event`는 스크립트가 다른 모드의 이벤트나 게임 자체의 이벤트를 클래스 이름으로 듣게 합니다. 클래스는 `class`에 전체 이름으로 적습니다. 다음 경우 항목은 무시되고 로그에 남습니다. `class`가 없을 때(`a mod_event needs a class`), 그런 클래스가 없을 때(`the class <name> was not found`), 들을 수 있는 이벤트 클래스가 아닐 때(`the class <name> is not a Forge event`). 정확히 그 클래스만 인정되며, 그것을 상속한 이벤트는 스크립트를 실행하지 않습니다. 스크립트는 서버 스레드에서만 실행되며, 이벤트의 엔티티나 월드가 있는 월드에서 실행되고, 둘 다 없으면 오버월드에서 실행됩니다. 스크립트 자신이 일으킨 같은 클래스의 이벤트는 스크립트를 다시 실행하지 않습니다. 스크립트는 `rdpl`, `event`(이벤트 객체), `player`(이벤트와 관련된 플레이어, 없으면 아무것도 아님)를 받습니다. `every`와 다른 키는 다른 이벤트와 같이 동작합니다. `"cancel"` 결과는 취소할 수 있는 이벤트를 취소합니다.
+
+### 레지스트리 스크립트
+
+`<namespace>/scripts/registries/*.json`
+
+파일 이름은 자유롭게 정할 수 있고, 폴더만 읽히며, 여러 파일이 쌓입니다. 레지스트리 스크립트는 게임이 로드되는 동안 게임 내장 레지스트리 중 하나에 객체를 추가하며, 팩만으로는 할 수 없는 일입니다. 블록과 아이템과 같이 `content` 범주에서 `load`가 켜져 있고 `vanillaClients`가 꺼져 있어야 합니다.
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var I = java("net.minecraft.world.item.Item");
+var P = java("net.minecraft.world.item.Item$Properties");
+registry.register("mypack:script_item", new I(new P()));
+```
+
+| 키           | 필수       | 값              | 기본값 | 설명                                                                                                                              |
+| ------------ | ---------- | --------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `registry`   | 예         | 레지스트리 이름 | 없음   | 추가할 레지스트리이며, 예로 `minecraft:item`이나 `minecraft:block`이 있습니다. 게임 자체의 내장 레지스트리에만 추가할 수 있습니다 |
+| `script`     | 둘 중 하나 | 텍스트          | 없음   | 실행할 인라인 JavaScript입니다                                                                                                    |
+| `scriptFile` | 둘 중 하나 | 경로            | 없음   | 같은 네임스페이스의 `scripts/` 아래 경로이며 `.js`로 끝납니다                                                                     |
+
+스크립트는 그 레지스트리가 등록을 위해 열릴 때 한 번 실행되며, 모든 모드가 자기 것을 등록한 뒤입니다. 스크립트는 두 가지를 받습니다. `registry`는 메서드 하나, `register(name, object)`를 가지며 `object`를 `name`으로 추가합니다. `java(className)`은 Java 클래스를 돌려주어 스크립트가 객체를 만들 수 있게 합니다. 존재하지 않는 클래스는 `The class <name> was not found`로 실패합니다. 아직 월드가 없으므로 스크립트는 `rdpl`을 받지 않습니다.
+
+`register`는 다음의 경우 거부하고 로그에 남기며, 스크립트는 계속 진행됩니다: 객체가 레지스트리가 담는 종류가 아닐 때(`is not a <type>, not registering it`), 이름이 올바른 ID가 아닐 때(`could not be registered: not a valid name`), 이름이 팩 자체의 네임스페이스에 없을 때(`is not in the pack namespace <namespace>, not registering it`), 이름이 이미 쓰일 때(`is already registered in <registry>, skipping it`), 그리고 레지스트리 자체가 거부할 때(`could not be registered`). 성공하면 `Script <name> registered <id> in <registry>`가 로그에 남습니다. 항목 자체는 `registry`가 없을 때(`needs a registry`), 스크립트가 없을 때(`needs script or scriptFile`), 레지스트리가 스크립트로 추가할 수 없는 것일 때(`the registry '<name>' is not a registry that scripts can add to, ignoring it`), 그리고 어느 모드도 그 레지스트리를 제공하지 않을 때(`no mod provides the registry '<name>', ignoring it`) 로그에 기록되고 무시됩니다. 실패하거나 한도를 넘긴 스크립트는 다음 다시 불러오기 전까지 꺼집니다. 이런 방식으로 등록된 객체는 스크립트가 준 것만 가집니다. 블록이나 아이템은 여전히 자체 모델, 텍스처, 언어 항목이 필요합니다.
+
+### 스크립트 파일이 놓이는 곳
+
+스크립트와 관련된 모든 것은 팩의 `data/<namespace>/scripts/` 폴더 아래에 있습니다. 이벤트 항목은 `data/<namespace>/scripts/events/`에 둡니다. `.js` 파일은 `data/<namespace>/scripts/` 아래 어디에나 둘 수 있으며, 팩 경로로 이름이 정해집니다. 그래서 `"scriptFile": "scripts/trophy_altar.js"`는 `data/<namespace>/scripts/trophy_altar.js`를 읽습니다. 아이템도 같은 방식으로 `script` 또는 `scriptFile`을 써서 스크립트를 지정하며([아이템](#아이템) 참고), 레시피 교체 파일도 그렇습니다([레시피 교체](#레시피-교체) 참고).
+
+### rdpl 객체
+
+스크립트는 `rdpl`을 통해 게임에 닿습니다. 그 멤버는 다음과 같습니다:
+
+```js
+if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
+```
+
+| 멤버                                                 | 하는 일                                                                                                                                                                                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | 플레이어입니다. 이벤트에 플레이어가 없으면 아무것도 없습니다                                                                                                                                                                    |
+| `level`                                              | 월드입니다                                                                                                                                                                                                                      |
+| `runCommand(command)`                                | 플레이어로서 명령을 실행합니다. 플레이어가 없으면 월드 스폰 지점에서 권한 레벨 2로 실행합니다. 성공하면 true를 돌려줍니다                                                                                                       |
+| `give(item, count)`                                  | 플레이어에게 그 아이템을 그 개수만큼 줍니다                                                                                                                                                                                     |
+| `actionbar(text)`                                    | 플레이어의 액션바에 텍스트를 보여 줍니다                                                                                                                                                                                        |
+| `cooldown(item, ticks)`                              | 플레이어에게 그 아이템을 이 틱 수만큼 쿨다운에 둡니다                                                                                                                                                                           |
+| `card(id, "key=value", ...)`                         | 인수와 함께 카드를 띄웁니다                                                                                                                                                                                                     |
+| `schedule(ticks, function)`                          | 틱이 지난 뒤 함수를 실행합니다. 동시에 최대 1000개가 기다릴 수 있습니다. 다시 불러오면 대기열이 비워집니다                                                                                                                      |
+| `data()`, `data(player)`, `teamData(name)`           | `get`, `set`, `has`, `remove`를 가진 저장 저장소입니다. 텍스트, 숫자, true/false를 담으며 월드 저장에 보관됩니다. `data()`는 월드의 것, `data(player)`는 플레이어의 것, `teamData(name)`은 팀의 것입니다                        |
+| `sync(name, value)`                                  | 플레이어의 동기화 값을 설정하며, 이벤트에 플레이어가 없으면 월드의 값을 설정합니다. 값은 텍스트, 숫자, true/false입니다. 설정되면 true를, 규칙이 거부하면 false를 돌려주며 로그에 남깁니다. 그 밖의 값은 스크립트 오류를 냅니다 |
+| `syncTo(player, name, value)`                        | 다른 플레이어에 대해 같은 일을 합니다                                                                                                                                                                                           |
+| `syncAll(name, value)`                               | 월드에 대해 같은 일을 합니다                                                                                                                                                                                                    |
+| `unsync(name)`                                       | 플레이어의 값을 지우며, 이벤트에 플레이어가 없으면 월드의 값을 지웁니다. 값이 있었으면 true를 돌려줍니다                                                                                                                        |
+| `synced(name)`                                       | 읽었을 때 나오는 값입니다. 플레이어 자신의 값, 그다음 월드 값, 그다음 기본값 순이며, 이벤트에 플레이어가 없으면 월드 값과 기본값입니다. 설정된 값이 없으면 아무것도 나오지 않습니다                                             |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 플레이어의 태그를 확인하거나, 더하거나, 뺍니다                                                                                                                                                                                  |
+| `score(objective)`, `setScore(objective, value)`     | 플레이어의 스코어보드 목표 점수를 읽거나 설정합니다                                                                                                                                                                             |
+| `hasAdvancement(id)`                                 | 플레이어가 그 발전 과제를 가지고 있으면 true입니다                                                                                                                                                                              |
+| `world.scan(player, match)`                          | 플레이어 인벤토리와 그 안의 셜커 상자에서 맞는 아이템 개수를 셉니다. `match`는 아이템 id, `#` 형식, 또는 스택마다 호출되는 함수입니다                                                                                           |
+| `world.scanAt(x, y, z, match)`                       | 같은 것을, 그 위치의 용기 블록에 대해 합니다                                                                                                                                                                                    |
+| `world.capability(x, y, z, type)`                    | 그 위치 블록의 핸들러를 `"items"`, `"fluids"`, `"energy"`에 대해 돌려줍니다                                                                                                                                                     |
+| `world.placeStructure(template, x, y, z)`            | 그 위치에 구조물 템플릿을 놓습니다                                                                                                                                                                                              |
+| `world.summon(id, x, y, z, nbt)`                     | 그 위치에 엔티티를 소환합니다. NBT는 선택 사항입니다                                                                                                                                                                            |
+
+### 스크립트가 닿을 수 있는 것
+
+스크립트는 `rdpl` 객체, 각 이벤트가 넘겨주는 값(이벤트 종류 표 참고), 그리고 그 값이 돌려주는 게임 타입만 봅니다. `Packages`는 어떤 스크립트에도 없고, `java`는 레지스트리 스크립트([레지스트리 스크립트](#레지스트리-스크립트) 참고)에만 있습니다. 이벤트, 아이템, 명령, 레시피 재작성 스크립트에는 없습니다. 그 밖의 것을 요청하면 거부되며, 거부는 한 번 로그에 기록됩니다.
+
+스크립트는 전체 이름으로 어떤 자바 클래스든 쓸 수 있습니다. 실제로는 `java(className)`으로 클래스를 요청하는 레지스트리 스크립트에서 쓰입니다.
+
+### 제한
+
+- 실행은 50ms가 지나면 멈춥니다. 로그 오류에 스크립트 이름이 적힙니다.
+- `try`/`catch`로도 그 제한을 넘겨서 실행을 살릴 수 없습니다.
+- 오류는 스크립트의 팩 경로와 함께 로그에 기록됩니다. 게임을 멈추지 않습니다.
+- `every`와 필터는 스크립트가 실행되기 전에 확인되어 비용을 줄입니다.
+- 스크립트는 한 번 컴파일되어 `/rdplserver reload`까지 캐시됩니다.
 
 ## 제어 계층
 
@@ -11471,6 +12344,21 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 | `/rdplserver gate grant <player> <gate>`  | 3    | 플레이어에게 게이트를 엽니다                        |
 | `/rdplserver gate revoke <player> <gate>` | 3    | 다시 닫습니다                                       |
 
+#### 동기화 데이터 명령어
+
+*서버 명령어*
+
+`<target>`은 `world` 또는 플레이어입니다. 플레이어는 이름이나 한 명을 고르는 선택자로 지정합니다. `<name>`은 값의 이름입니다. 각 명령어는 채팅으로 답하며, 규칙이 거부한 값을 설정하면 채팅과 로그에 그 사실을 남깁니다.
+
+| 명령어                                                | 수준 | 설명                                                                                                                                                                                   |
+| ----------------------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver data set <target> <name> <value>`        | 2    | 선언된 유형으로 값을 설정합니다. 텍스트에는 공백을 넣을 수 있습니다                                                                                                                    |
+| `/rdplserver data set <target> <name> <type> <value>` | 2    | 유형(`text`, `number`, `bool`)을 함께 적어 값을 설정합니다. 파일이 없는 이름에는 유형이 필요하고, 파일이 있는 이름은 그 파일의 유형을 씁니다. `bool`은 `true`, `false`, `1`, `0`입니다 |
+| `/rdplserver data add <target> <name> <amount>`       | 2    | 숫자 값에 수를 더합니다. 기본값이나 0에서 시작합니다. 숫자가 아닌 값은 거부됩니다                                                                                                      |
+| `/rdplserver data remove <target> <name>`             | 2    | 값을 지우므로 기본값이나 아무것도 다시 나타납니다                                                                                                                                      |
+| `/rdplserver data get <target> <name>`                | 2    | 읽었을 때 나오는 값을 알려 줍니다. 플레이어는 자신의 값, 그다음 월드 값, 그다음 기본값이고, 월드는 월드 값, 그다음 기본값입니다                                                        |
+| `/rdplserver data list [target]`                      | 2    | 대상에 설정된 값을 나열하며, 대상을 빼면 월드입니다. 기본값은 나열하지 않습니다                                                                                                        |
+
 #### 포트웨이 명령어
 
 *서버 명령어*
@@ -11506,6 +12394,7 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0    | 팩이 편성한 진영과 그 진영에 들어가고 나가는 방법으로, 팩이 진영을 편성하는 동안에만 제공됩니다. [팀](#팀)을 참고하세요                                                                                                                                                                                                                          |
 | `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no`              | 0    | 팩이 로비에 붙잡아 둔 라운드를 시작하고, 진행 중인 라운드를 초기화하거나 그렇게 할지 투표를 부르고, 투표에 참여합니다. 팩의 점수 계산이 허용하는 범위에서이며 시작은 플레이어만 할 수 있습니다. 팩이 점수를 기록하는 동안에만 플레이어에게 제공됩니다. [점수 계산](#점수-계산)을 참고하세요                                                      |
 | `/rdplserver card <rule> [players]`                                                      | 2    | 지정한 플레이어 또는 본인에게 id나 파일 이름으로 [카드 규칙](#카드)을 보여 줍니다. `when`, `repeat`, `cooldown`은 건너뜁니다                                                                                                                                                                                                                     |
+| `/rdplserver card <rule> [players] key=value...`                                         | 2    | 위의 명령과 같으며, 지정한 각 `key=value`가 카드 제목과 줄의 `{key}`를 바꿉니다. `=`가 없는 단어는 앞선 쌍의 값에 속합니다                                                                                                                                                                                                                       |
 | `/rdplserver talk <number>`                                                              | 0    | 열려 있는 대화에서 번호로 선택지를 고릅니다. 바닐라 클라이언트의 클릭 가능한 선택지가 이것을 실행합니다. [대화](#대화)                                                                                                                                                                                                                           |
 | `/rdplserver talk open <players> <dialog> <npc>`                                         | 2    | 지정한 플레이어에게, 지정한 엔티티를 대화 상대로 삼아 대화를 엽니다. 대화는 ID나 파일 이름으로 지정합니다. 대화 상대는 같은 월드에서 8블록 이내에 있어야 합니다. [대화](#대화)                                                                                                                                                                   |
 | `/rdplserver raid <습격> [플레이어 또는 x y z]`                                          | 3    | 지정한 [습격](#습격)을 플레이어 위치, 좌표, 둘 다 없으면 자신의 위치에서 마을 없이 시작합니다. `reach` 안에서 다른 습격이 진행 중이면 거부됩니다                                                                                                                                                                                                 |
@@ -11630,6 +12519,95 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 | `gameLevels` | `game`의 한 부분: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass`, 또는 `board`와 그 동작(예: `board move`) |
 
 기준은 `goto`가 쓰는 것과 같으며, `4`는 해당 부분을 모든 사람에게 닫습니다. 탭 완성은 실행한 사람이 쓸 수 있는 부분만 제안합니다. `gameLevels`는 `goto` 설정과 같은 `commands` 그룹에 있습니다.
+
+### 팩 명령어
+
+*명령어*
+
+`<namespace>/commands/*.json`
+
+파일 이름은 자유롭게 정할 수 있으며 여러 파일이 쌓입니다. 파일 하나는 `permission`이 허용한 누구나 입력할 수 있는 슬래시 명령어 하나를 추가하며, 타입이 있는 인자를 받고, 사용되면 함수를 실행합니다. 함수는 명령어를 입력한 플레이어로서 실행되며, 그 안의 명령어는 권한 수준 2로 채팅 출력 없이 실행됩니다. 명령어가 콘솔이나 명령 블록에서 왔다면 서버로서 실행됩니다. 명령어는 서버가 명령어를 등록할 때 추가됩니다.
+
+```json
+{
+  "name": "giveruby",
+  "permission": 2,
+  "args": [
+    { "name": "who", "type": "player", "optional": true },
+    { "name": "count", "type": "int", "optional": true, "default": "1" },
+    { "name": "note", "type": "text", "optional": true }
+  ],
+  "runs": "mypack:giveruby"
+}
+```
+
+그리고 함수 `mypack/functions/giveruby.mcfunction`:
+
+```
+$give $(who) mypack:ruby $(count)
+$say Gave $(count) ruby to $(who): $(note)
+```
+
+| 키           | 필수                                   | 값           | 기본값    | 설명                                                                                                                                                     |
+| ------------ | -------------------------------------- | ------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | 아니요                                 | 텍스트       | 파일 이름 | 슬래시 뒤에 입력하는 단어로, 소문자, 숫자, 밑줄만 씁니다. 그 밖의 것은 로그에 남기고 파일을 무시합니다. 다른 명령어가 이미 쓰는 이름도 마찬가지입니다    |
+| `runs`       | `runs`, `script`, `scriptFile` 중 하나 | 함수 id      | 없음      | 실행할 함수입니다. 세 키 중 어느 것도 없는 파일은 무시하고 로그에 남깁니다. 어떤 팩도 제공하지 않는 함수는 명령어를 쓸 때마다 로그에 남습니다            |
+| `permission` | 아니요                                 | 정수 `0`~`4` | `2`       | 필요한 권한 수준입니다. `0`은 모든 플레이어가 쓸 수 있고, `2`는 명령 블록도 허용하며, `3`은 운영자입니다. `0`~`4` 밖의 숫자는 로그에 남기고 `2`를 씁니다 |
+| `args`       | 아니요                                 | 객체 목록    | 없음      | 인수로, 입력하는 순서대로 나열합니다. 아래를 보세요                                                                                                      |
+| `requires`   | 아니요                                 | 모드 id 목록 | 없음      | 목록의 모드가 모두 로드되지 않으면 파일을 건너뜁니다. `config:`와 `file:` 항목은 다른 곳에서와 같이 동작합니다                                           |
+| `script`     | `runs`, `script`, `scriptFile` 중 하나 | 텍스트       | 없음      | 함수 대신 실행할 인라인 JavaScript입니다                                                                                                                 |
+| `scriptFile` | `runs`, `script`, `scriptFile` 중 하나 | 경로         | 없음      | 같은 네임스페이스의 `scripts/` 아래 경로로, `.js`로 끝나야 합니다                                                                                        |
+
+명령어 파일에는 `runs`, `script`, `scriptFile` 중 정확히 하나가 있어야 합니다. 셋 중 하나도 없는 파일은 무시하고, 둘 이상 있는 파일도 무시하며, 두 경우 모두 로그에 남깁니다. 스크립트 명령어는 각 인수를 같은 이름의 변수로 받습니다. `int`는 정수, `number`는 소수를 포함한 숫자이고, 나머지는 텍스트이며, 인수를 생략했거나 숫자가 아니면 값이 없습니다. 인수 이름으로 `rdpl`이나 `sender`는 쓸 수 없는데, 스크립트가 이 둘도 따로 받기 때문입니다. `sender.reply(text)`는 명령어를 쓴 사람에게 답하고, `sender.getName()`은 그 이름, `sender.isPlayer()`는 플레이어인지 여부, `sender.player()`는 그 플레이어를 돌려주며 플레이어가 아니면 값이 없습니다. 스크립트가 실패하거나, 컴파일되지 않거나, 제한 시간을 넘기면 명령어는 `The command /<name> failed; the server log names the script`라고 응답하며, 스크립트는 꺼지지 않습니다.
+
+```json
+{
+  "name": "greet",
+  "permission": 0,
+  "args": [{ "name": "who", "type": "player", "optional": true }],
+  "scriptFile": "scripts/greet.js"
+}
+```
+
+```js
+sender.reply("Hello " + who);
+```
+
+각 인수:
+
+| 키         | 필수   | 값                                          | 기본값    | 설명                                                                                                                                                                                                                                                                                          |
+| ---------- | ------ | ------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | 예     | 텍스트                                      |           | 함수가 `$(name)`으로 쓰는 이름으로, 소문자, 숫자, 밑줄만 씁니다. 쓸 수 없는 이름이거나 같은 이름이 두 번 나오면 로그에 남기고 그 인수를 뺍니다                                                                                                                                                |
+| `type`     | 아니요 | `player`, `int`, `number`, `string`, `text` | `string`  | `player`는 접속 중인 플레이어의 이름이며 탭 완성됩니다. `int`는 정수, `number`는 아무 숫자, `string`은 단어 하나입니다. `text`는 공백을 포함한 나머지 줄이며 마지막 인수로만 쓸 수 있습니다. 그렇지 않으면 로그에 남기고 `string`이 됩니다. 알 수 없는 유형은 로그에 남기고 `string`을 씁니다 |
+| `optional` | 아니요 | 참/거짓                                     | `false`   | `true`이면 플레이어가 생략할 수 있습니다. 선택 인수 뒤에 적힌 필수 인수는 로그에 남기고 선택 인수로 바꿉니다                                                                                                                                                                                  |
+| `default`  | 아니요 | 텍스트                                      | 비어 있음 | 선택 인수를 생략했을 때 함수가 받는 값입니다. 생략한 `player` 인수는 명령어를 입력한 플레이어이며, 콘솔에서는 잘못된 사용법 메시지가 나오고 `default`는 무시됩니다                                                                                                                            |
+
+인자를 너무 적게 입력하거나, 마지막 인자가 `text`가 아닌데 너무 많이 입력하면, `/giveruby [who] [count] [note]`처럼 사용법 줄을 보여 줍니다. 필수 인자는 꺾쇠괄호로, 선택 인자는 대괄호로 표시합니다. `@`로 시작하거나 `{ } " \` 중 하나 또는 줄바꿈을 담은 `string`이나 `text` 값은 사용법 줄과 함께 거부되므로, 플레이어는 선택자나 추가 명령 텍스트를 함수에 끼워 넣을 수 없습니다. `number`는 평범한 숫자로 풀어 써서 넘깁니다. 인자는 실제 명령어 인자이므로 플레이어는 입력하는 동안 그것을 보며, 맞지 않는 값은 함수가 실행되기 전에 거부됩니다. 함수는 인자를 매크로로 받습니다. 그것을 쓰는 각 줄은 맨 앞에 `$`를 붙여 적습니다(예: `$say Welcome $(who)`). 그러면 `$(who)`는 그 값으로 바뀝니다. `$`가 없는 줄은 그대로 실행되며, `$(name)`은 적힌 대로 남습니다. 값을 넣은 뒤 더 이상 구문 분석이 되지 않는 함수는 로그에 기록되고 아무것도 실행되지 않습니다.
+
+### 명령어 가드
+
+*명령어*
+
+`<namespace>/command_guards/*.json`
+
+파일 이름은 원하는 대로 정하며 폴더만 읽고, 여러 파일을 함께 씁니다. 가드는 조건이 성립하는 동안 플레이어가 게임이나 다른 모드에서 명령어를 쓰지 못하게 막습니다. 시작할 때 읽고, `/rdplserver reload`로 다시 읽습니다.
+
+```json
+{
+  "guard": "home",
+  "unless": { "advancement": "mypack:first_camp" },
+  "message": "Build a camp before you use /home"
+}
+```
+
+| 키        | 필수   | 값                  | 기본값                          | 설명                                                                                                                                                                               |
+| --------- | ------ | ------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard`   | 예     | 명령어 이름         |                                 | 막을 명령어로, 슬래시 없이 씁니다(예: `home`, `tp`). 명령어의 별칭도 막힙니다. 이름이 없는 파일은 무시합니다. `rdpl`과 `rdplserver`는 막을 수 없어 파일을 무시하고 로그에 남깁니다 |
+| `when`    | 아니요 | 객체                | 항상                            | 이 조건이 성립하는 동안에만 가드가 명령어를 막습니다. 카드의 [시점](#시점)과 같은 키를 씁니다                                                                                      |
+| `unless`  | 아니요 | 객체                | 없음                            | 이 조건이 성립하는 동안 가드가 명령어를 통과시키고, 그 밖의 경우에는 막습니다. `when`과 같은 키를 씁니다                                                                           |
+| `message` | 아니요 | 언어 키 또는 텍스트 | 바닐라의 알 수 없는 명령어 문구 | 차단된 플레이어에게 빨간색으로 보입니다. 공백 없이 점이 들어 있는 텍스트는 언어 키로 읽고, 그 밖의 것은 그대로 보입니다                                                            |
+
+명령어는 `when`이 성립하거나 `when`이 없고, 그리고 `unless`가 성립하지 않거나 `unless`가 없을 때 막힙니다. 두 키가 모두 없는 파일은 모든 플레이어에게 명령어를 막으며, 로그에 경고가 남습니다. 비어 있는 `when`이나 `unless`는 로그에 남고 무시됩니다. 가드는 플레이어에게만 적용되어 콘솔과 명령 블록은 절대 막히지 않으며, 막힐 때마다 로그에 파일, 명령어, 플레이어가 기록됩니다. 명령어를 막는 첫 가드만 메시지를 보냅니다. `unless`에는 플레이어가 명령어를 쓰기 위해 충족해야 하는 조건을, `when`에는 명령어가 닫히는 조건을 씁니다.
 
 ## 알아 두면 좋은 점
 

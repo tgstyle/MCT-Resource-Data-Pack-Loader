@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 
 public final class RecipeRemovals {
     private static final String REMOVE = "remove";
@@ -32,4 +33,8 @@ public final class RecipeRemovals {
     public static boolean removesName(Identifier id) { return SELECTOR.matchesName(id); }
 
     public static boolean removesOutput(ItemStack result) { return SELECTOR.matchesOutput(result); }
+
+    public static boolean removesType(Recipe<?> recipe) { return SELECTOR.matchesType(recipe); }
+
+    public static boolean removesInput(Recipe<?> recipe) { return SELECTOR.matchesInput(recipe); }
 }

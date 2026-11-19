@@ -15,8 +15,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentSounds {
@@ -72,7 +75,15 @@ public final class ContentSounds {
 
     @Nullable public static Holder<SoundEvent> holder(@Nullable Identifier name) { return name == null ? null : holder(name.toString()); }
 
-    private static String modern(@Nullable String name) {
+    public static void play(ServerPlayer player, String name, SoundSource source) {
+        Identifier id = ContentParser.location(modern(name));
+        if (id == null) { return; }
+        Holder<SoundEvent> registered = holder(id);
+        Holder<SoundEvent> sound = registered != null ? registered : Holder.direct(SoundEvent.createVariableRangeEvent(id));
+        player.connection.send(new ClientboundSoundPacket(sound, source, player.getX(), player.getEyeY(), player.getZ(), 1.0F, 1.0F, player.getRandom().nextLong()));
+    }
+
+    public static String modern(@Nullable String name) {
         String named = name == null ? "" : name.trim();
         String path = IdNames.bare(named);
         if (path.indexOf(':') >= 0) { return named; }

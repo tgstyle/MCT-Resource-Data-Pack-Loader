@@ -61,7 +61,6 @@ import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
-import net.neoforged.neoforge.event.entity.player.AnvilCraftEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -339,10 +338,10 @@ public final class ContentAnvils {
         if (!def.grants().isEmpty()) { ContentLog.LOGGER.debug("Anvil work {} also grants {}, which only a player can earn, so {} earns nothing more", def.key(), def.grants(), mob.getName().getString()); }
     }
 
-    public static void onTaken(AnvilCraftEvent.Post event) {
-        AnvilDef def = OFFERED.get(event.getOutput());
-        if (def == null || def.grants().isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
-        if (!Advancements.grant(player, def.grants())) { ContentLog.LOGGER.error("Anvil work {} grants the advancement {}, which no pack provides, so nothing is earned", def.key(), def.grants()); }
+    public static void onTaken(Player player, ItemStack taken) {
+        AnvilDef def = OFFERED.get(taken);
+        if (def == null || def.grants().isEmpty() || !(player instanceof ServerPlayer server)) { return; }
+        Advancements.grant(server, def.grants(), "Anvil work " + def.key());
     }
 
     public static ItemStack leftAfterWork(AnvilMenu menu, ItemStack taken) {

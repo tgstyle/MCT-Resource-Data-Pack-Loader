@@ -30,13 +30,17 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -46,6 +50,7 @@ import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.component.Consumables;
+import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -162,12 +167,23 @@ public final class ContentOverrides {
                 intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
                 effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
-                Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
+                tool(source, json), Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
         }
         return def;
+    }
+
+    @Nullable private static OverrideDef.ToolDef tool(Identifier source, JsonObject json) {
+        if (!json.has("tool")) { return null; }
+        JsonObject held = Json.object(json, "tool");
+        Identifier tag = Registered.tagId(Json.getString(held, "minesWith", ""));
+        if (tag == null || !held.has("speed")) {
+            ContentLog.LOGGER.error("Override file {} gives a tool that needs a speed and a minesWith block tag such as #minecraft:mineable/pickaxe, leaving it out", source);
+            return null;
+        }
+        return new OverrideDef.ToolDef(Math.max(0.0F, Json.getFloat(held, "speed", 1.0F)), TagKey.create(Registries.BLOCK, tag));
     }
 
     private static OverrideDef.FoodDef food(Identifier source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
@@ -220,6 +236,8 @@ public final class ContentOverrides {
             if (container != null) { item.craftingRemainingItem = new ItemStackTemplate(container); }
             else { ContentLog.LOGGER.error("Override {} names container item {}, which does not exist", def.source(), def.containerItem()); }
         }
+        OverrideDef.ToolDef tool = def.tool();
+        if (tool != null) { applyTool(def, tool, builder, item); }
         OverrideDef.FoodDef food = def.food();
         if (food != null) {
             builder.set(DataComponents.FOOD, food(food));
@@ -228,6 +246,19 @@ public final class ContentOverrides {
         }
         ItemHolders.of(item).bindComponents(builder.build());
         return true;
+    }
+
+    private static void applyTool(OverrideDef def, OverrideDef.ToolDef wanted, DataComponentMap.Builder builder, Item item) {
+        Optional<HolderSet.Named<Block>> blocks = BuiltInRegistries.BLOCK.get(wanted.minesWith());
+        if (blocks.isEmpty()) {
+            ContentLog.LOGGER.error("Override {} names the block tag {}, which does not exist, leaving the tool of {} alone", def.source(), wanted.minesWith().location(), def.target());
+            return;
+        }
+        Tool held = item.components().get(DataComponents.TOOL);
+        List<Tool.Rule> rules = new ArrayList<>();
+        rules.add(Tool.Rule.minesAndDrops(blocks.get(), wanted.speed()));
+        if (held != null) { rules.addAll(held.rules()); }
+        builder.set(DataComponents.TOOL, new Tool(List.copyOf(rules), held == null ? 1.0F : held.defaultMiningSpeed(), held == null ? 1 : held.damagePerBlock(), held == null || held.canDestroyBlocksInCreative()));
     }
 
     public static DataComponentMap validating(Item item, DataComponentMap components) {

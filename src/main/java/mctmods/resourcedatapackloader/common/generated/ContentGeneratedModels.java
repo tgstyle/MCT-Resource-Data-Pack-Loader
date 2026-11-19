@@ -55,7 +55,11 @@ public final class ContentGeneratedModels {
                 if (swings) { model(def, namespace, name + "_body", bellBody(texture)); }
                 blockstate(namespace, name, Json.obj("variants", bell(main)));
             }
-            case ContentBlockTypes.LOG -> {
+            case ContentBlockTypes.CARPET -> {
+                model(def, namespace, name, parented(BLOCK + "carpet", texture == null ? null : Json.obj("wool", texture)));
+                blockstate(namespace, name, singleVariant(main));
+            }
+            case ContentBlockTypes.LOG, ContentBlockTypes.PILLAR -> {
                 String top = textureOr(namespace, name + "_top", texture);
                 model(def, namespace, name, column(def, texture, top, "cube_column"));
                 model(def, namespace, name + "_horizontal", column(def, texture, top, "cube_column_horizontal"));

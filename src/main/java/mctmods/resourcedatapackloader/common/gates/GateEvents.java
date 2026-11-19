@@ -4,10 +4,13 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.dimension.Travel;
 import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +21,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -117,10 +121,34 @@ public final class GateEvents {
         }
     }
 
+    static void sendOut(ServerPlayer player, ServerLevel level) {
+        BlockPos feet = landing(player, level);
+        List<ItemStack> returned = new ArrayList<>();
+        if (player.getVehicle() instanceof Container inventory) {
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                ItemStack stack = inventory.getItem(slot);
+                if (!stack.isEmpty() && !GateLoot.stays(player, stack)) { returned.add(inventory.removeItemNoUpdate(slot)); }
+            }
+        }
+        player.stopRiding();
+        if (!Travel.to(player, level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot())) {
+            ServerLevel overworld = player.level().getServer().overworld();
+            BlockPos home = ContentDimensions.landing(overworld, overworld.getRespawnData().pos(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+            Travel.to(player, overworld, home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        }
+        for (ItemStack stack : returned) {
+            if (!player.getInventory().add(stack)) { player.level().addFreshEntity(new ItemEntity(player.level(), player.getX(), player.getY(), player.getZ(), stack)); }
+        }
+    }
+
+    private static BlockPos landing(ServerPlayer player, ServerLevel level) {
+        BlockPos bed = safeBed(player, level);
+        return ContentDimensions.landing(level, bed == null ? level.getRespawnData().pos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+    }
+
     private static void retreat(ServerPlayer player) {
         ServerLevel level = player.level();
-        BlockPos bed = safeBed(player, level);
-        BlockPos feet = ContentDimensions.landing(level, bed == null ? level.getRespawnData().pos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        BlockPos feet = landing(player, level);
         player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
     }
 

@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -75,6 +76,9 @@ public final class PackManager {
     public static final String GATES = "gates";
     public static final String CARDS = "cards";
     public static final String DIALOGS = "dialogs";
+    public static final String SYNCDATA = "syncdata";
+    public static final String COMMANDS = "commands";
+    public static final String COMMAND_GUARDS = "command_guards";
     public static final String POTIONS = "potions";
     public static final String POTION_TYPES = "potion_types";
     public static final String ENCHANTMENTS = "enchantments";
@@ -89,8 +93,10 @@ public final class PackManager {
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
     public static final String SPAWN_SWAPS = "spawn_swaps";
+    public static final String HURT_RULES = "hurt_rules";
     public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
+    public static final String TAG_COPIES = "tag_copies";
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String LOOT_REMOVALS = "loot_removals";
@@ -132,6 +138,9 @@ public final class PackManager {
     public static final String SLEEPING = "sleeping";
     public static final String ORDERS = "orders";
     public static final String RANKS = "ranks";
+    public static final String ZONES = "zones";
+    public static final String SCHEDULES = "schedules";
+    public static final String SCRIPTS = "scripts";
     private static final String DISABLED_SUFFIX = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
@@ -425,6 +434,11 @@ public final class PackManager {
             catch (IOException ex) { ContentLog.LOGGER.error("Could not read {}:{} from the packs", namespace, path, ex); }
         }
         return null;
+    }
+
+    @Nullable public String read(String namespace, String path, String type, String ext) {
+        byte[] bytes = bytes(CONTENT, namespace, type + "/" + path + "." + ext);
+        return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static boolean drawable(PackType type, String path) { return type == PackType.CLIENT_RESOURCES && ContentPixelMaps.couldBeDrawn(path); }

@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.items.ContentDrinkItem;
+import mctmods.resourcedatapackloader.common.items.derived.DerivedItems;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
@@ -232,7 +233,7 @@ public final class ContentRegistry {
         if (entry == null || ContentBlockTypes.SLAB.equals(entry.def().type())) { return null; }
         BlockDef def = entry.def();
         if (ContentBlockTypes.CONTAINER.equals(def.type()) && def.chested()) { return 0; }
-        if (ContentBlockTypes.BELL.equals(def.type())) { return 0; }
+        if (ContentBlockTypes.BELL.equals(def.type()) || ContentBlockTypes.CARPET.equals(def.type())) { return 0; }
         return Mth.clamp(def.lightOpacity(), 0, 15);
     }
 
@@ -278,6 +279,7 @@ public final class ContentRegistry {
                 if (entry.def() == def && entry.item() instanceof ContentDrinkItem drink) { drink.resolveContainer(container); }
             }
         }
+        DerivedItems.resolveLate();
     }
 
     private static void resolveDrop(BlockDef def, BlockVariant variant, DropDef drop) {

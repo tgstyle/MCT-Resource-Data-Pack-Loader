@@ -26,7 +26,7 @@ public final class RecipeDisabled {
         return false;
     }
 
-    private static List<Ingredient> ingredients(Recipe<?> recipe) {
+    static List<Ingredient> ingredients(Recipe<?> recipe) {
         if (recipe instanceof ShapedRecipe shaped) { return shaped.getIngredients().stream().flatMap(Optional::stream).toList(); }
         if (recipe instanceof ShapelessRecipe shapeless) { return shapeless.ingredients; }
         if (recipe instanceof SingleItemRecipe single) { return List.of(single.input()); }
@@ -34,10 +34,14 @@ public final class RecipeDisabled {
         return recipe.placementInfo().ingredients();
     }
 
+    static List<ItemStack> stacks(Ingredient ingredient) {
+        ICustomIngredient custom = ingredient.getCustomIngredient();
+        return (custom == null ? ingredient.getValues().stream() : custom.items()).map(ItemStack::new).toList();
+    }
+
     private static boolean onlyDisabled(Ingredient ingredient) {
         if (ingredient.isEmpty()) { return false; }
-        ICustomIngredient custom = ingredient.getCustomIngredient();
-        List<ItemStack> stacks = (custom == null ? ingredient.getValues().stream() : custom.items()).map(ItemStack::new).toList();
+        List<ItemStack> stacks = stacks(ingredient);
         if (stacks.isEmpty()) { return false; }
         for (ItemStack stack : stacks) {
             if (!ContentDisabled.disabled(stack) && !ContentDisabled.emptiedTag(stack)) { return false; }

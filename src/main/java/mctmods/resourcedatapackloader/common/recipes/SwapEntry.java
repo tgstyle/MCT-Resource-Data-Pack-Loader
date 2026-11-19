@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.common.util.ItemSelection;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,14 +30,20 @@ final class SwapEntry {
     private static final List<SwapEntry> ALL = new ArrayList<>();
     private final ItemSelection from = new ItemSelection("Recipe swap", "replaces");
     private final RecipeSelector scope = new RecipeSelector();
+    private final RecipeTypeFilter types = new RecipeTypeFilter();
+    private final List<String> paths = new ArrayList<>();
+    private final Identifier key;
     private final Identifier to;
     private final boolean output;
     private final boolean scoped;
+    private final boolean tagged;
 
-    private SwapEntry(Identifier to, boolean output, boolean scoped) {
+    private SwapEntry(Identifier key, Identifier to, boolean output, boolean scoped, boolean tagged) {
+        this.key = key;
         this.to = to;
         this.output = output;
         this.scoped = scoped;
+        this.tagged = tagged;
     }
 
     static synchronized List<SwapEntry> all() {
@@ -47,6 +55,14 @@ final class SwapEntry {
     }
 
     Identifier to() { return to; }
+
+    Identifier key() { return key; }
+
+    boolean tagged() { return tagged; }
+
+    boolean foreign(String type) { return types.matches(type); }
+
+    List<String> paths() { return paths; }
 
     boolean output() { return output; }
 
@@ -68,6 +84,7 @@ final class SwapEntry {
 
     private static void readFile(Identifier key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!json.has("swaps") && (json.has("remainder") || json.has("transfer") || json.has("template") || json.has("edit") || json.has("script") || json.has("scriptFile"))) { return; }
         if (!json.has("swaps")) {
             ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key);
             return;
@@ -87,9 +104,12 @@ final class SwapEntry {
             ContentLog.LOGGER.error("A swap in {} needs a from object, skipping it", key);
             return null;
         }
-        Item item = ContentStacks.find(key, Json.getString(json, "to", ""));
-        if (item == null || item == Items.AIR) {
-            ContentLog.LOGGER.error("A swap in {} needs a valid to item, skipping it", key);
+        String target = Json.getString(json, "to", "");
+        boolean tagged = target.startsWith("#");
+        Identifier id = tagged ? Registered.tagId(target) : itemId(key, target);
+        if (id == null) {
+            if (tagged) { ContentLog.LOGGER.error("The to tag '{}' of a swap in {} is not a valid name, skipping it", target, key); }
+            else { ContentLog.LOGGER.error("A swap in {} needs a valid to item, skipping it", key); }
             return null;
         }
         if (json.has("recipes") && !json.get("recipes").isJsonObject()) {
@@ -97,7 +117,7 @@ final class SwapEntry {
             return null;
         }
         boolean scoped = json.has("recipes");
-        SwapEntry entry = new SwapEntry(BuiltInRegistries.ITEM.getKey(item), Json.getBoolean(json, "output", false), scoped);
+        SwapEntry entry = new SwapEntry(key, id, Json.getBoolean(json, "output", false), scoped, tagged);
         entry.from.read(json.getAsJsonObject("from"), key);
         if (entry.from.unnamed()) {
             ContentLog.LOGGER.error("The from of a swap in {} names nothing, skipping it", key);
@@ -108,8 +128,31 @@ final class SwapEntry {
             ContentLog.LOGGER.error("The from of a swap in {} matches no registered item, skipping it", key);
             return null;
         }
+        if (!tagged && entry.from.items().contains(id)) {
+            ContentLog.LOGGER.error("The to item {} of a swap in {} is matched by its own from, skipping it", id, key);
+            return null;
+        }
         if (scoped) { entry.readScope(key, json.getAsJsonObject("recipes")); }
+        entry.readTypes(key, json);
         return entry;
+    }
+
+    @Nullable private static Identifier itemId(Identifier key, String target) {
+        Item item = ContentStacks.find(key, target);
+        return item == null || item == Items.AIR ? null : BuiltInRegistries.ITEM.getKey(item);
+    }
+
+    private void readTypes(Identifier key, JsonObject json) {
+        types.read(key, json);
+        List<String> listed = Json.strings(json, "paths");
+        if (!listed.isEmpty() && types.isEmpty()) {
+            ContentLog.LOGGER.error("A swap in {} has paths but no types, ignoring its paths", key);
+            return;
+        }
+        for (String path : listed) {
+            if (JsonTree.badPath(path)) { ContentLog.LOGGER.error("The path '{}' in {} has an empty part, skipping it", path, key); }
+            else { paths.add(path); }
+        }
     }
 
     private void readScope(Identifier key, JsonObject recipes) {

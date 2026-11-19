@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeRegistries;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.recipes.RecipeRemainders;
+import mctmods.resourcedatapackloader.common.recipes.RecipeTransfer;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
@@ -51,6 +53,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Override public void rdpl$registries(RegistryAccess registries) { rdpl$registries = registries; }
 
     @Override public void rdpl$filter(boolean late) {
+        RecipeRemainders.begin();
+        RecipeTransfer.begin();
         ContextMap context = LineCompat.displayContext(rdpl$registries);
         List<RecipeHolder<?>> kept = new ArrayList<>();
         Set<Identifier> named = new HashSet<>();
@@ -60,7 +64,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
             Identifier id = holder.id().identifier();
             ItemStack result = RecipeLoading.result(holder.value(), context, rdpl$registries);
             if (late ? RecipeLoading.late(id, holder.value(), result) : RecipeLoading.doomed(id, holder.value(), result)) { continue; }
-            kept.add(holder);
+            RecipeRemainders.mark(holder, result);
+            kept.add(RecipeTransfer.wrap(holder, result));
             named.add(id);
         }
         if (late) {

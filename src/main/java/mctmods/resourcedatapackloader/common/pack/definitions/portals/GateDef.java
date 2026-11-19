@@ -1,6 +1,10 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.portals;
 
+import mctmods.resourcedatapackloader.common.gates.GateLoot;
+import mctmods.resourcedatapackloader.common.gates.GateStay;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -8,7 +12,7 @@ import net.minecraft.resources.Identifier;
 
 public record GateDef(Identifier key, @Nullable Identifier dimension, String name, String scope, String teamless, boolean open, String craft, String consume, int consumeCount, String hold, String advancement,
                       String killed, int killedCount, String killedDrops, String killedTally, String killedRank, Standing standing, String teamAndScore, List<String> portalBlocks, String blockedMessage, String unlockedMessage,
-                      boolean safeReturn, List<String> requires) {
+                      boolean safeReturn, List<String> requires, WornCheck worn, GateStay stay, GateLoot loot, List<DataCheck> data) {
     public static final String GLOBAL = "global";
     public static final String PLAYER = "player";
     public static final String TEAM = "team";

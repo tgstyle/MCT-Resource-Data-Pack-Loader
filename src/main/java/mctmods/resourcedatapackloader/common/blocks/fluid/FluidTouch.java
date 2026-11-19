@@ -37,6 +37,15 @@ public final class FluidTouch {
 
     @Nullable public static Fluid fluidOf(Block block) { return block instanceof LiquidBlock liquid ? liquid.fluid.getSource() : null; }
 
+    @Nullable public static Fluid named(String id) {
+        Block block = ContentStates.registered(id);
+        if (block != null) { return fluidOf(block); }
+        Fluid fluid = Registered.find(BuiltInRegistries.FLUID, Identifier.tryParse(Settings.lower(id)));
+        if (fluid == null || fluid == Fluids.EMPTY) { return null; }
+        Fluid source = fluid instanceof FlowingFluid flowing ? flowing.getSource() : fluid;
+        return source.defaultFluidState().createLegacyBlock().isAir() ? null : source;
+    }
+
     public boolean matches(BlockState state) {
         Block block = state.getBlock();
         if (blocks.contains(block)) { return true; }

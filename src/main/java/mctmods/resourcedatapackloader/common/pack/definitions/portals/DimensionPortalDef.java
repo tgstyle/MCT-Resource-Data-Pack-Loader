@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.portals;
 
 import java.util.List;
 
-public record DimensionPortalDef(List<String> frames, String ignitedBy, int color, String back, PortalDef travel) {
+public record DimensionPortalDef(List<String> frames, String ignitedBy, String ignitedByFluid, int color, String back, PortalDef travel) {
     public static final String BUILT = "built";
     public static final String PLAYER = "player";
     public static final String NONE = "none";

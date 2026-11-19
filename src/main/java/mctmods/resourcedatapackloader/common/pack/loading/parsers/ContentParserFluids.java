@@ -27,6 +27,12 @@ public final class ContentParserFluids {
 
     private ContentParserFluids() {}
 
+    static boolean blockWanted(JsonObject json) { return json.has("block") && !(isFlag(json) && !json.get("block").getAsBoolean()); }
+
+    static JsonObject blockObject(JsonObject json) { return isFlag(json) ? new JsonObject() : Json.getJsonObject(json, "block", new JsonObject()); }
+
+    private static boolean isFlag(JsonObject json) { return json.has("block") && json.get("block").isJsonPrimitive() && json.get("block").getAsJsonPrimitive().isBoolean(); }
+
     public static FluidBehaviorDef behavior(Identifier key, JsonObject block) {
         FluidBehaviorDef.Creatures creatures = creatures(key, Json.object(block, "creatures"));
         FluidBehaviorDef.Items items = items(key, Json.object(block, "items"));

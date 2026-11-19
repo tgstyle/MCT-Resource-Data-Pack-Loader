@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientSyncData;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
@@ -26,6 +27,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import java.util.Arrays;
 import java.util.List;
@@ -77,7 +79,10 @@ public final class RDPLNetwork {
         registrar.playToClient(WeightFloorsMessage.TYPE, WeightFloorsMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WeightStacks.receiveFloors(message.floors()); } });
         registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
         registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
+        registrar.playToClient(SyncDataMessage.TYPE, SyncDataMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientSyncData.receive(message); } });
     }
+
+    public static boolean sendSyncData(ServerPlayer player, SyncDataMessage message) { return !Config.content.vanillaClients() && send(player, message); }
 
     public static void setSpawnHere() { ClientPacketDistributor.sendToServer(new SetSpawnMessage()); }
 

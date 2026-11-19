@@ -24,7 +24,7 @@ public record EntityVariantDef(Identifier key, Identifier base, String name, boo
     public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious, float stepHeight, @Nullable Boolean climbs, boolean teleports, int hurtResistance, boolean walks) {}
 
     public record Flags(boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, boolean persistent, boolean silent, boolean picksUpLoot,
-                        boolean hideArmor, boolean hideHeld, boolean leashable, boolean steerable, boolean ignoresSpawnRules, boolean bright, boolean keepsBaseBaby, boolean collectsExperience) {}
+                        boolean hideArmor, boolean hideHeld, boolean leashable, boolean steerable, boolean ignoresSpawnRules, boolean bright, boolean keepsBaseBaby, boolean collectsExperience, boolean dropsLeadOnDespawn) {}
 
     public record Egg(boolean wanted, int primary, int secondary) {}
 

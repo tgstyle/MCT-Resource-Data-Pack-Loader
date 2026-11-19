@@ -5,9 +5,11 @@ import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.RecordDef;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.common.tints.ContentTints;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
@@ -42,6 +44,11 @@ public final class ContentGeneratedItems {
         JsonObject model = model(entry.id());
         if (entry.item() instanceof ContentPotionItem) { model.add("tints", Json.arr(Json.obj("type", "minecraft:potion", "default", POTION_DEFAULT))); }
         definition(entry.id(), model);
+    }
+
+    static JsonObject song(Identifier id, RecordDef record) {
+        return Json.obj("sound_event", Json.obj("sound_id", ContentSounds.modern(record.sound().toString())), "description", Json.obj("translate", "item." + id.getNamespace() + "." + id.getPath()),
+                "length_in_seconds", record.ticks() / 20.0F, "comparator_output", record.comparator() < 0 ? ContentFormats.DEFAULT_COMPARATOR : record.comparator());
     }
 
     static void blockItem(ContentRegistry.BlockEntry entry) {

@@ -38,8 +38,10 @@ public final class CardScan {
         ticks = 0;
         List<CardRule> scanned = CardRules.scanned();
         boolean timed = CardRules.timed();
-        if (scanned.isEmpty() && !timed) { return; }
+        List<CardRule> meters = CardRules.on(CardRule.WORN);
+        if (scanned.isEmpty() && !timed && meters.isEmpty()) { return; }
         MinecraftServer server = event.getServer();
+        if (!meters.isEmpty()) { CardMeter.show(server, meters); }
         if (!scanned.isEmpty()) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) { scan(player, scanned); }
         }

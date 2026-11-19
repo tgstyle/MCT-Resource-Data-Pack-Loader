@@ -64,6 +64,7 @@ public final class ServerCommands {
                 .then(ClaimCommand.unclaim(NAME))
                 .then(ClaimCommand.claims(NAME))
                 .then(CommandCards.card(NAME))
+                .then(CommandData.data(NAME))
                 .then(CommandTalk.talk(NAME))
                 .then(CommandEnvironments.environment(NAME))
                 .then(WeightCommand.weight(NAME))

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.items;
 
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.environment.SeasonState;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.SeasonClockDef;
 
 import javax.annotation.Nonnull;
@@ -14,22 +15,22 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 
 public final class ContentSeasonClockItem extends Item {
-    private final SeasonClockDef def;
+    private final ItemDef def;
 
-    public ContentSeasonClockItem(SeasonClockDef def, Properties properties) {
+    public ContentSeasonClockItem(ItemDef def, Properties properties) {
         super(properties);
         this.def = def;
     }
 
-    public SeasonClockDef clock() { return def; }
+    public SeasonClockDef clock() { return def.seasonClock(); }
 
     @Override @Nonnull public InteractionResult use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
-        if (!def.message()) { return super.use(level, player, hand); }
-        if (!level.isClientSide() && player instanceof ServerPlayer server) {
-            SeasonState state = ContentSeasons.state(def.dimension(), level.dimension().identifier());
+        if (!clock().message() && !def.acts()) { return super.use(level, player, hand); }
+        if (clock().message() && !level.isClientSide() && player instanceof ServerPlayer server) {
+            SeasonState state = ContentSeasons.state(clock().dimension(), level.dimension().identifier());
             if (state == null) { server.sendOverlayMessage(Component.translatable("rdpl.season.none")); }
             else { server.sendOverlayMessage(Component.translatable("rdpl.season.now", state.name(), state.dayInSeason() + 1, state.daysPerSeason())); }
         }
-        return InteractionResult.SUCCESS;
+        return ItemRuns.use(level, player, hand, def);
     }
 }

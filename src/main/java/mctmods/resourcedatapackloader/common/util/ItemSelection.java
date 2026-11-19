@@ -25,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluid;
 
 public final class ItemSelection {
     private final String kind;
@@ -106,6 +107,15 @@ public final class ItemSelection {
             Identifier id = BuiltInRegistries.BLOCK.getKey(block);
             Item item = block.asItem();
             if (named(id) || item != Items.AIR && named(BuiltInRegistries.ITEM.getKey(item))) { ids.add(id); }
+        }
+        return ids;
+    }
+
+    public Set<Identifier> fluids() {
+        Set<Identifier> ids = new LinkedHashSet<>();
+        for (Fluid fluid : BuiltInRegistries.FLUID) {
+            Identifier id = BuiltInRegistries.FLUID.getKey(fluid);
+            if (named(id)) { ids.add(id); }
         }
         return ids;
     }

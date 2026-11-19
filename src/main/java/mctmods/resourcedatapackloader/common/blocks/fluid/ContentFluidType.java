@@ -52,5 +52,5 @@ public final class ContentFluidType extends FluidTypeBase {
         return properties;
     }
 
-    @Override public boolean isVaporizedOnPlacement(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull FluidStack stack) { return def.waterMaterial() && level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES); }
+    @Override public boolean isVaporizedOnPlacement(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull FluidStack stack) { return def.waterMaterial() && level.environmentAttributes().getValue(EnvironmentAttributes.WATER_EVAPORATES, pos); }
 }

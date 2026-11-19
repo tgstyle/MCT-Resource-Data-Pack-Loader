@@ -152,6 +152,12 @@ public final class ContentGenerated {
         data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", Json.obj("entities", Json.arr("minecraft:player"), "slots", named));
     }
 
+    private static void record(ContentRegistry.ItemEntry entry) {
+        if (entry.def() == null || entry.def().record() == null) { return; }
+        String path = ContentFormats.JUKEBOX_SONGS + "/" + entry.id().getPath() + PackManager.JSON_SUFFIX;
+        if (!provided(PackType.SERVER_DATA, entry.id().getNamespace(), path)) { data(entry.id().getNamespace(), path, ContentGeneratedItems.song(entry.id(), entry.def().record())); }
+    }
+
     private static void item(ContentRegistry.ItemEntry entry, Map<String, Set<String>> itemTags) {
         String namespace = entry.id().getNamespace();
         String name = entry.id().getPath();
@@ -161,6 +167,7 @@ public final class ContentGenerated {
             asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, Json.obj("parent", parent, "textures", Json.obj("layer0", namespace + ":item/" + name)));
         }
         ContentGeneratedItems.item(entry);
+        record(entry);
         if (entry.variant() != null) {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
         }
@@ -316,7 +323,9 @@ public final class ContentGenerated {
             case ContentBlockTypes.TRAPDOOR -> both(blockTags, itemTags, hasItem, "minecraft:trapdoors", id);
             case ContentBlockTypes.FENCE_GATE -> both(blockTags, itemTags, hasItem, "minecraft:fence_gates", id);
             case ContentBlockTypes.LEAVES -> both(blockTags, itemTags, hasItem, "minecraft:leaves", id);
-            case ContentBlockTypes.LOG -> both(blockTags, itemTags, hasItem, "minecraft:logs", id);
+            case ContentBlockTypes.LOG -> {
+                if (def.tagged()) { both(blockTags, itemTags, hasItem, "minecraft:logs", id); }
+            }
             case ContentBlockTypes.SAPLING -> both(blockTags, itemTags, hasItem, "minecraft:saplings", id);
             case ContentBlockTypes.FLOWER -> {
                 both(blockTags, itemTags, hasItem, "minecraft:small_flowers", id);

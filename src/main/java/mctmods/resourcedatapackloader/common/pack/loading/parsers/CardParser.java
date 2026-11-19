@@ -7,7 +7,10 @@ import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.cards.CardRule;
 import mctmods.resourcedatapackloader.common.cards.CardWhen;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
+import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
+import mctmods.resourcedatapackloader.common.syncdata.DataSets;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -24,6 +27,8 @@ import net.minecraft.resources.Identifier;
 
 public final class CardParser {
     private static final int MOST_LINES = 16;
+    private static final int METER_TICKS = 40;
+    private static final int METER_STEP = 20;
 
     private CardParser() {}
 
@@ -65,7 +70,7 @@ public final class CardParser {
         rule.level = json.has("level") ? Json.getInt(json, "level") : null;
         rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
         rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
-        if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when")); }
+        if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when"), id, "Card rule"); }
         rule.title = json.has("title") ? Json.getString(json, "title") : null;
         rule.lines = json.has("lines") ? lines(key, json) : null;
         rule.icon = optional(json, "icon");
@@ -76,15 +81,25 @@ public final class CardParser {
         String owner = "Card rule " + key;
         rule.style = Json.choice(json, "style", null, owner, CardLook.STYLES);
         rule.ticks = Math.max(0, Json.getInt(json, "ticks", 0));
+        rule.sound = Json.getString(json, "sound", "").trim();
         rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
         rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
         rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
         rule.runs = Json.getString(json, "runs", "").trim();
+        rule.sets = DataSets.parse(json, "Card rule", key, id);
+        if (CardRule.WORN.equals(rule.trigger)) { meter(rule, json); }
         rule.requires = Json.strings(json, "requires");
         return missing(rule) ? null : rule;
     }
 
-    public static CardWhen when(JsonObject json) {
+    private static void meter(CardRule rule, JsonObject json) {
+        int asked = Json.getInt(json, "every", METER_TICKS);
+        rule.every = Math.max(METER_STEP, (asked + METER_STEP - 1) / METER_STEP * METER_STEP);
+        if (rule.every != asked) { ContentLog.LOGGER.error("Card rule {} sets every {}, which is not a multiple of 20 ticks, so it refreshes every {} ticks", rule.key, asked, rule.every); }
+        if (rule.cooldown > 0 || !CardRule.ALWAYS.equals(rule.repeat)) { ContentLog.LOGGER.warn("Card rule {} has trigger worn and sets cooldown or repeat, which a meter ignores", rule.key); }
+    }
+
+    public static CardWhen when(JsonObject json, Identifier key, String kind) {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
         when.environments = Json.strings(json, "environments");
@@ -98,6 +113,8 @@ public final class CardParser {
         when.portway = Json.getString(json, "portway", "").trim();
         when.network = Json.getString(json, "network", "").trim();
         when.standing = Standing.parse(json);
+        when.worn = WornCheck.parse(json, key, kind);
+        if (json.has("data")) { when.data = DataCheck.parse(json.get("data"), kind, "when", key); }
         return when;
     }
 
@@ -135,6 +152,7 @@ public final class CardParser {
             case CardRule.Y_LEVEL -> rule.below == null && rule.above == null ? "below or above" : null;
             case CardRule.PLAY_TIME -> rule.minutes <= 0 ? "minutes" : null;
             case CardRule.SCORE -> rule.objective.isEmpty() ? "objective" : null;
+            case CardRule.WORN -> rule.when == null || !rule.when.worn.present() ? "when.worn" : null;
             default -> null;
         };
     }

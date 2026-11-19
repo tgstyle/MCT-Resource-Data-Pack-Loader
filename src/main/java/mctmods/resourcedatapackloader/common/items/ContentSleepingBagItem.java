@@ -21,7 +21,9 @@ public final class ContentSleepingBagItem extends Item {
     @Override @Nonnull public InteractionResult useOn(@Nonnull UseOnContext context) {
         if (context.getLevel().isClientSide() || !(context.getPlayer() instanceof ServerPlayer player)) { return InteractionResult.PASS; }
         InteractionResult result = ContentSleepingBags.use(player, context.getClickedPos(), context.getClickedFace());
-        if (result.consumesAction()) { ContentEffects.cooldown(player, context.getItemInHand(), def.cooldown()); }
+        if (result.consumesAction()) {
+            if (ItemRuns.run(context.getLevel(), player, context.getHand(), def)) { ContentEffects.cooldown(player, context.getItemInHand(), def.cooldown()); }
+        }
         return result;
     }
 }

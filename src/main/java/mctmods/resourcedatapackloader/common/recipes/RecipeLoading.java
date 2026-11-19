@@ -56,6 +56,9 @@ public final class RecipeLoading {
     private static int removedByFile;
     private static int removedByName;
     private static int removedByOutput;
+    private static int removedByType;
+    private static int removedByInput;
+    private static int removedDisabled;
     private static int skipped;
     @Nullable private static IRecipeFilter attached;
     private static final Set<String> SCRIPTED = Set.of("crafttweaker", "kubejs", "groovyscript");
@@ -69,6 +72,9 @@ public final class RecipeLoading {
         rebuilt = false;
         RecipeRemovals.reload();
         RecipeSwaps.reload();
+        RecipeRemainders.reload();
+        RecipeTransfer.reload();
+        RecipeRewrites.reload();
         RecipeLocks.reload();
         FurnaceRecipes.reload();
         FurnaceRecipes.begin();
@@ -78,6 +84,9 @@ public final class RecipeLoading {
         removedByFile = 0;
         removedByName = 0;
         removedByOutput = 0;
+        removedByType = 0;
+        removedByInput = 0;
+        removedDisabled = 0;
         skipped = 0;
         keepOriginals(recipes, manager, conditions, parse);
         boolean skipMissing = Config.recipes.skipMissingItems();
@@ -101,7 +110,9 @@ public final class RecipeLoading {
         LOADED.clear();
         LOADED.addAll(recipes.keySet());
         CompressedRecipes.register(recipes);
+        RecipeRewrites.apply(recipes, parse, true);
         RecipeSwaps.apply(recipes, parse);
+        RecipeRewrites.apply(recipes, parse, false);
     }
 
     @SuppressWarnings("resource") private static void keepOriginals(Map<Identifier, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, Function<JsonElement, Optional<Recipe<?>>> parse) {
@@ -146,6 +157,10 @@ public final class RecipeLoading {
     public static boolean doomed(Identifier id, Recipe<?> recipe, ItemStack result) {
         if (spared(id)) { return false; }
         ItemStack original = original(id, result);
+        if (RecipeRemovals.removesType(recipe)) {
+            removedByType++;
+            return true;
+        }
         if (recipe instanceof AbstractCookingRecipe cooking) { return (FurnaceRecipes.resolvedAtLoad() && FurnaceRecipes.removes(List.of(cooking.input()), result)) || FurnaceBlocking.blocks(original); }
         if (recipe.getType() != RecipeType.CRAFTING) { return false; }
         if (RecipeRemovals.removesName(id)) {
@@ -154,6 +169,10 @@ public final class RecipeLoading {
         }
         if (RecipeRemovals.removesOutput(original)) {
             removedByOutput++;
+            return true;
+        }
+        if (RecipeRemovals.removesInput(recipe)) {
+            removedByInput++;
             return true;
         }
         return RecipeBlocking.blocks(id, original);
@@ -165,7 +184,13 @@ public final class RecipeLoading {
         return item == null ? result : new ItemStack(item, result.getCount());
     }
 
-    public static boolean late(Identifier id, Recipe<?> recipe, ItemStack result) { return RecipeDisabled.uses(recipe, result) || !FurnaceRecipes.resolvedAtLoad() && recipe instanceof AbstractCookingRecipe cooking && FurnaceRecipes.removesLate(id, List.of(cooking.input()), result, spared(id)); }
+    public static boolean late(Identifier id, Recipe<?> recipe, ItemStack result) { return usesDisabled(recipe, result) || !FurnaceRecipes.resolvedAtLoad() && recipe instanceof AbstractCookingRecipe cooking && FurnaceRecipes.removesLate(id, List.of(cooking.input()), result, spared(id)); }
+
+    private static boolean usesDisabled(Recipe<?> recipe, ItemStack result) {
+        if (!RecipeDisabled.uses(recipe, result)) { return false; }
+        removedDisabled++;
+        return true;
+    }
 
     public static ItemStack result(Recipe<?> recipe, ContextMap context, HolderLookup.Provider registries) {
         if (recipe instanceof SmithingTrimRecipe) { return trimmed(registries); }
@@ -194,6 +219,7 @@ public final class RecipeLoading {
         ContentLog.LOGGER.info("The recipe pass did not run inside RecipeManager.apply (another mod took the method over), running it after the reload instead");
         attach(filter);
         RecipeSwaps.scripted();
+        RecipeRewrites.scriptedNote();
     }
 
     public static void componentsBound(IRecipeFilter filter) {
@@ -202,6 +228,7 @@ public final class RecipeLoading {
         filter.rdpl$filter(false);
         if (FurnaceRecipes.resolvedAtLoad() && ContentDisabled.none()) { return; }
         filter.rdpl$filter(true);
+        if (removedDisabled > 0) { Summary.info("disabled.recipes", "Removed " + removedDisabled + " recipe(s) that use disabled blocks and items"); }
         if (FurnaceRecipes.resolvedAtLoad()) { return; }
         reportFurnaces();
     }
@@ -214,9 +241,11 @@ public final class RecipeLoading {
     public static void finish() {
         REGISTERED.clear();
         if (skipped > 0) { Summary.info("recipes.skipped", "Skipped " + skipped + " recipe(s) that use items which are not registered, usually content a mod's config has disabled"); }
-        int removed = removedByFile + removedByName + removedByOutput;
-        if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output"); }
+        int removed = removedByFile + removedByName + removedByOutput + removedByType + removedByInput;
+        if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output, " + removedByType + " by type, " + removedByInput + " by input"); }
         RecipeSwaps.report();
+        RecipeRemainders.report();
+        RecipeTransfer.report();
         RecipeBlocking.report();
         if (!FurnaceRecipes.resolvedAtLoad()) { return; }
         reportFurnaces();

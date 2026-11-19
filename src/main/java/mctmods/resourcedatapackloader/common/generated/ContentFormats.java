@@ -16,6 +16,9 @@ import javax.annotation.Nullable;
 
 public final class ContentFormats {
     public static final String LOOT_FOLDER = "loot_table";
+    public static final String JUKEBOX_SONGS = "jukebox_song";
+    public static final int MAX_SONG_TICKS = 2_000_000_000;
+    public static final int DEFAULT_COMPARATOR = 1;
     public static final String BLOCK_TAGS = "tags/block";
     public static final String ITEM_TAGS = "tags/item";
     public static final String BIOME_TAGS = "tags/worldgen/biome";

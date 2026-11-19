@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpaw
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.items.derived.DerivedItems;
 import mctmods.resourcedatapackloader.common.ownership.OwnedBlocksStore;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
@@ -237,6 +238,7 @@ public final class ContentEvents {
                 count++;
             }
         }
+        count += DerivedItems.register(helper);
         ContentFluids.registerItems((id, item) -> {
             if (registered(BuiltInRegistries.ITEM.containsKey(id), "An item", id, "bucket")) { return; }
             helper.register(id, item);
