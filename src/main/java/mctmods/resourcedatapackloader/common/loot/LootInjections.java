@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class LootInjections {
     private static final String TARGET = "target";
     private static final String POOLS = "pools";
+    private static final List<String> INJECTION_KEYS = Collections.unmodifiableList(Arrays.asList(TARGET, POOLS));
     private static final Map<ResourceLocation, List<String>> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -40,6 +43,7 @@ public final class LootInjections {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", INJECTION_KEYS);
         String target = Json.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);

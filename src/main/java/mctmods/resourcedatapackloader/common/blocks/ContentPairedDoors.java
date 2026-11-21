@@ -12,6 +12,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentPairedDoors {
     private static final String BLOCKS = "blocks";
+    private static final List<String> DOOR_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, "all", "unlessSneaking", "mobs"));
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final Map<BlockPos, EntityPlayer> ACTORS = new HashMap<>();
@@ -68,6 +71,7 @@ public final class ContentPairedDoors {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", DOOR_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         boolean all = Json.getBoolean(json, "all", false);
         if (!json.has(BLOCKS) && !all) {

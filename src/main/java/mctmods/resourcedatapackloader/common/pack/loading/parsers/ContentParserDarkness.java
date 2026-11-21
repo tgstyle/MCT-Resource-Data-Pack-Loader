@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
@@ -16,6 +17,7 @@ final class ContentParserDarkness {
     private static final String DARKNESS = "darkness";
     private static final String MOON_LIGHT = "moonLight";
     private static final List<String> MODES = Arrays.asList(DarknessDef.FULL, DarknessDef.BLOCK, DarknessDef.MOON);
+    private static final List<String> DARKNESS_KEYS = Collections.unmodifiableList(Arrays.asList("mode", MOON_LIGHT, "grayNight", "endGlow", "gamma"));
     private static final float[] MOON_DEFAULT = {0.0F, 0.075F, 0.15F, 0.225F, 0.3F};
 
     private ContentParserDarkness() {}
@@ -23,6 +25,7 @@ final class ContentParserDarkness {
     @Nullable static DarknessDef darkness(ResourceLocation key, JsonObject sky) {
         if (!sky.has(DARKNESS)) { return null; }
         JsonObject darkness = Json.getJsonObject(sky, DARKNESS, new JsonObject());
+        Json.unknownKeys(darkness, DARKNESS, DARKNESS_KEYS);
         String owner = "Dimension " + key + " sky.darkness";
         String mode = Json.choice(darkness, "mode", DarknessDef.FULL, owner, MODES);
         return new DarknessDef(mode, moonLight(owner, darkness), Json.getBoolean(darkness, "grayNight", false), Json.getBoolean(darkness, "endGlow", true), !sky.has("ambientLight"), Json.bounded(darkness, "gamma", 0.0F, 1.0F, owner));

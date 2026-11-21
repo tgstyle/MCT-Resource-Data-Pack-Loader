@@ -14,6 +14,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +33,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentOreDict {
+    private static final List<String> COPY_KEYS = Collections.unmodifiableList(Arrays.asList("tag", "matches", "from"));
     private static final List<Copy> COPIES = new ArrayList<>();
     private static boolean applied;
     private static boolean copied;
@@ -51,6 +54,7 @@ public final class ContentOreDict {
         JsonObject json = Json.object(key, contents, "ore dictionary file");
         if (json == null) { return; }
         if (json.has("tag") && json.get("tag").isJsonPrimitive()) {
+            Json.unknownKeys(json, "the top level", COPY_KEYS);
             copy(key, json);
             return;
         }

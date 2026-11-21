@@ -12,6 +12,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.item.ItemStack;
@@ -23,6 +25,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentFuels {
+    private static final List<String> FILE_KEYS = Collections.singletonList("fuels");
+    private static final List<String> FUEL_KEYS = Collections.unmodifiableList(Arrays.asList("burnTime", "oreDict", "item"));
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -40,12 +44,14 @@ public final class ContentFuels {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "fuel file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "fuels")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "fuels", FUEL_KEYS);
             int burnTime = Json.getInt(entry, "burnTime", 0);
             if (burnTime <= 0) {
                 ContentLog.LOGGER.error("A fuel in {} has no positive burnTime, skipping it", key);

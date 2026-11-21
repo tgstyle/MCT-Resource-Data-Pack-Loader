@@ -29,6 +29,13 @@ public final class ContentParserCelestial {
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS, CelestialDef.STATION));
     private static final List<String> LANDINGS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.LANDER, GalacticraftDef.PARACHUTE, GalacticraftDef.BALLOONS));
     private static final List<String> ARRIVALS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.DEPARTURE, GalacticraftDef.SPAWN));
+    private static final List<String> BODY_KEYS = Collections.unmodifiableList(Arrays.asList("name", "parent", "distance", "ring", "beltWidth", "icon", "relativeSize", "scaledDistance", "orbitTime", "phaseShift", "ringColor", "ringSize", "ringFront", "tier", "galaxyspace"));
+    private static final List<String> CELESTIAL_KEYS = Collections.unmodifiableList(Arrays.asList("kind", "requires", "name", "parent", "distance", "ring", "beltWidth", "icon", "relativeSize", "scaledDistance", "orbitTime", "phaseShift", "ringColor", "ringSize", "ringFront", "tier", "galaxyspace"));
+    private static final List<String> SYSTEM_KEYS = Collections.unmodifiableList(Arrays.asList("kind", "name", "mapPosition", "star", "galaxy", "galaxyImage", "requires"));
+    private static final List<String> OVERRIDE_KEYS = Collections.unmodifiableList(Arrays.asList("kind", "body", "icon", "ring", "ringSize", "ringFront", "requires", "galaxyspace"));
+    private static final List<String> GALACTICRAFT_KEYS = Collections.unmodifiableList(Arrays.asList("kind", "landing", "arrival", "rocketGui", "atmosphere", "dungeon", "reachable", "minTier", "landingHeight", "exitHeight", "checklist", "meteorFrequency", "fuelMultiplier", "soundReduction", "solarEnergy", "netherPortals", "extraplanets", "recipe", "showName", "name", "parent", "distance", "ring", "beltWidth", "icon", "relativeSize", "scaledDistance", "orbitTime", "phaseShift", "ringColor", "ringSize", "ringFront", "tier", "galaxyspace"));
+    private static final List<String> ATMOSPHERE_KEYS = Collections.unmodifiableList(Arrays.asList("breathable", "gases", "corrosive", "temperature", "wind", "density"));
+    private static final List<String> DUNGEON_KEYS = Collections.unmodifiableList(Arrays.asList("chest", "spacing"));
     private static final Pattern GALAXY = Pattern.compile("[a-z0-9_]+");
     private static final String RING = "#19E599";
     private static final String ICONS = "galacticraftcore:textures/gui/celestialbodies/";
@@ -45,12 +52,14 @@ public final class ContentParserCelestial {
             ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {}, {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.SUBSYSTEM, CelestialDef.MOON, CelestialDef.OVERRIDE);
             return null;
         }
+        Json.unknownKeys(json, "the top level", CELESTIAL_KEYS);
         return body(key, json, kind, key.getPath(), 0, strings(json, "requires"));
     }
 
     @Nullable public static GalacticraftDef galacticraft(ResourceLocation key, JsonObject dimension) {
         if (!dimension.has("galacticraft")) { return null; }
         JsonObject json = Json.getJsonObject(dimension, "galacticraft");
+        Json.unknownKeys(json, "galacticraft", GALACTICRAFT_KEYS);
         String owner = "Dimension " + key + " Galacticraft";
         String kind = Json.choice(json, "kind", CelestialDef.PLANET, owner, KINDS);
         CelestialDef body = body(key, json, kind, key.getPath(), CelestialDef.STATION.equals(kind) ? -1 : 1, Collections.emptyList());
@@ -59,9 +68,11 @@ public final class ContentParserCelestial {
         String arrival = Json.choice(json, "arrival", GalacticraftDef.DEPARTURE, owner, ARRIVALS);
         String gui = Json.getString(json, "rocketGui", "").trim();
         JsonObject air = Json.getJsonObject(json, "atmosphere", new JsonObject());
+        Json.unknownKeys(air, "atmosphere", ATMOSPHERE_KEYS);
         Boolean breathable = air.has("breathable") ? Json.getBoolean(air, "breathable") : null;
         List<String> gases = gases(key, air);
         JsonObject dungeon = Json.getJsonObject(json, "dungeon", new JsonObject());
+        Json.unknownKeys(dungeon, "dungeon", DUNGEON_KEYS);
         String chest = Json.getString(dungeon, "chest", "").trim();
         return new GalacticraftDef(body,
                 Json.getBoolean(json, "reachable", true),
@@ -105,6 +116,7 @@ public final class ContentParserCelestial {
     }
 
     @Nullable private static CelestialDef override(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", OVERRIDE_KEYS);
         String body = Json.getString(json, "body", "").trim();
         if (body.isEmpty()) {
             ContentLog.LOGGER.error("Celestial override {} names no body, so it changes nothing", key);
@@ -128,6 +140,7 @@ public final class ContentParserCelestial {
     }
 
     @Nullable private static CelestialDef system(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SYSTEM_KEYS);
         String name = Json.getString(json, "name", key.getPath()).trim();
         if (!JsonUtils.isJsonArray(json, "mapPosition")) {
             ContentLog.LOGGER.error("Star system {} has no mapPosition, so there is nowhere on the galaxy map to put it", key);
@@ -139,6 +152,7 @@ public final class ContentParserCelestial {
             return null;
         }
         JsonObject starJson = Json.getJsonObject(json, "star", new JsonObject());
+        Json.unknownKeys(starJson, "star", BODY_KEYS);
         CelestialDef star = body(key, starJson, CelestialDef.STAR, name, -1, Collections.emptyList());
         if (star == null) { return null; }
         String galaxy = Json.getString(json, "galaxy", "milky_way").trim().toLowerCase(Locale.ROOT);

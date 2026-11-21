@@ -19,6 +19,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
@@ -38,6 +39,7 @@ public final class ModPacks {
     private static final String CONTROL_FILE = CONTROL_STEM + "." + PackManager.JSON;
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
+    private static final List<String> SETTINGS_KEYS = Collections.unmodifiableList(Arrays.asList(ENABLED, PRIORITY));
 
     private ModPacks() {}
 
@@ -127,6 +129,7 @@ public final class ModPacks {
     private static JsonObject settingsFor(JsonObject control, String modId) {
         JsonElement held = control.get(modId);
         JsonObject settings = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
+        Json.unknownKeys(settings, modId, SETTINGS_KEYS);
         if (!JsonUtils.isJsonPrimitive(settings, ENABLED) || !settings.get(ENABLED).getAsJsonPrimitive().isBoolean()) { settings.addProperty(ENABLED, true); }
         if (!JsonUtils.isJsonPrimitive(settings, PRIORITY) || !settings.get(PRIORITY).getAsJsonPrimitive().isNumber()) { settings.addProperty(PRIORITY, -1); }
         control.add(modId, settings);

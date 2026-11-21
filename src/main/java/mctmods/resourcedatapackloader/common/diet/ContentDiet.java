@@ -20,6 +20,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -56,6 +57,8 @@ public final class ContentDiet {
     private static final String MEMORY = "memory";
     private static final String LIFETIME = "lifetime";
     private static final List<String> COUNTS = Arrays.asList(MEMORY, LIFETIME);
+    private static final List<String> DIET_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "keepOnDeath", "memory", "repeat", "variety", "exempt", "groups", "messages", "tooltip"));
+    private static final List<String> KEEP_KEYS = Collections.unmodifiableList(Arrays.asList("hunger", "saturation"));
     private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentDiet::eaten, ContentDiet::tooltip, RDPLNetwork::sendEaten);
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final Map<PotionEffectDef, Potion> EFFECTS = new IdentityHashMap<>();
@@ -88,6 +91,7 @@ public final class ContentDiet {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", DIET_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (json.has(KEEP_ON_DEATH)) { readKeep(key, json); }
         if (onlyKeep(json)) { return; }
@@ -117,6 +121,7 @@ public final class ContentDiet {
             return;
         }
         JsonObject keep = json.getAsJsonObject(KEEP_ON_DEATH);
+        Json.unknownKeys(keep, KEEP_ON_DEATH, KEEP_KEYS);
         keepFood = range(keep, "hunger", key);
         keepSaturation = range(keep, "saturation", key);
         keepSource = key;

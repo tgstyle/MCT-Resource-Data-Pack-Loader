@@ -12,8 +12,11 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.init.SoundEvents;
@@ -27,6 +30,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentMaterials {
+    private static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList("reduction", "harvestLevel", "durability", "efficiency", "damage", "enchantability", "toughness", "equipSound", "armorTexture", "repairItem", "requires"));
     private static final Map<String, MaterialDef> DEFS = new LinkedHashMap<>();
     private static final Map<String, String> REPAIR_ORES = new HashMap<>();
     private static boolean loaded;
@@ -44,6 +48,7 @@ public final class ContentMaterials {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "material file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", KEYS);
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
             JsonArray array = Json.getJsonArray(json, "reduction");

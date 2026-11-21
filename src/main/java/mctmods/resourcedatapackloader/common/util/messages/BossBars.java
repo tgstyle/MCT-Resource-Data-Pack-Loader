@@ -10,7 +10,9 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
@@ -25,6 +27,8 @@ import net.minecraft.world.WorldServer;
 
 public final class BossBars {
     public static final String KEY = "bossBar";
+    private static final List<String> BAR_KEYS = Collections.unmodifiableList(Arrays.asList("name", "color", "style", "background"));
+    private static final List<String> BACKGROUND_KEYS = Collections.unmodifiableList(Arrays.asList("texture", "width", "height", "x", "y"));
 
     private BossBars() {}
 
@@ -37,6 +41,7 @@ public final class BossBars {
             return null;
         }
         JsonObject bar = json.getAsJsonObject(KEY);
+        Json.unknownKeys(bar, KEY, BAR_KEYS);
         return new BossBarDef(Json.getString(bar, "name", "").trim(), pick(owner, bar, "color", BossInfo.Color.class, fallbackColor), pick(owner, bar, "style", BossInfo.Overlay.class, fallbackStyle), background(owner, bar));
     }
 
@@ -47,6 +52,7 @@ public final class BossBars {
             return null;
         }
         JsonObject background = bar.getAsJsonObject("background");
+        Json.unknownKeys(background, KEY + ".background", BACKGROUND_KEYS);
         String texture = Json.getString(background, "texture", "").trim();
         if (texture.isEmpty()) {
             ContentLog.LOGGER.error("{} sets {} background without a texture, so it has no background", owner, KEY);

@@ -9,12 +9,15 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 public final class RecipeLocks {
+    private static final List<String> LOCK_KEYS = Collections.unmodifiableList(Arrays.asList("advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount", "names", "namespaces", "outputs", "regex", "inputs", "types"));
     private static final List<Lock> LOCKS = new ArrayList<>();
 
     private RecipeLocks() {}
@@ -33,6 +36,7 @@ public final class RecipeLocks {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", LOCK_KEYS);
         String advancement = Json.getString(json, "advancement", "").trim();
         Standing standing = Standing.parse(json);
         if (standing.halfScore()) {

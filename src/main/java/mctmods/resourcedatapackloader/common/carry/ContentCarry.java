@@ -12,7 +12,10 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.block.Block;
@@ -61,6 +64,7 @@ public final class ContentCarry {
     private static final String TILE = "tile";
     private static final String ID = "id";
     private static final int EVERY = 10;
+    private static final List<String> CARRY_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, MOBS));
     private static final UUID CARRIED = UUID.fromString("6d1f3a52-94c7-4e08-b3a1-7f2c5e9d0b46");
     private static BlockGroup blockRules = new BlockGroup();
     private static final Set<ResourceLocation> MOB_RULES = new HashSet<>();
@@ -100,6 +104,7 @@ public final class ContentCarry {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", CARRY_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (!json.has(BLOCKS) && !json.has(MOBS)) {
             ContentLog.LOGGER.error("Carry {} names no blocks and no mobs, ignoring it", key);

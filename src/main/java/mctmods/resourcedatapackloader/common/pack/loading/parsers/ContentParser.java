@@ -60,16 +60,27 @@ public final class ContentParser {
     private static final int[] NO_CHANCE = new int[0];
     private static final List<String> PORTAL_LANDINGS = Collections.unmodifiableList(Arrays.asList("surface", "same"));
     private static final List<String> PORTAL_RETURNS = Collections.unmodifiableList(Arrays.asList("fixed", "origin"));
+    private static final List<String> BELL_KEYS = Collections.unmodifiableList(Arrays.asList("swing", "sound", "resonateSound"));
+    private static final List<String> EXP_DROP_KEYS = Collections.unmodifiableList(Arrays.asList("min", "max"));
+    private static final List<String> GROWTH_KEYS = Collections.unmodifiableList(Arrays.asList("maxHeight", "stages", "soil", "needsWater", "waterRange", "needsSky", "damage", "damageAmount", "breaksNeighbors", "spread", "drop", "dropCount"));
+    private static final List<String> PORTAL_KEYS = Collections.unmodifiableList(Arrays.asList("dimension", "returnDimension", "gate", "cooldown", "platform", "platformBlock", "sound", "owned", "walkIn", "landing", "torches", "useRange", "mounted", "returnTo"));
+    private static final List<String> SAPLING_KEYS = Collections.unmodifiableList(Arrays.asList("soil", "stages", "chance", "light", "structure", "structures", "log", "leaves", "height", "trees", "steps", "blocked", "growBy", "stepTicks", "catchUp", "catchUpLimit", "bonemeal", "bonemealTicks", "bonemealChecks", "biomes", "needsSky", "needsWater", "waterRange"));
+    private static final List<String> BLOCK_VARIANT_KEYS = Collections.unmodifiableList(Arrays.asList("meta", "rarity", "maxSize", "oreDict", "hardness", "resistance", "harvestLevel", "light", "portal", "drops"));
+    private static final List<String> ITEM_VARIANT_KEYS = Collections.unmodifiableList(Arrays.asList("meta", "rarity", "maxSize", "oreDict", "healAmount", "saturation", "potion"));
+    private static final List<String> MATCH_KEYS = Collections.unmodifiableList(Arrays.asList("block", "meta", "properties"));
+    private static final List<String> DROP_KEYS = Collections.unmodifiableList(Arrays.asList("block", "entity", "meta", "amount", "chance", "weight", "bonusChance", "guaranteed"));
 
     private ContentParser() {}
 
     @Nullable public static BlockDef block(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "block definition");
         if (json == null) { return null; }
+        ContentParserContainers.blockKeys(json);
         Material material = ContentTypes.material(Json.getString(json, "material", "rock"), key.toString());
         MapColor mapColor = ContentTypes.mapColor(Json.getString(json, "mapColor", ""), material.getMaterialMapColor(), key.toString());
         SoundType soundType = ContentTypes.soundType(Json.getString(json, "soundType", ""), null, key.toString());
         JsonObject exp = Json.getJsonObject(json, "expDrop", new JsonObject());
+        Json.unknownKeys(exp, "expDrop", EXP_DROP_KEYS);
         int expMin = Json.getInt(exp, "min", 0);
         int expMax = Json.getInt(exp, "max", 0);
         String type = Json.getString(json, "type", ContentBlockTypes.DEFAULT);
@@ -85,6 +96,7 @@ public final class ContentParser {
                 continue;
             }
             JsonObject variant = entry.getValue().getAsJsonObject();
+            Json.unknownKeys(variant, "variants", BLOCK_VARIANT_KEYS);
             int meta = Json.getInt(variant, "meta", -1);
             if (meta < 0 || meta >= maxVariants) {
                 ContentLog.LOGGER.error("Block variant '{}' in {} has meta {}, which is outside 0-{}. A '{}' block cannot hold more than {} variants, so this one is skipped. Split it into another block file", name, key, meta, maxVariants - 1, type, maxVariants);
@@ -153,6 +165,7 @@ public final class ContentParser {
     @Nullable private static BellDef bell(JsonObject json) {
         if (!json.has("bell") || !json.get("bell").isJsonObject()) { return null; }
         JsonObject held = Json.getJsonObject(json, "bell");
+        Json.unknownKeys(held, "bell", BELL_KEYS);
         return new BellDef(Json.getBoolean(held, "swing", BellDef.PLAIN.swing),
                 Json.getString(held, "sound", BellDef.PLAIN.sound).trim(),
                 Json.getString(held, "resonateSound", BellDef.PLAIN.resonateSound).trim());
@@ -161,6 +174,7 @@ public final class ContentParser {
     @Nullable private static PortalDef portal(JsonObject json) {
         if (!json.has("portal")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "portal");
+        Json.unknownKeys(entry, "portal", PORTAL_KEYS);
         return portal(entry, Json.getInt(entry, "dimension"), true, false);
     }
 
@@ -232,6 +246,7 @@ public final class ContentParser {
     @Nullable private static GrowthDef growth(JsonObject json) {
         if (!json.has("growth")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "growth");
+        Json.unknownKeys(entry, "growth", GROWTH_KEYS);
         return new GrowthDef(Math.max(1, Json.getInt(entry, "maxHeight", 3)),
                 MathHelper.clamp(Json.getInt(entry, "stages", 16), 1, 16),
                 strings(entry, "soil"),
@@ -249,6 +264,7 @@ public final class ContentParser {
     @Nullable private static SaplingDef sapling(JsonObject json) {
         if (!json.has("sapling")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "sapling");
+        Json.unknownKeys(entry, "sapling", SAPLING_KEYS);
         return new SaplingDef(
                 strings(entry, "soil"),
                 Math.max(1, Json.getInt(entry, "stages", 2)),
@@ -284,6 +300,7 @@ public final class ContentParser {
     }
 
     @Nullable private static DropDef drop(ResourceLocation key, String name, JsonObject json) {
+        Json.unknownKeys(json, "drops", DROP_KEYS);
         String block = Json.getString(json, "block", "");
         String entity = Json.getString(json, "entity", "");
         if (block.isEmpty() && entity.isEmpty()) {
@@ -311,6 +328,7 @@ public final class ContentParser {
         JsonObject json = Json.object(key, contents, "item definition");
         if (json == null) { return null; }
         if (json.has("item")) { return ContentParserDerived.item(key, json); }
+        ContentParserContainers.itemKeys(json);
         JsonObject variants = Json.getJsonObject(json, "variants", new JsonObject());
         Map<Integer, ItemVariant> byMeta = new LinkedHashMap<>();
         List<ItemVariant> visible = new ArrayList<>();
@@ -321,6 +339,7 @@ public final class ContentParser {
                 continue;
             }
             JsonObject variant = entry.getValue().getAsJsonObject();
+            Json.unknownKeys(variant, "variants", ITEM_VARIANT_KEYS);
             int meta = Json.getInt(variant, "meta", -1);
             if (meta < 0 || meta > Short.MAX_VALUE) {
                 ContentLog.LOGGER.error("Item variant '{}' in {} has meta {}, which is outside 0-{}, skipping it", name, key, meta, (int) Short.MAX_VALUE);
@@ -382,6 +401,7 @@ public final class ContentParser {
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "fluid definition");
         if (json == null) { return null; }
+        ContentParserFluids.fluidKeys(json);
         String name = Json.getString(json, "name", key.getPath());
         JsonObject block = ContentParserFluids.blockObject(json);
         boolean createBlock = ContentParserFluids.blockWanted(json);
@@ -560,6 +580,7 @@ public final class ContentParser {
     public static BlockMatchDef match(ResourceLocation key, JsonElement element) {
         if (!element.isJsonObject()) { return match(key, element.getAsString()); }
         JsonObject entry = element.getAsJsonObject();
+        Json.unknownKeys(entry, "match", MATCH_KEYS);
         return new BlockMatchDef(new ResourceLocation(Json.getString(entry, "block", "minecraft:stone")), Json.getInt(entry, "meta", -1), Json.map(entry, "properties"));
     }
 

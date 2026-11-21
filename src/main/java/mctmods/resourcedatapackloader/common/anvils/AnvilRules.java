@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
@@ -23,6 +24,7 @@ public final class AnvilRules {
     private static final String FACTOR = "factor";
     private static final double MOST_MULTIPLIED = 100.0D;
     private static final int MOST_FACTOR = 16;
+    private static final List<String> PENALTY_KEYS = Collections.singletonList(FACTOR);
     private static final List<Entry> RULES = new ArrayList<>();
     private static final ThreadLocal<EntityPlayer> WORKER = new ThreadLocal<>();
     private static final ThreadLocal<Integer> REFUSED = new ThreadLocal<>();
@@ -81,6 +83,7 @@ public final class AnvilRules {
             if ("none".equals(named)) { return AnvilMath.NO_GROWTH; }
         }
         else if (held.isJsonObject() && held.getAsJsonObject().has(FACTOR)) {
+            Json.unknownKeys(held.getAsJsonObject(), PENALTY, PENALTY_KEYS);
             JsonElement factor = held.getAsJsonObject().get(FACTOR);
             if (factor.isJsonPrimitive() && factor.getAsJsonPrimitive().isNumber() && factor.getAsDouble() == Math.rint(factor.getAsDouble()) && factor.getAsInt() >= 0 && factor.getAsInt() <= MOST_FACTOR) { return factor.getAsInt(); }
         }

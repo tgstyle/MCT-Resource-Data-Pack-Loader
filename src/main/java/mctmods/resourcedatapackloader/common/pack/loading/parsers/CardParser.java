@@ -20,12 +20,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 public final class CardParser {
+    private static final List<String> CARD_KEYS = Collections.unmodifiableList(Arrays.asList("trigger", "dimension", "biomes", "structures", "radius", "advancement", "item", "entity", "count", "below", "above", "time", "day", "minutes", "objective", "score", "roll", "order", "exposure", "environment", "portway", "raid", "rank", "network", "reason", "level", "atLeast", "atMost", "when", "title", "lines", "icon", "color", "image", "background", "font", "style", "ticks", "sound", "audience", "repeat", "cooldown", "runs", "sets", "worldSets", "requires", "every"));
+    private static final List<String> WHEN_KEYS = Collections.unmodifiableList(Arrays.asList("biomes", "environments", "season", "dimension", "timeFrom", "timeTo", "dayAtLeast", "advancement", "gameMode", "portway", "network", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective", "worn", "each", "data"));
     private static final int MOST_LINES = 16;
     private static final int METER_TICKS = 40;
     private static final int METER_STEP = 20;
@@ -36,6 +39,7 @@ public final class CardParser {
     @Nullable public static CardRule parse(ResourceLocation id, String contents) {
         JsonObject json = Json.object(id, contents, "card file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", CARD_KEYS);
         String key = id.toString();
         CardRule rule = new CardRule(key);
         boolean builtin = CardIds.ALL.contains(key);
@@ -101,6 +105,7 @@ public final class CardParser {
     }
 
     public static CardWhen when(JsonObject json, ResourceLocation key, String kind) {
+        Json.unknownKeys(json, "when", WHEN_KEYS);
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
         when.environments = Json.strings(json, "environments");

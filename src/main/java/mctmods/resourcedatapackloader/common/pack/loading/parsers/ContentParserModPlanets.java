@@ -25,11 +25,15 @@ public final class ContentParserModPlanets {
     private static final List<String> STAR_COLORS = Collections.unmodifiableList(Arrays.asList("BROWN", "RED", "ORANGE", "YELLOW", "WHITE", "LIGHTBLUE", "BLUE", "M1", "M2", "M3", "K1", "K2", "K3", "G1", "G2", "G3", "F1", "F2", "F3", "A1", "A2", "A3", "B1", "B2", "B3", "O1", "O2", "O3"));
     private static final List<String> LANDERS = Collections.unmodifiableList(Arrays.asList("general", "jupiter", "saturn", "mercury", "neptune", "uranus"));
 
+    private static final List<String> GALAXY_SPACE_KEYS = Collections.unmodifiableList(Arrays.asList("orbitEccentricity", "orbitOffset", "habitableZone", "auraColor", "pressure", "radiation", "class", "freezeBlocks", "thermalVariation", "solarWind", "weather", "weatherFrequency", "starType", "starColor"));
+    private static final List<String> EXTRA_PLANETS_KEYS = Collections.unmodifiableList(Arrays.asList("temperatureDay", "temperatureNight", "lander", "pressure", "radiation"));
+
     private ContentParserModPlanets() {}
 
     @Nullable public static GalaxySpaceDef galaxySpace(ResourceLocation key, JsonObject body) {
         if (!body.has(GALAXY_SPACE)) { return null; }
         JsonObject json = Json.getJsonObject(body, GALAXY_SPACE);
+        Json.unknownKeys(json, GALAXY_SPACE, GALAXY_SPACE_KEYS);
         float[] eccentricity = pair(key, json, "orbitEccentricity");
         float[] offset = pair(key, json, "orbitOffset");
         float[] zone = pair(key, json, "habitableZone");
@@ -53,6 +57,7 @@ public final class ContentParserModPlanets {
     @Nullable public static ExtraPlanetsDef extraPlanets(ResourceLocation key, JsonObject galacticraft) {
         if (!galacticraft.has(EXTRA_PLANETS)) { return null; }
         JsonObject json = Json.getJsonObject(galacticraft, EXTRA_PLANETS);
+        Json.unknownKeys(json, EXTRA_PLANETS, EXTRA_PLANETS_KEYS);
         float day = Json.getFloat(json, "temperatureDay", Float.NaN);
         String lander = Json.choice(json, "lander", "", "Dimension " + key + " ExtraPlanets", LANDERS);
         return new ExtraPlanetsDef(level(json, "pressure"), level(json, "radiation"), day,

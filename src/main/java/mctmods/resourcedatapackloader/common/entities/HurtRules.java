@@ -12,6 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class HurtRules {
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("attacker", "victim", "cancel", "runs"));
     private static final Map<String, List<HurtRuleDef>> BY_VICTIM = new HashMap<>();
     private static final List<HurtRuleDef> BY_KIND = new ArrayList<>();
 
@@ -71,6 +74,7 @@ public final class HurtRules {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         List<String> attackers = kinds(key, json, "attacker");
         List<String> victims = kinds(key, json, "victim");
         if (attackers == null || victims == null) {

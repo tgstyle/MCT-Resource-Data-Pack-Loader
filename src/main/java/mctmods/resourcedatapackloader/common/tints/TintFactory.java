@@ -4,12 +4,16 @@ import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.MathHelper;
 
 public final class TintFactory {
     public static final String FROM = "from";
     public static final String TO = "to";
+    private static final List<String> TINT_KEYS = Collections.unmodifiableList(Arrays.asList(FROM, TO));
     private static final int OPAQUE = 0xFF000000;
     private final int from;
     private final int to;
@@ -20,6 +24,7 @@ public final class TintFactory {
     }
 
     @Nullable public static TintFactory of(JsonObject json) {
+        Json.unknownKeys(json, "tint", TINT_KEYS);
         Integer starts = json.has(FROM) ? color(Json.getString(json, FROM, "")) : Integer.valueOf(OPAQUE);
         Integer ends = color(Json.getString(json, TO, ""));
         if (starts == null || ends == null) { return null; }

@@ -4,11 +4,15 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 public final class CraterDef {
     public static final int WIDEST = 64;
+    private static final List<String> CRATER_KEYS = Collections.unmodifiableList(Arrays.asList("chance", "minRadius", "maxRadius", "depth"));
     public final float chance;
     public final int minRadius;
     public final int maxRadius;
@@ -28,6 +32,7 @@ public final class CraterDef {
             return null;
         }
         JsonObject craters = json.getAsJsonObject("craters");
+        Json.unknownKeys(craters, "craters", CRATER_KEYS);
         String owner = "Biome " + key + " craters";
         float chance = Json.ranged(craters, "chance", 0.1F, 0.0F, 1.0F, owner);
         int smallest = (int) Json.ranged(craters, "minRadius", 8.0F, 2.0F, WIDEST, owner);

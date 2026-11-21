@@ -6,10 +6,13 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
 public final class DataCheck {
+    private static final List<String> CHECK_KEYS = Collections.unmodifiableList(Arrays.asList("name", "is", "isNot", "atLeast", "atMost", "set"));
     public final String name;
     @Nullable public final Object is;
     @Nullable public final Object isNot;
@@ -37,6 +40,7 @@ public final class DataCheck {
 
     private static void add(List<DataCheck> checks, JsonElement element, String kind, String member, Object file) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+        Json.unknownKeys(json, member + " data check", CHECK_KEYS);
         String name = Json.text(json, "name", "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("{} {} in {} has a data check with no name, skipping the check", kind, member, file);

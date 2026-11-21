@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +23,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 
 public final class ContentItemLocks {
+    private static final List<String> LOCK_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "names", "namespaces", "oreDict", "advancement"));
     private static volatile List<Group> groups = Collections.emptyList();
 
     private ContentItemLocks() {}
@@ -62,6 +64,7 @@ public final class ContentItemLocks {
 
     private static void read(List<Group> into, ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.unknownKeys(json, "the top level", LOCK_KEYS);
         ItemSelection selection = new ItemSelection("Item lock", "locks");
         selection.read(json, key);
         if (selection.unnamed()) {

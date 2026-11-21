@@ -32,6 +32,16 @@ public final class ContentParserDimensionTraits {
     private static final int CALM_LOW = 12000;
     private static final int CALM_HIGH = 180000;
     private static final List<String> COLOR_MODES = Collections.unmodifiableList(Arrays.asList("multiply", "solid"));
+    private static final List<String> PHYSICS_KEYS = Collections.unmodifiableList(Arrays.asList("gravity", "fallDamage", "arrowGravity"));
+    private static final List<String> WEATHER_KEYS = Collections.unmodifiableList(Arrays.asList("precipitation", "lightning", "snow", "freeze", "alwaysRain", "cycle", "rain", "wind"));
+    private static final List<String> CYCLE_KEYS = Collections.unmodifiableList(Arrays.asList("rainTicks", "clearTicks", "thunderTicks", "calmTicks", "maxStrength", "thunderStrength"));
+    private static final List<String> RAIN_KEYS = Collections.unmodifiableList(Arrays.asList("particle", "sound", "volume", "interval", "color", "snowColor", "splashColor", "colorMode", "angle", "heading", "splashUpward"));
+    private static final List<String> WIND_KEYS = Collections.unmodifiableList(Arrays.asList("gust", "every", "swing"));
+    private static final List<String> AMBIENCE_KEYS = Collections.unmodifiableList(Arrays.asList("music", "musicDelay", "loopSound", "ambientSound", "soundChance", "particle", "particleChance", "particleColor"));
+    private static final List<String> DARK_DAMAGE_KEYS = Collections.unmodifiableList(Arrays.asList("damage", "interval", "brightness"));
+    private static final List<String> MOON_KEYS = Collections.unmodifiableList(Arrays.asList("texture", "size", "tilt", "roll", "spin", "flip"));
+    private static final List<String> STARS_KEYS = Collections.unmodifiableList(Arrays.asList("count", "size"));
+    private static final List<String> BODY_KEYS = Collections.unmodifiableList(Arrays.asList("texture", "size", "angle", "tilt", "followsTime", "roll", "spin", "flip", "body", "gate"));
     private static final String RAIN_PARTICLE = "droplet";
     private static final String RAIN_SOUND = "minecraft:weather.rain";
     private static final String WHITE = "#FFFFFF";
@@ -61,6 +71,8 @@ public final class ContentParserDimensionTraits {
         JsonObject time = Json.getJsonObject(json, "time", new JsonObject());
         JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
         JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
+        Json.unknownKeys(physics, "physics", PHYSICS_KEYS);
+        Json.unknownKeys(weather, "weather", WEATHER_KEYS);
         boolean still = belt && !time.has("dayLength") && !sky.has("fixedTime");
         long day = still ? DimensionTraitsDef.NO_DAY : Json.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
         if (!still && day <= 0L) {
@@ -92,6 +104,7 @@ public final class ContentParserDimensionTraits {
     }
 
     private static DimensionTraitsDef.DarkDamage darkDamage(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "darkDamage", DARK_DAMAGE_KEYS);
         float damage = Json.getFloat(json, "damage", DARK_DAMAGE);
         if (!(damage > 0.0F)) {
             ContentLog.LOGGER.error("Dimension {} gives darkDamage.damage of {}, which is not above zero, using {}", key, damage, DARK_DAMAGE);
@@ -106,11 +119,13 @@ public final class ContentParserDimensionTraits {
     }
 
     private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {
+        Json.unknownKeys(moon, "moon", MOON_KEYS);
         return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", MOON).trim()), Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)),
                 ContentParserSkyLook.finite(key, moon, "sky.moon", "tilt"), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
     private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "ambience", AMBIENCE_KEYS);
         int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
         String particle = Json.getString(json, "particle", "").trim();
         if (!particle.isEmpty() && EnumParticleTypes.getByName(particle) == null) {
@@ -133,6 +148,7 @@ public final class ContentParserDimensionTraits {
     private static float chance(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " ambience"); }
 
     private static RainDef rain(ResourceLocation key, JsonObject json, @Nullable WindDef wind) {
+        Json.unknownKeys(json, "rain", RAIN_KEYS);
         String particle = Settings.lower(Json.getString(json, "particle", RAIN_PARTICLE));
         if (EnumParticleTypes.getByName(particle) == null) {
             ContentLog.LOGGER.error("Dimension {} names rain particle '{}', which is no particle Minecraft knows, using {}", key, particle, RAIN_PARTICLE);
@@ -154,6 +170,7 @@ public final class ContentParserDimensionTraits {
     }
 
     private static WindDef wind(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "wind", WIND_KEYS);
         return new WindDef(degrees(key, json, "gust", GUST, MAX_GUST),
                 span(key, json, WIND, "every", EVERY_LOW, EVERY_HIGH),
                 degrees(key, json, "swing", SWING, MAX_ANGLE));
@@ -170,6 +187,7 @@ public final class ContentParserDimensionTraits {
     }
 
     private static DimensionTraitsDef.Cycle cycle(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "cycle", CYCLE_KEYS);
         int[] rain = span(key, json, CYCLE, "rainTicks", CYCLE_LOW, RAIN_HIGH);
         int[] clear = span(key, json, CYCLE, "clearTicks", CYCLE_LOW, CLEAR_HIGH);
         int[] thunder = json.has("thunderTicks") ? span(key, json, CYCLE, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
@@ -212,6 +230,7 @@ public final class ContentParserDimensionTraits {
         if (!sky.has("sun") && !sky.has("moon") && !sky.has("bodies") && !sky.has("stars")) { return null; }
         JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
         JsonObject stars = Json.getJsonObject(sky, "stars", new JsonObject());
+        Json.unknownKeys(stars, "stars", STARS_KEYS);
         List<DimensionTraitsDef.Body> bodies = null;
         if (sky.has("bodies")) {
             List<DimensionTraitsDef.Body> found = new ArrayList<>();
@@ -222,6 +241,7 @@ public final class ContentParserDimensionTraits {
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
+                Json.unknownKeys(body, "bodies", BODY_KEYS);
                 String ringBody = Json.getString(body, "body", "").trim();
                 String gate = Json.getString(body, "gate", "").trim();
                 if (!gate.isEmpty()) { GateSync.watch(gate); }

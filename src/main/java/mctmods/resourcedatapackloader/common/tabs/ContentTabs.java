@@ -6,12 +6,16 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 public final class ContentTabs {
+    private static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList("label", "icon"));
     private static final Map<String, String> ICONS = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> SOURCES = new LinkedHashMap<>();
     private static boolean loaded;
@@ -27,6 +31,7 @@ public final class ContentTabs {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "creative tab");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", KEYS);
         String label = Json.getString(json, "label", key.getPath());
         String icon = Json.getString(json, "icon", "");
         if (icon.isEmpty()) {

@@ -8,8 +8,10 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.block.Block;
@@ -17,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 public final class ContentDisabled {
+    private static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList("requires", "hideOnly", "untag", "hideCategories", "fluids", "names", "namespaces", "oreDict"));
     private static final ItemSelection SELECTION = new ItemSelection("Disabled", "disables");
     private static final ItemSelection HIDDEN = new ItemSelection("Hidden", "hides");
     private static final ItemSelection UNTAGGED = new ItemSelection("Untagged", "untags");
@@ -72,6 +75,7 @@ public final class ContentDisabled {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "disabled file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         (Json.getBoolean(json, "hideOnly", false) ? HIDDEN : SELECTION).read(json, key);
         UNTAGGED.readNames(Json.strings(json, "untag"), key);

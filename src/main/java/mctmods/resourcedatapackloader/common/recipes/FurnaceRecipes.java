@@ -11,14 +11,20 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 public final class FurnaceRecipes {
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("remove", "add"));
+    private static final List<String> REMOVE_KEYS = Collections.unmodifiableList(Arrays.asList("result", "input"));
+    private static final List<String> ADD_KEYS = Collections.unmodifiableList(Arrays.asList("input", "output", "count", "experience"));
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private FurnaceRecipes() {}
@@ -40,12 +46,14 @@ public final class FurnaceRecipes {
     }
 
     private static void apply(ResourceLocation key, JsonObject json, int[] counts) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         if (json.has("remove")) { for (JsonElement element : Json.getJsonArray(json, "remove")) { counts[0] += remove(key, element); } }
         if (json.has("add")) { for (JsonElement element : Json.getJsonArray(json, "add")) { if (add(key, element)) { counts[1]++; } } }
     }
 
     private static int remove(ResourceLocation key, JsonElement element) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : null;
+        if (json != null) { Json.unknownKeys(json, "remove", REMOVE_KEYS); }
         String result = json == null ? element.getAsString() : Json.getString(json, "result", "");
         String input = json == null ? "" : Json.getString(json, "input", "");
         ItemStack resultStack = result.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(key, result, 1);
@@ -80,6 +88,7 @@ public final class FurnaceRecipes {
             return false;
         }
         JsonObject json = element.getAsJsonObject();
+        Json.unknownKeys(json, "add", ADD_KEYS);
         String inputName = Json.getString(json, "input", "");
         String outputName = Json.getString(json, "output", "");
         if (inputName.isEmpty() || outputName.isEmpty()) {

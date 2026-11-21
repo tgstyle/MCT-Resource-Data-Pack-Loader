@@ -18,6 +18,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -35,6 +36,13 @@ import net.minecraft.world.World;
 
 public final class ZoneRules {
     public static final String DEFAULT_MESSAGE = "rdpl.zone.denied";
+    private static final List<String> ZONE_KEYS = Collections.unmodifiableList(Arrays.asList("id", "where", "except", "break", "place", "use", "open", "fly", "message", "denyToolActions", "damage"));
+    private static final List<String> WHERE_KEYS = Collections.unmodifiableList(Arrays.asList("dimension", "box", "claim"));
+    private static final List<String> EXCEPT_KEYS = Collections.unmodifiableList(Arrays.asList("creative", "tag"));
+    private static final List<String> DAMAGE_KEYS = Collections.unmodifiableList(Arrays.asList("entities", "unlessAttackerInside", "allowNoAttacker"));
+    private static final List<String> RULE_KEYS = Collections.unmodifiableList(Arrays.asList("allow", "deny"));
+    private static final List<String> PLACE_KEYS = Collections.unmodifiableList(Arrays.asList("allow", "deny", "on"));
+    private static final List<String> OPEN_KEYS = Collections.unmodifiableList(Arrays.asList("allow", "deny", "close"));
     private static final String ALL = "all";
     private static final int BOX_VALUES = 6;
     private static final List<ZoneDef> ZONES = new ArrayList<>();
@@ -108,11 +116,14 @@ public final class ZoneRules {
     private static boolean excepts(ZoneDef zone, @Nullable EntityPlayer player) { return player != null && ((zone.exceptCreative && player.isCreative()) || (!zone.exceptTag.isEmpty() && player.getTags().contains(zone.exceptTag))); }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", ZONE_KEYS);
         String id = Json.text(json, "id", key.toString());
         JsonObject where = Json.object(json, "where");
+        Json.unknownKeys(where, "where", WHERE_KEYS);
         int[] box = box(id, where);
         if (box != null && box.length == 0) { return; }
         JsonObject except = Json.object(json, "except");
+        Json.unknownKeys(except, "except", EXCEPT_KEYS);
         ZoneListDef breaks = list(key, id, json, "break");
         ZoneListDef places = list(key, id, json, "place");
         ZoneListDef uses = list(key, id, json, "use");
@@ -159,6 +170,7 @@ public final class ZoneRules {
             return null;
         }
         JsonObject damage = json.getAsJsonObject("damage");
+        Json.unknownKeys(damage, "damage", DAMAGE_KEYS);
         List<String> entities = damage.has("entities") ? MobStats.entities("Zone file " + key, "damage entities", damage.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Zone file {} has a damage rule with no entities, ignoring it", key);
@@ -193,6 +205,7 @@ public final class ZoneRules {
     @Nullable private static ZoneListDef list(ResourceLocation key, String id, JsonObject json, String part) {
         if (!json.has(part) || !json.get(part).isJsonObject()) { return null; }
         JsonObject rule = json.getAsJsonObject(part);
+        Json.unknownKeys(rule, part, "place".equals(part) ? PLACE_KEYS : "open".equals(part) ? OPEN_KEYS : RULE_KEYS);
         String label = "Zone " + id + " " + part;
         boolean denyAll = rule.has("deny") && rule.get("deny").isJsonPrimitive() && ALL.equalsIgnoreCase(rule.get("deny").getAsString().trim());
         ItemSelection allow = rule.has("allow") ? selection(key, label + " allow", entries(rule, "allow")) : null;

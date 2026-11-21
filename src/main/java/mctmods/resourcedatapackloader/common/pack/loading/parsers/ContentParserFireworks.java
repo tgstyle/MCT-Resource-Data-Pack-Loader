@@ -19,6 +19,9 @@ public final class ContentParserFireworks {
     private static final List<String> TARGETS = Arrays.asList(FireworkDef.ON_BLOCK, FireworkDef.ON_AIR, FireworkDef.ON_BOTH);
     private static final List<String> PATTERNS = Arrays.asList(FireworkDef.PATTERN_SPHERE, FireworkDef.PATTERN_RING, FireworkDef.PATTERN_FOUNTAIN, FireworkDef.PATTERN_POINTS);
     private static final List<String> SHAPES = Arrays.asList(FireworkDef.SHAPE_SMALL_BALL, FireworkDef.SHAPE_LARGE_BALL, FireworkDef.SHAPE_STAR, FireworkDef.SHAPE_CREEPER, FireworkDef.SHAPE_BURST);
+    private static final List<String> FIREWORK_KEYS = Collections.unmodifiableList(Arrays.asList("replaceUse", "mode", "on", "flight", "consume", "dispense", "explosions", "burst"));
+    private static final List<String> EXPLOSION_KEYS = Collections.unmodifiableList(Arrays.asList("shape", "colors", "fade", "trail", "twinkle"));
+    private static final List<String> BURST_KEYS = Collections.unmodifiableList(Arrays.asList("particle", "count", "speed", "pattern", "sound", "delay", "spread", "points"));
     private static final int[] WHITE = {0xFFFFFF};
 
     private ContentParserFireworks() {}
@@ -30,6 +33,7 @@ public final class ContentParserFireworks {
             return null;
         }
         JsonObject held = json.getAsJsonObject("firework");
+        Json.unknownKeys(held, "firework", FIREWORK_KEYS);
         String owner = "Item " + key + " firework";
         return new FireworkDef(
                 Json.getBoolean(held, "replaceUse", false),
@@ -65,6 +69,7 @@ public final class ContentParserFireworks {
                 continue;
             }
             JsonObject json = element.getAsJsonObject();
+            Json.unknownKeys(json, "firework.explosions", EXPLOSION_KEYS);
             int[] colors = colors(json, "colors", owner);
             found.add(new FireworkDef.Explosion(
                     Json.choice(json, "shape", FireworkDef.SHAPE_SMALL_BALL, owner, SHAPES),
@@ -124,6 +129,7 @@ public final class ContentParserFireworks {
     }
 
     @Nullable private static FireworkDef.Burst burst(JsonObject json, String owner) {
+        Json.unknownKeys(json, "firework.burst", BURST_KEYS);
         String particle = Json.getString(json, "particle", "").trim();
         if (particle.isEmpty()) {
             ContentLog.LOGGER.error("{} has no 'particle' item, ignoring the burst", owner);

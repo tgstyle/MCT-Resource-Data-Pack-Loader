@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
@@ -18,6 +19,7 @@ public final class ContentParserCrops {
     private static final List<String> SOURCES = Arrays.asList(TallDef.FROM_BASE, TallDef.FROM_ALL);
 
     private static final List<String> AGE_KEYS = Arrays.asList("rise", "regrow", "produceFrom");
+    private static final List<String> TALL_KEYS = Collections.unmodifiableList(Arrays.asList("parts", "rise", "regrow", "produceFrom"));
 
     private ContentParserCrops() {}
 
@@ -30,6 +32,7 @@ public final class ContentParserCrops {
             return null;
         }
         JsonObject held = Json.getJsonObject(json, "tall");
+        Json.unknownKeys(held, "tall", TALL_KEYS);
         int parts = MathHelper.clamp(Json.getInt(held, "parts", TallDef.DEFAULT_PARTS), TallDef.MIN_PARTS, TallDef.MAX_PARTS);
         if (flower) {
             for (String ignored : AGE_KEYS) {

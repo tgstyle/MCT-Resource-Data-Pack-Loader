@@ -9,12 +9,14 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 
 public final class SpawnLocks {
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("entities", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount"));
     private static final List<Lock> LOCKS = new ArrayList<>();
 
     private SpawnLocks() {}
@@ -37,6 +39,7 @@ public final class SpawnLocks {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         List<String> entities = json.has("entities") ? MobStats.entities("Spawn lock file " + key, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Spawn lock file {} names no entities, ignoring it", key);

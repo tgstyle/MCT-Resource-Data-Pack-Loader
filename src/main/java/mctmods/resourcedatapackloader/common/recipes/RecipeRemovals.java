@@ -23,7 +23,10 @@ public final class RecipeRemovals {
     public static void apply(IForgeRegistry<IRecipe> registry) {
         if (!Config.recipes.removals) { return; }
         SELECTOR.clear();
-        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", SELECTOR::read);
+        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", (key, json) -> {
+            Json.unknownKeys(json, "the top level", RecipeSelector.KEYS);
+            SELECTOR.read(key, json);
+        });
         if (SELECTOR.isEmpty()) { return; }
         int removed = removeWhere(registry, (key, recipe) -> !RecipeSpared.spares(key) && matches(key, recipe)).size();
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " crafting recipe(s)"); }

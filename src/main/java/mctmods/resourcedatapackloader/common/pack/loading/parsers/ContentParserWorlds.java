@@ -63,6 +63,12 @@ public final class ContentParserWorlds {
     private static final List<String> TEAMLESS = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.REFUSE));
     private static final List<String> TALLIES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.TEAM));
     private static final List<String> STANDINGS = Collections.unmodifiableList(Arrays.asList(GateDef.ALONE, GateDef.WITH));
+    private static final List<String> GATE_KEYS = Collections.unmodifiableList(Arrays.asList("scope", "dimension", "name", "teamless", "open", "unlock", "portalBlocks", "blockedMessage", "unlockedMessage", "safeReturn", "requires", "stayMinutes", "stayReset", "stayWarn", "stayMessage", "onExpire", "dropOnLeave"));
+    private static final List<String> UNLOCK_KEYS = Collections.unmodifiableList(Arrays.asList("craft", "consume", "consumeCount", "hold", "advancement", "killed", "killedCount", "killedDrops", "killedTally", "killedRank", "scoreAtLeast", "team", "objective", "dietAtLeast", "dietCount", "teamAndScore", "worn", "each", "data"));
+    private static final List<String> DIMENSION_KEYS = Collections.unmodifiableList(Arrays.asList("id", "suffix", "keepLoaded", "requires", "terrain", "biomes", "sky", "gameRules", "portal", "galacticraft", "physics", "time", "weather", "ambience", "darkDamage", "environments", "seasons", "inherits", "variants"));
+    private static final List<String> TERRAIN_KEYS = Collections.unmodifiableList(Arrays.asList("type", "generatorOptions", "structures", "seaLevel", "fillBlock", "seaFluid"));
+    private static final List<String> BIOMES_KEYS = Collections.unmodifiableList(Arrays.asList("biome", "source", "biomeList"));
+    private static final List<String> PORTAL_KEYS = Collections.unmodifiableList(Arrays.asList("frames", "color", "return", "ignitedByFluid", "ignitedBy", "returnDimension", "gate", "cooldown", "platform", "platformBlock", "sound", "owned", "walkIn", "landing", "torches", "useRange", "mounted", "returnTo"));
     private static final String ROLES = "rlsc.";
 
     private ContentParserWorlds() {}
@@ -454,6 +460,18 @@ public final class ContentParserWorlds {
         return found;
     }
 
+    public static void dimensionKeys(JsonObject json) {
+        Json.unknownKeys(json, "the top level", DIMENSION_KEYS);
+        level(json, "terrain", TERRAIN_KEYS);
+        level(json, "biomes", BIOMES_KEYS);
+        level(json, "portal", PORTAL_KEYS);
+        level(json, "sky", ContentParserSkyLook.SKY_KEYS);
+    }
+
+    private static void level(JsonObject json, String member, List<String> read) {
+        if (json.has(member) && json.get(member).isJsonObject()) { Json.unknownKeys(json.getAsJsonObject(member), member, read); }
+    }
+
     public static DimensionDef dimension(ResourceLocation key, JsonObject json) {
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
@@ -545,7 +563,9 @@ public final class ContentParserWorlds {
         if (json == null) { return null; }
         String owner = "Gate " + key;
         String scope = Json.choice(json, "scope", GateDef.PLAYER, owner, SCOPES);
+        Json.unknownKeys(json, "the top level", GATE_KEYS);
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
+        Json.unknownKeys(unlock, "unlock", UNLOCK_KEYS);
         int dimension = Json.getInt(json, "dimension", GateDef.NO_DIMENSION);
         return new GateDef(key,
                 dimension,

@@ -14,6 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +29,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentWeights {
+    private static final List<String> ITEM_KEYS = Collections.unmodifiableList(Arrays.asList("weight", "names", "namespaces", "oreDict"));
     private static final int OWN = 1;
     private static final int NAME_META = 2;
     private static final int NAME = 3;
@@ -128,6 +130,7 @@ public final class ContentWeights {
     }
 
     private static void entry(List<Source> sources, ResourceLocation key, JsonObject entry) {
+        Json.unknownKeys(entry, "items", ITEM_KEYS);
         if (!entry.has("weight")) {
             ContentLog.LOGGER.error("An items entry in weight file {} has no weight, skipping it", key);
             return;

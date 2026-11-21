@@ -50,6 +50,7 @@ public final class ContentSleep {
     private static final String CHAT = "chat";
     private static final String BAR = "bar";
     private static final List<String> PLACES = Arrays.asList(CHAT, BAR);
+    private static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList(BED_SETS_SPAWN, BED_SPAWN_BY_DAY, SLEEP_SHARE, LEAVES_OUT_BELOW, SLEEP_SAYS, WAKE_SAYS, MORNING_SAYS, SAYS_IN));
     private static final int WHOLE_SHARE = 100;
     private static final int NO_HEIGHT = Integer.MIN_VALUE;
     private static final Map<Integer, Map<UUID, String>> SLEEPERS = new HashMap<>();
@@ -95,6 +96,7 @@ public final class ContentSleep {
     }
 
     private static void read(String owner, JsonObject json) {
+        Json.unknownKeys(json, "the top level", KEYS);
         if (json.has(BED_SETS_SPAWN)) { bedSetsSpawn = Json.getBoolean(json, BED_SETS_SPAWN, true); }
         if (json.has(BED_SPAWN_BY_DAY)) { bedSpawnByDay = Json.getBoolean(json, BED_SPAWN_BY_DAY, false); }
         if (json.has(SLEEP_SHARE)) { sleepShare = Math.round(Json.ranged(json, SLEEP_SHARE, WHOLE_SHARE, 0.0F, WHOLE_SHARE, owner)); }

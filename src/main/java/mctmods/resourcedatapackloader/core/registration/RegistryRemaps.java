@@ -9,8 +9,11 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -22,6 +25,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 public final class RegistryRemaps {
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
+    private static final List<String> REMAP_KEYS = Collections.unmodifiableList(Arrays.asList(REGISTRY, MAPPING));
     private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -37,6 +41,7 @@ public final class RegistryRemaps {
     }
 
     private static int read(JsonObject json) {
+        Json.unknownKeys(json, "the top level", REMAP_KEYS);
         ResourceLocation registry = new ResourceLocation(Json.getString(json, REGISTRY));
         JsonObject mapping = Json.getJsonObject(json, MAPPING);
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());

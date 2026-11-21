@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -66,6 +67,8 @@ public final class ContentAnvils {
     private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
     private static final Map<AnvilDef, Map<Enchantment, Integer>> ENCHANTMENTS = new IdentityHashMap<>();
     private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
+    private static final List<String> ANVIL_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "match", "repairWith", "repairPerUnit", "repairCost", "combineCost", "bookCost", "penalty", "repair", "combine", TOO_EXPENSIVE, "item", "with", "result", "levels", "enchantments", "grants", "locks"));
+    private static final List<String> STACK_KEYS = Collections.unmodifiableList(Arrays.asList("item", "count"));
 
     private ContentAnvils() {}
 
@@ -80,6 +83,7 @@ public final class ContentAnvils {
         if (!Config.data.anvils) { return false; }
         Json.eachFile(PackManager.ANVILS, "anvil file", (key, contents) -> {
             JsonObject json = Json.object(key, contents, "anvil work");
+            if (json != null) { Json.unknownKeys(json, "the top level", ANVIL_KEYS); }
             if (json == null || !ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
             if (AnvilRules.names(json)) {
                 AnvilRules.read(key, json);
@@ -152,7 +156,10 @@ public final class ContentAnvils {
     }
 
     private static String itemOf(JsonObject json, String name) {
-        if (json.has(name) && json.get(name).isJsonObject()) { return Json.getString(Json.getJsonObject(json, name), "item", "").trim(); }
+        if (json.has(name) && json.get(name).isJsonObject()) {
+            Json.unknownKeys(json.getAsJsonObject(name), name, STACK_KEYS);
+            return Json.getString(Json.getJsonObject(json, name), "item", "").trim();
+        }
         return Json.getString(json, name, "").trim();
     }
 

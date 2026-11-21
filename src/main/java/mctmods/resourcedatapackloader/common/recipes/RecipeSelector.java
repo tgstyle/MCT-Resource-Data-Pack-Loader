@@ -10,6 +10,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +24,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.OreDictionary;
 
 final class RecipeSelector {
+    static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList("names", "namespaces", "outputs", "regex", "inputs", "types"));
     private final Set<String> names = new LinkedHashSet<>();
     private final Set<String> prefixes = new LinkedHashSet<>();
     private final List<ItemStack> outputs = new ArrayList<>();

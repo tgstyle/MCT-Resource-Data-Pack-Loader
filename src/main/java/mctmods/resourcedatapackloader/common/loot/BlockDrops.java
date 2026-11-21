@@ -17,6 +17,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -60,6 +62,9 @@ public final class BlockDrops {
     private static final String GRANT = "grant";
     private static final String RUNS = "runs";
     private static final String PLAYER = "player";
+    private static final List<String> RULE_KEYS = Collections.unmodifiableList(Arrays.asList(BLOCK, META, REPLACE, DROPS, ONCE, ADVANCEMENT, RUNS));
+    private static final List<String> DROP_KEYS = Collections.unmodifiableList(Arrays.asList(ITEM, EXPERIENCE, COUNT, CHANCE, FORTUNE, SILK_TOUCH));
+    private static final List<String> ONCE_KEYS = Collections.unmodifiableList(Arrays.asList(PER, GRANT));
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
     private static final List<TagRule> BY_TAG = new ArrayList<>();
     private static final Set<ResourceLocation> MISSING = new HashSet<>();
@@ -127,6 +132,7 @@ public final class BlockDrops {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", RULE_KEYS);
         String name = Json.getString(json, BLOCK, "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
@@ -185,6 +191,7 @@ public final class BlockDrops {
             return null;
         }
         JsonObject once = json.getAsJsonObject(ONCE);
+        Json.unknownKeys(once, ONCE, ONCE_KEYS);
         String grant = Json.getString(once, GRANT, "").trim();
         if (!PLAYER.equals(Settings.lower(Json.getString(once, PER, ""))) || grant.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} 'once' needs per \"player\" and a grant, ignoring it", key);
@@ -194,6 +201,7 @@ public final class BlockDrops {
     }
 
     private static Drop drop(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, DROPS, DROP_KEYS);
         boolean experience = json.has(EXPERIENCE);
         ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, Json.getString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }

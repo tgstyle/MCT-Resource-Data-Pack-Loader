@@ -31,6 +31,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class CommandGuards {
     private static final Set<String> OWN = new HashSet<>(Arrays.asList("rdpl", "rdplserver"));
     private static final String DENIED = "commands.generic.permission";
+    private static final List<String> GUARD_KEYS = Collections.unmodifiableList(Arrays.asList("guard", "when", "unless", "message"));
     private static final List<Guard> GUARDS = new ArrayList<>();
 
     private CommandGuards() {}
@@ -42,6 +43,7 @@ public final class CommandGuards {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", GUARD_KEYS);
         String name = Json.getString(json, "guard", "").trim().toLowerCase(Locale.ROOT);
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Command guard file {} names no command in guard, ignoring it", key);

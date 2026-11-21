@@ -11,6 +11,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -36,6 +38,7 @@ public final class PlayerLoot {
     private static final String ADD = "add";
     private static final String REPLACE = "replace";
     private static final String KEEP_INVENTORY_RULE = "keepInventory";
+    private static final List<String> LOOT_KEYS = Collections.unmodifiableList(Arrays.asList(TABLE, MODE, KEEP_INVENTORY, DROP_LOOSE));
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -50,6 +53,7 @@ public final class PlayerLoot {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", LOOT_KEYS);
         String table = Json.getString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);

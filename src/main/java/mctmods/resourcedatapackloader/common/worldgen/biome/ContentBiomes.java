@@ -46,6 +46,12 @@ import net.minecraftforge.registries.IForgeRegistry;
 public final class ContentBiomes {
     private static final List<String> RATE_KEYS = Collections.unmodifiableList(Arrays.asList(
             "surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight"));
+    private static final List<String> BIOME_KEYS = Collections.unmodifiableList(Arrays.asList(
+            "name", "id", "temperature", "rainfall", "baseHeight", "heightVariation", "snow", "rain", "waterColor", "baseBiome", "topBlock", "fillerBlock", "stoneBlock", "types",
+            "placement", "villageType", "decoration", "spawnChance", "spawnRates", "grassColor", "foliageColor", "snowColor", "minHeight", "maxHeight", "replaces",
+            "keepDefaultSpawns", "spawns", "requires", "skyStone", "skyIslands", "skyThickness", "craters", "inherits"));
+    private static final List<String> PLACEMENT_KEYS = Collections.unmodifiableList(Arrays.asList("climate", "weight", "playerSpawn", "villages", "villageSpawn", "strongholds"));
+    private static final List<String> SPAWN_KEYS = Collections.unmodifiableList(Arrays.asList("entity", "type", "weight", "min", "max"));
     private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
     private static final List<ContentBiome> REGISTERED = new ArrayList<>();
     private static boolean loaded;
@@ -107,6 +113,7 @@ public final class ContentBiomes {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "biome file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", BIOME_KEYS);
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (json.has("spawns")) {
             for (JsonElement element : Json.getJsonArray(json, "spawns")) {
@@ -115,6 +122,7 @@ public final class ContentBiomes {
                     continue;
                 }
                 JsonObject entry = element.getAsJsonObject();
+                Json.unknownKeys(entry, "spawns", SPAWN_KEYS);
                 String entity = Json.getString(entry, "entity", "");
                 if (entity.isEmpty()) {
                     ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
@@ -136,6 +144,7 @@ public final class ContentBiomes {
             ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, entry.getKey(), RATE_KEYS);
         }
         JsonObject placement = Json.getJsonObject(json, "placement", new JsonObject());
+        Json.unknownKeys(placement, "placement", PLACEMENT_KEYS);
         DEFS.put(key, new BiomeDef(key,
                 Json.getString(json, "name", key.getPath()),
                 Json.getInt(json, "id", BiomeDef.AUTO_ID),

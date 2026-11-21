@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ public final class RecipeTransfer {
     private static final String DAMAGE = "damage";
     private static final String NBT = "nbt";
     private static final Set<String> PARTS = new HashSet<>(Arrays.asList(ENCHANTMENTS, NAME, DAMAGE, NBT));
+    private static final List<String> TRANSFER_KEYS = Collections.unmodifiableList(Arrays.asList("from", "source", "take"));
     private static final List<Entry> ENTRIES = new ArrayList<>();
 
     private RecipeTransfer() {}
@@ -74,16 +76,19 @@ public final class RecipeTransfer {
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!json.has("transfer")) { return; }
+        if (!json.has("swaps")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
         if (!json.has("recipes") || !json.get("recipes").isJsonObject()) {
             ContentLog.LOGGER.error("Recipe transfer file {} needs a recipes object saying which recipes it covers, ignoring it", key);
             return;
         }
+        if (json.get("transfer").isJsonObject()) { Json.unknownKeys(json.getAsJsonObject("transfer"), "transfer", TRANSFER_KEYS); }
         Transfer transfer = json.get("transfer").isJsonObject() ? transfer(key, json.getAsJsonObject("transfer")) : null;
         if (transfer == null) {
             ContentLog.LOGGER.error("The transfer in {} needs a from, a source and a take list of enchantments, name, damage or nbt, ignoring it", key);
             return;
         }
         RecipeSelector scope = new RecipeSelector();
+        Json.unknownKeys(json.getAsJsonObject("recipes"), "recipes", RecipeSelector.KEYS);
         scope.read(key, json.getAsJsonObject("recipes"));
         if (scope.isEmpty()) {
             ContentLog.LOGGER.error("Recipe transfer file {} selects no recipes, ignoring it", key);

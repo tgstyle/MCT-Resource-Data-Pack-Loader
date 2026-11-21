@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -18,6 +19,8 @@ public final class HeartsDef {
     public static final float VANILLA = 10.0F;
     public static final List<String> STYLES = Arrays.asList("bar", "chat");
     public static final List<String> LOSS_HEALTH = Arrays.asList("keep", "scale");
+    private static final List<String> HEARTS_KEYS = Collections.unmodifiableList(Arrays.asList("startHearts", "cap", "floor", "keepOnDeath", "floorDebt", "floorKills", "style", "lossHealth", "sound", "particle",
+            "lossSound", "lossParticle", "heartColors", "rewards", "losses"));
     private static final Pattern COLOR = Pattern.compile("#[0-9A-Fa-f]{6}");
     public final ResourceLocation file;
     @Nullable public final Float startHearts;
@@ -55,7 +58,10 @@ public final class HeartsDef {
         this.losses = rules(json, "losses", true);
     }
 
-    public static HeartsDef parse(ResourceLocation file, JsonObject json) { return new HeartsDef(file, json); }
+    public static HeartsDef parse(ResourceLocation file, JsonObject json) {
+        Json.unknownKeys(json, "the top level", HEARTS_KEYS);
+        return new HeartsDef(file, json);
+    }
 
     @Nullable private Float hearts(JsonObject json, String name) {
         if (!json.has(name)) { return null; }

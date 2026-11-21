@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -49,6 +50,8 @@ public final class ContentOverrides {
     private static final Map<PotionType, ImmutableList<PotionEffect>> TYPES = new IdentityHashMap<>();
     private static final Map<Item, OverrideDef.FoodDef> EDIBLE = new IdentityHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final List<String> OVERRIDE_KEYS = Collections.unmodifiableList(Arrays.asList("hardness", "resistance", "slipperiness", "light", "lightOpacity", "soundType", "harvestTool", "harvestToolLevel", "flammability", "fireSpread", "maxStackSize", "maxDamage", "containerItem", "effects", "food", "requires", "weight"));
+    private static final List<String> FOOD_KEYS = Collections.unmodifiableList(Arrays.asList("heal", "saturation", "alwaysEdible", "effects"));
 
     private ContentOverrides() {}
 
@@ -88,6 +91,7 @@ public final class ContentOverrides {
     @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
         JsonObject json = Json.object(source, contents, "override file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", OVERRIDE_KEYS);
         OverrideDef def = new OverrideDef(target, source,
                 floatOrNull(json, "hardness"),
                 floatOrNull(json, "resistance"),
@@ -217,6 +221,7 @@ public final class ContentOverrides {
     }
 
     private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) {
+        Json.unknownKeys(json, "food", FOOD_KEYS);
         return new OverrideDef.FoodDef(
                 Math.max(0, Json.getInt(json, "heal", 1)),
                 Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)),

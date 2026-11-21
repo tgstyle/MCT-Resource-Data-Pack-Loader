@@ -19,6 +19,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
@@ -45,6 +47,10 @@ public final class ContentAffixes {
     private static final int COMPOUND = 10;
     private static final int POLL = 20;
     private static final int NO_SOCKET = -1;
+    private static final List<String> AFFIX_KEYS = Collections.unmodifiableList(Arrays.asList("item", "affixes", "rolls", "sockets"));
+    private static final List<String> RANGE_KEYS = Collections.unmodifiableList(Arrays.asList("min", "max"));
+    private static final List<String> ENTRY_KEYS = Collections.unmodifiableList(Arrays.asList("attribute", "slot", "operation", "min", "max", "name", "weight"));
+    private static final List<String> GEM_KEYS = Collections.unmodifiableList(Arrays.asList("item", "attribute", "slot", "operation", "name", "amount", "levels"));
     private static final List<AffixDef> DEFS = new ArrayList<>();
     private static final List<GemDef> GEMS = new ArrayList<>();
 
@@ -66,6 +72,7 @@ public final class ContentAffixes {
     public static boolean sockets() { return !GEMS.isEmpty(); }
 
     private static void readAffix(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", AFFIX_KEYS);
         ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
         if (stack.isEmpty()) { return; }
         if (stack.getMaxStackSize() > 1) {
@@ -85,6 +92,7 @@ public final class ContentAffixes {
     }
 
     @Nullable private static AffixEntry readEntry(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "affixes", ENTRY_KEYS);
         IAttribute attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EntityEquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
         int operation = Json.getInt(json, "operation", 0);
@@ -99,6 +107,7 @@ public final class ContentAffixes {
     }
 
     private static void readGem(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", GEM_KEYS);
         ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
         IAttribute attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EntityEquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
@@ -115,6 +124,7 @@ public final class ContentAffixes {
 
     private static int[] range(JsonObject json, String member, int fallback) {
         JsonObject held = Json.object(json, member);
+        Json.unknownKeys(held, member, RANGE_KEYS);
         int min = Math.max(0, Json.getInt(held, "min", fallback));
         return new int[] {min, Math.max(min, Json.getInt(held, "max", min))};
     }

@@ -229,6 +229,12 @@ public final class Json {
         }
     }
 
+    public static void unknownKeys(JsonObject json, String path, Collection<String> read) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            if (!read.contains(entry.getKey())) { ContentLog.LOGGER.warn("{}: unknown key {} under {}, ignoring it", where(), entry.getKey(), path); }
+        }
+    }
+
     public static void eachFile(String type, String kind, BiConsumer<ResourceLocation, String> reader) { PackManager.get().forEach(type, PackManager.JSON, (namespace, path, contents) -> read(new ResourceLocation(namespace, path), contents, kind, reader)); }
 
     public static void eachInheritedFile(String type, String kind, Set<String> identity, BiConsumer<ResourceLocation, String> reader) {

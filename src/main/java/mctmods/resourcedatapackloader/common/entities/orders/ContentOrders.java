@@ -14,7 +14,9 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +54,8 @@ public final class ContentOrders {
     private static final String BOSS = "rdplBoss";
     private static final String TEAM = "team:";
     private static final String TAG = "tag:";
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("stockName", "hire", "spawnCap", "orders"));
+    private static final List<String> ORDER_KEYS = Collections.unmodifiableList(Arrays.asList("job", "blocks", "takers", "deliver", "areaByTier", "area", "limit", "standing", "workers", "priority", "sign", "speed", "tool", "wins", "points", "loot"));
     private static final int SIGN_WAIT = 2400;
     private static final int CHECK = 20;
     private static final Map<String, OrderDef> DEFS = new LinkedHashMap<>();
@@ -81,6 +85,7 @@ public final class ContentOrders {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "order file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         if (json.has("stockName")) { stockName = Json.getString(json, "stockName").trim(); }
         if (json.has("hire")) { hire = Json.getString(json, "hire").trim(); }
         if (json.has("spawnCap")) { spawnCap = Math.max(0, Json.getInt(json, "spawnCap")); }
@@ -96,6 +101,7 @@ public final class ContentOrders {
     }
 
     @Nullable private static OrderDef order(String name, JsonObject json) {
+        Json.unknownKeys(json, "orders", ORDER_KEYS);
         String named = Json.getString(json, "job", "");
         OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
         if (job == null) {

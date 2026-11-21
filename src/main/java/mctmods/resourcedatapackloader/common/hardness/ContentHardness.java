@@ -25,6 +25,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +68,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 
 public final class ContentHardness {
+    private static final List<String> HARDNESS_KEYS = Collections.unmodifiableList(Arrays.asList("blocks", "except", "miningTime", "blastResistance", "buckets", "minHeight", "maxHeight", "requires", "field", "keeps", "adventure", "advancement", "becomes"));
+    private static final List<String> ADVENTURE_KEYS = Collections.unmodifiableList(Arrays.asList("tools", "teams", "players", "entities"));
+    private static final List<String> BECOMES_KEYS = Collections.unmodifiableList(Arrays.asList("advancement", "block"));
+    private static final List<String> FIELD_KEYS = Collections.unmodifiableList(Arrays.asList("type", "spread", "chances", "cell", "seeds", "reach", "arms", "armReach"));
+    private static final List<String> RANGE_KEYS = Collections.unmodifiableList(Arrays.asList("min", "max"));
     private static final Map<ResourceLocation, HardnessDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, List<HardnessDef>> WHOLE = new IdentityHashMap<>();
     private static final Map<IBlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
@@ -384,6 +391,7 @@ public final class ContentHardness {
     @Nullable private static HardnessDef read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "hardness group");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", HARDNESS_KEYS);
         List<BlockMatchDef> blocks = ContentParser.matches(key, json, "blocks");
         if (blocks.isEmpty()) {
             ContentLog.LOGGER.error("Hardness group {} names no blocks, ignoring it", key);
@@ -395,6 +403,8 @@ public final class ContentHardness {
         IntRange heights = ContentParser.heights("Hardness group", key, json, 0, 255);
         JsonObject adventure = Json.getJsonObject(json, "adventure", new JsonObject());
         JsonObject becomes = Json.getJsonObject(json, "becomes", new JsonObject());
+        Json.unknownKeys(adventure, "adventure", ADVENTURE_KEYS);
+        Json.unknownKeys(becomes, "becomes", BECOMES_KEYS);
         return new HardnessDef(key, blocks, ContentParser.matches(key, json, "except"),
                 mining[0], mining[1], blast[0], blast[1], buckets,
                 heights.getMin(), heights.getMax(), strings(json, "requires"), field(json),
@@ -406,7 +416,9 @@ public final class ContentHardness {
 
     private static ContentField field(JsonObject json) {
         if (!json.has("field")) { return new ContentField(ContentField.CHANCES, ContentField.SPREAD); }
-        return fieldFrom(Json.getJsonObject(json, "field"));
+        JsonObject entry = Json.getJsonObject(json, "field");
+        Json.unknownKeys(entry, "field", FIELD_KEYS);
+        return fieldFrom(entry);
     }
 
     public static ContentField fieldFrom(JsonObject entry) {
@@ -432,6 +444,7 @@ public final class ContentHardness {
         JsonElement element = json.get(name);
         if (element.isJsonObject()) {
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, name, RANGE_KEYS);
             float least = Json.getFloat(entry, "min", 1.0F);
             float most = Json.getFloat(entry, "max", 1.0F);
             return new float[] { Math.min(least, most), Math.max(least, most) };

@@ -43,6 +43,11 @@ public final class ContentParserWorldgen {
             ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING)));
 
     private static final List<String> SHAPE_ONLY_KEYS = Collections.unmodifiableList(Arrays.asList("rarity", "rarityIsPerChunk", "pattern", "threshold", "density", "taper", "rich", "poor"));
+    private static final List<String> WORLDGEN_KEYS = Collections.unmodifiableList(Arrays.asList("block", "meta", "blocks", "size", "attempts", "minHeight", "maxHeight", "replace", "adjacent", "sparse", "dimensions", "dimensionsAreBlacklist", "biomes", "biomeTypes", "biomesAreBlacklist", "requires", "retrogen", "retrogenKey", "minDistanceFromSpawn", "spread", "shape", "minTemperature", "maxTemperature", "minRainfall", "maxRainfall", "caveRegions", "indicators", "indicatorCount", "indicatorSpread", "then", "thenCount", "thenSpread", "thenDepth", "prospectAs", "snap", "snapDepth"));
+    private static final List<String> SPREAD_KEYS = Collections.unmodifiableList(Arrays.asList("type", "center", "range", "smoothness", "veinHeight", "veinDiameter", "verticalDensity", "horizontalDensity", "offsetMin", "offsetMax", "ceiling"));
+    private static final List<String> SHAPE_KEYS = Collections.unmodifiableList(Arrays.asList("type", "plane", "radius", "height", "width", "slim", "outline", "fill", "surface", "stackHeight", "seeSky", "checkStay", "scatterX", "scatterY", "scatterZ", "log", "leaves", "hanging", "structure", "structures", "turns", "mirrors", "taper", "integrity", "rarity", "rarityIsPerChunk", "field", "threshold", "lootTable", "respawn", "locateAs", "fade", "pattern", "density", "rich", "poor", "richAt", "poorAt", "middle", "budding", "buddingChance", "crystal", "crystalChance", "crack", "at"));
+    private static final List<String> FIELD_KEYS = Collections.unmodifiableList(Arrays.asList("type", "spread", "chances", "cell", "seeds", "reach", "arms", "armReach"));
+    private static final List<String> THEN_KEYS = Collections.unmodifiableList(Arrays.asList("name", "weight", "spread", "depth"));
     private static final List<String> SNAPS = Collections.unmodifiableList(Arrays.asList("floor", "ceiling"));
     private static final List<String> VILLAGE_TYPES = Collections.unmodifiableList(Arrays.asList(VillageDef.FARM, VillageDef.TEMPLATE));
     private static final List<String> PLANES = Collections.unmodifiableList(Arrays.asList(ShapeDef.CIRCLE, ShapeDef.SQUARE));
@@ -54,6 +59,7 @@ public final class ContentParserWorldgen {
     @Nullable public static WorldgenDef worldgen(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "worldgen definition");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", WORLDGEN_KEYS);
         String block = Json.getString(json, "block", "");
         if (block.isEmpty()) {
             ContentLog.LOGGER.error("Worldgen definition {} has no block, ignoring it", key);
@@ -101,6 +107,7 @@ public final class ContentParserWorldgen {
                 AmountDef depth = null;
                 if (element.isJsonObject()) {
                     JsonObject follow = element.getAsJsonObject();
+                    Json.unknownKeys(follow, "then", THEN_KEYS);
                     name = Json.getString(follow, "name", "");
                     weight = Json.getInt(follow, "weight", 1);
                     spread = follow.has("spread") ? Math.max(0, Json.getInt(follow, "spread", 0)) : -1;
@@ -182,6 +189,7 @@ public final class ContentParserWorldgen {
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
         JsonObject entry = Json.getJsonObject(json, "spread");
+        Json.unknownKeys(entry, "spread", SPREAD_KEYS);
         String type = Json.choice(entry, "type", SpreadDef.EVEN, "Worldgen " + key + " spread", KNOWN_SPREADS);
         int center = Json.getInt(entry, "center", (minHeight + maxHeight) / 2);
         int offsetMin = Json.getInt(entry, "offsetMin", 0);
@@ -245,6 +253,7 @@ public final class ContentParserWorldgen {
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
         JsonObject entry = Json.getJsonObject(json, "shape");
+        Json.unknownKeys(entry, "shape", SHAPE_KEYS);
         String owner = "Worldgen " + key + " shape";
         String type = Json.choice(entry, "type", ShapeDef.CLUSTER, owner, KNOWN_SHAPES);
         String plane = Json.choice(entry, "plane", ShapeDef.CIRCLE, owner, PLANES);
@@ -274,7 +283,7 @@ public final class ContentParserWorldgen {
                 MathHelper.clamp(Json.getInt(entry, "integrity", 100), 1, 100),
                 Math.max(0, Json.getInt(entry, "rarity", 0)),
                 Json.getBoolean(entry, "rarityIsPerChunk", false),
-                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(Json.getJsonObject(entry, "field", new JsonObject())) : null,
+                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(field(entry)) : null,
                 Json.getFloat(entry, "threshold", ShapeDef.VEIN.equals(type) ? 0.4F : 0.5F),
                 Json.getString(entry, "lootTable", ""),
                 ContentParserRespawn.parse(key, entry));
@@ -298,6 +307,12 @@ public final class ContentParserWorldgen {
             else { ContentLog.LOGGER.error("Worldgen {} pins its imprint with 'at', which needs exactly [x, z], so it places by chance instead", key); }
         }
         return made;
+    }
+
+    private static JsonObject field(JsonObject entry) {
+        JsonObject field = Json.getJsonObject(entry, "field", new JsonObject());
+        Json.unknownKeys(field, "field", FIELD_KEYS);
+        return field;
     }
 
     private static String taper(ResourceLocation key, JsonObject entry) { return Json.choice(entry, "taper", ShapeDef.STRAIGHT, "Worldgen " + key + " shape", TAPERS); }

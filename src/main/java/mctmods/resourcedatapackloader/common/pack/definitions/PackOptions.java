@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -32,6 +34,7 @@ public final class PackOptions {
     private static final List<String> WORLD_CHANGED = new ArrayList<>();
     private static final Map<String, Map<String, Boolean>> HIDDEN = new LinkedHashMap<>();
     private static final Map<String, Map<String, String>> ABOUT = new LinkedHashMap<>();
+    private static final List<String> OPTION_KEYS = Collections.unmodifiableList(Arrays.asList("default", "description", "hide"));
     private static Path HOME;
 
     private PackOptions() {}
@@ -130,6 +133,10 @@ public final class PackOptions {
                 JsonElement held = entry.getValue();
                 if (isBoolean(held)) { defaults.add(entry.getKey(), held); }
                 else if (held.isJsonObject() && isBoolean(held.getAsJsonObject().get("default"))) {
+                    Json.within("Pack options file", pack.getName() + "/config/" + fileName, () -> {
+                        Json.unknownKeys(held.getAsJsonObject(), entry.getKey(), OPTION_KEYS);
+                        return null;
+                    });
                     defaults.add(entry.getKey(), held.getAsJsonObject().get("default"));
                     if (held.getAsJsonObject().has("description")) { about.put(entry.getKey(), held.getAsJsonObject().get("description").getAsString()); }
                     if (held.getAsJsonObject().has("hide") && held.getAsJsonObject().get("hide").getAsBoolean()) { shy.add(entry.getKey()); }

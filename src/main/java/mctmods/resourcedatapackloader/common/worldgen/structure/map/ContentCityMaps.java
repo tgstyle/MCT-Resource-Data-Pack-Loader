@@ -8,13 +8,18 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentCityMaps {
     private static final Map<String, CityMapDef> DEFS = new LinkedHashMap<>();
+    private static final List<String> CITY_MAP_KEYS = Collections.unmodifiableList(Arrays.asList("map", "palette", "cell", "settings", "name"));
     private static boolean loaded;
 
     private ContentCityMaps() {}
@@ -29,6 +34,8 @@ public final class ContentCityMaps {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.CITYMAPS, "city map", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", CITY_MAP_KEYS); }
             CityMapDef def = ContentParserWorlds.cityMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

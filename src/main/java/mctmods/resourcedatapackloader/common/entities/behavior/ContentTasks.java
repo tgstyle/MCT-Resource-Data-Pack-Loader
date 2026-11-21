@@ -13,6 +13,7 @@ import com.google.common.base.Predicates;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -110,6 +111,8 @@ public final class ContentTasks {
     private static final String TAMEABLE = "a tameable base, like a wolf, cat or parrot";
     private static final String GOLEM = "an iron golem";
     private static final String ANIMAL = "an animal";
+    private static final List<String> TASK_KEYS = Collections.unmodifiableList(Arrays.asList("task", "priority", "speed", "nearSpeed", "distance", "near", "chance", "leap", "cooldown", "entity", "items",
+            "sight", "nearby", "help", "memory", "close", "nocturnal", "scared"));
 
     private ContentTasks() {}
 
@@ -252,6 +255,7 @@ public final class ContentTasks {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "tasks", TASK_KEYS);
             Kind kind = known(key, Json.getString(entry, "task", ""));
             if (kind == null) { continue; }
             if (!entry.has("priority")) {

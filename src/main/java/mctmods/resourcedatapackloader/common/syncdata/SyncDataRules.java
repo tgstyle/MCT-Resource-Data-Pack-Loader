@@ -10,13 +10,18 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 public final class SyncDataRules {
+    private static final List<String> FILE_KEYS = Collections.singletonList("values");
+    private static final List<String> VALUE_KEYS = Collections.unmodifiableList(Arrays.asList("name", "type", "default", "max", "persist"));
     private static final Map<String, Declaration> DECLARED = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -53,6 +58,7 @@ public final class SyncDataRules {
     }
 
     private static void read(ResourceLocation file, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         JsonArray values = Json.getJsonArray(json, "values", new JsonArray());
         for (JsonElement element : values) {
             if (element.isJsonObject()) { declare(file, element.getAsJsonObject()); }
@@ -61,6 +67,7 @@ public final class SyncDataRules {
     }
 
     private static void declare(ResourceLocation file, JsonObject json) {
+        Json.unknownKeys(json, "values", VALUE_KEYS);
         String name = Json.text(json, "name", "");
         if (!SyncData.valid(name)) {
             ContentLog.LOGGER.error("A synced value entry in {} has the name '{}', which is not 1 to 64 of a-z, 0-9, _ . : / -, skipping it", file, name);

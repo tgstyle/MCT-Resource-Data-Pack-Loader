@@ -13,6 +13,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -34,6 +36,8 @@ public final class ContentColumns {
     private static final String BLOCKS = "blocks";
     private static final String ALTERNATE = "alternate";
     private static final int WORLD_EVENT_BREAK = 2001;
+    private static final List<String> COLUMN_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, ALTERNATE, "limit", "includeSelf", "unlessSneaking"));
+    private static final List<String> ALTERNATE_KEYS = Collections.unmodifiableList(Arrays.asList("item", "chance"));
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean clearing;
@@ -68,6 +72,7 @@ public final class ContentColumns {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", COLUMN_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         BlockGroup group = new BlockGroup();
         for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, key, BLOCKS); }
@@ -79,6 +84,7 @@ public final class ContentColumns {
         float chance = 0.0F;
         if (json.has(ALTERNATE)) {
             JsonObject extra = Json.object(json, ALTERNATE);
+            Json.unknownKeys(extra, ALTERNATE, ALTERNATE_KEYS);
             alternate = ContentStacks.parse(key, Json.text(extra, "item"), 1);
             chance = Json.bounded(extra, "chance", 0.0F, 1.0F, key + " " + ALTERNATE);
             if (alternate.isEmpty() || Float.isNaN(chance)) {

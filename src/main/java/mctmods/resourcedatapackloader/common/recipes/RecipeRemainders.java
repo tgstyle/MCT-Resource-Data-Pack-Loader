@@ -12,6 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 
 public final class RecipeRemainders {
+    private static final List<String> REMAINDER_KEYS = Collections.unmodifiableList(Arrays.asList("ingredient", "returns"));
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<ResourceLocation, List<Remainder>> BY_RECIPE = new HashMap<>();
 
@@ -62,6 +65,7 @@ public final class RecipeRemainders {
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!json.has("remainder")) { return; }
+        if (!json.has("swaps") && !json.has("transfer")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
         if (!json.has("recipes") || !json.get("recipes").isJsonObject()) {
             ContentLog.LOGGER.error("Recipe remainder file {} needs a recipes object saying which recipes it covers, ignoring it", key);
             return;
@@ -75,6 +79,7 @@ public final class RecipeRemainders {
         }
         if (remainders.isEmpty()) { return; }
         RecipeSelector scope = new RecipeSelector();
+        Json.unknownKeys(json.getAsJsonObject("recipes"), "recipes", RecipeSelector.KEYS);
         scope.read(key, json.getAsJsonObject("recipes"));
         if (scope.isEmpty()) {
             ContentLog.LOGGER.error("Recipe remainder file {} selects no recipes, ignoring it", key);
@@ -84,6 +89,7 @@ public final class RecipeRemainders {
     }
 
     @Nullable private static Remainder remainder(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "remainder", REMAINDER_KEYS);
         String ingredient = Json.getString(json, "ingredient", "");
         ItemStack returns = ContentStacks.parse(key, Json.getString(json, "returns", ""), 1);
         if (ingredient.isEmpty() || returns.isEmpty()) { return null; }

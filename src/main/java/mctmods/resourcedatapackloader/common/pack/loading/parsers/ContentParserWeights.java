@@ -18,6 +18,10 @@ import net.minecraft.util.ResourceLocation;
 
 public final class ContentParserWeights {
     public static final int UNSET = -1;
+    private static final List<String> WEIGHT_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "items", "unit", "default", "limit", "bonuses", "tiers", "hardLimit", "hardLimitMode", "stackBudget", "stackBudgetMin", "containerFactor", "countContents", "wornFactor", "creative", "tooltip", "hud"));
+    private static final List<String> HUD_KEYS = Collections.unmodifiableList(Arrays.asList("show", "inventory", "anchor", "x", "y"));
+    private static final List<String> BONUS_KEYS = Collections.unmodifiableList(Arrays.asList("add", "advancement", "worn"));
+    private static final List<String> TIER_KEYS = Collections.unmodifiableList(Arrays.asList("above", "effects", "speed", "sprint", "jump", "exhaustion", "color", "message"));
 
     private ContentParserWeights() {}
 
@@ -34,6 +38,7 @@ public final class ContentParserWeights {
     public static int weight(JsonObject json, Object owner) { return thousandths(json, "weight", owner); }
 
     public static boolean apply(WeightDef.Builder into, ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", WEIGHT_KEYS);
         boolean defines = false;
         if (json.has("unit")) { into.unit = Json.getString(json, "unit", "").trim(); }
         int fallback = thousandths(json, "default", key);
@@ -64,6 +69,7 @@ public final class ContentParserWeights {
         into.tooltip = Json.getBoolean(json, "tooltip", into.tooltip);
         if (json.has("hud")) {
             JsonObject hud = Json.getJsonObject(json, "hud", new JsonObject());
+            Json.unknownKeys(hud, "hud", HUD_KEYS);
             into.hudShow = Json.choice(hud, "show", into.hudShow, key, Arrays.asList(WeightDef.HUD_NEVER, WeightDef.HUD_TIERS, WeightDef.HUD_ALWAYS));
             into.hudInventory = Json.getBoolean(hud, "inventory", into.hudInventory);
             into.hudAnchor = Json.choice(hud, "anchor", into.hudAnchor, key, Arrays.asList(WeightDef.HUD_HOTBAR, WeightDef.HUD_TOP_LEFT, WeightDef.HUD_TOP, WeightDef.HUD_TOP_RIGHT, WeightDef.HUD_LEFT, WeightDef.HUD_CENTER, WeightDef.HUD_RIGHT, WeightDef.HUD_BOTTOM_LEFT, WeightDef.HUD_BOTTOM, WeightDef.HUD_BOTTOM_RIGHT));
@@ -93,6 +99,7 @@ public final class ContentParserWeights {
                 continue;
             }
             JsonObject bonus = element.getAsJsonObject();
+            Json.unknownKeys(bonus, "bonuses", BONUS_KEYS);
             if (!bonus.has("add") || Double.isNaN(Json.asDouble(bonus.get("add"), "add", Double.NaN))) {
                 ContentLog.LOGGER.error("A bonus in weight file {} has no numeric add, skipping it", key);
                 continue;
@@ -116,6 +123,7 @@ public final class ContentParserWeights {
                 continue;
             }
             JsonObject tier = element.getAsJsonObject();
+            Json.unknownKeys(tier, "tiers", TIER_KEYS);
             double above = tier.has("above") ? Json.asDouble(tier.get("above"), "above", Double.NaN) : Double.NaN;
             if (Double.isNaN(above) || above <= 0.0D) {
                 ContentLog.LOGGER.error("A tier in weight file {} has no above greater than 0, skipping it", key);

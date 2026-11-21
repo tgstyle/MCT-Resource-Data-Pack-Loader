@@ -13,23 +13,34 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentParserPortways {
     private static final String[] BUTTONS = {"previous", "sort", "page", "next", "scope"};
+    private static final List<String> PORTWAY_KEYS = Collections.unmodifiableList(Arrays.asList("scope", "global", "activateSound", "travelSound", "names", "allow", "deny", "crossDimension", "gate", "network", "tall", "facing", "activateParticle", "travelParticle", "carry", "cost", "menu"));
+    private static final List<String> ITEM_KEYS = Collections.unmodifiableList(Arrays.asList("scope", "global", "activateSound", "travelSound", "names", "allow", "deny", "crossDimension", "gate", "network", "tall", "facing", "activateParticle", "travelParticle", "carry", "cost", "menu", "consume", "bind"));
+    private static final List<String> CARRY_KEYS = Collections.unmodifiableList(Arrays.asList("mount", "leashed", "pets", "crossDimension"));
+    private static final List<String> COST_KEYS = Collections.unmodifiableList(Arrays.asList("xp", "item", "health", "hunger", "cooldown"));
+    private static final List<String> PART_KEYS = Collections.unmodifiableList(Arrays.asList("id", "amount", "perBlocks", "dimension", "max", "points"));
+    private static final List<String> MENU_KEYS = Collections.unmodifiableList(Arrays.asList("order", "previous", "next", "page", "sort", "locked", "scope", "slots"));
+    private static final List<String> SLOT_KEYS = Collections.unmodifiableList(Arrays.asList(BUTTONS));
 
     private ContentParserPortways() {}
 
     @Nullable static PortwayDef portway(JsonObject json) {
         if (!json.has("portway") || !json.get("portway").isJsonObject()) { return null; }
-        return settings(Json.getJsonObject(json, "portway"), false);
+        JsonObject held = Json.getJsonObject(json, "portway");
+        Json.unknownKeys(held, "portway", PORTWAY_KEYS);
+        return settings(held, false);
     }
 
     @Nullable static PortwayItemDef item(JsonObject json) {
         if (!json.has("portway") || !json.get("portway").isJsonObject()) { return null; }
         JsonObject held = Json.getJsonObject(json, "portway");
+        Json.unknownKeys(held, "portway", ITEM_KEYS);
         return new PortwayItemDef(settings(held, true), Json.getBoolean(held, "consume", false), Json.getBoolean(held, "bind", false));
     }
 
@@ -70,7 +81,10 @@ public final class ContentParserPortways {
 
     private static PortwayMenu menu(JsonObject json, boolean scoped) {
         PortwayMenu plain = PortwayMenu.PLAIN;
-        int[] at = columns(Json.object(json, "slots"), scoped);
+        Json.unknownKeys(json, "portway.menu", MENU_KEYS);
+        JsonObject slots = Json.object(json, "slots");
+        Json.unknownKeys(slots, "portway.menu.slots", SLOT_KEYS);
+        int[] at = columns(slots, scoped);
         return new PortwayMenu(Json.choice(json, "order", plain.order, "Portway menu", PortwayMenu.ORDERS),
                 icon(json, "previous", plain.previous), icon(json, "next", plain.next), icon(json, "page", plain.page),
                 icon(json, "sort", plain.sort), icon(json, "locked", plain.locked), icon(json, "scope", plain.scope),
@@ -113,16 +127,23 @@ public final class ContentParserPortways {
         return id.isEmpty() ? fallback : id;
     }
 
-    private static CarryDef carry(JsonObject json) { return new CarryDef(Json.getBoolean(json, "mount", false), Json.getBoolean(json, "leashed", false), Json.getBoolean(json, "pets", false), Json.getBoolean(json, "crossDimension", true)); }
+    private static CarryDef carry(JsonObject json) {
+        Json.unknownKeys(json, "portway.carry", CARRY_KEYS);
+        return new CarryDef(Json.getBoolean(json, "mount", false), Json.getBoolean(json, "leashed", false), Json.getBoolean(json, "pets", false), Json.getBoolean(json, "crossDimension", true));
+    }
 
     private static List<Integer> dimensions(JsonObject held, String key) {
         if (!held.has(key)) { return Collections.emptyList(); }
         return Collections.unmodifiableList(Json.ints(Json.getJsonArray(held, key, new JsonArray()), key));
     }
 
-    private static PortwayCost cost(JsonObject json) { return new PortwayCost(part(Json.object(json, "xp")), part(Json.object(json, "item")), part(Json.object(json, "health")), part(Json.object(json, "hunger")), Math.max(0, Json.getInt(json, "cooldown", 0))); }
+    private static PortwayCost cost(JsonObject json) {
+        Json.unknownKeys(json, "portway.cost", COST_KEYS);
+        return new PortwayCost(part(Json.object(json, "xp"), "xp"), part(Json.object(json, "item"), "item"), part(Json.object(json, "health"), "health"), part(Json.object(json, "hunger"), "hunger"), Math.max(0, Json.getInt(json, "cooldown", 0)));
+    }
 
-    private static CostPart part(JsonObject json) {
+    private static CostPart part(JsonObject json, String member) {
+        Json.unknownKeys(json, "portway.cost." + member, PART_KEYS);
         return new CostPart(Json.getString(json, "id", "").trim(), Math.max(0, Json.getInt(json, "amount", 0)), Math.max(0, Json.getInt(json, "perBlocks", 0)),
                 Math.max(0, Json.getInt(json, "dimension", 0)), Math.max(0, Json.getInt(json, "max", 0)), Json.getBoolean(json, "points", false));
     }

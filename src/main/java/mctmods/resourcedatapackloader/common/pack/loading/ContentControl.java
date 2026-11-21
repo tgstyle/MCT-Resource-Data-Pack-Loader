@@ -85,6 +85,11 @@ public final class ContentControl {
     public static void check(@Nullable WorldTemplateDef template) {
         if (template == null || template.settings == null) { return; }
         warnUnknown("World template " + template.getKey(), template.settings);
+        JsonElement sections = template.settings.get(BIOMES);
+        if (sections == null || !sections.isJsonObject()) { return; }
+        for (Map.Entry<String, JsonElement> section : sections.getAsJsonObject().entrySet()) {
+            if (section.getValue().isJsonObject()) { warnUnknown("World template " + template.getKey() + " biome " + section.getKey(), section.getValue().getAsJsonObject()); }
+        }
     }
 
     public static void warnUnknown(String owner, JsonObject settings) {

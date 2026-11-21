@@ -21,7 +21,10 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.text.Listing;
 
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,6 +65,7 @@ public final class ContentVillages {
     private static final TemplateMemo<Boolean> BARRED_READ = new TemplateMemo<>();
     private static final TemplateMemo<Integer> LARGEST = new TemplateMemo<>();
     private static final WeightedPicks BLOCK_SIZES = new WeightedPicks("villageBlockSizes");
+    private static final List<String> VILLAGE_KEYS = Collections.unmodifiableList(Arrays.asList("type", "structure", "orderSign", "weight", "leastCount", "mostCount", "width", "height", "depth", "apron", "crops", "edge", "soil", "water", "rowWidth", "ground", "integrity", "villagers", "villagerEntity", "villagerX", "villagerY", "villagerZ", "requires", "lootTable", "orderX", "orderY", "orderZ", "respawn"));
     private static boolean loaded;
     private static boolean registered;
 
@@ -72,6 +76,8 @@ public final class ContentVillages {
         loaded = true;
         if (!Config.content.villages) { return false; }
         Json.eachFile(PackManager.VILLAGES, "village file", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", VILLAGE_KEYS); }
             VillageDef def = ContentParserWorldgen.village(key, contents);
             if (def == null) { return; }
             if (missing(def)) {

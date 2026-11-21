@@ -21,7 +21,18 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 
 public final class ContentParserContainers {
+    private static final List<String> CONTAINER_KEYS = Collections.unmodifiableList(Arrays.asList("rows", "columns", "guiTexture", "guiWidth", "guiHeight", "chestModel", "ender", "lootTable", "keepContents", "enderAutomation", "bauble"));
+    private static final List<String> UPGRADE_KEYS = Collections.unmodifiableList(Arrays.asList("paths", "unopenedLoot", "consume"));
+    private static final List<String> PATH_KEYS = Collections.unmodifiableList(Arrays.asList("fromBlock", "toBlock", "contents", "linked", "fewerSlots", "strict", "state"));
+    private static final List<String> ATTRIBUTE_KEYS = Collections.unmodifiableList(Arrays.asList("attribute", "operation", "amount"));
+    private static final List<String> BLOCK_KEYS = Collections.unmodifiableList(Arrays.asList("inherits", "variants", "type", "material", "mapColor", "soundType", "expDrop", "opaque", "maxAge", "creativeTab", "harvestTool", "harvestToolLevel", "silkHarvest", "explosionResistanceDivisor", "requires", "renderLayer", "fullCube", "lightOpacity", "slipperiness", "bounds", "flammability", "fireSpread", "modelBlock", "modelMeta", "itemModel", "particle", "smoke", "particleColor", "seed", "produce", "sapling", "portal", "growth", "plantTypes", "behavesAs", "tint", "leafSapling", "leafSaplingChance", "opensWith", "openSound", "container", "bell", "seasonSensor", "spreadsOnto", "needsOxygen", "portway", "weight", "tall", "blocksSpawns", "blocksWeather", "tagged", "compressable"));
+    private static final List<String> ITEM_KEYS = Collections.unmodifiableList(Arrays.asList("inherits", "variants", "type", "creativeTab", "alwaysEdible", "requires", "useDuration", "eat", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "cooldown", "rocket", "rolls", "rollStore", "passesTurn", "wornEffects", "sleepingBag", "runs", "scriptFile", "script", "locates", "locatesEye", "locatesSound", "locatesRange", "containerItem", "container", "bauble", "opensWith", "wornAttributes", "upgrade", "attackReach", "fireSeconds", "sweep", "combo", "finisher", "portway", "weight", "firework", "seasonClock", "jukebox"));
+
     private ContentParserContainers() {}
+
+    static void itemKeys(JsonObject json) { Json.unknownKeys(json, "the top level", ITEM_KEYS); }
+
+    static void blockKeys(JsonObject json) { Json.unknownKeys(json, "the top level", BLOCK_KEYS); }
 
     static String remainder(JsonObject json) {
         String named = Json.getString(json, "containerItem", "").trim();
@@ -34,6 +45,7 @@ public final class ContentParserContainers {
     @Nullable static ContainerDef container(ResourceLocation key, JsonObject json) {
         if (!json.has("container")) { return null; }
         JsonObject held = Json.getJsonObject(json, "container");
+        Json.unknownKeys(held, "container", CONTAINER_KEYS);
         int askedRows = Json.getInt(held, "rows", 3);
         int askedColumns = Json.getInt(held, "columns", 9);
         int rows = MathHelper.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
@@ -66,6 +78,7 @@ public final class ContentParserContainers {
             return ContainerUpgradeDef.PLAIN;
         }
         JsonObject held = Json.getJsonObject(json, "upgrade", new JsonObject());
+        Json.unknownKeys(held, "upgrade", UPGRADE_KEYS);
         List<ContainerUpgradeDef.Path> paths = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(held, "paths", new JsonArray())) {
             String from = element.isJsonObject() ? Json.getString(element.getAsJsonObject(), "fromBlock", "").trim() : "";
@@ -83,6 +96,7 @@ public final class ContentParserContainers {
 
     private static ContainerUpgradeDef.Path path(ResourceLocation key, JsonObject entry, String from, String to) {
         String owner = "Container upgrade " + key;
+        Json.unknownKeys(entry, "upgrade.paths", PATH_KEYS);
         ContainerUpgradeDef.Contents contents = ContainerUpgradeDef.Contents.valueOf(Json.choice(entry, "contents", "container", owner, Arrays.asList("container", "slots", "nbt")).toUpperCase(Locale.ROOT));
         for (String idle : idleKeys(contents)) {
             if (entry.has(idle)) { ContentLog.LOGGER.error("The container upgrade {} sets {} on the path from {}, which has no effect on this path", key, idle, from); }
@@ -113,6 +127,7 @@ public final class ContentParserContainers {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "wornAttributes", ATTRIBUTE_KEYS);
             String attribute = Json.getString(entry, "attribute", "");
             int operation = Json.getInt(entry, "operation", 0);
             if (attribute.isEmpty() || operation < 0 || operation > 2) {

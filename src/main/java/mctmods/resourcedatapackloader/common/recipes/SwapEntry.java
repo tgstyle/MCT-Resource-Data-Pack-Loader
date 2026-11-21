@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -20,6 +21,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.OreDictionary;
 
 final class SwapEntry {
+    static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "swaps", "remainder", "transfer", "recipes", "template", "edit", "scriptFile", "script"));
+    private static final List<String> SWAP_KEYS = Collections.unmodifiableList(Arrays.asList("from", "to", "output", "recipes", "types", "paths"));
+    private static final List<String> FROM_KEYS = Collections.unmodifiableList(Arrays.asList("names", "namespaces", "oreDict"));
+    private static final List<String> SCOPE_KEYS = Collections.unmodifiableList(Arrays.asList("names", "namespaces", "outputs"));
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final List<SwapEntry> ALL = new ArrayList<>();
     private final ItemSelection from = new ItemSelection("Recipe swap", "replaces");
@@ -67,6 +72,7 @@ final class SwapEntry {
             if (!template && !edit && !scriptFile && !script) { ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key); }
             return;
         }
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "swaps")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A swap in {} is not an object, skipping it", key);
@@ -82,6 +88,8 @@ final class SwapEntry {
             ContentLog.LOGGER.error("A swap in {} needs a from object, skipping it", key);
             return null;
         }
+        Json.unknownKeys(json, "swaps", SWAP_KEYS);
+        Json.unknownKeys(json.getAsJsonObject("from"), "from", FROM_KEYS);
         if (json.has("types")) { ContentLog.LOGGER.error("A swap in {} has types, which 1.12.2 does not read, ignoring it", key); }
         if (json.has("paths")) { ContentLog.LOGGER.error("A swap in {} has paths, which 1.12.2 does not read, ignoring it", key); }
         String target = Json.getString(json, "to", "");
@@ -120,6 +128,7 @@ final class SwapEntry {
     }
 
     private void readScope(ResourceLocation key, JsonObject recipes) {
+        Json.unknownKeys(recipes, "recipes", SCOPE_KEYS);
         if (recipes.has("outputs")) { ContentLog.LOGGER.error("A swap in {} has outputs in its recipes, which a swap does not read, ignoring it", key); }
         JsonObject limits = new JsonObject();
         for (String member : new String[] {"names", "namespaces"}) {

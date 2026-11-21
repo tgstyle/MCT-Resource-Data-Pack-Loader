@@ -23,6 +23,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +37,15 @@ import net.minecraft.util.math.MathHelper;
 
 public final class ContentParserEntities {
     private static final Set<String> PHASE_KEYS = new LinkedHashSet<>(Arrays.asList("below", "attributes", "tasks", "charges", "pounces", "gusts", "gustPower", "bossBar"));
+    private static final List<String> ENTITY_KEYS = Collections.unmodifiableList(Arrays.asList("entity", "attributes", "tintParts", "spawns", "sounds", "effects", "pathPriorities", "egg", "bossBar", "name", "texture", "lootTable", "profession", "career", "baby", "keepsBaseBaby", "becomes", "immuneTo", "jumpMultiplier", "fallDamage", "hitEffects", "ignoresEffects", "soundVolume", "soundPitch", "waterSlowdown", "experience", "maxFallHeight", "absorption", "creatureAttribute", "breathesUnderwater", "swims", "amphibious", "despawns", "despawnAfter", "leash", "noAI", "leftHanded", "fireproof", "invulnerable", "glowing", "invisible", "dropChance", "scale", "angryScale", "leashable", "steerable", "width", "height", "trackingRange", "trackingFrequency", "trackVelocity", "hostile", "passive", "ignoresSpawnRules", "targets", "persistent", "silent", "picksUpLoot", "hideArmor", "hideHeld", "tint", "showName", "explodes", "throws", "throwReload", "throwRetreat", "throwAmmo", "throwPower", "throwArc", "explosionPower", "explosionFuse", "explosionFire", "equipment", "biomes", "biomeTypes", "requires", "charges", "pounces", "sniffs", "sleepsByDay", "home", "fleesWhenHurt", "patrols", "swoops", "gusts", "gustPower", "threatLeast", "threatHostile", "tasks", "attackReach", "hurtResistance", "stepHeight", "hitFire", "climbs", "teleports", "knockback", "digs", "bright", "collectsExperience", "walks", "throwReturns", "fleesLight", "followsPlayers", "teleportsWhenHit", "pulls", "pullReload", "pullPower", "pullItem", "galacticraft", "storage", "phases", "dialog", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective"));
+    private static final List<String> SOUNDS_KEYS = Collections.unmodifiableList(Arrays.asList("ambient", "hurt", "death", "target", "explode", "targetVaries", "throw"));
+    private static final List<String> EGG_KEYS = Collections.unmodifiableList(Arrays.asList("primary", "secondary"));
+    private static final List<String> EFFECT_KEYS = Collections.unmodifiableList(Arrays.asList("potion", "amplifier"));
+    private static final List<String> GALACTICRAFT_KEYS = Collections.unmodifiableList(Arrays.asList("cargoSlots", "tier", "fuelTank", "cargo", "requiredPayload", "payload"));
+    private static final List<String> STORAGE_KEYS = Collections.unmodifiableList(Arrays.asList("items", "fluid", "energy", "dropsOnDeath", "runsDry"));
+    private static final List<String> ITEMS_KEYS = Collections.singletonList("filter");
+    private static final List<String> FLUID_KEYS = Collections.unmodifiableList(Arrays.asList("capacity", "buckets", "use", "filter"));
+    private static final List<String> ENERGY_KEYS = Collections.unmodifiableList(Arrays.asList("capacity", "transfer", "use"));
 
     private ContentParserEntities() {}
 
@@ -48,6 +58,7 @@ public final class ContentParserEntities {
                     continue;
                 }
                 JsonObject effect = element.getAsJsonObject();
+                Json.unknownKeys(effect, "effects", EFFECT_KEYS);
                 effects.put(Json.getString(effect, "potion", ""), Math.max(0, Json.getInt(effect, "amplifier", 0)));
             }
         }
@@ -71,6 +82,7 @@ public final class ContentParserEntities {
     @Nullable public static EntityVariantDef entityVariant(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "entity file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", ENTITY_KEYS);
         String base = Json.getString(json, "entity", "");
         if (base.isEmpty()) {
             ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
@@ -82,9 +94,11 @@ public final class ContentParserEntities {
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         List<SpawnEntryDef> spawns = ContentParser.spawns(key, json, "creatureType", false);
         JsonObject sounds = Json.getJsonObject(json, "sounds", new JsonObject());
+        Json.unknownKeys(sounds, "sounds", SOUNDS_KEYS);
         Map<String, Integer> effects = effects(key, json);
         Map<String, Float> priorities = numbers(key, json, "pathPriorities", "path priority", JsonElement::getAsFloat);
         JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? Json.getJsonObject(json, "egg") : null;
+        if (egg != null) { Json.unknownKeys(egg, "egg", EGG_KEYS); }
         BossBarDef bar = BossBars.read("Entity variant " + key, json);
         boolean wantsEgg = !json.has("egg") || egg != null || Json.getBoolean(json, "egg", true);
         return new EntityVariantDef(key, new ResourceLocation(base),
@@ -268,6 +282,7 @@ public final class ContentParserEntities {
     @Nullable private static RocketDef rocket(ResourceLocation key, JsonObject json) {
         if (!json.has("galacticraft")) { return null; }
         JsonObject rocket = Json.getJsonObject(json, "galacticraft");
+        Json.unknownKeys(rocket, "galacticraft", GALACTICRAFT_KEYS);
         int slots = Json.getInt(rocket, "cargoSlots", 0);
         if (slots != 0 && slots != 27 && slots != 36 && slots != 54) {
             ContentLog.LOGGER.error("Entity variant {} sets cargoSlots to {}, which is not one of 0, 27, 36 or 54, using 0", key, slots);
@@ -280,10 +295,14 @@ public final class ContentParserEntities {
     @Nullable private static StorageDef storage(ResourceLocation key, JsonObject json) {
         if (!json.has("storage")) { return null; }
         JsonObject storage = Json.getJsonObject(json, "storage");
+        Json.unknownKeys(storage, "storage", STORAGE_KEYS);
         JsonObject items = Json.getJsonObject(storage, "items", new JsonObject());
+        Json.unknownKeys(items, "items", ITEMS_KEYS);
         JsonObject fluid = Json.getJsonObject(storage, "fluid", new JsonObject());
+        Json.unknownKeys(fluid, "fluid", FLUID_KEYS);
         int fluidCapacity = Math.max(0, Json.getInt(fluid, "capacity", 0));
         JsonObject energy = Json.getJsonObject(storage, "energy", new JsonObject());
+        Json.unknownKeys(energy, "energy", ENERGY_KEYS);
         int energyCapacity = Math.max(0, Json.getInt(energy, "capacity", 0));
         int energyTransfer = MathHelper.clamp(Json.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
         int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
@@ -310,6 +329,7 @@ public final class ContentParserEntities {
         if (!json.has(list)) { return entries; }
         for (JsonElement element : Json.getJsonArray(json, list)) {
             JsonObject entry = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            Json.unknownKeys(entry, list, Arrays.asList("item", "oreDict", "fluid", amount));
             String item = Json.getString(entry, "item", "");
             String oreDict = Json.getString(entry, "oreDict", "");
             String fluid = Json.getString(entry, "fluid", "");

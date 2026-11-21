@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class ScriptRegistries {
+    private static final List<String> REGISTRY_KEYS = Collections.unmodifiableList(Arrays.asList("registry", "script", "scriptFile"));
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static boolean loaded;
 
@@ -47,6 +50,7 @@ public final class ScriptRegistries {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", REGISTRY_KEYS);
         String registry = Json.text(json, "registry", "").trim();
         ScriptRef script = ScriptRef.read(key, json);
         if (registry.isEmpty()) {

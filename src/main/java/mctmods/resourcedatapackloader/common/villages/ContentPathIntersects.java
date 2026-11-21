@@ -10,7 +10,10 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +21,15 @@ import net.minecraft.world.World;
 
 public class ContentPathIntersects {
     private static final Map<String, PathIntersectDef> DEFS = new LinkedHashMap<>();
+    private static final List<String> INTERSECT_KEYS = Collections.unmodifiableList(Arrays.asList("weight", "legend", "mouth", "corner", "name"));
     private static boolean loaded = false;
 
     public static void load() {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.PATHINTERSECTS, "path intersect design", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", INTERSECT_KEYS); }
             PathIntersectDef def = ContentParserWorlds.pathIntersect(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

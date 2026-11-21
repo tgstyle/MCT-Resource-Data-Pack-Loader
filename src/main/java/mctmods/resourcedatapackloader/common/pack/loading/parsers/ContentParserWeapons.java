@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -18,6 +19,11 @@ import net.minecraft.util.ResourceLocation;
 public final class ContentParserWeapons {
     private static final int DEFAULT_WINDOW = 30;
     private static final float MAX_PUSH = 64.0F;
+    private static final List<String> FINISHER_KEYS = Collections.unmodifiableList(Arrays.asList("targets", "push", "health", "damage", "damageType"));
+    private static final List<String> PUSH_KEYS = Collections.unmodifiableList(Arrays.asList("horizontal", "vertical"));
+    private static final List<String> SWEEP_KEYS = Collections.unmodifiableList(Arrays.asList("shape", "reach", "angle", "width", "damage"));
+    private static final List<String> COMBO_KEYS = Collections.unmodifiableList(Arrays.asList("window", "steps"));
+    private static final List<String> STEP_KEYS = Collections.unmodifiableList(Arrays.asList("damage", "sweep"));
 
     private ContentParserWeapons() {}
 
@@ -47,6 +53,7 @@ public final class ContentParserWeapons {
             return null;
         }
         JsonObject json = parent.getAsJsonObject("finisher");
+        Json.unknownKeys(json, "finisher", FINISHER_KEYS);
         String owner = "The finisher on " + key;
         List<String> targets = json.has("targets") ? MobStats.entities(owner, "targets", json.get("targets")) : null;
         if (targets == null || targets.isEmpty()) {
@@ -57,6 +64,7 @@ public final class ContentParserWeapons {
         float vertical = 0.0F;
         if (json.has("push") && json.get("push").isJsonObject()) {
             JsonObject push = json.getAsJsonObject("push");
+            Json.unknownKeys(push, "finisher.push", PUSH_KEYS);
             horizontal = Json.ranged(push, "horizontal", 0.0F, 0.0F, MAX_PUSH, owner);
             vertical = Json.ranged(push, "vertical", 0.0F, 0.0F, MAX_PUSH, owner);
         }
@@ -74,6 +82,7 @@ public final class ContentParserWeapons {
             return null;
         }
         JsonObject json = parent.getAsJsonObject("sweep");
+        Json.unknownKeys(json, "sweep", SWEEP_KEYS);
         String named = Json.getString(json, "shape", "box").trim().toLowerCase(Locale.ROOT);
         WeaponDef.Shape shape = null;
         for (WeaponDef.Shape each : WeaponDef.Shape.values()) {
@@ -98,6 +107,7 @@ public final class ContentParserWeapons {
             return null;
         }
         JsonObject json = parent.getAsJsonObject("combo");
+        Json.unknownKeys(json, "combo", COMBO_KEYS);
         int window = Json.getInt(json, "window", DEFAULT_WINDOW);
         if (window < 1) {
             ContentLog.LOGGER.error("The combo on {} sets window to {}, which is below 1, so {} is used instead", key, window, DEFAULT_WINDOW);
@@ -111,6 +121,7 @@ public final class ContentParserWeapons {
                 continue;
             }
             JsonObject step = element.getAsJsonObject();
+            Json.unknownKeys(step, "combo.steps", STEP_KEYS);
             steps.add(new WeaponDef.Step(Json.ranged(step, "damage", 1.0F, 0.0F, 100.0F, "A step of the combo on " + key), sweep(key, step)));
         }
         if (steps.isEmpty()) {

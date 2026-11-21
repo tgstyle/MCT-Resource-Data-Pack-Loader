@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.entity.Entity;
@@ -34,6 +35,8 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class SpawnSwaps {
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("entities", "becomes", "runs", "blocks", "biomes", "biomeTypes", "requireAll", "elsewhere", "extra", "fromSpawners", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount"));
+    private static final List<String> ELSEWHERE_KEYS = Collections.unmodifiableList(Arrays.asList("chance", "lightBelow", "night"));
     private static final String MARK = "rdplSwapFresh";
     private static final String RAN = "rdplSpawnRan";
     private static final byte NATURAL = 1;
@@ -150,6 +153,7 @@ public final class SpawnSwaps {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         List<String> entities = json.has("entities") ? MobStats.entities("Spawn swap file " + key, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Spawn swap file {} names no entities, ignoring it", key);
@@ -168,6 +172,7 @@ public final class SpawnSwaps {
             return;
         }
         JsonObject elsewhere = Json.object(json, "elsewhere");
+        Json.unknownKeys(elsewhere, "elsewhere", ELSEWHERE_KEYS);
         RULES.add(new SpawnSwapDef(entities, becomes, Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), blocks, Json.getBoolean(json, "requireAll", false),
                 SpawnGateDef.read(key, json, "Spawn swap file"), json.has("elsewhere"), MathHelper.clamp(Json.getFloat(elsewhere, "chance", 1.0F), 0.0F, 1.0F),
                 MathHelper.clamp(Json.getInt(elsewhere, "lightBelow", 0), 0, 16), Json.getBoolean(elsewhere, "night", false), MathHelper.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA),

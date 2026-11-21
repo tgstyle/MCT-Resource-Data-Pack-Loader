@@ -22,8 +22,17 @@ public final class ContentParserFluids {
     public static final int MIN_INTERVAL = 20;
     private static final int DAMAGE_EVERY = 20;
     private static final float LARGE = 1.0E7F;
+    private static final List<String> BLOCK_KEYS = Collections.unmodifiableList(Arrays.asList("material", "flammability", "fireSpread", "quantaPerBlock", "potions", "creatures", "items", "reactions", "byDimension", "flowTicks", "spread", "infinite"));
+    private static final List<String> CREATURES_KEYS = Collections.unmodifiableList(Arrays.asList("damage", "damageEvery", "damageType", "fireSeconds", "drown", "swim", "push", "drag"));
+    private static final List<String> ITEMS_KEYS = Collections.unmodifiableList(Arrays.asList("burn", "dissolve", "immune", "drift", "buoyancy"));
+    private static final List<String> REACTION_KEYS = Collections.unmodifiableList(Arrays.asList("touching", "faces", "chance", "interval", "becomes", "drops", "source", "flowing", "explosion", "sound", "particles", "function"));
+    private static final List<String> EXPLOSION_KEYS = Collections.unmodifiableList(Arrays.asList("power", "at", "fire", "grief"));
+    private static final List<String> ROW_KEYS = Collections.unmodifiableList(Arrays.asList("dimensions", "flowTicks", "spread", "infinite"));
+    private static final List<String> FLUID_KEYS = Collections.unmodifiableList(Arrays.asList("name", "color", "still", "flow", "temperature", "density", "viscosity", "luminosity", "gaseous", "bucket", "block", "creativeTab", "requires"));
 
     private ContentParserFluids() {}
+
+    static void fluidKeys(JsonObject json) { Json.unknownKeys(json, "the top level", FLUID_KEYS); }
 
     static boolean blockWanted(JsonObject json) {
         JsonElement value = json.get("block");
@@ -37,6 +46,7 @@ public final class ContentParserFluids {
     }
 
     public static FluidBehaviorDef behavior(ResourceLocation key, JsonObject block) {
+        Json.unknownKeys(block, "block", BLOCK_KEYS);
         FluidBehaviorDef.Creatures creatures = creatures(key, Json.object(block, "creatures"));
         FluidBehaviorDef.Items items = items(key, Json.object(block, "items"));
         List<FluidReactionDef> reactions = reactions(key, block, false);
@@ -67,6 +77,7 @@ public final class ContentParserFluids {
     }
 
     @Nullable private static FluidReactionDef reaction(String label, JsonObject json, boolean vanilla) {
+        Json.unknownKeys(json, "reactions", REACTION_KEYS);
         List<String> touching = touching(json);
         if (touching.isEmpty()) {
             ContentLog.LOGGER.error("{} names nothing under touching, so it is dropped", label);
@@ -124,6 +135,7 @@ public final class ContentParserFluids {
     @Nullable private static FluidReactionDef.Explosion explosion(JsonObject json, String label) {
         if (!json.has("explosion")) { return null; }
         JsonObject held = Json.object(json, "explosion");
+        Json.unknownKeys(held, "explosion", EXPLOSION_KEYS);
         float power = Json.getFloat(held, "power", 0.0F);
         if (power <= 0.0F) {
             ContentLog.LOGGER.error("{} has an explosion with no power above zero, so the explosion is dropped", label);
@@ -141,6 +153,7 @@ public final class ContentParserFluids {
             index++;
             String label = key + " byDimension row " + index;
             JsonObject row = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            Json.unknownKeys(row, "byDimension", ROW_KEYS);
             List<String> dimensions = Json.names(row, "dimensions");
             if (dimensions.isEmpty()) {
                 ContentLog.LOGGER.error("{} names no dimensions, so it is dropped", label);
@@ -154,6 +167,7 @@ public final class ContentParserFluids {
 
     private static FluidBehaviorDef.Creatures creatures(ResourceLocation key, JsonObject json) {
         if (json.entrySet().isEmpty()) { return FluidBehaviorDef.Creatures.NONE; }
+        Json.unknownKeys(json, "creatures", CREATURES_KEYS);
         String label = key + " creatures";
         return new FluidBehaviorDef.Creatures(decimal(json, "damage", 0.0F, LARGE, label), whole(json, "damageEvery", DAMAGE_EVERY, label),
                 Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Math.max(0, Json.getInt(json, "fireSeconds", 0)) : null,
@@ -162,6 +176,7 @@ public final class ContentParserFluids {
 
     private static FluidBehaviorDef.Items items(ResourceLocation key, JsonObject json) {
         if (json.entrySet().isEmpty()) { return FluidBehaviorDef.Items.NONE; }
+        Json.unknownKeys(json, "items", ITEMS_KEYS);
         String label = key + " items";
         return new FluidBehaviorDef.Items(flag(json, "burn"), Json.ranged(json, "dissolve", 0.0F, 0.0F, 1.0F, label), Json.names(json, "immune"),
                 decimal(json, "drift", -LARGE, LARGE, label), decimal(json, "buoyancy", -LARGE, LARGE, label));

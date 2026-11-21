@@ -18,9 +18,13 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Turns;
 
+import com.google.gson.JsonObject;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
@@ -43,6 +47,7 @@ import net.minecraft.world.gen.structure.template.Template;
 public class ContentStructureMaps {
     private static final Map<String, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new HashSet<>();
+    private static final List<String> STRUCTURE_MAP_KEYS = Collections.unmodifiableList(Arrays.asList("layers", "ground", "cell", "spacing", "chance", "at", "dimensions", "depth", "spawners", "loot", "respawn", "name"));
     private static final int OFFSET = 8;
     private static final int FLAGS = BlockFlags.UPDATE_CLIENTS;
     private static boolean loaded = false;
@@ -51,6 +56,8 @@ public class ContentStructureMaps {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.STRUCTUREMAPS, "structure map", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", STRUCTURE_MAP_KEYS); }
             StructureMapDef def = ContentParserWorlds.structureMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

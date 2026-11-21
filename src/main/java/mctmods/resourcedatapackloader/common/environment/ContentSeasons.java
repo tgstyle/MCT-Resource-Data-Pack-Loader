@@ -15,6 +15,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public final class ContentSeasons {
     private static final String SEASONS = "seasons";
+    private static final List<String> SEASON_KEYS = Collections.unmodifiableList(Arrays.asList("days", "order"));
     private static final int INTERVAL = 20;
     private static final int CLOCK_INTERVAL = 200;
     private static final Map<DimensionDef, SeasonDef> BY_DIMENSION = new IdentityHashMap<>();
@@ -49,6 +51,7 @@ public final class ContentSeasons {
             return;
         }
         JsonObject seasons = json.getAsJsonObject(SEASONS);
+        Json.unknownKeys(seasons, SEASONS, SEASON_KEYS);
         int days = Json.getInt(seasons, "days", 0);
         if (days <= 0) {
             ContentLog.LOGGER.error("{} gives days {}, which is not a whole number above 0, ignoring it", owner, days);

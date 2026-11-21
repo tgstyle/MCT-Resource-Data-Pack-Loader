@@ -33,6 +33,7 @@ public final class GateStay {
     private static final String VISIT = "visit";
     private static final List<String> RESETS = Collections.unmodifiableList(Arrays.asList(NEVER, DAY, VISIT));
     private static final List<Integer> DEFAULT_WARN = Collections.unmodifiableList(Arrays.asList(60, 30, 10, 5, 4, 3, 2, 1));
+    private static final List<String> EXPIRE_KEYS = Collections.unmodifiableList(Arrays.asList("exit", "function", "message"));
     private static final String SECTION = "rdplGateStay";
     private static final String USED = "used";
     private static final String DAY_KEY = "day";
@@ -70,6 +71,7 @@ public final class GateStay {
             return NONE;
         }
         JsonObject onExpire = Json.getJsonObject(json, "onExpire", new JsonObject());
+        Json.unknownKeys(onExpire, "onExpire", EXPIRE_KEYS);
         return new GateStay(minutes, Json.choice(json, "stayReset", NEVER, "Gate " + key, RESETS), warnings(json), Json.getString(json, "stayMessage", "%dim%: %time% left"),
                 Json.getBoolean(onExpire, "exit", true), Json.getString(onExpire, "function", "").trim(), Json.getString(onExpire, "message", "Your time in %dim% is up"));
     }

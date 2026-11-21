@@ -47,6 +47,7 @@ public final class ContentDimensions {
         Json.eachInheritedFile(PackManager.DIMENSIONS, "dimension definition", ContentInherits.DIMENSION_IDENTITY, (key, contents) -> {
             JsonObject json = Json.object(key, contents, "dimension");
             if (json == null) { return; }
+            ContentParserWorlds.dimensionKeys(json);
             DimensionDef def = ContentParserWorlds.dimension(key, json);
             DEFS.put(key, def);
             ContentEnvironments.parse(key, contents, def);

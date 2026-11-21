@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.block.Block;
@@ -40,6 +41,7 @@ public final class ContentBoneMealFlowers {
     private static final String FLOWERS = "flowers";
     private static final String ORE_DICT = "oreDict";
     private static final int TRIES_PER_FLOWER = 8;
+    private static final List<String> SPREAD_KEYS = Collections.unmodifiableList(Arrays.asList("requires", ON, FLOWERS, ORE_DICT, "everyMod", "radius", "count"));
     private static final BlockMatchDef GRASS = new BlockMatchDef(new ResourceLocation("minecraft:grass"), -1, Collections.emptyMap());
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -71,6 +73,7 @@ public final class ContentBoneMealFlowers {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SPREAD_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         BlockGroup on = new BlockGroup();
         List<BlockMatchDef> targets = json.has(ON) ? ContentParser.matches(key, json, ON) : Collections.singletonList(GRASS);

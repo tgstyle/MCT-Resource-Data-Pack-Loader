@@ -51,6 +51,24 @@ public final class ContentParserGames {
     private static final List<String> BASE_LOGOFF = Collections.unmodifiableList(Arrays.asList("pause", "continue", "end"));
     private static final List<String> BASE_BREAK = Collections.unmodifiableList(Arrays.asList("protect", "allow"));
 
+    private static final List<String> SCORE_KEYS = Collections.unmodifiableList(Arrays.asList("name", "displayName", "criterion", "display", "render", "teamTotals", "individuals", "carries", "awardsTo", "tiebreak", "results", "points", "ends", "opens", "reset", "turns", BossBars.KEY));
+    private static final List<String> RESULTS_KEYS = Collections.unmodifiableList(Arrays.asList("card", "title", "icon", "image", "background", "seconds"));
+    private static final List<String> POINTS_KEYS = Collections.unmodifiableList(Arrays.asList("kill", "death", "revive", "ownKill", "raid", "order"));
+    private static final List<String> ENDS_KEYS = Collections.unmodifiableList(Arrays.asList("atScore", "afterMinutes", "afterRounds", "resets", "intermissionSeconds", "locksTeams", "intermissionSays", "startsSays", "lastStanding", "outSays"));
+    private static final List<String> OPENS_KEYS = Collections.unmodifiableList(Arrays.asList("by", "says", "leaderSays", "lobby", "lobbyJoins", "joinsSays"));
+    private static final List<String> RESET_KEYS = Collections.unmodifiableList(Arrays.asList("lead", "players", "teams", "passPercent", "voteSeconds", "cooldownSeconds", "leadSays", "voteSays", "tallySays", "passSays", "failSays"));
+    private static final List<String> TURNS_KEYS = Collections.unmodifiableList(Arrays.asList("order", "seconds", "gapSeconds", "held", "endsAtScore", "cycles", "mobTags", "mobTypes"));
+    private static final List<String> RAID_KEYS = Collections.unmodifiableList(Arrays.asList("omen", "name", "color", "waves", "waveDelay", "spawnDistance", "reach", "timeout", "sound", "wins", "loses", "bell", "points", "loot", "anywhere", "target", "base", BossBars.KEY));
+    private static final List<String> GROUP_KEYS = Collections.unmodifiableList(Arrays.asList("entity", "count"));
+    private static final List<String> BASE_KEYS = Collections.unmodifiableList(Arrays.asList("claims", "minScore", "fullScore", "radius", "weights", "decayDays", "cellFloor", "cellCap", "creative", "chance", "rollEvery", "cooldown", "onlineOnly", "loss", "loseGrace", "rewardAll", "onLogoff", "logoffGrace", "follow", "hostileToAll", "insideSpawn", "breakClaimed", "breakable", "share"));
+    private static final List<String> WEIGHT_KEYS = Collections.unmodifiableList(Arrays.asList("bed", "spawn", "chest", "placed", "minutes", "claim"));
+    private static final List<String> TEAM_KEYS = Collections.unmodifiableList(Arrays.asList("name", "displayName", "color", "prefix", "suffix", "friendlyFire", "mobFriendlyFire", "seeFriendlyInvisibles", "nameTags", "deathMessages", "collision", "entities", "players", "spawnBox", "joinable", "lead", "leadOn", "leadIs", "leadSays", "leadRuns", "balance", "scoreboard", "picks", "picksFrom", "gives", "standIn", "spawn", "down"));
+    private static final List<String> DOWN_KEYS = Collections.unmodifiableList(Arrays.asList("seconds", "reviveSeconds", "says", "revivedSays"));
+    private static final List<String> STAND_IN_KEYS = Collections.unmodifiableList(Arrays.asList("entity", "at"));
+    private static final List<String> GIVE_KEYS = Collections.unmodifiableList(Arrays.asList("item", "count", "unbreakable"));
+    private static final List<String> DICE_KEYS = Collections.unmodifiableList(Arrays.asList("audience", "says", "dice", "decks"));
+    private static final List<String> DECK_KEYS = Collections.unmodifiableList(Arrays.asList("cards", "reshuffle"));
+
     private ContentParserGames() {}
 
     @Nullable public static ScoreDef scoreFile(ResourceLocation key, String contents) {
@@ -78,6 +96,11 @@ public final class ContentParserGames {
         JsonObject points = Json.getJsonObject(json, "points", new JsonObject());
         JsonObject ends = Json.getJsonObject(json, "ends", new JsonObject());
         JsonObject opens = Json.getJsonObject(json, "opens", new JsonObject());
+        Json.unknownKeys(json, "the top level", SCORE_KEYS);
+        Json.unknownKeys(results, "results", RESULTS_KEYS);
+        Json.unknownKeys(points, "points", POINTS_KEYS);
+        Json.unknownKeys(ends, "ends", ENDS_KEYS);
+        Json.unknownKeys(opens, "opens", OPENS_KEYS);
         Map<String, Integer> kills = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(points, "kill", new JsonObject()).entrySet()) { kills.put(ContentRanks.killKey(key.getNamespace(), entry.getKey().trim()), Json.asInt(entry.getValue(), entry.getKey(), 0)); }
         return new ScoreDef(name, Json.getString(json, "displayName", name), criterion, slot, render,
@@ -122,6 +145,7 @@ public final class ContentParserGames {
     @Nullable private static TurnsDef turns(ResourceLocation key, JsonObject json) {
         if (!json.has("turns")) { return null; }
         JsonObject turns = Json.getJsonObject(json, "turns");
+        Json.unknownKeys(turns, "turns", TURNS_KEYS);
         String order = Json.choice(turns, "order", TurnsDef.FIXED, "Score file " + key + " turns", TurnsDef.ORDERS);
         String held = Json.choice(turns, "held", TurnsDef.FROZEN, "Score file " + key + " turns", TurnsDef.HOLDS);
         return new TurnsDef(order, Math.max(1, Json.getInt(turns, "seconds", 60)), Math.max(0, Json.getInt(turns, "gapSeconds", 3)), held,
@@ -130,6 +154,7 @@ public final class ContentParserGames {
 
     private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
         String owner = "Score file " + key + " reset";
+        Json.unknownKeys(reset, "reset", RESET_KEYS);
         String lead = Json.choice(reset, "lead", RoundResetDef.NONE, owner, RESET_LEADS);
         String players = Json.choice(reset, "players", RoundResetDef.NONE, owner, RESET_PLAYERS);
         return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.names(reset, "teams"),
@@ -153,6 +178,7 @@ public final class ContentParserGames {
     @Nullable public static RaidDef raidFile(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "raid file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", RAID_KEYS);
         String omen = Json.getString(json, "omen", "").trim();
         if (omen.isEmpty()) {
             ContentLog.LOGGER.error("Raid {} names no omen effect, and nothing else starts a raid, so it is left out", key);
@@ -175,6 +201,7 @@ public final class ContentParserGames {
                         ContentLog.LOGGER.error("Raid {} has a group in wave {} that names no entity, skipping it", key, waves.size() + 1);
                         continue;
                     }
+                    Json.unknownKeys(group.getAsJsonObject(), "waves", GROUP_KEYS);
                     groups.add(new RaidDef.Group(Json.getString(group.getAsJsonObject(), "entity", "").trim(), ContentParser.amount(group.getAsJsonObject(), "count", 1, 1)));
                 }
                 if (!groups.isEmpty()) { waves.add(groups); }
@@ -221,6 +248,8 @@ public final class ContentParserGames {
 
     private static BaseDef baseDef(JsonObject base, String owner) {
         JsonObject weights = Json.object(base, "weights");
+        Json.unknownKeys(base, "base", BASE_KEYS);
+        Json.unknownKeys(weights, "base.weights", WEIGHT_KEYS);
         String weighed = owner + " weights";
         return new BaseDef(Json.choice(base, "claims", "any", owner, BASE_CLAIMS),
                 number(base, "minScore", 40, 0, Double.MAX_VALUE, owner),
@@ -290,6 +319,7 @@ public final class ContentParserGames {
             ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
             return null;
         }
+        Json.unknownKeys(json, "the top level", TEAM_KEYS);
         TextFormatting color = TextFormatting.getValueByName(Settings.lower(Json.getString(json, "color", "white")));
         if (color == null || !color.isColor()) {
             ContentLog.LOGGER.error("Team {} asks for the color '{}', which is not one of the sixteen text colors, so it is white", name, Json.getString(json, "color", ""));
@@ -326,6 +356,7 @@ public final class ContentParserGames {
     @Nullable private static DownDef down(JsonObject json) {
         if (!json.has("down") || !json.get("down").isJsonObject()) { return null; }
         JsonObject asked = Json.getJsonObject(json, "down");
+        Json.unknownKeys(asked, "down", DOWN_KEYS);
         int seconds = Math.max(0, Json.getInt(asked, "seconds", 0));
         if (seconds == 0) { return null; }
         return new DownDef(seconds, Math.max(1, Json.getInt(asked, "reviveSeconds", 5)),
@@ -365,6 +396,7 @@ public final class ContentParserGames {
 
     private static String standIn(JsonObject json) {
         if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return ""; }
+        Json.unknownKeys(Json.getJsonObject(json, "standIn"), "standIn", STAND_IN_KEYS);
         return Json.getString(Json.getJsonObject(json, "standIn"), "entity", "").trim();
     }
 
@@ -381,7 +413,9 @@ public final class ContentParserGames {
         if (!json.has("gives")) { return values; }
         for (JsonElement held : Json.getJsonArray(json, "gives")) {
             if (held.isJsonPrimitive()) { values.add(new ItemGiveDef(held.getAsString().trim(), 1, false)); }
-            else if (held.isJsonObject()) { values.add(new ItemGiveDef(Json.getString(held.getAsJsonObject(), "item", "").trim(), Math.max(1, Json.getInt(held.getAsJsonObject(), "count", 1)), Json.getBoolean(held.getAsJsonObject(), "unbreakable", false))); }
+            else if (held.isJsonObject()) {
+                Json.unknownKeys(held.getAsJsonObject(), "gives", GIVE_KEYS);
+                values.add(new ItemGiveDef(Json.getString(held.getAsJsonObject(), "item", "").trim(), Math.max(1, Json.getInt(held.getAsJsonObject(), "count", 1)), Json.getBoolean(held.getAsJsonObject(), "unbreakable", false))); }
             else { ContentLog.LOGGER.error("Team file {} lists something under gives that is neither an item name nor an object, skipping it", key); }
         }
         return values;
@@ -429,6 +463,7 @@ public final class ContentParserGames {
     @Nullable public static DiceDef diceFile(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "dice file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", DICE_KEYS);
         Map<String, String> says = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "says", new JsonObject()).entrySet()) {
             if (entry.getValue().isJsonPrimitive()) { says.put(entry.getKey().trim(), entry.getValue().getAsString()); }
@@ -454,6 +489,7 @@ public final class ContentParserGames {
         Set<String> fixed = new HashSet<>();
         for (Map.Entry<String, JsonElement> deck : held.entrySet()) {
             boolean object = deck.getValue().isJsonObject();
+            if (object) { Json.unknownKeys(deck.getValue().getAsJsonObject(), "decks." + deck.getKey(), DECK_KEYS); }
             List<String> cards = object ? Json.names(deck.getValue().getAsJsonObject(), "cards") : Json.names(held, deck.getKey());
             if (cards.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the deck '{}' no cards, so it is left out", key, deck.getKey()); }
             else {

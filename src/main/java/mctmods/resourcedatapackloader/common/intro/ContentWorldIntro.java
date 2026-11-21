@@ -10,7 +10,9 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ import net.minecraft.util.ResourceLocation;
 public final class ContentWorldIntro {
     private static final Map<ResourceLocation, WorldIntroDef> DEFS = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final List<String> INTRO_KEYS = Collections.unmodifiableList(Arrays.asList("pages", "music", "once", "requires"));
 
     private ContentWorldIntro() {}
 
@@ -29,6 +32,8 @@ public final class ContentWorldIntro {
         DEFS.clear();
         if (!Config.content.load) { return; }
         Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", INTRO_KEYS); }
             WorldIntroDef def = ContentParserWorlds.worldIntro(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });

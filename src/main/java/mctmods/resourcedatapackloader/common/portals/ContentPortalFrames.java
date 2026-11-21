@@ -9,7 +9,10 @@ import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fluids.Fluid;
 
 public final class ContentPortalFrames {
+    private static final List<String> FRAME_KEYS = Collections.unmodifiableList(Arrays.asList("legend", "rows", "axis", "name", "maxWidth", "maxHeight"));
     private static final int BUDGET = 20000;
     private static final Map<String, PortalFrameDef> DEFS = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -32,6 +36,8 @@ public final class ContentPortalFrames {
         if (!GENERATION.stale()) { return; }
         DEFS.clear();
         Json.eachFile(PackManager.PORTALFRAMES, "portal frame", (key, contents) -> {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { Json.unknownKeys(json, "the top level", FRAME_KEYS); }
             PortalFrameDef def = ContentParserWorlds.portalFrame(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

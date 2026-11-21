@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -18,6 +20,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class PackSchedules {
     private static final long DONE = Long.MAX_VALUE;
+    private static final List<String> SCHEDULE_KEYS = Collections.unmodifiableList(Arrays.asList("runs", "after", "every"));
     private static final List<ScheduleDef> SCHEDULES = new ArrayList<>();
     private static long[] due = new long[0];
     private static long next = DONE;
@@ -57,6 +60,7 @@ public final class PackSchedules {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SCHEDULE_KEYS);
         String runs = Json.getString(json, "runs", "");
         if (runs.isEmpty()) {
             ContentLog.LOGGER.error("Schedule file {} names no function to run, ignoring it", key);

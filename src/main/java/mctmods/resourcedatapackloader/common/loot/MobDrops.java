@@ -16,6 +16,8 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.entity.Entity;
@@ -31,6 +33,8 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class MobDrops {
+    private static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("entities", "adds", "strip", "stripTagged"));
+    private static final List<String> ADD_KEYS = Collections.unmodifiableList(Arrays.asList("item", "count", "chance", "killerHolds", "damageTypes", "requireAll", "unlessDropped"));
     private static final List<MobDropsDef> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -45,6 +49,7 @@ public final class MobDrops {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         List<String> entities = json.has("entities") ? MobStats.entities("Mob drop file " + key, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Mob drop file {} names no entities, ignoring it", key);
@@ -67,6 +72,7 @@ public final class MobDrops {
     }
 
     private static MobDropsDef.Add add(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "adds", ADD_KEYS);
         ItemStack item = ContentStacks.parse(key, Json.getString(json, "item", ""), 1);
         if (item.isEmpty()) { return null; }
         AmountDef count = ContentParser.amount(json, "count", 1, 1);

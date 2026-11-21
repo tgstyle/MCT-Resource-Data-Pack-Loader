@@ -6,12 +6,15 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 final class ContentParserRespawn {
     private static final String KEY = "respawn";
+    private static final List<String> RESPAWN_KEYS = Collections.unmodifiableList(Arrays.asList("after", "loot", "rebuild", "playerDistance", "spawners", "mobs", "mobCap"));
 
     private ContentParserRespawn() {}
 
@@ -22,6 +25,7 @@ final class ContentParserRespawn {
             return null;
         }
         JsonObject json = owner.getAsJsonObject(KEY);
+        Json.unknownKeys(json, KEY, RESPAWN_KEYS);
         String where = "Respawn of " + key;
         if (!json.has("after")) {
             ContentLog.LOGGER.error("{} respawn needs after, the seconds before it comes back, so it does not respawn", where);
