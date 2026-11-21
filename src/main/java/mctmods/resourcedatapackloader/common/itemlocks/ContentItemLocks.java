@@ -34,6 +34,7 @@ public final class ContentItemLocks {
     private static final String ITEM_TAGS = Registries.tagsDirPath(Registries.ITEM);
     private static final String LOCKED = "locked/";
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final List<String> LOCK_KEYS = List.of("requires", "names", "namespaces", "tags", "advancement");
     private static volatile List<Group> groups = Collections.emptyList();
 
     private ContentItemLocks() {}
@@ -90,6 +91,7 @@ public final class ContentItemLocks {
 
     private static void read(List<Group> into, ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.unknownKeys(json, "the top level", LOCK_KEYS);
         ItemSelection selection = new ItemSelection("Item lock", "locks");
         selection.read(json, key);
         if (selection.unnamed()) {

@@ -34,6 +34,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
 public final class MobDrops {
+    private static final List<String> FILE_KEYS = List.of("entities", "adds", "strip", "stripTagged");
+    private static final List<String> ADD_KEYS = List.of("item", "count", "chance", "killerHolds", "damageTypes", "requireAll", "unlessDropped");
     private static final List<MobDropsDef> DEFS = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -48,6 +50,7 @@ public final class MobDrops {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Mob drops file " + key;
         List<String> entities = json.has("entities") ? MobStats.entities(owner, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
@@ -74,6 +77,7 @@ public final class MobDrops {
     }
 
     private static MobDropsDef.Add add(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "adds", ADD_KEYS);
         Item item = ContentStacks.find(key, Json.text(json, "item", ""));
         if (item == null) { return null; }
         int min = 1;

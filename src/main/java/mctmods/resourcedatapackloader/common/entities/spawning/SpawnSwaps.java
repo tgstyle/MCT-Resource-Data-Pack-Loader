@@ -37,6 +37,8 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 
 public final class SpawnSwaps {
+    private static final List<String> FILE_KEYS = List.of("entities", "becomes", "runs", "blocks", "biomes", "biomeTypes", "requireAll", "elsewhere", "extra", "fromSpawners", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount");
+    private static final List<String> ELSEWHERE_KEYS = List.of("chance", "lightBelow", "night");
     private static final String FRESH = "rdplSwapFresh";
     private static final String RAN = "rdplSpawnRan";
     private static final byte NATURAL = 1;
@@ -165,6 +167,7 @@ public final class SpawnSwaps {
     private static <T extends Comparable<T>> String valueName(Property<T> property, BlockState state) { return property.getName(state.getValue(property)); }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Spawn swap file " + key;
         List<String> entities = json.has("entities") ? MobStats.entities(owner, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
@@ -180,6 +183,7 @@ public final class SpawnSwaps {
         SpawnSwapDef.Elsewhere elsewhere = null;
         if (json.has("elsewhere")) {
             JsonObject held = Json.object(json, "elsewhere");
+            Json.unknownKeys(held, "elsewhere", ELSEWHERE_KEYS);
             elsewhere = new SpawnSwapDef.Elsewhere(Mth.clamp(Json.getFloat(held, "chance", 1.0F), 0.0F, 1.0F), held.has("lightBelow") ? Mth.clamp(Json.getInt(held, "lightBelow", 0), 1, 16) : 0, Json.flag(held, "night"));
         }
         SWAPS.add(new SpawnSwapDef(entities, becomes, Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), ContentParser.matches(key, json, "blocks"), Json.flag(json, "requireAll"),

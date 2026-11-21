@@ -54,6 +54,12 @@ import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentVillagers {
+    private static final List<String> VILLAGER_KEYS = List.of("careers", "texture", "zombieTexture", "jobSite", "workSound", "requires");
+    private static final List<String> TRADE_FILE_KEYS = List.of("trades", "clear");
+    private static final List<String> TRADE_KEYS = List.of("level", "sell", "buy", "buySecondary", "profession", "career", "maxUses", "xp", "requires", "advancement", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective", "priceScale");
+    private static final List<String> CLEAR_KEYS = List.of("profession", "career", "level", "requires");
+    private static final List<String> STACK_KEYS = List.of("item", "min", "max");
+    private static final List<String> SCALE_KEYS = List.of("objective", "perPoint", "min", "max");
     private static final byte[] PLAIN_SKIN = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAJ0lEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAIB3A0BAAAGveg7oAAAAAElFTkSuQmCC");
     private static final Map<ResourceLocation, VillagerDef> VILLAGERS = new LinkedHashMap<>();
     private static final List<TradeDef> TRADES = new ArrayList<>();
@@ -96,6 +102,7 @@ public final class ContentVillagers {
     private static void readVillager(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "villager file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", VILLAGER_KEYS);
         if (json.has("careers")) { ContentLog.LOGGER.warn("Villager profession {} lists careers, which this line does not read. There are no careers now, so give each one its own villager file and name it in the trade's 'profession'", key); }
         skin(key, "villager", Json.getString(json, "texture", "").trim());
         skin(key, "zombie_villager", Json.getString(json, "zombieTexture", "").trim());
@@ -119,6 +126,7 @@ public final class ContentVillagers {
     private static void readTrades(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "trade file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", TRADE_FILE_KEYS);
         if (json.has("clear")) {
             for (JsonElement element : Json.getJsonArray(json, "clear")) {
                 if (!element.isJsonObject()) {
@@ -134,12 +142,14 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
+            Json.unknownKeys(element.getAsJsonObject(), "trades", TRADE_KEYS);
             TradeDef def = trade(key, element.getAsJsonObject());
             if (def != null) { TRADES.add(def); }
         }
     }
 
     private static void readClear(ResourceLocation key, JsonObject entry) {
+        Json.unknownKeys(entry, "clear", CLEAR_KEYS);
         String profession = Json.getString(entry, "profession", "").trim();
         if (profession.isEmpty()) {
             ContentLog.LOGGER.error("A clear in {} names no profession, skipping it", key);
@@ -212,6 +222,7 @@ public final class ContentVillagers {
     @Nullable private static PriceScaleDef scale(ResourceLocation key, JsonObject entry) {
         if (!entry.has("priceScale")) { return null; }
         JsonObject json = Json.getJsonObject(entry, "priceScale");
+        Json.unknownKeys(json, "priceScale", SCALE_KEYS);
         String objective = Json.getString(json, "objective", "").trim();
         if (objective.isEmpty() || !json.has("perPoint")) {
             ContentLog.LOGGER.error("A priceScale in {} needs an objective and a perPoint, ignoring it", key);
@@ -223,6 +234,7 @@ public final class ContentVillagers {
     private static TradeStackDef stack(JsonObject json, String name) {
         if (!json.has(name)) { return new TradeStackDef("", 1, 1); }
         JsonObject entry = Json.getJsonObject(json, name);
+        Json.unknownKeys(entry, name, STACK_KEYS);
         int min = Math.max(1, Json.getInt(entry, "min", 1));
         return new TradeStackDef(Json.getString(entry, "item", ""), min, Math.max(min, Json.getInt(entry, "max", min)));
     }

@@ -37,6 +37,8 @@ public final class LootRemovals {
     private static final String CHILDREN = "children";
     private static final String MAIN = "main";
     private static final String POOL_PREFIX = "pool";
+    private static final List<String> REMOVAL_KEYS = List.of(TARGET, CLEAR, ENTRIES, ITEMS);
+    private static final List<String> PICK_KEYS = List.of("pool", "entry");
     private static final Map<ResourceLocation, Removal> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -60,6 +62,7 @@ public final class LootRemovals {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", REMOVAL_KEYS);
         String target = Json.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot removal {} has no target table, ignoring it", key);
@@ -83,6 +86,7 @@ public final class LootRemovals {
         if (GsonHelper.isArrayNode(json, ENTRIES)) {
             for (JsonElement element : json.getAsJsonArray(ENTRIES)) {
                 if (!element.isJsonObject()) { continue; }
+                Json.unknownKeys(element.getAsJsonObject(), ENTRIES, PICK_KEYS);
                 String pool = Json.text(element.getAsJsonObject(), "pool", "");
                 String entry = Json.text(element.getAsJsonObject(), "entry", "");
                 if (pool.isEmpty() || entry.isEmpty()) {

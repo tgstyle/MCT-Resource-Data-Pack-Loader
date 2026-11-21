@@ -35,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public final class ContentWeights {
+    private static final List<String> ITEM_KEYS = List.of("weight", "names", "tags", "namespaces");
     private static final int OWN = 1;
     private static final int NAME = 2;
     private static final int TAG = 3;
@@ -143,6 +144,7 @@ public final class ContentWeights {
     }
 
     private static void entry(List<Source> sources, ResourceLocation key, JsonObject entry) {
+        Json.unknownKeys(entry, "items", ITEM_KEYS);
         if (!entry.has("weight")) {
             ContentLog.LOGGER.error("An items entry in weight file {} has no weight, skipping it", key);
             return;

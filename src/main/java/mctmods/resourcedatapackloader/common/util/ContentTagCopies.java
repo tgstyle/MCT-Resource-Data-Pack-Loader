@@ -29,6 +29,7 @@ public final class ContentTagCopies {
     private static final String BLOCK = "block";
     private static final String ITEM_TAGS = Registries.tagsDirPath(Registries.ITEM);
     private static final String BLOCK_TAGS = Registries.tagsDirPath(Registries.BLOCK);
+    private static final List<String> COPY_KEYS = List.of("tag", "matches", "from");
     private static final List<Copy> COPIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -96,6 +97,7 @@ public final class ContentTagCopies {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "tag copy file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", COPY_KEYS);
         String path = key.getPath();
         boolean items = path.startsWith(ITEM + "/");
         if (!items && !path.startsWith(BLOCK + "/")) {

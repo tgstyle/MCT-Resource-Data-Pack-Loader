@@ -31,12 +31,18 @@ public final class ContentWorldgenParser {
             ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING);
     private static final Set<String> KNOWN_SPREADS = Set.of(SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED);
     private static final List<String> SHAPE_ONLY_KEYS = List.of("rarity", "rarityIsPerChunk", "pattern", "threshold", "density", "taper", "rich", "poor");
+    private static final List<String> WORLDGEN_KEYS = List.of("block", "meta", "blocks", "size", "attempts", "minHeight", "maxHeight", "replace", "adjacent", "sparse", "dimensions", "dimensionsAreBlacklist", "biomes", "biomeTypes", "biomesAreBlacklist", "requires", "retrogen", "retrogenKey", "minDistanceFromSpawn", "spread", "shape", "minTemperature", "maxTemperature", "minRainfall", "maxRainfall", "caveRegions", "indicators", "indicatorCount", "indicatorSpread", "then", "thenCount", "thenSpread", "thenDepth", "prospectAs", "snap", "snapDepth");
+    private static final List<String> SPREAD_KEYS = List.of("type", "center", "range", "smoothness", "veinHeight", "veinDiameter", "verticalDensity", "horizontalDensity", "offsetMin", "offsetMax", "ceiling");
+    private static final List<String> SHAPE_KEYS = List.of("type", "plane", "radius", "height", "width", "slim", "outline", "fill", "surface", "stackHeight", "seeSky", "checkStay", "scatterX", "scatterY", "scatterZ", "log", "leaves", "hanging", "structure", "structures", "turns", "mirrors", "taper", "integrity", "rarity", "rarityIsPerChunk", "field", "threshold", "lootTable", "respawn", "locateAs", "fade", "pattern", "density", "rich", "poor", "richAt", "poorAt", "middle", "budding", "buddingChance", "crystal", "crystalChance", "crack", "at");
+    private static final List<String> FIELD_KEYS = List.of("type", "spread", "chances", "cell", "seeds", "reach", "arms", "armReach");
+    private static final List<String> THEN_KEYS = List.of("name", "weight", "spread", "depth");
 
     private ContentWorldgenParser() {}
 
     @Nullable public static WorldgenDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "worldgen definition");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", WORLDGEN_KEYS);
         ResourceLocation block = ContentParser.location(Json.getString(json, "block", ""));
         if (block == null) {
             ContentLog.LOGGER.error("Worldgen definition {} names no block, ignoring it", key);
@@ -134,6 +140,7 @@ public final class ContentWorldgenParser {
             AmountDef depth = null;
             if (element.isJsonObject()) {
                 JsonObject follow = element.getAsJsonObject();
+                Json.unknownKeys(follow, "then", THEN_KEYS);
                 name = Json.getString(follow, "name", "");
                 weight = Json.getInt(follow, "weight", 1);
                 spread = follow.has("spread") ? Math.max(0, Json.getInt(follow, "spread", 0)) : -1;
@@ -210,6 +217,7 @@ public final class ContentWorldgenParser {
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
         JsonObject entry = Json.getJsonObject(json, "spread");
+        Json.unknownKeys(entry, "spread", SPREAD_KEYS);
         String type = choice(key, entry, "type", "spread type", SpreadDef.EVEN, KNOWN_SPREADS);
         int offsetMin = Json.getInt(entry, "offsetMin", 0);
         return new SpreadDef(type,
@@ -227,6 +235,7 @@ public final class ContentWorldgenParser {
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
         JsonObject entry = Json.getJsonObject(json, "shape");
+        Json.unknownKeys(entry, "shape", SHAPE_KEYS);
         String type = choice(key, entry, "type", "shape", ShapeDef.CLUSTER, KNOWN_SHAPES);
         String plane = choice(key, entry, "plane", "plane", ShapeDef.CIRCLE, List.of(ShapeDef.CIRCLE, ShapeDef.SQUARE));
         float richAt = Mth.clamp(Json.getFloat(entry, "richAt", 0.88F), 0.0F, 1.0F);
@@ -254,7 +263,7 @@ public final class ContentWorldgenParser {
                 Mth.clamp(Json.getInt(entry, "integrity", 100), 1, 100),
                 Math.max(0, Json.getInt(entry, "rarity", 0)),
                 Json.getBoolean(entry, "rarityIsPerChunk", false),
-                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(Json.getJsonObject(entry, "field", new JsonObject())) : null,
+                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(field(entry)) : null,
                 Json.getFloat(entry, "threshold", ShapeDef.VEIN.equals(type) ? 0.4F : 0.5F),
                 Math.max(0, Json.getInt(entry, "fade", 0)),
                 Json.getString(entry, "lootTable", "").trim(),
@@ -273,6 +282,12 @@ public final class ContentWorldgenParser {
                 Mth.clamp(Json.getFloat(entry, "crystalChance", 0.35F), 0.0F, 1.0F),
                 Mth.clamp(Json.getFloat(entry, "crack", 0.0F), 0.0F, 1.0F),
                 ContentParserRespawn.parse(key, entry));
+    }
+
+    private static JsonObject field(JsonObject entry) {
+        JsonObject field = Json.getJsonObject(entry, "field", new JsonObject());
+        Json.unknownKeys(field, "field", FIELD_KEYS);
+        return field;
     }
 
     private static String choice(ResourceLocation key, JsonObject entry, String member, String what, String fallback, Collection<String> allowed) {

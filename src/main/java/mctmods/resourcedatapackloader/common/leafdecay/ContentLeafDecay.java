@@ -27,6 +27,8 @@ public final class ContentLeafDecay {
     private static final String TAG = "tag";
     private static final String ALL = "all";
     private static final String EXCEPT = "except";
+    private static final List<String> DECAY_KEYS = List.of(BLOCKS, TAG, ALL, EXCEPT, "minTicks", "maxTicks", "dimensions", "requires");
+    private static final List<String> EXCEPT_KEYS = List.of(BLOCKS, TAG);
     private static final int MOST_TICKS = 1200;
     private static final List<LeafDecayRule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -69,6 +71,7 @@ public final class ContentLeafDecay {
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.unknownKeys(json, "the top level", DECAY_KEYS);
         boolean all = Json.getBoolean(json, ALL, false);
         if (!json.has(BLOCKS) && !json.has(TAG) && !all) {
             ContentLog.LOGGER.error("Leaf decay {} needs blocks, tag or all, ignoring it", key);
@@ -81,6 +84,7 @@ public final class ContentLeafDecay {
             return;
         }
         JsonObject except = Json.object(json, EXCEPT);
+        Json.unknownKeys(except, EXCEPT, EXCEPT_KEYS);
         int min = (int) Json.ranged(json, "minTicks", 10, 1, MOST_TICKS, key);
         int max = (int) Json.ranged(json, "maxTicks", 60, 1, MOST_TICKS, key);
         if (max < min) {

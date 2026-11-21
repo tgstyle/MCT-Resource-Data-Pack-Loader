@@ -30,6 +30,8 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 public final class ContentColumns {
     private static final String BLOCKS = "blocks";
     private static final String ALTERNATE = "alternate";
+    private static final List<String> COLUMN_KEYS = List.of("requires", BLOCKS, ALTERNATE, "limit", "includeSelf", "unlessSneaking");
+    private static final List<String> ALTERNATE_KEYS = List.of("item", "chance");
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean clearing;
@@ -48,6 +50,7 @@ public final class ContentColumns {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", COLUMN_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         BlockGroup group = new BlockGroup();
         for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, "Falling column " + key, BLOCKS); }
@@ -59,6 +62,7 @@ public final class ContentColumns {
         float chance = 0.0F;
         if (json.has(ALTERNATE)) {
             JsonObject extra = Json.object(json, ALTERNATE);
+            Json.unknownKeys(extra, ALTERNATE, ALTERNATE_KEYS);
             alternate = ContentStacks.parse(key, Json.text(extra, "item"), 1);
             chance = Json.bounded(extra, "chance", 0.0F, 1.0F, key + " " + ALTERNATE);
             if (alternate.isEmpty() || Float.isNaN(chance)) {

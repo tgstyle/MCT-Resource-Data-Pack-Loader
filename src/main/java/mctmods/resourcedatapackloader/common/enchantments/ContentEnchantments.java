@@ -59,6 +59,9 @@ public final class ContentEnchantments {
     private static final Map<String, String> PROTECTIONS = Map.of("fire", "is_fire", "fall", "is_fall", "explosion", "is_explosion", "projectile", "is_projectile");
     private static final List<String> MOBS = List.of("any", "undead", "arthropod", "illager");
     private static final List<String> TRIGGERS = List.of("attack", "hurt");
+    private static final List<String> ENCHANTMENT_KEYS = List.of("name", "category", "items", "slots", "maxLevel", "minCost", "maxCost", "rarity", "treasure", "effects", "requires");
+    private static final List<String> EFFECT_KEYS = List.of("type", "amount", "from", "mob", "on", "potion", "duration", "amplifier");
+    private static final List<String> LINEAR_KEYS = List.of("base", "perLevel");
     private static final Map<ResourceLocation, EnchantmentDef> ENCHANTMENTS = new LinkedHashMap<>();
     private static boolean loaded;
 
@@ -77,6 +80,7 @@ public final class ContentEnchantments {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "enchantment file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", ENCHANTMENT_KEYS);
         String category = Json.choice(json, "category", "", key, CATEGORIES.keySet());
         List<String> items = Json.strings(json, "items");
         if (category.isEmpty() && items.isEmpty()) {
@@ -127,6 +131,7 @@ public final class ContentEnchantments {
     }
 
     private static EnchantmentEffectDef readEffect(ResourceLocation key, JsonObject entry, List<String> slots) {
+        Json.unknownKeys(entry, "effects", EFFECT_KEYS);
         String type = Json.choice(entry, "type", "", key, EFFECT_TYPES);
         if (type.isEmpty()) {
             ContentLog.LOGGER.error("An effect in {} has no usable type, skipping it", key);
@@ -167,6 +172,7 @@ public final class ContentEnchantments {
 
     private static double[] linear(JsonObject json, String member, double base, double perLevel) {
         JsonObject object = Json.getJsonObject(json, member, new JsonObject());
+        Json.unknownKeys(object, member, LINEAR_KEYS);
         return new double[]{Json.getFloat(object, "base", (float) base), Json.getFloat(object, "perLevel", (float) perLevel)};
     }
 

@@ -27,6 +27,9 @@ public final class ContentParserAdAstra {
     private static final float OVERWORLD_SOLAR = 16.0F;
     private static final String ORBIT_BIOME = ContentAdAstra.MOD_ID + ":orbit";
     private static final List<String> NO_STATION_EQUIVALENT = List.of("showName", "checklist");
+    private static final List<String> ADASTRA_KEYS = List.of("kind", "parent", "tier", "minTier", "atmosphere", "launchFrom", "reachable", "solarEnergy", "exitHeight", "landingHeight", "fuelMultiplier", "recipe", "structure", "showName", "checklist",
+            "name", "ring", "beltWidth", "icon", "relativeSize", "distance", "orbitTime", "phaseShift", "ringColor", "ringSize", "ringFront", "galaxy", "galaxyImage", "mapPosition", "subsystem", "scaledDistance", "galaxyspace", "extraplanets");
+    private static final List<String> ATMOSPHERE_KEYS = List.of("breathable", "temperature", "corrosive");
 
     private ContentParserAdAstra() {}
 
@@ -37,6 +40,7 @@ public final class ContentParserAdAstra {
             return null;
         }
         JsonObject json = Json.getJsonObject(dimension, "adastra");
+        Json.unknownKeys(json, "adastra", ADASTRA_KEYS);
         String owner = "Dimension " + key + " adastra";
         String kind = Json.choice(json, "kind", AdAstraDef.PLANET, owner, KINDS);
         if (AdAstraDef.ASTEROIDS.equals(kind)) {
@@ -52,6 +56,7 @@ public final class ContentParserAdAstra {
         }
         int tier = Json.getInt(json, "tier", 1);
         JsonObject air = Json.getJsonObject(json, "atmosphere", new JsonObject());
+        Json.unknownKeys(air, "atmosphere", ATMOSPHERE_KEYS);
         List<ResourceLocation> launch = new ArrayList<>();
         for (String named : Json.strings(json, "launchFrom")) {
             ResourceLocation site = ResourceLocation.tryParse(ContentFormats.dimensionId(named.trim()));

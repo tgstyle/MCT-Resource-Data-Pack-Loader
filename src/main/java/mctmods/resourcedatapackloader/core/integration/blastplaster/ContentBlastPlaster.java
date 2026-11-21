@@ -23,12 +23,24 @@ import java.util.function.Supplier;
 import net.minecraft.world.level.Level;
 
 public final class ContentBlastPlaster {
+    private static final List<String> SETTING_KEYS = List.of(
+            "explosionMode", "enableFakeTossedBlocks", "enableExplosionFlash", "explosionFlashDuration", "explosionFlashLightLevel", "explosionFlashParticleCount", "explosionFlashPulses",
+            "enableExplosionSmoke", "explosionSmokeDuration", "explosionSmokeParticleCount", "playerTNTAlwaysDrops", "playerTNTDropFullBlocks", "healCreepers", "healNonPlayerTNT",
+            "healWither", "healAll", "processPlayerIgnitedTNT", "customEntitiesToHeal", "minimumTicksBeforeHeal", "randomTickVar", "overrideBlocks", "healFullTrees", "dtSpecialDrops",
+            "maxTreeSize", "blockConversions", "enableDropSuppression", "preventMobDrops");
+    private static final List<String> FILE_KEYS = fileKeys();
     private static final Map<String, JsonElement> EVERYWHERE = new LinkedHashMap<>();
     private static final Map<String, Map<String, JsonElement>> PER_DIMENSION = new LinkedHashMap<>();
     private static final Map<String, View> RESOLVED = new ConcurrentHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentBlastPlaster() {}
+
+    private static List<String> fileKeys() {
+        List<String> keys = new ArrayList<>(SETTING_KEYS);
+        keys.add("dimensions");
+        return List.copyOf(keys);
+    }
 
     public static void install() {
         if (ContentControl.off(ContentControl.BLAST_PLASTER)) { return; }
@@ -68,12 +80,14 @@ public final class ContentBlastPlaster {
     private static void read() {
         int[] read = {0};
         Json.eachObject(PackManager.BLASTPLASTER, "Blast Plaster settings file", (file, held) -> {
+            Json.unknownKeys(held, "the top level", FILE_KEYS);
             for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
                 if (!"dimensions".equals(entry.getKey())) {
                     EVERYWHERE.put(entry.getKey(), entry.getValue());
                     continue;
                 }
                 for (Map.Entry<String, JsonElement> given : entry.getValue().getAsJsonObject().entrySet()) {
+                    Json.unknownKeys(given.getValue().getAsJsonObject(), "dimensions", SETTING_KEYS);
                     Map<String, JsonElement> section = PER_DIMENSION.computeIfAbsent(given.getKey().trim(), unused -> new LinkedHashMap<>());
                     for (Map.Entry<String, JsonElement> inner : given.getValue().getAsJsonObject().entrySet()) { section.put(inner.getKey(), inner.getValue()); }
                 }

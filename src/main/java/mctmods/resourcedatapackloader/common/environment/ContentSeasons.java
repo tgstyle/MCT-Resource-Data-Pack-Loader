@@ -23,6 +23,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ContentSeasons {
     private static final String SEASONS = "seasons";
+    private static final List<String> SEASON_KEYS = List.of("days", "order");
     private static final int INTERVAL = 20;
     private static final int CLOCK_INTERVAL = 200;
     private static final Map<ResourceLocation, SeasonDef> BY_DIMENSION = new HashMap<>();
@@ -43,6 +44,7 @@ public final class ContentSeasons {
             return;
         }
         JsonObject seasons = json.getAsJsonObject(SEASONS);
+        Json.unknownKeys(seasons, SEASONS, SEASON_KEYS);
         int days = Json.getInt(seasons, "days", 0);
         if (days <= 0) {
             ContentLog.LOGGER.error("{} gives days {}, which is not a whole number above 0, ignoring it", owner, days);

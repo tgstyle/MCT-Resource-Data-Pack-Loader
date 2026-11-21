@@ -27,6 +27,9 @@ import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ContentDialogs {
+    private static final List<String> DIALOG_KEYS = List.of("start", "title", "icon", "color", "image", "background", "font", "titleColor", "textColor", "replyColor", "hoverColor", "hoverBackground", "history", "requires", "nodes");
+    private static final List<String> NODE_KEYS = List.of("title", "lines", "replies");
+    private static final List<String> REPLY_KEYS = List.of("text", "trade", "goto", "when", "card", "runs", "close", "sets", "worldSets");
     private static final int MOST_NODES = 64;
     private static final int MOST_LINES = 16;
     private static final int MOST_REPLIES = 8;
@@ -67,6 +70,7 @@ public final class ContentDialogs {
     @Nullable private static DialogDef parse(ResourceLocation id, String contents) {
         JsonObject json = Json.object(id, contents, "dialog file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", DIALOG_KEYS);
         String key = id.toString();
         String start = Json.getString(json, "start", "").trim();
         Map<String, DialogDef.Node> nodes = nodes(key, json);
@@ -94,6 +98,7 @@ public final class ContentDialogs {
     }
 
     private static DialogDef.Node node(String key, String name, JsonObject json, List<String> names) {
+        Json.unknownKeys(json, "nodes." + name, NODE_KEYS);
         List<String> lines = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(json, "lines", new JsonArray())) {
             if (!element.isJsonPrimitive()) { ContentLog.LOGGER.error("Dialog {} node {} has a line that is not text, skipping it", key, name); }
@@ -112,6 +117,7 @@ public final class ContentDialogs {
     }
 
     @Nullable private static DialogDef.Reply reply(String key, String node, JsonObject json, List<String> names) {
+        Json.unknownKeys(json, "nodes." + node + ".replies", REPLY_KEYS);
         String text = Json.getString(json, "text", "");
         if (text.trim().isEmpty()) {
             ContentLog.LOGGER.error("Dialog {} node {} has a reply with no text, skipping it", key, node);

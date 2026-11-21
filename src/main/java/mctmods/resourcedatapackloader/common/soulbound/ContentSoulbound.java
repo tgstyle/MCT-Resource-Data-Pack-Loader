@@ -30,6 +30,7 @@ public final class ContentSoulbound {
     private static final String PLAYER = "player";
     private static final String GRAVE = "grave";
     private static final String DEFAULT_TOOLTIP = "rdpl.tooltip.soulbound";
+    private static final List<String> KEYS = List.of(ENCHANTMENT, ITEMS, NBT, LOSE_CHANCE, GRAVES, "rollOnKeepInventory", "loseFirst", "keepVanishing", "tooltip");
     private static final List<SoulboundMark> MARKS = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -44,6 +45,7 @@ public final class ContentSoulbound {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", KEYS);
         SoulboundMark.Kind kind = null;
         String name = "";
         List<ItemStack> items = new ArrayList<>();

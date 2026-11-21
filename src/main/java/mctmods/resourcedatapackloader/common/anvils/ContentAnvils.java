@@ -75,6 +75,8 @@ public final class ContentAnvils {
     private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
     private static final Set<String> UNKNOWN = new HashSet<>();
     private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
+    private static final List<String> ANVIL_KEYS = List.of("requires", "match", "repairWith", "repairPerUnit", "repairCost", "combineCost", "bookCost", "penalty", "repair", "combine", TOO_EXPENSIVE, "item", "with", "result", "levels", "enchantments", "grants", "locks");
+    private static final List<String> STACK_KEYS = List.of("item", "count");
 
     private ContentAnvils() {}
 
@@ -89,6 +91,7 @@ public final class ContentAnvils {
         if (Config.data.anvilsOff()) { return; }
         Json.eachFile(PackManager.ANVILS, "anvil file", (key, contents) -> {
             JsonObject json = Json.object(key, contents, "anvil work");
+            if (json != null) { Json.unknownKeys(json, "the top level", ANVIL_KEYS); }
             if (json == null || !ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
             if (AnvilRules.names(json)) {
                 AnvilRules.read(key, json);
@@ -188,6 +191,7 @@ public final class ContentAnvils {
 
     private static int countOf(JsonObject json, String name) {
         if (!GsonHelper.isObjectNode(json, name)) { return 1; }
+        Json.unknownKeys(Json.getJsonObject(json, name), name, STACK_KEYS);
         return Math.max(1, Json.getInt(Json.getJsonObject(json, name), "count", 1));
     }
 

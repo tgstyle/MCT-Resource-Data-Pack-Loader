@@ -25,6 +25,14 @@ public final class BoardRules {
     public static final int MOST_SQUARES = 16;
     public static final int MOST_LEVEL = 4;
     private static final List<String> MODES = Arrays.asList("both", "never", "only", "hop");
+    private static final List<String> GAME_KEYS = List.of("name", "board", "pieces", "sides", "rules", "clock", "ai", "result", "quiet", "setup");
+    private static final List<String> BOARD_KEYS = List.of("files", "ranks", "light", "dark");
+    private static final List<String> SIDE_KEYS = List.of("name", "color");
+    private static final List<String> RULE_KEYS = List.of("mustCapture", "chainCaptures", "quietDraw", "repeatDraw");
+    private static final List<String> CLOCK_KEYS = List.of("minutes", "addSeconds");
+    private static final List<String> RESULT_KEYS = List.of("objective", "win", "draw", "loss");
+    private static final List<String> PIECE_KEYS = List.of("letter", "mob", "mobs", "value", "royal", "enPassant", "castles", "promotes", "moves");
+    private static final List<String> STEP_KEYS = List.of("captures", "steps", "slides", "firstRange");
     public final String id;
     public final String name;
     public final int files;
@@ -96,7 +104,20 @@ public final class BoardRules {
 
     boolean keepsMoved(int kind) { return keepsMoved[kind]; }
 
+    private static void check(JsonObject json) {
+        Json.unknownKeys(json, "the top level", GAME_KEYS);
+        Json.unknownKeys(object(json, "board"), "board", BOARD_KEYS);
+        Json.unknownKeys(object(json, "rules"), "rules", RULE_KEYS);
+        Json.unknownKeys(object(json, "clock"), "clock", CLOCK_KEYS);
+        Json.unknownKeys(object(json, "result"), "result", RESULT_KEYS);
+        if (!GsonHelper.isArrayNode(json, "sides")) { return; }
+        for (JsonElement side : json.getAsJsonArray("sides")) {
+            if (side.isJsonObject()) { Json.unknownKeys(side.getAsJsonObject(), "sides", SIDE_KEYS); }
+        }
+    }
+
     @Nullable public static BoardRules parse(String id, JsonObject json) {
+        check(json);
         JsonObject board = object(json, "board");
         int files = number(board, "files", 8);
         int ranks = number(board, "ranks", 8);
@@ -163,6 +184,7 @@ public final class BoardRules {
             return null;
         }
         JsonObject json = element.getAsJsonObject();
+        Json.unknownKeys(json, "pieces." + name, PIECE_KEYS);
         String letter = text(json, "letter", name.substring(0, 1)).toLowerCase(Locale.ROOT);
         if (letter.length() != 1 || !Character.isLetter(letter.charAt(0))) {
             ContentLog.LOGGER.error("Game file {} gives {} the letter '{}', and a letter is one letter, so it is left out", id, name, letter);
@@ -186,6 +208,7 @@ public final class BoardRules {
     }
 
     @Nullable private static BoardPiece.Steps steps(String id, String name, JsonObject json) {
+        Json.unknownKeys(json, "pieces." + name + ".moves", STEP_KEYS);
         String mode = text(json, "captures", "both");
         if (!MODES.contains(mode)) {
             ContentLog.LOGGER.error("Game file {} lets {} capture by '{}', which is not both, never, only or hop, so it is left out", id, name, mode);

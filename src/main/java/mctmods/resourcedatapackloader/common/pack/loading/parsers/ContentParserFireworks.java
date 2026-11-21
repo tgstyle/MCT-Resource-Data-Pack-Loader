@@ -16,12 +16,16 @@ import net.minecraft.resources.ResourceLocation;
 final class ContentParserFireworks {
     private static final String FIREWORK = "firework";
     private static final int WHITE = 0xFFFFFF;
+    private static final List<String> FIREWORK_KEYS = List.of("replaceUse", "mode", "on", "flight", "consume", "dispense", "explosions", "burst");
+    private static final List<String> EXPLOSION_KEYS = List.of("shape", "colors", "fade", "trail", "twinkle");
+    private static final List<String> BURST_KEYS = List.of("particle", "count", "speed", "pattern", "sound", "delay", "spread", "points");
 
     private ContentParserFireworks() {}
 
     @Nullable static FireworkDef firework(ResourceLocation key, JsonObject json) {
         if (!json.has(FIREWORK)) { return null; }
         JsonObject firework = Json.getJsonObject(json, FIREWORK, new JsonObject());
+        Json.unknownKeys(firework, FIREWORK, FIREWORK_KEYS);
         String owner = "Item " + key + " " + FIREWORK;
         List<FireworkDef.Explosion> explosions = new ArrayList<>();
         JsonArray list = Json.getJsonArray(firework, "explosions", new JsonArray());
@@ -41,6 +45,7 @@ final class ContentParserFireworks {
     }
 
     private static FireworkDef.Explosion explosion(JsonObject json, String owner) {
+        Json.unknownKeys(json, "firework.explosions", EXPLOSION_KEYS);
         String shape = Json.choice(json, "shape", FireworkDef.SHAPE_SMALL_BALL, owner, List.of(FireworkDef.SHAPE_SMALL_BALL, FireworkDef.SHAPE_LARGE_BALL, FireworkDef.SHAPE_STAR, FireworkDef.SHAPE_CREEPER, FireworkDef.SHAPE_BURST));
         int[] colors = colors(json, "colors", owner);
         if (colors.length == 0) { colors = new int[] {WHITE}; }
@@ -96,6 +101,7 @@ final class ContentParserFireworks {
     }
 
     @Nullable private static FireworkDef.Burst burst(JsonObject json, String where) {
+        Json.unknownKeys(json, "firework.burst", BURST_KEYS);
         ResourceLocation particle = ResourceLocation.tryParse(Json.getString(json, "particle", "").trim());
         if (particle == null) {
             ContentLog.LOGGER.error("{} has no valid particle item id, so the burst is ignored", where);

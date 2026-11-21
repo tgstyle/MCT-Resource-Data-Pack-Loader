@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +25,7 @@ public final class ScriptEventDef {
     public static final String MOD_EVENT = "mod_event";
     private static final Set<String> KINDS = Set.of(BLOCK_PLACE, BLOCK_BREAK, ENTITY_HURT, ENTITY_SPAWN, ENTITY_DESPAWN, PLAYER_LOGIN,
         PLAYER_TICK, SERVER_TICK, DIMENSION_CHANGE, LOOT_DROP, ENTITY_TRAVEL, MOD_EVENT);
+    private static final List<String> EVENT_KEYS = List.of(KIND, "every", "filter", "scriptFile", "script", "class");
     private static final Set<String> NEW_KINDS = Set.of(PLAYER_TICK, SERVER_TICK, DIMENSION_CHANGE, LOOT_DROP, ENTITY_TRAVEL, MOD_EVENT);
 
     public final String kind;
@@ -54,6 +56,7 @@ public final class ScriptEventDef {
     }
 
     @Nullable public static ScriptEventDef read(ResourceLocation owner, JsonObject json) {
+        Json.unknownKeys(json, "the top level", EVENT_KEYS);
         String kind = Json.text(json, KIND, "");
         if (!KINDS.contains(kind)) {
             ContentLog.LOGGER.error("{}: unknown or missing event '{}', ignoring it", owner, kind);

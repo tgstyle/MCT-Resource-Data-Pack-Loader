@@ -24,6 +24,8 @@ public final class ContentFuels {
     private static final String FUELS = "fuels";
     private static final String ORE_DICT = "oreDict";
     private static final String TAG = "tag";
+    private static final List<String> FILE_KEYS = List.of(FUELS);
+    private static final List<String> FUEL_KEYS = List.of("burnTime", ORE_DICT, TAG, "item");
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -41,12 +43,14 @@ public final class ContentFuels {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "fuel file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, FUELS)) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, FUELS, FUEL_KEYS);
             int burnTime = Json.getInt(entry, "burnTime", 0);
             if (burnTime <= 0) {
                 ContentLog.LOGGER.error("A fuel in {} has no positive burnTime, skipping it", key);

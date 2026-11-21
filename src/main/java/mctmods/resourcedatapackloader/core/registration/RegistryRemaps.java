@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -21,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class RegistryRemaps {
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
+    private static final List<String> REMAP_KEYS = List.of(REGISTRY, MAPPING);
     private static final Map<String, String> LEGACY_REGISTRIES = Map.of("minecraft:blocks", "minecraft:block", "minecraft:items", "minecraft:item", "minecraft:biomes", "minecraft:worldgen/biome", "minecraft:enchantments", "minecraft:enchantment", "minecraft:potions", "minecraft:mob_effect", "minecraft:potiontypes", "minecraft:potion", "minecraft:soundevents", "minecraft:sound_event", "minecraft:entities", "minecraft:entity_type", "minecraft:villagerprofessions", "minecraft:villager_profession");
     private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -37,6 +39,7 @@ public final class RegistryRemaps {
     }
 
     private static int read(JsonObject json) {
+        Json.unknownKeys(json, "the top level", REMAP_KEYS);
         String named = Json.getString(json, REGISTRY);
         ResourceLocation registry = ResourceLocation.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
         JsonObject mapping = Json.getJsonObject(json, MAPPING);

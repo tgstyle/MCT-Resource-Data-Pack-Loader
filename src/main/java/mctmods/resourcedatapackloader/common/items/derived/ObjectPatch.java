@@ -24,7 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 public final class ObjectPatch {
-    private static final List<String> SPEC_KEYS = Arrays.asList("set", "returns", "addTo");
+    private static final List<String> SPEC_KEYS = List.of("set", "returns", "addTo");
     private static final JsonObject NONE = new JsonObject();
 
     private ObjectPatch() {}
@@ -40,9 +40,10 @@ public final class ObjectPatch {
     }
 
     @Nullable static Object nested(Object source, JsonObject spec, ResourceLocation owner, String path) {
-        for (Map.Entry<String, JsonElement> entry : spec.entrySet()) {
-            if (!SPEC_KEYS.contains(entry.getKey())) { ContentLog.LOGGER.warn("Derived item {} has an unknown key {} under {}, ignoring it", owner, entry.getKey(), path); }
-        }
+        Json.within("derived item", owner, () -> {
+            Json.unknownKeys(spec, path, SPEC_KEYS);
+            return null;
+        });
         JsonObject returns = member(spec, "returns", owner, path);
         Object made = copy(source, owner, path, returns);
         if (made == null) { return null; }
