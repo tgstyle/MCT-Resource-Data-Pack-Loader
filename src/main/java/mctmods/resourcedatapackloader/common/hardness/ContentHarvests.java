@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +29,7 @@ public final class ContentHarvests {
     private static final String CROPS = "crops";
     private static final String AGE = "age";
     private static final String REPLANT = "replant";
+    private static final List<String> HARVEST_KEYS = List.of(CROPS, AGE, REPLANT, "requires");
     private static final Map<Block, Rule> BY_BLOCK = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -44,6 +46,7 @@ public final class ContentHarvests {
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.unknownKeys(json, "the top level", HARVEST_KEYS);
         if (!json.has(CROPS)) {
             ContentLog.LOGGER.error("Crop harvest {} names no crops, ignoring it", key);
             return;

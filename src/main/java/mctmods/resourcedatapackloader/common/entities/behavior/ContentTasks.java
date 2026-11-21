@@ -106,6 +106,7 @@ public final class ContentTasks {
     private static final String WALKER = "a walking creature";
     private static final String TAME = "a tameable base, like a wolf, cat or parrot";
     private static final String ANY_NAME = "any living entity";
+    private static final List<String> TASK_KEYS = List.of("task", "priority", "speed", "nearSpeed", "distance", "near", "chance", "leap", "cooldown", "entity", "items", "sight", "nearby", "help", "memory", "close", "nocturnal", "scared");
 
     private ContentTasks() {}
 
@@ -253,6 +254,7 @@ public final class ContentTasks {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "tasks", TASK_KEYS);
             Kind kind = known(key, Json.getString(entry, "task", ""));
             if (kind == null) { continue; }
             if (!entry.has("priority")) {

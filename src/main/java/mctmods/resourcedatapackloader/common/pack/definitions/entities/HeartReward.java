@@ -31,6 +31,8 @@ public final class HeartReward {
     private static final String WHILE_MET = "while_met";
     private static final List<String> REPEATS = Arrays.asList(ONCE, ALWAYS);
     private static final List<String> LOSS_REPEATS = Arrays.asList(ONCE, ALWAYS, WHILE_MET);
+    private static final List<String> REWARD_KEYS = List.of("id", "advancement", "diet", "dietCount", "foods", "count", "team", "objective", "scoreAtLeast", "dietAtLeast",
+            "death", "deathBy", "invert", "repeat", "clearOnDeath", "clearFoodsOnDeath", "times", "hearts", "message", "requires");
     private static final List<String> DEATH_BY = Arrays.asList("any", "player", "mob", "world");
     public final boolean loss;
     public final boolean invert;
@@ -84,6 +86,7 @@ public final class HeartReward {
 
     public static HeartReward parse(ResourceLocation file, JsonObject json, List<String> seen, boolean loss) {
         String noun = loss ? "loss" : "reward";
+        Json.unknownKeys(json, loss ? "losses" : "rewards", REWARD_KEYS);
         if (!json.has("id")) { throw new IllegalArgumentException("a " + noun + " has no id"); }
         String id = Json.getString(json, "id").trim();
         if (id.isEmpty() || seen.contains(id)) { throw new IllegalArgumentException(noun + " id '" + id + "' is empty or used twice in the file"); }

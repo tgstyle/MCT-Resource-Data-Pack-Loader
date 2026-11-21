@@ -80,6 +80,9 @@ public final class BlockDrops extends LootModifier {
     private static final String GRANT = "grant";
     private static final String RUNS = "runs";
     private static final String PLAYER = "player";
+    private static final List<String> RULE_KEYS = List.of("block", "meta", "properties", REPLACE, DROPS, ONCE, ADVANCEMENT, RUNS);
+    private static final List<String> DROP_KEYS = List.of(ITEM, EXPERIENCE, COUNT, CHANCE, FORTUNE, SILK_TOUCH);
+    private static final List<String> ONCE_KEYS = List.of(PER, GRANT);
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
     private static final List<TagRule> BY_TAG = new ArrayList<>();
     private static final Set<ResourceLocation> MISSING = new HashSet<>();
@@ -109,6 +112,7 @@ public final class BlockDrops extends LootModifier {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", RULE_KEYS);
         String name = Json.getString(json, "block", "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
@@ -120,7 +124,7 @@ public final class BlockDrops extends LootModifier {
             ContentLog.LOGGER.error("Block drops {} names tag '{}', which is not a valid tag id, ignoring it", key, name);
             return;
         }
-        BlockMatchDef match = tag ? null : ContentParser.match(key, json);
+        BlockMatchDef match = tag ? null : ContentParser.matchOf(key, json);
         if (!tag && match == null) { return; }
         Block block = tag ? null : Registered.find(ForgeRegistries.BLOCKS, match.block());
         if (!tag && block == null) {
@@ -160,6 +164,7 @@ public final class BlockDrops extends LootModifier {
             return null;
         }
         JsonObject once = json.getAsJsonObject(ONCE);
+        Json.unknownKeys(once, ONCE, ONCE_KEYS);
         String grant = Json.getString(once, GRANT, "").trim();
         if (!PLAYER.equals(Settings.lower(Json.getString(once, PER, ""))) || grant.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} 'once' needs per \"player\" and a grant, ignoring it", key);
@@ -169,6 +174,7 @@ public final class BlockDrops extends LootModifier {
     }
 
     @Nullable private static Drop drop(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, DROPS, DROP_KEYS);
         boolean experience = json.has(EXPERIENCE);
         ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, Json.getString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }

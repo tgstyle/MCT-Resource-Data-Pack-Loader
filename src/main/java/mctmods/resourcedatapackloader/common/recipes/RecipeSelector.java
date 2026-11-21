@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -28,6 +29,7 @@ final class RecipeSelector {
     private static final String INPUTS = "inputs";
     private static final String REGEX = "regex";
     private static final String TYPES = "types";
+    static final List<String> KEYS = List.of(NAMES, NAMESPACES, OUTPUTS, REGEX, INPUTS, TYPES);
     private final Set<String> named = new LinkedHashSet<>();
     private final Set<String> prefixes = new LinkedHashSet<>();
     private final Set<Pattern> patterns = new LinkedHashSet<>();

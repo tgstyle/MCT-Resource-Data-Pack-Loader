@@ -31,6 +31,9 @@ public final class ContentTooltips {
     private static final String SHIFT = "shift";
     private static final String POSITION = "position";
     private static final String REPLACE = "replace";
+    private static final List<String> FILE_KEYS = List.of("items", "enchantments");
+    private static final List<String> ITEM_KEYS = List.of("item", "lines", SHIFT, POSITION, REPLACE, "when");
+    private static final List<String> ENCHANTMENT_KEYS = List.of("enchantment", "lines", SHIFT, POSITION, REPLACE, "when");
     private static final Map<Item, List<Rule>> ITEMS = new HashMap<>();
     private static final Map<Enchantment, List<Rule>> ENCHANTMENTS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -75,12 +78,14 @@ public final class ContentTooltips {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "items", new JsonArray())) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("An items entry in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "items", ITEM_KEYS);
             List<String> lines = Json.strings(entry, "lines");
             if (lines.isEmpty()) {
                 ContentLog.LOGGER.error("An items entry in {} has no lines, skipping it", key);
@@ -97,6 +102,7 @@ public final class ContentTooltips {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "enchantments", ENCHANTMENT_KEYS);
             List<String> lines = Json.strings(entry, "lines");
             String name = Json.getString(entry, "enchantment", "");
             Enchantment enchantment = Registered.find(ForgeRegistries.ENCHANTMENTS, ResourceLocation.tryParse(name));

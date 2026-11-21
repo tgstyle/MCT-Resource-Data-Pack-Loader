@@ -20,6 +20,14 @@ public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
     private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow", "grassTint", "foliageTint", "birchTint", "nightVisionColor");
     private static final List<String> FACES = List.of("up", "down", "north", "east", "south", "west");
+    private static final List<String> SUN_KEYS = List.of("texture", "size", "tilt", "roll", "spin", "flip", "color", "auraColor", "auraSize", "auraHorizon", "lineCount", "lineStart", "lineLength", "lineWidth", "lineColor");
+    private static final List<String> SKYBOX_KEYS = List.of("yaw", "pitch", "roll", "spin", "flip", "followsTime", "panorama", "up", "down", "north", "east", "south", "west");
+    private static final List<String> AURORA_KEYS = List.of("color", "topColor", "yaw");
+    private static final List<String> HEAT_KEYS = List.of("strength", "minTemperature", "dayOnly", "mode", "startDistance");
+    private static final List<String> LAYER_KEYS = List.of("color", "height", "speed");
+    public static final List<String> SKY_KEYS = List.of("skyColor", "cloudColor", "fogColor", "cloudHeight", "hasSkyLight", "surfaceWorld", "respawn", "spawning", "groundLevel", "movementFactor", "fixedTime", "sunriseColors", "nether", "beds", "waterVaporizes", "showFog", "ambientLight", "starBrightness", "respawnDimension", "renderSky", "renderClouds", "renderWeather",
+            "fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow", "grassTint", "foliageTint", "birchTint", "nightVisionColor",
+            "sun", "moon", "bodies", "stars", "darkness");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
     private static final List<String> HAZE = List.of("color", "auraColor", "auraSize", "auraHorizon", "lineCount", "lineStart", "lineLength", "lineWidth", "lineColor");
@@ -39,6 +47,7 @@ public final class ContentParserSkyLook {
     @Nullable public static SkyLookDef look(ResourceLocation key, JsonObject sky, int cloudHeight, int cloudColor) {
         boolean sample = samples(sky);
         JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
+        Json.unknownKeys(sun, "sun", SUN_KEYS);
         if (!sample && KEYS.stream().noneMatch(sky::has) && HAZE.stream().noneMatch(sun::has)) { return null; }
         float cloudSpeed = Json.getFloat(sky, "cloudSpeed", 1.0F);
         return new SkyLookDef(sample, unit(key, sky, "fogDensity", 0.0F), unit(key, sky, "fogGroundWeight", GROUND_WEIGHT), color(key, sky, "lightSkyColor"), color(key, sky, "lightBlockColor"),
@@ -54,6 +63,7 @@ public final class ContentParserSkyLook {
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
         if (!sky.has("skybox")) { return null; }
         JsonObject box = Json.getJsonObject(sky, "skybox");
+        Json.unknownKeys(box, "skybox", SKYBOX_KEYS);
         String owner = "sky.skybox";
         float yaw = finite(key, box, owner, "yaw");
         float pitch = finite(key, box, owner, "pitch");
@@ -74,6 +84,7 @@ public final class ContentParserSkyLook {
     }
 
     private static SkyLookDef.Aurora aurora(ResourceLocation key, JsonObject aurora) {
+        Json.unknownKeys(aurora, "aurora", AURORA_KEYS);
         int color = color(key, aurora, "color");
         int top = color(key, aurora, "topColor");
         return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top, finite(key, aurora, "sky.aurora", "yaw"));
@@ -127,13 +138,17 @@ public final class ContentParserSkyLook {
         List<SkyLookDef.CloudLayer> layers = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(sky, "cloudLayers")) {
             JsonObject layer = GsonHelper.convertToJsonObject(element, "cloud layer");
+            Json.unknownKeys(layer, "cloudLayers", LAYER_KEYS);
             String tint = Json.getString(layer, "color", "").trim();
             layers.add(new SkyLookDef.CloudLayer(Json.getFloat(layer, "height", cloudHeight), Json.getFloat(layer, "speed", cloudSpeed), tint.isEmpty() ? cloudColor : ContentParser.color(tint, key + " sky.cloudLayers") & 0xFFFFFF));
         }
         return List.copyOf(layers);
     }
 
-    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) { return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), Json.getFloat(heat, "minTemperature", HOT), Json.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat)); }
+    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) {
+        Json.unknownKeys(heat, "heat", HEAT_KEYS);
+        return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), Json.getFloat(heat, "minTemperature", HOT), Json.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat));
+    }
 
     private static boolean followsWorld(ResourceLocation key, JsonObject heat) { return WORLD.equals(Json.choice(heat, "mode", SCREEN, "Dimension " + key + " sky.heat", MODES)); }
 

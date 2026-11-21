@@ -13,6 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class ContentParserCelestial {
     private static final List<String> UNUSED = List.of("galaxy", "galaxyImage", "mapPosition", "subsystem", "scaledDistance", "galaxyspace", "extraplanets");
+    private static final List<String> CELESTIAL_KEYS = List.of("kind", "requires", "name", "parent", "distance", "ring", "beltWidth", "icon", "relativeSize", "orbitTime", "phaseShift", "ringColor", "ringSize", "ringFront", "galaxy", "galaxyImage", "mapPosition", "subsystem", "scaledDistance", "galaxyspace", "extraplanets");
+    private static final List<String> SYSTEM_KEYS = List.of("kind", "name", "star", "requires", "ringColor", "galaxy", "galaxyImage", "mapPosition", "subsystem", "scaledDistance", "galaxyspace", "extraplanets");
+    private static final List<String> STAR_KEYS = List.of("icon", "relativeSize");
     private static final String RING = "#19E599";
     private static final String SUBSYSTEM = "subsystem";
     private static final String OVERRIDE = "override";
@@ -33,15 +36,18 @@ public final class ContentParserCelestial {
             ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.MOON);
             return null;
         }
+        Json.unknownKeys(json, "the top level", CELESTIAL_KEYS);
         return body(key, json, kind, key.getPath(), Json.strings(json, "requires"));
     }
 
     @Nullable public static CelestialDef mapBody(ResourceLocation key, JsonObject adastra, String kind) { return body(key, adastra, kind, key.getPath(), List.of()); }
 
     private static CelestialDef system(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SYSTEM_KEYS);
         String name = Json.getString(json, "name", key.getPath()).trim();
         skipped(key, json);
         JsonObject star = Json.getJsonObject(json, "star", new JsonObject());
+        Json.unknownKeys(star, "star", STAR_KEYS);
         return new CelestialDef(key, CelestialDef.SYSTEM, name.isEmpty() ? key.getPath() : name, "", ResourceLocation.parse(Json.getString(star, "icon", ICONS + "sun.png").trim()), Json.getFloat(star, "relativeSize", 1.0F), 0.0F, 1.0F, 0.0F, ringColor(key, json), null,
                 CelestialDef.DEFAULT_RING_SIZE, RingFront.BOTTOM, 0.0F, Json.strings(json, "requires"));
     }

@@ -51,6 +51,8 @@ public final class ContentGates {
     private static final List<String> TEAMLESS = List.of(GateDef.PLAYER, GateDef.REFUSE);
     private static final List<String> TALLIES = List.of(GateDef.PLAYER, GateDef.TEAM);
     private static final List<String> STANDINGS = List.of(GateDef.ALONE, GateDef.WITH);
+    private static final List<String> GATE_KEYS = List.of("scope", "dimension", "name", "teamless", "open", "unlock", "portalBlocks", "blockedMessage", "unlockedMessage", "safeReturn", "requires", "stayMinutes", "stayReset", "stayWarn", "stayMessage", "onExpire", "dropOnLeave");
+    private static final List<String> UNLOCK_KEYS = List.of("craft", "consume", "consumeCount", "hold", "advancement", "killed", "killedCount", "killedDrops", "killedTally", "killedRank", "scoreAtLeast", "team", "objective", "dietAtLeast", "dietCount", "teamAndScore", "worn", "each", "data");
 
     private ContentGates() {}
 
@@ -92,6 +94,7 @@ public final class ContentGates {
             ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {}, {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM, GateDef.PLAYER);
             scope = GateDef.PLAYER;
         }
+        Json.unknownKeys(json, "the top level", GATE_KEYS);
         String named = Json.getString(json, "dimension", "").trim();
         ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
         if (!named.isEmpty() && dimension == null) {
@@ -99,6 +102,7 @@ public final class ContentGates {
             return null;
         }
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
+        Json.unknownKeys(unlock, "unlock", UNLOCK_KEYS);
         String owner = "Gate " + key;
         return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), scope, Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS), Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", "").trim(), Json.getString(unlock, "consume", "").trim(), Math.max(1, Json.getInt(unlock, "consumeCount", 1)),

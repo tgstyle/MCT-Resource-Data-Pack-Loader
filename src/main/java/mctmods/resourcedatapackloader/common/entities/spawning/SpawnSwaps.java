@@ -38,6 +38,8 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 
 public final class SpawnSwaps {
+    private static final List<String> FILE_KEYS = List.of("entities", "becomes", "runs", "blocks", "biomes", "biomeTypes", "requireAll", "elsewhere", "extra", "fromSpawners", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount");
+    private static final List<String> ELSEWHERE_KEYS = List.of("chance", "lightBelow", "night");
     private static final String MARK = "rdplSwapFresh";
     private static final String RAN = "rdplSpawnRan";
     private static final String NATURAL = "natural";
@@ -159,6 +161,7 @@ public final class SpawnSwaps {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Spawn swap file " + key;
         List<String> entities = json.has("entities") ? MobStats.entities(owner, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
@@ -179,6 +182,7 @@ public final class SpawnSwaps {
         JsonObject where = json.has("elsewhere") && json.get("elsewhere").isJsonObject() ? json.getAsJsonObject("elsewhere") : null;
         if (json.has("elsewhere") && where == null) { ContentLog.LOGGER.error("{} gives elsewhere that is not an object, so it is left out", owner); }
         boolean elsewhere = where != null;
+        if (elsewhere) { Json.unknownKeys(where, "elsewhere", ELSEWHERE_KEYS); }
         RULES.add(new Rule(new SpawnSwapDef(key, entities, becomes, Json.strings(json, "biomes"), types, blocks, Json.getBoolean(json, "requireAll", false),
                 SpawnGateDef.read(key, json, "Spawn swap file"), elsewhere, elsewhere ? Json.ranged(where, "chance", 1.0F, 0.0F, 1.0F, owner) : 1.0F,
                 elsewhere && where.has("lightBelow") ? Math.max(1, Math.min(BRIGHTEST, Json.getInt(where, "lightBelow", BRIGHTEST))) : 0, elsewhere && Json.getBoolean(where, "night", false),

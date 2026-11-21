@@ -24,6 +24,10 @@ import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
 
 final class SwapEntry {
+    static final List<String> FILE_KEYS = List.of("requires", "swaps", "remainder", "transfer", "recipes", "template", "edit", "scriptFile", "script", "types", "before_swaps");
+    private static final List<String> SWAP_KEYS = List.of("from", "to", "output", "recipes", "types", "paths");
+    private static final List<String> FROM_KEYS = List.of("names", "namespaces", "tags");
+    private static final List<String> SCOPE_KEYS = List.of("names", "namespaces", "outputs");
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final List<SwapEntry> ALL = new ArrayList<>();
     private final ItemSelection from = new ItemSelection("Recipe swap", "replaces");
@@ -80,6 +84,7 @@ final class SwapEntry {
             ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key);
             return;
         }
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "swaps")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A swap in {} is not an object, skipping it", key);
@@ -95,6 +100,8 @@ final class SwapEntry {
             ContentLog.LOGGER.error("A swap in {} needs a from object, skipping it", key);
             return null;
         }
+        Json.unknownKeys(json, "swaps", SWAP_KEYS);
+        Json.unknownKeys(json.getAsJsonObject("from"), "from", FROM_KEYS);
         String target = Json.getString(json, "to", "");
         boolean tagged = target.startsWith("#");
         ResourceLocation id = tagged ? Registered.tagId(target) : itemId(key, target);
@@ -148,6 +155,7 @@ final class SwapEntry {
     }
 
     private void readScope(ResourceLocation key, JsonObject recipes) {
+        Json.unknownKeys(recipes, "recipes", SCOPE_KEYS);
         if (recipes.has("outputs")) { ContentLog.LOGGER.error("A swap in {} has outputs in its recipes, which a swap does not read, ignoring it", key); }
         JsonObject limits = new JsonObject();
         for (String member : new String[] {"names", "namespaces"}) {

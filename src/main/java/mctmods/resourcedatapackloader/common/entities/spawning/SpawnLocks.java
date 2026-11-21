@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
 public final class SpawnLocks {
+    private static final List<String> FILE_KEYS = List.of("entities", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount");
     private static final List<Lock> LOCKS = new ArrayList<>();
 
     private SpawnLocks() {}
@@ -36,6 +37,7 @@ public final class SpawnLocks {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         List<String> entities = json.has("entities") ? MobStats.entities("Spawn lock file " + key, "entities", json.get("entities")) : null;
         if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Spawn lock file {} names no entities, ignoring it", key);

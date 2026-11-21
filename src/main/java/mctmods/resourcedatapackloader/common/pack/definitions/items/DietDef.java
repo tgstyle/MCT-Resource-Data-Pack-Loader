@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffe
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -18,6 +19,8 @@ public final class DietDef {
     public static final int DEFAULT_MEMORY = 10;
     private static final String DEFAULT_REPEAT = "rdpl.diet.repeat";
     private static final String DEFAULT_VARIETY = "rdpl.diet.variety";
+    private static final List<String> TIER_KEYS = List.of("distinct", "multiplier", "effects", "runs");
+    private static final List<String> MESSAGE_KEYS = List.of("repeat", "variety");
     private final int memory;
     private final float[] repeat;
     private final List<Tier> variety;
@@ -56,6 +59,7 @@ public final class DietDef {
             for (JsonElement element : array(json.get("variety"), "variety")) {
                 if (!element.isJsonObject()) { throw new IllegalArgumentException("variety entries must be objects"); }
                 JsonObject tier = element.getAsJsonObject();
+                Json.unknownKeys(tier, "variety", TIER_KEYS);
                 List<PotionEffectDef> effects = tier.has("effects") ? ContentParser.effects(file, array(tier.get("effects"), "effects"), 1200, false) : new ArrayList<>();
                 String runs = tier.has("runs") ? text(tier.get("runs"), "runs") : "";
                 variety.add(new Tier(whole(tier.get("distinct"), "distinct"), (float) number(tier.get("multiplier"), "multiplier", 0.0D), effects, runs));
@@ -85,6 +89,7 @@ public final class DietDef {
         if (json.has("messages")) {
             if (!json.get("messages").isJsonObject()) { throw new IllegalArgumentException("messages must be an object"); }
             JsonObject messages = json.getAsJsonObject("messages");
+            Json.unknownKeys(messages, "messages", MESSAGE_KEYS);
             repeatMessage = message(messages, "repeat", DEFAULT_REPEAT);
             varietyMessage = message(messages, "variety", DEFAULT_VARIETY);
         }

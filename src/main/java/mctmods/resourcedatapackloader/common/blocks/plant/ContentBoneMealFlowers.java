@@ -39,6 +39,7 @@ public final class ContentBoneMealFlowers {
     private static final String FLOWERS = "flowers";
     private static final String TAG = "tag";
     private static final String ORE_DICT = "oreDict";
+    private static final List<String> SPREAD_KEYS = List.of("requires", ON, FLOWERS, TAG, ORE_DICT, "everyMod", "radius", "count");
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -54,6 +55,7 @@ public final class ContentBoneMealFlowers {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SPREAD_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         String owner = "Flower spread " + key;
         BlockGroup on = new BlockGroup();

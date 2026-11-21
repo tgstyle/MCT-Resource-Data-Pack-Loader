@@ -27,6 +27,7 @@ import net.minecraftforge.event.CommandEvent;
 public final class CommandGuards {
     private static final Set<String> OWN = Set.of("rdpl", "rdplserver");
     private static final String DENIED = "commands.help.failed";
+    private static final List<String> GUARD_KEYS = List.of("guard", "when", "unless", "message");
     private static final List<Guard> GUARDS = new ArrayList<>();
 
     private CommandGuards() {}
@@ -38,6 +39,7 @@ public final class CommandGuards {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", GUARD_KEYS);
         String name = Json.getString(json, "guard", "").trim().toLowerCase(Locale.ROOT);
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Command guard file {} names no command in guard, ignoring it", key);

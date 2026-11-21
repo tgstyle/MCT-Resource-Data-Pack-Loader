@@ -16,6 +16,7 @@ import net.minecraftforge.event.TickEvent;
 
 public final class PackSchedules {
     private static final long DONE = Long.MAX_VALUE;
+    private static final List<String> SCHEDULE_KEYS = List.of("runs", "after", "every");
     private static final List<ScheduleDef> SCHEDULES = new ArrayList<>();
     private static long[] due = new long[0];
     private static long next = DONE;
@@ -55,6 +56,7 @@ public final class PackSchedules {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SCHEDULE_KEYS);
         String runs = Json.getString(json, "runs", "");
         if (runs.isEmpty()) {
             ContentLog.LOGGER.error("Schedule file {} names no function to run, ignoring it", key);

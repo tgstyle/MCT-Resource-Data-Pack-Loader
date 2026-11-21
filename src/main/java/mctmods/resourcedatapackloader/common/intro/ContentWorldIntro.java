@@ -25,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class ContentWorldIntro {
     private static final Map<ResourceLocation, WorldIntroDef> DEFS = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final List<String> INTRO_KEYS = List.of("pages", "music", "once", "requires");
 
     private ContentWorldIntro() {}
 
@@ -43,6 +44,7 @@ public final class ContentWorldIntro {
     @Nullable private static WorldIntroDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "world intro file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", INTRO_KEYS);
         List<IntroPageDef> pages = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(json, "pages", new com.google.gson.JsonArray())) {
             if (!element.isJsonObject()) { continue; }

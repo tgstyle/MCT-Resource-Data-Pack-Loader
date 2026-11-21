@@ -33,6 +33,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 public final class ContentPairedDoors {
     private static final String BLOCKS = "blocks";
     private static final String TAG = "tag";
+    private static final List<String> DOOR_KEYS = List.of("requires", BLOCKS, TAG, "all", "unlessSneaking", "mobs");
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final Map<BlockPos, Player> ACTORS = new HashMap<>();
@@ -63,6 +64,7 @@ public final class ContentPairedDoors {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", DOOR_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         boolean all = Json.getBoolean(json, "all", false);
         if (!json.has(BLOCKS) && !json.has(TAG) && !all) {

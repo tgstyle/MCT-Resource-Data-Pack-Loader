@@ -52,6 +52,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 public final class ContentOverrides {
     private static final List<String> TIERS = List.of("minecraft:needs_stone_tool", "minecraft:needs_iron_tool", "minecraft:needs_diamond_tool", ContentFormats.NEEDS_NETHERITE_TOOL);
     private static final int DEFAULT_FIRE_SPREAD = 5;
+    private static final List<String> OVERRIDE_KEYS = List.of("hardness", "resistance", "slipperiness", "light", "lightOpacity", "soundType", "harvestTool", "harvestToolLevel", "flammability", "fireSpread", "maxStackSize", "maxDamage", "containerItem", "effects", "food", "requires", "weight", "tool");
+    private static final List<String> FOOD_KEYS = List.of("heal", "saturation", "alwaysEdible", "effects");
+    private static final List<String> TOOL_KEYS = List.of("minesWith", "speed");
     private static final Map<ResourceLocation, OverrideDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, BlockSnapshot> BLOCKS = new IdentityHashMap<>();
     private static final Map<Block, FireSnapshot> FIRE = new IdentityHashMap<>();
@@ -129,6 +132,7 @@ public final class ContentOverrides {
     @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
         JsonObject json = Json.object(source, contents, "override file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", OVERRIDE_KEYS);
         String tool = json.has("harvestTool") ? Settings.lower(Json.getString(json, "harvestTool")) : null;
         if (tool != null && !ContentToolTypes.HARVEST.contains(tool)) {
             ContentLog.LOGGER.error("Override file {} names harvestTool '{}', which is not one of {}, leaving the tool alone", source, tool, ContentToolTypes.HARVEST);
@@ -158,6 +162,7 @@ public final class ContentOverrides {
     }
 
     @Nullable private static OverrideDef.ToolDef tool(ResourceLocation source, JsonObject json) {
+        Json.unknownKeys(json, "tool", TOOL_KEYS);
         String named = Json.getString(json, "minesWith", "").trim();
         ResourceLocation tag = ContentParser.location(named.startsWith("#") ? named.substring(1) : named);
         float speed = Json.getFloat(json, "speed", 0.0F);
@@ -168,7 +173,10 @@ public final class ContentOverrides {
         return new OverrideDef.ToolDef(speed, tag);
     }
 
-    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
+    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) {
+        Json.unknownKeys(json, "food", FOOD_KEYS);
+        return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json));
+    }
 
     private static boolean apply(OverrideDef def, Map<Block, Integer> lights) {
         boolean block = def.touchesBlock() && applyBlock(def, lights);

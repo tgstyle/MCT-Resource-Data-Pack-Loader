@@ -95,6 +95,12 @@ public final class ContentBiomes {
             Map.entry("rocks", List.of("forest_rock")));
     private static final Set<String> SWITCHES = Set.of(FALLS, "pumpkins", "desertwells", "ice", "fossils", "rocks");
     private static final Set<String> HEAD_MODIFIERS = Set.of("minecraft:count", "minecraft:rarity_filter", "minecraft:noise_threshold_count", "minecraft:noise_based_count");
+    private static final List<String> BIOME_KEYS = List.of(
+            "name", "id", "temperature", "rainfall", "baseHeight", "heightVariation", "snow", "rain", "waterColor", "baseBiome", "topBlock", "fillerBlock", "stoneBlock", "types",
+            "placement", "villageType", "decoration", "spawnChance", "spawnRates", "grassColor", "foliageColor", "snowColor", "minHeight", "maxHeight", "replaces",
+            "keepDefaultSpawns", "spawns", "requires", "skyStone", "skyIslands", "skyThickness", "craters", "inherits");
+    private static final List<String> PLACEMENT_KEYS = List.of("climate", "weight", "playerSpawn", "villages", "villageSpawn", "strongholds");
+    private static final List<String> SPAWN_KEYS = List.of("entity", "type", "weight", "min", "max");
     private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
     private static Set<Block> packGround = Set.of();
@@ -113,10 +119,21 @@ public final class ContentBiomes {
         if (Config.definitionsOff() || !Config.content.biomes()) { return; }
         Json.eachInheritedFile(PackManager.BIOMES, "biome file", ContentInherits.BIOME_IDENTITY, (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json != null) { unknownKeys(json); }
             BiomeDef def = ContentBiomeParser.parse(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
         if (!DEFS.isEmpty()) { Summary.info("biomes", "Loaded " + DEFS.size() + " biome definition(s) from packs"); }
+    }
+
+    private static void unknownKeys(JsonObject json) {
+        Json.unknownKeys(json, "the top level", BIOME_KEYS);
+        Json.unknownKeys(Json.getJsonObject(json, "placement", new JsonObject()), "placement", PLACEMENT_KEYS);
+        if (!json.has("spawns")) { return; }
+        for (JsonElement element : Json.getJsonArray(json, "spawns")) {
+            if (element.isJsonObject()) { Json.unknownKeys(element.getAsJsonObject(), "spawns", SPAWN_KEYS); }
+        }
     }
 
     public static void generate() {

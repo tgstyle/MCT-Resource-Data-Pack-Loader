@@ -85,6 +85,7 @@ public final class ContentDimensions {
             if (ContentRegistry.reserved(key)) { return; }
             JsonObject json = Json.object(key, contents, "dimension");
             if (json == null) { return; }
+            ContentDimensionParser.dimensionKeys(json);
             DimensionDef def = ContentDimensionParser.parse(key, json);
             DEFS.put(key, def);
             ContentDimensionParser.drawn(key, json);

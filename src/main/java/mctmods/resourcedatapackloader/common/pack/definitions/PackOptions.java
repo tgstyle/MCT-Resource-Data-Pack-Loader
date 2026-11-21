@@ -32,6 +32,7 @@ public final class PackOptions {
     private static final List<String> WORLD_CHANGED = new ArrayList<>();
     private static final Map<String, Map<String, Boolean>> HIDDEN = new LinkedHashMap<>();
     private static final Map<String, Map<String, String>> ABOUT = new LinkedHashMap<>();
+    private static final List<String> OPTION_KEYS = List.of("default", "description", "hide");
     @Nullable private static Path home;
 
     private PackOptions() {}
@@ -131,6 +132,10 @@ public final class PackOptions {
                 JsonElement held = entry.getValue();
                 if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isBoolean()) { defaults.add(entry.getKey(), held); }
                 else if (held.isJsonObject() && GsonHelper.isBooleanValue(held.getAsJsonObject(), "default")) {
+                    Json.within("Pack options file", pack.getName() + "/" + PackManager.CONFIG + "/" + fileName, () -> {
+                        Json.unknownKeys(held.getAsJsonObject(), entry.getKey(), OPTION_KEYS);
+                        return null;
+                    });
                     defaults.add(entry.getKey(), held.getAsJsonObject().get("default"));
                     if (held.getAsJsonObject().has("description")) { about.put(entry.getKey(), held.getAsJsonObject().get("description").getAsString()); }
                     if (held.getAsJsonObject().has("hide") && held.getAsJsonObject().get("hide").getAsBoolean()) { shy.add(entry.getKey()); }

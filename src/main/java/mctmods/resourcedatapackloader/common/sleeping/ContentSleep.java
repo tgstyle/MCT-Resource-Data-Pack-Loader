@@ -44,6 +44,7 @@ public final class ContentSleep {
     private static final String SAYS_IN = "sleepSaysIn";
     private static final String CHAT = "chat";
     private static final String BAR = "bar";
+    private static final List<String> KEYS = List.of(BED_SETS_SPAWN, BED_SPAWN_BY_DAY, SLEEP_SHARE, LEAVES_OUT_BELOW, SLEEP_SAYS, WAKE_SAYS, MORNING_SAYS, SAYS_IN);
     private static final int UNSET = -1;
     private static final Map<ResourceKey<Level>, Set<UUID>> SLEEPING = new HashMap<>();
     private static final Set<ResourceKey<Level>> SKIPPED = new HashSet<>();
@@ -86,6 +87,7 @@ public final class ContentSleep {
     }
 
     private static void read(String owner, JsonObject json) {
+        Json.unknownKeys(json, "the top level", KEYS);
         if (json.has(BED_SETS_SPAWN)) {
             bedSetsSpawn = Json.getBoolean(json, BED_SETS_SPAWN, true);
             if (!bedSetsSpawn) { VanillaClients.clientDrawn(owner, BED_SETS_SPAWN); }

@@ -30,6 +30,7 @@ public final class ContentTagCopies {
     private static final String BLOCK_TAGS = TagManager.getTagDir(Registries.BLOCK);
     private static final String BLOCK_FOLDER = "block/";
     private static final String ITEM_FOLDER = "item/";
+    private static final List<String> COPY_KEYS = List.of("tag", "matches", "from");
     private static volatile List<Copy> copies = List.of();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -106,6 +107,7 @@ public final class ContentTagCopies {
     private static void read(ResourceLocation key, String contents, List<Copy> into) {
         JsonObject json = Json.object(key, contents, "tag copy file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", COPY_KEYS);
         boolean block = key.getPath().startsWith(BLOCK_FOLDER);
         if (!block && !key.getPath().startsWith(ITEM_FOLDER)) {
             ContentLog.LOGGER.error("Tag copy in {} sits outside {}/{} and {}/{}, ignoring it", key, PackManager.TAG_COPIES, "item", PackManager.TAG_COPIES, "block");

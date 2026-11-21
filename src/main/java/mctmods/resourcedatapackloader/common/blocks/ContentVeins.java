@@ -34,6 +34,7 @@ public final class ContentVeins {
     private static final String BLOCKS = "blocks";
     private static final String TOOLS = "tools";
     private static final float EXHAUSTION_PER_POINT = 4.0F;
+    private static final List<String> VEIN_KEYS = List.of("requires", BLOCKS, TOOLS, "limit", "hunger", "advancement");
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean veining;
@@ -59,6 +60,7 @@ public final class ContentVeins {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", VEIN_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         BlockGroup group = new BlockGroup();
         for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, "Vein mining " + key, BLOCKS); }

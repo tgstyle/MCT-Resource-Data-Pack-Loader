@@ -28,6 +28,9 @@ public final class FurnaceRecipes {
     private static final String OUTPUT = "output";
     private static final String COUNT = "count";
     private static final String EXPERIENCE = "experience";
+    private static final List<String> FILE_KEYS = List.of(REMOVE, ADD);
+    private static final List<String> REMOVE_KEYS = List.of(RESULT, INPUT);
+    private static final List<String> ADD_KEYS = List.of(INPUT, OUTPUT, COUNT, EXPERIENCE);
     private static final int KEPT = Integer.MAX_VALUE;
     private static final List<Removal> REMOVALS = new ArrayList<>();
     private static final List<Addition> ADDITIONS = new ArrayList<>();
@@ -56,6 +59,7 @@ public final class FurnaceRecipes {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         if (json.has(REMOVE)) { for (JsonElement element : Json.getJsonArray(json, REMOVE)) { removal(key, element); } }
         if (json.has(ADD)) {
             int index = 0;
@@ -65,6 +69,7 @@ public final class FurnaceRecipes {
 
     private static void removal(ResourceLocation key, JsonElement element) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : null;
+        if (json != null) { Json.unknownKeys(json, REMOVE, REMOVE_KEYS); }
         String result = json == null ? element.getAsString() : Json.getString(json, RESULT, "");
         String input = json == null ? "" : Json.getString(json, INPUT, "");
         Item resultItem = result.isEmpty() ? null : ContentStacks.find(key, result);
@@ -82,6 +87,7 @@ public final class FurnaceRecipes {
             return;
         }
         JsonObject json = element.getAsJsonObject();
+        Json.unknownKeys(json, ADD, ADD_KEYS);
         String inputName = Json.getString(json, INPUT, "");
         String outputName = Json.getString(json, OUTPUT, "");
         if (inputName.isEmpty() || outputName.isEmpty()) {

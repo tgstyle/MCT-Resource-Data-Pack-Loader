@@ -19,6 +19,7 @@ public final class ContentParserCrops {
     private static final List<String> SOURCES = List.of(TallDef.FROM_BASE, TallDef.FROM_ALL);
 
     private static final List<String> AGE_KEYS = List.of("rise", "regrow", "produceFrom");
+    private static final List<String> TALL_KEYS = List.of("parts", "rise", "regrow", "produceFrom");
 
     private ContentParserCrops() {}
 
@@ -31,6 +32,7 @@ public final class ContentParserCrops {
             return null;
         }
         JsonObject held = Json.getJsonObject(json, MEMBER);
+        Json.unknownKeys(held, MEMBER, TALL_KEYS);
         int parts = Mth.clamp(Json.getInt(held, "parts", TallDef.DEFAULT_PARTS), TallDef.MIN_PARTS, TallDef.MAX_PARTS);
         if (flower) {
             for (String ignored : AGE_KEYS) {

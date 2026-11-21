@@ -22,7 +22,10 @@ public final class RecipeRemovals {
         if (!GENERATION.stale()) { return; }
         SELECTOR.clear();
         if (!Config.recipes.removals()) { return; }
-        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", SELECTOR::read);
+        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", (key, json) -> {
+            Json.unknownKeys(json, "the top level", RecipeSelector.KEYS);
+            SELECTOR.read(key, json);
+        });
     }
 
     public static boolean isRemoval(JsonElement json) {

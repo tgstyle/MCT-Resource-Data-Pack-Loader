@@ -23,6 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class ContentPathIntersects {
     private static final Map<String, PathIntersectDef> DEFS = new LinkedHashMap<>();
+    private static final List<String> INTERSECT_KEYS = List.of("weight", "legend", "mouth", "corner", "name");
     private static final Set<String> WARNED = new LinkedHashSet<>();
     private static boolean loaded;
 
@@ -59,6 +60,7 @@ public final class ContentPathIntersects {
     @Nullable private static PathIntersectDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "path intersect design");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", INTERSECT_KEYS);
         Map<Character, String> legend = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "legend", new JsonObject()).entrySet()) {
             String symbol = entry.getKey().trim();

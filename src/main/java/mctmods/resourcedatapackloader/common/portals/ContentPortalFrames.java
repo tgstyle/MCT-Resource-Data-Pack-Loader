@@ -32,6 +32,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ContentPortalFrames {
+    private static final List<String> FRAME_KEYS = List.of("legend", "rows", "axis", "name", "maxWidth", "maxHeight");
     private static final int BUDGET = 20000;
     private static final Map<String, PortalFrameDef> DEFS = new LinkedHashMap<>();
     private static volatile Map<BlockMatchDef, List<BlockState>> states = Map.of();
@@ -54,6 +55,7 @@ public final class ContentPortalFrames {
     @Nullable private static PortalFrameDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "portal frame file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", FRAME_KEYS);
         Map<Character, BlockMatchDef> legend = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(json, "legend", new JsonObject()).entrySet()) {
             String symbol = mark.getKey().trim();

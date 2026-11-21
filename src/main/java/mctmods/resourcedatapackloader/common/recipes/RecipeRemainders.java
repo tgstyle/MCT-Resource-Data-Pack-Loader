@@ -29,6 +29,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 public final class RecipeRemainders {
     private static final String REMAINDER = "remainder";
     private static final String RECIPES = "recipes";
+    private static final List<String> REMAINDER_KEYS = List.of("ingredient", "returns");
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<ResourceLocation, List<Remainder>> BY_RECIPE = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -81,6 +82,7 @@ public final class RecipeRemainders {
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!json.has(REMAINDER)) { return; }
+        if (!json.has("swaps") && !json.has("transfer")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
         if (!json.has(RECIPES) || !json.get(RECIPES).isJsonObject()) {
             ContentLog.LOGGER.error("Recipe remainder file {} needs a recipes object saying which recipes it covers, ignoring it", key);
             return;
@@ -93,6 +95,7 @@ public final class RecipeRemainders {
         }
         if (remainders.isEmpty()) { return; }
         RecipeSelector scope = new RecipeSelector();
+        Json.unknownKeys(json.getAsJsonObject(RECIPES), RECIPES, RecipeSelector.KEYS);
         scope.read(key, json.getAsJsonObject(RECIPES));
         if (scope.isEmpty()) {
             ContentLog.LOGGER.error("Recipe remainder file {} selects no recipes, ignoring it", key);
@@ -102,6 +105,7 @@ public final class RecipeRemainders {
     }
 
     @Nullable private static Remainder remainder(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, REMAINDER, REMAINDER_KEYS);
         String ingredient = Json.getString(json, "ingredient", "");
         ItemStack returns = ContentStacks.parse(key, Json.getString(json, "returns", ""), 1);
         if (ingredient.isEmpty() || returns.isEmpty()) { return null; }

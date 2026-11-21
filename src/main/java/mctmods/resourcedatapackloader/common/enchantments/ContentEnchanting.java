@@ -37,6 +37,9 @@ public final class ContentEnchanting {
     private static final String SHELF_CAP = "shelfCap";
     private static final String SHELF_POWER = "shelfPower";
     private static final String KEEP_LAPIS = "keepLapis";
+    private static final List<String> SHAPE_KEYS = List.of("requires", ENCHANTMENT, "minLevel", "maxLevel", "off", "weight");
+    private static final List<String> FIT_KEYS = List.of("requires", MATCH, ENCHANTABLE, ENCHANTMENTS, ENCHANTABILITY);
+    private static final List<String> TABLE_KEYS = List.of("requires", "enchantLevels", "enchantCosts", "lapisCosts", SHELF_CAP, SHELF_POWER, KEEP_LAPIS);
     private static final float MOST_SHELF_POWER = 16.0F;
     private static final Map<Enchantment, TableMath.Shape> SHAPES = new HashMap<>();
     private static final List<Fit> FITS = new ArrayList<>();
@@ -81,6 +84,7 @@ public final class ContentEnchanting {
     }
 
     private static void shape(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SHAPE_KEYS);
         String named = Json.text(json, ENCHANTMENT, "");
         Enchantment enchantment = named(named);
         if (enchantment == null) {
@@ -98,6 +102,7 @@ public final class ContentEnchanting {
     }
 
     private static void fit(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FIT_KEYS);
         ItemMatch match = ItemMatch.parse(key, Json.text(json, MATCH, ""));
         if (match == null) { return; }
         Boolean enchantable = json.has(ENCHANTABLE) ? Json.getBoolean(json, ENCHANTABLE, true) : null;
@@ -114,6 +119,7 @@ public final class ContentEnchanting {
     }
 
     private static void table(ResourceLocation key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", TABLE_KEYS);
         int[] levels = perSlot(key, json, "enchantLevels", 1);
         if (levels != null) { AnvilCosts.serveLevels(levels); }
         int[] paid = perSlot(key, json, "enchantCosts", 0);

@@ -18,6 +18,9 @@ public final class ContentParserFireworks {
     private static final List<String> TARGETS = List.of(FireworkDef.ON_BLOCK, FireworkDef.ON_AIR, FireworkDef.ON_BOTH);
     private static final List<String> PATTERNS = List.of(FireworkDef.PATTERN_SPHERE, FireworkDef.PATTERN_RING, FireworkDef.PATTERN_FOUNTAIN, FireworkDef.PATTERN_POINTS);
     private static final List<String> SHAPES = List.of(FireworkDef.SHAPE_SMALL_BALL, FireworkDef.SHAPE_LARGE_BALL, FireworkDef.SHAPE_STAR, FireworkDef.SHAPE_CREEPER, FireworkDef.SHAPE_BURST);
+    private static final List<String> FIREWORK_KEYS = List.of("replaceUse", "mode", "on", "flight", "consume", "dispense", "explosions", "burst");
+    private static final List<String> EXPLOSION_KEYS = List.of("shape", "colors", "fade", "trail", "twinkle");
+    private static final List<String> BURST_KEYS = List.of("particle", "count", "speed", "pattern", "sound", "delay", "spread", "points");
     private static final int[] WHITE = {0xFFFFFF};
 
     private ContentParserFireworks() {}
@@ -29,6 +32,7 @@ public final class ContentParserFireworks {
             return null;
         }
         JsonObject held = json.getAsJsonObject("firework");
+        Json.unknownKeys(held, "firework", FIREWORK_KEYS);
         String owner = "Item " + key + " firework";
         return new FireworkDef(
                 Json.getBoolean(held, "replaceUse", false),
@@ -64,6 +68,7 @@ public final class ContentParserFireworks {
                 continue;
             }
             JsonObject json = element.getAsJsonObject();
+            Json.unknownKeys(json, "firework.explosions", EXPLOSION_KEYS);
             int[] colors = colors(json, "colors", owner);
             found.add(new FireworkDef.Explosion(
                     Json.choice(json, "shape", FireworkDef.SHAPE_SMALL_BALL, owner, SHAPES),
@@ -133,6 +138,7 @@ public final class ContentParserFireworks {
     }
 
     @Nullable private static FireworkDef.Burst burst(JsonObject json, String owner) {
+        Json.unknownKeys(json, "firework.burst", BURST_KEYS);
         ResourceLocation particle = ContentParser.location(Json.getString(json, "particle", ""));
         if (particle == null) {
             ContentLog.LOGGER.error("{} has no valid 'particle' item, ignoring the burst", owner);
