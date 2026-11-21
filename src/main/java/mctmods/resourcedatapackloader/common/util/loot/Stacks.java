@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.util.loot;
 
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.OreDictionary;
@@ -17,6 +18,6 @@ public final class Stacks {
 
     public static boolean matches(ItemStack wanted, ItemStack found) {
         if (wanted.isEmpty() || found.isEmpty() || wanted.getItem() != found.getItem()) { return false; }
-        return wanted.getItemDamage() == OreDictionary.WILDCARD_VALUE || found.getItemDamage() == OreDictionary.WILDCARD_VALUE || wanted.getItemDamage() == found.getItemDamage();
+        return found.getItemDamage() == OreDictionary.WILDCARD_VALUE || ContentStacks.matches(found, wanted.getItem(), wanted.getItemDamage());
     }
 }
