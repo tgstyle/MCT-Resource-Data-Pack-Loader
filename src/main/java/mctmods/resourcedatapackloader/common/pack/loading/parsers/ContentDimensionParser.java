@@ -68,8 +68,33 @@ public final class ContentDimensionParser {
     private static final int CAVE_TOP = 255;
     private static final List<String> COLOR_MODES = List.of("multiply", "solid");
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
+    private static final List<String> DIMENSION_KEYS = List.of("id", "suffix", "keepLoaded", "requires", "terrain", "biomes", "sky", "gameRules", "portal", "physics", "time", "weather", "ambience", "darkDamage", "environments", "seasons", "inherits", "variants");
+    private static final List<String> TERRAIN_KEYS = List.of("type", "generatorOptions", "structures", "seaLevel", "fillBlock", "seaFluid", "minHeight", "maxHeight");
+    private static final List<String> PORTAL_KEYS = List.of("frames", "color", "return", "ignitedByFluid", "ignitedBy", "dimension", "returnDimension", "gate", "cooldown", "platform", "platformBlock", "sound", "owned", "walkIn", "landing", "torches", "useRange", "mounted", "returnTo");
+    private static final List<String> BIOMES_KEYS = List.of("biome", "source", "biomeList");
+    private static final List<String> PHYSICS_KEYS = List.of("gravity", "fallDamage", "arrowGravity");
+    private static final List<String> WEATHER_KEYS = List.of("precipitation", "lightning", "snow", "freeze", "alwaysRain", "cycle", "rain", "wind");
+    private static final List<String> CYCLE_KEYS = List.of("rainTicks", "clearTicks", "thunderTicks", "calmTicks", "maxStrength", "thunderStrength");
+    private static final List<String> RAIN_KEYS = List.of("particle", "sound", "volume", "interval", "color", "snowColor", "splashColor", "colorMode", "angle", "heading", "splashUpward");
+    private static final List<String> WIND_KEYS = List.of("gust", "every", "swing");
+    private static final List<String> AMBIENCE_KEYS = List.of("music", "musicDelay", "loopSound", "ambientSound", "soundChance", "particle", "particleChance", "particleColor");
+    private static final List<String> DARK_DAMAGE_KEYS = List.of("damage", "interval", "brightness");
+    private static final List<String> MOON_KEYS = List.of("texture", "size", "tilt", "roll", "spin", "flip");
+    private static final List<String> STARS_KEYS = List.of("count", "size");
+    private static final List<String> BODY_KEYS = List.of("texture", "size", "angle", "tilt", "followsTime", "roll", "spin", "flip", "gate");
 
     private ContentDimensionParser() {}
+
+    public static void dimensionKeys(JsonObject json) {
+        Json.unknownKeys(json, "the top level", DIMENSION_KEYS);
+        level(json, "terrain", TERRAIN_KEYS);
+        level(json, "biomes", BIOMES_KEYS);
+        level(json, "sky", ContentParserSkyLook.SKY_KEYS);
+    }
+
+    private static void level(JsonObject json, String member, List<String> read) {
+        if (json.has(member) && json.get(member).isJsonObject()) { Json.unknownKeys(json.getAsJsonObject(member), member, read); }
+    }
 
     public static void drawn(Identifier key, JsonObject json) {
         String owner = "Dimension " + key;
@@ -156,6 +181,8 @@ public final class ContentDimensionParser {
         JsonObject physics = Json.getJsonObject(json, "physics", new JsonObject());
         JsonObject time = Json.getJsonObject(json, "time", new JsonObject());
         JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
+        Json.unknownKeys(physics, "physics", PHYSICS_KEYS);
+        Json.unknownKeys(weather, "weather", WEATHER_KEYS);
         long day = Json.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
         if (day <= 0L) {
             ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
@@ -177,6 +204,7 @@ public final class ContentDimensionParser {
     }
 
     private static DimensionTraitsDef.DarkDamage darkDamage(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, DARK, DARK_DAMAGE_KEYS);
         float damage = Json.getFloat(json, "damage", DARK_DAMAGE);
         if (damage <= 0.0F) {
             ContentLog.LOGGER.error("Dimension {} gives darkDamage damage of {}, which is not above 0, using {}", key, damage, DARK_DAMAGE);
@@ -191,11 +219,13 @@ public final class ContentDimensionParser {
     }
 
     private static DimensionTraitsDef.Moon moon(Identifier key, JsonObject moon) {
+        Json.unknownKeys(moon, "moon", MOON_KEYS);
         return new DimensionTraitsDef.Moon(moon.has("texture") ? texture(key, Json.getString(moon, "texture")) : null, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)),
                 ContentParserSkyLook.finite(key, moon, "sky.moon", "tilt"), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
     private static AmbienceDef ambience(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "ambience", AMBIENCE_KEYS);
         int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
         return new AmbienceDef(id(key, json, "music"), delay[0], delay[1], id(key, json, "loopSound"), id(key, json, "ambientSound"), ranged(key, json, AMBIENCE, "soundChance", SOUND_CHANCE, 1.0F),
                 id(key, json, "particle"), ranged(key, json, AMBIENCE, "particleChance", PARTICLE_CHANCE, 1.0F),
@@ -221,6 +251,7 @@ public final class ContentDimensionParser {
         if (!sky.has("sun") && !sky.has("moon") && !sky.has("bodies") && !sky.has("stars")) { return null; }
         JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
         JsonObject stars = Json.getJsonObject(sky, "stars", new JsonObject());
+        Json.unknownKeys(stars, "stars", STARS_KEYS);
         List<DimensionTraitsDef.Body> bodies = null;
         if (sky.has("bodies")) {
             List<DimensionTraitsDef.Body> found = new ArrayList<>();
@@ -230,6 +261,7 @@ public final class ContentDimensionParser {
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
+                Json.unknownKeys(body, "bodies", BODY_KEYS);
                 Identifier texture = texture(key, Json.getString(body, "texture"));
                 if (texture == null) { continue; }
                 String gate = Json.getString(body, "gate", "").trim();
@@ -260,6 +292,7 @@ public final class ContentDimensionParser {
     }
 
     private static DimensionTraitsDef.Cycle cycle(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "cycle", CYCLE_KEYS);
         int[] rain = span(key, json, CYCLE, "rainTicks", CYCLE_LOW, 4600);
         int[] clear = span(key, json, CYCLE, "clearTicks", CYCLE_LOW, 3000);
         int[] thunder = json.has("thunderTicks") ? span(key, json, CYCLE, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
@@ -276,6 +309,7 @@ public final class ContentDimensionParser {
     }
 
     private static RainDef rain(Identifier key, JsonObject json, @Nullable WindDef wind) {
+        Json.unknownKeys(json, "rain", RAIN_KEYS);
         Identifier particle = Identifier.tryParse(Settings.lower(Json.getString(json, "particle", RAIN_PARTICLE)));
         if (particle == null) {
             ContentLog.LOGGER.error("Dimension {} names a rain particle that is no particle id, using {}", key, RAIN_PARTICLE);
@@ -299,6 +333,7 @@ public final class ContentDimensionParser {
     }
 
     private static WindDef wind(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "wind", WIND_KEYS);
         int[] every = span(key, json, WIND, "every", EVERY_LOW, EVERY_HIGH);
         return new WindDef(ranged(key, json, WIND, "gust", GUST, MAX_GUST), every[0], every[1], ranged(key, json, WIND, "swing", SWING, MAX_ANGLE));
     }
@@ -341,7 +376,7 @@ public final class ContentDimensionParser {
             ContentLog.LOGGER.error("Dimension {} asks for a return of '{}', which is none of {}, {} or {}, building one instead", key, back, DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE);
             back = DimensionPortalDef.BUILT;
         }
-        PortalDef travel = ContentParser.portal(key, json, key, false, true);
+        PortalDef travel = ContentParser.portal(key, json, key, false, true, PORTAL_KEYS);
         String fluid = Json.getString(entry, "ignitedByFluid", "").trim();
         String item = entry.has("ignitedBy") ? Json.getString(entry, "ignitedBy", "").trim() : fluid.isEmpty() ? "minecraft:flint_and_steel" : "";
         return travel == null ? null : new DimensionPortalDef(frames, item, fluid, color, back, travel);

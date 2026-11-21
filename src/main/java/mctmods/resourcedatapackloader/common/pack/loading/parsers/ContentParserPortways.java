@@ -22,14 +22,29 @@ import net.minecraft.util.GsonHelper;
 
 final class ContentParserPortways {
     private static final String[] BUTTONS = {"previous", "sort", "page", "next", "scope"};
+    private static final List<String> PORTWAY_KEYS = List.of("scope", "global", "activateSound", "travelSound", "names", "allow", "deny", "crossDimension", "gate", "network", "tall", "facing", "activateParticle", "travelParticle", "carry", "cost", "menu");
+    private static final List<String> ITEM_KEYS = List.of("scope", "global", "activateSound", "travelSound", "names", "allow", "deny", "crossDimension", "gate", "network", "tall", "facing", "activateParticle", "travelParticle", "carry", "cost", "menu", "consume", "bind");
+    private static final List<String> CARRY_KEYS = List.of("mount", "leashed", "pets", "crossDimension");
+    private static final List<String> COST_KEYS = List.of("xp", "item", "health", "hunger", "cooldown");
+    private static final List<String> PART_KEYS = List.of("amount", "perBlocks", "dimension", "max");
+    private static final List<String> XP_KEYS = List.of("amount", "perBlocks", "dimension", "max", "points");
+    private static final List<String> COST_ITEM_KEYS = List.of("id", "amount", "perBlocks", "dimension", "max");
+    private static final List<String> MENU_KEYS = List.of("order", "previous", "next", "page", "sort", "locked", "scope", "slots");
+    private static final List<String> SLOT_KEYS = List.of(BUTTONS);
 
     private ContentParserPortways() {}
 
-    @Nullable static PortwayDef portway(Identifier key, JsonObject json) { return GsonHelper.isObjectNode(json, "portway") ? settings(key, Json.getJsonObject(json, "portway"), false) : null; }
+    @Nullable static PortwayDef portway(Identifier key, JsonObject json) {
+        if (!GsonHelper.isObjectNode(json, "portway")) { return null; }
+        JsonObject held = Json.getJsonObject(json, "portway");
+        Json.unknownKeys(held, "portway", PORTWAY_KEYS);
+        return settings(key, held, false);
+    }
 
     @Nullable static PortwayItemDef item(Identifier key, JsonObject json) {
         if (!GsonHelper.isObjectNode(json, "portway")) { return null; }
         JsonObject held = Json.getJsonObject(json, "portway");
+        Json.unknownKeys(held, "portway", ITEM_KEYS);
         return new PortwayItemDef(settings(key, held, true), Json.getBoolean(held, "consume", false), Json.getBoolean(held, "bind", false));
     }
 
@@ -58,7 +73,10 @@ final class ContentParserPortways {
 
     private static PortwayMenu menu(Identifier key, JsonObject json, boolean scoped) {
         PortwayMenu plain = PortwayMenu.PLAIN;
-        int[] at = columns(Json.object(json, "slots"), scoped);
+        Json.unknownKeys(json, "portway.menu", MENU_KEYS);
+        JsonObject slots = Json.object(json, "slots");
+        Json.unknownKeys(slots, "portway.menu.slots", SLOT_KEYS);
+        int[] at = columns(slots, scoped);
         return new PortwayMenu(Json.choice(json, "order", plain.order(), "Portway " + key + " menu", PortwayMenu.ORDERS), icon(json, "previous", plain.previous()), icon(json, "next", plain.next()), icon(json, "page", plain.page()),
                 icon(json, "sort", plain.sort()), icon(json, "locked", plain.locked()), icon(json, "scope", plain.scope()),
                 PortwayMenu.BOTTOM + at[0], PortwayMenu.BOTTOM + at[1], PortwayMenu.BOTTOM + at[2], PortwayMenu.BOTTOM + at[3], PortwayMenu.BOTTOM + at[4]);
@@ -100,7 +118,10 @@ final class ContentParserPortways {
         return id.isEmpty() ? fallback : id;
     }
 
-    private static CarryDef carry(JsonObject json) { return new CarryDef(Json.getBoolean(json, "mount", false), Json.getBoolean(json, "leashed", false), Json.getBoolean(json, "pets", false), Json.getBoolean(json, "crossDimension", true)); }
+    private static CarryDef carry(JsonObject json) {
+        Json.unknownKeys(json, "portway.carry", CARRY_KEYS);
+        return new CarryDef(Json.getBoolean(json, "mount", false), Json.getBoolean(json, "leashed", false), Json.getBoolean(json, "pets", false), Json.getBoolean(json, "crossDimension", true));
+    }
 
     private static List<String> trimmed(List<String> texts) {
         List<String> out = new ArrayList<>();
@@ -117,14 +138,21 @@ final class ContentParserPortways {
     }
 
     private static CostDef cost(Identifier key, JsonObject cost) {
+        Json.unknownKeys(cost, "portway.cost", COST_KEYS);
         JsonObject xp = Json.object(cost, "xp");
         JsonObject item = Json.object(cost, "item");
+        JsonObject health = Json.object(cost, "health");
+        JsonObject hunger = Json.object(cost, "hunger");
+        Json.unknownKeys(xp, "portway.cost.xp", XP_KEYS);
+        Json.unknownKeys(item, "portway.cost.item", COST_ITEM_KEYS);
+        Json.unknownKeys(health, "portway.cost.health", PART_KEYS);
+        Json.unknownKeys(hunger, "portway.cost.hunger", PART_KEYS);
         String itemId = Json.getString(item, "id", "").trim();
         if (!itemId.isEmpty() && Identifier.tryParse(itemId) == null) {
             ContentLog.LOGGER.error("Portway {} asks for the item '{}', which is not an item id, so it costs no item", key, itemId);
             itemId = "";
         }
-        return new CostDef(part(xp), Json.getBoolean(xp, "points", false), itemId, part(item), part(Json.object(cost, "health")), part(Json.object(cost, "hunger")), Math.max(0, Json.getInt(cost, "cooldown", 0)));
+        return new CostDef(part(xp), Json.getBoolean(xp, "points", false), itemId, part(item), part(health), part(hunger), Math.max(0, Json.getInt(cost, "cooldown", 0)));
     }
 
     private static CostPart part(JsonObject part) { return new CostPart(Math.max(0, Json.getInt(part, "amount", 0)), Math.max(0, Json.getInt(part, "perBlocks", 0)), Math.max(0, Json.getInt(part, "dimension", 0)), Math.max(0, Json.getInt(part, "max", 0))); }

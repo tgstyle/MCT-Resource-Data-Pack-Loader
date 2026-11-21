@@ -38,6 +38,8 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 
 public final class SpawnSwaps {
+    private static final List<String> FILE_KEYS = List.of("entities", "becomes", "runs", "blocks", "biomes", "biomeTypes", "requireAll", "elsewhere", "extra", "fromSpawners", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount");
+    private static final List<String> ELSEWHERE_KEYS = List.of("chance", "lightBelow", "night");
     private static final String FRESH = "rdplSwapFresh";
     private static final String RAN = "rdplSpawnRan";
     private static final int NIGHT_FROM = 13000;
@@ -138,6 +140,7 @@ public final class SpawnSwaps {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Spawn swap file " + key;
         List<Identifier> ids = new ArrayList<>();
         List<String> kinds = new ArrayList<>();
@@ -174,6 +177,7 @@ public final class SpawnSwaps {
             return null;
         }
         JsonObject object = held.getAsJsonObject();
+        Json.unknownKeys(object, "elsewhere", ELSEWHERE_KEYS);
         return new SpawnSwapDef.Elsewhere(Mth.clamp(Json.getFloat(object, "chance", 1.0F), 0.0F, 1.0F), object.has("lightBelow") ? Mth.clamp(Json.getInt(object, "lightBelow", 16), 1, 16) : 0, Json.getBoolean(object, "night", false));
     }
 }

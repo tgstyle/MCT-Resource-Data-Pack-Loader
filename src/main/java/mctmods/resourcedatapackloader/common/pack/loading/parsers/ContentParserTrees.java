@@ -34,6 +34,8 @@ public final class ContentParserTrees {
     private static final List<String> CATCH_UP = Arrays.asList("world", "pause");
     private static final List<String> BONEMEAL = Arrays.asList("step", "time", "off");
     private static final List<String> RULE_IGNORED = Arrays.asList("stages", "soil", "log", "leaves", "height", STRUCTURE, "structures");
+    private static final List<String> RULE_KEYS = List.of("requires", "saplings", "chance", "steps", "growBy", "stepTicks", "blocked", "catchUp", "catchUpLimit", "bonemeal", "bonemealTicks", "bonemealChecks", "biomes", "needsSky", "needsWater", "waterRange", "light", TREES, "stages", "soil", "log", "leaves", "height", STRUCTURE, "structures");
+    private static final List<String> TREE_KEYS = List.of("own", STRUCTURE, VANILLA, "turns", "turn", "mirrors", "mirror", "weight", "inSteps");
     private static final List<PickDef> NO_TURN = Collections.singletonList(new PickDef("none", 1));
 
     private ContentParserTrees() {}
@@ -47,6 +49,7 @@ public final class ContentParserTrees {
 
     @Nullable public static TreeRuleDef rule(Identifier key, JsonObject json) {
         String owner = "Tree growth rule " + key;
+        Json.unknownKeys(json, "the top level", RULE_KEYS);
         if (!json.has(SAPLINGS)) {
             ContentLog.LOGGER.error("{} names no saplings, ignoring it", owner);
             return null;
@@ -140,6 +143,7 @@ public final class ContentParserTrees {
     }
 
     @Nullable private static TreePickDef tree(JsonObject entry, String where) {
+        Json.unknownKeys(entry, "trees", TREE_KEYS);
         boolean own = Json.getBoolean(entry, "own", false);
         int named = (entry.has(STRUCTURE) ? 1 : 0) + (entry.has(VANILLA) ? 1 : 0) + (own ? 1 : 0);
         if (named != 1) {

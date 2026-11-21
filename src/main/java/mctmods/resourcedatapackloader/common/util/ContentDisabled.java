@@ -35,6 +35,7 @@ public final class ContentDisabled {
     private static final String ITEM_TAGS = Registries.tagsDirPath(Registries.ITEM);
     private static final String BLOCK_TAGS = Registries.tagsDirPath(Registries.BLOCK);
     private static final String FLUID_TAGS = Registries.tagsDirPath(Registries.FLUID);
+    private static final List<String> KEYS = List.of("requires", "hideOnly", "untag", "hideCategories", "fluids", "names", "namespaces", "tags");
     private static final ItemSelection SELECTION = new ItemSelection("Disabled", "disables");
     private static final ItemSelection HIDE = new ItemSelection("Hidden", "hides");
     private static final ItemSelection UNTAG_ITEMS = new ItemSelection("Untagged", "untags");
@@ -148,6 +149,7 @@ public final class ContentDisabled {
     private static void read(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "disabled file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         (Json.getBoolean(json, "hideOnly", false) ? HIDE : SELECTION).read(json, key);
         UNTAG_ITEMS.readNames(Json.strings(json, "untag"), key);

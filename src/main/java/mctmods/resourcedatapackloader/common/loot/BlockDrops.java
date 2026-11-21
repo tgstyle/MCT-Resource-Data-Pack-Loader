@@ -78,6 +78,9 @@ public final class BlockDrops extends LineCompat.Modifier {
     private static final String GRANT = "grant";
     private static final String RUNS = "runs";
     private static final String PLAYER = "player";
+    private static final List<String> RULE_KEYS = List.of("block", "meta", "properties", REPLACE, DROPS, ONCE, ADVANCEMENT, RUNS);
+    private static final List<String> DROP_KEYS = List.of(ITEM, EXPERIENCE, COUNT, CHANCE, FORTUNE, SILK_TOUCH);
+    private static final List<String> ONCE_KEYS = List.of(PER, GRANT);
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
@@ -112,6 +115,7 @@ public final class BlockDrops extends LineCompat.Modifier {
     }
 
     private static void read(Identifier key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", RULE_KEYS);
         String name = Json.getString(json, "block", "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
@@ -119,7 +123,7 @@ public final class BlockDrops extends LineCompat.Modifier {
         }
         boolean tag = name.startsWith("#");
         Identifier tagId = tag ? Identifier.tryParse(Settings.lower(name.substring(1).trim())) : null;
-        BlockMatchDef match = tag ? null : ContentParser.match(key, json);
+        BlockMatchDef match = tag ? null : ContentParser.matchOf(key, json);
         Block block = match == null ? null : Registered.find(BuiltInRegistries.BLOCK, match.block());
         if (tag ? tagId == null : match == null) {
             if (tag) { ContentLog.LOGGER.error("Block drops {} names tag '{}', which is not a valid tag id, ignoring it", key, name); }
@@ -162,6 +166,7 @@ public final class BlockDrops extends LineCompat.Modifier {
             return null;
         }
         JsonObject once = json.getAsJsonObject(ONCE);
+        Json.unknownKeys(once, ONCE, ONCE_KEYS);
         String grant = Json.getString(once, GRANT, "").trim();
         if (!PLAYER.equals(Settings.lower(Json.getString(once, PER, ""))) || grant.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} 'once' needs per \"player\" and a grant, ignoring it", key);
@@ -171,6 +176,7 @@ public final class BlockDrops extends LineCompat.Modifier {
     }
 
     @Nullable private static Drop drop(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, DROPS, DROP_KEYS);
         boolean experience = json.has(EXPERIENCE);
         ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, Json.getString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }

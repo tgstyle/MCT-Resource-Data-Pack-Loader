@@ -35,12 +35,22 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class ContentEntityParser {
     private static final Set<String> PHASE_KEYS = new LinkedHashSet<>(List.of("below", "attributes", "tasks", "charges", "pounces", "gusts", "gustPower", "bossBar"));
+    private static final List<String> ENTITY_KEYS = List.of("entity", "attributes", "tintParts", "spawns", "sounds", "effects", "pathPriorities", "egg", "bossBar", "name", "texture", "lootTable", "profession", "career", "baby", "keepsBaseBaby", "becomes", "immuneTo", "jumpMultiplier", "fallDamage", "hitEffects", "ignoresEffects", "soundVolume", "soundPitch", "waterSlowdown", "experience", "maxFallHeight", "absorption", "creatureAttribute", "breathesUnderwater", "swims", "amphibious", "despawns", "despawnAfter", "leash", "noAI", "leftHanded", "fireproof", "invulnerable", "glowing", "invisible", "dropChance", "scale", "angryScale", "leashable", "steerable", "width", "height", "trackingRange", "trackingFrequency", "trackVelocity", "hostile", "passive", "ignoresSpawnRules", "targets", "persistent", "silent", "picksUpLoot", "hideArmor", "hideHeld", "tint", "showName", "explodes", "throws", "throwReload", "throwRetreat", "throwAmmo", "throwPower", "throwArc", "explosionPower", "explosionFuse", "explosionFire", "equipment", "biomes", "biomeTypes", "requires", "charges", "pounces", "sniffs", "sleepsByDay", "home", "fleesWhenHurt", "patrols", "swoops", "gusts", "gustPower", "threatLeast", "threatHostile", "tasks", "attackReach", "hurtResistance", "stepHeight", "hitFire", "climbs", "teleports", "knockback", "digs", "bright", "collectsExperience", "walks", "throwReturns", "fleesLight", "followsPlayers", "teleportsWhenHit", "pulls", "pullReload", "pullPower", "pullItem", "storage", "phases", "dialog", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective");
+    private static final List<String> SOUNDS_KEYS = List.of("ambient", "hurt", "death", "target", "explode", "targetVaries", "throw");
+    private static final List<String> EGG_KEYS = List.of("primary", "secondary");
+    private static final List<String> EFFECT_KEYS = List.of("potion", "amplifier");
+    private static final List<String> STORAGE_KEYS = List.of("items", "fluid", "energy", "dropsOnDeath", "runsDry");
+    private static final List<String> ITEMS_KEYS = List.of("filter");
+    private static final List<String> FLUID_KEYS = List.of("capacity", "buckets", "use", "filter");
+    private static final List<String> ENERGY_KEYS = List.of("capacity", "transfer", "use");
+    private static final List<String> FILTER_KEYS = List.of("item", "oreDict", "tag", "fluid", "max");
 
     private ContentEntityParser() {}
 
     @Nullable public static EntityVariantDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "entity file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", ENTITY_KEYS);
         Identifier base = ContentParser.location(Json.getString(json, "entity", ""));
         if (base == null) {
             ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
@@ -54,7 +64,9 @@ public final class ContentEntityParser {
         }
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         JsonObject sounds = Json.getJsonObject(json, "sounds", new JsonObject());
+        Json.unknownKeys(sounds, "sounds", SOUNDS_KEYS);
         JsonObject egg = GsonHelper.isObjectNode(json, "egg") ? Json.getJsonObject(json, "egg") : null;
+        if (egg != null) { Json.unknownKeys(egg, "egg", EGG_KEYS); }
         BossBarDef bar = BossBars.read("Entity variant " + key, json);
         boolean wantsEgg = !json.has("egg") || egg != null || Json.getBoolean(json, "egg", true);
         float scale = Math.max(0.05F, Json.getFloat(json, "scale", 1.0F));
@@ -187,10 +199,14 @@ public final class ContentEntityParser {
     @Nullable private static StorageDef storage(Identifier key, JsonObject json) {
         if (!json.has("storage")) { return null; }
         JsonObject storage = Json.getJsonObject(json, "storage");
+        Json.unknownKeys(storage, "storage", STORAGE_KEYS);
         JsonObject items = Json.getJsonObject(storage, "items", new JsonObject());
+        Json.unknownKeys(items, "items", ITEMS_KEYS);
         JsonObject fluid = Json.getJsonObject(storage, "fluid", new JsonObject());
+        Json.unknownKeys(fluid, "fluid", FLUID_KEYS);
         int fluidCapacity = Math.max(0, Json.getInt(fluid, "capacity", 0));
         JsonObject energy = Json.getJsonObject(storage, "energy", new JsonObject());
+        Json.unknownKeys(energy, "energy", ENERGY_KEYS);
         int energyCapacity = Math.max(0, Json.getInt(energy, "capacity", 0));
         int energyTransfer = Mth.clamp(Json.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
         boolean hasItems = storage.has("items");
@@ -217,6 +233,7 @@ public final class ContentEntityParser {
         if (!json.has("filter")) { return entries; }
         for (JsonElement element : Json.getJsonArray(json, "filter")) {
             JsonObject entry = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            Json.unknownKeys(entry, "filter", FILTER_KEYS);
             if (entry.has("oreDict")) { ContentLog.LOGGER.warn("A filter entry in {} uses 'oreDict', which this line does not read. Name a tag under 'tag' instead, such as c:ingots/iron or forge:ingots/iron", key); }
             String item = Json.getString(entry, "item", "").trim();
             Identifier tag = ContentParser.location(Json.getString(entry, "tag", "").trim());
@@ -264,6 +281,7 @@ public final class ContentEntityParser {
                 continue;
             }
             JsonObject effect = element.getAsJsonObject();
+            Json.unknownKeys(effect, "effects", EFFECT_KEYS);
             effects.put(Json.getString(effect, "potion", "").trim(), Math.max(0, Json.getInt(effect, "amplifier", 0)));
         }
         return effects;

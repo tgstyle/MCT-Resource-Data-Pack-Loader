@@ -257,6 +257,12 @@ public final class Json {
         return Collections.unmodifiableMap(values);
     }
 
+    public static void unknownKeys(JsonObject json, String path, Collection<String> read) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            if (!read.contains(entry.getKey())) { ContentLog.LOGGER.warn("{}: unknown key {} under {}, ignoring it", where(), entry.getKey(), path); }
+        }
+    }
+
     public static void eachFile(String folder, String kind, BiConsumer<Identifier, String> reader) { PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> read(Identifier.fromNamespaceAndPath(namespace, path), contents, kind, reader)); }
 
     public static void eachInheritedFile(String folder, String kind, Set<String> identity, BiConsumer<Identifier, String> reader) {

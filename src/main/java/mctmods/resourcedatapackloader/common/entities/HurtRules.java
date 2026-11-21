@@ -28,6 +28,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 public final class HurtRules {
+    private static final List<String> FILE_KEYS = List.of("attacker", "victim", "cancel", "runs");
     private static final Map<Identifier, List<HurtRuleDef>> BY_VICTIM = new HashMap<>();
     private static final List<HurtRuleDef> BY_KIND = new ArrayList<>();
 
@@ -85,6 +86,7 @@ public final class HurtRules {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         HurtRuleDef.Who attackers = who(key, json, "attacker");
         HurtRuleDef.Who victims = who(key, json, "victim");
         if (attackers == null || victims == null) {

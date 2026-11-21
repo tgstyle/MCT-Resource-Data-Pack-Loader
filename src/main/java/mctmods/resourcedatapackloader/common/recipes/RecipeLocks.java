@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 public final class RecipeLocks {
+    private static final List<String> LOCK_KEYS = List.of("advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount", "names", "namespaces", "outputs", "regex", "inputs", "types");
     private static final List<Lock> LOCKS = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -36,6 +37,7 @@ public final class RecipeLocks {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", LOCK_KEYS);
         String advancement = Json.getString(json, "advancement", "").trim();
         Standing standing = Standing.parse(json);
         if (standing.halfScore()) {

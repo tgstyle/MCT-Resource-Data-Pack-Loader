@@ -37,6 +37,7 @@ public final class PlayerLoot {
     private static final String DROP_LOOSE = "dropLoose";
     private static final String ADD = "add";
     private static final String REPLACE = "replace";
+    private static final List<String> LOOT_KEYS = List.of(TABLE, MODE, KEEP_INVENTORY, DROP_LOOSE);
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -51,6 +52,7 @@ public final class PlayerLoot {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", LOOT_KEYS);
         String table = Json.getString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);

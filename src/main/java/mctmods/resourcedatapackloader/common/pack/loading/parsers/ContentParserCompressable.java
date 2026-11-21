@@ -5,12 +5,14 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
 public final class ContentParserCompressable {
     public static final int MAX_LAYERS = 20;
     public static final String MEMBER = "compressable";
+    private static final List<String> COMPRESSABLE_KEYS = List.of("layers", "of", "item", "texture", "recipes");
 
     private ContentParserCompressable() {}
 
@@ -23,6 +25,7 @@ public final class ContentParserCompressable {
             return null;
         }
         JsonObject held = Json.getJsonObject(json, MEMBER);
+        Json.unknownKeys(held, MEMBER, COMPRESSABLE_KEYS);
         int layers = Json.getInt(held, "layers", 0);
         if (layers < 1 || layers > MAX_LAYERS) {
             ContentLog.LOGGER.error("The 'compressable' member of {} needs 'layers' between 1 and {}, not {}, skipping its compressed blocks", key, MAX_LAYERS, layers);

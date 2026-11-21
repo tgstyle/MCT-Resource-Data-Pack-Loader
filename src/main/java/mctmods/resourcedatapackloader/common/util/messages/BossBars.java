@@ -24,6 +24,8 @@ import net.minecraft.world.BossEvent;
 
 public final class BossBars {
     public static final String KEY = "bossBar";
+    private static final List<String> BAR_KEYS = List.of("name", "color", "style", "background");
+    private static final List<String> BACKGROUND_KEYS = List.of("texture", "width", "height", "x", "y");
 
     private BossBars() {}
 
@@ -36,6 +38,7 @@ public final class BossBars {
             return null;
         }
         JsonObject bar = json.getAsJsonObject(KEY);
+        Json.unknownKeys(bar, KEY, BAR_KEYS);
         return new BossBarDef(Json.getString(bar, "name", "").trim(), pick(owner, bar, "color", BossEvent.BossBarColor.class, fallbackColor), pick(owner, bar, "style", BossEvent.BossBarOverlay.class, fallbackStyle), background(owner, bar));
     }
 
@@ -46,6 +49,7 @@ public final class BossBars {
             return null;
         }
         JsonObject background = bar.getAsJsonObject("background");
+        Json.unknownKeys(background, KEY + ".background", BACKGROUND_KEYS);
         String texture = Json.getString(background, "texture", "").trim();
         if (texture.isEmpty()) {
             ContentLog.LOGGER.error("{} sets {} background without a texture, so it has no background", owner, KEY);

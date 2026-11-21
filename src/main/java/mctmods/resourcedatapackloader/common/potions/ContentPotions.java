@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -40,6 +41,13 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentPotions {
     private static final String ICON = "icon";
+    private static final List<String> POTION_KEYS = List.of("attributes", "name", "badEffect", "beneficial", "color", ICON, "iconTexture", "instant", "requires");
+    private static final List<String> ATTRIBUTE_KEYS = List.of("attribute", "amount", "operation");
+    private static final List<String> ICON_KEYS = List.of("x", "y");
+    private static final List<String> TYPE_KEYS = List.of("baseName", "effects", "requires");
+    private static final List<String> EFFECT_KEYS = List.of("potion", "duration", "amplifier", "ambient", "showParticles");
+    private static final List<String> BREWING_FILE_KEYS = List.of("brewing");
+    private static final List<String> BREWING_KEYS = List.of("from", "to", "ingredient", "input", "output", "requires");
     private static final Map<Identifier, PotionDef> POTIONS = new LinkedHashMap<>();
     private static final Map<Identifier, PotionTypeDef> TYPES = new LinkedHashMap<>();
     private static final List<BrewingDef> BREWING = new ArrayList<>();
@@ -74,6 +82,7 @@ public final class ContentPotions {
     private static void readPotion(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "potion file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", POTION_KEYS);
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
             for (JsonElement element : Json.getJsonArray(json, "attributes")) {
@@ -82,12 +91,14 @@ public final class ContentPotions {
                     continue;
                 }
                 JsonObject entry = element.getAsJsonObject();
+                Json.unknownKeys(entry, "attributes", ATTRIBUTE_KEYS);
                 attributes.add(new AttributeDef(Json.getString(entry, "attribute", ""),
                         Json.getFloat(entry, "amount", 0.0F),
                         Json.getInt(entry, "operation", 0)));
             }
         }
         JsonObject icon = Json.getJsonObject(json, ICON, new JsonObject());
+        Json.unknownKeys(icon, ICON, ICON_KEYS);
         POTIONS.put(key, new PotionDef(key,
                 Json.getString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
                 Json.getBoolean(json, "badEffect", false),
@@ -104,6 +115,10 @@ public final class ContentPotions {
     private static void readType(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "potion type file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", TYPE_KEYS);
+        for (JsonElement element : Json.getJsonArray(json, "effects", new JsonArray())) {
+            if (element.isJsonObject()) { Json.unknownKeys(element.getAsJsonObject(), "effects", EFFECT_KEYS); }
+        }
         List<PotionEffectDef> effects = ContentParser.effects(key, json);
         if (effects.isEmpty()) {
             ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
@@ -118,12 +133,14 @@ public final class ContentPotions {
     private static void readBrewing(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "brewing file");
         if (json == null) { return; }
+        Json.unknownKeys(json, "the top level", BREWING_FILE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "brewing")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
+            Json.unknownKeys(entry, "brewing", BREWING_KEYS);
             BrewingDef def = new BrewingDef(key,
                     Json.getString(entry, "from", ""),
                     Json.getString(entry, "to", ""),

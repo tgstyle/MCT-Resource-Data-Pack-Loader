@@ -30,6 +30,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
 public final class MobDrops {
+    private static final List<String> FILE_KEYS = List.of("entities", "adds", "strip", "stripTagged");
+    private static final List<String> ADD_KEYS = List.of("item", "count", "chance", "killerHolds", "damageTypes", "requireAll", "unlessDropped");
     private static final List<MobDropsDef> DEFS = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -44,6 +46,7 @@ public final class MobDrops {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Mob drop file " + key;
         List<Identifier> ids = new ArrayList<>();
         List<String> kinds = new ArrayList<>();
@@ -64,6 +67,7 @@ public final class MobDrops {
     }
 
     private static void add(Identifier key, String owner, JsonObject json, List<MobDropsDef.Add> adds) {
+        Json.unknownKeys(json, "adds", ADD_KEYS);
         String item = Json.getString(json, "item", "");
         if (item.isEmpty()) {
             ContentLog.LOGGER.error("{} has an adds entry with no item, skipping it", owner);

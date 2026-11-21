@@ -25,6 +25,7 @@ import net.minecraft.util.Mth;
 
 public final class ContentCityMaps {
     private static final Map<String, CityMapDef> DEFS = new LinkedHashMap<>();
+    private static final List<String> CITY_MAP_KEYS = List.of("map", "palette", "cell", "settings", "name");
     private static final int CELL_LEAST = 8;
     private static final int CELL_MOST = 128;
     private static final int CELL_USUAL = 48;
@@ -63,6 +64,7 @@ public final class ContentCityMaps {
     @Nullable private static CityMapDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "city map");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", CITY_MAP_KEYS);
         List<String> rows = Json.strings(json, "map");
         if (rows.isEmpty() || rows.size() > CityMapDef.LIMIT) {
             ContentLog.LOGGER.error("City map {} holds {} map row(s), the most being {}, so it is dropped", key, rows.size(), CityMapDef.LIMIT);

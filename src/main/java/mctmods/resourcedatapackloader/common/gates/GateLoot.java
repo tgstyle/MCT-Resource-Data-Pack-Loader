@@ -56,6 +56,7 @@ public final class GateLoot {
     private static final Map<UUID, BlockPos> POSITIONS = new HashMap<>();
     private static final Map<UUID, List<ItemStack>> OPEN = new HashMap<>();
     private static final Map<UUID, List<ItemStack>> OWN = new HashMap<>();
+    private static final List<String> LOOT_KEYS = List.of("keep", "enderChest", "message");
     private static int ticks;
 
     private final boolean enabled;
@@ -79,6 +80,7 @@ public final class GateLoot {
             return NONE;
         }
         JsonObject options = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+        Json.unknownKeys(options, "dropOnLeave", LOOT_KEYS);
         Set<Identifier> keep = new HashSet<>();
         for (String named : Json.strings(options, "keep")) {
             Identifier item = named.contains(":") ? Identifier.tryParse(named) : null;

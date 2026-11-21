@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -58,6 +59,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class ContentCarry {
     private static final String BLOCKS = "blocks";
     private static final String MOBS = "mobs";
+    private static final List<String> CARRY_KEYS = List.of("requires", BLOCKS, MOBS);
     private static final String CARRY = "rdplCarry";
     private static final String KIND = "kind";
     private static final String BLOCK = "block";
@@ -111,6 +113,7 @@ public final class ContentCarry {
     private static EntityType<?> mob(String name) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, Identifier.tryParse(Settings.lower(name))); }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", CARRY_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (!json.has(BLOCKS) && !json.has(MOBS)) {
             ContentLog.LOGGER.error("Carry {} names no blocks and no mobs, ignoring it", key);

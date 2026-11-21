@@ -31,6 +31,7 @@ final class RecipeSelector {
     private static final String REGEX = "regex";
     private static final String TYPES = "types";
     private static final String INPUTS = "inputs";
+    static final List<String> KEYS = List.of(NAMES, NAMESPACES, OUTPUTS, REGEX, INPUTS, TYPES);
     private final Set<String> named = new LinkedHashSet<>();
     private final Set<String> prefixes = new LinkedHashSet<>();
     private final Set<Item> outputItems = new LinkedHashSet<>();

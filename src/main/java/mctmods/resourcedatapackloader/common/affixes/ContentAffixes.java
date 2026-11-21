@@ -48,6 +48,10 @@ public final class ContentAffixes {
     private static final List<EquipmentSlot> CARRIED = List.of(EquipmentSlot.OFFHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET);
     private static final int POLL = 20;
     private static final int NO_SOCKET = -1;
+    private static final List<String> AFFIX_KEYS = List.of("item", "affixes", "rolls", "sockets");
+    private static final List<String> RANGE_KEYS = List.of("min", "max");
+    private static final List<String> ENTRY_KEYS = List.of("attribute", "slot", "operation", "min", "max", "name", "weight");
+    private static final List<String> GEM_KEYS = List.of("item", "attribute", "slot", "operation", "name", "amount", "levels");
     private static final List<AffixDef> DEFS = new ArrayList<>();
     private static final List<GemDef> GEMS = new ArrayList<>();
 
@@ -66,6 +70,7 @@ public final class ContentAffixes {
     }
 
     private static void readAffix(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", AFFIX_KEYS);
         ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
         if (stack.isEmpty()) { return; }
         if (stack.getMaxStackSize() > 1) {
@@ -87,6 +92,7 @@ public final class ContentAffixes {
     }
 
     @Nullable private static AffixEntry readEntry(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "affixes", ENTRY_KEYS);
         Holder<Attribute> attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
         int operation = Json.getInt(json, "operation", 0);
@@ -101,6 +107,7 @@ public final class ContentAffixes {
     }
 
     private static void readGem(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", GEM_KEYS);
         ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
         Holder<Attribute> attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
@@ -117,6 +124,7 @@ public final class ContentAffixes {
 
     private static int[] range(JsonObject json, String member, int fallback) {
         JsonObject held = Json.object(json, member);
+        Json.unknownKeys(held, member, RANGE_KEYS);
         int min = Math.max(0, Json.getInt(held, "min", fallback));
         return new int[] {min, Math.max(min, Json.getInt(held, "max", min))};
     }

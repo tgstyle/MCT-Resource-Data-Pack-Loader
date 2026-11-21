@@ -21,6 +21,8 @@ import net.minecraft.resources.Identifier;
 
 public final class PackCommands {
     private static final Pattern NAME = Pattern.compile("[a-z0-9_]+");
+    private static final List<String> COMMAND_KEYS = List.of("requires", "runs", "script", "scriptFile", "name", "permission", "args");
+    private static final List<String> ARG_KEYS = List.of("name", "optional", "type", "default");
     private static final List<String> TYPES = List.of(CommandArg.PLAYER, CommandArg.INT, CommandArg.NUMBER, CommandArg.STRING, CommandArg.TEXT);
 
     private PackCommands() {}
@@ -30,6 +32,7 @@ public final class PackCommands {
     }
 
     private static void read(CommandDispatcher<CommandSourceStack> dispatcher, Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", COMMAND_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         String runs = Json.getString(json, "runs", "").trim();
         boolean inline = !Json.getString(json, "script", "").trim().isEmpty();
@@ -73,6 +76,7 @@ public final class PackCommands {
         for (int i = 0; i < array.size(); i++) {
             JsonElement element = array.get(i);
             JsonObject object = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            Json.unknownKeys(object, "args", ARG_KEYS);
             String name = Json.getString(object, "name", "").trim();
             if (!NAME.matcher(name).matches()) {
                 ContentLog.LOGGER.error("Command file {} has an argument with no usable name, ignoring that argument", key);

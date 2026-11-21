@@ -57,13 +57,26 @@ public final class ContentParser {
     private static final List<String> RENDER_LAYERS = List.of("solid", "cutout", "cutout_mipped", "translucent");
     private static final String PLANT_TYPES = "plantTypes";
     private static final int[] NO_CHANCE = new int[0];
+    private static final List<String> BELL_KEYS = List.of("swing", "sound", "resonateSound");
+    private static final List<String> EXP_DROP_KEYS = List.of("min", "max");
+    private static final List<String> GROWTH_KEYS = List.of("maxHeight", "stages", "soil", "needsWater", "waterRange", "needsSky", "damage", "damageAmount", "breaksNeighbors", "spread", "drop", "dropCount");
+    private static final List<String> PORTAL_KEYS = List.of("dimension", "returnDimension", "gate", "cooldown", "platform", "platformBlock", "sound", "owned", "walkIn", "landing", "torches", "useRange", "mounted", "returnTo");
+    private static final List<String> SAPLING_KEYS = List.of("soil", "stages", "chance", "light", "structure", "structures", "log", "leaves", "height", "vines", "trees", "steps", "blocked", "growBy", "stepTicks", "catchUp", "catchUpLimit", "bonemeal", "bonemealTicks", "bonemealChecks", "biomes", "needsSky", "needsWater", "waterRange");
+    private static final List<String> BLOCK_VARIANT_KEYS = List.of("rarity", "maxSize", "tags", "oreDict", "hardness", "resistance", "harvestLevel", "light", "portal", "drops");
+    private static final List<String> ITEM_VARIANT_KEYS = List.of("rarity", "maxSize", "tags", "oreDict", "healAmount", "saturation", "potion");
+    private static final List<String> TAB_KEYS = List.of("label", "icon", "requires");
+    private static final List<String> MATERIAL_KEYS = List.of("reduction", "harvestLevel", "durability", "efficiency", "damage", "enchantability", "toughness", "equipSound", "armorTexture", "repairItem", "requires");
+    private static final List<String> MATCH_KEYS = List.of("block", "meta", "properties");
+    private static final List<String> DROP_KEYS = List.of("block", "entity", "amount", "chance", "weight", "bonusChance", "guaranteed");
 
     private ContentParser() {}
 
     @Nullable public static BlockDef block(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "block definition");
         if (json == null) { return null; }
+        ContentParserContainers.blockKeys(json);
         JsonObject exp = Json.getJsonObject(json, "expDrop", new JsonObject());
+        Json.unknownKeys(exp, "expDrop", EXP_DROP_KEYS);
         String type = Settings.lower(Json.getString(json, "type", DEFAULT_TYPE));
         boolean opaque = Json.getBoolean(json, "opaque", !ContentParserContainers.chested(json) && !ContentBlockTypes.plant(type));
         List<BlockVariant> variants = new ArrayList<>();
@@ -118,7 +131,7 @@ public final class ContentParser {
                 Mth.clamp(Json.getInt(json, "leafSaplingChance", 5), 0, 100),
                 location(Json.getString(json, "opensWith", "")),
                 Json.getString(json, "openSound", "").trim(),
-                portal(key, json, null, true, false),
+                portal(key, json, null, true, false, PORTAL_KEYS),
                 ContentParserContainers.container(key, json),
                 bell(json),
                 ContentParserSeasons.sensor(key, json),
@@ -140,14 +153,16 @@ public final class ContentParser {
     @Nullable private static BellDef bell(JsonObject json) {
         if (!GsonHelper.isObjectNode(json, "bell")) { return null; }
         JsonObject held = Json.getJsonObject(json, "bell");
+        Json.unknownKeys(held, "bell", BELL_KEYS);
         return new BellDef(Json.getBoolean(held, "swing", BellDef.PLAIN.swing()),
                 Json.getString(held, "sound", BellDef.PLAIN.sound()).trim(),
                 Json.getString(held, "resonateSound", BellDef.PLAIN.resonateSound()).trim());
     }
 
-    @Nullable public static PortalDef portal(Identifier key, JsonObject json, @Nullable Identifier ownDimension, boolean ownedDefault, boolean walkInDefault) {
+    @Nullable public static PortalDef portal(Identifier key, JsonObject json, @Nullable Identifier ownDimension, boolean ownedDefault, boolean walkInDefault, List<String> read) {
         if (!json.has("portal")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "portal");
+        Json.unknownKeys(entry, "portal", read);
         String named = Json.getString(entry, "dimension", ownDimension == null ? "" : ownDimension.toString()).trim();
         Identifier dimension = named.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(named));
         if (dimension == null) {
@@ -178,6 +193,7 @@ public final class ContentParser {
     }
 
     private static BlockVariant blockVariant(Identifier key, Identifier id, JsonObject json) {
+        Json.unknownKeys(json, VARIANTS, BLOCK_VARIANT_KEYS);
         List<DropDef> drops = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(json, "drops", new JsonArray())) {
             if (!element.isJsonObject()) { continue; }
@@ -193,7 +209,7 @@ public final class ContentParser {
                 Json.getInt(json, "harvestLevel", 0),
                 Mth.clamp(Json.getInt(json, "light", 0), 0, 15),
                 Collections.unmodifiableList(drops),
-                portal(key, json, null, true, false));
+                portal(key, json, null, true, false, PORTAL_KEYS));
     }
 
     private static void retiredPlantTypes(Identifier key, JsonObject json) { if (!Json.strings(json, PLANT_TYPES).isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Use 'bush' under 'behavesAs' for what 'plains' did, and let any other plant name this block in its own soil list", key, PLANT_TYPES); } }
@@ -217,6 +233,11 @@ public final class ContentParser {
     @Nullable public static BlockMatchDef match(Identifier key, JsonElement element) {
         if (!element.isJsonObject()) { return match(key, element.getAsString()); }
         JsonObject entry = element.getAsJsonObject();
+        Json.unknownKeys(entry, "match", MATCH_KEYS);
+        return matchOf(key, entry);
+    }
+
+    @Nullable public static BlockMatchDef matchOf(Identifier key, JsonObject entry) {
         if (entry.has("meta")) { ContentLog.LOGGER.warn("A block match in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", key); }
         String name = Json.getString(entry, "block", "minecraft:stone");
         Identifier block = location(name);
@@ -279,6 +300,7 @@ public final class ContentParser {
     }
 
     @Nullable private static DropDef drop(Identifier key, String name, JsonObject json) {
+        Json.unknownKeys(json, "drops", DROP_KEYS);
         String block = Json.getString(json, "block", "").trim();
         String entity = Json.getString(json, "entity", "").trim();
         if (block.isEmpty() && entity.isEmpty()) {
@@ -306,6 +328,7 @@ public final class ContentParser {
         JsonObject json = Json.object(key, contents, "item definition");
         if (json == null) { return null; }
         if (json.has("item")) { return ContentParserDerived.item(key, json); }
+        ContentParserContainers.itemKeys(json);
         List<ItemVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
             Identifier id = variantId(key, entry.getKey(), "Item");
@@ -314,6 +337,7 @@ public final class ContentParser {
                 continue;
             }
             JsonObject variant = entry.getValue().getAsJsonObject();
+            Json.unknownKeys(variant, VARIANTS, ITEM_VARIANT_KEYS);
             variants.add(new ItemVariant(id, id.getPath(),
                     Settings.lower(Json.getString(variant, "rarity", "common")),
                     Mth.clamp(Json.getInt(variant, "maxSize", 64), 1, 64),
@@ -361,6 +385,7 @@ public final class ContentParser {
     @Nullable public static FluidDef fluid(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "fluid definition");
         if (json == null) { return null; }
+        ContentParserFluids.fluidKeys(json);
         String name = fluidName(key, json);
         if (Identifier.tryBuild(key.getNamespace(), name) == null) {
             ContentLog.LOGGER.error("Fluid definition {} names itself '{}', which is not a usable registry name, ignoring it", key, name);
@@ -391,6 +416,7 @@ public final class ContentParser {
     @Nullable public static MaterialDef material(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "material file");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", MATERIAL_KEYS);
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
             JsonArray array = Json.getJsonArray(json, "reduction");
@@ -529,6 +555,7 @@ public final class ContentParser {
     @Nullable public static TabDef tab(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "creative tab");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", TAB_KEYS);
         String icon = Json.getString(json, "icon", "").trim();
         if (icon.isEmpty()) { ContentLog.LOGGER.error("Creative tab {} has no icon, it will fall back to the first block that uses it", key); }
         return new TabDef(key, Json.getString(json, "label", key.getPath()).trim(), icon, Json.strings(json, "requires"));
@@ -537,6 +564,7 @@ public final class ContentParser {
     @Nullable private static GrowthDef growth(JsonObject json) {
         if (!json.has("growth")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "growth");
+        Json.unknownKeys(entry, "growth", GROWTH_KEYS);
         return new GrowthDef(Math.max(1, Json.getInt(entry, "maxHeight", 3)),
                 Mth.clamp(Json.getInt(entry, "stages", 16), 1, 16),
                 Json.strings(entry, "soil"),
@@ -554,6 +582,7 @@ public final class ContentParser {
     @Nullable private static SaplingDef sapling(JsonObject json) {
         if (!json.has("sapling")) { return null; }
         JsonObject entry = Json.getJsonObject(json, "sapling");
+        Json.unknownKeys(entry, "sapling", SAPLING_KEYS);
         return new SaplingDef(Json.strings(entry, "soil"),
                 Math.max(1, Json.getInt(entry, "stages", 2)),
                 Math.max(1, Json.getInt(entry, "chance", ContentParserTrees.SAPLING_CHANCE)),

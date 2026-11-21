@@ -57,6 +57,8 @@ public final class ContentDiet {
     private static final String MEMORY = "memory";
     private static final String LIFETIME = "lifetime";
     private static final List<String> COUNTS = Arrays.asList(MEMORY, LIFETIME);
+    private static final List<String> DIET_KEYS = List.of("requires", "keepOnDeath", "memory", "repeat", "variety", "exempt", "groups", "messages", "tooltip");
+    private static final List<String> KEEP_KEYS = List.of("hunger", "saturation");
     private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentDiet::eaten, ContentDiet::tooltip, RDPLNetwork::sendEaten);
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -93,6 +95,7 @@ public final class ContentDiet {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", DIET_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (json.has(KEEP_ON_DEATH)) { readKeep(key, json); }
         if (onlyKeep(json)) { return; }
@@ -122,6 +125,7 @@ public final class ContentDiet {
             return;
         }
         JsonObject keep = json.getAsJsonObject(KEEP_ON_DEATH);
+        Json.unknownKeys(keep, KEEP_ON_DEATH, KEEP_KEYS);
         keepFood = range(keep, "hunger", key);
         keepSaturation = range(keep, "saturation", key);
         keepSource = key;

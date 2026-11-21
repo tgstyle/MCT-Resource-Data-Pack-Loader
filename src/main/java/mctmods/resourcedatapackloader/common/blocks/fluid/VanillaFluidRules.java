@@ -41,6 +41,7 @@ public final class VanillaFluidRules {
     private static final List<FluidReactionDef> LAVA = new ArrayList<>();
     private static final List<Place> SOURCES = new ArrayList<>();
     private static final List<Rain> RAIN = new ArrayList<>();
+    private static final List<String> RULE_KEYS = List.of("fluid", "infinite", "rain", "reactions");
     private static final Set<String> RAIN_MEMBERS = Set.of("biomes", "dimensions", "chance", "maxLevel", "minHeight", "maxHeight", "seaLevel", "inClaims");
     private static final Map<BlockState, Boolean> TOUCHED = new ConcurrentHashMap<>();
 
@@ -92,6 +93,7 @@ public final class VanillaFluidRules {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", RULE_KEYS);
         String named = Json.text(json, "fluid", "");
         Identifier fluid = named.isEmpty() ? null : Identifier.tryParse(named);
         List<FluidReactionDef> into = fluid == null ? null : WATER_ID.equals(fluid) ? WATER : LAVA_ID.equals(fluid) ? LAVA : null;

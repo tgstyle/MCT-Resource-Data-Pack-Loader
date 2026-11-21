@@ -28,6 +28,7 @@ final class ContentParserTimeWindows {
     private static final String AURA = "auraColor";
     private static final String PRECIPITATION = "precipitation";
     private static final String ALWAYS_RAIN = "alwaysRain";
+    private static final List<String> TIME_KEYS = List.of("dayLength", "windows");
     private static final List<String> WINDOW_KEYS = List.of(FROM, TO, SKY, WEATHER);
     private static final List<String> SKY_KEYS = List.of(FOG_DENSITY, FOG_COLOR, SUN);
     private static final List<String> SUN_KEYS = List.of(COLOR, AURA);
@@ -37,6 +38,7 @@ final class ContentParserTimeWindows {
 
     static List<TimeWindowDef> windows(Identifier key, JsonObject json, boolean precipitation) {
         JsonObject time = Json.getJsonObject(json, "time", new JsonObject());
+        Json.unknownKeys(time, "time", TIME_KEYS);
         if (!time.has("windows")) { return List.of(); }
         List<TimeWindowDef> windows = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(time, "windows")) {

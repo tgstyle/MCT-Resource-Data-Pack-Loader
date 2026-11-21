@@ -25,6 +25,7 @@ import net.neoforged.neoforge.event.LootTableLoadEvent;
 public final class LootInjections {
     private static final String TARGET = "target";
     private static final String POOLS = "pools";
+    private static final List<String> INJECTION_KEYS = List.of(TARGET, POOLS);
     private static final Map<Identifier, List<JsonElement>> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -40,6 +41,7 @@ public final class LootInjections {
     }
 
     private static void read(Identifier key, JsonObject json, int[] count) {
+        Json.unknownKeys(json, "the top level", INJECTION_KEYS);
         String target = Json.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);

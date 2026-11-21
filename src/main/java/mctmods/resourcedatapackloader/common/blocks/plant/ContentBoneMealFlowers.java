@@ -36,6 +36,8 @@ public final class ContentBoneMealFlowers {
     private static final String ON = "on";
     private static final String FLOWERS = "flowers";
     private static final String TAG = "tag";
+    private static final String ORE_DICT = "oreDict";
+    private static final List<String> SPREAD_KEYS = List.of("requires", ON, FLOWERS, TAG, ORE_DICT, "everyMod", "radius", "count");
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -51,6 +53,7 @@ public final class ContentBoneMealFlowers {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", SPREAD_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         BlockGroup on = new BlockGroup();
         if (json.has(ON)) {
@@ -66,7 +69,7 @@ public final class ContentBoneMealFlowers {
         for (BlockMatchDef match : ContentParser.matches(key, json, FLOWERS)) {
             ContentStates.bind(match, key, FLOWERS, all -> fixed.addAll(all.getStateDefinition().getPossibleStates()), fixed::add);
         }
-        if (json.has("oreDict")) { ContentLog.LOGGER.warn("Flower spread {} uses 'oreDict', which this line does not read. Name block tags under '{}' instead", key, TAG); }
+        if (json.has(ORE_DICT)) { ContentLog.LOGGER.warn("Flower spread {} uses 'oreDict', which this line does not read. Name block tags under '{}' instead", key, TAG); }
         List<TagKey<Block>> tags = new ArrayList<>();
         for (String named : Json.strings(json, TAG)) {
             Identifier id = Registered.tagId(named);

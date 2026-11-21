@@ -14,6 +14,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 
 public final class SpawnLocks {
+    private static final List<String> FILE_KEYS = List.of("entities", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "team", "objective", "scoreAtLeast", "dietAtLeast", "dietCount");
     private static final List<Lock> LOCKS = new ArrayList<>();
 
     private SpawnLocks() {}
@@ -34,6 +35,7 @@ public final class SpawnLocks {
     }
 
     private static void read(Identifier key, JsonObject json) {
+        Json.unknownKeys(json, "the top level", FILE_KEYS);
         String owner = "Spawn lock file " + key;
         List<Identifier> ids = new ArrayList<>();
         List<String> kinds = new ArrayList<>();

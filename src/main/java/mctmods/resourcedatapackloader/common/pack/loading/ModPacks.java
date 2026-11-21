@@ -31,6 +31,7 @@ public final class ModPacks {
     private static final String MODS_TOML = "META-INF/neoforge.mods.toml";
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
+    private static final List<String> SETTINGS_KEYS = List.of(ENABLED, PRIORITY);
 
     private ModPacks() {}
 
@@ -90,6 +91,7 @@ public final class ModPacks {
     private static JsonObject settingsFor(JsonObject control, String modId) {
         JsonElement held = control.get(modId);
         JsonObject settings = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
+        Json.unknownKeys(settings, modId, SETTINGS_KEYS);
         if (!GsonHelper.isBooleanValue(settings, ENABLED)) { settings.addProperty(ENABLED, true); }
         if (!GsonHelper.isNumberValue(settings, PRIORITY)) { settings.addProperty(PRIORITY, -1); }
         control.add(modId, settings);

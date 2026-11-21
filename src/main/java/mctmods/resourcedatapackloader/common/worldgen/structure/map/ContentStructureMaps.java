@@ -40,6 +40,7 @@ public final class ContentStructureMaps {
     public static final String MAP_STRUCTURE = "map";
     public static final String MAP_PIECE = "map_piece";
     private static final Map<Identifier, StructureMapDef> DEFS = new LinkedHashMap<>();
+    private static final List<String> STRUCTURE_MAP_KEYS = List.of("layers", "ground", "cell", "spacing", "chance", "at", "dimensions", "depth", "spawners", "loot", "respawn");
     private static final Set<String> MISSING = new LinkedHashSet<>();
     private static final Set<String> OVERSIZE = new LinkedHashSet<>();
     private static final List<String> SETS = new ArrayList<>();
@@ -121,6 +122,7 @@ public final class ContentStructureMaps {
 
     @Nullable private static StructureMapDef parse(Identifier key, String contents) {
         JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+        if (json != null) { Json.unknownKeys(json, "the top level", STRUCTURE_MAP_KEYS); }
         if (json == null || !json.has("layers")) {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
             return null;

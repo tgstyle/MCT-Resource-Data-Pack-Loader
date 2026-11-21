@@ -6,11 +6,14 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
 final class ContentParserRecords {
     private static final String TYPE = "record";
+
+    private static final List<String> JUKEBOX_KEYS = List.of("sound", "ticks", "comparator");
 
     private ContentParserRecords() {}
 
@@ -21,6 +24,7 @@ final class ContentParserRecords {
             return null;
         }
         JsonObject jukebox = Json.getJsonObject(json, "jukebox");
+        Json.unknownKeys(jukebox, "jukebox", JUKEBOX_KEYS);
         Identifier sound = ContentParser.location(Json.getString(jukebox, "sound", ""));
         if (sound == null) {
             ContentLog.LOGGER.error("Record item {} has no jukebox.sound, so it registers nothing", key);

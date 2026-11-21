@@ -48,6 +48,7 @@ public final class ContentVillages {
     private static final String FIELD = "_farm_";
     private static final Map<Identifier, VillageDef> VANILLA = new LinkedHashMap<>();
     private static final Map<Identifier, Rotation> TURNS = new LinkedHashMap<>();
+    private static final List<String> VILLAGE_KEYS = List.of("type", "structure", "orderSign", "weight", "leastCount", "mostCount", "width", "height", "depth", "apron", "crops", "edge", "soil", "water", "rowWidth", "ground", "integrity", "villagers", "villagerEntity", "villagerX", "villagerY", "villagerZ", "requires", "lootTable", "orderX", "orderY", "orderZ", "respawn");
     private static final Set<String> GROWN = new LinkedHashSet<>();
     private static boolean loaded;
 
@@ -219,6 +220,7 @@ public final class ContentVillages {
     @Nullable private static VillageDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "village plot");
         if (json == null) { return null; }
+        Json.unknownKeys(json, "the top level", VILLAGE_KEYS);
         String type = Settings.lower(Json.getString(json, "type", VillageDef.FARM));
         if (!VillageDef.FARM.equals(type) && !VillageDef.TEMPLATE.equals(type)) {
             ContentLog.LOGGER.error("Village plot {} asks for type '{}', which is not {} or {}, so {} stands in", key, type, VillageDef.FARM, VillageDef.TEMPLATE, VillageDef.FARM);
