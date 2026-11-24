@@ -2338,23 +2338,25 @@ Metoda, která existuje s více seznamy parametrů, se musí pojmenovat s typy p
 
 `set` je objekt s tečkovými cestami k polím a hodnotami. `"maxDamage": 2000` zapíše pole `maxDamage` na kopii. `"tier.enchantmentValue": 30` vstoupí do objektu, který drží `tier`, a zapíše tam. Statická pole se nikdy nezapisují, protože by každý předmět sdílel tu změnu.
 
-| Hodnota JSON       | Typ pole                                                                                                                      | Poznámky                                                                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| číslo              | `int`, `long`, `short`, `byte`, `float`, `double`                                                                             | Celá čísla jen pro celočíselné typy, a hodnota se musí vejít do typu               |
-| `true`, `false`    | `boolean`                                                                                                                     |                                                                                    |
-| text               | `String`, `char`                                                                                                              | `char` přijímá text o jednom znaku                                                 |
-| text               | výčet                                                                                                                         | Název konstanty, velkými nebo malými písmeny                                       |
-| text               | `ResourceLocation`                                                                                                            | `mod:name`                                                                         |
-| text               | `Component`                                                                                                                   | Prostý text, zapsaný doslova                                                       |
-| text               | `ItemStack`                                                                                                                   | Stack zapsaný tak, jak ho packy zapisují jinde. Nesmí vyjít prázdný                |
-| text               | `Item`, `Block`, `Fluid`, `MobEffect`, `Potion`, `Enchantment`, `SoundEvent`, `EntityType`, `Attribute`, `VillagerProfession` | Název v registru. Musí být zaregistrován                                           |
-| pole               | pole, nebo `List`, `Set` či `Collection`                                                                                      | Každý prvek sleduje tuto tabulku. Pole kolekce se nahradí celé, nikdy se nepřidává |
-| objekt             | jakýkoli jiný objekt                                                                                                          | Vnořený objekt, viz níže                                                           |
-| text `<ns>:<item>` | jakýkoli jiný objekt                                                                                                          | Znovupoužije objekt, který odvozený předmět postavil na stejné cestě, viz níže     |
+| Hodnota JSON       | Typ pole                                                                                                                      | Poznámky                                                                                      |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| číslo              | `int`, `long`, `short`, `byte`, `float`, `double`                                                                             | Celá čísla jen pro celočíselné typy, a hodnota se musí vejít do typu                          |
+| `true`, `false`    | `boolean`                                                                                                                     |                                                                                               |
+| text               | `String`, `char`                                                                                                              | `char` přijímá text o jednom znaku                                                            |
+| text               | výčet                                                                                                                         | Název konstanty, velkými nebo malými písmeny                                                  |
+| text               | tier                                                                                                                          | Prostý název tieru bez dvojtečky: `wood`, `stone`, `iron`, `gold`, `diamond` nebo `netherite` |
+| text               | `ResourceLocation`                                                                                                            | `mod:name`                                                                                    |
+| text               | `Component`                                                                                                                   | Prostý text, zapsaný doslova                                                                  |
+| text               | `ItemStack`                                                                                                                   | Stack zapsaný tak, jak ho packy zapisují jinde. Nesmí vyjít prázdný                           |
+| text               | `Item`, `Block`, `Fluid`, `MobEffect`, `Potion`, `Enchantment`, `SoundEvent`, `EntityType`, `Attribute`, `VillagerProfession` | Název v registru. Musí být zaregistrován                                                      |
+| pole               | pole, nebo `List`, `Set` či `Collection`                                                                                      | Každý prvek sleduje tuto tabulku. Pole kolekce se nahradí celé, nikdy se nepřidává            |
+| objekt             | jakýkoli jiný objekt                                                                                                          | Vnořený objekt, viz níže                                                                      |
+| text `<ns>:<item>` | jakýkoli jiný objekt                                                                                                          | Znovupoužije objekt, který odvozený předmět postavil na stejné cestě, viz níže                |
+| text `#<ns>:<tag>` | `TagKey` pole                                                                                                                 | Tag registru pole, například `#forge:ingots/iron`                                             |
 
 **Vnořené objekty.** Objekt JSON pod `set` má stejné tři klíče jako soubor: `set`, `returns` a `addTo`. Mění kopii objektu, který pole drží, takže základní předmět a vše ostatní, co ten objekt sdílí, si zachová původní. Je to kopie při zápisu: kopírují se jen objekty podél cesty, kterou zapisuješ, a každé jiné pole ukazuje na stejný objekt jako základ.
 
-Tier nástroje nebo materiál brnění se kopíruje jako nový objekt, s ponechaným opravným předmětem. Tier se kopírovat smí jen s tagem mineable. Jakýkoli jiný výčet jako vnořený objekt je odmítnut, stejně jako objekt z balíčku `java.`. Pole a kolekce se neprocházejí: cesta jimi nemůže vést a pole kolekce se nahrazuje celé z pole JSON.
+Tier nástroje nebo materiál brnění se kopíruje jako nový objekt, s ponechaným opravným předmětem. Tier se kopírovat smí jen s tagem mineable. Pole tieru přijímá i prostý název tieru, takže `"tier": "netherite"` ho nastaví bez kopírování. Objekt napiš, jen když chceš nová čísla. Jakýkoli jiný výčet jako vnořený objekt je odmítnut, stejně jako objekt z balíčku `java.`. Pole a kolekce se neprocházejí: cesta jimi nemůže vést a pole kolekce se nahrazuje celé z pole JSON.
 
 Text `"<ns>:<item>"` místo objektu znovupoužije objekt toho odvozeného předmětu na stejné cestě. Dva odvozené předměty tak mohou sdílet jeden tier a ten jmenovaný se postaví první. V testovacím balíčku `"tier": "d427:derived_pick"` dá druhému krumpáči tier, který postavil `derived_pick`.
 
@@ -2393,6 +2395,71 @@ Kopie je samostatný objekt se zkopírovanými poli základu, takže tyto věci 
 Odvozený předmět, jehož základ je jiný odvozený předmět, nebo který znovupoužívá cizí objekt, se staví až po něm. Závisí-li odvozené předměty na sobě v cyklu, všechny se zalogují a vynechají. Odvozený předmět, jehož `requires` není splněno, se přeskočí, takže základ z jiné mody potřebuje stejné `requires`. Název předmětu, který je už zaregistrován, se přeskočí.
 
 Tři věci vynechají celý předmět: chybí základ, základ je blokový předmět, nebo je třída základu final. Vynechána je i třída načtená z class loaderu, který RDPL nevidí.
+
+#### Příklad: vlastní hlava vrtáku
+
+Immersive Engineering drží všechna čísla každé hlavy vrtáku v jednom objektu `perms`, který drží předmět hlavy. Odvozený předmět před zápisem zkopíruje ten objekt, takže vlastní hlava nepotřebuje kód ani skript. Zkopíruj ocelovou hlavu IE a nastav čísla, která chceš. Vrták vezme jakýkoli předmět, který je hlavou vrtáku, takže nová hlava jde do vrtáku stejně jako hlavy IE.
+
+`data/mypack/items/drillhead_tungsten.json`
+
+```json
+{
+  "item": "immersiveengineering:drillhead_steel",
+  "requires": ["immersiveengineering"],
+  "name": "Tungsten Drill Head",
+  "set": {
+    "perms.drillSize": 5,
+    "perms.drillDepth": 2,
+    "perms.drillSpeed": 14.0,
+    "perms.drillAttack": 9.0,
+    "perms.maxDamage": 20000,
+    "perms.texture": "mypack:item/drill_tungsten",
+    "perms.repairMaterial": "#forge:ingots/iron",
+    "perms.drillLevel": "netherite"
+  }
+}
+```
+
+Balíček potřebuje kromě souboru předmětu dva soubory textur. Oba přebarvují texturu IE, takže balíček nedodává žádné PNG.
+
+`assets/mypack/textures/item/drillhead_tungsten.png.json` je ikona hlavy. Předmět z této textury získá svůj model, jako každý předmět balíčku.
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drillhead_steel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+`assets/mypack/textures/item/drill_tungsten.png.json` je textura, kterou vrták kreslí na svou hlavu.
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drill_diesel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+Co dělá každý zápis:
+
+| Zápis                  | Co mění                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `perms.drillSize`      | Šířku a výšku oblasti, kterou vrták rozbíjí, v blocích                                         |
+| `perms.drillDepth`     | Hloubku, do které rozbíjí, v blocích                                                           |
+| `perms.drillSpeed`     | Rychlost těžby                                                                                 |
+| `perms.drillAttack`    | Útočné poškození                                                                               |
+| `perms.maxDamage`      | Kolik opotřebení hlava snese, než se rozbije                                                   |
+| `perms.texture`        | Texturu, kterou vrták kreslí pro tuto hlavu: `mod:path` pod `textures/`, bez složky a `.png`   |
+| `perms.repairMaterial` | Předměty, které hlavu opravují. Řetězec začínající na `#` je tag předmětů                      |
+| `perms.drillLevel`     | Úroveň těžby, název vanilla tieru: `wood`, `stone`, `iron`, `gold`, `diamond` nebo `netherite` |
+
+`perms` je pole hlavy předmětu, takže `set` do něj vstoupí a zkopíruje ho jako první. Ocelová hlava IE si zachová svá čísla.
+
+Tooltip hlavy ukazuje 5x5x2, Netherite, rychlost 14, útok 9 a trvanlivost 20000 a vrták kreslí novou texturu. Chceš-li změnit samotnou úroveň, napiš holý název tieru. Objekt pod `perms.drillLevel` vytvoří kopii tieru s tvými čísly, a tooltip stále ukazuje název tieru, ze kterého vychází, například Diamond. Kopie se zapíše do pořadí tierů Forge vedle svého zdrojového tieru, takže ji ostatní mody vidí na stejné úrovni těžby.
+
+Hlavu vložíš do vrtáku pomocí údržbové sady IE. Drž ji v ruce a klikni pravým tlačítkem. Vrták vlož do slotu pro nástroj a pak hlavu do slotu pro hlavu.
+
+Kopie nedostane žádné recepty IE pro ocelovou hlavu, takže nové hlavě dej vlastní recept.
 
 #### Zprávy logu
 
@@ -2439,6 +2506,7 @@ Tři věci vynechají celý předmět: chybí základ, základ je blokový před
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | Člen není kolekce                                                                         |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | Typ prvků kolekce předmět nepřijímá                                                       |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo` selhalo, například třída neexistuje                                               |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | Hodnota `#` na poli tagu nejmenuje tag, který registr umí sestavit                        |
 | `Registered {} derived item(s) from packs`                                                                                | Souhrnný řádek s počtem vytvořených předmětů                                              |
 
 ## Tekutiny
@@ -10803,13 +10871,294 @@ Na konci `result` vyplatí držiteli každé strany do jejího cíle (objective)
 
 ## Skriptování
 
-Skript běží, když ho JSON balíčku pojmenuje, buď `scriptFile` (soubor `.js` v balíčku), nebo `script` (JavaScript napsaný rovnou v JSONu). Soubor `.js`, který žádný JSON nepojmenuje, nikdy neběží. Skripty jsou JavaScript zhruba na úrovni ES6. RDPL je spouští vestavěným enginem Rhino v modu jako interpretovaný kód.
+Skript běží, když ho JSON balíčku pojmenuje, buď `scriptFile` (soubor `.js` v balíčku), nebo `script` (JavaScript napsaný rovnou v JSONu). Soubor `.js`, který žádný JSON nepojmenuje, nikdy neběží.
+
+Skripty jsou JavaScript zhruba na úrovni ES6. RDPL je spouští vestavěným enginem Rhino v modu jako interpretovaný kód.
+
+Sekce níže začínají procházkou jedním funkčním skriptem a pak uvádějí referenci: události, objekt `rdpl`, hodnoty, které skript dostane, který JavaScript funguje a kam jdou chyby.
+
+### Zapnutí skriptů
+
+Balíček, který má soubor `scripts/events/*.json` s platným záznamem, spustí své skripty hned, jak se načte, a `/rdplserver reload` je načte znovu.
+
+Nic v konfiguračních souborech hry nevypíná skripty událostí, skripty předmětů ani `rdpl` a log nemá řádek, který by říkal, že skript byl přeskočen, protože skriptování je vypnuté.
+
+Skripty registrů jsou jediná výjimka. Běží během načítání hry, takže potřebují kategorii `content` s `load` zapnutým (výchozí) a `vanillaClients` vypnutým (výchozí). Když je jedno z toho změněno, skripty registrů nikdy neběží a žádný řádek to neřekne. Při `load` zapnutém a `vanillaClients` vypnutém se záznam, jehož registr žádný mod nedodává, zaloguje jako `no mod provides the registry '<name>', ignoring it`.
+
+Nainstalovaný skript, který nic nedělá, tedy nikdy nebyl vypnutý: zkontroluj JSON balíčku a log (viz [Kam jdou chyby](#kam-jdou-chyby)).
+
+### První skript
+
+Tento balíček hlásí, co bylo v truhle. Když hráč rozbije truhlu, akční lišta ukáže, kolik zlatých ingotů v ní bylo. Balíček je zip v `rdploader/` s touto strukturou:
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta` je obvyklý:
+
+```json
+{
+  "pack": {
+    "pack_format": 15,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json` pojmenuje událost, zúží ji na truhly a ukazuje na soubor skriptu:
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js`:
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+Skript dostane `pos` (pozici rozbitého bloku) a `rdpl`, protože `block_break` je předává, jak uvádí tabulka druhů událostí. `rdpl.world.scanAt` spočítá zlaté ingoty v kontejneru na dané pozici a `rdpl.actionbar` ukáže text hráči, který blok rozbil.
+
+Vyzkoušení:
+
+1. Ulož zip do `rdploader/` a spusť svět, nebo spusť `/rdplserver reload` ve světě, který už běží.
+2. Polož truhlu, dej do ní několik zlatých ingotů a rozbij ji.
+3. Akční lišta ukáže `Chest held 3 gold ingots, item handler: true` s tvým počtem.
+
+Když se nic nestane, otevři `logs/rdpl.log` ve složce hry. Záznam s překlepem v klíči, neznámou událostí nebo `scriptFile`, který nezačíná na `scripts/` a nekončí na `.js`, se tam zapíše se jménem souboru a záznam se přeskočí. Skript, který selže, se zaloguje jako `Script shrine:scripts/chest_broken.js failed: ...` s číslem řádku.
+
+### Další příklady
+
+Všechny tyto jsou v balíčku RDPLExampleScripts pod `data/shrine/`, kromě posledních dvou.
+
+Vložený `script` nechá krátký skript přímo v JSONu, bez souboru `.js`. Rozhoduje poslední hodnota skriptu: když je to text `'cancel'`, událost se zruší. Tento záznam odmítne zásah ovcí, když hráč drží hůl, a dá holi dvousekundový cooldown:
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+Každý běh začíná s čistými proměnnými, takže skript, který si má něco pamatovat, to uloží přes `rdpl.data()`. `scripts/login.js`, spouštěný záznamem `player_login`, počítá návštěvy hráče:
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule` spustí funkci později. `scripts/altar_placed.js` běží, když hráč položí zlatý blok v overworldu, používá data světa, data hráče a data týmu, zespawnuje ovci a o pět sekund později ukáže druhou zprávu na akční liště:
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+Skript `loot_drop` mění, co mob upustí, přes `drops`. Tenhle odebere z kořisti zombie shnilé maso a přidá smaragd:
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  if (drops.stack(i).getItem().getDescriptionId() === "item.minecraft.rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+Smyčka počítá dolů, aby odebrání svazku nepřeskočilo ty, které ještě zbývají zkontrolovat.
+
+Skript registru přidá předmět při načítání hry. Jeho záznam je v `scripts/registries/`, ne v `scripts/events/`:
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Item = java("net.minecraft.world.item.Item");
+var Properties = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationMod(0.3).build();
+registry.register("shrine:script_food", new Item(new Properties().food(food)));
+```
+
+Název musí být v jmenném prostoru balíčku, tady `shrine`. Předmět ještě potřebuje model, texturu a záznam jazyka, aby ve hře vypadal správně.
+
+### Který JavaScript funguje
+
+Engine je Rhino nastavený na jazykovou úroveň ES6, běžící v interpretovaném režimu. Fungují tyto:
+
+- `var`, `let` a `const`, přičemž `let` a `const` platí jen ve svém bloku
+- šipkové funkce, výchozí parametry, a spread a rest `...`
+- šablonové literály, například `` `Visit ${visits}` ``
+- destrukturování polí a objektů, v deklaracích i v parametrech
+- `for...of`, generátory přes `function*` a `Symbol`
+- `Map`, `Set`, `WeakMap` a `WeakSet`
+- `JSON.parse` a `JSON.stringify`, a `Math`, včetně operátoru `**`
+- `??`, `??=` a `?.`
+- metody řetězců jako `includes`, `startsWith`, `repeat` a `at`, metody polí jako `includes`, `at` a `flatMap`, a `Object.assign` a `Object.fromEntries`
+
+Tohle nefunguje:
+
+- `class`. Je to rezervované slovo, které parser odmítne, takže skript, který ho použije, se nezkompiluje. Místo něj použij funkci a objekt.
+- `async` a `await`, a `import` a `export`.
+- `java` a `Packages` v události nebo skriptu předmětu, a `Packages` ve všech skriptech (viz [Co skript dosáhne](#co-skript-dosáhne)).
+- Názvy z prohlížeče a Node jako `console`, `setTimeout` a `require`. V skriptu neexistují. Místo `setTimeout` na čekání použij `rdpl.schedule`.
+
+Každý běh začíná s čistou sadou proměnných: `var` nastavená v jednom běhu je v dalším pryč. Co má přetrvat, ulož do `rdpl.data()`.
+
+Běh se zastaví po zhruba 50 ms (viz [Limity](#limity)). Zásobník volání hlubší než 200 selže.
+
+### Hodnoty, které skript dostane
+
+Každá událost předá skriptu své vlastní hodnoty (viz tabulka druhů událostí). Jsou to herní objekty, takže skript volá jejich Mojangovské názvy metod, jako `pos.getX()` a `player.getScoreboardName()`. RDPL tyto názvy mapuje na obfuskované členy hry.
+
+Tabulky níže uvádějí časté metody, ale funguje jakákoli metoda s Mojangovským názvem. Výjimkou je metoda, která jako argument bere herní typ, například `DamageSource`. Event skript ji zavolat nemůže, protože skript žádný takový typ sestavit nemůže.
+
+```js
+var below = pos.below();
+var id = String(state.getBlock());
+if (id === "Block{minecraft:gold_block}" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos` (pozice bloku):
+
+| Člen                                     | Co dává                    |
+| ---------------------------------------- | -------------------------- |
+| `getX()`, `getY()`, `getZ()`             | Souřadnice jako čísla      |
+| `above()`, `below()`                     | Pozice o blok výš nebo níž |
+| `north()`, `south()`, `east()`, `west()` | Pozice o blok vedle        |
+| `offset(x, y, z)`                        | Pozice posunutá o tolik    |
+
+`state` (stav bloku):
+
+| Člen                            | Co dává                                                               |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `getBlock()`                    | Blok                                                                  |
+| `String(state.getBlock())`      | Id bloku uvnitř `Block{...}`, například `Block{minecraft:gold_block}` |
+| `getBlock().getDescriptionId()` | Překladový klíč bloku, například `block.minecraft.gold_block`         |
+| `isAir()`                       | Pravda pro vzduchový blok                                             |
+
+`entity` a `player` (hráč je entita s něčím navíc):
+
+| Člen                                            | Co dává                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `getName()`                                     | Jméno jako textová komponenta; pro prostý text zavolej `getString()` |
+| `getScoreboardName()`                           | Jméno hráče jako prostý text, jméno, které používají scoreboardy     |
+| `getId()`, `getUUID()`                          | Číselné id a UUID (na něm zavolej `toString()`)                      |
+| `blockPosition()`                               | Pozice bloku, ve kterém stojí                                        |
+| `getX()`, `getY()`, `getZ()`                    | Jeho přesná pozice jako čísla                                        |
+| `isRemoved()`                                   | Pravda, když byla odstraněna                                         |
+| `isOnFire()`, `isShiftKeyDown()`, `isInWater()` | Jeho stav                                                            |
+| `getHealth()`, `getMaxHealth()`                 | Životy živé entity, moba nebo hráče                                  |
+| `setHealth(value)`                              | Nastaví životy živé entity                                           |
+| `getMainHandItem()`                             | Svazek předmětů v jeho hlavní ruce                                   |
+| `level()`                                       | Svět, ve kterém je                                                   |
+| `getDisplayName()`                              | Jméno, jak se ukazuje v chatu, jako textová komponenta               |
+| `getFoodData().getFoodLevel()` (hráč)           | Hladovost hráče                                                      |
+| `isCreative()` (hráč)                           | Pravda v kreativním režimu                                           |
+| `giveExperienceLevels(n)` (hráč)                | Dá levely                                                            |
+| `getTags()`                                     | Tagy entity, včetně těch, které `addStage` nastaví na hráči          |
+
+Svazek předmětů, například `player.getMainHandItem()` nebo `drops.stack(0)`, má tyto metody:
+
+- `getCount()` vrací počet předmětů ve svazku.
+- `isEmpty()` vrací pravdu, když svazek nedrží žádný předmět.
+- `getItem().getDescriptionId()` vrací překladový klíč předmětu, například `item.minecraft.rotten_flesh`.
+- `getHoverName()` vrací jméno svazku jako textovou komponentu.
+
+Prosté hodnoty:
+
+| Název        | V událostech                        | Co to je                                                                               |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`, `loot_drop`          | Entita, která to způsobila, nebo nic u pádu, ohně a podobně. Před použitím ověř        |
+| `damageType` | `entity_hurt`, `loot_drop`          | Text, id zprávy typu poškození, například `player`, `mob`, `fall`, `lava` nebo `drown` |
+| `amount`     | `entity_hurt`                       | Poškození jako číslo                                                                   |
+| `from`, `to` | `dimension_change`, `entity_travel` | Názvy dimenzí, například `minecraft:overworld` a `minecraft:the_nether`                |
+| `tick`       | `server_tick`                       | Herní čas overworldu                                                                   |
+| `event`      | `mod_event`                         | Objekt události třídy pojmenované v `class`; její čitelné metody fungují               |
+| `drops`      | `loot_drop`                         | Seznam kořisti, viz pod tabulkou druhů událostí                                        |
+
+`rdpl.level` je serverový svět. `rdpl.level.getBlockState(pos)` dá stav bloku a `rdpl.level.getGameTime()` herní čas.
+
+### Kam jdou chyby
+
+Každá zpráva skriptu jde do `logs/rdpl.log` ve složce hry. Skript, který selže, nikdy neshodí hru a nezastaví ostatní skripty. Názvy v řádcích jsou `<namespace>:<path>` pro soubor, například `shrine:scripts/chest_broken.js`, a `<entry file id>#<number>` pro vložený skript.
+
+| Případ                             | Řádek                                                                                                                                                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Soubor pojmenovaný, ale chybí      | `Script <name> not found`                                                                                                                                                                                                     |
+| Chyba kompilace (překlep, `class`) | `Script <name> did not compile: <message>`, a skript se přeskočí až do dalšího přenačtení                                                                                                                                     |
+| Chyba za běhu                      | `Script <name> failed: <message>`, pak zásobník skriptu s čísly řádků                                                                                                                                                         |
+| Přes 50 ms                         | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                                               |
+| Vypnutý                            | `Script <name> is turned off until the next reload`, zapíše se po selhání nebo timeoutu skriptu `player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel` nebo `mod_event`, a po každém skriptu registru |
+| Odmítnutý přístup k Javě           | `Script <name> failed: Scripts may not use <class>`, pro `Class`, `ClassLoader`, `Thread`, `Runtime`, `System` nebo reflexní objekt, na který skript sáhne                                                                    |
+| Naplánovaná funkce selže           | `Script scheduled function took longer than 50 ms, stopped`, nebo `Script scheduled function failed: <message>`                                                                                                               |
+| Záznam se nenačte                  | `<file id>: <reason>, ignoring it`, s důvody vypsanými pod tabulkami událostí a registrů                                                                                                                                      |
+| Příliš mnoho naplánovaných funkcí  | `Script scheduler: too many scheduled script functions, dropped`, jednou; potom `rdpl.schedule` zahazuje další funkce bez řádku, až do přenačtení                                                                             |
+
+Skript, který se nezkompiloval, zůstává selhaný, dokud se neprovede `/rdplserver reload`. Oprav soubor a pak přenačti.
+
+Použití `java` nebo `Packages` v event skriptu není odmítnutý přístup. Jméno tam prostě neexistuje, takže log ukáže `Script <name> failed:` s chybou reference.
 
 ### Události skriptů
 
-`<namespace>/scripts/events/*.json`
+`data/<namespace>/scripts/events/*.json`
 
-Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Každý soubor je jeden záznam: událost, na kterou se naslouchá, volitelný filtr a skript, který se spustí, když událost nastane.
+Název souboru si zvolíš sám. RDPL čte každý JSON soubor ve složce a záznamy z více souborů platí všechny. Každý soubor je jeden záznam: událost, na kterou se naslouchá, volitelný filtr a skript, který se spustí, když událost nastane.
 
 ```json
 {
@@ -10832,43 +11181,82 @@ Záznam s oběma `script` a `scriptFile`, nebo s žádným z nich, se přeskoč�
 
 Klíče filtru:
 
-| Klíč        | Hodnota                      | Odpovídá                           |
-| ----------- | ---------------------------- | ---------------------------------- |
-| `dimension` | id dimenze, nebo seznam jich | Dimenze, ve které se událost stane |
-| `block`     | id bloku, nebo tvar `#`      | Blok položený nebo rozbitý         |
-| `entity`    | id entity                    | Entita, o které událost je         |
-| `item`      | id předmětu, nebo tvar `#`   | Předmět, který hráč drží           |
+| Klíč        | Hodnota                      | Odpovídá                                                                    |
+| ----------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `dimension` | id dimenze, nebo seznam jich | Dimenze, ve které se událost stane                                          |
+| `block`     | id bloku, nebo tvar `#`      | Blok položený nebo rozbitý                                                  |
+| `entity`    | id entity                    | Entita, o které událost je                                                  |
+| `item`      | id předmětu, nebo tvar `#`   | Předmět v hlavní ruce hráče, útočníka nebo toho, kdo položil blok, viz níže |
+
+Událost bez bloku se nikdy neshoduje s filtrem `block`. Záznam `entity_hurt`, `entity_spawn`, `entity_despawn` nebo `player_login` s klíčem `block` proto nikdy neběží.
+
+Filtr `item` kontroluje hlavní ruku:
+
+- útočníka v `entity_hurt`, kde se počítá i mob
+- hráče v `block_break` a `player_login`
+- toho, kdo položil blok, v `block_place`; hráč, který blok položí, se shoduje s kteroukoli rukou
 
 Druhy událostí:
 
-| Událost            | Kdy nastane                                                 | Hodnoty, které skript dostane                                                    | `"cancel"` funguje              |
-| ------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
-| `block_place`      | Blok je položen                                             | `rdpl`, `pos`, `state`, `entity` (kdo položil)                                   | Ano                             |
-| `block_break`      | Hráč rozbije blok                                           | `rdpl`, `pos`, `state`, `player`                                                 | Ano                             |
-| `entity_hurt`      | Každá živá entita, včetně hráčů, se chystá utrpět poškození | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                             | Ano                             |
-| `entity_spawn`     | Mob poprvé vstoupí do světa (ne hráči)                      | `rdpl`, `entity`                                                                 | Ano, a entita se nikdy neobjeví |
-| `entity_despawn`   | Mob zmizí, nebo ho ukončí časované odebrání varianty entity | `rdpl`, `entity`                                                                 | Ne                              |
-| `player_login`     | Hráč se připojí                                             | `rdpl`, `player`                                                                 | Ne                              |
-| `player_tick`      | Každých `every` ticků, pro každého hráče, po ticku          | `rdpl`, `player`, `pos`                                                          | Ne                              |
-| `server_tick`      | Každých `every` ticků, jednou, po ticku                     | `rdpl` (overworld), `tick` (čas světa)                                           | Ne                              |
-| `dimension_change` | Hráč dorazil do jiné dimenze                                | `rdpl`, `player`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ne                              |
-| `loot_drop`        | Mob zemřel a jeho kořist se má objevit                      | `rdpl`, `entity`, `attacker`, `damageType` (id zprávy typu poškození), `drops`   | Ne                              |
-| `entity_travel`    | Entita se má přesunout do jiné dimenze                      | `rdpl`, `entity`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ano, a entita zůstane, kde je   |
-| `mod_event`        | Událost pojmenovaná v `class` nastane na serveru            | `rdpl`, `event`, `player`                                                        | Ano, když ji lze zrušit         |
+| Událost            | Kdy nastane                                                                                                                                                      | Hodnoty, které skript dostane                                                    | `"cancel"` funguje              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
+| `block_place`      | Blok je položen                                                                                                                                                  | `rdpl`, `pos`, `state`, `entity` (kdo položil)                                   | Ano                             |
+| `block_break`      | Hráč rozbije blok                                                                                                                                                | `rdpl`, `pos`, `state`, `player`                                                 | Ano                             |
+| `entity_hurt`      | Každá živá entita, včetně hráčů, se chystá utrpět poškození; ne ta, která je vůči němu nezranitelná, už je mrtvá, nebo je proti ohni odolná vůči poškození ohněm | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                             | Ano                             |
+| `entity_spawn`     | Mob poprvé vstoupí do světa (ne hráči)                                                                                                                           | `rdpl`, `entity`                                                                 | Ano, a entita se nikdy neobjeví |
+| `entity_despawn`   | Mob zmizí, nebo ho ukončí časované odebrání varianty entity                                                                                                      | `rdpl`, `entity`                                                                 | Ne                              |
+| `player_login`     | Hráč se připojí                                                                                                                                                  | `rdpl`, `player`                                                                 | Ne                              |
+| `player_tick`      | Každých `every` ticků, pro každého hráče, po ticku                                                                                                               | `rdpl`, `player`, `pos`                                                          | Ne                              |
+| `server_tick`      | Každých `every` ticků, jednou, po ticku                                                                                                                          | `rdpl` (overworld), `tick` (čas světa)                                           | Ne                              |
+| `dimension_change` | Hráč dorazil do jiné dimenze                                                                                                                                     | `rdpl`, `player`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ne                              |
+| `loot_drop`        | Mob zemřel a jeho kořist se má objevit                                                                                                                           | `rdpl`, `entity`, `attacker`, `damageType` (id zprávy typu poškození), `drops`   | Ne                              |
+| `entity_travel`    | Entita se má přesunout do jiné dimenze                                                                                                                           | `rdpl`, `entity`, `from`, `to` (názvy dimenzí, například `minecraft:the_nether`) | Ano, a entita zůstane, kde je   |
+| `mod_event`        | Událost pojmenovaná v `class` nastane na serveru                                                                                                                 | `rdpl`, `event`, `player`                                                        | Ano, když ji lze zrušit         |
 
 Skript, jehož konečná hodnota je text `"cancel"`, zruší událost všude tam, kde tabulka říká, že to funguje. Událost, kterou už zrušilo pravidlo zóny nebo jiný mod, se do skriptu nedostane. `entity_despawn` se nespustí u zabití, uvolnění chunku ani u `/kill`.
 
-Nové druhy čtou jen některé klíče filtru. `player_tick` a `dimension_change` čtou `dimension` a `item`. `loot_drop` a `entity_travel` čtou `dimension`, `entity` a `item`. `server_tick` a `mod_event` nečtou žádný. Klíč filtru, který událost nečte, přeskočí záznam a log řekne `the <event> event does not read the filter key '<key>', skipping the entry`. `entity` bere id, druhy `#monster`, `#creature`, `#ambient` a `#water_creature` a tag typu entity s namespace, například `#minecraft:skeletons`. U `loot_drop` je `entity` mob, který zemřel, a `item` je to, co drží jeho zabiják; u `entity_travel` je `entity` cestovatel. `player_tick` a `server_tick` běží každých 20 tiků, pokud `every` neříká jinak. `server_tick` běží jednou pro server, podle hodin overworldu, a nemá hráče.
+Novější druhy čtou jen některé klíče filtru:
+
+- `player_tick` a `dimension_change` čtou `dimension` a `item`.
+- `loot_drop` a `entity_travel` čtou `dimension`, `entity` a `item`.
+- `server_tick` a `mod_event` nečtou žádný klíč filtru.
+
+Klíč filtru, který událost nečte, přeskočí záznam a log řekne `the <event> event does not read the filter key '<key>', skipping the entry`.
+
+Poznámky ke klíčům filtru a načasování:
+
+- `entity` bere id, druhy `#monster`, `#creature`, `#ambient` a `#water_creature` a tag typu entity s namespace, například `#minecraft:skeletons`.
+- U `loot_drop` je `entity` mob, který zemřel, a `item` je to, co drží jeho zabiják; u `entity_travel` je `entity` cestovatel.
+- `player_tick` a `server_tick` běží každých 20 tiků, pokud `every` neříká jinak.
+- `server_tick` běží jednou za interval pro celý server, podle hodin overworldu, a nemá hráče.
 
 Skript nového druhu (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`), který selže nebo přeběhne časový limit, se vypne až do dalšího přenačtení a log říká `Script <name> is turned off until the next reload`. Skripty starších druhů běží dál.
 
-`drops` v `loot_drop` je seznam toho, co mob upustí. `drops.size()` je spočítá, `drops.stack(index)` je svazek předmětů na indexu, `drops.remove(index)` jeden vyjme, `drops.clear()` vyjme všechny a `drops.add(item, count)` přidá svazek, který se objeví tam, kde mob zemřel. Skript smí přidat nejvýš 32 svazků na jednu smrt. Přidání dalších skript zastaví s hláškou `A loot_drop script can add at most 32 stacks`, a neznámý předmět nebo počet menší než 1 ho zastaví s `Unknown item`, stejně jako jakákoli chyba skriptu.
+V `loot_drop` skriptu je `drops` seznam toho, co mob upustí:
 
-`mod_event` umožní skriptu naslouchat události jiného modu, nebo některé z událostí samotné hry, podle názvu její třídy. Třídu uveďte v `class` jejím úplným názvem. Záznam se ignoruje a log to říká, když chybí `class` (`a mod_event needs a class`), když taková třída neexistuje (`the class <name> was not found`), a když to není třída události, na kterou lze naslouchat (`the class <name> is not a Forge event`). Počítá se jen přesně tato třída: událost, která ji rozšiřuje, skript nespustí. Skript běží jen na vlákně serveru, ve světě entity nebo světa události, a když událost nemá ani jedno, v overworldu; událost stejné třídy, kterou sám skript vyvolá, ho znovu nespustí. Dostane `rdpl`, `event` (objekt události) a `player` (hráč, o kterého událost jde, nebo nic). `every` a ostatní klíče fungují jako u každé události. Výsledek `"cancel"` zruší událost, když ji lze zrušit.
+- `drops.size()` vrací počet svazků.
+- `drops.stack(index)` vrací svazek předmětů na tom indexu.
+- `drops.remove(index)` odebere svazek na tom indexu.
+- `drops.clear()` odebere všechny svazky.
+- `drops.add(item, count)` přidá svazek, který se objeví tam, kde mob zemřel.
+
+Skript smí přidat nejvýš 32 svazků na jednu smrt. Přidání dalších vyhodí chybu s hláškou `A loot_drop script can add at most 32 stacks`, a neznámý předmět nebo počet menší než 1 vyhodí chybu s hláškou `Unknown item`. Obojí skript zastaví jako jakoukoli jinou chybu skriptu.
+
+`mod_event` umožní skriptu naslouchat události jiného modu, nebo některé z událostí samotné hry, podle názvu její třídy. Třídu uveďte v `class` jejím úplným názvem. RDPL zaloguje problém a záznam ignoruje v těchto případech:
+
+- chybí `class`: `a mod_event needs a class`
+- taková třída neexistuje: `the class <name> was not found`
+- není to třída události, na kterou lze naslouchat: `the class <name> is not a Forge event`
+
+Počítá se jen přesně tato třída: událost, která ji rozšiřuje, skript nespustí.
+
+Skript běží jen na vlákně serveru, ve světě entity nebo světa události, a když událost nemá ani jedno, v overworldu. Událost stejné třídy, kterou sám skript vyvolá, ho znovu nespustí.
+
+Skript dostane `rdpl`, `event` (objekt události) a `player` (hráč, o kterého událost jde, nebo `null`). `every` a ostatní klíče fungují jako u každé události. Výsledek `"cancel"` zruší událost, když ji lze zrušit.
 
 ### Skripty registrů
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
 Název souboru si zvolíš sám, čte se jen složka a několik souborů se skládá. Skript registru přidá objekty do jednoho ze vestavěných registrů hry během načítání, což jinak balíček nedokáže. Potřebuje kategorii `content` s `load` zapnutým a `vanillaClients` vypnutým, stejně jako bloky a předměty.
 
@@ -10880,9 +11268,11 @@ Název souboru si zvolíš sám, čte se jen složka a několik souborů se skl�
 ```
 
 ```js
-var I = java("net.minecraft.world.item.Item");
-var P = java("net.minecraft.world.item.Item$Properties");
-registry.register("mypack:script_item", new I(new P()));
+var Item = java("net.minecraft.world.item.Item");
+var Properties = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationMod(0.3).build();
+registry.register("shrine:script_food", new Item(new Properties().food(food)));
 ```
 
 | Klíč         | Povinné         | Hodnota        | Výchozí | Co dělá                                                                                                                                |
@@ -10891,13 +11281,47 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | jedno z dvojice | text           | žádný   | Vložený JavaScript ke spuštění                                                                                                         |
 | `scriptFile` | jedno z dvojice | cesta          | žádná   | Cesta pod `scripts/` ve stejném jmenném prostoru, končící na `.js`                                                                     |
 
-Skript běží jednou, když se ten registr otevře pro registraci, až poté, co se zaregistrovaly všechny mody. Dostane dvě věci. `registry` má jednu metodu, `register(name, object)`, která přidá `object` pod `name`. `java(className)` vrátí třídu Javy podle úplného názvu, takže skript může objekt postavit; třída, která neexistuje, selže s `The class <name> was not found`. Skript nedostane `rdpl`, protože svět ještě neexistuje.
+Skript běží jednou, až když se ten registr otevře pro registraci, po tom, co se zaregistrovaly všechny mody. Dostane dvě věci:
 
-`register` odmítne a zaloguje, a skript jde dál, když objekt není druhem, který registr drží (`is not a <type>, not registering it`), když název není platné id (`could not be registered: not a valid name`), když název není v jmenném prostoru balíčku (`is not in the pack namespace <namespace>, not registering it`), když je název už obsazený (`is already registered in <registry>, skipping it`), a když registr sám to odmítne (`could not be registered`). Úspěch zapíše `Script <name> registered <id> in <registry>`. Samotná položka se zaloguje a ignoruje, když chybí `registry` (`needs a registry`), když nemá skript (`needs script or scriptFile`), když registr není takový, do něhož skripty mohou přidávat (`the registry '<name>' is not a registry that scripts can add to, ignoring it`), a když žádný mód registr nedodává (`no mod provides the registry '<name>', ignoring it`). Skript, který selže nebo přeběhne limit, se vypne až do dalšího přenačtení. Objekt registrovaný tímto způsobem má jen to, co mu skript dal: blok nebo předmět stále potřebuje vlastní model, texturu a záznamy jazyka.
+- `registry` má jednu metodu, `register(name, object)`, která přidá `object` pod `name`.
+- `java(className)` vrátí třídu Javy podle úplného názvu, takže skript může objekt postavit. Třída, která neexistuje, selže s `The class <name> was not found`.
+
+Skript nedostane `rdpl`, protože svět ještě neexistuje.
+
+`register` zaloguje zprávu a objekt přeskočí; skript běží dál v těchto případech:
+
+- objekt není druhem, který registr drží: `is not a <type>, not registering it`
+- název není platné id: `could not be registered: not a valid name`
+- název není v jmenném prostoru balíčku: `is not in the pack namespace <namespace>, not registering it`
+- název je už obsazený: `is already registered in <registry>, skipping it`
+- registr sám objekt odmítne: `could not be registered`
+
+Úspěch zapíše `Script <name> registered <id> in <registry>`.
+
+RDPL záznam zaloguje a ignoruje ho v těchto případech:
+
+- chybí `registry`: `needs a registry`
+- záznam nemá skript: `needs script or scriptFile`
+- skripty do toho registru přidávat nemohou: `the registry '<name>' is not a registry that scripts can add to, ignoring it`
+- žádný mod registr nedodává: `no mod provides the registry '<name>', ignoring it`
+
+Skript, který selže nebo přeběhne limit, se vypne až do dalšího přenačtení.
+
+Objekt registrovaný tímto způsobem má jen to, co mu skript dal. Blok nebo předmět stále potřebuje vlastní model, texturu a záznamy jazyka.
 
 ### Kam patří soubory skriptů
 
-Všechny skripty leží pod složkou `scripts/` balíčku. Záznamy událostí jdou do `scripts/events/`. Soubor `.js` může být kdekoli pod `scripts/` a pojmenovává se podle své cesty v balíčku, takže `"scriptFile": "scripts/trophy_altar.js"` čte `<namespace>/scripts/trophy_altar.js`. Předmět pojmenovává svůj skript stejně, pomocí `script` nebo `scriptFile` (viz [Předměty](#předměty)), a stejně to dělá i soubor s přepisem receptu (viz [Výměna receptů](#výměna-receptů)).
+Všechny skripty leží pod složkou `scripts/` balíčku. Záznamy událostí jdou do `scripts/events/`. Soubor `.js` může být kdekoli pod `scripts/` a pojmenovává se podle své cesty v balíčku, takže `"scriptFile": "scripts/trophy_altar.js"` čte `<namespace>/scripts/trophy_altar.js`.
+
+Stejným způsobem pojmenovávají skript pomocí `script` nebo `scriptFile` také:
+
+- předmět (viz [Předměty](#předměty))
+- soubor s přepisem receptu (viz [Výměna receptů](#výměna-receptů))
+- příkaz balíčku (viz [Příkazy](#příkazy))
+
+Skript předmětu běží na serveru, když hráč s předmětem klikne pravým tlačítkem. Dostane `rdpl`, `item` (svazek v té ruce) a `hand` (text `MAIN_HAND` nebo `OFF_HAND`). Výsledek `"cancel"` přeskočí jen `cooldown` předmětu. Samotný pravý klik se nezruší.
+
+Skript příkazu dostane `rdpl`, `sender` (metody viz [Příkazy](#příkazy)) a jednu proměnnou pro každý argument.
 
 ### Objekt rdpl
 
@@ -10907,40 +11331,48 @@ Skript dosáhne na hru přes `rdpl`. Jeho členové:
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| Člen                                                 | Co dělá                                                                                                                                                                                                                                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | Hráč, nebo nic, když událost žádného nemá                                                                                                                                                                                                   |
-| `level`                                              | Svět                                                                                                                                                                                                                                        |
-| `runCommand(command)`                                | Spustí příkaz jako hráč, nebo na spawnu světa, když žádný není, na úrovni oprávnění 2. Vrátí true při úspěchu                                                                                                                               |
-| `give(item, count)`                                  | Dá hráči daný počet předmětu                                                                                                                                                                                                                |
-| `actionbar(text)`                                    | Ukáže text na akční liště hráče                                                                                                                                                                                                             |
-| `cooldown(item, ticks)`                              | Dá předmět hráči do cooldownu na tolik ticků                                                                                                                                                                                                |
-| `card(id, "key=value", ...)`                         | Ukáže kartu s jejími argumenty                                                                                                                                                                                                              |
-| `schedule(ticks, function)`                          | Spustí funkci po ticích. Naráz čeká nejvýše 1000. Fronta se při přenačtení vyprázdní                                                                                                                                                        |
-| `data()`, `data(player)`, `teamData(name)`           | Uložené úložiště s `get`, `set`, `has` a `remove`. Drží text, čísla a true/false a je uloženo v úložišti světa. `data()` je světové, `data(player)` hráčovo, `teamData(name)` týmové                                                        |
-| `sync(name, value)`                                  | Nastaví synchronizovanou hodnotu hráči, nebo světu, když událost žádného hráče nemá. Hodnota je text, číslo nebo true/false. Vrátí true, když se nastaví, a false, když pravidla odmítnou, což řekne log. Jiná hodnota vyhodí chybu skriptu |
-| `syncTo(player, name, value)`                        | Totéž pro jiného hráče                                                                                                                                                                                                                      |
-| `syncAll(name, value)`                               | Totéž pro svět                                                                                                                                                                                                                              |
-| `unsync(name)`                                       | Odstraní hodnotu hráče, nebo světa, když událost žádného hráče nemá. Vrátí true, když nějaká byla                                                                                                                                           |
-| `synced(name)`                                       | Hodnota, kterou čtení dá: hráčova vlastní, pak světová, pak výchozí, nebo světová a výchozí, když událost žádného hráče nemá. Nic, když není nastavena                                                                                      |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Ověří, přidá nebo odebere stage (značku) na hráči                                                                                                                                                                                           |
-| `score(objective)`, `setScore(objective, value)`     | Přečte nebo nastaví skóre hráče v objektivu scoreboardu                                                                                                                                                                                     |
-| `hasAdvancement(id)`                                 | True, když hráč pokrok má                                                                                                                                                                                                                   |
-| `world.scan(player, match)`                          | Spočítá odpovídající předměty v inventáři hráče a v shulker boxech v něm. `match` je id předmětu, tvar `#`, nebo funkce, která dostane každý stack                                                                                          |
-| `world.scanAt(x, y, z, match)`                       | Totéž pro blok kontejneru na dané pozici                                                                                                                                                                                                    |
-| `world.capability(x, y, z, type)`                    | Handler bloku na dané pozici pro `"items"`, `"fluids"` nebo `"energy"`                                                                                                                                                                      |
-| `world.placeStructure(template, x, y, z)`            | Položí šablonu struktury na pozici                                                                                                                                                                                                          |
-| `world.summon(id, x, y, z, nbt)`                     | Spawne entitu na pozici, s volitelným NBT                                                                                                                                                                                                   |
+| Člen                                                 | Co dělá                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `player`                                             | Hráč, nebo `null`, když událost žádného nemá                                                                                                                                                                                                                                                           |
+| `level`                                              | Svět                                                                                                                                                                                                                                                                                                   |
+| `runCommand(command)`                                | Spustí příkaz jako hráč, nebo na spawnu světa, když žádný není, na úrovni oprávnění 2. Vrátí true při úspěchu                                                                                                                                                                                          |
+| `give(item, count)`                                  | Dá hráči daný počet předmětu                                                                                                                                                                                                                                                                           |
+| `actionbar(text)`                                    | Ukáže text na akční liště hráče. Bez hráče nedělá nic                                                                                                                                                                                                                                                  |
+| `cooldown(item, ticks)`                              | Dá předmět hráči do cooldownu na tolik ticků. Bez hráče nedělá nic. Neznámý předmět vyhodí chybu skriptu, s hráčem i bez něj                                                                                                                                                                           |
+| `card(id, "key=value", ...)`                         | Ukáže hráči kartu s jejími argumenty. Vrátí false u neznámého id karty nebo bez hráče, jinak true. Argument, který není ve tvaru `key=value`, se ignoruje                                                                                                                                              |
+| `schedule(ticks, function)`                          | Spustí funkci po tolika tickách, nejméně o 1 tick později. Naráz může čekat nejvýše 1000 funkcí, další se zahodí. Přenačtení nebo zastavení serveru frontu vyprázdní. Funkce naplánovaná událostí s hráčem se zahodí, pokud je hráč v okamžiku spuštění offline                                        |
+| `data()`, `data(player)`, `teamData(name)`           | Uložené úložiště s `get`, `set`, `has` a `remove`. Drží text, čísla a true/false a je uloženo v úložišti světa. `data()` je světové, `data(player)` hráčovo, `teamData(name)` týmové. `data()` a `teamData` vrátí `null`, když svět nemá úložiště. `data(player)` vyhodí chybu skriptu, když hráč není |
+| `sync(name, value)`                                  | Nastaví synchronizovanou hodnotu hráči, nebo světu, když událost žádného hráče nemá. Hodnota je text, číslo nebo true/false. Vrátí true, když se nastaví, a false, když pravidla odmítnou, což řekne log. Jiná hodnota vyhodí chybu skriptu                                                            |
+| `syncTo(player, name, value)`                        | Totéž pro jiného hráče                                                                                                                                                                                                                                                                                 |
+| `syncAll(name, value)`                               | Totéž pro svět                                                                                                                                                                                                                                                                                         |
+| `unsync(name)`                                       | Odstraní hodnotu hráče, nebo světa, když událost žádného hráče nemá. Vrátí true, když nějaká byla                                                                                                                                                                                                      |
+| `synced(name)`                                       | Přečte synchronizovanou hodnotu: hráčovu vlastní, pak světovou, pak výchozí. Když událost žádného hráče nemá, zkontroluje jen světovou, pak výchozí. Vrátí `null`, když není nastavena žádná                                                                                                           |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Ověří, přidá nebo odebere značku (stage) na hráči. Bez hráče `hasStage` vrátí false a ostatní dvě nedělají nic                                                                                                                                                                                         |
+| `score(objective)`, `setScore(objective, value)`     | Přečte nebo nastaví skóre hráče v objektivu scoreboardu. Bez hráče `score` vrátí 0 a `setScore` nedělá nic. `setScore` vyhodí chybu skriptu u neznámého objektivu, s hráčem i bez něj                                                                                                                  |
+| `hasAdvancement(id)`                                 | True, když hráč pokrok má                                                                                                                                                                                                                                                                              |
+| `world.scan(player, match)`                          | Spočítá odpovídající předměty v inventáři hráče a v shulker boxech v něm. `match` je id předmětu, tvar `#`, nebo funkce, která dostane každý stack                                                                                                                                                     |
+| `world.scanAt(x, y, z, match)`                       | Totéž pro blok kontejneru na dané pozici                                                                                                                                                                                                                                                               |
+| `world.capability(x, y, z, type)`                    | Handler bloku na dané pozici pro `"items"`, `"fluids"` nebo `"energy"`. Nejdřív se ptá bloku bez strany, pak každé ze šesti stran. `"items"` funguje i u každého prostého inventářového bloku. Vrátí `null`, když chunk není načtený, blok takový handler nemá, nebo je `type` cokoli jiného           |
+| `world.placeStructure(template, x, y, z)`            | Položí šablonu struktury na pozici. Vrátí false, když taková šablona není                                                                                                                                                                                                                              |
+| `world.summon(id, x, y, z, nbt)`                     | Spawne entitu na pozici, s volitelným NBT. Špatné NBT vyhodí chybu skriptu (`Bad entity NBT`). Vrátí false, když entitu nelze vytvořit. Při prázdném NBT dostane mob stejné nastavení spawnu jako příkaz `/summon`                                                                                     |
 
 ### Co skript dosáhne
 
-Skript vidí jen objekt `rdpl`, hodnoty, které mu každá událost předá (viz tabulka druhů událostí), a herní typy, které tyto hodnoty vracejí. `Packages` ve skriptu neexistuje a `java` existuje jen ve skriptu registru (viz [Skripty registrů](#skripty-registrů)); skripty událostí, předmětů, příkazů a přepisů receptů ho nemají. Cokoli jiného se odmítne a odmítnutí se zapíše do logu jednou.
+Skript události, skript předmětu a naplánovaná funkce mohou používat jen tyto:
 
-Skript smí použít libovolnou třídu Javy podle jejího úplného názvu. V praxi je to skript registru, který třídu žádá přes `java(className)`.
+- objekt `rdpl`
+- hodnoty, které jim událost předá (viz tabulka druhů událostí)
+- cokoli vrátí metody těchto objektů
+
+`java` a `Packages` v nich neexistují, takže nemohou pojmenovat třídu Javy ani vytvořit objekt přes `new`. `Packages` neexistuje v žádném skriptu. Skripty příkazů a přepisů receptů jsou na tom stejně: `java` nemají také.
+
+Skript registru dostane navíc `java(className)`, které vrátí třídu s tímto úplným názvem, například `net.minecraft.world.item.Item`. Takto lze požádat o kteroukoli třídu, kterou hra načetla, bez seznamu povolených. Jméno, které není třídou, selže s `The class <name> was not found`.
+
+Ve všech skriptech se objekt těchto druhů odmítne, když ho volání vrátí nebo předá: `Class`, `ClassLoader`, `Thread`, `Runtime`, `System` a reflexní objekty (`Method`, `Field`, `Constructor`). Skript se zastaví s `Scripts may not use <class>` a log dostane řádek `Script <name> failed:`.
 
 ### Limity
 
-- Běh se zastaví po 50 ms. Chyba v logu pojmenuje skript.
+- Běh se zastaví po 50 ms a chyba v logu pojmenuje skript. Engine kontroluje hodiny každých 10000 instrukcí, takže běh může limit lehce překročit.
 - `try`/`catch` neudrží běh při životě za tento limit.
 - Chyby se zapisují s cestou skriptu v balíčku. Nikdy neshodí hru.
 - `every` a filtry se kontrolují před během skriptu, což drží náklady nízko.

@@ -2344,6 +2344,7 @@ A method that exists with several parameter lists must be named with its paramet
 | `true`, `false`      | `boolean`                                                                                                                     |                                                                                       |
 | string               | `String`, `char`                                                                                                              | A `char` takes a string of one character                                              |
 | string               | an enum                                                                                                                       | A constant name, upper or lower case                                                  |
+| string               | a tier                                                                                                                        | A vanilla tier name with no colon, such as `iron` or `netherite`                      |
 | string               | `ResourceLocation`                                                                                                            | `mod:name`                                                                            |
 | string               | `Component`                                                                                                                   | Plain text, written as a literal                                                      |
 | string               | `ItemStack`                                                                                                                   | A stack written the way pack files write stacks elsewhere. It must not come out empty |
@@ -2351,10 +2352,11 @@ A method that exists with several parameter lists must be named with its paramet
 | array                | an array, or a `List`, `Set` or `Collection`                                                                                  | Each element follows this table. A collection field is replaced whole, never added to |
 | object               | any other object                                                                                                              | A nested object, see below                                                            |
 | string `<ns>:<item>` | any other object                                                                                                              | Reuses the object that derived item built at the same path, see below                 |
+| string `#<ns>:<tag>` | a `TagKey` field                                                                                                              | A tag of the field's registry, such as `#forge:ingots/iron`                           |
 
 **Nested objects.** A JSON object under `set` has the same three keys as the file: `set`, `returns` and `addTo`. It changes a copy of the object the field holds, so the base item and everything else that shares that object keep the original. This is copy on write: only the objects along a path you write are copied, and every other field keeps pointing at the same object as the base.
 
-A tool tier or an armor material is copied as a new object, with the repair ingredient kept. A tier needs a mineable tag to be copied. Any other enum as a nested object is refused, as is an object from a `java.` package. Arrays and collections are not walked into: a path cannot go through one, and a collection field is replaced whole from a JSON array.
+A tool tier or an armor material is copied as a new object, with the repair ingredient kept. A tier needs a mineable tag to be copied. A tier field also takes a plain tier name, so `"tier": "netherite"` sets it without copying one. Write a tier as an object only when you want new numbers. Any other enum as a nested object is refused, as is an object from a `java.` package. Arrays and collections are not walked into: a path cannot go through one, and a collection field is replaced whole from a JSON array.
 
 A string `"<ns>:<item>"` in the place of an object reuses the object of that derived item at the same path. Two derived items can share one tier that way, and the one named is built first. In the tested pack, `"tier": "d427:derived_pick"` gives a second pickaxe the tier that `derived_pick` built.
 
@@ -2393,6 +2395,71 @@ A copy is a separate object with the base's fields copied, so the following do n
 A derived item whose base is another derived item, or that reuses another one's object, is built after it. If derived items depend on each other in a loop, all of them are logged and left out. A derived item whose `requires` is not met is skipped, so a base from another mod needs the same `requires`. An item name that is already registered is skipped.
 
 Three things leave the whole item out: the base is missing, the base is a block item, or the base class is final. A class that was loaded by a class loader that cannot see RDPL is left out too.
+
+#### Example: a custom drill head
+
+Immersive Engineering keeps every drill head's numbers in one object, `perms`, held by the head item. A derived item copies that object before it writes to it, so a head of your own needs no code and no script. Copy IE's steel head and set the numbers you want. The drill takes any item that is a drill head, so the new head goes into a drill like IE's own heads.
+
+`data/mypack/items/drillhead_tungsten.json`
+
+```json
+{
+  "item": "immersiveengineering:drillhead_steel",
+  "requires": ["immersiveengineering"],
+  "name": "Tungsten Drill Head",
+  "set": {
+    "perms.drillSize": 5,
+    "perms.drillDepth": 2,
+    "perms.drillSpeed": 14.0,
+    "perms.drillAttack": 9.0,
+    "perms.maxDamage": 20000,
+    "perms.texture": "mypack:item/drill_tungsten",
+    "perms.repairMaterial": "#forge:ingots/iron",
+    "perms.drillLevel": "netherite"
+  }
+}
+```
+
+The pack needs two texture files besides the item file. Both recolor an IE texture, so the pack ships no PNG.
+
+`assets/mypack/textures/item/drillhead_tungsten.png.json` is the head's icon. The item takes its model from this texture, as any pack item does.
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drillhead_steel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+`assets/mypack/textures/item/drill_tungsten.png.json` is the texture the drill draws on its head.
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drill_diesel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+What each entry does:
+
+| Entry                  | What it changes                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `perms.drillSize`      | The width and height of the area the drill breaks, in blocks                                                 |
+| `perms.drillDepth`     | How many blocks deep it breaks                                                                               |
+| `perms.drillSpeed`     | Mining speed                                                                                                 |
+| `perms.drillAttack`    | Attack damage                                                                                                |
+| `perms.maxDamage`      | How much wear the head takes before it breaks                                                                |
+| `perms.texture`        | The texture the drill draws for this head: a `mod:path` under `textures/`, without the folder and the `.png` |
+| `perms.repairMaterial` | The items that repair the head. A string starting with `#` is an item tag                                    |
+| `perms.drillLevel`     | The mining level, a vanilla tier name: `wood`, `stone`, `iron`, `gold`, `diamond` or `netherite`             |
+
+`perms` is a field of the head item, so `set` walks into it and copies it first. IE's steel head keeps its own numbers.
+
+The head's tooltip shows 5x5x2, Netherite, speed 14, attack 9 and 20000 durability, and the drill draws the new texture. To change the level itself, write the bare tier name. An object under `perms.drillLevel` makes a copy of the tier with your numbers, and the tooltip still shows the name of the tier it came from, such as Diamond. The copy is registered in Forge's tier order next to its source tier, so other mods see it at the same mining level.
+
+To put the head into a drill, use IE's Maintenance Kit. Hold the kit and right-click. Place the drill in the tool slot, then the head in the head slot.
+
+A copy gets none of IE's recipes for the steel head, so give the new head a recipe of its own.
 
 #### Log messages
 
@@ -2439,6 +2506,7 @@ Three things leave the whole item out: the base is missing, the base is a block 
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | The member is not a collection                                                           |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | The collection's element type does not accept the item                                   |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo` failed, for example the class does not exist                                     |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | A `#` string on a tag field names no tag the registry can build                          |
 | `Registered {} derived item(s) from packs`                                                                                | The summary line, with the count of items made                                           |
 
 ## Fluids
@@ -10811,13 +10879,294 @@ At the end, `result` pays each side's holder in its objective, as a player or a 
 
 ## Scripting
 
-A script runs when a pack JSON names one, with `scriptFile` (a `.js` file in the pack) or `script` (JavaScript written inline in the JSON). A `.js` file that no JSON names never runs. Scripts are JavaScript at about ES6 level. RDPL runs them with the Rhino engine built into the mod, as interpreted code.
+A script runs only when a pack JSON names it. Use `scriptFile` for a `.js` file in the pack, or `script` for JavaScript written inline in the JSON. A `.js` file that no JSON names never runs.
+
+Scripts are ES6 JavaScript. RDPL runs them in interpreted mode on the Rhino engine built into the mod.
+
+This section starts with a walkthrough of one working script. The reference follows: the events, the `rdpl` object, the values a script receives, which JavaScript works, and where errors go.
+
+### Switching scripts on
+
+A pack with a `scripts/events/*.json` file holding a valid entry runs its scripts as soon as the pack loads. `/rdplserver reload` loads them again.
+
+No config option turns off event scripts, item scripts or `rdpl`, and the log never says a script was skipped because scripting is off.
+
+Registry scripts are the one exception. They run while the game loads, so the `content` category needs `load` on (the default) and `vanillaClients` off (the default). If you change either one, registry scripts never run, and the log says nothing. With both at their defaults, an entry whose registry no mod provides is logged as `no mod provides the registry '<name>', ignoring it`.
+
+So a script that is installed but does nothing was never switched off. Check the pack JSON and the log (see [Where errors go](#where-errors-go)).
+
+### Your first script
+
+This pack reports what a chest held. When a player breaks a chest, the action bar shows how many gold ingots were inside. The pack is a zip in `rdploader/`, with this layout:
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta` is the usual one:
+
+```json
+{
+  "pack": {
+    "pack_format": 15,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json` names the event, filters it to chests, and points at the script file:
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js`:
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+The script has `pos` (the position of the broken block) and `rdpl` because `block_break` provides them, as the event kinds table lists. `rdpl.world.scanAt` counts the gold ingots in the container at that position. `rdpl.actionbar` shows text to the player who broke the block.
+
+To try it:
+
+1. Put the zip in `rdploader/` and start a world, or run `/rdplserver reload` in a world that is already running.
+2. Place a chest, put a few gold ingots in it, and break it.
+3. The action bar shows `Chest held 3 gold ingots, item handler: true`, with your count.
+
+If nothing happens, open `logs/rdpl.log` in the game folder. The log names the file and skips the entry when it has a typo in a key, an unknown event, or a `scriptFile` that does not start with `scripts/` and end in `.js`. A script that throws an error is logged as `Script shrine:scripts/chest_broken.js failed: ...` with the line number.
+
+### More examples
+
+All of these are in the RDPLExampleScripts pack, under `data/shrine/`, except the last two.
+
+An inline `script` keeps a short script in the JSON, with no `.js` file. If the script's last value is the string `'cancel'`, the event is canceled. This entry cancels a hit on a sheep when the player holds a stick, and puts the stick on a two second cooldown:
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+Every run starts with fresh variables, so a script that must remember something saves it with `rdpl.data()`. `scripts/login.js`, run by a `player_login` entry, counts a player's visits:
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule` runs a function later. `scripts/altar_placed.js` runs when a player places a gold block in the overworld. It uses the world's data, the player's data and a team's data, spawns a sheep, and shows a second action bar message five seconds later:
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+A `loot_drop` script changes what a mob drops through `drops`. This one removes the rotten flesh from a zombie's drops and adds an emerald:
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  if (drops.stack(i).getItem().getDescriptionId() === "item.minecraft.rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+The loop counts down so that removing a stack does not shift the stacks it has not checked yet.
+
+A registry script adds an item while the game loads. Its entry is in `scripts/registries/`, not `scripts/events/`:
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Item = java("net.minecraft.world.item.Item");
+var Properties = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationMod(0.3).build();
+registry.register("shrine:script_food", new Item(new Properties().food(food)));
+```
+
+The registered name must use the pack's own namespace, here `shrine`. The item still needs a model, a texture and a lang entry to display correctly in game.
+
+### Which JavaScript works
+
+The engine is Rhino at the ES6 language level, in interpreted mode. These work:
+
+- `var`, `let` and `const`, with `let` and `const` scoped to their block
+- arrow functions, default parameters, and the spread and rest `...`
+- template literals, such as `` `Visit ${visits}` ``
+- destructuring of arrays and objects, in declarations and in parameters
+- `for...of`, generators with `function*`, and `Symbol`
+- `Map`, `Set`, `WeakMap` and `WeakSet`
+- `JSON.parse` and `JSON.stringify`, and `Math`, including the `**` operator
+- `??`, `??=` and `?.`
+- string methods such as `includes`, `startsWith`, `repeat` and `at`, array methods such as `includes`, `at` and `flatMap`, and `Object.assign` and `Object.fromEntries`
+
+These do not work:
+
+- `class`. The parser rejects it as a reserved word, so a script that uses it does not compile. Use a function and an object instead.
+- `async` and `await`, and `import` and `export`.
+- `java` and `Packages` in an event or item script, and `Packages` in every script (see [What a script can reach](#what-a-script-can-reach)).
+- Browser and Node names such as `console`, `setTimeout` and `require`. They do not exist in a script. Use `rdpl.schedule` to wait instead of `setTimeout`.
+
+Every run starts with fresh variables: a `var` set in one run is gone in the next. Keep anything that must last in `rdpl.data()`.
+
+A run stops after about 50 ms (see [Limits](#limits)). A call stack deeper than 200 fails.
+
+### The values a script gets
+
+Each event gives a script its own values (see the event kinds table). They are the game's own objects, so a script calls them by their Mojang method names, such as `pos.getX()` and `player.getScoreboardName()`. RDPL maps those names onto the game's obfuscated members.
+
+The tables below list the common methods, but any method with a Mojang name works. The exception is a method that takes a game type as an argument, such as a `DamageSource`. An event script cannot call it, because a script cannot build one.
+
+```js
+var below = pos.below();
+var id = String(state.getBlock());
+if (id === "Block{minecraft:gold_block}" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos` (a block position):
+
+| Member                                   | What it gives                         |
+| ---------------------------------------- | ------------------------------------- |
+| `getX()`, `getY()`, `getZ()`             | The coordinates, as numbers           |
+| `above()`, `below()`                     | The position one block above or below |
+| `north()`, `south()`, `east()`, `west()` | The position one block over           |
+| `offset(x, y, z)`                        | The position moved by that much       |
+
+`state` (a block state):
+
+| Member                          | What it gives                                                             |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `getBlock()`                    | The block                                                                 |
+| `String(state.getBlock())`      | The block's id inside `Block{...}`, such as `Block{minecraft:gold_block}` |
+| `getBlock().getDescriptionId()` | The block's translation key, such as `block.minecraft.gold_block`         |
+| `isAir()`                       | True for an air block                                                     |
+
+`entity` and `player` (a player is an entity with more):
+
+| Member                                          | What it gives                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| `getName()`                                     | The name as a text component; call `getString()` on it for plain text |
+| `getScoreboardName()`                           | A player's name as plain text, the name scoreboards use               |
+| `getId()`, `getUUID()`                          | The numeric id, and the UUID (call `toString()` on it)                |
+| `blockPosition()`                               | The block position it stands in                                       |
+| `getX()`, `getY()`, `getZ()`                    | Its exact position, as numbers                                        |
+| `isRemoved()`                                   | True when it has been removed                                         |
+| `isOnFire()`, `isShiftKeyDown()`, `isInWater()` | Its state                                                             |
+| `getHealth()`, `getMaxHealth()`                 | Health of a living entity, a mob or a player                          |
+| `setHealth(value)`                              | Sets the health of a living entity                                    |
+| `getMainHandItem()`                             | The stack in its main hand                                            |
+| `level()`                                       | The world it is in                                                    |
+| `getDisplayName()`                              | The name as shown in chat, as a text component                        |
+| `getFoodData().getFoodLevel()` (player)         | The player's hunger value                                             |
+| `isCreative()` (player)                         | True in creative mode                                                 |
+| `giveExperienceLevels(n)` (player)              | Gives levels                                                          |
+| `getTags()`                                     | The tags on the entity, including those `addStage` sets on a player   |
+
+An item stack, such as `player.getMainHandItem()` or `drops.stack(0)`, has these methods:
+
+- `getCount()` returns the number of items in the stack.
+- `isEmpty()` returns true when the stack holds no item.
+- `getItem().getDescriptionId()` returns the item's translation key, such as `item.minecraft.rotten_flesh`.
+- `getHoverName()` returns the stack's name as a text component.
+
+Plain values:
+
+| Name         | In events                           | What it is                                                                             |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`, `loot_drop`          | The attacking entity, or `null` for fall, fire and similar damage. Check it before use |
+| `damageType` | `entity_hurt`, `loot_drop`          | Text, the damage type's message id, such as `player`, `mob`, `fall`, `lava` or `drown` |
+| `amount`     | `entity_hurt`                       | The damage, as a number                                                                |
+| `from`, `to` | `dimension_change`, `entity_travel` | Dimension names, such as `minecraft:overworld` and `minecraft:the_nether`              |
+| `tick`       | `server_tick`                       | The overworld's game time                                                              |
+| `event`      | `mod_event`                         | The event object of the class named in `class`; its readable methods work              |
+| `drops`      | `loot_drop`                         | The drop list, see below the event kinds table                                         |
+
+`rdpl.level` is the server world. `rdpl.level.getBlockState(pos)` gives a block state, and `rdpl.level.getGameTime()` gives the game time.
+
+### Where errors go
+
+Every script message goes to `logs/rdpl.log` in the game folder. A failing script never crashes the game and never stops other scripts. A log line names a script file as `<namespace>:<path>`, such as `shrine:scripts/chest_broken.js`, and an inline script as `<entry file id>#<number>`.
+
+| Case                            | Line                                                                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File named but missing          | `Script <name> not found`                                                                                                                                                                                                         |
+| Compile error (a typo, `class`) | `Script <name> did not compile: <message>`, and the script is skipped until the next reload                                                                                                                                       |
+| Runtime error                   | `Script <name> failed: <message>`, then the script stack with line numbers                                                                                                                                                        |
+| Past 50 ms                      | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                                                   |
+| Turned off                      | `Script <name> is turned off until the next reload`, written after a failure or a timeout of a `player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel` or `mod_event` script, and of every registry script |
+| Refused Java access             | `Script <name> failed: Scripts may not use <class>`, for a `Class`, `ClassLoader`, `Thread`, `Runtime`, `System` or reflection object a script reaches                                                                            |
+| A scheduled function fails      | `Script scheduled function took longer than 50 ms, stopped`, or `Script scheduled function failed: <message>`                                                                                                                     |
+| Entry does not load             | `<file id>: <reason>, ignoring it`, with the reasons listed under the event and registry tables                                                                                                                                   |
+| Too many scheduled functions    | `Script scheduler: too many scheduled script functions, dropped`, once; after that `rdpl.schedule` drops further functions without a line, until a reload                                                                         |
+
+A script that did not compile stays failed until `/rdplserver reload`. Fix the file, then reload.
+
+Using `java` or `Packages` in an event script is not a refused access. The name does not exist there, so the log shows `Script <name> failed:` with a reference error.
 
 ### Script events
 
-`<namespace>/scripts/events/*.json`
+`data/<namespace>/scripts/events/*.json`
 
-The file name is yours to choose, only the folder is read, and several files stack. Each file is one entry: the event to listen for, an optional filter, and the script to run when the event fires.
+The file name is up to you. RDPL reads every JSON file in the folder, and entries from several files all apply. Each file is one entry: the event to listen for, an optional filter, and the script to run when the event fires.
 
 ```json
 {
@@ -10836,49 +11185,88 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `scriptFile` | one of the two   | path          | none                                          | A path under `scripts/` in the same namespace, ending in `.js`                                                                         |
 | `class`      | `mod_event` only | text          | none                                          | The full name of the event class a `mod_event` entry listens for. See below                                                            |
 
-An entry with both `script` and `scriptFile`, or with neither, is skipped and the log gets an error line for it.
+An entry with both `script` and `scriptFile`, or with neither, is skipped and logged as an error.
 
 Filter keys:
 
-| Key         | Value                           | Matches                            |
-| ----------- | ------------------------------- | ---------------------------------- |
-| `dimension` | dimension id, or a list of them | The dimension the event happens in |
-| `block`     | block id, or a `#` form         | The block placed or broken         |
-| `entity`    | entity id                       | The entity the event is about      |
-| `item`      | item id, or a `#` form          | The item the player holds          |
+| Key         | Value                           | Matches                                                                     |
+| ----------- | ------------------------------- | --------------------------------------------------------------------------- |
+| `dimension` | dimension id, or a list of them | The dimension the event happens in                                          |
+| `block`     | block id, or a `#` form         | The block placed or broken                                                  |
+| `entity`    | entity id                       | The entity the event is about                                               |
+| `item`      | item id, or a `#` form          | The item held in the main hand of the player, attacker or placer, see below |
+
+An event with no block never matches a `block` filter. An `entity_hurt`, `entity_spawn`, `entity_despawn` or `player_login` entry with a `block` key therefore never runs.
+
+The `item` filter checks the main hand of:
+
+- the attacker in `entity_hurt`, where a mob counts too
+- the player in `block_break` and `player_login`
+- the placer in `block_place`; a player who places a block matches with either hand
 
 Event kinds:
 
-| Event              | When it fires                                                | Values the script gets                                                             | `"cancel"` works                      |
-| ------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------- |
-| `block_place`      | A block is placed                                            | `rdpl`, `pos`, `state`, `entity` (the placer)                                      | Yes                                   |
-| `block_break`      | A player breaks a block                                      | `rdpl`, `pos`, `state`, `player`                                                   | Yes                                   |
-| `entity_hurt`      | Any living entity, players included, is about to take damage | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                               | Yes                                   |
-| `entity_spawn`     | A mob enters the world for the first time (not players)      | `rdpl`, `entity`                                                                   | Yes, and the entity never appears     |
-| `entity_despawn`   | A mob despawns, or an entity variant's timed removal ends it | `rdpl`, `entity`                                                                   | No                                    |
-| `player_login`     | A player joins                                               | `rdpl`, `player`                                                                   | No                                    |
-| `player_tick`      | Every `every` ticks, for each player, after the tick         | `rdpl`, `player`, `pos`                                                            | No                                    |
-| `server_tick`      | Every `every` ticks, once, after the tick                    | `rdpl` (the overworld), `tick` (the world time)                                    | No                                    |
-| `dimension_change` | A player has arrived in another dimension                    | `rdpl`, `player`, `from`, `to` (dimension names such as `minecraft:the_nether`)    | No                                    |
-| `loot_drop`        | A mob has died and its drops are about to appear             | `rdpl`, `entity`, `attacker`, `damageType` (the damage type's message id), `drops` | No                                    |
-| `entity_travel`    | An entity is about to go to another dimension                | `rdpl`, `entity`, `from`, `to` (dimension names such as `minecraft:the_nether`)    | Yes, and the entity stays where it is |
-| `mod_event`        | The event named by `class` fires on the server               | `rdpl`, `event`, `player`                                                          | Yes, when that event can be canceled  |
+| Event              | When it fires                                                                                                                                       | Values the script gets                                                             | `"cancel"` works                      |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
+| `block_place`      | A block is placed                                                                                                                                   | `rdpl`, `pos`, `state`, `entity` (the placer)                                      | Yes                                   |
+| `block_break`      | A player breaks a block                                                                                                                             | `rdpl`, `pos`, `state`, `player`                                                   | Yes                                   |
+| `entity_hurt`      | A living entity, players included, is about to take damage; not one that is invulnerable to it, already dead, or fire resistant against fire damage | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                               | Yes                                   |
+| `entity_spawn`     | A mob enters the world for the first time (not players)                                                                                             | `rdpl`, `entity`                                                                   | Yes, and the entity never appears     |
+| `entity_despawn`   | A mob despawns, or an entity variant's timed removal ends it                                                                                        | `rdpl`, `entity`                                                                   | No                                    |
+| `player_login`     | A player joins                                                                                                                                      | `rdpl`, `player`                                                                   | No                                    |
+| `player_tick`      | Every `every` ticks, for each player, after the tick                                                                                                | `rdpl`, `player`, `pos`                                                            | No                                    |
+| `server_tick`      | Every `every` ticks, once, after the tick                                                                                                           | `rdpl` (the overworld), `tick` (the world time)                                    | No                                    |
+| `dimension_change` | A player has arrived in another dimension                                                                                                           | `rdpl`, `player`, `from`, `to` (dimension names such as `minecraft:the_nether`)    | No                                    |
+| `loot_drop`        | A mob has died and its drops are about to appear                                                                                                    | `rdpl`, `entity`, `attacker`, `damageType` (the damage type's message id), `drops` | No                                    |
+| `entity_travel`    | An entity is about to go to another dimension                                                                                                       | `rdpl`, `entity`, `from`, `to` (dimension names such as `minecraft:the_nether`)    | Yes, and the entity stays where it is |
+| `mod_event`        | The event named by `class` fires on the server                                                                                                      | `rdpl`, `event`, `player`                                                          | Yes, when that event can be canceled  |
 
-A script whose final value is the text `"cancel"` cancels the event wherever the table says it works. An event that a zone rule or another mod already canceled never reaches a script. `entity_despawn` does not fire for kills, chunk unloads or `/kill`.
+A script whose final value is the string `"cancel"` cancels the event, where the table says `"cancel"` works. An event that a zone rule or another mod already canceled never reaches a script. `entity_despawn` does not fire for kills, chunk unloads or `/kill`.
 
-The new kinds read only some filter keys. `player_tick` and `dimension_change` read `dimension` and `item`. `loot_drop` and `entity_travel` read `dimension`, `entity` and `item`. `server_tick` and `mod_event` read none. A filter key an event does not read skips the entry, and the log says `the <event> event does not read the filter key '<key>', skipping the entry`. `entity` takes ids, the kinds `#monster`, `#creature`, `#ambient` and `#water_creature`, and an entity type tag with a namespace, such as `#minecraft:skeletons`. In `loot_drop`, `entity` is the mob that died and `item` is what its killer holds; in `entity_travel`, `entity` is the traveler. `player_tick` and `server_tick` run every 20 ticks unless `every` says otherwise. `server_tick` runs once for the server, on the overworld's clock, and has no player.
+The newer kinds read only some filter keys:
 
-A script of a new kind (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`) that fails or runs past the time limit is turned off until the next reload, and the log says `Script <name> is turned off until the next reload`. Scripts of the older kinds keep running.
+- `player_tick` and `dimension_change` read `dimension` and `item`.
+- `loot_drop` and `entity_travel` read `dimension`, `entity` and `item`.
+- `server_tick` and `mod_event` read no filter keys.
 
-`drops`, in `loot_drop`, is the list of what the mob drops. `drops.size()` counts them, `drops.stack(index)` is the item stack at an index, `drops.remove(index)` takes one out, `drops.clear()` takes them all out, and `drops.add(item, count)` adds a stack that appears where the mob died. A script may add at most 32 stacks per death. Adding more stops the script with `A loot_drop script can add at most 32 stacks`, and an unknown item or a count below 1 stops it with `Unknown item`, the same as any script error.
+If the filter has a key the event does not read, the entry is skipped and the log says `the <event> event does not read the filter key '<key>', skipping the entry`.
 
-`mod_event` lets a script listen to an event of another mod, or one of the game's own, by its class name. Put the class in `class`, by its full name. An entry is ignored, and the log says so, when `class` is missing (`a mod_event needs a class`), when no such class exists (`the class <name> was not found`), and when it is not an event class that can be listened for (`the class <name> is not a Forge event`). Only that exact class counts: an event that extends it does not fire the script. The script runs on the server thread only, in the world of the event's entity or world, or in the overworld when the event has neither, and an event of the same class that the script itself causes does not run it again. It gets `rdpl`, `event` (the event object) and `player` (the player the event is about, or nothing). `every` and the other keys work as for any event. A `"cancel"` result cancels the event when the event can be canceled.
+Notes on the filter keys and timing:
+
+- `entity` takes entity ids, the kinds `#monster`, `#creature`, `#ambient` and `#water_creature`, and entity type tags with a namespace, such as `#minecraft:skeletons`.
+- In `loot_drop`, `entity` is the mob that died and `item` is what its killer holds. In `entity_travel`, `entity` is the traveler.
+- `player_tick` and `server_tick` run every 20 ticks unless `every` says otherwise.
+- `server_tick` runs once per interval for the whole server, on the overworld's clock, and has no player.
+
+If a script of a newer kind (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`) fails or runs past the time limit, it is turned off until the next reload. The log says `Script <name> is turned off until the next reload`. Scripts of the older kinds keep running.
+
+In a `loot_drop` script, `drops` is the list of what the mob drops:
+
+- `drops.size()` returns the number of stacks.
+- `drops.stack(index)` returns the item stack at that index.
+- `drops.remove(index)` removes the stack at that index.
+- `drops.clear()` removes all stacks.
+- `drops.add(item, count)` adds a stack that appears where the mob died.
+
+A script can add at most 32 stacks per death. Adding more throws an error with the message `A loot_drop script can add at most 32 stacks`. An unknown item or a count below 1 throws an error with the message `Unknown item`. Both stop the script like any other script error.
+
+`mod_event` lets a script listen to an event of another mod, or one of the game's own, by its class name. Put the full class name in `class`. RDPL logs the problem and ignores the entry in these cases:
+
+- `class` is missing: `a mod_event needs a class`
+- no such class exists: `the class <name> was not found`
+- the class is not an event class that can be listened for: `the class <name> is not a Forge event`
+
+Only the exact class counts. An event that extends it does not fire the script.
+
+The script runs on the server thread only. It runs in the world of the event's entity or world, or in the overworld when the event has neither. If the script itself causes another event of the same class, that event does not run the script again.
+
+The script gets `rdpl`, `event` (the event object) and `player` (the player the event is about, or `null`). `every` and the other keys work as for any event. A `"cancel"` result cancels the event when the event can be canceled.
 
 ### Registry scripts
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
-The file name is yours to choose, only the folder is read, and several files stack. A registry script adds objects to one of the game's built in registries while the game is loading, which a pack otherwise cannot do. It needs the `content` category to have `load` on and `vanillaClients` off, the same as blocks and items.
+The file name is up to you. RDPL reads every JSON file in the folder, and entries from several files all apply. A registry script adds objects to one of the game's built in registries while the game is loading, which a pack otherwise cannot do. Like blocks and items, it needs the `content` category to have `load` on and `vanillaClients` off.
 
 ```json
 {
@@ -10888,9 +11276,11 @@ The file name is yours to choose, only the folder is read, and several files sta
 ```
 
 ```js
-var I = java("net.minecraft.world.item.Item");
-var P = java("net.minecraft.world.item.Item$Properties");
-registry.register("mypack:script_item", new I(new P()));
+var Item = java("net.minecraft.world.item.Item");
+var Properties = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationMod(0.3).build();
+registry.register("mypack:script_food", new Item(new Properties().food(food)));
 ```
 
 | Key          | Required       | Value         | Default | What it does                                                                                                                   |
@@ -10899,59 +11289,101 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | one of the two | text          | none    | Inline JavaScript to run                                                                                                       |
 | `scriptFile` | one of the two | path          | none    | A path under `scripts/` in the same namespace, ending in `.js`                                                                 |
 
-The script runs once, when that registry opens for registration, after every mod has registered its own. It gets two things. `registry` has one method, `register(name, object)`, that adds `object` under `name`. `java(className)` returns a Java class by its full name, so the script can build the object; a class that does not exist fails with `The class <name> was not found`. The script does not get `rdpl`, because no world exists yet.
+The script runs once, when that registry opens for registration, after every mod has registered its own. It gets two things:
 
-`register` refuses and logs, and the script goes on, when the object is not the kind the registry holds (`is not a <type>, not registering it`), when the name is not a valid id (`could not be registered: not a valid name`), when the name is not in the pack's own namespace (`is not in the pack namespace <namespace>, not registering it`), when the name is already taken (`is already registered in <registry>, skipping it`), and when the registry itself rejects it (`could not be registered`). A success logs `Script <name> registered <id> in <registry>`. The entry itself is logged and ignored when `registry` is missing (`needs a registry`), when it has no script (`needs script or scriptFile`), when the registry is not one scripts can add to (`the registry '<name>' is not a registry that scripts can add to, ignoring it`), and when no mod provides the registry (`no mod provides the registry '<name>', ignoring it`). A script that fails or runs past the limit is turned off until the next reload. An object registered this way has only what the script gave it: a block or item still needs its own model, texture and lang entries.
+- `registry` has one method, `register(name, object)`, which adds `object` under `name`.
+- `java(className)` returns a Java class by its full name, so the script can build the object. A class that does not exist fails with `The class <name> was not found`.
+
+The script does not get `rdpl`, because no world exists yet.
+
+`register` logs a message and skips the object, and the script keeps running, in these cases:
+
+- the object is not the kind the registry holds: `is not a <type>, not registering it`
+- the name is not a valid id: `could not be registered: not a valid name`
+- the name is not in the pack's own namespace: `is not in the pack namespace <namespace>, not registering it`
+- the name is already taken: `is already registered in <registry>, skipping it`
+- the registry itself rejects the object: `could not be registered`
+
+A success logs `Script <name> registered <id> in <registry>`.
+
+RDPL logs the entry and ignores it in these cases:
+
+- `registry` is missing: `needs a registry`
+- the entry has no script: `needs script or scriptFile`
+- scripts cannot add to that registry: `the registry '<name>' is not a registry that scripts can add to, ignoring it`
+- no mod provides the registry: `no mod provides the registry '<name>', ignoring it`
+
+A script that fails or runs past the time limit is turned off until the next reload.
+
+An object registered this way has only what the script gave it. A block or item still needs its own model, texture and lang entries.
 
 ### Where script files go
 
-Everything scripting sits under the pack's `scripts/` folder. Event entries go in `scripts/events/`. A `.js` file can go anywhere under `scripts/`, and it is named by its pack path, so `"scriptFile": "scripts/trophy_altar.js"` reads `<namespace>/scripts/trophy_altar.js`. An item names its script the same way, with `script` or `scriptFile` (see [Items](#items)), and so does a recipe rewrite file (see [Recipe swaps](#recipe-swaps)).
+All scripting files live under the pack's `scripts/` folder. Event entries go in `scripts/events/`. A `.js` file can go anywhere under `scripts/`, and a `scriptFile` value is its path inside the namespace folder: `"scriptFile": "scripts/trophy_altar.js"` reads `<namespace>/scripts/trophy_altar.js`.
+
+These also name a script with `script` or `scriptFile`, the same way:
+
+- an item (see [Items](#items))
+- a recipe rewrite file (see [Recipe swaps](#recipe-swaps))
+- a pack command (see [Pack commands](#pack-commands))
+
+An item script runs on the server when a player right clicks with the item. It gets `rdpl`, `item` (the stack in that hand) and `hand` (the string `MAIN_HAND` or `OFF_HAND`). A result of `"cancel"` only skips the item's `cooldown`. The right click itself is not canceled.
+
+A command script gets `rdpl`, `sender` (see [Pack commands](#pack-commands) for its methods) and one variable for each argument.
 
 ### The rdpl object
 
-A script reaches the game through `rdpl`. Its members:
+A script talks to the game through `rdpl`. Its members:
 
 ```js
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| Member                                               | What it does                                                                                                                                                                                                                                            |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | The player, or nothing when the event has none                                                                                                                                                                                                          |
-| `level`                                              | The world                                                                                                                                                                                                                                               |
-| `runCommand(command)`                                | Runs a command as the player, or at the world spawn when there is none, at permission level 2. Returns true on success                                                                                                                                  |
-| `give(item, count)`                                  | Gives the player a count of an item                                                                                                                                                                                                                     |
-| `actionbar(text)`                                    | Shows text on the player's action bar                                                                                                                                                                                                                   |
-| `cooldown(item, ticks)`                              | Puts the item on cooldown for the player, for this many ticks                                                                                                                                                                                           |
-| `card(id, "key=value", ...)`                         | Raises a card, with its arguments                                                                                                                                                                                                                       |
-| `schedule(ticks, function)`                          | Runs the function after the ticks. At most 1000 wait at once. The queue is cleared on reload                                                                                                                                                            |
-| `data()`, `data(player)`, `teamData(name)`           | A saved store with `get`, `set`, `has` and `remove`. Holds text, numbers and true/false, and is kept in the world save. `data()` is the world's, `data(player)` the player's, `teamData(name)` a team's                                                 |
-| `sync(name, value)`                                  | Sets a synced value for the player, or for the world when the event has no player. The value is text, a number or true/false. Returns true when it is set and false when the rules refuse it, which the log says. Any other value throws a script error |
-| `syncTo(player, name, value)`                        | The same for another player                                                                                                                                                                                                                             |
-| `syncAll(name, value)`                               | The same for the world                                                                                                                                                                                                                                  |
-| `unsync(name)`                                       | Removes the player's value, or the world's when the event has no player. Returns true when there was one                                                                                                                                                |
-| `synced(name)`                                       | The value a read gives: the player's own, then the world's, then the default, or the world's and the default when the event has no player. Nothing when none is set                                                                                     |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Checks, adds or removes a tag on the player                                                                                                                                                                                                             |
-| `score(objective)`, `setScore(objective, value)`     | Reads or sets the player's score on a scoreboard objective                                                                                                                                                                                              |
-| `hasAdvancement(id)`                                 | True when the player has the advancement                                                                                                                                                                                                                |
-| `world.scan(player, match)`                          | Counts matching items in the player's inventory and in the shulker boxes in it. `match` is an item id, a `#` form, or a function that gets each stack                                                                                                   |
-| `world.scanAt(x, y, z, match)`                       | The same, for a container block at that position                                                                                                                                                                                                        |
-| `world.capability(x, y, z, type)`                    | The block's handler at that position for `"items"`, `"fluids"` or `"energy"`                                                                                                                                                                            |
-| `world.placeStructure(template, x, y, z)`            | Places a structure template at the position                                                                                                                                                                                                             |
-| `world.summon(id, x, y, z, nbt)`                     | Spawns an entity at the position, with optional NBT                                                                                                                                                                                                     |
+| Member                                               | What it does                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | The player, or `null` when the event has none                                                                                                                                                                                                                                                                                                       |
+| `level`                                              | The world                                                                                                                                                                                                                                                                                                                                           |
+| `runCommand(command)`                                | Runs a command as the player, or at the world spawn when there is no player, at permission level 2. Returns true on success                                                                                                                                                                                                                         |
+| `give(item, count)`                                  | Gives the player a count of an item                                                                                                                                                                                                                                                                                                                 |
+| `actionbar(text)`                                    | Shows text on the player's action bar. Does nothing when there is no player                                                                                                                                                                                                                                                                         |
+| `cooldown(item, ticks)`                              | Puts the item on cooldown for the player for that many ticks. Does nothing without a player. An unknown item throws a script error, with or without a player                                                                                                                                                                                        |
+| `card(id, "key=value", ...)`                         | Shows a card to the player, with its arguments. Returns false for an unknown card id or when there is no player, true otherwise. An argument that is not `key=value` is ignored                                                                                                                                                                     |
+| `schedule(ticks, function)`                          | Runs the function after that many ticks, and at least 1 tick later. At most 1000 functions can wait at once; further ones are dropped. A reload or a server stop clears the queue. A function scheduled by an event with a player is dropped if that player is offline when it is due                                                               |
+| `data()`, `data(player)`, `teamData(name)`           | A saved store with `get`, `set`, `has` and `remove`. It holds text, numbers and true/false, and is kept in the world save. `data()` is the world's store, `data(player)` the player's, `teamData(name)` a team's. `data()` and `teamData` return `null` when the world has no storage. `data(player)` throws a script error when there is no player |
+| `sync(name, value)`                                  | Sets a synced value for the player, or for the world when the event has no player. The value must be text, a number or true/false; any other value throws a script error. Returns true when the value is set, and false when the sync rules refuse it (the log says why)                                                                            |
+| `syncTo(player, name, value)`                        | The same, for another player                                                                                                                                                                                                                                                                                                                        |
+| `syncAll(name, value)`                               | The same, for the world                                                                                                                                                                                                                                                                                                                             |
+| `unsync(name)`                                       | Removes the player's value, or the world's when the event has no player. Returns true when a value was removed                                                                                                                                                                                                                                      |
+| `synced(name)`                                       | Reads a synced value: the player's own, then the world's, then the default. When the event has no player, it checks only the world's value, then the default. Returns `null` when none is set                                                                                                                                                       |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Checks, adds or removes a tag on the player. Without a player, `hasStage` returns false and the other two do nothing                                                                                                                                                                                                                                |
+| `score(objective)`, `setScore(objective, value)`     | Reads or sets the player's score on a scoreboard objective. Without a player, `score` returns 0 and `setScore` does nothing. `setScore` throws a script error for an unknown objective, with or without a player                                                                                                                                    |
+| `hasAdvancement(id)`                                 | True when the player has the advancement                                                                                                                                                                                                                                                                                                            |
+| `world.scan(player, match)`                          | Counts matching items in the player's inventory and in the shulker boxes in it. `match` is an item id, a `#` form, or a function that gets each stack                                                                                                                                                                                               |
+| `world.scanAt(x, y, z, match)`                       | The same, for a container block at that position                                                                                                                                                                                                                                                                                                    |
+| `world.capability(x, y, z, type)`                    | The block's handler at that position for `"items"`, `"fluids"` or `"energy"`. It asks the block with no side first, then each of the six sides. `"items"` also works for any plain inventory block. Returns `null` when the chunk is not loaded, the block has no such handler, or `type` is anything else                                          |
+| `world.placeStructure(template, x, y, z)`            | Places a structure template at the position. Returns false when there is no such template                                                                                                                                                                                                                                                           |
+| `world.summon(id, x, y, z, nbt)`                     | Spawns an entity at the position, with optional NBT. Bad NBT throws a script error (`Bad entity NBT`). Returns false when the entity could not be created. With empty NBT, a mob also gets the same spawn setup as the `/summon` command                                                                                                            |
 
 ### What a script can reach
 
-A script sees only the `rdpl` object, the values each event hands it (see the event kinds table), and the game types those values return. `Packages` does not exist in any script, and `java` exists only in a registry script (see [Registry scripts](#registry-scripts)); event, item, command and recipe rewrite scripts do not have it. Asking for anything else is refused, and the refusal is logged once.
+An event script, an item script and a scheduled function can use only these:
 
-A script may use any Java class, by its full name. In practice that is a registry script, which asks for a class with `java(className)`.
+- the `rdpl` object
+- the values the event provides (see the event kinds table)
+- whatever the methods of those objects return
+
+`java` and `Packages` do not exist in them, so they cannot name a Java class or build an object with `new`. `Packages` does not exist in any script. Command scripts and recipe rewrite scripts have no `java` either.
+
+A registry script also gets `java(className)`. It returns the class with that full name, such as `net.minecraft.world.item.Item`. Any class the game can find works, with no allowlist, and the call loads and initializes a class that is not loaded yet. A name that is not a class fails with `The class <name> was not found`.
+
+In every script, these objects are refused when a call returns them or passes them in: `Class`, `ClassLoader`, `Thread`, `Runtime`, `System`, and the reflection objects (`Method`, `Field`, `Constructor`). The script stops with `Scripts may not use <class>`, and the log gets a `Script <name> failed:` line.
 
 ### Limits
 
-- A run stops after 50 ms. The log error names the script.
+- A run stops after 50 ms, and the log error names the script. The engine checks the clock every 10000 instructions, so a run can overshoot the limit a little.
 - A `try`/`catch` cannot keep a run alive past that limit.
 - Errors are logged with the script's pack path. They never crash the game.
-- `every` and the filters are checked before a script runs, which keeps the cost down.
+- `every` and the filters are checked before a script runs, so an entry that does not match costs almost nothing.
 - Scripts are compiled once and cached until `/rdplserver reload`.
 
 ## The control layer
