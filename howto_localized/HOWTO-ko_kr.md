@@ -2365,12 +2365,14 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `true`, `false`      | `boolean`                                                                                    |                                                                              |
 | 문자열               | `String`, `char`                                                                             | `char`는 한 글자짜리 문자열을 받습니다                                       |
 | 문자열               | 열거형                                                                                       | 상수 이름입니다. 대문자든 소문자든 상관없습니다                              |
+| 문자열               | `ToolMaterial`                                                                               | `ToolMaterial` 상수의 이름입니다. 콜론 없이 씁니다. 예: `iron`, `netherite`  |
 | 문자열               | `Identifier`                                                                                 | `mod:name`                                                                   |
 | 문자열               | `ItemStack`                                                                                  | 팩 파일에서 다른 곳의 스택을 쓰는 방식과 같습니다. 비어 있으면 안 됩니다     |
 | 문자열               | `Item`, `Block`, `Fluid`, `SoundEvent`, `MobEffect`, `EntityType`, `Potion` 또는 `Attribute` | 레지스트리 이름입니다. 등록되어 있어야 합니다                                |
 | 배열                 | 배열, 또는 `List`, `Set`, `Collection`                                                       | 각 요소는 이 표를 따릅니다. 컬렉션 필드에는 추가되지 않고 통째로 대체됩니다  |
 | 객체                 | 그 밖의 객체                                                                                 | 중첩된 객체입니다. 아래를 참고하세요                                         |
 | 문자열 `<ns>:<item>` | 그 밖의 객체                                                                                 | 같은 위치에서 다른 파생 아이템이 만든 객체를 재사용합니다. 아래를 참고하세요 |
+| 문자열 `#<ns>:<tag>` | `TagKey` 필드                                                                                | 필드 레지스트리의 태그입니다. 예: `#c:ingots/iron`                           |
 
 **중첩된 객체.** `set` 아래의 JSON 객체는 파일과 같은 세 키, `set`, `returns`, `addTo`를 가질 수 있습니다. 필드가 가진 객체의 사본을 바꾸므로, 원본 아이템과 그 객체를 공유하는 다른 것은 원래 값을 유지합니다. 이는 쓰기 시점 복사(copy on write)입니다. 쓰는 경로 위의 객체만 복사되고, 나머지 필드는 원본과 같은 객체를 계속 가리킵니다.
 
@@ -2404,6 +2406,35 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 다음 네 경우에는 아이템 전체가 제외됩니다. 원본이 없을 때, 원본이 블록 아이템일 때, 원본 클래스가 final이나 sealed이거나 레코드일 때, 원본 클래스가 RDPL에 닿지 않는 모듈에서 올 때입니다. 복사할 컴포넌트가 없는 원본도 제외됩니다.
 
 서버가 시작된 뒤에는 모든 파생 아이템을 한 번 더 확인합니다. 이름, 모델, 원본의 컴포넌트 중 하나라도 없이 만들어진 아이템은 오류로 로그에 기록됩니다.
+
+#### 예시: 수치를 객체에 담는 Mod 아이템
+
+일부 Mod는 아이템의 수치를 컴포넌트가 아니라 아이템이 가진 하나의 객체에 담아 둡니다. 파생 아이템은 쓰기 전에 그 객체를 복사하므로, 변형을 만드는 데 코드가 필요 없습니다. 아이템을 복사하고, `set`으로 객체의 필드를 점 경로로 지정하고, 사본에 고유한 아이콘을 줍니다. 아래 이름들은 예시입니다. `othermod`, `power_blade`, `stats`는 실제 Mod의 아이템과 필드 이름을 대신합니다.
+
+`data/mypack/items/power_blade_plus.json`
+
+```json
+{
+  "item": "othermod:power_blade",
+  "requires": ["othermod"],
+  "name": "Power Blade+",
+  "set": {
+    "stats.power": 12,
+    "stats.cooldown": 8.5,
+    "stats.repairTag": "#c:ingots/iron",
+    "stats.material": "diamond"
+  }
+}
+```
+
+| 항목              | 바뀌는 것                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `stats.power`     | 객체의 정수 필드입니다                                                                            |
+| `stats.cooldown`  | 소수 필드입니다                                                                                   |
+| `stats.repairTag` | 태그 필드입니다. `#`으로 시작하는 문자열은 필드 레지스트리의 태그를 뜻하며, 여기서는 아이템입니다 |
+| `stats.material`  | 도구 재질을 담는 필드입니다. `ToolMaterial` 상수의 이름을 콜론 없이 씁니다                        |
+
+기본 아이템은 자기 수치를 그대로 유지합니다. 사본의 아이콘은 `assets/mypack/textures/item/power_blade_plus.png`에, 모델은 `assets/mypack/items/power_blade_plus.json`에 둡니다. 사본은 원본의 레시피를 받지 않으므로 따로 하나 만들어 주세요.
 
 #### 로그 메시지
 
@@ -2453,6 +2484,7 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | 멤버가 컬렉션이 아닙니다                                                                                   |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | 컬렉션의 요소 타입이 그 아이템을 받아들이지 않습니다                                                       |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo`가 실패했습니다. 예를 들어 클래스가 없습니다                                                        |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | 태그 필드의 `#` 문자열이 레지스트리가 만들 수 있는 태그를 가리키지 않습니다                                |
 | `Registered {} derived item(s) from packs`                                                                                | 요약 줄입니다. 만들어진 파생 아이템 수가 함께 적힙니다                                                     |
 
 ## 유체
@@ -3385,7 +3417,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 각각에 쓰이는 재료는 격자에서 처음으로 맞는 것이며, 두 재료는 서로 다른 칸이어야 합니다. 레시피는 감싸져서, 결과물 칸의 미리 보기, 일반 클릭, Shift 클릭이 모두 같은 결과를 주며, 바닐라 클라이언트는 감싸기 전의 레시피를 봅니다. 로그는 `Gave N crafting recipe(s) a transfer`로 요약합니다.
 
-레시피 재작성: `recipe_swaps`의 파일이 `template`, `edit`, `script` 중 하나 이상을 갖고 `swaps`가 필요 없으면, 레시피를 그 JSON으로 바꿉니다. 이 파일의 `recipes` 한정과 `types` 목록이 가리키는 레시피를 대상으로 하며, 둘 다 적혀 있으면 레시피가 둘 모두와 맞아야 합니다.
+레시피 재작성: `recipe_swaps`의 파일이 `template`, `edit`, `script`, `scriptFile`을 하나 이상 어떤 조합으로든 갖고 있으면, `swaps` 없이도 레시피를 그 JSON으로 바꿉니다. 이 파일의 `recipes` 한정과 `types` 목록이 가리키는 레시피가 대상이며, 파일에 둘 다 적혀 있으면 레시피가 두 조건에 모두 맞아야 합니다. `script`나 `scriptFile`이 있고 `swaps`가 없는 파일도 받아들입니다. 파일에 `swaps`도 있으면 교체는 그대로 적용되고, 스크립트도 함께 실행됩니다.
 
 ```json
 {
@@ -10544,7 +10576,287 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 
 ## 스크립팅
 
-스크립트는 팩 JSON이 이름을 댈 때 실행됩니다. 지정은 `scriptFile`(팩 안의 `.js` 파일)이나 `script`(JSON 안에 직접 쓴 JavaScript)로 합니다. JSON이 이름을 대지 않은 `.js` 파일은 결코 실행되지 않습니다. 스크립트는 대략 ES6 수준의 JavaScript이며, RDPL은 모드에 내장된 Rhino 엔진으로 해석된 코드로 실행합니다.
+스크립트는 팩 JSON이 이름을 댈 때 실행됩니다. 지정은 `scriptFile`(팩 안의 `.js` 파일)이나 `script`(JSON 안에 직접 쓴 JavaScript)로 합니다. JSON이 이름을 대지 않은 `.js` 파일은 결코 실행되지 않습니다. 스크립트는 ES6 수준의 JavaScript이며, RDPL은 모드에 내장된 Rhino 엔진으로 해석된 코드로 실행합니다. 아래 절은 작동하는 스크립트 하나를 따라가며 시작한 뒤, 이벤트, `rdpl` 객체, 스크립트가 받는 값, 작동하는 JavaScript, 오류가 가는 곳을 참고 자료로 다룹니다.
+
+### 스크립트 켜기
+
+올바른 항목이 있는 `data/<namespace>/scripts/events/*.json` 파일이 있는 팩은 팩이 로드되는 즉시 스크립트를 실행하며, `/rdplserver reload`는 그것들을 다시 불러옵니다. 게임의 설정 파일에는 이벤트 스크립트, 아이템 스크립트, `rdpl`을 끄는 설정이 없으며, 스크립팅이 꺼졌거나 허용되지 않아 스크립트를 건너뛰었다는 로그 줄도 없습니다.
+
+레지스트리 스크립트만 예외입니다. 이들은 게임이 로드되는 동안 실행되므로, `content` 범주에서 `load`가 켜져(기본값) 있고 `vanillaClients`가 꺼져(기본값) 있어야 합니다. 둘 중 하나라도 바뀌면 레지스트리 스크립트는 결코 실행되지 않으며, 그렇다고 알려 주는 줄도 없습니다. `load`가 켜져 있고 `vanillaClients`가 꺼져 있을 때, 어떤 모드도 제공하지 않는 레지스트리를 가진 항목은 `no mod provides the registry '<name>', ignoring it`로 로그에 기록됩니다.
+
+설치되어 있지만 아무 일도 하지 않는 스크립트는 그래서 꺼진 것이 아닙니다. 대신 팩 JSON과 로그를 확인하세요([오류가 가는 곳](#오류가-가는-곳) 참고).
+
+### 첫 스크립트
+
+이 팩은 금 주괴가 든 상자를 하나 둡니다. 플레이어가 상자를 부수면, 액션바가 그 상자에 금 주괴가 몇 개 있었는지 알려 줍니다. 팩은 `rdploader/` 안의 zip 파일이며, 다음과 같은 구조입니다:
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta`는 선택 사항입니다. 모드가 모든 팩을 게임에 직접 보여 주기 때문입니다. 이 파일을 둔 팩은 게임이 읽는 형식을 적으며, 26.1.2에서는 101, 26.2에서는 107입니다. 아래 범위는 둘 다 포함하므로 팩이 어느 쪽에서든 그대로 로드됩니다:
+
+```json
+{
+  "pack": {
+    "pack_format": 101,
+    "min_format": 101,
+    "max_format": 107,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json`은 이벤트를 이름으로 적고, 상자로 걸러 내며, 스크립트 파일을 가리킵니다:
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js`:
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+스크립트는 `pos`(부서진 블록의 위치)와 `rdpl`을 받습니다. `block_break`가 이 둘을 넘겨주기 때문이며, 이벤트 종류 표에 나와 있습니다. `rdpl.world.scanAt`은 그 위치의 용기에 든 금 주괴 수를 세고, `rdpl.actionbar`는 블록을 부순 플레이어에게 텍스트를 보여 줍니다.
+
+시험해 보려면:
+
+1. zip을 `rdploader/`에 넣고 월드를 시작하거나, 이미 실행 중인 월드에서 `/rdplserver reload`를 실행합니다.
+2. 상자를 놓고, 금 주괴를 몇 개 넣은 뒤 부숩니다.
+3. 액션바에 `Chest held 3 gold ingots, item handler: true`가 나타나며, 숫자는 여러분이 넣은 개수입니다.
+
+아무 일도 없으면, 게임 폴더의 `logs/rdpl.log`를 여세요. 로그는 다음 중 하나가 있는 항목의 파일 이름을 적고, 그 항목을 건너뜁니다:
+
+- 키의 오타
+- 알 수 없는 이벤트
+- `scripts/`로 시작하지 않거나 `.js`로 끝나지 않는 `scriptFile`
+
+실패하는 스크립트는 줄 번호와 함께 `Script shrine:scripts/chest_broken.js failed: ...`로 기록됩니다.
+
+### 더 많은 예시
+
+이 예시들은 마지막 두 개를 제외하고 모두 RDPLExampleScripts 팩의 `data/shrine/` 아래에 있습니다.
+
+인라인 `script`는 `.js` 파일 없이 짧은 스크립트를 JSON 안에 둡니다. 마지막 값이 결과를 정합니다. 텍스트 `'cancel'`로 끝나면 이벤트를 취소합니다. 이 항목은 플레이어가 막대기를 들고 있을 때 양을 때리는 것을 거부하고, 막대기에 2초 쿨다운을 겁니다:
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+`rdpl.data()`로 저장한 데이터는 스크립트가 실행 사이에도 무언가를 기억하게 해 줍니다. 실행마다 변수가 새로 시작되기 때문입니다. `player_login` 항목으로 실행되는 `scripts/login.js`는 플레이어의 방문 횟수를 셉니다:
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule`은 함수를 나중에 실행합니다. `scripts/altar_placed.js`는 플레이어가 오버월드에 금 블록을 놓을 때 실행되며, 월드의 데이터, 플레이어의 데이터, 팀의 데이터를 사용하고, 양을 소환하며, 5초 뒤에 두 번째 액션바 메시지를 보여 줍니다:
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+`loot_drop` 스크립트는 `drops`로 몹의 드롭을 바꿉니다. 이 예시는 좀비의 드롭에서 썩은 살을 빼고 에메랄드를 더합니다:
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  if (String(drops.stack(i).getItem().builtInRegistryHolder().key().identifier()) === "minecraft:rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+반복문은 거꾸로 세므로, 스택을 제거해도 아직 확인하지 않은 스택들이 밀려나지 않습니다.
+
+레지스트리 스크립트는 게임이 로드되는 동안 아이템을 추가합니다. 이 항목은 `scripts/events/`가 아니라 `scripts/registries/`에 있습니다:
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var I = java("net.minecraft.world.item.Item");
+var P = java("net.minecraft.world.item.Item$Properties");
+registry.register("shrine:script_item", new I(new P().setId(registry.key("shrine:script_item"))));
+```
+
+이름은 팩 자체의 네임스페이스, 여기서는 `shrine`에 있어야 합니다. 이 게임 버전의 아이템은 만들어질 때 자신의 ID를 알아야 하며, 그것을 주는 것이 `setId(registry.key(name))`입니다. 없으면 아이템이 만들어지지 않습니다. 게임 안에서 제대로 보이려면 아이템에 여전히 모델, 텍스처, 언어 항목이 필요합니다.
+
+### 작동하는 JavaScript
+
+엔진은 Rhino이며, ES6 언어 수준으로 설정되고 해석 모드로 실행됩니다. 다음은 작동합니다:
+
+- `var`, `let`, `const`. `let`과 `const`는 자신의 블록 범위로 한정됩니다
+- 화살표 함수, 기본 매개변수, 전개와 나머지 `...`
+- 템플릿 리터럴, 예: `` `Visit ${visits}` ``
+- 배열과 객체의 구조 분해(선언과 매개변수 모두)
+- `for...of`, `function*` 제너레이터, `Symbol`
+- `Map`, `Set`, `WeakMap`, `WeakSet`
+- `JSON.parse`와 `JSON.stringify`, 그리고 `**` 연산자를 포함한 `Math`
+- `??`, `??=`, `?.`
+- `includes`, `startsWith`, `repeat`, `at` 같은 문자열 메서드, `includes`, `at`, `flatMap` 같은 배열 메서드, 그리고 `Object.assign`과 `Object.fromEntries`
+
+다음은 작동하지 않습니다:
+
+- `class`. 파서가 거부하는 예약어이므로 이를 쓴 스크립트는 컴파일되지 않습니다. 대신 함수와 객체를 쓰세요.
+- `async`와 `await`, 그리고 `import`와 `export`.
+- 이벤트 스크립트나 아이템 스크립트의 `java`와 `Packages`, 그리고 모든 스크립트의 `Packages`([스크립트가 닿을 수 있는 것](#스크립트가-닿을-수-있는-것) 참고).
+- `console`, `setTimeout`, `require` 같은 브라우저와 Node 이름. 스크립트에는 이것들이 주어지지 않습니다. 기다리려면 `rdpl.schedule`을 쓰고, 보고하려면 로그를 쓰세요.
+
+실행마다 변수 집합이 새로 시작됩니다. 한 실행에서 설정한 `var`는 다음 실행에서 사라집니다. 계속 남아야 하는 것은 `rdpl.data()`에 두세요. 실행은 약 50ms가 지나면 멈추며([제한](#제한) 참고), 호출 스택의 깊이가 200을 넘으면 실패합니다.
+
+### 스크립트가 받는 값
+
+각 이벤트는 자신만의 값을 스크립트에 넘깁니다(이벤트 종류 표 참고). 이것들은 게임의 객체 그 자체이며, 이 버전의 클래스는 Mojang 이름을 그대로 가지므로, 스크립트는 `pos.getX()`나 `player.getName()`처럼 게임 코드가 쓰는 이름을 호출합니다. 객체의 public 메서드나 필드는 Mojang 이름으로 작동합니다.
+
+- 게임 타입을 인수로 받는 메서드(예: `DamageSource`)는 스크립트가 그것을 만들 수 없으므로 이벤트 스크립트에서 호출할 수 없습니다.
+- `Component`인 텍스트(예: 이름)는 `getString()`으로 평범한 문자열이 됩니다.
+
+객체에는 물어볼 레지스트리 이름이 없으므로, 블록이나 아이템의 ID는 레지스트리 홀더에서 읽습니다. `state.getBlock().builtInRegistryHolder().key().identifier()`이며, 텍스트와 비교하려면 `String(...)`으로 감쌉니다.
+
+```js
+var below = pos.below();
+var id = String(state.getBlock().builtInRegistryHolder().key().identifier());
+if (id === "minecraft:gold_block" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos`(블록 위치):
+
+| 멤버                                     | 제공하는 것                 |
+| ---------------------------------------- | --------------------------- |
+| `getX()`, `getY()`, `getZ()`             | 좌표, 숫자로                |
+| `above()`, `below()`                     | 한 블록 위 또는 아래의 위치 |
+| `north()`, `south()`, `east()`, `west()` | 한 블록 옆의 위치           |
+| `offset(x, y, z)`                        | 그만큼 옮긴 위치            |
+
+`state`(블록 상태):
+
+| 멤버                                                    | 제공하는 것                           |
+| ------------------------------------------------------- | ------------------------------------- |
+| `getBlock()`                                            | 블록                                  |
+| `getBlock().builtInRegistryHolder().key().identifier()` | 블록의 ID, 예: `minecraft:gold_block` |
+| `isAir()`                                               | 공기이면 true                         |
+| `isSolid()`                                             | 단단한 블록이면 true                  |
+| `hasBlockEntity()`                                      | 상자처럼 데이터를 가진 블록이면 true  |
+
+`entity`와 `player`(플레이어는 더 많은 것을 가진 엔티티):
+
+| 멤버                                            | 제공하는 것                                           |
+| ----------------------------------------------- | ----------------------------------------------------- |
+| `getName()`                                     | `Component`로서의 이름. 플레이어의 이름이나 몹의 이름 |
+| `getId()`, `getUUID()`                          | 숫자 ID와 UUID(그것에 `toString()`을 호출)            |
+| `blockPosition()`                               | 서 있는 블록 위치                                     |
+| `getX()`, `getY()`, `getZ()`                    | 정확한 위치, 숫자로                                   |
+| `isRemoved()`                                   | 제거되었으면 true                                     |
+| `isOnFire()`, `isShiftKeyDown()`, `isInWater()` | 상태                                                  |
+| `getHealth()`, `getMaxHealth()`                 | 살아 있는 엔티티(몹이나 플레이어)의 체력              |
+| `setHealth(value)`                              | 살아 있는 엔티티의 체력을 설정                        |
+| `getMainHandItem()`                             | 주손에 든 스택                                        |
+| `level()`                                       | 그것이 있는 월드                                      |
+| `getDisplayName()`                              | 채팅에 보이는 이름                                    |
+| `getFoodData().getFoodLevel()`(플레이어)        | 플레이어의 허기 수치                                  |
+| `isCreative()`(플레이어)                        | 창의 모드이면 true                                    |
+| `giveExperienceLevels(n)`(플레이어)             | 레벨을 줍니다                                         |
+| `entityTags()`                                  | 엔티티의 태그, `addStage`가 설정한 것을 포함          |
+
+아이템 스택(예: `player.getMainHandItem()`이나 `drops.stack(0)`)에는 다음 메서드가 있습니다:
+
+- `getCount()`는 스택에 든 아이템의 개수를 돌려줍니다.
+- `isEmpty()`는 스택에 아이템이 없으면 true입니다.
+- `getItem().builtInRegistryHolder().key().identifier()`는 아이템 ID를 돌려줍니다.
+- `getHoverName()`은 아이템의 이름을 `Component`로 돌려줍니다.
+
+단순 값:
+
+| 이름         | 이벤트에서                          | 설명                                                                                  |
+| ------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`, `loot_drop`          | 피해를 준 엔티티입니다. 추락, 화염 등이면 아무것도 없으니 쓰기 전에 확인하세요        |
+| `damageType` | `entity_hurt`, `loot_drop`          | 텍스트이며, 피해 종류의 메시지 ID입니다. 예: `player`, `mob`, `fall`, `lava`, `drown` |
+| `amount`     | `entity_hurt`                       | 피해량이며, 숫자입니다                                                                |
+| `from`, `to` | `dimension_change`, `entity_travel` | 텍스트로서의 차원 이름입니다. 예: `minecraft:overworld`나 `minecraft:the_nether`      |
+| `tick`       | `server_tick`                       | 오버월드의 월드 시간                                                                  |
+| `event`      | `mod_event`                         | `class`가 이름 짓는 클래스의 이벤트 객체이며, 그 public 메서드가 작동합니다           |
+| `drops`      | `loot_drop`                         | 드롭 목록입니다. 이벤트 종류 표 아래를 보세요                                         |
+
+`rdpl.level`은 서버 월드입니다. `rdpl.level.getBlockState(pos)`는 블록 상태를 주고, `rdpl.level.getGameTime()`은 월드 시간을 줍니다.
+
+### 오류가 가는 곳
+
+모든 스크립트 메시지는 게임 폴더의 `logs/rdpl.log`로 갑니다. 실패하는 스크립트는 게임을 결코 멈추지 않으며, 다른 스크립트도 멈추지 않습니다. 줄 안의 이름은 파일이면 `<namespace>:<path>` 형식입니다(예: `shrine:scripts/chest_broken.js`). 인라인 스크립트이면 `<entry file id>#<code>` 형식이며, 여기서 코드는 스크립트 텍스트로 만든 짧은 16진수입니다.
+
+| 경우                       | 줄                                                                                                                                                                                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 파일을 지정했지만 없음     | `Script <name> not found`                                                                                                                                                                                                                 |
+| 컴파일 오류(오타, `class`) | `Script <name> did not compile: <message>`, 그리고 다음 다시 불러오기 전까지 스크립트를 건너뜁니다                                                                                                                                        |
+| 실행 오류                  | `Script <name> failed: <message>`, 그다음 줄 번호와 함께 스크립트 스택                                                                                                                                                                    |
+| 50ms를 넘김                | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                                                           |
+| 꺼짐                       | `Script <name> is turned off until the next reload`. 실패하거나 `player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel` 또는 `mod_event` 스크립트가 시간을 넘긴 뒤에 기록되며, 모든 레지스트리 스크립트도 같습니다 |
+| 거부된 Java 접근           | `Script <name> failed: Scripts may not use <class>`. 스크립트가 닿는 `Class`, `ClassLoader`, `Thread`, `Runtime` 또는 리플렉션 객체에 대한 것입니다                                                                                       |
+| 예약된 함수가 실패         | `Script scheduled function took longer than 50 ms, stopped`, 또는 `Script scheduled function failed: <message>`                                                                                                                           |
+| 예약 함수가 너무 많음      | `Script scheduler: too many scheduled script functions, dropped`, 한 번 기록됩니다. 그 뒤에는 다시 불러오기 전까지 `rdpl.schedule`이 로그 줄 없이 추가 함수를 버립니다                                                                    |
+| 항목이 로드되지 않음       | `<file id>: <reason>, ignoring it`. 이유는 이벤트 표와 레지스트리 표 아래에 나와 있습니다                                                                                                                                                 |
+
+컴파일되지 않은 스크립트는 `/rdplserver reload`까지 실패 상태로 남습니다. 파일을 고친 뒤 다시 불러오세요. 이벤트 스크립트의 `java`와 `Packages`는 거부가 아닙니다. 그 이름이 존재하지 않을 뿐이며, 로그에는 그에 대한 참조 오류와 함께 `Script <name> failed:`가 적힙니다.
 
 ### 스크립트 이벤트
 
@@ -10573,43 +10885,78 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 
 필터 키:
 
-| 키          | 값                      | 맞는 것                     |
-| ----------- | ----------------------- | --------------------------- |
-| `dimension` | 차원 id 또는 그 목록    | 이벤트가 일어나는 차원      |
-| `block`     | 블록 id 또는 `#` 형식   | 놓이거나 부서진 블록        |
-| `entity`    | 엔티티 id               | 이벤트가 관련된 엔티티      |
-| `item`      | 아이템 id 또는 `#` 형식 | 플레이어가 들고 있는 아이템 |
+| 키          | 값                      | 맞는 것                                                    |
+| ----------- | ----------------------- | ---------------------------------------------------------- |
+| `dimension` | 차원 id 또는 그 목록    | 이벤트가 일어나는 차원                                     |
+| `block`     | 블록 id 또는 `#` 형식   | 놓이거나 부서진 블록                                       |
+| `entity`    | 엔티티 id               | 이벤트가 관련된 엔티티                                     |
+| `item`      | 아이템 id 또는 `#` 형식 | 플레이어, 공격자 또는 설치자가 주손에 든 아이템(아래 참고) |
+
+이벤트에 블록이 없으면 `block` 필터와 결코 맞지 않으므로, `block` 키가 있는 `entity_hurt`, `entity_spawn`, `entity_despawn`, `player_login` 항목은 결코 실행되지 않습니다.
+
+`item` 필터는 다음의 주손을 검사합니다:
+
+- `entity_hurt`의 공격자이며, 몹일 수도 있습니다
+- `block_break`와 `player_login`의 플레이어
+- `block_place`의 설치자입니다. 블록을 놓은 플레이어는 주손이나 보조손 중 어느 쪽으로든 맞습니다
 
 이벤트 종류:
 
-| 이벤트             | 발생 시점                                                         | 스크립트가 받는 값                                                         | `"cancel"` 작동                       |
-| ------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------- |
-| `block_place`      | 블록이 놓일 때                                                    | `rdpl`, `pos`, `state`, `entity`(놓은 쪽)                                  | 예                                    |
-| `block_break`      | 플레이어가 블록을 부술 때                                         | `rdpl`, `pos`, `state`, `player`                                           | 예                                    |
-| `entity_hurt`      | 플레이어를 포함한 살아 있는 모든 엔티티가 피해를 받기 직전        | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                       | 예                                    |
-| `entity_spawn`     | 몹이 처음으로 월드에 들어올 때(플레이어 제외)                     | `rdpl`, `entity`                                                           | 예, 그리고 엔티티는 나타나지 않습니다 |
-| `entity_despawn`   | 몹이 디스폰될 때, 또는 엔티티 변형의 시간제 제거가 그것을 끝낼 때 | `rdpl`, `entity`                                                           | 아니요                                |
-| `player_login`     | 플레이어가 접속할 때                                              | `rdpl`, `player`                                                           | 아니요                                |
-| `player_tick`      | 플레이어마다 `every` 틱마다, 틱이 끝난 뒤                         | `rdpl`, `player`, `pos`                                                    | 아니요                                |
-| `server_tick`      | 서버에서 `every` 틱마다 한 번, 틱이 끝난 뒤                       | `rdpl`(오버월드), `tick`(월드 시간)                                        | 아니요                                |
-| `dimension_change` | 플레이어가 다른 차원에 도착함                                     | `rdpl`, `player`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 아니요                                |
-| `loot_drop`        | 몹이 죽어 그 드롭이 곧 나타남                                     | `rdpl`, `entity`, `attacker`, `damageType`(피해 종류의 메시지 ID), `drops` | 아니요                                |
-| `entity_travel`    | 엔티티가 다른 차원으로 가려 함                                    | `rdpl`, `entity`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 예, 엔티티는 제자리에 남음            |
-| `mod_event`        | `class`가 가리키는 이벤트가 서버에서 일어날 때                    | `rdpl`, `event`, `player`                                                  | 예, 취소할 수 있는 이벤트일 때        |
+| 이벤트             | 발생 시점                                                                                                                                                 | 스크립트가 받는 값                                                         | `"cancel"` 작동                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------- |
+| `block_place`      | 블록이 놓일 때                                                                                                                                            | `rdpl`, `pos`, `state`, `entity`(놓은 쪽)                                  | 예                                    |
+| `block_break`      | 플레이어가 블록을 부술 때                                                                                                                                 | `rdpl`, `pos`, `state`, `player`                                           | 예                                    |
+| `entity_hurt`      | 플레이어를 포함한 살아 있는 모든 엔티티가 피해를 받기 직전. 그 피해에 무적이거나, 이미 죽었거나, 화염 피해에 대해 화염 저항 중인 엔티티에는 실행되지 않음 | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                       | 예                                    |
+| `entity_spawn`     | 몹이 처음으로 월드에 들어올 때(플레이어 제외)                                                                                                             | `rdpl`, `entity`                                                           | 예, 그리고 엔티티는 나타나지 않습니다 |
+| `entity_despawn`   | 몹이 디스폰될 때, 또는 엔티티 변형의 시간제 제거가 그것을 끝낼 때                                                                                         | `rdpl`, `entity`                                                           | 아니요                                |
+| `player_login`     | 플레이어가 접속할 때                                                                                                                                      | `rdpl`, `player`                                                           | 아니요                                |
+| `player_tick`      | 플레이어마다 `every` 틱마다, 틱이 끝난 뒤                                                                                                                 | `rdpl`, `player`, `pos`                                                    | 아니요                                |
+| `server_tick`      | 서버에서 `every` 틱마다 한 번, 틱이 끝난 뒤                                                                                                               | `rdpl`(오버월드), `tick`(월드 시간)                                        | 아니요                                |
+| `dimension_change` | 플레이어가 다른 차원에 도착함                                                                                                                             | `rdpl`, `player`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 아니요                                |
+| `loot_drop`        | 몹이 죽어 그 드롭이 곧 나타남                                                                                                                             | `rdpl`, `entity`, `attacker`, `damageType`(피해 종류의 메시지 ID), `drops` | 아니요                                |
+| `entity_travel`    | 엔티티가 다른 차원으로 가려 함                                                                                                                            | `rdpl`, `entity`, `from`, `to`(`minecraft:the_nether`처럼 차원 이름)       | 예, 엔티티는 제자리에 남음            |
+| `mod_event`        | `class`가 가리키는 이벤트가 서버에서 일어날 때                                                                                                            | `rdpl`, `event`, `player`                                                  | 예, 취소할 수 있는 이벤트일 때        |
 
 최종 값이 텍스트 `"cancel"`인 스크립트는 위 표에서 작동한다고 적힌 곳의 이벤트를 취소합니다. 구역 규칙이나 다른 모드가 이미 취소한 이벤트는 스크립트에 닿지 않습니다. `entity_despawn`은 처치, 청크 언로드, `/kill`로는 실행되지 않습니다.
 
-새 종류는 일부 필터 키만 읽습니다. `player_tick`과 `dimension_change`는 `dimension`과 `item`을 읽고, `loot_drop`과 `entity_travel`은 `dimension`, `entity`, `item`을 읽습니다. `server_tick`과 `mod_event`는 아무것도 읽지 않습니다. 이벤트가 읽지 않는 필터 키가 있으면 그 항목을 건너뛰고, 로그에 `the <event> event does not read the filter key '<key>', skipping the entry`라고 남깁니다. `entity`는 id와 `#monster`, `#creature`, `#ambient`, `#water_creature` 종류를 받습니다. `loot_drop`에서 `entity`는 죽은 몹이고 `item`은 그것을 처치한 쪽이 들고 있는 것입니다. `entity_travel`에서 `entity`는 이동하는 엔티티입니다. `player_tick`과 `server_tick`은 `every`로 달리 정하지 않으면 20틱마다 실행합니다. `server_tick`은 오버월드의 시계에 따라 서버당 한 번 실행하며, 플레이어는 없습니다.
+새 종류는 일부 필터 키만 읽습니다:
+
+- `player_tick`과 `dimension_change`는 `dimension`과 `item`을 읽습니다.
+- `loot_drop`과 `entity_travel`은 `dimension`, `entity`, `item`을 읽습니다.
+- `server_tick`과 `mod_event`는 아무 필터 키도 읽지 않습니다.
+
+이벤트가 읽지 않는 필터 키가 있는 항목은 건너뛰며, 로그에 `the <event> event does not read the filter key '<key>', skipping the entry`라고 남습니다.
+
+이 종류들의 세부 사항은 다음과 같습니다:
+
+- `entity`는 id와 `#monster`, `#creature`, `#ambient`, `#water_creature` 종류를 받습니다.
+- `loot_drop`에서 `entity`는 죽은 몹이고 `item`은 그것을 처치한 쪽이 들고 있는 것입니다. `entity_travel`에서 `entity`는 이동하는 엔티티입니다.
+- `player_tick`과 `server_tick`은 `every`로 달리 정하지 않으면 20틱마다 실행합니다.
+- `server_tick`은 플레이어마다가 아니라 서버당 한 번, 오버월드의 시계에 맞춰 실행하며, 플레이어는 없습니다.
 
 새 종류(`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`)의 스크립트가 실패하거나 제한 시간을 넘기면 다음 리로드 전까지 꺼지고, 로그에 `Script <name> is turned off until the next reload`라고 남습니다. 이전 종류의 스크립트는 계속 실행됩니다.
 
-`loot_drop`의 `drops`는 몹이 떨어뜨리는 것의 목록입니다. `drops.size()`는 개수를 세고, `drops.stack(index)`는 그 자리의 아이템 스택을, `drops.remove(index)`는 하나를 꺼내며, `drops.clear()`는 모두 꺼내고, `drops.add(item, count)`는 몹이 죽은 자리에 나타나는 스택을 추가합니다. 스크립트는 한 번의 죽음에 최대 32개의 스택을 추가할 수 있습니다. 더 추가하려 하면 `A loot_drop script can add at most 32 stacks`라는 메시지로 스크립트가 멈추고, 알 수 없는 아이템이나 1보다 작은 개수는 `Unknown item`으로 멈춥니다. 다른 스크립트 오류와 같습니다.
+`loot_drop`의 `drops`는 몹이 떨어뜨리는 것의 목록입니다:
 
-`mod_event`는 스크립트가 다른 모드의 이벤트나 게임 자체의 이벤트를 클래스 이름으로 듣게 합니다. 클래스는 `class`에 전체 이름으로 적습니다. 다음 경우 항목은 무시되고 로그에 남습니다. `class`가 없을 때(`a mod_event needs a class`), 그런 클래스가 없을 때(`the class <name> was not found`), 들을 수 있는 이벤트 클래스가 아닐 때(`the class <name> is not a Forge event`). 정확히 그 클래스만 인정되며, 그것을 상속한 이벤트는 스크립트를 실행하지 않습니다. 스크립트는 서버 스레드에서만 실행되며, 이벤트의 엔티티나 월드가 있는 월드에서 실행되고, 둘 다 없으면 오버월드에서 실행됩니다. 스크립트 자신이 일으킨 같은 클래스의 이벤트는 스크립트를 다시 실행하지 않습니다. 스크립트는 `rdpl`, `event`(이벤트 객체), `player`(이벤트와 관련된 플레이어, 없으면 아무것도 아님)를 받습니다. `every`와 다른 키는 다른 이벤트와 같이 동작합니다. `"cancel"` 결과는 취소할 수 있는 이벤트를 취소합니다.
+- `drops.size()`는 목록에 있는 스택의 개수를 돌려줍니다.
+- `drops.stack(index)`는 그 자리의 아이템 스택을 돌려줍니다.
+- `drops.remove(index)`는 스택 하나를 제거합니다.
+- `drops.clear()`는 모두 제거합니다.
+- `drops.add(item, count)`는 몹이 죽은 자리에 나타나는 스택을 추가합니다.
+
+한 번의 죽음에 스크립트는 최대 32개의 스택을 추가할 수 있습니다. 더 추가하면 스크립트가 `A loot_drop script can add at most 32 stacks` 오류로 멈추며, 알 수 없는 아이템이나 1보다 작은 개수는 `Unknown item`으로 멈춥니다. 둘 다 다른 스크립트 오류와 같이 기록됩니다.
+
+`mod_event`는 스크립트가 다른 모드의 이벤트나 게임 자체의 이벤트를 클래스 이름으로 듣게 합니다. 전체 클래스 이름을 `class`에 적습니다. 스크립트는 서버 스레드에서만 실행되며, 이벤트의 엔티티나 월드가 있는 월드에서 실행되고, 둘 다 없으면 오버월드에서 실행됩니다. 스크립트 자신이 일으킨 같은 클래스의 이벤트는 스크립트를 다시 실행하지 않습니다. 스크립트는 `rdpl`, `event`(이벤트 객체), `player`(이벤트와 관련된 플레이어, 없으면 `null`)를 받습니다. `every`와 나머지 키는 다른 이벤트와 같이 작동합니다. `"cancel"` 결과는 취소할 수 있는 이벤트일 때 그 이벤트를 취소합니다.
+
+정확히 그 클래스만 인정되며, 그것을 상속하는 이벤트는 스크립트를 실행하지 않습니다. 다음의 경우 항목은 무시되고, 로그에 이유가 남습니다:
+
+- `class`가 없을 때(`a mod_event needs a class`)
+- 그런 클래스가 없을 때(`the class <name> was not found`)
+- 들을 수 있는 이벤트 클래스가 아닐 때(`the class <name> is not a Forge event`)
 
 ### 레지스트리 스크립트
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
 파일 이름은 자유롭게 정할 수 있고, 폴더만 읽히며, 여러 파일이 쌓입니다. 레지스트리 스크립트는 게임이 로드되는 동안 게임 내장 레지스트리 중 하나에 객체를 추가하며, 팩만으로는 할 수 없는 일입니다. 블록과 아이템과 같이 `content` 범주에서 `load`가 켜져 있고 `vanillaClients`가 꺼져 있어야 합니다.
 
@@ -10623,7 +10970,7 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
 ```js
 var I = java("net.minecraft.world.item.Item");
 var P = java("net.minecraft.world.item.Item$Properties");
-registry.register("mypack:script_item", new I(new P()));
+registry.register("mypack:script_item", new I(new P().setId(registry.key("mypack:script_item"))));
 ```
 
 | 키           | 필수       | 값              | 기본값 | 설명                                                                                                                              |
@@ -10632,13 +10979,38 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | 둘 중 하나 | 텍스트          | 없음   | 실행할 인라인 JavaScript입니다                                                                                                    |
 | `scriptFile` | 둘 중 하나 | 경로            | 없음   | 같은 네임스페이스의 `scripts/` 아래 경로이며 `.js`로 끝납니다                                                                     |
 
-스크립트는 그 레지스트리가 등록을 위해 열릴 때 한 번 실행되며, 모든 모드가 자기 것을 등록한 뒤입니다. 스크립트는 두 가지를 받습니다. `registry`는 메서드 하나, `register(name, object)`를 가지며 `object`를 `name`으로 추가합니다. `java(className)`은 Java 클래스를 돌려주어 스크립트가 객체를 만들 수 있게 합니다. 존재하지 않는 클래스는 `The class <name> was not found`로 실패합니다. 아직 월드가 없으므로 스크립트는 `rdpl`을 받지 않습니다.
+스크립트는 그 레지스트리가 등록을 위해 열릴 때 한 번 실행되며, 이때는 모든 모드가 자기 것을 등록한 뒤입니다. 아직 월드가 없으므로 `rdpl`은 받지 않고, 두 개의 변수를 받습니다:
 
-`register`는 다음의 경우 거부하고 로그에 남기며, 스크립트는 계속 진행됩니다: 객체가 레지스트리가 담는 종류가 아닐 때(`is not a <type>, not registering it`), 이름이 올바른 ID가 아닐 때(`could not be registered: not a valid name`), 이름이 팩 자체의 네임스페이스에 없을 때(`is not in the pack namespace <namespace>, not registering it`), 이름이 이미 쓰일 때(`is already registered in <registry>, skipping it`), 그리고 레지스트리 자체가 거부할 때(`could not be registered`). 성공하면 `Script <name> registered <id> in <registry>`가 로그에 남습니다. 항목 자체는 `registry`가 없을 때(`needs a registry`), 스크립트가 없을 때(`needs script or scriptFile`), 레지스트리가 스크립트로 추가할 수 없는 것일 때(`the registry '<name>' is not a registry that scripts can add to, ignoring it`), 그리고 어느 모드도 그 레지스트리를 제공하지 않을 때(`no mod provides the registry '<name>', ignoring it`) 로그에 기록되고 무시됩니다. 실패하거나 한도를 넘긴 스크립트는 다음 다시 불러오기 전까지 꺼집니다. 이런 방식으로 등록된 객체는 스크립트가 준 것만 가집니다. 블록이나 아이템은 여전히 자체 모델, 텍스처, 언어 항목이 필요합니다.
+- `registry`는 메서드 두 개를 가집니다. `register(name, object)`는 `object`를 `name`으로 추가하고, `key(name)`은 그 이름의 레지스트리 키를 돌려줍니다. 이 게임 버전의 아이템이나 블록은 만들어질 때 `setId`로 이 키가 필요합니다.
+- `java(className)`은 전체 이름으로 Java 클래스를 돌려주므로 스크립트가 객체를 만들 수 있습니다. 존재하지 않는 클래스는 `The class <name> was not found`로 실패합니다.
+
+`register`는 다음의 경우 줄을 로그에 남기고 객체를 거부하며, 스크립트는 계속 진행합니다:
+
+- 객체가 레지스트리가 담는 종류가 아닐 때(`is not a <type>, not registering it`)
+- 이름이 올바른 ID가 아닐 때(`could not be registered: not a valid name`)
+- 이름이 팩 자체의 네임스페이스에 없을 때(`is not in the pack namespace <namespace>, not registering it`)
+- 이름이 이미 쓰일 때(`is already registered in <registry>, skipping it`)
+- 레지스트리 자체가 객체를 거부할 때(`could not be registered`)
+
+성공하면 `Script <name> registered <id> in <registry>`가 로그에 남습니다.
+
+항목 자체는 다음의 경우 로그에 기록되고 무시됩니다:
+
+- `registry`가 없을 때(`needs a registry`)
+- 스크립트가 없을 때(`needs script or scriptFile`)
+- 레지스트리가 스크립트로 추가할 수 없는 것일 때(`the registry '<name>' is not a registry that scripts can add to, ignoring it`)
+- 어느 모드도 그 레지스트리를 제공하지 않을 때(`no mod provides the registry '<name>', ignoring it`)
+
+실패하거나 한도를 넘긴 레지스트리 스크립트는 다음 다시 불러오기 전까지 꺼집니다. 이런 방식으로 등록된 객체는 스크립트가 준 것만 가집니다. 블록이나 아이템은 여전히 자체 모델, 텍스처, 언어 항목이 필요합니다.
 
 ### 스크립트 파일이 놓이는 곳
 
-스크립트와 관련된 모든 것은 팩의 `data/<namespace>/scripts/` 폴더 아래에 있습니다. 이벤트 항목은 `data/<namespace>/scripts/events/`에 둡니다. `.js` 파일은 `data/<namespace>/scripts/` 아래 어디에나 둘 수 있으며, 팩 경로로 이름이 정해집니다. 그래서 `"scriptFile": "scripts/trophy_altar.js"`는 `data/<namespace>/scripts/trophy_altar.js`를 읽습니다. 아이템도 같은 방식으로 `script` 또는 `scriptFile`을 써서 스크립트를 지정하며([아이템](#아이템) 참고), 레시피 교체 파일도 그렇습니다([레시피 교체](#레시피-교체) 참고).
+스크립트와 관련된 모든 것은 팩의 `data/<namespace>/scripts/` 폴더 아래에 있습니다. 이벤트 항목은 `data/<namespace>/scripts/events/`에 둡니다. `.js` 파일은 `data/<namespace>/scripts/` 아래 어디에나 둘 수 있으며, 팩 경로로 이름이 정해집니다. 그래서 `"scriptFile": "scripts/trophy_altar.js"`는 `data/<namespace>/scripts/trophy_altar.js`를 읽습니다. 아이템도 같은 방식으로 `script` 또는 `scriptFile`을 써서 스크립트를 지정하며([아이템](#아이템) 참고), 레시피 교체 파일과 팩 명령도 그렇습니다([레시피 교체](#레시피-교체), [팩 명령어](#팩-명령어) 참고).
+
+두 가지 다른 종류의 스크립트는 자신만의 변수를 받습니다:
+
+- 아이템 스크립트는 플레이어가 아이템을 우클릭하면 서버에서 실행됩니다. `rdpl`, `item`(클릭한 손에 든 스택), `hand`(텍스트 `MAIN_HAND` 또는 `OFF_HAND`)를 받습니다. `"cancel"` 결과는 아이템의 쿨다운 설정만 건너뛰며, 우클릭 자체는 그대로 진행됩니다.
+- 명령 스크립트는 `rdpl`, `sender`([팩 명령어](#팩-명령어)의 메서드 참고)와 인수마다 변수 하나를 받습니다.
 
 ### rdpl 객체
 
@@ -10648,40 +11020,42 @@ registry.register("mypack:script_item", new I(new P()));
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| 멤버                                                 | 하는 일                                                                                                                                                                                                                         |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | 플레이어입니다. 이벤트에 플레이어가 없으면 아무것도 없습니다                                                                                                                                                                    |
-| `level`                                              | 월드입니다                                                                                                                                                                                                                      |
-| `runCommand(command)`                                | 플레이어로서 명령을 실행합니다. 플레이어가 없으면 월드 스폰 지점에서 권한 레벨 2로 실행합니다. 성공하면 true를 돌려줍니다                                                                                                       |
-| `give(item, count)`                                  | 플레이어에게 그 아이템을 그 개수만큼 줍니다                                                                                                                                                                                     |
-| `actionbar(text)`                                    | 플레이어의 액션바에 텍스트를 보여 줍니다                                                                                                                                                                                        |
-| `cooldown(item, ticks)`                              | 플레이어에게 그 아이템을 이 틱 수만큼 쿨다운에 둡니다                                                                                                                                                                           |
-| `card(id, "key=value", ...)`                         | 인수와 함께 카드를 띄웁니다                                                                                                                                                                                                     |
-| `schedule(ticks, function)`                          | 틱이 지난 뒤 함수를 실행합니다. 동시에 최대 1000개가 기다릴 수 있습니다. 다시 불러오면 대기열이 비워집니다                                                                                                                      |
-| `data()`, `data(player)`, `teamData(name)`           | `get`, `set`, `has`, `remove`를 가진 저장 저장소입니다. 텍스트, 숫자, true/false를 담으며 월드 저장에 보관됩니다. `data()`는 월드의 것, `data(player)`는 플레이어의 것, `teamData(name)`은 팀의 것입니다                        |
-| `sync(name, value)`                                  | 플레이어의 동기화 값을 설정하며, 이벤트에 플레이어가 없으면 월드의 값을 설정합니다. 값은 텍스트, 숫자, true/false입니다. 설정되면 true를, 규칙이 거부하면 false를 돌려주며 로그에 남깁니다. 그 밖의 값은 스크립트 오류를 냅니다 |
-| `syncTo(player, name, value)`                        | 다른 플레이어에 대해 같은 일을 합니다                                                                                                                                                                                           |
-| `syncAll(name, value)`                               | 월드에 대해 같은 일을 합니다                                                                                                                                                                                                    |
-| `unsync(name)`                                       | 플레이어의 값을 지우며, 이벤트에 플레이어가 없으면 월드의 값을 지웁니다. 값이 있었으면 true를 돌려줍니다                                                                                                                        |
-| `synced(name)`                                       | 읽었을 때 나오는 값입니다. 플레이어 자신의 값, 그다음 월드 값, 그다음 기본값 순이며, 이벤트에 플레이어가 없으면 월드 값과 기본값입니다. 설정된 값이 없으면 아무것도 나오지 않습니다                                             |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 플레이어의 태그를 확인하거나, 더하거나, 뺍니다                                                                                                                                                                                  |
-| `score(objective)`, `setScore(objective, value)`     | 플레이어의 스코어보드 목표 점수를 읽거나 설정합니다                                                                                                                                                                             |
-| `hasAdvancement(id)`                                 | 플레이어가 그 발전 과제를 가지고 있으면 true입니다                                                                                                                                                                              |
-| `world.scan(player, match)`                          | 플레이어 인벤토리와 그 안의 셜커 상자에서 맞는 아이템 개수를 셉니다. `match`는 아이템 id, `#` 형식, 또는 스택마다 호출되는 함수입니다                                                                                           |
-| `world.scanAt(x, y, z, match)`                       | 같은 것을, 그 위치의 용기 블록에 대해 합니다                                                                                                                                                                                    |
-| `world.capability(x, y, z, type)`                    | 그 위치 블록의 핸들러를 `"items"`, `"fluids"`, `"energy"`에 대해 돌려줍니다                                                                                                                                                     |
-| `world.placeStructure(template, x, y, z)`            | 그 위치에 구조물 템플릿을 놓습니다                                                                                                                                                                                              |
-| `world.summon(id, x, y, z, nbt)`                     | 그 위치에 엔티티를 소환합니다. NBT는 선택 사항입니다                                                                                                                                                                            |
+| 멤버                                                 | 하는 일                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | 플레이어입니다. 이벤트에 플레이어가 없으면 아무것도 없습니다                                                                                                                                                                                                                                          |
+| `level`                                              | 월드입니다                                                                                                                                                                                                                                                                                            |
+| `runCommand(command)`                                | 플레이어로서 명령을 실행합니다. 플레이어가 없으면 월드 스폰 지점에서 권한 레벨 2로 실행합니다. 성공하면 true를 돌려줍니다                                                                                                                                                                             |
+| `give(item, count)`                                  | 플레이어에게 그 아이템을 그 개수만큼 줍니다                                                                                                                                                                                                                                                           |
+| `actionbar(text)`                                    | 플레이어의 액션바에 텍스트를 보여 줍니다. 플레이어가 없으면 아무것도 하지 않습니다                                                                                                                                                                                                                    |
+| `cooldown(item, ticks)`                              | 플레이어에게 그 아이템을 이 틱 수만큼 쿨다운에 둡니다. 플레이어가 없으면 아무것도 하지 않으며, 알 수 없는 아이템은 플레이어 유무와 관계없이 스크립트 오류를 냅니다                                                                                                                                    |
+| `card(id, "key=value", ...)`                         | 인수와 함께 카드를 띄웁니다. 알 수 없는 카드 id이거나 플레이어가 없으면 `false`를, 그 밖에는 `true`를 돌려줍니다. `key=value` 형식이 아닌 인수는 버려집니다                                                                                                                                           |
+| `schedule(ticks, function)`                          | 틱이 지난 뒤, 그리고 최소 1틱 뒤에 함수를 실행합니다. 동시에 최대 1000개가 기다릴 수 있으며, 넘치는 것은 버려집니다. 다시 불러오거나 서버가 멈추면 대기열이 비워집니다. 플레이어가 있는 이벤트가 예약한 함수는, 기한이 되었을 때 그 플레이어가 오프라인이면 버려집니다                                |
+| `data()`, `data(player)`, `teamData(name)`           | `get`, `set`, `has`, `remove`를 가진 저장 저장소입니다. 텍스트, 숫자, true/false를 담으며 월드 저장에 보관됩니다. `data()`는 월드의 것, `data(player)`는 플레이어의 것, `teamData(name)`은 팀의 것입니다. 이벤트에 플레이어가 없을 때 `data(player)`는 스크립트 오류를 냅니다                         |
+| `sync(name, value)`                                  | 플레이어의 동기화 값을 설정하며, 이벤트에 플레이어가 없으면 월드의 값을 설정합니다. 값은 텍스트, 숫자, true/false입니다. 설정되면 true를, 규칙이 거부하면 false를 돌려주며 로그에 남깁니다. 그 밖의 값은 스크립트 오류를 냅니다                                                                       |
+| `syncTo(player, name, value)`                        | 다른 플레이어에 대해 같은 일을 합니다                                                                                                                                                                                                                                                                 |
+| `syncAll(name, value)`                               | 월드에 대해 같은 일을 합니다                                                                                                                                                                                                                                                                          |
+| `unsync(name)`                                       | 플레이어의 값을 지우며, 이벤트에 플레이어가 없으면 월드의 값을 지웁니다. 값이 있었으면 true를 돌려줍니다                                                                                                                                                                                              |
+| `synced(name)`                                       | 읽었을 때 나오는 값입니다. 플레이어 자신의 값, 그다음 월드 값, 그다음 기본값 순이며, 이벤트에 플레이어가 없으면 월드 값과 기본값입니다. 설정된 값이 없으면 `null`을 돌려줍니다                                                                                                                        |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 플레이어의 태그를 확인하거나, 더하거나, 뺍니다. 플레이어가 없으면 `hasStage`는 `false`를 돌려주고, 나머지 둘은 아무것도 하지 않습니다                                                                                                                                                                 |
+| `score(objective)`, `setScore(objective, value)`     | 플레이어의 스코어보드 목표 점수를 읽거나 설정합니다. 플레이어가 없으면 `score`는 0을, `setScore`는 아무것도 하지 않습니다. 알 수 없는 목표에 대한 `setScore`는 스크립트 오류를 냅니다                                                                                                                 |
+| `hasAdvancement(id)`                                 | 플레이어가 그 발전 과제를 가지고 있으면 true입니다                                                                                                                                                                                                                                                    |
+| `world.scan(player, match)`                          | 플레이어 인벤토리와 그 안의 셜커 상자에서 맞는 아이템 개수를 셉니다. `match`는 아이템 id, `#` 형식, 또는 스택마다 호출되는 함수입니다                                                                                                                                                                 |
+| `world.scanAt(x, y, z, match)`                       | 같은 것을, 그 위치의 용기 블록에 대해 합니다                                                                                                                                                                                                                                                          |
+| `world.capability(x, y, z, type)`                    | 그 위치 블록의 핸들러를 `"items"`, `"fluids"`, `"energy"`에 대해 돌려줍니다. NeoForge의 transfer API(`Capabilities.Item.BLOCK`, `Fluid.BLOCK`, `Energy.BLOCK`)에서 가져오며, 면을 지정하지 않고 묻습니다. 블록이 로드되지 않았거나, 그 핸들러가 없거나, 종류가 그 밖의 문자열이면 `null`을 돌려줍니다 |
+| `world.placeStructure(template, x, y, z)`            | 그 위치에 구조물 템플릿을 놓습니다. 그런 템플릿이 없으면 `false`를 돌려줍니다                                                                                                                                                                                                                         |
+| `world.summon(id, x, y, z, nbt)`                     | 그 위치에 엔티티를 소환합니다. NBT는 선택 사항입니다. 잘못된 NBT는 스크립트 오류(`Bad entity NBT`)를 내며, 엔티티를 만들 수 없으면 `false`를 돌려줍니다. NBT가 비어 있으면 몹은 게임의 일반 스폰 초기화(`finalizeSpawn`)도 거칩니다                                                                   |
 
 ### 스크립트가 닿을 수 있는 것
 
-스크립트는 `rdpl` 객체, 각 이벤트가 넘겨주는 값(이벤트 종류 표 참고), 그리고 그 값이 돌려주는 게임 타입만 봅니다. `Packages`는 어떤 스크립트에도 없고, `java`는 레지스트리 스크립트([레지스트리 스크립트](#레지스트리-스크립트) 참고)에만 있습니다. 이벤트, 아이템, 명령, 레시피 재작성 스크립트에는 없습니다. 그 밖의 것을 요청하면 거부되며, 거부는 한 번 로그에 기록됩니다.
+이벤트 스크립트, 아이템 스크립트, 명령 스크립트, 레시피 재작성 스크립트, 예약된 함수는 `rdpl` 객체, 이벤트가 넘겨주는 값(이벤트 종류 표 참고), 그리고 그 객체들의 메서드가 돌려주는 것만 봅니다. 이들에는 `java`와 `Packages`가 없으므로 Java 클래스의 이름을 대거나 `new`로 객체를 만들 수 없습니다. `Packages`는 어떤 스크립트에도 없습니다.
 
-스크립트는 전체 이름으로 어떤 자바 클래스든 쓸 수 있습니다. 실제로는 `java(className)`으로 클래스를 요청하는 레지스트리 스크립트에서 쓰입니다.
+레지스트리 스크립트는 추가로 `java(className)`을 받습니다. 이것은 그 전체 이름의 클래스를 돌려주며, 예를 들어 `net.minecraft.world.item.Item`이 있습니다. 게임이 로드한 어떤 클래스든 이 방식으로 요청할 수 있고, 허용 목록은 없습니다. 클래스가 아닌 이름은 `The class <name> was not found`로 실패합니다.
+
+모든 스크립트에서, 다음 종류의 객체는 호출이 그것을 돌려주거나 넘길 때 거부됩니다. `Class`, `ClassLoader`, `Thread`, `Runtime`, 그리고 리플렉션 객체(`Method`, `Field`, `Constructor`)입니다. 스크립트는 `Scripts may not use <class>`로 멈추며, 로그에 `Script <name> failed:` 줄이 남습니다.
 
 ### 제한
 
-- 실행은 50ms가 지나면 멈춥니다. 로그 오류에 스크립트 이름이 적힙니다.
+- 실행은 50ms가 지나면 멈춥니다. 로그 오류에 스크립트 이름이 적힙니다. 시간은 10000개의 명령어마다 확인되므로, 실행이 제한을 조금 넘을 수 있습니다.
 - `try`/`catch`로도 그 제한을 넘겨서 실행을 살릴 수 없습니다.
 - 오류는 스크립트의 팩 경로와 함께 로그에 기록됩니다. 게임을 멈추지 않습니다.
 - `every`와 필터는 스크립트가 실행되기 전에 확인되어 비용을 줄입니다.

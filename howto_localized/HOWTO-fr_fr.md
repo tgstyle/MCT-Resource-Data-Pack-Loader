@@ -2366,12 +2366,14 @@ Une méthode qui existe avec plusieurs listes de paramètres doit être nommée 
 | `true`, `false`      | `boolean`                                                                                  |                                                                                                  |
 | chaîne               | `String`, `char`                                                                           | Un `char` prend une chaîne d'un seul caractère                                                   |
 | chaîne               | un enum                                                                                    | Un nom de constante, en majuscules ou en minuscules                                              |
+| chaîne               | `ToolMaterial`                                                                             | Une constante de `ToolMaterial` sans deux-points, comme `iron` ou `netherite`                    |
 | chaîne               | `Identifier`                                                                               | `mod:name`                                                                                       |
 | chaîne               | `ItemStack`                                                                                | Une pile écrite comme les fichiers de pack l'écrivent ailleurs. Elle ne doit pas être vide       |
 | chaîne               | `Item`, `Block`, `Fluid`, `SoundEvent`, `MobEffect`, `EntityType`, `Potion` ou `Attribute` | Le nom de registre. Il doit être enregistré                                                      |
 | tableau              | un tableau, ou une `List`, `Set` ou `Collection`                                           | Chaque élément suit ce tableau. Un champ de collection est remplacé entièrement, jamais complété |
 | objet                | tout autre objet                                                                           | Un objet imbriqué, voir plus bas                                                                 |
 | chaîne `<ns>:<item>` | tout autre objet                                                                           | Réutilise l'objet que cet objet dérivé a construit au même chemin, voir plus bas                 |
+| chaîne `#<ns>:<tag>` | un champ `TagKey`                                                                          | Un tag du registre du champ, comme `#c:ingots/iron`                                              |
 
 **Objets imbriqués.** Un objet JSON sous `set` a les trois mêmes clés que le fichier : `set`, `returns` et `addTo`. Il modifie une copie de l'objet que détient le champ, si bien que l'objet de base et tout ce qui partage cet objet conservent l'original. C'est une copie à l'écriture : seuls les objets le long d'un chemin que vous écrivez sont copiés, et chaque autre champ continue de pointer vers le même objet que la base.
 
@@ -2405,6 +2407,35 @@ Un objet dérivé dont la base est un autre objet dérivé, ou qui réutilise l'
 Quatre cas excluent l'objet entier : la base manque, la base est un objet-bloc, la classe de base est finale, scellée ou un record, ou la classe de base vient d'un module que RDPL ne voit pas. Une base sans composant à copier est aussi laissée de côté.
 
 Une fois le serveur démarré, chaque objet dérivé est vérifié une fois de plus. Celui qui sort sans son nom, son modèle ou les composants de la base est consigné comme erreur.
+
+#### Exemple : un objet de mod qui garde ses statistiques dans un objet
+
+Certains mods gardent les valeurs d'un objet dans un objet que l'objet contient, et non dans des composants. Un objet dérivé copie cet objet avant d'y écrire, donc une variante ne demande aucun code. Copiez l'objet, utilisez `set` pour donner aux champs de l'objet leur valeur par chemin pointé, et donnez à la copie sa propre icône. Les noms ci-dessous sont un exemple : `othermod`, `power_blade` et `stats` remplacent les noms réels de l'objet et des champs d'un mod.
+
+`data/mypack/items/power_blade_plus.json`
+
+```json
+{
+  "item": "othermod:power_blade",
+  "requires": ["othermod"],
+  "name": "Power Blade+",
+  "set": {
+    "stats.power": 12,
+    "stats.cooldown": 8.5,
+    "stats.repairTag": "#c:ingots/iron",
+    "stats.material": "diamond"
+  }
+}
+```
+
+| Entrée            | Ce qui change                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `stats.power`     | Un champ entier de l'objet                                                                            |
+| `stats.cooldown`  | Un champ décimal                                                                                      |
+| `stats.repairTag` | Un champ de tag. Une chaîne commençant par `#` est un tag du registre du champ, ici des objets        |
+| `stats.material`  | Un champ qui contient un matériau d'outil, écrit avec le nom simple d'une constante de `ToolMaterial` |
+
+L'objet de base garde ses propres valeurs. Mettez l'icône de la copie dans `assets/mypack/textures/item/power_blade_plus.png` et son modèle dans `assets/mypack/items/power_blade_plus.json`. Une copie n'hérite d'aucune recette de la base, donc donnez-lui en une.
 
 #### Messages du journal
 
@@ -2454,6 +2485,7 @@ Une fois le serveur démarré, chaque objet dérivé est vérifié une fois de p
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | Le membre n'est pas une collection                                                                    |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | Le type d'élément de la collection n'accepte pas l'objet                                              |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo` a échoué, par exemple parce que la classe n'existe pas                                        |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | Une chaîne `#` dans un champ de tag ne nomme aucun tag que le registre peut construire                |
 | `Registered {} derived item(s) from packs`                                                                                | La ligne de synthèse, avec le nombre d'objets créés                                                   |
 
 ## Fluides
@@ -3386,7 +3418,7 @@ Transfert : un fichier qui fait garder au résultat les données d'un ingrédien
 
 Le premier ingrédient correspondant de la grille sert pour chacun, et les deux doivent être dans des emplacements différents. La recette est enveloppée : l'aperçu du résultat, un clic normal et un shift-clic donnent tous le même résultat, et un client vanilla voit la recette autour de laquelle elle a été enveloppée. Le journal en fait le total : `Gave N crafting recipe(s) a transfer`.
 
-Réécritures de recettes : un fichier de `recipe_swaps` qui a `template`, `edit`, `script`, ou l'un d'eux ou plusieurs, sans avoir besoin de `swaps`, modifie les recettes d'après leur JSON. Il couvre les recettes que nomment sa limite `recipes` et sa liste `types`, et quand les deux sont données, une recette doit correspondre aux deux.
+Réécritures de recettes : un fichier de `recipe_swaps` qui contient `template`, `edit`, `script` ou `scriptFile`, seul ou en combinaison, modifie les recettes d'après leur JSON et n'a pas besoin de `swaps`. Il couvre les recettes que nomment sa limite `recipes` et sa liste `types`, et quand les deux sont données, une recette doit correspondre aux deux. Un fichier avec `script` ou `scriptFile` et sans `swaps` est accepté. Quand le fichier a aussi `swaps`, les swaps s'appliquent toujours et le script s'exécute aussi.
 
 ```json
 {
@@ -10545,7 +10577,287 @@ Un plateau est gardé dans les données sauvegardées du monde sous la forme de 
 
 ## Scripts
 
-Un script s'exécute lorsqu'un JSON du pack le nomme, avec `scriptFile` (un fichier `.js` du pack) ou `script` (du JavaScript écrit directement dans le JSON). Un fichier `.js` qu'aucun JSON ne nomme ne s'exécute jamais. Les scripts sont du JavaScript de niveau ES6 environ. RDPL les exécute avec le moteur Rhino intégré au mod, sous forme de code interprété.
+Un script s'exécute lorsqu'un JSON du pack le nomme, avec `scriptFile` (un fichier `.js` du pack) ou `script` (du JavaScript écrit directement dans le JSON). Un fichier `.js` qu'aucun JSON ne nomme ne s'exécute jamais. Les scripts sont du JavaScript de niveau ES6 environ. RDPL les exécute avec le moteur Rhino intégré au mod, sous forme de code interprété. Cette section commence par un script qui fonctionne, puis donne la référence : les événements, l'objet `rdpl`, les valeurs que reçoit un script, le JavaScript qui fonctionne et l'endroit où vont les erreurs.
+
+### Activer les scripts
+
+Il n'existe pas d'interrupteur. Un pack qui possède un fichier `data/<namespace>/scripts/events/*.json` avec une entrée valide exécute ses scripts dès que le pack se charge, et `/rdplserver reload` les charge de nouveau. Rien dans les fichiers de configuration du jeu ne désactive les scripts d'événement, les scripts d'objet ni `rdpl`, et le journal ne contient aucune ligne indiquant qu'un script a été ignoré parce que les scripts sont désactivés ou non autorisés.
+
+Les scripts de registre font exception. Ils s'exécutent pendant le chargement du jeu, il faut donc que la catégorie `content` ait `load` activé (la valeur par défaut) et `vanillaClients` désactivé (la valeur par défaut). Si l'un des deux est modifié, les scripts de registre ne s'exécutent jamais, et aucune ligne ne le signale. Avec `load` activé et `vanillaClients` désactivé, une entrée dont aucun mod ne fournit le registre est journalisée sous la forme `no mod provides the registry '<name>', ignoring it`.
+
+Un script installé qui ne fait rien n'est donc jamais désactivé : vérifiez plutôt le JSON du pack et le journal (voir [Où vont les erreurs](#où-vont-les-erreurs)).
+
+### Votre premier script
+
+Ce pack indique ce que contenait un coffre. Quand un joueur casse un coffre, la barre d'action affiche le nombre de lingots d'or qu'il contenait. Le pack est un zip dans `rdploader/`, avec cette arborescence :
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta` est facultatif, puisque le mod transmet lui-même chaque pack au jeu. Si vous en incluez un, il fixe le format du pack, soit 101 sur 26.1.2 et 107 sur 26.2. La plage ci-dessous couvre les deux, ainsi le pack se charge tel quel sur l'une ou l'autre version :
+
+```json
+{
+  "pack": {
+    "pack_format": 101,
+    "min_format": 101,
+    "max_format": 107,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json` nomme l'événement, filtre sur les coffres et pointe vers le fichier de script :
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js` :
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+Le script reçoit `pos` (la position du bloc cassé) et `rdpl`, parce que `block_break` les remet, comme l'indique le tableau des types d'événements. `rdpl.world.scanAt` compte les lingots d'or dans le conteneur à cette position, et `rdpl.actionbar` affiche le texte au joueur qui a cassé le bloc.
+
+Pour l'essayer :
+
+1. Placez le zip dans `rdploader/` et lancez un monde, ou exécutez `/rdplserver reload` dans un monde déjà lancé.
+2. Placez un coffre, mettez-y quelques lingots d'or, puis cassez-le.
+3. La barre d'action affiche `Chest held 3 gold ingots, item handler: true`, avec votre décompte.
+
+Si rien ne se passe, ouvrez `logs/rdpl.log` dans le dossier du jeu. Le journal nomme le fichier et ignore l'entrée quand elle contient :
+
+- une faute de frappe dans une clé
+- un événement inconnu
+- un `scriptFile` qui ne commence pas par `scripts/` et ne se termine pas par `.js`
+
+Un script qui échoue est journalisé sous la forme `Script shrine:scripts/chest_broken.js failed: ...`, avec le numéro de ligne.
+
+### D'autres exemples
+
+Tous ces exemples se trouvent dans le pack RDPLExampleScripts, sous `data/shrine/`, sauf les deux derniers.
+
+Un `script` en ligne garde un court script dans le JSON, sans fichier `.js`. La dernière valeur du script décide : si elle est le texte `'cancel'`, l'événement est annulé. Cette entrée refuse un coup sur un mouton quand le joueur tient un bâton, et met le bâton en recharge pendant deux secondes :
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+Les données sauvegardées avec `rdpl.data()` permettent à un script de se souvenir d'une exécution à l'autre, car chaque exécution commence avec des variables neuves. `scripts/login.js`, lancé par une entrée `player_login`, compte les visites d'un joueur :
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule` exécute une fonction plus tard. `scripts/altar_placed.js` s'exécute quand un joueur pose un bloc d'or dans la Surface. Il enregistre des données pour le monde, le joueur et une équipe, fait apparaître un mouton, place une structure, et affiche un second message dans la barre d'action cinq secondes plus tard :
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+Un script `loot_drop` modifie ce qu'un mob laisse tomber grâce à `drops`. Celui-ci retire la chair putréfiée des objets lâchés par un zombie et ajoute une émeraude :
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  if (String(drops.stack(i).getItem().builtInRegistryHolder().key().identifier()) === "minecraft:rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+La boucle compte à rebours, pour que retirer une pile ne décale pas celles qui restent à vérifier.
+
+Un script de registre ajoute un objet pendant le chargement du jeu. Son entrée se trouve dans `scripts/registries/`, et non dans `scripts/events/` :
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var I = java("net.minecraft.world.item.Item");
+var P = java("net.minecraft.world.item.Item$Properties");
+registry.register("shrine:script_item", new I(new P().setId(registry.key("shrine:script_item"))));
+```
+
+Le nom doit être dans l'espace de noms du pack, ici `shrine`. Un objet de cette version du jeu doit connaître son propre id au moment de sa construction, ce que lui donne `setId(registry.key(name))` ; sans cela, l'objet ne se construit pas. L'objet a encore besoin d'un modèle, d'une texture et d'une entrée de langue pour être correct en jeu.
+
+### Quel JavaScript fonctionne
+
+Le moteur est Rhino, réglé au niveau de langage ES6 et exécuté en mode interprété. Ces éléments fonctionnent :
+
+- `var`, `let` et `const`, avec `let` et `const` limités à leur bloc
+- fonctions fléchées, paramètres par défaut, et l'opérateur d'étalement et de reste `...`
+- chaînes de gabarit, comme `` `Visit ${visits}` ``
+- déstructuration de tableaux et d'objets, dans les déclarations et dans les paramètres
+- `for...of`, générateurs avec `function*`, et `Symbol`
+- `Map`, `Set`, `WeakMap` et `WeakSet`
+- `JSON.parse` et `JSON.stringify`, et `Math`, y compris l'opérateur `**`
+- `??`, `??=` et `?.`
+- méthodes de chaînes comme `includes`, `startsWith`, `repeat` et `at`, méthodes de tableaux comme `includes`, `at` et `flatMap`, et `Object.assign` et `Object.fromEntries`
+
+Ceux-ci ne fonctionnent pas :
+
+- `class`. C'est un mot réservé que l'analyseur rejette, donc un script qui l'utilise ne se compile pas. Utilisez une fonction et un objet à la place.
+- `async` et `await`, ainsi que `import` et `export`.
+- `java` et `Packages` dans un script d'événement ou d'objet, et `Packages` dans tous les scripts (voir [Ce qu'un script peut atteindre](#ce-quun-script-peut-atteindre)).
+- Les noms du navigateur et de Node comme `console`, `setTimeout` et `require`. Un script ne les reçoit pas. Utilisez `rdpl.schedule` pour attendre, et le journal pour signaler.
+
+Chaque exécution commence avec un jeu de variables neuves : un `var` défini dans une exécution disparaît dans la suivante. Gardez ce qui doit durer dans `rdpl.data()`. Une exécution s'arrête après 50 ms, et une pile d'appels de plus de 200 niveaux échoue.
+
+### Les valeurs que reçoit un script
+
+Chaque événement remet à son script ses propres valeurs (voir le tableau des types d'événements). Ce sont les objets du jeu eux-mêmes, et les classes de cette version portent leurs noms Mojang : un script appelle donc les noms qu'utilise le code du jeu, comme `pos.getX()` et `player.getName()`. Une méthode ou un champ public de l'objet fonctionne sous son nom Mojang.
+
+- Une méthode qui prend en argument un type du jeu, comme un `DamageSource`, ne peut pas être appelée depuis un script d'événement, car un script ne peut pas en construire un.
+- Un `Component`, comme un nom, devient une chaîne simple avec `getString()`.
+
+Un objet n'a pas de nom de registre à demander : l'id d'un bloc ou d'un objet se lit donc depuis son détenteur de registre, `state.getBlock().builtInRegistryHolder().key().identifier()`, encadré par `String(...)` pour le comparer à un texte.
+
+```js
+var below = pos.below();
+var id = String(state.getBlock().builtInRegistryHolder().key().identifier());
+if (id === "minecraft:gold_block" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos` (une position de bloc) :
+
+| Membre                                   | Rôle                                              |
+| ---------------------------------------- | ------------------------------------------------- |
+| `getX()`, `getY()`, `getZ()`             | Les coordonnées, sous forme de nombres            |
+| `above()`, `below()`                     | La position d'un bloc au-dessus ou en dessous     |
+| `north()`, `south()`, `east()`, `west()` | La position d'un bloc voisin dans cette direction |
+| `offset(x, y, z)`                        | La position décalée de cette valeur               |
+
+`state` (un état de bloc) :
+
+| Membre                                                  | Rôle                                                     |
+| ------------------------------------------------------- | -------------------------------------------------------- |
+| `getBlock()`                                            | Le bloc                                                  |
+| `getBlock().builtInRegistryHolder().key().identifier()` | L'id du bloc, comme `minecraft:gold_block`               |
+| `isAir()`                                               | Vrai pour l'air                                          |
+| `isSolid()`                                             | Vrai pour un bloc solide                                 |
+| `hasBlockEntity()`                                      | Vrai pour un bloc qui garde des données, comme un coffre |
+
+`entity` et `player` (un joueur est une entité avec davantage) :
+
+| Membre                                          | Rôle                                                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `getName()`                                     | Le nom sous forme de `Component` ; le nom du joueur ou celui du mob         |
+| `getId()`, `getUUID()`                          | L'id numérique, et l'UUID (appelez `toString()` dessus)                     |
+| `blockPosition()`                               | La position de bloc qu'il occupe                                            |
+| `getX()`, `getY()`, `getZ()`                    | Sa position exacte, sous forme de nombres                                   |
+| `isRemoved()`                                   | Vrai quand il a été retiré                                                  |
+| `isOnFire()`, `isShiftKeyDown()`, `isInWater()` | Vrai quand il est en feu, accroupi ou dans l'eau                            |
+| `getHealth()`, `getMaxHealth()`                 | Points de vie actuels et maximum d'une entité vivante (un mob ou un joueur) |
+| `setHealth(value)`                              | Fixe les points de vie d'une entité vivante                                 |
+| `getMainHandItem()`                             | La pile dans sa main principale                                             |
+| `level()`                                       | Le monde où il se trouve                                                    |
+| `getDisplayName()`                              | Le nom tel qu'affiché dans le chat                                          |
+| `getFoodData().getFoodLevel()` (joueur)         | La valeur de faim du joueur                                                 |
+| `isCreative()` (joueur)                         | Vrai en mode créatif                                                        |
+| `giveExperienceLevels(n)` (joueur)              | Donne `n` niveaux d'expérience                                              |
+| `entityTags()`                                  | Les tags de l'entité, y compris ceux que définit `addStage`                 |
+
+Une pile d'objets, comme `player.getMainHandItem()` ou `drops.stack(0)`, a ces méthodes :
+
+- `getCount()` donne le nombre d'objets de la pile.
+- `isEmpty()` est vrai quand la pile ne contient aucun objet.
+- `getItem().builtInRegistryHolder().key().identifier()` donne l'id de l'objet.
+- `getHoverName()` donne le nom de l'objet sous forme de `Component`.
+
+Valeurs simples :
+
+| Nom          | Dans les événements                 | Ce que c'est                                                                                                |
+| ------------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`, `loot_drop`          | L'entité qui a causé les dégâts, ou rien pour une chute, un feu et ce genre de cas. Vérifiez-la avant usage |
+| `damageType` | `entity_hurt`, `loot_drop`          | Texte, l'id du message du type de dégât, comme `player`, `mob`, `fall`, `lava` ou `drown`                   |
+| `amount`     | `entity_hurt`                       | Les dégâts, sous forme de nombre                                                                            |
+| `from`, `to` | `dimension_change`, `entity_travel` | Noms de dimension en texte, comme `minecraft:overworld` ou `minecraft:the_nether`                           |
+| `tick`       | `server_tick`                       | Le temps du monde de la Surface                                                                             |
+| `event`      | `mod_event`                         | L'objet événement de la classe nommée dans `class` ; ses méthodes publiques fonctionnent                    |
+| `drops`      | `loot_drop`                         | La liste des objets lâchés, voir sous le tableau des types d'événements                                     |
+
+`rdpl.level` est le monde du serveur. `rdpl.level.getBlockState(pos)` donne un état de bloc, et `rdpl.level.getGameTime()` donne l'heure du monde.
+
+### Où vont les erreurs
+
+Chaque message de script va dans `logs/rdpl.log`, dans le dossier du jeu. Un script qui échoue ne fait jamais planter le jeu et n'arrête jamais les autres scripts. Les noms dans les lignes sont `<namespace>:<path>` pour un fichier, comme `shrine:scripts/chest_broken.js`, et `<entry file id>#<code>` pour un script en ligne, où le code est un court nombre hexadécimal tiré du texte du script.
+
+| Cas                                                  | Ligne                                                                                                                                                                                                                                           |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fichier nommé mais absent                            | `Script <name> not found`                                                                                                                                                                                                                       |
+| Erreur de compilation (une faute de frappe, `class`) | `Script <name> did not compile: <message>`, et le script est ignoré jusqu'au prochain rechargement                                                                                                                                              |
+| Erreur d'exécution                                   | `Script <name> failed: <message>`, puis la pile du script avec les numéros de ligne                                                                                                                                                             |
+| Au-delà de 50 ms                                     | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                                                                 |
+| Désactivé                                            | `Script <name> is turned off until the next reload`, écrit après un échec ou un dépassement de délai d'un script `player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel` ou `mod_event`, et de chaque script de registre |
+| Accès Java refusé                                    | `Script <name> failed: Scripts may not use <class>`, lorsqu'un appel renvoie un objet `Class`, `ClassLoader`, `Thread`, `Runtime` ou de réflexion                                                                                               |
+| Une fonction planifiée échoue                        | `Script scheduled function took longer than 50 ms, stopped`, ou `Script scheduled function failed: <message>`                                                                                                                                   |
+| Trop de fonctions planifiées                         | `Script scheduler: too many scheduled script functions, dropped`, journalisé une seule fois. Ensuite, `rdpl.schedule` écarte les fonctions suivantes sans ligne de journal jusqu'au prochain rechargement                                       |
+| L'entrée ne se charge pas                            | `<file id>: <reason>, ignoring it`, avec les raisons listées sous les tableaux des événements et des registres                                                                                                                                  |
+
+Un script qui n'a pas pu être compilé reste ignoré jusqu'à `/rdplserver reload` ; corrigez le fichier, puis rechargez. `java` et `Packages` dans un script d'événement ne sont pas refusés : les noms n'existent tout simplement pas à cet endroit, et le journal indique `Script <name> failed:` avec une erreur de référence qui nomme la variable absente.
 
 ### Événements de script
 
@@ -10574,43 +10886,78 @@ Une entrée qui a à la fois `script` et `scriptFile`, ou aucun des deux, est ig
 
 Clés de filtre :
 
-| Clé         | Valeur                        | Correspond à                           |
-| ----------- | ----------------------------- | -------------------------------------- |
-| `dimension` | id de dimension, ou une liste | La dimension où se produit l'événement |
-| `block`     | id de bloc, ou une forme `#`  | Le bloc posé ou cassé                  |
-| `entity`    | id d'entité                   | L'entité concernée par l'événement     |
-| `item`      | id d'objet, ou une forme `#`  | L'objet que tient le joueur            |
+| Clé         | Valeur                        | Correspond à                                                                               |
+| ----------- | ----------------------------- | ------------------------------------------------------------------------------------------ |
+| `dimension` | id de dimension, ou une liste | La dimension où se produit l'événement                                                     |
+| `block`     | id de bloc, ou une forme `#`  | Le bloc posé ou cassé                                                                      |
+| `entity`    | id d'entité                   | L'entité concernée par l'événement                                                         |
+| `item`      | id d'objet, ou une forme `#`  | L'objet tenu dans la main principale du joueur, de l'attaquant ou du poseur, voir plus bas |
+
+Une entrée sans bloc ne correspond jamais à un filtre `block`, donc une entrée `entity_hurt`, `entity_spawn`, `entity_despawn` ou `player_login` avec une clé `block` ne s'exécute jamais.
+
+Le filtre `item` vérifie la main principale de :
+
+- l'attaquant dans `entity_hurt`, qui peut être un mob
+- le joueur dans `block_break` et `player_login`
+- le poseur dans `block_place` ; un joueur qui pose un bloc correspond avec l'une ou l'autre main, principale ou secondaire
 
 Types d'événements :
 
-| Événement          | Quand il se produit                                                              | Valeurs que reçoit le script                                                    | `"cancel"` fonctionne                     |
-| ------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------- |
-| `block_place`      | Un bloc est posé                                                                 | `rdpl`, `pos`, `state`, `entity` (le poseur)                                    | Oui                                       |
-| `block_break`      | Un joueur casse un bloc                                                          | `rdpl`, `pos`, `state`, `player`                                                | Oui                                       |
-| `entity_hurt`      | Toute entité vivante, joueurs compris, est sur le point de subir des dégâts      | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                            | Oui                                       |
-| `entity_spawn`     | Un mob entre dans le monde pour la première fois (pas les joueurs)               | `rdpl`, `entity`                                                                | Oui, et l'entité n'apparaît jamais        |
-| `entity_despawn`   | Un mob disparaît, ou la suppression temporisée d'une variante d'entité y met fin | `rdpl`, `entity`                                                                | Non                                       |
-| `player_login`     | Un joueur rejoint                                                                | `rdpl`, `player`                                                                | Non                                       |
-| `player_tick`      | Toutes les `every` ticks, pour chaque joueur, après le tick                      | `rdpl`, `player`, `pos`                                                         | Non                                       |
-| `server_tick`      | Toutes les `every` ticks, une fois, après le tick                                | `rdpl` (la Surface), `tick` (l'heure du monde)                                  | Non                                       |
-| `dimension_change` | Un joueur est arrivé dans une autre dimension                                    | `rdpl`, `player`, `from`, `to` (noms de dimension comme `minecraft:the_nether`) | Non                                       |
-| `loot_drop`        | Un mob est mort, et son butin est sur le point d'apparaître                      | `rdpl`, `entity`, `attacker`, `damageType` (l'id du message de dégât), `drops`  | Non                                       |
-| `entity_travel`    | Une entité est sur le point d'aller dans une autre dimension                     | `rdpl`, `entity`, `from`, `to` (noms de dimension comme `minecraft:the_nether`) | Oui, et l'entité reste où elle est        |
-| `mod_event`        | L'événement nommé par `class` se déclenche sur le serveur                        | `rdpl`, `event`, `player`                                                       | Oui, quand cet événement peut être annulé |
+| Événement          | Quand il se produit                                                                                                                                                                                        | Valeurs que reçoit le script                                                    | `"cancel"` fonctionne                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------- |
+| `block_place`      | Un bloc est posé                                                                                                                                                                                           | `rdpl`, `pos`, `state`, `entity` (le poseur)                                    | Oui                                       |
+| `block_break`      | Un joueur casse un bloc                                                                                                                                                                                    | `rdpl`, `pos`, `state`, `player`                                                | Oui                                       |
+| `entity_hurt`      | Toute entité vivante, joueurs compris, est sur le point de subir des dégâts. Ne se déclenche pas pour une entité invulnérable à ces dégâts, déjà morte, ou sous Résistance au feu contre les dégâts de feu | `rdpl`, `entity`, `attacker`, `damageType`, `amount`                            | Oui                                       |
+| `entity_spawn`     | Un mob entre dans le monde pour la première fois (pas les joueurs)                                                                                                                                         | `rdpl`, `entity`                                                                | Oui, et l'entité n'apparaît jamais        |
+| `entity_despawn`   | Un mob disparaît, ou la suppression temporisée d'une variante d'entité y met fin                                                                                                                           | `rdpl`, `entity`                                                                | Non                                       |
+| `player_login`     | Un joueur rejoint                                                                                                                                                                                          | `rdpl`, `player`                                                                | Non                                       |
+| `player_tick`      | Toutes les `every` ticks, pour chaque joueur, après le tick                                                                                                                                                | `rdpl`, `player`, `pos`                                                         | Non                                       |
+| `server_tick`      | Toutes les `every` ticks, une fois, après le tick                                                                                                                                                          | `rdpl` (la Surface), `tick` (l'heure du monde)                                  | Non                                       |
+| `dimension_change` | Un joueur vient d'arriver dans une autre dimension                                                                                                                                                         | `rdpl`, `player`, `from`, `to` (noms de dimension comme `minecraft:the_nether`) | Non                                       |
+| `loot_drop`        | Un mob est mort, et son butin est sur le point d'apparaître                                                                                                                                                | `rdpl`, `entity`, `attacker`, `damageType` (l'id du message de dégât), `drops`  | Non                                       |
+| `entity_travel`    | Une entité est sur le point d'aller dans une autre dimension                                                                                                                                               | `rdpl`, `entity`, `from`, `to` (noms de dimension comme `minecraft:the_nether`) | Oui, et l'entité reste où elle est        |
+| `mod_event`        | L'événement nommé par `class` se déclenche sur le serveur                                                                                                                                                  | `rdpl`, `event`, `player`                                                       | Oui, quand cet événement peut être annulé |
 
-Un script dont la valeur finale est le texte `"cancel"` annule l'événement là où le tableau indique que cela fonctionne. Un événement déjà annulé par une règle de zone ou par un autre mod n'atteint jamais un script. `entity_despawn` ne se déclenche pas pour les morts, les déchargements de chunks ni `/kill`.
+Un script dont la valeur finale est le texte `"cancel"` annule l'événement là où le tableau indique que cela fonctionne. Un événement déjà annulé par une règle de zone ou par un autre mod n'atteint jamais un script. `entity_despawn` ne se déclenche pas pour les mobs tués, les déchargements de chunks ni `/kill`.
 
-Les nouveaux types ne lisent que certaines clés de filtre. `player_tick` et `dimension_change` lisent `dimension` et `item`. `loot_drop` et `entity_travel` lisent `dimension`, `entity` et `item`. `server_tick` et `mod_event` n'en lisent aucune. Une clé de filtre qu'un événement ne lit pas fait ignorer l'entrée, et le journal indique `the <event> event does not read the filter key '<key>', skipping the entry`. `entity` accepte des identifiants et les types `#monster`, `#creature`, `#ambient` et `#water_creature`. Dans `loot_drop`, `entity` est le mob qui est mort et `item` est ce que tient son tueur ; dans `entity_travel`, `entity` est le voyageur. `player_tick` et `server_tick` s'exécutent tous les 20 ticks, sauf si `every` indique autre chose. `server_tick` s'exécute une fois pour le serveur, sur l'horloge de la Surface, et n'a pas de joueur.
+Les nouveaux types ne lisent que certaines clés de filtre :
+
+- `player_tick` et `dimension_change` lisent `dimension` et `item`.
+- `loot_drop` et `entity_travel` lisent `dimension`, `entity` et `item`.
+- `server_tick` et `mod_event` ne lisent aucune clé de filtre.
+
+Une entrée qui a une clé de filtre que son événement ne lit pas est ignorée, et le journal indique `the <event> event does not read the filter key '<key>', skipping the entry`.
+
+Autres détails de ces types :
+
+- `entity` accepte des identifiants et les types `#monster`, `#creature`, `#ambient` et `#water_creature`.
+- Dans `loot_drop`, `entity` est le mob qui est mort, et `item` est ce que tient son tueur. Dans `entity_travel`, `entity` est le voyageur.
+- `player_tick` et `server_tick` s'exécutent toutes les 20 ticks, sauf si `every` indique autre chose.
+- `server_tick` s'exécute une fois pour le serveur, et non une fois par joueur, sur l'horloge de la Surface, et n'a pas de joueur.
 
 Un script d'un nouveau type (`player_tick`, `server_tick`, `dimension_change`, `loot_drop`, `entity_travel`, `mod_event`) qui échoue ou dépasse la limite de temps est désactivé jusqu'au prochain rechargement, et le journal indique `Script <name> is turned off until the next reload`. Les scripts des anciens types continuent de tourner.
 
-`drops`, dans `loot_drop`, est la liste de ce que le mob laisse tomber. `drops.size()` les compte, `drops.stack(index)` est la pile d'objets à un index, `drops.remove(index)` en retire une, `drops.clear()` les retire toutes, et `drops.add(item, count)` ajoute une pile qui apparaît à l'endroit où le mob est mort. Un script peut ajouter au plus 32 piles par mort. En ajouter davantage arrête le script avec `A loot_drop script can add at most 32 stacks`, et un objet inconnu ou un nombre inférieur à 1 l'arrête avec `Unknown item`, comme toute erreur de script.
+`drops`, dans `loot_drop`, est la liste de ce que le mob laisse tomber :
 
-`mod_event` permet à un script d'écouter un événement d'un autre mod, ou d'un événement du jeu lui-même, par son nom de classe. Mettez la classe dans `class`, par son nom complet. Une entrée est ignorée, et le journal le dit, quand `class` manque (`a mod_event needs a class`), quand la classe n'existe pas (`the class <name> was not found`), et quand ce n'est pas une classe d'événement qu'on peut écouter (`the class <name> is not a Forge event`). Seule la classe exacte compte : un événement qui en hérite ne déclenche pas le script. Le script ne tourne que sur le thread du serveur, dans le monde de l'entité ou du monde de l'événement, ou dans la Surface quand l'événement n'en a aucun, et un événement de la même classe que celui que le script provoque lui-même ne le relance pas. Il reçoit `rdpl`, `event` (l'objet événement) et `player` (le joueur concerné par l'événement, ou rien). `every` et les autres clés fonctionnent comme pour tout événement. Un résultat `"cancel"` annule l'événement quand il peut l'être.
+- `drops.size()` renvoie le nombre de piles de la liste.
+- `drops.stack(index)` renvoie la pile d'objets à cet index.
+- `drops.remove(index)` retire une pile.
+- `drops.clear()` retire toutes les piles.
+- `drops.add(item, count)` ajoute une pile qui apparaît à l'endroit où le mob est mort.
+
+Un script peut ajouter au plus 32 piles par mort. En ajouter davantage arrête le script avec `A loot_drop script can add at most 32 stacks`, et un objet inconnu ou un nombre inférieur à 1 l'arrête avec `Unknown item`. Les deux sont journalisées comme toute erreur de script.
+
+`mod_event` permet à un script d'écouter un événement d'un autre mod, ou d'un événement du jeu lui-même, par son nom de classe. Mettez le nom complet de la classe dans `class`. Le script ne tourne que sur le thread du serveur. Il s'exécute dans le monde de l'entité ou du monde de l'événement, ou dans la Surface quand l'événement n'en a aucun. Un événement de la même classe que celui que le script provoque lui-même ne le relance pas. Le script reçoit `rdpl`, `event` (l'objet événement) et `player` (le joueur concerné par l'événement, ou `null`). `every` et les autres clés fonctionnent comme pour tout événement. Un résultat `"cancel"` annule l'événement quand celui-ci peut être annulé.
+
+Seule la classe exacte compte : un événement qui en hérite ne déclenche pas le script. L'entrée est ignorée, et le journal en indique la raison, quand :
+
+- `class` manque (`a mod_event needs a class`)
+- la classe n'existe pas (`the class <name> was not found`)
+- la classe n'est pas une classe d'événement qu'on peut écouter (`the class <name> is not a Forge event`)
 
 ### Scripts de registre
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
 Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichiers s'empilent. Un script de registre ajoute des objets à l'un des registres intégrés du jeu pendant son chargement, ce qu'un pack ne peut pas faire autrement. Il faut que la catégorie `content` ait `load` activé et `vanillaClients` désactivé, comme pour les blocs et les objets.
 
@@ -10624,7 +10971,7 @@ Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichi
 ```js
 var I = java("net.minecraft.world.item.Item");
 var P = java("net.minecraft.world.item.Item$Properties");
-registry.register("mypack:script_item", new I(new P()));
+registry.register("mypack:script_item", new I(new P().setId(registry.key("mypack:script_item"))));
 ```
 
 | Clé          | Requis        | Valeur          | Défaut | Rôle                                                                                                                                     |
@@ -10633,13 +10980,38 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | l'un des deux | texte           | aucun  | JavaScript inline à exécuter                                                                                                             |
 | `scriptFile` | l'un des deux | chemin          | aucun  | Un chemin sous `scripts/` dans le même espace de noms, se terminant par `.js`                                                            |
 
-Le script s'exécute une fois, quand ce registre s'ouvre à l'enregistrement, après que chaque mod a enregistré les siens. Il reçoit deux éléments. `registry` a une seule méthode, `register(name, object)`, qui ajoute `object` sous `name`. `java(className)` renvoie une classe Java par son nom complet, pour que le script puisse construire l'objet ; une classe qui n'existe pas fait échouer le script avec `The class <name> was not found`. Le script ne reçoit pas `rdpl`, car aucun monde n'existe encore.
+Le script s'exécute une fois, quand ce registre s'ouvre à l'enregistrement, après que chaque mod a enregistré les siens. Il reçoit deux variables, et non `rdpl`, car aucun monde n'existe encore.
 
-`register` refuse et consigne, et le script continue, quand l'objet n'est pas du genre que contient le registre (`is not a <type>, not registering it`), quand le nom n'est pas un id valide (`could not be registered: not a valid name`), quand le nom n'est pas dans l'espace de noms du pack (`is not in the pack namespace <namespace>, not registering it`), quand le nom est déjà pris (`is already registered in <registry>, skipping it`), et quand le registre lui-même le refuse (`could not be registered`). Une réussite est consignée par `Script <name> registered <id> in <registry>`. L'entrée elle-même est consignée et ignorée quand `registry` manque (`needs a registry`), quand elle n'a pas de script (`needs script or scriptFile`), quand le registre n'est pas un registre auquel les scripts peuvent ajouter (`the registry '<name>' is not a registry that scripts can add to, ignoring it`), et quand aucun mod ne fournit le registre (`no mod provides the registry '<name>', ignoring it`). Un script qui échoue ou dépasse la limite est désactivé jusqu'au prochain rechargement. Un objet enregistré de cette façon n'a que ce que le script lui a donné : un bloc ou un objet a toujours besoin de son propre modèle, de sa texture et de ses entrées de langue.
+- `registry` a deux méthodes. `register(name, object)` ajoute `object` sous `name`. `key(name)` renvoie la clé de registre de ce nom, qu'un objet ou un bloc de cette version du jeu doit donner à `setId` lors de sa construction.
+- `java(className)` renvoie la classe Java portant ce nom complet, pour que le script puisse construire l'objet. Une classe qui n'existe pas fait échouer le script avec `The class <name> was not found`.
+
+`register` journalise une ligne et refuse l'objet, et le script continue, quand :
+
+- l'objet n'est pas du genre que contient le registre (`is not a <type>, not registering it`)
+- le nom n'est pas un id valide (`could not be registered: not a valid name`)
+- le nom n'est pas dans l'espace de noms du pack (`is not in the pack namespace <namespace>, not registering it`)
+- le nom est déjà pris (`is already registered in <registry>, skipping it`)
+- le registre lui-même refuse l'objet (`could not be registered`)
+
+Un appel réussi journalise `Script <name> registered <id> in <registry>`.
+
+L'entrée elle-même est journalisée et ignorée quand :
+
+- `registry` manque (`needs a registry`)
+- elle n'a pas de script (`needs script or scriptFile`)
+- le registre n'est pas un registre auquel les scripts peuvent ajouter (`the registry '<name>' is not a registry that scripts can add to, ignoring it`)
+- aucun mod ne fournit le registre (`no mod provides the registry '<name>', ignoring it`)
+
+Un script de registre qui échoue ou dépasse la limite est désactivé jusqu'au prochain rechargement. Un objet enregistré de cette façon n'a que ce que le script lui a donné : un bloc ou un objet a toujours besoin de son propre modèle, de sa texture et de ses entrées de langue.
 
 ### Où vont les fichiers de script
 
-Tout ce qui concerne les scripts se trouve dans le dossier `data/<namespace>/scripts/` du pack. Les entrées d'événement vont dans `data/<namespace>/scripts/events/`. Un fichier `.js` peut se trouver n'importe où sous `data/<namespace>/scripts/`, et il est désigné par son chemin dans le pack : ainsi `"scriptFile": "scripts/trophy_altar.js"` lit `data/<namespace>/scripts/trophy_altar.js`. Un objet nomme son script de la même façon, avec `script` ou `scriptFile` (voir [Objets](#objets)), et il en va de même pour un fichier de réécriture de recettes (voir [Échanges de recettes](#échanges-de-recettes)).
+Tout ce qui concerne les scripts se trouve dans le dossier `data/<namespace>/scripts/` du pack. Les entrées d'événement vont dans `data/<namespace>/scripts/events/`. Un fichier `.js` peut se trouver n'importe où sous `data/<namespace>/scripts/`, et il est désigné par son chemin dans le pack : ainsi `"scriptFile": "scripts/trophy_altar.js"` lit `data/<namespace>/scripts/trophy_altar.js`. Un objet, un fichier de réécriture de recettes et une commande de pack nomment leur script de la même façon, avec `script` ou `scriptFile` (voir [Objets](#objets), [Échanges de recettes](#échanges-de-recettes) et [Commandes de pack](#commandes-de-pack)).
+
+Deux autres types de script ont leurs propres variables :
+
+- Un script d'objet s'exécute sur le serveur quand un joueur fait un clic droit avec l'objet. Il reçoit `rdpl`, `item` (la pile dans la main qui a cliqué) et `hand` (le texte `MAIN_HAND` ou `OFF_HAND`). Un résultat `"cancel"` ne fait que sauter la recharge de l'objet ; le clic droit passe quand même.
+- Un script de commande reçoit `rdpl`, `sender` (voir [Commandes de pack](#commandes-de-pack) pour ses méthodes) et une variable pour chaque argument.
 
 ### L'objet rdpl
 
@@ -10649,40 +11021,42 @@ Un script atteint le jeu par `rdpl`. Ses membres :
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| Membre                                               | Rôle                                                                                                                                                                                                                                                                                                     |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | Le joueur, ou rien quand l'événement n'en a pas                                                                                                                                                                                                                                                          |
-| `level`                                              | Le monde                                                                                                                                                                                                                                                                                                 |
-| `runCommand(command)`                                | Exécute une commande en tant que le joueur, ou au point d'apparition du monde quand il n'y en a pas, au niveau de permission 2. Renvoie vrai en cas de succès                                                                                                                                            |
-| `give(item, count)`                                  | Donne au joueur un nombre d'un objet                                                                                                                                                                                                                                                                     |
-| `actionbar(text)`                                    | Affiche un texte dans la barre d'action du joueur                                                                                                                                                                                                                                                        |
-| `cooldown(item, ticks)`                              | Met l'objet en recharge pour le joueur, pendant ce nombre de ticks                                                                                                                                                                                                                                       |
-| `card(id, "key=value", ...)`                         | Déclenche une carte, avec ses arguments                                                                                                                                                                                                                                                                  |
-| `schedule(ticks, function)`                          | Exécute la fonction après les ticks. 1000 au plus attendent à la fois. La file est vidée au rechargement                                                                                                                                                                                                 |
-| `data()`, `data(player)`, `teamData(name)`           | Un stockage sauvegardé avec `get`, `set`, `has` et `remove`. Contient du texte, des nombres et vrai/faux, et est gardé dans la sauvegarde du monde. `data()` est celui du monde, `data(player)` celui du joueur, `teamData(name)` celui d'une équipe                                                     |
-| `sync(name, value)`                                  | Définit une valeur synchronisée pour le joueur, ou pour le monde quand l'événement n'a pas de joueur. La valeur est un texte, un nombre ou vrai/faux. Renvoie vrai quand elle est définie, et faux quand les règles la refusent, ce que le journal indique. Toute autre valeur lève une erreur de script |
-| `syncTo(player, name, value)`                        | La même chose pour un autre joueur                                                                                                                                                                                                                                                                       |
-| `syncAll(name, value)`                               | La même chose pour le monde                                                                                                                                                                                                                                                                              |
-| `unsync(name)`                                       | Supprime la valeur du joueur, ou celle du monde quand l'événement n'a pas de joueur. Renvoie vrai quand il y en avait une                                                                                                                                                                                |
-| `synced(name)`                                       | La valeur que donne une lecture : celle du joueur, puis celle du monde, puis la valeur par défaut, ou celle du monde et la valeur par défaut quand l'événement n'a pas de joueur. Rien quand aucune n'est définie                                                                                        |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Vérifie, ajoute ou retire un tag sur le joueur                                                                                                                                                                                                                                                           |
-| `score(objective)`, `setScore(objective, value)`     | Lit ou fixe le score du joueur sur un objectif du tableau des scores                                                                                                                                                                                                                                     |
-| `hasAdvancement(id)`                                 | Vrai quand le joueur a le progrès                                                                                                                                                                                                                                                                        |
-| `world.scan(player, match)`                          | Compte les objets correspondants dans l'inventaire du joueur et dans les boîtes de shulker qu'il contient. `match` est un id d'objet, une forme `#`, ou une fonction qui reçoit chaque pile                                                                                                              |
-| `world.scanAt(x, y, z, match)`                       | Idem, pour un bloc de conteneur à cette position                                                                                                                                                                                                                                                         |
-| `world.capability(x, y, z, type)`                    | Le gestionnaire du bloc à cette position pour `"items"`, `"fluids"` ou `"energy"`, issu de l'API de transfert de NeoForge                                                                                                                                                                                |
-| `world.placeStructure(template, x, y, z)`            | Place un modèle de structure à la position                                                                                                                                                                                                                                                               |
-| `world.summon(id, x, y, z, nbt)`                     | Fait apparaître une entité à la position, avec du NBT facultatif                                                                                                                                                                                                                                         |
+| Membre                                               | Rôle                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | Le joueur, ou `null` quand l'événement n'en a pas                                                                                                                                                                                                                                                                                 |
+| `level`                                              | Le monde                                                                                                                                                                                                                                                                                                                          |
+| `runCommand(command)`                                | Exécute une commande en tant que le joueur, ou au point d'apparition du monde quand il n'y en a pas, au niveau de permission 2. Renvoie vrai en cas de succès                                                                                                                                                                     |
+| `give(item, count)`                                  | Donne au joueur `count` de l'objet                                                                                                                                                                                                                                                                                                |
+| `actionbar(text)`                                    | Affiche un texte dans la barre d'action du joueur. Ne fait rien sans joueur                                                                                                                                                                                                                                                       |
+| `cooldown(item, ticks)`                              | Met l'objet en recharge pour le joueur, pendant ce nombre de ticks. Ne fait rien sans joueur. Un objet inconnu lève une erreur de script, avec ou sans joueur                                                                                                                                                                     |
+| `card(id, "key=value", ...)`                         | Déclenche une carte avec ses arguments. Renvoie `false` pour un id de carte inconnu ou quand il n'y a pas de joueur, `true` sinon. Un argument qui n'est pas `key=value` est écarté                                                                                                                                               |
+| `schedule(ticks, function)`                          | Exécute la fonction après ce nombre de ticks, et au moins 1 tick plus tard. 1000 au plus peuvent attendre à la fois, et les suivantes sont écartées. La file est vidée au rechargement et à l'arrêt du serveur. Une fonction planifiée par un événement avec joueur est écartée si ce joueur est hors ligne à son échéance        |
+| `data()`, `data(player)`, `teamData(name)`           | Un stockage sauvegardé avec `get`, `set`, `has` et `remove`. Contient du texte, des nombres et vrai/faux, et est gardé dans la sauvegarde du monde. `data()` est celui du monde, `data(player)` celui du joueur, `teamData(name)` celui d'une équipe. `data(player)` lève une erreur de script quand il n'y a pas de joueur       |
+| `sync(name, value)`                                  | Définit une valeur synchronisée pour le joueur, ou pour le monde quand l'événement n'a pas de joueur. La valeur est un texte, un nombre ou vrai/faux. Renvoie vrai quand elle est définie, et faux quand les règles la refusent, ce que le journal indique. Toute autre valeur lève une erreur de script                          |
+| `syncTo(player, name, value)`                        | La même chose pour un autre joueur                                                                                                                                                                                                                                                                                                |
+| `syncAll(name, value)`                               | La même chose pour le monde                                                                                                                                                                                                                                                                                                       |
+| `unsync(name)`                                       | Supprime la valeur du joueur, ou celle du monde quand l'événement n'a pas de joueur. Renvoie vrai quand il y en avait une                                                                                                                                                                                                         |
+| `synced(name)`                                       | La valeur que donne une lecture : celle du joueur, puis celle du monde, puis la valeur par défaut, ou celle du monde et la valeur par défaut quand l'événement n'a pas de joueur. Renvoie `null` quand aucune n'est définie                                                                                                       |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | Vérifie, ajoute ou retire un tag sur le joueur. Sans joueur, `hasStage` renvoie `false` et les deux autres ne font rien                                                                                                                                                                                                           |
+| `score(objective)`, `setScore(objective, value)`     | Lit ou fixe le score du joueur sur un objectif du tableau des scores. Sans joueur, `score` renvoie 0 et `setScore` ne fait rien. `setScore` lève une erreur de script pour un objectif inconnu                                                                                                                                    |
+| `hasAdvancement(id)`                                 | Vrai quand le joueur a le progrès                                                                                                                                                                                                                                                                                                 |
+| `world.scan(player, match)`                          | Compte les objets correspondants dans l'inventaire du joueur et dans les boîtes de shulker qu'il contient. `match` est un id d'objet, une forme `#`, ou une fonction qui reçoit chaque pile                                                                                                                                       |
+| `world.scanAt(x, y, z, match)`                       | Idem, pour un bloc de conteneur à cette position                                                                                                                                                                                                                                                                                  |
+| `world.capability(x, y, z, type)`                    | Le gestionnaire du bloc à cette position pour `"items"`, `"fluids"` ou `"energy"`, issu de l'API de transfert de NeoForge (`Capabilities.Item.BLOCK`, `Fluid.BLOCK` ou `Energy.BLOCK`), interrogé sans côté précis. Renvoie `null` quand le bloc n'est pas chargé, n'a pas ce gestionnaire, ou quand le type est une autre chaîne |
+| `world.placeStructure(template, x, y, z)`            | Place un modèle de structure à la position. Renvoie `false` quand ce modèle n'existe pas                                                                                                                                                                                                                                          |
+| `world.summon(id, x, y, z, nbt)`                     | Fait apparaître une entité à la position, avec du NBT facultatif. Un NBT mal formé lève une erreur de script (`Bad entity NBT`), et l'appel renvoie `false` quand l'entité ne peut pas être créée. Avec un NBT vide, un mob passe aussi par l'initialisation normale d'apparition du jeu (`finalizeSpawn`)                        |
 
 ### Ce qu'un script peut atteindre
 
-Un script ne voit que l'objet `rdpl`, les valeurs que chaque événement lui remet (voir le tableau des types d'événements), et les types du jeu que renvoient ces valeurs. `Packages` n'existe dans aucun script, et `java` n'existe que dans un script de registre (voir [Scripts de registre](#scripts-de-registre)) ; les scripts d'événement, d'objet, de commande et de réécriture de recettes ne l'ont pas. Demander autre chose est refusé, et le refus est journalisé une fois.
+Un script d'événement, un script d'objet, un script de commande, un script de réécriture de recettes et une fonction planifiée ne voient que l'objet `rdpl`, les valeurs que leur remet l'événement (voir le tableau des types d'événements), et ce que renvoient les méthodes de ces objets. `java` et `Packages` n'existent pas dans ces scripts, ils ne peuvent donc ni nommer une classe Java ni construire un objet avec `new`. `Packages` n'existe dans aucun script.
 
-Un script peut utiliser n'importe quelle classe Java, par son nom complet. En pratique, c'est un script de registre, qui demande une classe avec `java(className)`.
+Un script de registre reçoit aussi `java(className)`, qui renvoie la classe portant ce nom complet, comme `net.minecraft.world.item.Item`, et toute classe chargée par le jeu peut être demandée de cette façon, sans liste d'autorisation. Si la classe n'est pas encore chargée, l'appel la charge et l'initialise. Un nom qui n'est pas une classe fait échouer le script avec `The class <name> was not found`.
+
+Dans tous les scripts, un objet de ces genres est refusé quand un appel le renvoie ou le transmet : un `Class`, un `ClassLoader`, un `Thread`, un `Runtime`, et les objets de réflexion (`Method`, `Field`, `Constructor`). Le script s'arrête avec `Scripts may not use <class>`, et le journal reçoit une ligne `Script <name> failed:`.
 
 ### Limites
 
-- Une exécution s'arrête après 50 ms. L'erreur du journal nomme le script.
+- Une exécution s'arrête après 50 ms, et l'erreur du journal nomme le script. L'horloge n'est vérifiée que toutes les 10000 instructions, si bien qu'une exécution peut dépasser un peu la limite.
 - Un `try`/`catch` ne peut pas garder une exécution en vie au-delà de cette limite.
 - Les erreurs sont journalisées avec le chemin du script dans le pack. Elles ne font jamais planter le jeu.
 - `every` et les filtres sont vérifiés avant qu'un script ne s'exécute, ce qui limite le coût.
