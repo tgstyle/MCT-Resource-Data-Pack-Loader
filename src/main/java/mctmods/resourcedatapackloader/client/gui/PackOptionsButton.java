@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.client.gui;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
+import mctmods.resourcedatapackloader.common.util.messages.Says;
 
 import javax.annotation.Nullable;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,7 +27,7 @@ public final class PackOptionsButton {
     private static final int WARNING_ROOM = 16;
     private static final int FLASH_ABOVE_LIST_FOOTER = 62;
     private static final long FLASH_MILLIS = 500L;
-    private static final int WARNING = 0xFF5555;
+    private static final int WARNING = Says.rgb(ChatFormatting.RED);
     private static final String PLAY_KEY = "selectWorld.select";
     private static final String CREATE_KEY = "selectWorld.create";
     @Nullable private static Screen owner;

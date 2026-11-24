@@ -6,11 +6,13 @@ import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -55,6 +57,13 @@ public final class ContentAttributes {
         Attribute attribute = find(name, context);
         if (attribute == null) { return null; }
         return mob.getAttribute(attribute);
+    }
+
+    public static void replace(AttributeInstance instance, UUID id, String name, double amount, AttributeModifier.Operation operation, boolean saved) {
+        instance.removeModifier(id);
+        AttributeModifier modifier = new AttributeModifier(id, name, amount, operation);
+        if (saved) { instance.addPermanentModifier(modifier); }
+        else { instance.addTransientModifier(modifier); }
     }
 
     private static String key(String name) { return name.toLowerCase(Locale.ROOT); }

@@ -2,11 +2,12 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.PullingHand;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
@@ -31,11 +32,9 @@ public final class PullGoal extends Goal {
         this.follows = follows;
     }
 
-    private double range() { return mob.getAttributeValue(Attributes.FOLLOW_RANGE); }
-
     @Nullable private Player target() {
         if (mob.getTarget() instanceof Player aimed && !aimed.isCreative() && !aimed.isSpectator()) { return aimed; }
-        return follows ? mob.level().getNearestPlayer(TargetingConditions.forCombat().range(range()), mob) : null;
+        return follows ? mob.level().getNearestPlayer(TargetingConditions.forCombat().range(Walking.followRange(mob)), mob) : null;
     }
 
     @Override public boolean canUse() {
@@ -44,7 +43,8 @@ public final class PullGoal extends Goal {
         Player target = target();
         if (target == null) { return false; }
         double away = mob.distanceToSqr(target);
-        return away > NEAR_SQ && away <= range() * range() && mob.getSensing().hasLineOfSight(target);
+        double range = Walking.followRange(mob);
+        return away > NEAR_SQ && away <= range * range && mob.getSensing().hasLineOfSight(target);
     }
 
     @Override public boolean canContinueToUse() { return false; }
@@ -53,7 +53,7 @@ public final class PullGoal extends Goal {
         Player target = target();
         if (target == null) { return; }
         next = mob.level().getGameTime() + reload;
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         PullingHand hand = new PullingHand(mob.level(), mob, stack, power);
         hand.aim(new Vec3(target.getX(), target.getEyeY(), target.getZ()));
         mob.level().addFreshEntity(hand);

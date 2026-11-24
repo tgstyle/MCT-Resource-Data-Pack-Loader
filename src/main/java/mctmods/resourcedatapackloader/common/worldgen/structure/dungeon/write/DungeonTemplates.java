@@ -87,10 +87,7 @@ final class DungeonTemplates {
         }
         String mob = draw.mob(seed);
         if (mob == null) { return info; }
-        int brace = mob.indexOf('{');
-        StructureTemplate.StructureBlockInfo filled = ContentMapFill.fill(rules, seed, info, brace < 0 ? mob : mob.substring(0, brace), null);
-        if (filled != info && brace >= 0 && filled.nbt() != null) { DungeonWriter.merge(filled.nbt(), mob.substring(brace), mob); }
-        return filled;
+        return DungeonWriter.spawner(rules, seed, info, mob);
     }
 
     private static final class Filler extends StructureProcessor {

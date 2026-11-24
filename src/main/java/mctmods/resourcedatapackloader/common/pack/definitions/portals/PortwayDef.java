@@ -11,7 +11,7 @@ public record PortwayDef(String activateSound, String travelSound, List<String> 
 
     public boolean lists(String dimension) { return !deny.contains(dimension) && (allow.isEmpty() || allow.contains(dimension)); }
 
-    public boolean global() { return GateDef.GLOBAL.equals(scope); }
+    public boolean global() { return GateDef.global(scope); }
 
-    public boolean teamWide() { return GateDef.TEAM.equals(scope); }
+    public boolean teamWide() { return GateDef.teamWide(scope); }
 }

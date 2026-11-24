@@ -76,7 +76,7 @@ public final class ContentTreeRules {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         TreeRuleDef def = ContentParserTrees.rule(key, json);
         if (def == null) { return; }
         Entry entry = new Entry(def);

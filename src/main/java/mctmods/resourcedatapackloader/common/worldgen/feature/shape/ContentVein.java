@@ -1,20 +1,14 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentVein implements IContentShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentVein extends ContentPlacedShape {
     private static final int MOST_BLOCKS = 42;
     private static final int SCATTER_BELOW = 4;
     private static final float HALF_TURN = (float) Math.PI;
@@ -43,7 +37,7 @@ public final class ContentVein implements IContentShape {
         for (int step = 0; step <= blocks; step++) {
             double along = (double) step / blocks;
             double girth = (Mth.sin(HALF_TURN * (float) along) + 1.0D) * (random.nextDouble() * blocks / 16.0D) + 1.0D;
-            placed |= blob(placer, random, lowX + (highX - lowX) * along, lowY + (highY - lowY) * along, lowZ + (highZ - lowZ) * along, girth * 0.5D);
+            placed |= blob(placer, random, MathUtil.lerp(along, lowX, highX), MathUtil.lerp(along, lowY, highY), MathUtil.lerp(along, lowZ, highZ), girth * 0.5D);
         }
         return placed;
     }
@@ -72,10 +66,7 @@ public final class ContentVein implements IContentShape {
         return placed;
     }
 
-    private static double away(int block, double center, double radius) {
-        double offset = (block + 0.5D - center) / radius;
-        return offset * offset;
-    }
+    private static double away(int block, double center, double radius) { return MathUtil.away(block, center, radius, 0.5D); }
 
     private static boolean scatter(ContentPlacer placer, RandomSource random, int blocks, BlockPos origin) {
         boolean placed = placer.place(random, origin.getX(), origin.getY(), origin.getZ());

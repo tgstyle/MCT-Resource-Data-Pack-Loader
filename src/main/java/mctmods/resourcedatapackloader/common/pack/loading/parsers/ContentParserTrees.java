@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeRuleDef
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
@@ -24,7 +25,6 @@ public final class ContentParserTrees {
     private static final String TREES = "trees";
     private static final String STRUCTURE = "structure";
     private static final String VANILLA = "vanilla";
-    private static final String MINECRAFT = "minecraft:";
     private static final String SAPLINGS = "saplings";
     private static final int MIN_STEPS = 4;
     private static final int MAX_STEPS = 64;
@@ -44,7 +44,7 @@ public final class ContentParserTrees {
         if (!sapling.has(TREES)) { return TreeGrowthDef.NONE; }
         String owner = "Sapling growth";
         if (sapling.has(STRUCTURE) || sapling.has("structures")) { ContentLog.LOGGER.warn("{} gives trees, so its structure and structures are ignored", owner); }
-        return read(sapling, owner, 1.0 / Math.max(1, Json.getInt(sapling, "chance", SAPLING_CHANCE)));
+        return read(sapling, owner, 1.0 / Json.atLeast(sapling, "chance", SAPLING_CHANCE, 1));
     }
 
     @Nullable public static TreeRuleDef rule(ResourceLocation key, JsonObject json) {
@@ -74,7 +74,7 @@ public final class ContentParserTrees {
             ContentLog.LOGGER.error("{} has no usable saplings, ignoring it", owner);
             return null;
         }
-        return new TreeRuleDef(key.toString(), Collections.unmodifiableList(targets), Collections.unmodifiableList(tags), read(json, owner, json.has("chance") ? Mth.clamp(Json.getFloat(json, "chance", 0.0F), 0.0F, 1.0F) : -1.0));
+        return new TreeRuleDef(key.toString(), Collections.unmodifiableList(targets), Collections.unmodifiableList(tags), read(json, owner, json.has("chance") ? Json.clamped(json, "chance", 0.0F, 0.0F, 1.0F) : -1.0));
     }
 
     private static void target(ResourceLocation key, JsonElement element, List<BlockMatchDef> targets, List<String> tags) {
@@ -108,16 +108,16 @@ public final class ContentParserTrees {
                 growBy,
                 Math.max(0, stepTicks),
                 choose(json, "catchUp", TreeGrowthDef.CatchUp.class, TreeGrowthDef.CatchUp.WORLD, owner, CATCH_UP),
-                Math.max(0, Json.getInt(json, "catchUpLimit", 0)),
+                Json.atLeast(json, "catchUpLimit", 0, 0),
                 choose(json, "bonemeal", TreeGrowthDef.Bonemeal.class, TreeGrowthDef.Bonemeal.UNSET, owner, BONEMEAL),
-                Math.max(0, Json.getInt(json, "bonemealTicks", 0)),
+                Json.atLeast(json, "bonemealTicks", 0, 0),
                 Json.getBoolean(json, "bonemealChecks", false),
                 Json.strings(json, "biomes"),
                 Json.getBoolean(json, "needsSky", false),
                 Json.getBoolean(json, "needsWater", false),
-                Math.max(1, Json.getInt(json, "waterRange", 1)),
+                Json.atLeast(json, "waterRange", 1, 1),
                 chance,
-                json.has("light") ? Mth.clamp(Json.getInt(json, "light", 0), 0, 15) : -1);
+                json.has("light") ? Json.clamped(json, "light", 0, 0, 15) : -1);
     }
 
     private static <E extends Enum<E>> E choose(JsonObject json, String member, Class<E> type, E fallback, String owner, List<String> options) {
@@ -156,7 +156,7 @@ public final class ContentParserTrees {
             ContentLog.LOGGER.error("{} names an empty {}, dropping it", where, kind.name().toLowerCase(Locale.ROOT));
             return null;
         }
-        if (kind == TreePickDef.Kind.VANILLA && source.contains(":") && !source.startsWith(MINECRAFT)) {
+        if (kind == TreePickDef.Kind.VANILLA && source.contains(":") && !source.startsWith(IdNames.MINECRAFT)) {
             ContentLog.LOGGER.error("{} names vanilla '{}', which is not a minecraft id, dropping it", where, source);
             return null;
         }

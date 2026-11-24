@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -57,11 +56,7 @@ public final class ContentPairedDoors {
         return RULES.isEmpty();
     }
 
-    private static void reload() {
-        RULES.clear();
-        Json.eachObject(PackManager.PAIRED_DOORS, "paired door", ContentPairedDoors::read);
-        if (!RULES.isEmpty()) { Summary.info("content.paired_doors", "Loaded " + RULES.size() + " paired door rule(s)"); }
-    }
+    private static void reload() { PackGeneration.reload(RULES, PackManager.PAIRED_DOORS, "paired door", "content.paired_doors", "paired door rule(s)", ContentPairedDoors::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", DOOR_KEYS);

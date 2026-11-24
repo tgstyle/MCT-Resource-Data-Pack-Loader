@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.items;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.util.ContentEffects;
 
 import javax.annotation.Nonnull;
 import net.minecraft.world.InteractionResult;
@@ -26,7 +27,7 @@ public final class ContentContainerUpgradeItem extends Item {
         InteractionResult result = ContentContainerUpgrades.use(upgrade, this, player, context.getHand(), context.getLevel(), context.getClickedPos(), context.getClickedFace());
         if (result != InteractionResult.SUCCESS || context.getLevel().isClientSide() || player == null) { return result; }
         if (upgrade.consume() && !player.isCreative()) { stack.shrink(1); }
-        if (cooldown > 0) { player.getCooldowns().addCooldown(this, cooldown); }
+        ContentEffects.cooldown(player, this, cooldown);
         return result;
     }
 }

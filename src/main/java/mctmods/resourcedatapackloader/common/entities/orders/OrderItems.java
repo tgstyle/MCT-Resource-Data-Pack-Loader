@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
 import mctmods.resourcedatapackloader.common.types.ContentToolTypes;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -167,11 +168,7 @@ public final class OrderItems {
     }
 
     public static boolean carriesAny(Mob mob) {
-        IItemHandler carried = carried(mob);
-        for (int slot = 0; slot < carried.getSlots(); slot++) {
-            if (!carried.getStackInSlot(slot).isEmpty()) { return true; }
-        }
-        return false;
+        return ItemHandlers.any(carried(mob), stack -> !stack.isEmpty());
     }
 
     public static int spilled(Mob mob, ItemStack stack) {
@@ -182,12 +179,7 @@ public final class OrderItems {
     }
 
     public static int count(OrderDef def, IItemHandler handler) {
-        int count = 0;
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            ItemStack stack = handler.getStackInSlot(slot);
-            if (counts(def, stack)) { count += stack.getCount(); }
-        }
-        return count;
+        return (int) ItemHandlers.sum(handler, stack -> counts(def, stack) ? stack.getCount() : 0L);
     }
 
     public static int move(IItemHandler from, IItemHandler into, Predicate<ItemStack> which, @Nullable List<ItemStack> only, int cap, Mob spill) {

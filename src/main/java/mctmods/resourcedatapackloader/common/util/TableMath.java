@@ -32,6 +32,8 @@ public final class TableMath {
         return slot == 1 ? roll * 2 / 3 + 1 : Math.max(roll, held * 2);
     }
 
+    public static double perLevel(double base, double perLevel, int level) { return base + perLevel * (level - 1); }
+
     public static List<EnchantmentInstance> forSlot(RandomSource rand, int seed, int slot, ItemStack stack, int level, int enchantability, @Nullable Set<Enchantment> allowed, Map<Enchantment, Shape> shapes) {
         rand.setSeed(seed + slot);
         List<EnchantmentInstance> list = rolled(rand, stack, level, enchantability, allowed, shapes);

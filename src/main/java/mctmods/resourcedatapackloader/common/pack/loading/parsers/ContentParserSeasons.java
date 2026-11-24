@@ -33,8 +33,8 @@ final class ContentParserSeasons {
     }
 
     @Nullable static SeasonSensorDef sensor(JsonObject json) {
-        if (!json.has("seasonSensor") || !json.get("seasonSensor").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "seasonSensor");
+        JsonObject held = Json.objectOrNull(json, "seasonSensor");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "seasonSensor", SENSOR_KEYS);
         Map<String, Integer> output = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.object(held, "output").entrySet()) {

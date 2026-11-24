@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,12 +91,7 @@ public final class ContentParserWeights {
     }
 
     private static void bonuses(WeightDef.Builder into, ResourceLocation key, JsonArray array) {
-        for (JsonElement element : array) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A bonus in weight file {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject bonus = element.getAsJsonObject();
+        for (JsonObject bonus : Json.objectsOrSkip(array, "A bonus in weight file {} is not an object, skipping it", key)) {
             Json.unknownKeys(bonus, "bonuses", BONUS_KEYS);
             if (!bonus.has("add") || Double.isNaN(Json.asDouble(bonus.get("add"), "add", Double.NaN))) {
                 ContentLog.LOGGER.error("A bonus in weight file {} has no numeric add, skipping it", key);
@@ -116,12 +110,7 @@ public final class ContentParserWeights {
     }
 
     private static void tiers(WeightDef.Builder into, ResourceLocation key, JsonArray array) {
-        for (JsonElement element : array) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A tier in weight file {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject tier = element.getAsJsonObject();
+        for (JsonObject tier : Json.objectsOrSkip(array, "A tier in weight file {} is not an object, skipping it", key)) {
             Json.unknownKeys(tier, "tiers", TIER_KEYS);
             double above = tier.has("above") ? Json.asDouble(tier.get("above"), "above", Double.NaN) : Double.NaN;
             if (Double.isNaN(above) || above <= 0.0D) {

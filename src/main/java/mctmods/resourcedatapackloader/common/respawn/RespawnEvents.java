@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.respawn;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 import mctmods.resourcedatapackloader.common.util.world.PlayerNear;
 
 import net.minecraft.server.level.ServerLevel;
@@ -45,7 +46,7 @@ public final class RespawnEvents {
             data.park(instance);
             return;
         }
-        if (PlayerNear.within(level, instance.bounds(), def.playerDistance()) || unloaded(level, instance.box)) {
+        if (PlayerNear.within(level, instance.bounds(), def.playerDistance()) || !loaded(level, instance.box)) {
             data.requeue(instance, now + COARSE * 3L);
             return;
         }
@@ -57,12 +58,5 @@ public final class RespawnEvents {
 
     private static boolean unloaded(ServerLevel level, int chunkX, int chunkZ) { return level.getChunkSource().getChunkNow(chunkX, chunkZ) == null; }
 
-    private static boolean unloaded(ServerLevel level, int[] box) {
-        for (int chunkX = box[0] >> 4; chunkX <= box[3] >> 4; chunkX++) {
-            for (int chunkZ = box[2] >> 4; chunkZ <= box[5] >> 4; chunkZ++) {
-                if (unloaded(level, chunkX, chunkZ)) { return true; }
-            }
-        }
-        return false;
-    }
+    private static boolean loaded(ServerLevel level, int[] box) { return ChunkSpan.allChunks(box[0], box[2], box[3], box[5], (chunkX, chunkZ) -> !unloaded(level, chunkX, chunkZ)); }
 }

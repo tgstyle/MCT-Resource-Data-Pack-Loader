@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.entities.spawning;
 import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnGateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.util.Lists;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -27,13 +28,7 @@ public final class SpawnLocks {
 
     static List<SpawnGateDef> gates(Entity entity) {
         if (LOCKS.isEmpty()) { return List.of(); }
-        List<SpawnGateDef> found = null;
-        for (Lock lock : LOCKS) {
-            if (!MobStats.targets(lock.entities(), entity)) { continue; }
-            if (found == null) { found = new ArrayList<>(); }
-            found.add(lock.gate());
-        }
-        return found == null ? List.of() : found;
+        return Lists.collect(LOCKS, lock -> MobStats.targets(lock.entities(), entity), Lock::gate);
     }
 
     private static void read(ResourceLocation key, JsonObject json) {

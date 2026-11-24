@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSpread;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 
 import java.util.List;
 import java.util.Set;
@@ -20,9 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.Tags;
 
-public final class ContentCover implements IContentChunkShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentCover extends ContentPlacedShape implements IContentChunkShape {
     private static final List<TagKey<Block>> ROCK = List.of(BlockTags.BASE_STONE_OVERWORLD, BlockTags.BASE_STONE_NETHER, BlockTags.STONE_ORE_REPLACEABLES, BlockTags.DEEPSLATE_ORE_REPLACEABLES, BlockTags.TERRACOTTA, Tags.Blocks.ORES, Tags.Blocks.COBBLESTONE, Tags.Blocks.END_STONES, Tags.Blocks.SANDSTONE, Tags.Blocks.OBSIDIAN);
     @Nullable private final BlockState floor;
     private final float floorChance;

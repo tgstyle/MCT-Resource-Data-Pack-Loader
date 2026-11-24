@@ -12,8 +12,7 @@ public record PickDef(String name, int weight) {
 
     public static String pick(List<PickDef> choices, Random random, String fallback) {
         if (choices == null || choices.isEmpty()) { return fallback; }
-        PickDef picked = WeightedPicks.pick(choices, PickDef::weight, random);
-        return picked == null ? choices.get(0).name() : picked.name();
+        return WeightedPicks.pickOr(choices, PickDef::weight, random, choices.get(0)).name();
     }
 
     @Nullable public static String pick(List<PickDef> choices, RandomSource random) {

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.MemberNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -21,7 +22,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.registries.IForgeRegistry;
 
 public final class ItemOverrides {
     private ItemOverrides() {}
@@ -48,7 +48,14 @@ public final class ItemOverrides {
         return planned;
     }
 
-    public static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
+    @Nullable public static Class<?> makeStored(Class<?> base, ResourceLocation key, List<ItemClassMaker.Override> planned) {
+        Class<?> made = ItemClassMaker.make(base, key, planned);
+        if (made == null) { return null; }
+        store(key, planned);
+        return made;
+    }
+
+    private static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
         Object[] values = new Object[planned.size()];
         for (ItemClassMaker.Override each : planned) { values[each.slot()] = each.constant(); }
         DerivedConstants.put(key.toString(), values);
@@ -58,10 +65,7 @@ public final class ItemOverrides {
         if (FMLEnvironment.dist != Dist.DEDICATED_SERVER) { return false; }
         int paren = key.indexOf('(');
         String name = paren < 0 ? key : key.substring(0, paren);
-        for (Method method : MemberNames.methods(base)) {
-            if (MemberNames.readable(method.getName()).equals(name)) { return false; }
-        }
-        return true;
+        return !MemberNames.hasMethod(base, name);
     }
 
     @Nullable private static String refusal(Method method, Class<?> base) {
@@ -83,7 +87,7 @@ public final class ItemOverrides {
 
     @Nullable @SuppressWarnings({"unchecked", "rawtypes"}) private static Object constant(Method method, String name, JsonElement json, ResourceLocation key, @Nullable Object source) {
         Class<?> type = method.getReturnType();
-        boolean text = json.isJsonPrimitive() && json.getAsJsonPrimitive().isString();
+        boolean text = Json.isString(json);
         if (json.isJsonObject()) { return object(method, name, json.getAsJsonObject(), key, source); }
         if (type == ItemStack.class && text) {
             String stack = json.getAsString();
@@ -95,7 +99,7 @@ public final class ItemOverrides {
         if (Component.class.isAssignableFrom(type) && text) { return Component.literal(json.getAsString()); }
         if (ValueCoercer.registry(type) != null && text) {
             String entry = json.getAsString();
-            return new DerivedConstants.Lazy(entry, () -> entry(type, entry));
+            return new DerivedConstants.Lazy(entry, () -> ValueCoercer.entryOf(type, entry));
         }
         if (type.isEnum() && text) {
             Object found = Enums.byName((Class) type, json.getAsString());
@@ -129,14 +133,6 @@ public final class ItemOverrides {
             ContentLog.LOGGER.error("Derived item {} could not read {} to copy it, leaving it out: {}", key, name, e.toString());
             return null;
         }
-    }
-
-    @Nullable private static Object entry(Class<?> type, String name) {
-        IForgeRegistry<?> registry = ValueCoercer.registry(type);
-        ResourceLocation location = ResourceLocation.tryParse(name);
-        if (registry == null || location == null || !registry.containsKey(location)) { return null; }
-        Object found = registry.getValue(location);
-        return type.isInstance(found) ? found : null;
     }
 
     private static void mismatch(ResourceLocation key, String name, JsonElement json, @Nullable String problem) {

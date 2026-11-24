@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
-import mctmods.resourcedatapackloader.common.pack.io.port.cross.CrossJson;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import mctmods.resourcedatapackloader.common.pack.loading.WorldgenFiles;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Snbt;
 
 import com.google.gson.JsonObject;
@@ -48,10 +48,11 @@ public final class Down {
     }
 
     public static void data(JsonObject json, Port.Kind kind, String path, String file, Consumer<String> note) {
+        Consumer<String> said = text -> note.accept("'" + file + "' " + text);
         switch (kind) {
-            case RECIPE -> DownRecipes.recipe(json, file, note);
-            case LOOT -> DownLoot.loot(json, file, note);
-            case ADVANCEMENT -> DownLoot.advancement(json, file, note);
+            case RECIPE -> DownRecipes.recipe(json, said);
+            case LOOT -> DownLoot.loot(json, said);
+            case ADVANCEMENT -> DownLoot.advancement(json, said);
             case MODEL -> DownAssets.model(json);
             default -> definition(json, path, file, note);
         }
@@ -64,10 +65,10 @@ public final class Down {
         else if (path.startsWith("trim_material/") || path.startsWith("trim_pattern/")) { DownWorld.trim(json, path, file, note); }
         else if (path.startsWith("wolf_variant/")) { DownWorld.wolf(json, file, note); }
         else if (path.startsWith("enchantment/") || path.startsWith("painting_variant/")) {
-            DownLoot.loot(json, file, note);
+            DownLoot.loot(json, text -> note.accept("'" + file + "' " + text));
             return;
         }
-        CrossJson.replace(json, DownFixes.names(json).getAsJsonObject());
+        DownFixes.rename(json);
     }
 
     public static String function(String contents, String file, Consumer<String> note) {
@@ -114,7 +115,7 @@ public final class Down {
         if (id.isEmpty() || id.startsWith("#") || id.startsWith("@")) { return arg; }
         String renamed = DownFixes.name(id);
         if (renamed.equals(id)) { return arg; }
-        return (id.indexOf(':') < 0 ? renamed.substring(MINECRAFT.length()) : renamed) + arg.substring(end);
+        return (id.indexOf(':') < 0 ? IdNames.bare(renamed) : renamed) + arg.substring(end);
     }
 
     private static String gamerule(String line, String file, Consumer<String> note) {

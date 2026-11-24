@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.phys.Vec3;
@@ -38,7 +37,7 @@ public final class PounceGoal extends CooldownGoal {
         }
         if (mob.distanceToSqr(current) < 4.0D) {
             StrikeGoal.hit(mob, current);
-            current.knockback(1.0D, Mth.sin(mob.getYRot() * Mth.DEG_TO_RAD), -Mth.cos(mob.getYRot() * Mth.DEG_TO_RAD));
+            StrikeGoal.knockAlongYaw(mob, current, 1.0D);
             airborne = false;
             return;
         }

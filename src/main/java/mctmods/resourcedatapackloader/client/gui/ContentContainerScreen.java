@@ -53,7 +53,7 @@ public final class ContentContainerScreen extends BackdropContainerScreen<Conten
 
     private static void head(GuiGraphics graphics, int left, int y, int wide) {
         graphics.blit(SHEET, left, y, 0, 0, EDGE, HEADER);
-        for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER); }
+        tile(graphics, left + EDGE, y, wide - EDGE - EDGE, HEADER, EDGE, 0, CELL, HEADER);
         graphics.blit(SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
     }
 
@@ -75,12 +75,14 @@ public final class ContentContainerScreen extends BackdropContainerScreen<Conten
         graphics.blit(SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
     }
 
-    private static void sill(GuiGraphics graphics, int left, int y, int wide) { for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL); } }
+    private static void sill(GuiGraphics graphics, int left, int y, int wide) { tile(graphics, left + EDGE, y, wide - EDGE - EDGE, SILL, EDGE, SILL_SOURCE, CELL, SILL); }
 
-    private static void plain(GuiGraphics graphics, int x, int y, int wide, int tall) {
-        for (int down = 0; down < tall; down += PLAIN_TALL) {
-            int high = Math.min(PLAIN_TALL, tall - down);
-            for (int across = 0; across < wide; across += PLAIN_WIDE) { graphics.blit(SHEET, x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_WIDE, wide - across), high); }
+    private static void plain(GuiGraphics graphics, int x, int y, int wide, int tall) { tile(graphics, x, y, wide, tall, PLAIN_X, PLAIN_Y, PLAIN_WIDE, PLAIN_TALL); }
+
+    private static void tile(GuiGraphics graphics, int x, int y, int wide, int tall, int sourceX, int sourceY, int tileW, int tileH) {
+        for (int down = 0; down < tall; down += tileH) {
+            int high = Math.min(tileH, tall - down);
+            for (int across = 0; across < wide; across += tileW) { graphics.blit(SHEET, x + across, y + down, sourceX, sourceY, Math.min(tileW, wide - across), high); }
         }
     }
 }

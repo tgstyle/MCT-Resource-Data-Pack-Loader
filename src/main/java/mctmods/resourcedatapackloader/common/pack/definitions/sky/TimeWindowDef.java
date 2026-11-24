@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+
 import java.util.Set;
 
 public record TimeWindowDef(int from, int to, float fogDensity, int fogColor, boolean sampleFog, int sunColor, int sunAuraColor, boolean precipitation, boolean alwaysRain, Set<String> given) {
@@ -12,7 +14,7 @@ public record TimeWindowDef(int from, int to, float fogDensity, int fogColor, bo
 
     public boolean gives(String key) { return given.contains(key); }
 
-    public boolean contains(long tick) { return from <= to ? tick >= from && tick < to : tick >= from || tick < to; }
+    public boolean contains(long tick) { return DimensionTraitsDef.inWindow(tick, from, to, false); }
 
     public boolean holdsDry() { return gives(PRECIPITATION) && !precipitation; }
 }

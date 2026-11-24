@@ -26,7 +26,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class EventFilter {
-    private static final Set<String> KEYS = new HashSet<>(Arrays.asList("dimension", "block", "entity", "item"));
+    public static final String DIMENSION = "dimension";
+    public static final String BLOCK = "block";
+    public static final String ENTITY = "entity";
+    public static final String ITEM = "item";
+    private static final Set<String> KEYS = new HashSet<>(Arrays.asList(DIMENSION, BLOCK, ENTITY, ITEM));
     public static final EventFilter ALL = new EventFilter(Collections.emptyList(), null, null, null);
     private final List<String> dimensions;
     @Nullable private final BlockMatch block;
@@ -53,11 +57,11 @@ public final class EventFilter {
             }
         }
         String ownerName = owner.toString();
-        List<String> dimensions = json.has("dimension") ? names(json.get("dimension"), "dimension") : Collections.emptyList();
-        BlockMatch block = json.has("block") ? BlockMatches.parse(ownerName, Json.text(json, "block"), "filter block") : null;
-        List<String> entities = json.has("entity") ? names(json.get("entity"), "entity") : null;
-        ItemMatch item = json.has("item") ? ItemMatch.parse(owner, Json.text(json, "item")) : null;
-        if (json.has("block") && block == null || json.has("item") && item == null) {
+        List<String> dimensions = json.has(DIMENSION) ? names(json.get(DIMENSION), DIMENSION) : Collections.emptyList();
+        BlockMatch block = json.has(BLOCK) ? BlockMatches.parse(ownerName, Json.text(json, BLOCK), "filter block") : null;
+        List<String> entities = json.has(ENTITY) ? names(json.get(ENTITY), ENTITY) : null;
+        ItemMatch item = json.has(ITEM) ? ItemMatch.parse(owner, Json.text(json, ITEM)) : null;
+        if (json.has(BLOCK) && block == null || json.has(ITEM) && item == null) {
             ContentLog.LOGGER.error("{}: filter value did not parse, skipping the entry", owner);
             return null;
         }
@@ -87,10 +91,10 @@ public final class EventFilter {
         return Collections.unmodifiableList(values);
     }
 
-    public boolean matches(Level level, @Nullable BlockState state, @Nullable Entity entity, @Nullable ItemStack stack, @Nullable ItemStack alternate) {
+    public boolean matches(Level level, @Nullable BlockState state, @Nullable Entity entity, @Nullable ItemStack stack) {
         if (!dimensions.isEmpty() && !CardPlace.inAny(dimensions, level)) { return false; }
         if (block != null && (state == null || !block.matches(state.getBlock()))) { return false; }
         if (entities != null && (entity == null || !MobStats.targets(entities, entity))) { return false; }
-        return item == null || stack != null && item.matches(stack) || alternate != null && item.matches(alternate);
+        return item == null || stack != null && item.matches(stack);
     }
 }

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.io.port.cross.CrossJson;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -27,15 +28,15 @@ final class DownLoot {
 
     private DownLoot() {}
 
-    static void loot(JsonObject json, String file, Consumer<String> note) {
-        walk(json, file, note);
-        CrossJson.replace(json, DownFixes.names(json).getAsJsonObject());
+    static void loot(JsonObject json, Consumer<String> note) {
+        walk(json, note);
+        DownFixes.rename(json);
     }
 
-    static void advancement(JsonObject json, String file, Consumer<String> note) {
+    static void advancement(JsonObject json, Consumer<String> note) {
         JsonObject display = GsonHelper.isObjectNode(json, "display") ? json.getAsJsonObject("display") : null;
         if (display != null) {
-            if (GsonHelper.isObjectNode(display, "icon")) { DownFixes.stack(display.getAsJsonObject("icon"), file, note); }
+            if (GsonHelper.isObjectNode(display, "icon")) { DownFixes.stack(display.getAsJsonObject("icon"), note); }
             for (String key : TEXTS) {
                 if (display.has(key)) { display.add(key, DownFixes.text(display.get(key))); }
             }
@@ -46,12 +47,12 @@ final class DownLoot {
             for (JsonElement recipe : rewards.getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? new JsonPrimitive(DownFixes.recipe(recipe.getAsString())) : recipe); }
             rewards.add("recipes", recipes);
         }
-        loot(json, file, note);
+        loot(json, note);
     }
 
-    private static void walk(JsonElement element, String file, Consumer<String> note) {
+    private static void walk(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            element.getAsJsonArray().forEach(inner -> walk(inner, file, note));
+            element.getAsJsonArray().forEach(inner -> walk(inner, note));
             return;
         }
         if (!element.isJsonObject()) { return; }
@@ -59,25 +60,25 @@ final class DownLoot {
         for (String key : TARGET_KEYS) {
             if (GsonHelper.isValidPrimitive(json, key) && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
-        String condition = namespaced(Json.text(json, "condition"));
+        String condition = Json.id(json, "condition");
         if ("minecraft:time_check".equals(condition)) { json.remove("clock"); }
         if (GsonHelper.isValidPrimitive(json, "recipe")) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
         String function = Json.text(json, "function");
-        if (!function.isEmpty()) { function(json, namespaced(function), file, note); }
+        if (!function.isEmpty()) { function(json, namespaced(function), note); }
         else if (GsonHelper.isObjectNode(json, CrossJson.COMPONENTS)) {
             variant(json);
-            DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), file, note);
+            DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), note);
             if (json.getAsJsonObject(CrossJson.COMPONENTS).size() == 0) { json.remove(CrossJson.COMPONENTS); }
         }
-        json.entrySet().forEach(entry -> walk(entry.getValue(), file, note));
+        json.entrySet().forEach(entry -> walk(entry.getValue(), note));
     }
 
-    private static void function(JsonObject json, String function, String file, Consumer<String> note) {
+    private static void function(JsonObject json, String function, Consumer<String> note) {
         switch (function) {
             case "minecraft:set_components" -> {
-                if (GsonHelper.isObjectNode(json, CrossJson.COMPONENTS)) { DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), file, note); }
+                if (GsonHelper.isObjectNode(json, CrossJson.COMPONENTS)) { DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), note); }
             }
-            case "minecraft:set_custom_model_data" -> modelData(json, file, note);
+            case "minecraft:set_custom_model_data" -> modelData(json, note);
             case "minecraft:set_name" -> {
                 if (json.has("name")) { json.add("name", DownFixes.text(json.get("name"))); }
             }
@@ -91,7 +92,7 @@ final class DownLoot {
         }
     }
 
-    private static void modelData(JsonObject json, String file, Consumer<String> note) {
+    private static void modelData(JsonObject json, Consumer<String> note) {
         if (json.has("value")) { return; }
         JsonElement floats = json.remove("floats");
         List<String> lost = new ArrayList<>();
@@ -102,7 +103,7 @@ final class DownLoot {
         if (values != null && !values.isEmpty()) { json.add("value", values.get(0)); }
         else { json.addProperty("value", 0); }
         if (values != null && values.size() > 1) { lost.add("floats after the first"); }
-        if (!lost.isEmpty()) { note.accept("'" + file + "' sets custom model data " + String.join(", ", lost) + ", which " + Port.Line.running().title() + " cannot hold (one whole number only), so they are left out"); }
+        if (!lost.isEmpty()) { note.accept("sets custom model data " + String.join(", ", lost) + ", which " + Port.Line.running().title() + " cannot hold (one whole number only), so they are left out"); }
     }
 
     private static void variant(JsonObject json) {
@@ -110,7 +111,7 @@ final class DownLoot {
         for (String key : new ArrayList<>(components.keySet())) {
             String named = namespaced(key);
             if (!named.startsWith(MINECRAFT)) { continue; }
-            String bare = named.substring(MINECRAFT.length());
+            String bare = IdNames.bare(named);
             String owner = bare.endsWith(VARIANT) ? bare.substring(0, bare.length() - VARIANT.length()) : "";
             String entity = VARIANTS.contains(owner) ? owner : "tropical_fish/pattern".equals(bare) ? "tropical_fish" : null;
             if (entity == null || json.has(TYPE_SPECIFIC)) { continue; }

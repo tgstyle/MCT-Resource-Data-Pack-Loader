@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.scoring;
 
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
@@ -140,9 +141,8 @@ public final class ContentTeamsPicks {
 
     private static boolean alive(MinecraftServer server, String member) {
         if (Scores.isPlayerName(member)) { return server.getPlayerList().getPlayerByName(member) != null; }
-        UUID id;
-        try { id = UUID.fromString(member); }
-        catch (IllegalArgumentException notAnId) { return false; }
+        UUID id = Nbts.uuid(member);
+        if (id == null) { return false; }
         for (ServerLevel level : server.getAllLevels()) {
             Entity held = level.getEntity(id);
             if (held != null) { return held.isAlive(); }

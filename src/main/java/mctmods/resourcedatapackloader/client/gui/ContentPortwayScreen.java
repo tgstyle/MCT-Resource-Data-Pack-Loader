@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.gui;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
 import mctmods.resourcedatapackloader.common.gui.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,7 +38,7 @@ public final class ContentPortwayScreen extends BackdropContainerScreen<ContentP
         EditBox box = new EditBox(font, leftPos + imageWidth - 8 - FIELD_WIDE, topPos + FIELD_TOP, FIELD_WIDE, FIELD_HIGH, Component.translatable("rdpl.portway.search"));
         box.setMaxLength(ContentPortwayMenu.FILTER_MAX);
         box.setValue(kept);
-        box.setHint(Component.translatable("rdpl.portway.search").withStyle(style -> style.withColor(0x808080)));
+        box.setHint(Component.translatable("rdpl.portway.search").withStyle(style -> style.withColor(Colors.GREY_TEXT)));
         box.setResponder(text -> quiet = 0);
         search = box;
         addRenderableWidget(box);

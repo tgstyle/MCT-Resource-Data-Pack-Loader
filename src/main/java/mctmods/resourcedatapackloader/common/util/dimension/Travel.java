@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.util.dimension;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,6 +15,11 @@ public final class Travel {
     private Travel() {}
 
     public static boolean to(Entity entity, ServerLevel level, double x, double y, double z, float yaw, float pitch) { return move(entity, level, x, y, z, yaw, pitch) != null; }
+
+    public static boolean to(Entity entity, ServerLevel level, BlockPos at, float yaw, float pitch) {
+        Vec3 feet = Vec3.atBottomCenterOf(at);
+        return to(entity, level, feet.x, feet.y, feet.z, yaw, pitch);
+    }
 
     @Nullable public static Entity move(Entity entity, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         boolean crossing = entity.level() != level;

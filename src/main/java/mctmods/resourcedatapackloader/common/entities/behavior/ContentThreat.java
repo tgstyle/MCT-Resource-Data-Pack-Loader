@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -38,7 +39,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.items.IItemHandler;
 
@@ -46,7 +46,7 @@ public final class ContentThreat {
     private static final int SAMPLE = 100;
     private static final double REACH = 128.0D * 128.0D;
     private static final ResourceLocation KEY = ResourceDataPackLoader.id("threatitems");
-    private static final Map<UUID, Integer> BANDS = new HashMap<>();
+    private static final Map<UUID, Integer> BANDS = PlayerLogout.track(new HashMap<>());
     private static final Map<Level, List<Carrier>> CARRIERS = new HashMap<>();
     private static final Map<Level, Integer> OTHERS = new HashMap<>();
     private static volatile Map<Level, List<Spot>> spots = Map.of();
@@ -158,7 +158,6 @@ public final class ContentThreat {
         spots = Map.copyOf(found);
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { BANDS.remove(event.getEntity().getUUID()); }
 
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!(event.getLevel() instanceof Level level)) { return; }

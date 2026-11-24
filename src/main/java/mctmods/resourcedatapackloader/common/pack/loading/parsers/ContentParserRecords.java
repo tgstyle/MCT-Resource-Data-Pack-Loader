@@ -10,7 +10,6 @@ import com.google.gson.JsonObject;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 
 final class ContentParserRecords {
     private static final List<String> JUKEBOX_KEYS = List.of("sound", "ticks", "comparator");
@@ -19,11 +18,11 @@ final class ContentParserRecords {
 
     @Nullable static RecordDef record(ResourceLocation key, JsonObject json) {
         if (!ContentItemTypes.RECORD.equals(Settings.lower(Json.getString(json, "type", "")))) { return null; }
-        if (!GsonHelper.isObjectNode(json, "jukebox")) {
+        JsonObject jukebox = Json.objectOrNull(json, "jukebox");
+        if (jukebox == null) {
             ContentLog.LOGGER.error("Record item {} has no jukebox section, so it registers nothing", key);
             return null;
         }
-        JsonObject jukebox = Json.getJsonObject(json, "jukebox");
         Json.unknownKeys(jukebox, "jukebox", JUKEBOX_KEYS);
         ResourceLocation sound = ContentParser.location(Json.getString(jukebox, "sound", "").trim());
         if (sound == null) {

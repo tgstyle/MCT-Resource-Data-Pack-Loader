@@ -19,7 +19,6 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -37,7 +36,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -78,9 +76,8 @@ public final class BlockDrops extends LootModifier {
     private static final String ONCE = "once";
     private static final String PER = "per";
     private static final String GRANT = "grant";
-    private static final String RUNS = "runs";
     private static final String PLAYER = "player";
-    private static final List<String> RULE_KEYS = List.of("block", "meta", "properties", REPLACE, DROPS, ONCE, ADVANCEMENT, RUNS);
+    private static final List<String> RULE_KEYS = List.of("block", "meta", "properties", REPLACE, DROPS, ONCE, ADVANCEMENT, Json.RUNS);
     private static final List<String> DROP_KEYS = List.of(ITEM, EXPERIENCE, COUNT, CHANCE, FORTUNE, SILK_TOUCH);
     private static final List<String> ONCE_KEYS = List.of(PER, GRANT);
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
@@ -101,23 +98,20 @@ public final class BlockDrops extends LootModifier {
     private record Drop(ItemStack item, boolean experience, AmountDef count, float chance, int fortune, String silkTouch) {}
 
     private static void reload() {
-        BY_BLOCK.clear();
-        BY_TAG.clear();
-        MISSING.clear();
-        GENERATION.stale();
-        if (Config.data.blockDropsOff()) { return; }
         int[] count = new int[1];
-        Json.eachObject(PackManager.BLOCK_DROPS, "block drops", (key, json) -> read(key, json, count));
-        if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)" + (BY_TAG.isEmpty() ? "" : " and " + BY_TAG.size() + " tag rule(s)")); }
+        GENERATION.load(!Config.data.blockDropsOff(), () -> {
+            BY_BLOCK.clear();
+            BY_TAG.clear();
+            MISSING.clear();
+        }, PackManager.BLOCK_DROPS, "block drops", (key, json) -> read(key, json, count), () -> {
+            if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)" + (BY_TAG.isEmpty() ? "" : " and " + BY_TAG.size() + " tag rule(s)")); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
         Json.unknownKeys(json, "the top level", RULE_KEYS);
-        String name = Json.getString(json, "block", "");
-        if (name.isEmpty()) {
-            ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
-            return;
-        }
+        String name = Json.required(json, "block", key, "Block drops {} names no block, ignoring it");
+        if (name.isEmpty()) { return; }
         boolean tag = name.startsWith("#");
         ResourceLocation tagId = tag ? ResourceLocation.tryParse(name.substring(1).trim()) : null;
         if (tag && tagId == null) {
@@ -131,17 +125,10 @@ public final class BlockDrops extends LootModifier {
             ContentLog.LOGGER.error("Block drops {} names block '{}', which nothing registers, ignoring it", key, match.block());
             return;
         }
-        if (!json.has(DROPS)) {
-            ContentLog.LOGGER.error("Block drops {} has no drops, ignoring it", key);
-            return;
-        }
+        if (Json.missing(json, DROPS, key, "Block drops {} has no drops, ignoring it")) { return; }
         List<Drop> drops = new ArrayList<>();
-        for (JsonElement element : Json.getJsonArray(json, DROPS)) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A drop in {} is not an object, skipping it", key);
-                continue;
-            }
-            Drop drop = drop(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, DROPS), "A drop in {} is not an object, skipping it", key)) {
+            Drop drop = drop(key, element);
             if (drop != null) { drops.add(drop); }
         }
         if (drops.isEmpty()) {
@@ -151,7 +138,7 @@ public final class BlockDrops extends LootModifier {
         String grant = grant(key, json);
         if (grant == null) { return; }
         List<BlockState> states = tag || match.properties().isEmpty() ? null : ContentStates.matching(block, match.properties(), key);
-        Rule rule = new Rule(key, states, Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), grant, Json.getString(json, RUNS, "").trim(), drops);
+        Rule rule = new Rule(key, states, Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), grant, Json.getString(json, Json.RUNS, "").trim(), drops);
         if (tag) { BY_TAG.add(new TagRule(BlockMatch.group(tagId), Json.map(json, "properties"), rule)); }
         else { BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(rule); }
         count[0]++;
@@ -185,7 +172,7 @@ public final class BlockDrops extends LootModifier {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
         }
-        return new Drop(item, experience, count, Mth.clamp(Json.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, Json.getInt(json, FORTUNE, 0)), silkTouch);
+        return new Drop(item, experience, count, Json.clamped(json, CHANCE, 1.0F, 0.0F, 1.0F), Math.max(0, Json.getInt(json, FORTUNE, 0)), silkTouch);
     }
 
     @Nullable private static AmountDef amount(ResourceLocation key, JsonObject json, String name) {

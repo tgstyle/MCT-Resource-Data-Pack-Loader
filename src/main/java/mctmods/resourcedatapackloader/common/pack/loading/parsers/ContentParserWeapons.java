@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,12 +108,7 @@ public final class ContentParserWeapons {
         }
         JsonArray array = Json.getJsonArray(json, "steps", new JsonArray());
         List<WeaponDef.Step> steps = new ArrayList<>();
-        for (JsonElement element : array) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A step of the combo on {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject step = element.getAsJsonObject();
+        for (JsonObject step : Json.objectsOrSkip(array, "A step of the combo on {} is not an object, skipping it", key)) {
             Json.unknownKeys(step, "combo.steps", STEP_KEYS);
             steps.add(new WeaponDef.Step(Json.ranged(step, "damage", 1.0F, 0.0F, 100.0F, "A step of the combo on " + key), sweep(key, step)));
         }

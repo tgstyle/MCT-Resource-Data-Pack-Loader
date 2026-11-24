@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,14 +129,11 @@ public final class ContentWeights {
     }
 
     private static void read(WeightDef.Builder settings, List<Source> sources, ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         boolean defines = ContentParserWeights.apply(settings, key, json);
         int before = sources.size();
         if (json.has("items")) {
-            for (JsonElement element : Json.getJsonArray(json, "items", new JsonArray())) {
-                if (element.isJsonObject()) { entry(sources, key, element.getAsJsonObject()); }
-                else { ContentLog.LOGGER.error("An items entry in weight file {} is not an object, skipping it", key); }
-            }
+            for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "items", new JsonArray()), "An items entry in weight file {} is not an object, skipping it", key)) { entry(sources, key, element); }
         }
         if (!defines && sources.size() == before && !json.has("bonuses") && !json.has("tiers")) { ContentLog.LOGGER.error("Weight file {} sets no weight, default or limit, so it does nothing", key); }
     }

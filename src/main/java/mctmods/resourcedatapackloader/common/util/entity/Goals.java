@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 public final class Goals {
     private Goals() {}
@@ -14,6 +15,13 @@ public final class Goals {
         for (WrappedGoal wrapped : new ArrayList<>(selector.getAvailableGoals())) {
             if (match.test(wrapped.getGoal())) { selector.removeGoal(wrapped.getGoal()); }
         }
+    }
+
+    @Nullable public static <T extends Goal> T first(GoalSelector selector, Class<T> kind) {
+        for (WrappedGoal wrapped : selector.getAvailableGoals()) {
+            if (kind.isInstance(wrapped.getGoal())) { return kind.cast(wrapped.getGoal()); }
+        }
+        return null;
     }
 
     public static List<WrappedGoal> entries(GoalSelector selector) { return new ArrayList<>(selector.getAvailableGoals()); }

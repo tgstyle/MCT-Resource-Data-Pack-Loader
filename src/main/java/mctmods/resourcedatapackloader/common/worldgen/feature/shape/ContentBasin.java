@@ -1,27 +1,17 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentBasin implements IContentShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
-    private final ShapeDef shape;
-
-    public ContentBasin(ShapeDef shape) { this.shape = shape; }
+public final class ContentBasin extends ContentShapeBase {
+    public ContentBasin(ShapeDef shape) { super(shape); }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Mth.clamp(shape.radius().pick(random), 1, ShapeDef.MOST_REACH * 2);
-        int depth = Math.max(1, shape.height().pick(random));
+        int radius = radius(random, 1, ShapeDef.MOST_REACH * 2);
+        int depth = rise(random);
         boolean round = shape.isRound();
         int span = radius * radius;
         boolean placed = false;

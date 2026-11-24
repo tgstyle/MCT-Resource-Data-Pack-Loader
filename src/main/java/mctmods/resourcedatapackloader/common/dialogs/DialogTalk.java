@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.cards.CardSend;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.DialogDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.IntSupplier;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
@@ -35,7 +37,7 @@ public final class DialogTalk {
     public static final int CLOSE = -1;
     public static final double REACH = 8.0D;
     private static final String NPC = "{npc}";
-    private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+    private static final Map<UUID, Session> SESSIONS = PlayerLogout.track(new HashMap<>());
 
     private DialogTalk() {}
 
@@ -110,8 +112,6 @@ public final class DialogTalk {
         merchant.openTradingScreen(player, npc.getDisplayName(), npc instanceof VillagerDataHolder holder ? holder.getVillagerData().getLevel() : 1);
     }
 
-    public static void forget(UUID player) { SESSIONS.remove(player); }
-
     private static void card(ServerPlayer player, Session session, String named) {
         CardRule rule = CardRules.find(named);
         if (rule == null) { ContentLog.LOGGER.error("Dialog {} shows the card {}, which no pack provides, so no card is shown", session.def.key(), named); }
@@ -154,7 +154,9 @@ public final class DialogTalk {
         return def.icon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceLocation.tryParse(def.key()), def.icon(), 1);
     }
 
-    private static int background(DialogDef def) { return def.color() == null || def.color().isEmpty() ? Says.background() : ContentParser.color(def.color(), "dialog " + def.key()) & 0xFFFFFF; }
+    private static int color(DialogDef def, @Nullable String value, IntSupplier fallback) { return value == null || value.isEmpty() ? fallback.getAsInt() : ContentParser.color(value, "dialog " + def.key()) & 0xFFFFFF; }
+
+    private static int background(DialogDef def) { return color(def, def.color(), Says::background); }
 
     private static String image(DialogDef def) { return def.image() == null ? Says.image() : def.image(); }
 
@@ -162,5 +164,5 @@ public final class DialogTalk {
 
     private static String font(DialogDef def) { return def.font() == null ? Says.font() : def.font(); }
 
-    private static int tint(DialogDef def, @Nullable String value) { return value == null || value.isEmpty() ? -1 : ContentParser.color(value, "dialog " + def.key()) & 0xFFFFFF; }
+    private static int tint(DialogDef def, @Nullable String value) { return color(def, value, () -> -1); }
 }

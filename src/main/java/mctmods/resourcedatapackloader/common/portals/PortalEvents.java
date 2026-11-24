@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.portals;
 
-import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 
 import net.minecraft.core.BlockPos;
@@ -11,14 +10,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 
 public final class PortalEvents {
     private PortalEvents() {}
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentPortalBlock.forget(event.getEntity().getUUID()); }
 
     public static void onBroken(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof Level level && !ContentCarry.probing()) { ContentPortals.shaken(level, event.getPos(), event.getState()); } }
 

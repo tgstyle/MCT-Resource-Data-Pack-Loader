@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.tints;
 
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.google.gson.JsonObject;
 import java.util.List;
@@ -34,12 +35,14 @@ public final class TintFactory {
         if (digits != 6 && digits != 8) { return null; }
         Long value = ContentTypes.hex(written);
         if (value == null) { return null; }
-        return digits == 6 ? (int) (value | 0xFF000000L) : value.intValue();
+        return digits == 6 ? opaque(value.intValue()) : value.intValue();
     }
 
+    public static int opaque(int color) { return color >>> 24 == 0 ? color | OPAQUE : color; }
+
     public int shade(int color) {
-        int level = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
-        return (color & 0xFF000000) | (ramp(level, 16) << 16) | (ramp(level, 8) << 8) | ramp(level, 0);
+        int level = (Colors.red(color) + Colors.green(color) + Colors.blue(color)) / 3;
+        return (color & OPAQUE) | (ramp(level, 16) << 16) | (ramp(level, 8) << 8) | ramp(level, 0);
     }
 
     private int ramp(int level, int shift) {

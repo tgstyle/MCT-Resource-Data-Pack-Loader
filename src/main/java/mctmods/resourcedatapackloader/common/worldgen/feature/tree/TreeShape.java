@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -55,7 +56,7 @@ public final class TreeShape {
         if (base == null) { return; }
         findRoots();
         measure();
-        this.steps = steps > 0 ? steps : Math.max(MIN_STEPS, Math.min(MAX_STEPS, height + radius));
+        this.steps = steps > 0 ? steps : Mth.clamp(height + radius, MIN_STEPS, MAX_STEPS);
         if (cap != null) { cap = persistent(cap); }
     }
 

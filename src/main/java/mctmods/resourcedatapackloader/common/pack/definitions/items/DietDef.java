@@ -61,7 +61,7 @@ public final class DietDef {
                 JsonObject tier = element.getAsJsonObject();
                 Json.unknownKeys(tier, "variety", TIER_KEYS);
                 List<PotionEffectDef> effects = tier.has("effects") ? ContentParser.effects(file, array(tier.get("effects"), "effects"), 1200, false) : new ArrayList<>();
-                String runs = tier.has("runs") ? text(tier.get("runs"), "runs") : "";
+                String runs = tier.has(Json.RUNS) ? text(tier.get(Json.RUNS), Json.RUNS) : "";
                 variety.add(new Tier(whole(tier.get("distinct"), "distinct"), (float) number(tier.get("multiplier"), "multiplier", 0.0D), effects, runs));
             }
         }
@@ -77,11 +77,9 @@ public final class DietDef {
         List<Group> groups = new ArrayList<>();
         if (json.has("groups")) {
             for (JsonElement element : array(json.get("groups"), "groups")) {
-                if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { throw new IllegalArgumentException("groups entries must be text"); }
+                if (!Json.isString(element)) { throw new IllegalArgumentException("groups entries must be text"); }
                 String text = element.getAsString().trim();
-                ItemMatch match = ItemMatch.parse(file, text);
-                if (match == null) { throw new IllegalArgumentException("groups entry '" + text + "' matches nothing"); }
-                groups.add(new Group(text, match));
+                groups.add(new Group(text, ItemMatch.parseOrThrow(file, text, "groups entry")));
             }
         }
         String repeatMessage = DEFAULT_REPEAT;
@@ -103,7 +101,7 @@ public final class DietDef {
     }
 
     private static String text(JsonElement element, String name) {
-        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { throw new IllegalArgumentException(name + " must be text"); }
+        if (element == null || !Json.isString(element)) { throw new IllegalArgumentException(name + " must be text"); }
         return element.getAsString().trim();
     }
 
@@ -128,7 +126,7 @@ public final class DietDef {
     private static String message(JsonObject messages, String name, String fallback) {
         if (!messages.has(name)) { return fallback; }
         JsonElement element = messages.get(name);
-        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { throw new IllegalArgumentException("messages." + name + " must be text"); }
+        if (!Json.isString(element)) { throw new IllegalArgumentException("messages." + name + " must be text"); }
         return element.getAsString().trim();
     }
 

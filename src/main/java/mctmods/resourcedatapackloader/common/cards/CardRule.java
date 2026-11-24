@@ -107,4 +107,6 @@ public final class CardRule {
     public CardRule(String key) { this.key = key; }
 
     public String key() { return key; }
+
+    static boolean wants(String wanted, String got) { return wanted.isEmpty() || wanted.equals(got); }
 }

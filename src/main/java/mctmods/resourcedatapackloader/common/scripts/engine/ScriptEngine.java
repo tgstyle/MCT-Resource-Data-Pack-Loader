@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ScriptEngine {
+    public static final String CANCEL = "cancel";
     private static final ScriptFactory FACTORY = new ScriptFactory();
     private static final Map<String, Script> COMPILED = new ConcurrentHashMap<>();
     private static final Set<String> FAILED = ConcurrentHashMap.newKeySet();
@@ -99,7 +100,7 @@ public final class ScriptEngine {
             return new Outcome(null, true);
         }
         catch (ScriptTimeout e) {
-            ContentLog.LOGGER.error("Script {} took longer than 50 ms, stopped", sourceName(ref));
+            ContentLog.LOGGER.error("Script {} took longer than {} ms, stopped", sourceName(ref), ScriptFactory.TIME_LIMIT_MS);
             turnOff(ref, disableOnError);
             return new Outcome(null, true);
         }
@@ -120,7 +121,7 @@ public final class ScriptEngine {
             return new Called(text(cx, scope, fn.call(cx, scope, scope, new Object[] {argument})), null);
         }
         catch (RhinoException e) { FAILED.add(ref.key()); return new Called(null, e.getMessage()); }
-        catch (ScriptTimeout e) { FAILED.add(ref.key()); return new Called(null, "it took longer than 50 ms"); }
+        catch (ScriptTimeout e) { FAILED.add(ref.key()); return new Called(null, "it took longer than " + ScriptFactory.TIME_LIMIT_MS + " ms"); }
     }
 
     @Nullable private static String text(Context cx, Scriptable scope, @Nullable Object result) {
@@ -146,12 +147,12 @@ public final class ScriptEngine {
             return null;
         }
         catch (ScriptTimeout e) {
-            ContentLog.LOGGER.error("Script scheduled function took longer than 50 ms, stopped");
+            ContentLog.LOGGER.error("Script scheduled function took longer than {} ms, stopped", ScriptFactory.TIME_LIMIT_MS);
             return null;
         }
     }
 
-    @Nullable private static String verdict(Object result) { return "cancel".equals(Context.toString(result)) ? "cancel" : null; }
+    @Nullable private static String verdict(Object result) { return CANCEL.equals(Context.toString(result)) ? CANCEL : null; }
 
     private static void logFailure(String sourceName, RhinoException e) { ContentLog.LOGGER.error("Script {} failed: {}\n{}", sourceName, e.getMessage(), e.getScriptStackTrace()); }
 }

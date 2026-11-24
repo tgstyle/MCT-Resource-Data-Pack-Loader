@@ -45,7 +45,7 @@ public final class ContentHarvests {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         Json.unknownKeys(json, "the top level", HARVEST_KEYS);
         if (!json.has(CROPS)) {
             ContentLog.LOGGER.error("Crop harvest {} names no crops, ignoring it", key);

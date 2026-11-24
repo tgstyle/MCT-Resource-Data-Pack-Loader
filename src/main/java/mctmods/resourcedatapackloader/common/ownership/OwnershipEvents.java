@@ -40,7 +40,6 @@ public final class OwnershipEvents {
         MinecraftForge.EVENT_BUS.addListener(ClaimProtection::onUseEntitySpecific);
         MinecraftForge.EVENT_BUS.addListener(ClaimProtection::onHurt);
         MinecraftForge.EVENT_BUS.addListener(ClaimMessages::onTick);
-        MinecraftForge.EVENT_BUS.addListener(ClaimMessages::onLogout);
         MinecraftForge.EVENT_BUS.addListener(ClaimWorldProtection::onDetonate);
         MinecraftForge.EVENT_BUS.addListener(ClaimWorldProtection::onMobGriefing);
         MinecraftForge.EVENT_BUS.addListener(ClaimWorldProtection::onFluidPlace);

@@ -33,7 +33,10 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 
 public final class ContentEntityTicks {
-    private static final List<String> KINDS = List.of("items", "experience", "projectiles");
+    private static final String ITEMS = "items";
+    private static final String EXPERIENCE = "experience";
+    private static final String PROJECTILES = "projectiles";
+    private static final List<String> KINDS = List.of(ITEMS, EXPERIENCE, PROJECTILES);
     private static final int SNAPSHOT = 100;
     private static final Map<Level, Long2BooleanOpenHashMap> FAR = new HashMap<>();
     private static final Map<Level, Long> CHECKED = new HashMap<>();
@@ -142,9 +145,9 @@ public final class ContentEntityTicks {
 
     private static boolean kindSlowed(Entity entity, Slowing slowing) {
         if (entity instanceof Mob) { return true; }
-        if (entity instanceof ItemEntity) { return slowing.kinds().contains("items"); }
-        if (entity instanceof ExperienceOrb) { return slowing.kinds().contains("experience"); }
-        if (entity instanceof AbstractArrow || entity instanceof ThrowableProjectile || entity instanceof LlamaSpit) { return slowing.kinds().contains("projectiles"); }
+        if (entity instanceof ItemEntity) { return slowing.kinds().contains(ITEMS); }
+        if (entity instanceof ExperienceOrb) { return slowing.kinds().contains(EXPERIENCE); }
+        if (entity instanceof AbstractArrow || entity instanceof ThrowableProjectile || entity instanceof LlamaSpit) { return slowing.kinds().contains(PROJECTILES); }
         return false;
     }
 

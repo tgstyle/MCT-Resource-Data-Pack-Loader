@@ -191,12 +191,14 @@ public final class WorldIntroScreen extends Screen {
         float room = height - FOOTER;
         scale = Crisp.scale(scale);
         for (int tries = 0; tries < FITS; tries++) {
-            wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+            wrap(wrapWidth());
             if (totalScrollLength <= room || scale <= SMALLEST) { return; }
             scale = Crisp.below(scale * room / totalScrollLength, SMALLEST);
         }
-        wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+        wrap(wrapWidth());
     }
+
+    private int wrapWidth() { return (int) Math.max(1.0F, (width - MARGIN * 2) / scale); }
 
     private void read(IntroPageDef def) {
         if (def.text() == null) { return; }

@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -27,6 +29,22 @@ import net.minecraftforge.event.server.ServerStartingEvent;
 public final class ContentServer {
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentServer::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
+    private static final List<Setting<?>> SETTINGS = List.of(
+        new Setting<>("force-gamemode", ContentServer::forceGameMode, null),
+        new Setting<>("pvp", ContentServer::pvp, MinecraftServer::setPvpAllowed),
+        new Setting<>("allow-flight", ContentServer::flight, MinecraftServer::setFlightAllowed),
+        new Setting<>("spawn-protection", () -> count(spawnProtection()), null),
+        new Setting<>("allow-nether", ContentServer::nether, null),
+        new Setting<>("enable-command-block", ContentServer::commandBlocks, null),
+        new Setting<>("player-idle-timeout", () -> count(idleTimeout()), MinecraftServer::setPlayerIdleTimeout),
+        new Setting<>("motd", () -> words(motd()), MinecraftServer::setMotd),
+        new Setting<>("max-world-size", () -> count(maxSize()), null),
+        new Setting<>("generate-structures", ContentServer::structures, null),
+        new Setting<>("spawn-monsters", ContentServer::spawnMonsters, null),
+        new Setting<>("spawn-animals", ContentServer::spawnAnimals, null),
+        new Setting<>("spawn-npcs", ContentServer::spawnNpcs, null),
+        new Setting<>("view-distance", () -> count(viewDistance()), null),
+        new Setting<>("simulation-distance", () -> count(simulationDistance()), null));
 
     private ContentServer() {}
 
@@ -98,30 +116,16 @@ public final class ContentServer {
 
     public static Map<String, String> properties(String levelType) {
         Map<String, String> asked = new LinkedHashMap<>();
-        put(asked, "force-gamemode", forceGameMode());
-        put(asked, "pvp", pvp());
-        put(asked, "allow-flight", flight());
-        put(asked, "spawn-protection", spawnProtection());
-        put(asked, "allow-nether", nether());
-        put(asked, "enable-command-block", commandBlocks());
-        put(asked, "player-idle-timeout", idleTimeout());
-        if (!motd().isEmpty()) { asked.put("motd", motd()); }
-        put(asked, "max-world-size", maxSize());
-        put(asked, "generate-structures", structures());
-        put(asked, "spawn-monsters", spawnMonsters());
-        put(asked, "spawn-animals", spawnAnimals());
-        put(asked, "spawn-npcs", spawnNpcs());
-        put(asked, "view-distance", viewDistance());
-        put(asked, "simulation-distance", simulationDistance());
+        for (Setting<?> setting : SETTINGS) { setting.into(asked); }
         Difficulty difficulty = difficultyFor(Level.OVERWORLD.location().toString());
         if (difficulty != null) { asked.put("difficulty", difficulty.getKey()); }
         ContentTerrain.properties(asked, levelType);
         return asked;
     }
 
-    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) { if (value != null) { asked.put(key, value.toString()); } }
+    @Nullable private static Integer count(int value) { return value >= 0 ? value : null; }
 
-    private static void put(Map<String, String> asked, String key, int value) { if (value >= 0) { asked.put(key, Integer.toString(value)); } }
+    @Nullable private static String words(String value) { return value.isEmpty() ? null : value; }
 
     public static void onAboutToStart(ServerAboutToStartEvent event) {
         if (!(event.getServer() instanceof DedicatedServer server)) { return; }
@@ -165,18 +169,24 @@ public final class ContentServer {
     }
 
     public static void applyTo(MinecraftServer server) {
-        Boolean pvp = pvp();
-        if (pvp != null) { server.setPvpAllowed(pvp); }
-        Boolean flight = flight();
-        if (flight != null) { server.setFlightAllowed(flight); }
-        int idle = idleTimeout();
-        if (idle >= 0) { server.setPlayerIdleTimeout(idle); }
-        String motd = motd();
-        if (!motd.isEmpty()) { server.setMotd(motd); }
+        for (Setting<?> setting : SETTINGS) { setting.apply(server); }
         if (!server.isDedicatedServer()) { return; }
         int view = viewDistance();
         if (view >= 0) { server.getPlayerList().setViewDistance(view); }
         int simulation = simulationDistance();
         if (simulation >= 0) { server.getPlayerList().setSimulationDistance(simulation); }
+    }
+
+    private record Setting<T>(String key, Supplier<T> read, @Nullable BiConsumer<MinecraftServer, T> live) {
+        private void into(Map<String, String> asked) {
+            T value = read.get();
+            if (value != null) { asked.put(key, value.toString()); }
+        }
+
+        private void apply(MinecraftServer server) {
+            if (live == null) { return; }
+            T value = read.get();
+            if (value != null) { live.accept(server, value); }
+        }
     }
 }

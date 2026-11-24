@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -52,7 +54,7 @@ public final class SwoopGoal extends Goal {
     @Override public void tick() {
         if (!canContinueToUse()) { return; }
         if (target == null) { return; }
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         ticks++;
         if (circling) {
             angle += 0.08D;

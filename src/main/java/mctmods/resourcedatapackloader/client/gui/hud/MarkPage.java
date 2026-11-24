@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.messages.MarkLines;
 import mctmods.resourcedatapackloader.common.util.messages.Marks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -158,8 +159,8 @@ public final class MarkPage {
         graphics.pose().scale(size, size, 1.0F);
         float x = Crisp.snap(left + row.indent * scale) / size;
         float at = Crisp.snap(y) / size;
-        graphics.drawString(font, row.lead, x, at, 0xFF000000 | row.color, true);
-        graphics.drawString(font, row.line, x + row.shift, at, 0xFF000000 | row.color, true);
+        graphics.drawString(font, row.lead, x, at, Colors.overlay(row.color, 0xFF), true);
+        graphics.drawString(font, row.line, x + row.shift, at, Colors.overlay(row.color, 0xFF), true);
         graphics.pose().popPose();
     }
 

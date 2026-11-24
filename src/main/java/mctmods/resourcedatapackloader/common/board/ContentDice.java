@@ -41,6 +41,9 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 
 public final class ContentDice {
+    private static final String BAD_ROLL = "badroll";
+    private static final String NO_DECK = "nodeck";
+    private static final String NO_OBJECTIVE = "noobjective";
     public static final String SILENT = "silent";
     public static final String SELF = "self";
     public static final String TEAM = "team";
@@ -164,7 +167,7 @@ public final class ContentDice {
 
     public static Result dice(RandomSource random, String roll) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         List<Integer> rolls = throwOf(random, spec);
         int total = sum(rolls, spec);
         Spell spelled = new Spell(spec[0], spec[1], spec[2]);
@@ -174,7 +177,7 @@ public final class ContentDice {
 
     public static Result edge(RandomSource random, String roll, boolean higher) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         int first = sum(throwOf(random, spec), spec);
         int second = sum(throwOf(random, spec), spec);
         int kept = higher ? Math.max(first, second) : Math.min(first, second);
@@ -191,7 +194,7 @@ public final class ContentDice {
 
     public static Result draw(MinecraftServer server, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         int card = ContentDicePile.draw(server, deck, cards.size(), random(server));
         boolean again = card < 0 && !FIXED.contains(deck);
         if (again) {
@@ -204,14 +207,14 @@ public final class ContentDice {
 
     public static Result shuffle(MinecraftServer server, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         ContentDicePile.shuffle(server, deck);
         return new Result(cards.size()).say("shuffle", "deck", deck, "left", cards.size());
     }
 
     public static Result left(MinecraftServer server, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         int left = ContentDicePile.left(server, deck, cards.size());
         return new Result(left).say("left", "deck", deck, "left", left);
     }
@@ -240,7 +243,7 @@ public final class ContentDice {
 
     public static Result teamroll(MinecraftServer server, CommandSourceStack source, String roll) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         List<String> members = new ArrayList<>();
         for (ServerPlayer mate : teammates(server, source)) { members.add(mate.getGameProfile().getName()); }
         if (members.isEmpty()) { members.add(source.getTextName()); }
@@ -263,7 +266,7 @@ public final class ContentDice {
         Scoreboard board = Scores.board(server);
         String name = objective == null ? tieObjective() : objective;
         Objective held = name == null ? null : Scores.objective(board, name);
-        if (held == null) { return Result.refused("noobjective", "objective", name == null ? "-" : name); }
+        if (held == null) { return Result.refused(NO_OBJECTIVE, "objective", name == null ? "-" : name); }
         List<Scores.Row> top = ContentScoringTie.top(Scores.rows(board, held));
         if (top.size() < 2) { return Result.refused("notie", "objective", name); }
         Scores.Row drawn = top.get(random(server).nextInt(top.size()));
@@ -314,7 +317,7 @@ public final class ContentDice {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
         if (!store.isEmpty() && lacks(server, store)) {
-            Says.line(player, ChatFormatting.RED, words(player, "noobjective", "objective", store));
+            Says.line(player, ChatFormatting.RED, words(player, NO_OBJECTIVE, "objective", store));
             return;
         }
         Result result = named(server, rolls);

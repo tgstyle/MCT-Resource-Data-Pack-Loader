@@ -173,6 +173,8 @@ public final class PackManager {
 
     public int getGeneration() { return generation.get(); }
 
+    public static Path config(Path packRoot, String file) { return packRoot.resolve(CONFIG).resolve(file); }
+
     public Set<String> namespaces() {
         Set<String> all = new LinkedHashSet<>();
         for (RDPLPack pack : packs) {

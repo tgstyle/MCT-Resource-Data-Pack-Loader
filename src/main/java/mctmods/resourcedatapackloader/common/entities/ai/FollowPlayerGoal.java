@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
+
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
@@ -25,8 +27,6 @@ public final class FollowPlayerGoal extends Goal {
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
-    private double range() { return mob.getAttributeValue(Attributes.FOLLOW_RANGE); }
-
     private boolean dark(Player found) { return lightLevel <= 0 || found.level().getMaxLocalRawBrightness(found.blockPosition()) < lightLevel; }
 
     @Override public boolean canUse() {
@@ -34,13 +34,13 @@ public final class FollowPlayerGoal extends Goal {
         long now = mob.level().getGameTime();
         if (now < next) { return false; }
         next = now + INTERVAL;
-        Player found = mob.level().getNearestPlayer(TargetingConditions.forCombat().range(range()), mob);
+        Player found = mob.level().getNearestPlayer(TargetingConditions.forCombat().range(Walking.followRange(mob)), mob);
         if (found == null || !dark(found)) { return false; }
         player = found;
         return true;
     }
 
-    @Override public boolean canContinueToUse() { return player != null && player.isAlive() && mob.getTarget() == null && mob.distanceToSqr(player) <= range() * range() && dark(player); }
+    @Override public boolean canContinueToUse() { return player != null && player.isAlive() && mob.getTarget() == null && mob.distanceToSqr(player) <= Walking.followRange(mob) * Walking.followRange(mob) && dark(player); }
 
     @Override public void start() { next = 0L; }
 
@@ -51,7 +51,7 @@ public final class FollowPlayerGoal extends Goal {
 
     @Override public void tick() {
         if (player == null) { return; }
-        mob.getLookControl().setLookAt(player, 30.0F, 30.0F);
+        Looking.at(mob, player);
         long now = mob.level().getGameTime();
         if (now < next) { return; }
         next = now + INTERVAL;

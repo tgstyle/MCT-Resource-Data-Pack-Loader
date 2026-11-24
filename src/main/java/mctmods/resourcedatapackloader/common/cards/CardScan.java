@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.environment.ContentTimeWindows;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
@@ -25,7 +26,7 @@ public final class CardScan {
     private static final int EVERY = 20;
     private static final long MINUTE_TICKS = 1200L;
     private static final String PLAY_FROM = "rdplPlayFrom";
-    private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
+    private static final Map<UUID, Map<String, Boolean>> INSIDE = PlayerLogout.track(new HashMap<>());
     private static final Map<ResourceKey<Level>, Long> CLOCKS = new HashMap<>();
     private static final Map<ResourceKey<Level>, Long> SCALED = new HashMap<>();
     private static int ticks;
@@ -85,8 +86,8 @@ public final class CardScan {
             Long scaledBefore = SCALED.put(level.dimension(), scaled);
             if (before == null || scaledBefore == null || now <= before) { continue; }
             if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, scaledBefore, scaled); }
-            long day = now / Level.TICKS_PER_DAY;
-            if (day == before / Level.TICKS_PER_DAY) { continue; }
+            long day = CardPlace.day(now);
+            if (day == CardPlace.day(before)) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
                 if (rule.day < 0L || rule.day == day) { fireAll(rule, here); }
             }
@@ -114,6 +115,4 @@ public final class CardScan {
         CompoundTag persisted = PlayerPersisted.of(player, PLAY_FROM);
         if (!persisted.contains(PLAY_FROM)) { persisted.putInt(PLAY_FROM, played(player)); }
     }
-
-    static void forget(UUID player) { INSIDE.remove(player); }
 }

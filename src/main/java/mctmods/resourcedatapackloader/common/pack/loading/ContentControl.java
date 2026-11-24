@@ -20,6 +20,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.util.Mth;
@@ -43,10 +45,31 @@ public final class ContentControl {
     public static final String SERVER = "server";
     public static final String OWNERSHIP = "ownership";
     public static final String CLAIMS = "claims";
-    private static final String DEFAULT = "default";
+    public static final String DEFAULT = "default";
+    public static final String LAYOUT = "villageLayout";
+    public static final String PREGEN_DIMENSIONS = "pregenDimensions";
+    public static final String PREGEN_ALL_DIMENSIONS = "pregenAllDimensions";
+    public static final String PREGEN_DIMENSIONS_WHEN_ENTERED = "pregenDimensionsWhenEntered";
+    public static final String PREGEN_TO_BORDER = "pregenToBorder";
+    public static final String PREGEN_RESUME = "pregenResume";
+    public static final String PREGEN_ON_NEW_WORLD = "pregenOnNewWorld";
+    public static final String PREGEN_BACKUP = "pregenBackup";
+    public static final String PREGEN_BACKUP_SAYS = "pregenBackupSays";
+    public static final String PREGEN_SPECTATING_SAYS = "pregenSpectatingSays";
+    public static final String PREGEN_RUNNING_SAYS = "pregenRunningSays";
+    public static final String PREGEN_STOPPED_SAYS = "pregenStoppedSays";
+    public static final String PREGEN_FINISHED_SAYS = "pregenFinishedSays";
+    public static final String PREGEN_LOGO = "pregenLogo";
+    public static final String WELCOME_SAYS = "welcomeSays";
+    public static final String RESET_SAYS = "resetSays";
+    public static final String RESET_RUNS = "resetRuns";
+    public static final String RESET_SENDS_TO = "resetSendsTo";
+    public static final String RESET_CLEARS_ENTITIES = "resetClearsEntities";
+    public static final String RESET_CLEARS_SCORES = "resetClearsScores";
+    public static final String RESET_CLEARS_INVENTORY = "resetClearsInventory";
+    public static final String RESET_CLEARS_EXPERIENCE = "resetClearsExperience";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
-    private static final String LAYOUT = "villageLayout";
     private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private static final Set<String> KNOWN = Set.of(
@@ -64,9 +87,9 @@ public final class ContentControl {
             "logBlockReplacements", "logBlockedBiomes", "logBlockedOres", "logBlockedRecipes", "monsterCap",
             "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "blockOreDimensions",
             "blockOreDimensionsAreBlacklist", "oreWhitelist", "prospectItems", "prospectItemsAreBlacklist",
-            "prospectDrops", "prospectSlow", "prospectWear", "pregenAllDimensions", "pregenDimensions",
-            "pregenDimensionsWhenEntered", "pregenOnNewWorld", "pregenFinishedSays", "pregenResume",
-            "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays",
+            "prospectDrops", "prospectSlow", "prospectWear", PREGEN_ALL_DIMENSIONS, PREGEN_DIMENSIONS,
+            PREGEN_DIMENSIONS_WHEN_ENTERED, PREGEN_ON_NEW_WORLD, PREGEN_FINISHED_SAYS, PREGEN_RESUME,
+            PREGEN_RUNNING_SAYS, PREGEN_SPECTATING_SAYS, PREGEN_STOPPED_SAYS, PREGEN_TO_BORDER, WELCOME_SAYS,
             "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts", "hiddenToasts", "recipeMatch", "recipeWhitelist", "slowDistance",
             "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes",
             "structureBiomesAreBlacklist", "structureMinDistanceFromSpawn", "structureSeparation",
@@ -100,9 +123,9 @@ public final class ContentControl {
             "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation",
             "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock",
             "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageBlockSizes",
-            "villageCitySpacing", "villageLayout", "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
+            "villageCitySpacing", LAYOUT, "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
             "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight",
-            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "biomes", "worldBorder", "worldBelow",
+            "structureAt", "structureMost", "pregenChunksInFlight", PREGEN_LOGO, PREGEN_BACKUP, PREGEN_BACKUP_SAYS, RESET_SAYS, RESET_SENDS_TO, RESET_RUNS, RESET_CLEARS_ENTITIES, RESET_CLEARS_SCORES, RESET_CLEARS_INVENTORY, RESET_CLEARS_EXPERIENCE, "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
             "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether",
             "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals",
@@ -198,8 +221,12 @@ public final class ContentControl {
         if (template == null || template.settings() == null) { return; }
         for (Map.Entry<String, JsonElement> entry : template.settings().entrySet()) {
             if (KNOWN.contains(entry.getKey())) { continue; }
-            ContentLog.LOGGER.error("World template {} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", template.key(), entry.getKey());
+            unknownSetting("World template " + template.key(), entry.getKey(), "", ". Check the spelling against the list of settings in HOWTO.md");
         }
+    }
+
+    public static void unknownSetting(String owner, String key, String on, String hint) {
+        ContentLog.LOGGER.error("{} sets '{}'{}, which is not a setting anything reads, so it does nothing{}", owner, key, on, hint);
     }
 
     public static boolean ignores(String key) { return !KNOWN.contains(key); }
@@ -233,17 +260,19 @@ public final class ContentControl {
     public static boolean packDecides(String group) { return DEFAULT.equals(mode(group)); }
 
     public static boolean flag(String group, String key, boolean fallback) {
-        JsonElement value = setting(group, key);
-        if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive()) { return rejected(key, "true or false", fallback); }
-        return value.getAsBoolean();
+        return typed(setting(group, key), key, "true or false", fallback, JsonElement::isJsonPrimitive, JsonElement::getAsBoolean);
     }
 
     public static int number(String group, String key, int fallback) {
-        JsonElement value = setting(group, key);
+        return typed(setting(group, key), key, "a number", fallback, ContentControl::isNumber, JsonElement::getAsInt);
+    }
+
+    private static boolean isNumber(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber(); }
+
+    private static <T> T typed(@Nullable JsonElement value, String key, String wanted, T fallback, Predicate<JsonElement> shape, Function<JsonElement, T> read) {
         if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
-        return value.getAsInt();
+        if (!shape.test(value)) { return rejected(key, wanted, fallback); }
+        return read.apply(value);
     }
 
     public static int ranged(String group, String key, int configured, int least, int most) {
@@ -259,19 +288,14 @@ public final class ContentControl {
     }
 
     public static float decimal(String group, String key, float fallback) {
-        JsonElement value = setting(group, key);
-        if (value == null) { return fallback; }
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) { return value.getAsFloat(); }
-        return rejected(key, "a number", fallback);
+        return typed(setting(group, key), key, "a number", fallback, ContentControl::isNumber, JsonElement::getAsFloat);
     }
 
     public static String text(String group, String key, String fallback) {
         JsonElement value = roadSetting(group, key);
         if (value == null) { value = biomeSetting(group, key); }
         if (value == null) { value = setting(group, key); }
-        if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
-        return value.getAsString();
+        return typed(value, key, "a text value", fallback, JsonElement::isJsonPrimitive, JsonElement::getAsString);
     }
 
     public static List<String> list(String group, String key, List<String> fallback) {

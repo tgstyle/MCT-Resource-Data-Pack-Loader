@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Turns;
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,7 +185,7 @@ public final class ContentTreeGrowth {
     public static void plant(ServerLevel level, BlockPos pos, BlockState sapling, String rule) {
         if (ContentTreeStore.get(level, pos.asLong()) != null) { return; }
         long now = level.getGameTime();
-        ContentTreeStore.put(level, new TreeEntry(pos.asLong(), rule, (byte) 0, new int[0], -1, (byte) 0, "", (byte) 0, (byte) 0, 0L, 0, 0, now, now, 0L, single(sapling), new IntOpenHashSet(), new IntOpenHashSet(), 0, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>()));
+        ContentTreeStore.put(level, TreeEntry.fresh(pos.asLong(), rule, (byte) 0, -1, (byte) 0, "", (byte) 0, (byte) 0, 0L, 0, now, single(sapling), 0, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>()));
     }
 
     @Nullable private static String blockedAt(ServerLevel level, BlockPos base, BlockPos tip, TreeGrowthDef growth) {
@@ -277,7 +276,7 @@ public final class ContentTreeGrowth {
 
     private static TreeEntry entryOf(ServerLevel level, BlockPos pos, String rule, int pick, TreePickDef def, byte turn, byte mirror, long seed, int steps, Map<Integer, BlockState> saplings, int hash) {
         long now = level.getGameTime();
-        return new TreeEntry(pos.asLong(), rule, (byte) 1, new int[0], pick, (byte) def.kind().ordinal(), def.source(), turn, mirror, seed, 0, steps, now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), hash, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>());
+        return TreeEntry.fresh(pos.asLong(), rule, (byte) 1, pick, (byte) def.kind().ordinal(), def.source(), turn, mirror, seed, steps, now, saplings, hash, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>());
     }
 
     private static TreeEntry recorded(ServerLevel level, BlockPos pos, String rule, int pick, TreePickDef def, long seed, TreeShape shape, TreeRecorder.Result result) {
@@ -296,7 +295,7 @@ public final class ContentTreeGrowth {
         Map<Integer, BlockState> saplings = new LinkedHashMap<>();
         for (int i = 0; i < result.saplingOffsets.size(); i++) { saplings.put(result.saplingOffsets.get(i), result.saplingStates.get(i)); }
         long now = level.getGameTime();
-        return new TreeEntry(pos.asLong(), rule, (byte) 1, new int[0], pick, (byte) def.kind().ordinal(), def.source(), (byte) 0, (byte) 0, seed, 0, shape.steps(), now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), 0, palette, blocks, states, under, tiles);
+        return TreeEntry.fresh(pos.asLong(), rule, (byte) 1, pick, (byte) def.kind().ordinal(), def.source(), (byte) 0, (byte) 0, seed, shape.steps(), now, saplings, 0, palette, blocks, states, under, tiles);
     }
 
     private static int paletteIndex(List<BlockState> palette, BlockState state) {

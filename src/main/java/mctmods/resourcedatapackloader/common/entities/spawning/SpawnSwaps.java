@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.Lists;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -100,15 +101,9 @@ public final class SpawnSwaps {
     public static void runs(EntityJoinLevelEvent event) {
         if (RULES.isEmpty() || event.getLevel().isClientSide()) { return; }
         Entity entity = event.getEntity();
-        List<String> functions = null;
-        for (Rule rule : RULES) {
-            if (rule.def().runs().isEmpty() || !MobStats.targets(rule.def().entities(), entity)) { continue; }
-            if (functions == null) { functions = new ArrayList<>(); }
-            functions.add(rule.def().runs());
-        }
-        CompoundTag data = functions == null ? null : entity.getPersistentData();
-        if (data == null || data.contains(RAN)) { return; }
-        data.putBoolean(RAN, true);
+        List<String> functions = Lists.collect(RULES, rule -> !rule.def().runs().isEmpty() && MobStats.targets(rule.def().entities(), entity), rule -> rule.def().runs());
+        if (functions.isEmpty() || entity.getPersistentData().contains(RAN)) { return; }
+        entity.getPersistentData().putBoolean(RAN, true);
         for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName().getString()); }
     }
 
@@ -169,7 +164,7 @@ public final class SpawnSwaps {
             return;
         }
         List<PickDef> becomes = ContentWorldgenParser.picks(json, "becomes", "entity");
-        String runs = Json.getString(json, "runs", "").trim();
+        String runs = Json.getString(json, Json.RUNS, "").trim();
         if (becomes.isEmpty() && runs.isEmpty()) {
             ContentLog.LOGGER.error("{} names nothing under becomes and no function it runs, ignoring it", owner);
             return;
@@ -186,7 +181,7 @@ public final class SpawnSwaps {
         RULES.add(new Rule(new SpawnSwapDef(key, entities, becomes, Json.strings(json, "biomes"), types, blocks, Json.getBoolean(json, "requireAll", false),
                 SpawnGateDef.read(key, json, "Spawn swap file"), elsewhere, elsewhere ? Json.ranged(where, "chance", 1.0F, 0.0F, 1.0F, owner) : 1.0F,
                 elsewhere && where.has("lightBelow") ? Math.max(1, Math.min(BRIGHTEST, Json.getInt(where, "lightBelow", BRIGHTEST))) : 0, elsewhere && Json.getBoolean(where, "night", false),
-                Math.max(0, Math.min(MOST_EXTRA, Json.getInt(json, "extra", 0))), Json.getBoolean(json, "fromSpawners", false), runs)));
+                Json.clamped(json, "extra", 0, 0, MOST_EXTRA), Json.getBoolean(json, "fromSpawners", false), runs)));
     }
 
     private static final class Rule {

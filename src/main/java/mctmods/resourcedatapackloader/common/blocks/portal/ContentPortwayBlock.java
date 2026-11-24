@@ -91,7 +91,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
     @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (settings().tall()) { level.setBlock(pos.above(), state.setValue(HALF, DoubleBlockHalf.UPPER), 3); }
+        if (settings().tall()) { level.setBlock(pos.above(), state.setValue(HALF, DoubleBlockHalf.UPPER), Block.UPDATE_ALL); }
         if (stack.hasCustomHoverName() && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.rename(stack.getHoverName().getString()); }
         if (placer instanceof Player && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.placedBy(placer.getUUID()); }
     }

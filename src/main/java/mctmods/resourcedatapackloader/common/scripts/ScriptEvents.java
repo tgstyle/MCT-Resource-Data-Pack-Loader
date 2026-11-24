@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,7 +23,25 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class ScriptEvents {
     private static final Map<String, List<ScriptEventDef>> EVENTS = new HashMap<>();
 
+    public static final String RDPL = "rdpl";
+    public static final String SENDER = "sender";
+    static final String ENTITY = "entity";
+    static final String PLAYER = "player";
+    static final String POS = "pos";
+    static final String STATE = "state";
+    static final String FROM = "from";
+    static final String TO = "to";
+    static final String ATTACKER = "attacker";
+    static final String DAMAGE_TYPE = "damageType";
+    static final String DROPS = "drops";
+
     private ScriptEvents() {}
+
+    public static Map<String, Object> bind(ServerLevel level, @Nullable Player player) {
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put(RDPL, new RdplApi(level, player));
+        return bindings;
+    }
 
     public static void load() {
         EVENTS.clear();
@@ -35,28 +55,24 @@ public final class ScriptEvents {
 
     public static boolean has(String kind) { return EVENTS.containsKey(kind); }
 
-    public static boolean fire(String kind, Level level, @Nullable BlockState state, @Nullable Entity entity, ItemStack item, Map<String, Object> bindings) {
-        return fire(kind, level, state, entity, item, null, bindings);
-    }
-
     public static boolean idle(String kind, long time) {
         List<ScriptEventDef> entries = EVENTS.get(kind);
         if (entries == null) { return true; }
         for (ScriptEventDef entry : entries) {
-            if (entry.every == 1 || time % entry.every == 0) { return false; }
+            if (entry.due(time)) { return false; }
         }
         return true;
     }
 
-    public static boolean fire(String kind, Level level, @Nullable BlockState state, @Nullable Entity entity, ItemStack item, @Nullable ItemStack alternate, Map<String, Object> bindings) {
+    public static boolean fire(String kind, Level level, @Nullable BlockState state, @Nullable Entity entity, ItemStack item, Map<String, Object> bindings) {
         List<ScriptEventDef> entries = EVENTS.get(kind);
         if (entries == null) { return false; }
         boolean cancelled = false;
         boolean disable = ScriptEventDef.disablesOnError(kind);
         for (ScriptEventDef entry : entries) {
-            if (entry.every != 1 && level.getGameTime() % entry.every != 0) { continue; }
-            if (!entry.filter.matches(level, state, entity, item, alternate)) { continue; }
-            if ("cancel".equals(ScriptEngine.run(entry.script, bindings, disable))) { cancelled = true; }
+            if (!entry.due(level.getGameTime())) { continue; }
+            if (!entry.filter.matches(level, state, entity, item)) { continue; }
+            if (ScriptEngine.CANCEL.equals(ScriptEngine.run(entry.script, bindings, disable))) { cancelled = true; }
         }
         return cancelled;
     }

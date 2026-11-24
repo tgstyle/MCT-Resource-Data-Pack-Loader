@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.stacks.StackModifiers;
 import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -66,10 +67,11 @@ public final class ContentAffixes {
 
     private static void readAffix(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", AFFIX_KEYS);
-        ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
+        String item = Json.text(json, "item", "");
+        ItemStack stack = ContentStacks.parse(key, item, 1);
         if (stack.isEmpty()) { return; }
         if (stack.getMaxStackSize() > 1) {
-            ContentLog.LOGGER.error("Affix file {} names {}, which stacks, and a stack cannot carry rolled values, skipping it", key, Json.text(json, "item", ""));
+            ContentLog.LOGGER.error("Affix file {} names {}, which stacks, and a stack cannot carry rolled values, skipping it", key, item);
             return;
         }
         List<AffixEntry> entries = new ArrayList<>();
@@ -90,29 +92,24 @@ public final class ContentAffixes {
         Json.unknownKeys(json, "affixes", ENTRY_KEYS);
         Attribute attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
-        int operation = Json.getInt(json, "operation", 0);
-        if (operation < 0 || operation > 2) {
-            ContentLog.LOGGER.error("Affix file {} sets operation to {}, which is not 0, 1 or 2, skipping that affix", key, operation);
-            return null;
-        }
+        int operation = StackModifiers.operation(key, json, "Affix", "that affix");
+        if (operation < 0) { return null; }
         if (attribute == null || slots == null) { return null; }
         double min = number(json, "min", 0.0D);
         double max = Math.max(min, number(json, "max", min));
-        return new AffixEntry(Json.text(json, "name", ""), attribute, min, max, operation, slots, Math.max(1, Json.getInt(json, "weight", 1)));
+        return new AffixEntry(Json.text(json, "name", ""), attribute, min, max, operation, slots, Json.atLeast(json, "weight", 1, 1));
     }
 
     private static void readGem(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", GEM_KEYS);
-        ItemStack stack = ContentStacks.parse(key, Json.text(json, "item", ""), 1);
+        String item = Json.text(json, "item", "");
+        ItemStack stack = ContentStacks.parse(key, item, 1);
         Attribute attribute = ContentAttributes.find(Json.text(json, "attribute", ""), key);
         List<EquipmentSlot> slots = StackModifiers.slots(key, Json.text(json, "slot", StackModifiers.ANY));
-        int operation = Json.getInt(json, "operation", 0);
-        if (operation < 0 || operation > 2) {
-            ContentLog.LOGGER.error("Gem file {} sets operation to {}, which is not 0, 1 or 2, skipping it", key, operation);
-            return;
-        }
+        int operation = StackModifiers.operation(key, json, "Gem", "it");
+        if (operation < 0) { return; }
         if (stack.isEmpty() || attribute == null || slots == null) { return; }
-        GEMS.add(new GemDef(stack, Json.text(json, "name", Json.text(json, "item", "")), attribute, number(json, "amount", 0.0D), operation, slots, Math.max(1, Json.getInt(json, "levels", 1))));
+        GEMS.add(new GemDef(stack, Json.text(json, "name", item), attribute, number(json, "amount", 0.0D), operation, slots, Json.atLeast(json, "levels", 1, 1)));
     }
 
     private static double number(JsonObject json, String member, double fallback) { return json.has(member) ? Json.asDouble(json.get(member), member, fallback) : fallback; }
@@ -120,7 +117,7 @@ public final class ContentAffixes {
     private static int[] range(JsonObject json, String member, int fallback) {
         JsonObject held = Json.object(json, member);
         Json.unknownKeys(held, member, RANGE_KEYS);
-        int min = Math.max(0, Json.getInt(held, "min", fallback));
+        int min = Json.atLeast(held, "min", fallback, 0);
         return new int[] {min, Math.max(min, Json.getInt(held, "max", min))};
     }
 
@@ -175,14 +172,7 @@ public final class ContentAffixes {
     }
 
     private static AffixEntry pick(List<AffixEntry> pool, RandomSource random) {
-        int total = 0;
-        for (AffixEntry entry : pool) { total += entry.weight(); }
-        int left = random.nextInt(total);
-        for (AffixEntry entry : pool) {
-            left -= entry.weight();
-            if (left < 0) { return entry; }
-        }
-        return pool.get(pool.size() - 1);
+        return WeightedPicks.raw(pool, AffixEntry::weight, random, pool.get(pool.size() - 1));
     }
 
     @Nullable private static GemDef gemOf(ItemStack right) {

@@ -39,11 +39,9 @@ public final class MobDrops {
     private MobDrops() {}
 
     private static void reload() {
-        DEFS.clear();
-        GENERATION.stale();
-        if (Config.data.mobDropsOff()) { return; }
-        Json.eachObject(PackManager.MOB_DROPS, "mob drop file", MobDrops::read);
-        if (!DEFS.isEmpty()) { Summary.info("loot.mobDrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        GENERATION.load(!Config.data.mobDropsOff(), DEFS::clear, PackManager.MOB_DROPS, "mob drop file", MobDrops::read, () -> {
+            if (!DEFS.isEmpty()) { Summary.info("loot.mobDrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        });
     }
 
     private static List<ItemMatch> matches(ResourceLocation key, JsonObject json, String member) {

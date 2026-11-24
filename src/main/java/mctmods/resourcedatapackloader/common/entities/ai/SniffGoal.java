@@ -42,18 +42,13 @@ public final class SniffGoal extends Goal {
     }
 
     @Nullable private Player loudest() {
-        Player best = null;
-        double nearest = Double.MAX_VALUE;
-        for (Player player : mob.level().players()) {
-            if (player.isSpectator() || player.isCreative() || player.isShiftKeyDown() || !player.isAlive()) { continue; }
-            Vec3 motion = player.getDeltaMovement();
-            if (motion.x * motion.x + motion.z * motion.z < 1.0E-4D && !player.isSprinting()) { continue; }
-            double away = mob.distanceToSqr(player);
-            if (away > (double) radius * radius || away >= nearest) { continue; }
-            nearest = away;
-            best = player;
-        }
-        return best;
+        return Walking.nearest(mob.level().players(), SniffGoal::audible, mob::distanceToSqr, (double) radius * radius);
+    }
+
+    private static boolean audible(Player player) {
+        if (player.isSpectator() || player.isCreative() || player.isShiftKeyDown() || !player.isAlive()) { return false; }
+        Vec3 motion = player.getDeltaMovement();
+        return motion.x * motion.x + motion.z * motion.z >= 1.0E-4D || player.isSprinting();
     }
 
     @Override public boolean canContinueToUse() { return heardAt != null && mob.getTarget() == null && walked < GIVE_UP && !mob.getNavigation().isDone(); }

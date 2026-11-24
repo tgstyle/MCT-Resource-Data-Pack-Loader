@@ -7,6 +7,7 @@ import net.minecraft.util.Mth;
 public final class ContentField {
     public static final int[] CHANCES = { 30, 30, 20, 20, 10, 10, 10, 10, 50 };
     public static final float SPREAD = 0.15F;
+    private static final long LCG = 6364136223846793005L;
     public static final int CELL = 8;
     public static final int SEEDS = 1;
     public static final float REACH = 3.0F;
@@ -173,9 +174,9 @@ public final class ContentField {
 
     private static long mix(long salt, int x, int y, int z) {
         long value = salt;
-        value = value * 6364136223846793005L + (x * 3129871L);
-        value = value * 6364136223846793005L + (y * 116129781L);
-        value = value * 6364136223846793005L + (z * 4295001919L);
+        value = value * LCG + (x * 3129871L);
+        value = value * LCG + (y * 116129781L);
+        value = value * LCG + (z * 4295001919L);
         value ^= value >>> 29;
         value *= Hashes.GOLDEN;
         value ^= value >>> 32;

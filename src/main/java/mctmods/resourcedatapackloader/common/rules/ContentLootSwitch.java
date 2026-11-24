@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
@@ -53,7 +54,7 @@ public final class ContentLootSwitch extends LootModifier {
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             ResourceLocation from = id(entry.getKey());
             JsonElement value = entry.getValue();
-            ResourceLocation to = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? id(value.getAsString()) : null;
+            ResourceLocation to = Json.isString(value) ? id(value.getAsString()) : null;
             if (from == null || to == null) { ContentLog.LOGGER.error("{} gives loot for '{}' as {}, which is not a pair of loot table ids, ignoring it", owner, entry.getKey(), value); }
             else if (from.equals(to)) { ContentLog.LOGGER.error("{} swaps loot table {} for itself, ignoring it", owner, from); }
             else { swaps.put(from, to); }

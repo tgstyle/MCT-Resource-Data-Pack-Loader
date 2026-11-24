@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import java.util.function.ToIntFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -71,6 +72,12 @@ public final class ServerCommands {
                 .then(ClaimCommand.claim(NAME))
                 .then(ClaimCommand.unclaim(NAME))
                 .then(ClaimCommand.claims(NAME)));
+    }
+
+    static int lowest(Iterable<String> keys, ToIntFunction<String> level) {
+        int lowest = CommandShared.OPERATOR;
+        for (String key : keys) { lowest = Math.min(lowest, level.applyAsInt(key)); }
+        return lowest;
     }
 
     private static int reload(CommandContext<CommandSourceStack> context) {

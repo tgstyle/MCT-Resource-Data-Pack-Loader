@@ -48,6 +48,8 @@ public final class CityLinks {
     private static final int HEAD = 5;
     private static final int PACKED = 10;
     private static final int END = HEAD + PACKED;
+    private static final int JOIN_ROW = 1;
+    private static final int TAIL = 2;
     private static final int WELL_X = 3;
     private static final int WELL_Z = 4;
     private static final int BURIED = HEAD + 5;
@@ -222,6 +224,12 @@ public final class CityLinks {
 
     private static boolean buried(int[] ends, int at) { return ends[at + BURIED] != 0; }
 
+    private static int dirOf(int[] ends, int at) { return ends[at]; }
+
+    private static int joinRowOf(int[] ends, int at) { return ends[at + JOIN_ROW]; }
+
+    private static int tailOf(int[] ends, int at) { return ends[at + TAIL]; }
+
     private static boolean founded(ServerLevel level, int wellX, int wellZ) { return ContentStructureMost.mayFound(level, new ChunkPos((wellX + 2) >> 4, (wellZ + 2) >> 4)); }
 
     public static boolean partnerless(WorldGenLevel level, @Nullable int[] packed, BoundingBox held) {
@@ -242,7 +250,7 @@ public final class CityLinks {
 
     public static boolean unlaid(int[] unfounded, int row) {
         for (int at = 0; at + END <= unfounded.length; at += END) {
-            if ((row - unfounded[at + 2]) * unfounded[at] > 0) { return true; }
+            if ((row - tailOf(unfounded, at)) * dirOf(unfounded, at) > 0) { return true; }
         }
         return false;
     }
@@ -255,8 +263,8 @@ public final class CityLinks {
     public static int[] bearded(int[] ends, int least, int most) {
         int[] rows = { least, most };
         for (int at = 0; at + END <= ends.length; at += END) {
-            if (ends[at] > 0) { rows[1] = Math.min(rows[1], ends[at + 2]); }
-            else { rows[0] = Math.max(rows[0], ends[at + 2]); }
+            if (dirOf(ends, at) > 0) { rows[1] = Math.min(rows[1], tailOf(ends, at)); }
+            else { rows[0] = Math.max(rows[0], tailOf(ends, at)); }
         }
         return rows;
     }
@@ -322,20 +330,20 @@ public final class CityLinks {
         int pinned = 0;
         boolean[] band = new boolean[profile.length];
         for (int at = 0; at + END <= ends.length; at += END) {
-            int dir = ends[at];
+            int dir = dirOf(ends, at);
             Trunk trunk = Trunk.of(Arrays.copyOfRange(ends, at + HEAD, at + END));
             Graded graded = CityLinksSurvey.graded(ground, trunk);
             if (graded == null) { continue; }
             int level = graded.profile()[trunk.row(trunk.lowSide() == -dir) - trunk.least()];
             for (int k = 0; k < pinRows(trunk.buried()); k++) {
-                int row = ends[at + 1] - dir * k - rowLeast;
+                int row = joinRowOf(ends, at) - dir * k - rowLeast;
                 if (row < 0 || row >= profile.length) { continue; }
                 profile[row] = level;
                 fixed[row] = true;
                 band[row] = true;
             }
             pinned++;
-            ContentLog.LOGGER.debug("The railway line at {} holds its last {} row(s) at y {} where it joins its link trunk at row {}", rail.middle(), pinRows(trunk.buried()), level, ends[at + 1]);
+            ContentLog.LOGGER.debug("The railway line at {} holds its last {} row(s) at y {} where it joins its link trunk at row {}", rail.middle(), pinRows(trunk.buried()), level, joinRowOf(ends, at));
         }
         if (pinned > 0) { CityGrade.approach(profile, fixed, band, climb); }
         return pinned;
@@ -343,15 +351,15 @@ public final class CityLinks {
 
     @Nullable public static int[] climbOut(int[] ends) {
         if (ends.length < END || buried(ends, 0)) { return null; }
-        int dir = ends[0];
-        return new int[] {ends[1] - dir * (pinRows(false) - 1) - dir * ramp(), dir};
+        int dir = dirOf(ends, 0);
+        return new int[] {joinRowOf(ends, 0) - dir * (pinRows(false) - 1) - dir * ramp(), dir};
     }
 
     private static int fromEnd(int[] ends, int row, boolean surfaceOnly, boolean station) {
         for (int at = 0; at + END <= ends.length; at += END) {
             boolean buried = buried(ends, at);
             if (surfaceOnly && buried) { continue; }
-            int k = (ends[at + 1] - row) * ends[at];
+            int k = (joinRowOf(ends, at) - row) * dirOf(ends, at);
             if (k >= 0 && k < (station ? pinRows(buried) : APPROACH)) { return k; }
         }
         return -1;
@@ -391,9 +399,9 @@ public final class CityLinks {
     public static boolean platformSide(int[] ends, boolean alongX, int row, int side) {
         if (!stationShape().startsWith("o")) { return true; }
         for (int at = 0; at + END <= ends.length; at += END) {
-            int k = (ends[at + 1] - row) * ends[at];
+            int k = (joinRowOf(ends, at) - row) * dirOf(ends, at);
             if (k < 0 || k >= pinRows(false)) { continue; }
-            return side == (alongX ? -ends[at] : ends[at]);
+            return side == (alongX ? -dirOf(ends, at) : dirOf(ends, at));
         }
         return false;
     }
@@ -406,9 +414,9 @@ public final class CityLinks {
         int laid = 0;
         for (int end = 0; end + END <= ends.length; end += END) {
             if (buried(ends, end)) { continue; }
-            int dir = ends[end];
-            int near = ends[end + 1] - dir * APPROACH;
-            int far = ends[end + 1] - dir * (pinRows(false) - 1);
+            int dir = dirOf(ends, end);
+            int near = joinRowOf(ends, end) - dir * APPROACH;
+            int far = joinRowOf(ends, end) - dir * (pinRows(false) - 1);
             int middle = (near + far) / 2;
             if (unlaid(unfounded, middle)) { continue; }
             for (int side : new int[] {-1, 1}) {

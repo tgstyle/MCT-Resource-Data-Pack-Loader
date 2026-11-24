@@ -87,12 +87,7 @@ public final class ContentPotions {
         Json.unknownKeys(json, "the top level", POTION_KEYS);
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
-            for (JsonElement element : Json.getJsonArray(json, "attributes")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An attribute in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject entry = element.getAsJsonObject();
+            for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "attributes"), "An attribute in {} is not an object, skipping it", key)) {
                 Json.unknownKeys(entry, "attributes", ATTRIBUTE_KEYS);
                 String uuid = Json.getString(entry, "uuid", "");
                 if (uuid.isEmpty()) {
@@ -141,12 +136,7 @@ public final class ContentPotions {
         JsonObject json = Json.object(key, contents, "brewing file");
         if (json == null) { return; }
         Json.unknownKeys(json, "the top level", BREWING_FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "brewing")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "brewing"), "A brewing recipe in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "brewing", BREWING_KEYS);
             BrewingDef def = new BrewingDef(key,
                     Json.getString(entry, "from", ""),

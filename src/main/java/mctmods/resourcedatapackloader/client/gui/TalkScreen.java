@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.client.util.Crisp;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.network.TalkMessage;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -35,7 +36,6 @@ public final class TalkScreen extends Screen {
     private static final double REACH = 8.0D;
     private static final int HOVER = 0x40FFFFFF;
     private static final int HOVER_TEXT = 0xFFFF55;
-    private static final int TEXT = 0xFFFFFF;
     private static final int BUTTON = 12;
     private static final int MOST_PAGES = 32;
     private static final int BAND = 0x40;
@@ -230,7 +230,7 @@ public final class TalkScreen extends Screen {
             ResourceLocation image = ContentParser.location(talk.image());
             if (image != null) { graphics.blit(image, left, top, 0, 0.0F, 0.0F, panelWidth, panelHeight, panelWidth, panelHeight); }
         }
-        if (talk.panel()) { graphics.fill(left, top, left + STRIPE, top + panelHeight, CardOverlay.withAlpha(TEXT, 1.0F)); }
+        if (talk.panel()) { graphics.fill(left, top, left + STRIPE, top + panelHeight, Colors.withAlpha(Colors.WHITE_TEXT, 1.0F)); }
         int x = left + STRIPE + PAD;
         if (!talk.icon().isEmpty()) {
             graphics.renderItem(talk.icon(), x, top + PAD);
@@ -239,16 +239,16 @@ public final class TalkScreen extends Screen {
         graphics.enableScissor(Crisp.real(left), Crisp.real(top + PAD), Crisp.real(edge()), Crisp.real(top + panelHeight - PAD));
         int y = contentTop();
         for (FormattedCharSequence line : title) {
-            graphics.drawString(font, line, x + pagerWidth(), y, CardOverlay.withAlpha(tone(talk.titleColor(), TEXT), 1.0F), true);
+            graphics.drawString(font, line, x + pagerWidth(), y, Colors.withAlpha(tone(talk.titleColor(), Colors.WHITE_TEXT), 1.0F), true);
             y += CardOverlay.LINE;
         }
         y = contentTop() + titleHeight();
         for (FormattedCharSequence line : lines) {
-            graphics.drawString(font, line, x, y, CardOverlay.withAlpha(tone(talk.textColor(), CardOverlay.LINE_COLOR), 1.0F), true);
+            graphics.drawString(font, line, x, y, Colors.withAlpha(tone(talk.textColor(), CardOverlay.LINE_COLOR), 1.0F), true);
             y += CardOverlay.LINE;
         }
         for (FormattedCharSequence line : chosen) {
-            graphics.drawString(font, line, x, y, CardOverlay.withAlpha(tone(talk.replyColor(), TEXT), 1.0F), true);
+            graphics.drawString(font, line, x, y, Colors.withAlpha(tone(talk.replyColor(), Colors.WHITE_TEXT), 1.0F), true);
             y += CardOverlay.LINE;
         }
         drawReplies(graphics, talk, x,Crisp.fit((double) mouseX), Crisp.fit((double) mouseY));
@@ -264,21 +264,21 @@ public final class TalkScreen extends Screen {
     private void drawReplies(GuiGraphics graphics, TalkMessage talk, int x, double mouseX, double mouseY) {
         int hovered = rowAt(mouseX, mouseY);
         int y = firstRowTop();
-        int replyColor = tone(talk.replyColor(), TEXT);
+        int replyColor = tone(talk.replyColor(), Colors.WHITE_TEXT);
         for (int i = 0; i < rows.size(); i++) {
             List<FormattedCharSequence> row = rows.get(i);
             int rowHeight = rowHeight(row);
             if (i == hovered) { graphics.fill(left + STRIPE, y, edge(), y + rowHeight, band(talk)); }
             int lineY = y + ROW_PAD;
             for (FormattedCharSequence line : row) {
-                graphics.drawString(font, line, x, lineY, CardOverlay.withAlpha(i == hovered ? tone(talk.hoverColor(), HOVER_TEXT) : replyColor, 1.0F), true);
+                graphics.drawString(font, line, x, lineY, Colors.withAlpha(i == hovered ? tone(talk.hoverColor(), HOVER_TEXT) : replyColor, 1.0F), true);
                 lineY += CardOverlay.LINE;
             }
             y += rowHeight;
         }
     }
 
-    private static int band(TalkMessage talk) { return talk.hoverBackground() < 0 ? HOVER : BAND << 24 | talk.hoverBackground(); }
+    private static int band(TalkMessage talk) { return talk.hoverBackground() < 0 ? HOVER : Colors.overlay(talk.hoverBackground(), BAND); }
 
     private int pagerTop() { return top + PAD; }
 
@@ -312,9 +312,9 @@ public final class TalkScreen extends Screen {
     }
 
     private int drawFrame(GuiGraphics graphics, TalkMessage talk, int x, int y, boolean enabled, double mouseX, double mouseY) {
-        if (talk.panel()) { graphics.fill(x, y, x + BUTTON, y + BUTTON, CardOverlay.withAlpha(talk.background(), 1.0F)); }
+        if (talk.panel()) { graphics.fill(x, y, x + BUTTON, y + BUTTON, Colors.withAlpha(talk.background(), 1.0F)); }
         graphics.fill(x, y, x + BUTTON, y + BUTTON, enabled && inside(mouseX, mouseY, x, y) ? band(talk) : BASE);
-        return CardOverlay.withAlpha(tone(talk.replyColor(), TEXT), enabled ? 1.0F : DIM);
+        return Colors.withAlpha(tone(talk.replyColor(), Colors.WHITE_TEXT), enabled ? 1.0F : DIM);
     }
 
     private void drawLabel(GuiGraphics graphics, TalkMessage talk, int x, boolean enabled, double mouseX, double mouseY, String label) {

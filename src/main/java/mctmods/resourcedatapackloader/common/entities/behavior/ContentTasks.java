@@ -106,6 +106,9 @@ public final class ContentTasks {
     private static final String WALKER = "a walking creature";
     private static final String TAME = "a tameable base, like a wolf, cat or parrot";
     private static final String ANY_NAME = "any living entity";
+    private static final double RANGED_SPEED = 1.0D;
+    private static final int RANGED_COOLDOWN = 20;
+    private static final float RANGED_DISTANCE = 15.0F;
     private static final List<String> TASK_KEYS = List.of("task", "priority", "speed", "nearSpeed", "distance", "near", "chance", "leap", "cooldown", "entity", "items", "sight", "nearby", "help", "memory", "close", "nocturnal", "scared");
 
     private ContentTasks() {}
@@ -127,7 +130,7 @@ public final class ContentTasks {
 
     static {
         task("attackMelee", PathfinderMob.class, WALKER, MeleeAttackGoal.class, (m, t, d) -> new MeleeAttackGoal((PathfinderMob) m, t.speed(1.0D), t.memory()));
-        task("attackRanged", RangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", RangedAttackGoal.class, (m, t, d) -> new RangedAttackGoal((RangedAttackMob) m, t.speed(1.0D), t.cooldown(20), t.distance(15.0F)));
+        task("attackRanged", RangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", RangedAttackGoal.class, (m, t, d) -> new RangedAttackGoal((RangedAttackMob) m, t.speed(RANGED_SPEED), t.cooldown(RANGED_COOLDOWN), t.distance(RANGED_DISTANCE)));
         task("attackRangedBow", Monster.class, "a monster that shoots, like a skeleton", RangedBowAttackGoal.class, ContentTasks::bow);
         task("avoidEntity", PathfinderMob.class, WALKER, AvoidEntityGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> avoided = entity(t, d, m.level());
@@ -226,7 +229,7 @@ public final class ContentTasks {
             ContentLog.LOGGER.error("Entity variant {} asks for the task attackRangedBow, which needs a monster that shoots, like a skeleton; {} does not", def.key(), def.base());
             return null;
         }
-        return new RangedBowAttackGoal((Monster) mob, task.speed(1.0D), task.cooldown(20), task.distance(15.0F));
+        return new RangedBowAttackGoal((Monster) mob, task.speed(RANGED_SPEED), task.cooldown(RANGED_COOLDOWN), task.distance(RANGED_DISTANCE));
     }
 
     public static String names() {

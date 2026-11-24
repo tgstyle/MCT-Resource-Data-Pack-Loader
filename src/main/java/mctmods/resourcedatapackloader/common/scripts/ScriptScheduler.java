@@ -7,10 +7,12 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.PriorityQueue;
 import javax.annotation.Nullable;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public final class ScriptScheduler {
@@ -39,7 +41,9 @@ public final class ScriptScheduler {
         dropped = false;
     }
 
-    @SubscribeEvent public static void onStopping(ServerStoppingEvent event) { clear(); }
+    @SubscribeEvent public static void onUnload(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) { clear(); }
+    }
 
     @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }

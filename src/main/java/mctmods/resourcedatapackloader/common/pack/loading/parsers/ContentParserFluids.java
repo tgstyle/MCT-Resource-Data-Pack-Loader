@@ -166,7 +166,7 @@ public final class ContentParserFluids {
         Json.unknownKeys(json, "creatures", CREATURES_KEYS);
         String label = key + " creatures";
         return new FluidBehaviorDef.Creatures(decimal(json, "damage", 0.0F, LARGE, label), whole(json, "damageEvery", DAMAGE_EVERY, label),
-                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Math.max(0, Json.getInt(json, "fireSeconds", 0)) : null,
+                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Json.atLeast(json, "fireSeconds", 0, 0) : null,
                 flag(json, "drown"), flag(json, "swim"), decimal(json, "push", 0.0F, LARGE, label), decimal(json, "drag", 0.0F, 1.0F, label));
     }
 

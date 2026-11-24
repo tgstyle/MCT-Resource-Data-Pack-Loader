@@ -21,7 +21,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -92,12 +91,11 @@ public final class CityPlotSeams {
         }
         if (low - here < PIT_DEPTH || walls < PIT_WALLS) { return 0; }
         BlockState ground = CityPlotGround.groundFor(level, x, z);
-        BlockState top = ground.is(Blocks.DIRT) ? Blocks.GRASS_BLOCK.defaultBlockState() : ground;
         int filled = 0;
         for (int y = here + 1; y <= low; y++) {
             at.set(x, y, z);
             if (!box.isInside(at) || doorBeside(level, x, y, z) || laid(level, x, y, z) || CityRails.insideBore(bores, x, y, z) || CityPlotGround.solid(level.getBlockState(at))) { break; }
-            level.setBlock(at, y == low ? top : ground, Block.UPDATE_CLIENTS);
+            level.setBlock(at, CityPlotGround.grassed(ground, y == low), Block.UPDATE_CLIENTS);
             filled++;
         }
         return filled;

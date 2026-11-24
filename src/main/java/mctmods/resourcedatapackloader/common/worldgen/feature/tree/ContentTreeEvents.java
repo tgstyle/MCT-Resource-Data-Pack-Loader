@@ -5,16 +5,15 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeGrowthD
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeRuleDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentTreeRules;
+import mctmods.resourcedatapackloader.common.util.world.PlacePositions;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.entity.player.BonemealEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -37,7 +36,6 @@ public final class ContentTreeEvents {
         MinecraftForge.EVENT_BUS.addListener(ContentTreeStore::onLevelUnload);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentTreeClock::onChunkLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentTreeClock::onLevelTick);
-        MinecraftForge.EVENT_BUS.addListener(ContentTreeClock::onLevelUnload);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentTreeEvents::onSaplingGrow);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentTreeEvents::onBonemeal);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTreeEvents::onPlace);
@@ -62,12 +60,7 @@ public final class ContentTreeEvents {
 
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
-        List<BlockPos> placed = new ArrayList<>();
-        if (event instanceof BlockEvent.EntityMultiPlaceEvent multi) {
-            for (BlockSnapshot snapshot : multi.getReplacedBlockSnapshots()) { placed.add(snapshot.getPos()); }
-        }
-        else { placed.add(event.getPos()); }
-        for (BlockPos pos : placed) { placed(level, pos); }
+        for (BlockPos pos : PlacePositions.of(event)) { placed(level, pos); }
     }
 
     public static boolean randomTick(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
@@ -108,8 +101,12 @@ public final class ContentTreeEvents {
             ContentTreeClock.credit(level, entry, growth.bonemealTicks());
             return Outcome.USED;
         }
-        if (growth.bonemealChecks() && ContentTreeGrowth.conditions(level, entry, growth) != null || budget && !ContentTreeClock.spend(level)) { return Outcome.KEPT; }
+        if (kept(level, growth, () -> ContentTreeGrowth.conditions(level, entry, growth), budget)) { return Outcome.KEPT; }
         return ContentTreeGrowth.step(level, entry, growth, growth.timed()) == null ? Outcome.USED : Outcome.KEPT;
+    }
+
+    private static boolean kept(ServerLevel level, TreeGrowthDef growth, Supplier<String> conditions, boolean budget) {
+        return growth.bonemealChecks() && conditions.get() != null || budget && !ContentTreeClock.spend(level);
     }
 
     private static Outcome onSapling(ServerLevel level, BlockPos pos, BlockState state, boolean budget) {
@@ -122,7 +119,7 @@ public final class ContentTreeEvents {
             ContentTreeClock.credit(level, waiting, growth.bonemealTicks());
             return Outcome.USED;
         }
-        if (growth.bonemealChecks() && ContentTreeGrowth.conditions(level, pos, growth) != null || budget && !ContentTreeClock.spend(level)) { return Outcome.KEPT; }
+        if (kept(level, growth, () -> ContentTreeGrowth.conditions(level, pos, growth), budget)) { return Outcome.KEPT; }
         if (own) { return Outcome.NONE; }
         ContentTreeGrowth.drive(level, pos, state, level.random);
         return Outcome.USED;

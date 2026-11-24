@@ -54,7 +54,7 @@ public final class ContentEntityPhases {
             drop(mob);
             return;
         }
-        float fraction = mob.getHealth() / mob.getMaxHealth();
+        float fraction = MobStats.health(mob);
         int target = -1;
         for (int i = 0; i < def.phases().size(); i++) {
             if (fraction < def.phases().get(i).below()) { target = i; }
@@ -78,9 +78,7 @@ public final class ContentEntityPhases {
                 if (ContentAttributes.lookup(entry.getKey()) != null) { ContentLog.LOGGER.error("Unknown attribute '{}' in a phase of {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.key(), def.base()); }
                 continue;
             }
-            UUID id = modifierId(instance.getAttribute());
-            instance.removeModifier(id);
-            instance.addTransientModifier(new AttributeModifier(id, MODIFIER, entry.getValue() - instance.getBaseValue(), AttributeModifier.Operation.ADDITION));
+            ContentAttributes.replace(instance, modifierId(instance.getAttribute()), MODIFIER, entry.getValue() - instance.getBaseValue(), AttributeModifier.Operation.ADDITION, false);
         }
         List<WrappedGoal> goalsBefore = Goals.entries(mob.goalSelector);
         List<WrappedGoal> targetsBefore = Goals.entries(mob.targetSelector);

@@ -4,7 +4,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.Enchantmen
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.EnchantmentEffectDef;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.tags.DamageTypeTags;
@@ -24,6 +27,37 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ContentEnchantment extends Enchantment {
+    static final Map<String, Rarity> RARITIES = new LinkedHashMap<>();
+    static final Map<String, EnchantmentCategory> CATEGORIES = new LinkedHashMap<>();
+    static final Map<String, Predicate<DamageSource>> PROTECTIONS = new LinkedHashMap<>();
+    static final Map<String, MobType> MOBS = new LinkedHashMap<>();
+    static {
+        RARITIES.put("common", Rarity.COMMON);
+        RARITIES.put("uncommon", Rarity.UNCOMMON);
+        RARITIES.put("rare", Rarity.RARE);
+        RARITIES.put("very_rare", Rarity.VERY_RARE);
+        CATEGORIES.put("armor", EnchantmentCategory.ARMOR);
+        CATEGORIES.put("armor_head", EnchantmentCategory.ARMOR_HEAD);
+        CATEGORIES.put("armor_chest", EnchantmentCategory.ARMOR_CHEST);
+        CATEGORIES.put("armor_legs", EnchantmentCategory.ARMOR_LEGS);
+        CATEGORIES.put("armor_feet", EnchantmentCategory.ARMOR_FEET);
+        CATEGORIES.put("weapon", EnchantmentCategory.WEAPON);
+        CATEGORIES.put("digger", EnchantmentCategory.DIGGER);
+        CATEGORIES.put("fishing_rod", EnchantmentCategory.FISHING_ROD);
+        CATEGORIES.put("breakable", EnchantmentCategory.BREAKABLE);
+        CATEGORIES.put("bow", EnchantmentCategory.BOW);
+        CATEGORIES.put("wearable", EnchantmentCategory.WEARABLE);
+        PROTECTIONS.put("all", source -> true);
+        PROTECTIONS.put("fire", source -> source.is(DamageTypeTags.IS_FIRE));
+        PROTECTIONS.put("fall", source -> source.is(DamageTypeTags.IS_FALL));
+        PROTECTIONS.put("explosion", source -> source.is(DamageTypeTags.IS_EXPLOSION));
+        PROTECTIONS.put("projectile", source -> source.is(DamageTypeTags.IS_PROJECTILE));
+        MOBS.put("any", null);
+        MOBS.put("undead", MobType.UNDEAD);
+        MOBS.put("arthropod", MobType.ARTHROPOD);
+        MOBS.put("illager", MobType.ILLAGER);
+    }
+
     private final EnchantmentDef def;
     private final List<EnchantmentEffectDef> effects;
     @Nullable private final EnchantmentCategory named;
@@ -35,30 +69,9 @@ public final class ContentEnchantment extends Enchantment {
         this.named = def.category().isEmpty() ? null : category(def.category());
     }
 
-    private static Rarity rarity(String name) {
-        return switch (name) {
-            case "uncommon" -> Rarity.UNCOMMON;
-            case "rare" -> Rarity.RARE;
-            case "very_rare" -> Rarity.VERY_RARE;
-            default -> Rarity.COMMON;
-        };
-    }
+    private static Rarity rarity(String name) { return RARITIES.getOrDefault(name, Rarity.COMMON); }
 
-    private static EnchantmentCategory category(String name) {
-        return switch (name) {
-            case "armor" -> EnchantmentCategory.ARMOR;
-            case "armor_head" -> EnchantmentCategory.ARMOR_HEAD;
-            case "armor_chest" -> EnchantmentCategory.ARMOR_CHEST;
-            case "armor_legs" -> EnchantmentCategory.ARMOR_LEGS;
-            case "armor_feet" -> EnchantmentCategory.ARMOR_FEET;
-            case "weapon" -> EnchantmentCategory.WEAPON;
-            case "digger" -> EnchantmentCategory.DIGGER;
-            case "fishing_rod" -> EnchantmentCategory.FISHING_ROD;
-            case "bow" -> EnchantmentCategory.BOW;
-            case "wearable" -> EnchantmentCategory.WEARABLE;
-            default -> EnchantmentCategory.BREAKABLE;
-        };
-    }
+    private static EnchantmentCategory category(String name) { return CATEGORIES.getOrDefault(name, EnchantmentCategory.BREAKABLE); }
 
     private static EquipmentSlot[] slots(List<String> names) {
         EquipmentSlot[] slots = new EquipmentSlot[names.size()];
@@ -93,15 +106,8 @@ public final class ContentEnchantment extends Enchantment {
 
     private static boolean protects(EnchantmentEffectDef effect, DamageSource source) {
         for (String kind : effect.from()) {
-            boolean match = switch (kind) {
-                case "all" -> true;
-                case "fire" -> source.is(DamageTypeTags.IS_FIRE);
-                case "fall" -> source.is(DamageTypeTags.IS_FALL);
-                case "explosion" -> source.is(DamageTypeTags.IS_EXPLOSION);
-                case "projectile" -> source.is(DamageTypeTags.IS_PROJECTILE);
-                default -> false;
-            };
-            if (match) { return true; }
+            Predicate<DamageSource> covers = PROTECTIONS.get(kind);
+            if (covers != null && covers.test(source)) { return true; }
         }
         return false;
     }
@@ -115,12 +121,8 @@ public final class ContentEnchantment extends Enchantment {
     }
 
     private static boolean hits(String mob, MobType type) {
-        return switch (mob) {
-            case "undead" -> type == MobType.UNDEAD;
-            case "arthropod" -> type == MobType.ARTHROPOD;
-            case "illager" -> type == MobType.ILLAGER;
-            default -> true;
-        };
+        MobType wanted = MOBS.get(mob);
+        return wanted == null || type == wanted;
     }
 
     @Override public void doPostAttack(@Nonnull LivingEntity attacker, @Nonnull Entity target, int level) { apply("attack", attacker, target, level); }

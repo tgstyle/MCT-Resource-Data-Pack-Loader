@@ -23,6 +23,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -41,7 +42,7 @@ final class StorageContents {
 
     static Map<String, Long> census(CompoundTag root) {
         Map<String, Long> totals = new HashMap<>();
-        eachStack(root, stack -> totals.merge(String.valueOf(ResourceLocation.tryParse(stack.getString(ID))), (long) count(stack), Long::sum));
+        eachStack(root, stack -> totals.merge(itemKey(ResourceLocation.tryParse(stack.getString(ID))), (long) count(stack), Long::sum));
         return totals;
     }
 
@@ -82,10 +83,12 @@ final class StorageContents {
     static Map<String, Long> totals(List<ItemStack> stacks) {
         Map<String, Long> totals = new HashMap<>();
         for (ItemStack stack : stacks) {
-            if (!stack.isEmpty()) { totals.merge(String.valueOf(ForgeRegistries.ITEMS.getKey(stack.getItem())), (long) stack.getCount(), Long::sum); }
+            if (!stack.isEmpty()) { totals.merge(itemKey(ForgeRegistries.ITEMS.getKey(stack.getItem())), (long) stack.getCount(), Long::sum); }
         }
         return totals;
     }
+
+    private static String itemKey(@Nullable ResourceLocation id) { return String.valueOf(id); }
 
     static List<ItemStack> shown(IItemHandler handler) {
         List<ItemStack> stacks = new ArrayList<>();
@@ -147,15 +150,17 @@ final class StorageContents {
     @Nullable private static IItemHandler onSide(BlockEntity tile, @Nullable Direction side) {
         try {
             if (side == null && tile.getLevel() != null) { return OrderItems.handler(tile.getLevel(), tile.getBlockPos()); }
-            return tile.getCapability(ForgeCapabilities.ITEM_HANDLER, side).resolve().orElse(null);
+            return capability(tile, ForgeCapabilities.ITEM_HANDLER, side);
         }
         catch (RuntimeException ex) { return null; }
     }
 
     @Nullable static IItemHandler forProbe(BlockEntity probe) {
         IItemHandler own = own(probe);
-        return own != null ? own : probe.getCapability(ForgeCapabilities.ITEM_HANDLER, null).resolve().orElse(null);
+        return own != null ? own : capability(probe, ForgeCapabilities.ITEM_HANDLER, null);
     }
+
+    @Nullable private static <T> T capability(BlockEntity tile, Capability<T> kind, @Nullable Direction side) { return tile.getCapability(kind, side).resolve().orElse(null); }
 
     @Nullable static IItemHandler forFill(BlockEntity placed) {
         IItemHandler own = own(placed);
@@ -191,7 +196,7 @@ final class StorageContents {
     static boolean holdsFluid(BlockEntity tile) {
         for (Direction side : SIDES) {
             try {
-                IFluidHandler handler = tile.getCapability(ForgeCapabilities.FLUID_HANDLER, side).resolve().orElse(null);
+                IFluidHandler handler = capability(tile, ForgeCapabilities.FLUID_HANDLER, side);
                 if (handler == null) { continue; }
                 for (int tank = 0; tank < handler.getTanks(); tank++) {
                     if (!handler.getFluidInTank(tank).isEmpty()) { return true; }

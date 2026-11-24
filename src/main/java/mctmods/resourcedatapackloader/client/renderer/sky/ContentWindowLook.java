@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.core.util.math.Rgb;
 
 import javax.annotation.Nullable;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 final class ContentWindowLook {
@@ -34,7 +35,7 @@ final class ContentWindowLook {
         }
         for (int index = 0; index < weights.length; index++) {
             float aim = def.windows().get(index) == active ? 1.0F : 0.0F;
-            weights[index] = arrived ? aim : weights[index] + (aim - weights[index]) * EASE;
+            weights[index] = arrived ? aim : Mth.lerp(EASE, weights[index], aim);
         }
     }
 
@@ -45,25 +46,21 @@ final class ContentWindowLook {
     static float fogDensity(@Nullable ClientLevel level, float base) {
         DimensionDef def = current(ContentDimensions.def(level));
         if (def == null) { return base; }
-        float density = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (window.gives(TimeWindowDef.FOG_DENSITY)) { density += (window.fogDensity() - density) * weights[index]; }
-        }
-        return density;
+        float[] density = {base};
+        each(def, TimeWindowDef.FOG_DENSITY, (window, weight) -> density[0] = Mth.lerp(weight, density[0], window.fogDensity()));
+        return density[0];
     }
 
     static Vec3 fogColor(@Nullable DimensionDef owner, Vec3 base, float brightness) {
         DimensionDef def = current(owner);
         if (def == null) { return base; }
-        Vec3 color = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (weights[index] <= 0.0F || !window.gives(TimeWindowDef.FOG_COLOR)) { continue; }
+        Vec3[] color = {base};
+        each(def, TimeWindowDef.FOG_COLOR, (window, weight) -> {
+            if (weight <= 0.0F) { return; }
             Vec3 aim = window.sampleFog() ? ContentFogSampler.color(base) : ContentDimensionEffects.litFog(window.fogColor(), brightness);
-            color = color.add(aim.subtract(color).scale(weights[index]));
-        }
-        return color;
+            color[0] = color[0].add(aim.subtract(color[0]).scale(weight));
+        });
+        return color[0];
     }
 
     @Nullable static float[] sunTint(@Nullable ClientLevel level) {
@@ -74,10 +71,7 @@ final class ContentWindowLook {
         float[] tint = look == null || look.sunColor() == SkyLookDef.UNSET ? new float[] {1.0F, 1.0F, 1.0F, 1.0F} : rgba(look.sunColor(), 1.0F);
         DimensionDef def = current(own);
         if (def == null) { return tint; }
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (window.gives(TimeWindowDef.SUN_COLOR)) { blend(tint, rgba(window.sunColor(), 1.0F), weights[index]); }
-        }
+        each(def, TimeWindowDef.SUN_COLOR, (window, weight) -> blend(tint, rgba(window.sunColor(), 1.0F), weight));
         return tint;
     }
 
@@ -89,10 +83,7 @@ final class ContentWindowLook {
         float[] aura = look == null || look.sunAuraColor() == SkyLookDef.UNSET ? rgba(first.sunAuraColor(), 0.0F) : rgba(look.sunAuraColor(), 1.0F);
         DimensionDef def = current(own);
         if (def == null) { return aura; }
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (window.gives(TimeWindowDef.SUN_AURA)) { blend(aura, rgba(window.sunAuraColor(), 1.0F), weights[index]); }
-        }
+        each(def, TimeWindowDef.SUN_AURA, (window, weight) -> blend(aura, rgba(window.sunAuraColor(), 1.0F), weight));
         return aura;
     }
 
@@ -100,7 +91,16 @@ final class ContentWindowLook {
 
     private static float[] rgba(int rgb, float alpha) { return new float[] {Rgb.red(rgb), Rgb.green(rgb), Rgb.blue(rgb), alpha}; }
 
+    private static void each(DimensionDef def, String key, WindowStep step) {
+        for (int index = 0; index < weights.length; index++) {
+            TimeWindowDef window = def.windows().get(index);
+            if (window.gives(key)) { step.apply(window, weights[index]); }
+        }
+    }
+
+    private interface WindowStep { void apply(TimeWindowDef window, float weight); }
+
     private static void blend(float[] color, float[] aim, float weight) {
-        for (int channel = 0; channel < color.length; channel++) { color[channel] += (aim[channel] - color[channel]) * weight; }
+        for (int channel = 0; channel < color.length; channel++) { color[channel] = Mth.lerp(weight, color[channel], aim[channel]); }
     }
 }

@@ -115,25 +115,26 @@ public final class ContentEnvironments {
             JsonObject layered = Json.object(key, contents, "dimension");
             if (layered == null) { continue; }
             layered.remove(ENVIRONMENTS);
-            layer(owner, layered, entry.getValue().getAsJsonObject());
+            JsonObject environment = entry.getValue().getAsJsonObject();
+            layer(owner, layered, environment);
             DimensionDef set = ContentDimensionParser.parse(key, layered);
             sets.put(name, set);
-            List<String> biomes = Json.strings(entry.getValue().getAsJsonObject(), BIOMES);
+            List<String> biomes = Json.strings(environment, BIOMES);
             if (!biomes.isEmpty()) { PLACES.put(set, biomes); }
-            JsonElement spawning = entry.getValue().getAsJsonObject().get(SPAWNING);
+            JsonElement spawning = environment.get(SPAWNING);
             SpawnSwitchDef switched = spawning == null ? null : ContentSpawnSwitch.parse(owner, spawning);
             if (switched != null) { SPAWNS.put(set, switched); }
-            GrowSwitchDef grown = ContentGrowSwitch.parse(owner, entry.getValue().getAsJsonObject().get(GROWTH));
+            GrowSwitchDef grown = ContentGrowSwitch.parse(owner, environment.get(GROWTH));
             if (grown != null) { GROWS.put(set, grown); }
-            MobSwitchDef mobs = ContentMobSwitch.parse(owner, name, entry.getValue().getAsJsonObject().get(MOBS));
+            MobSwitchDef mobs = ContentMobSwitch.parse(owner, name, environment.get(MOBS));
             if (mobs != null) { MOBLINES.put(set, mobs); }
-            RaidSwitchDef raided = ContentRaidSwitch.parse(owner, entry.getValue().getAsJsonObject().get(RAIDS));
+            RaidSwitchDef raided = ContentRaidSwitch.parse(owner, environment.get(RAIDS));
             if (raided != null) { RAIDLINES.put(set, raided); }
-            Map<ResourceLocation, ResourceLocation> swaps = ContentLootSwitch.parse(owner, entry.getValue().getAsJsonObject().get(LOOT));
+            Map<ResourceLocation, ResourceLocation> swaps = ContentLootSwitch.parse(owner, environment.get(LOOT));
             if (swaps != null) { LOOTS.put(set, swaps); }
-            TradeSwitchDef offered = ContentTradeSwitch.parse(key, owner, key + "/" + name, entry.getValue().getAsJsonObject().get(TRADES));
+            TradeSwitchDef offered = ContentTradeSwitch.parse(key, owner, key + "/" + name, environment.get(TRADES));
             if (offered != null) { TRADELINES.put(set, offered); }
-            RuleSwitchDef ruled = ContentRuleSwitch.parse(owner, entry.getValue().getAsJsonObject().get(RULES), !biomes.isEmpty(), set.traits().precipitation());
+            RuleSwitchDef ruled = ContentRuleSwitch.parse(owner, environment.get(RULES), !biomes.isEmpty(), set.traits().precipitation());
             if (ruled != null) { RULESETS.put(set, ruled); }
         }
         if (!sets.isEmpty()) { SETS.put(key, Collections.unmodifiableMap(sets)); }
@@ -197,8 +198,11 @@ public final class ContentEnvironments {
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return blocks.getOrDefault(set, none); }
             }
         }
-        DimensionDef set = whole(dimension);
-        T held = set == null ? null : blocks.get(set);
+        return pick(blocks, whole(dimension), none);
+    }
+
+    private static <T> T pick(Map<DimensionDef, T> map, @Nullable DimensionDef set, T none) {
+        T held = set == null ? null : map.get(set);
         return held == null ? none : held;
     }
 
@@ -208,11 +212,7 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.get(0));
     }
 
-    public static RuleSwitchDef wide(ResourceLocation dimension) {
-        DimensionDef set = whole(dimension);
-        RuleSwitchDef held = set == null ? null : RULESETS.get(set);
-        return held == null ? RuleSwitchDef.NONE : held;
-    }
+    public static RuleSwitchDef wide(ResourceLocation dimension) { return pick(RULESETS, whole(dimension), RuleSwitchDef.NONE); }
 
     public static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
 
@@ -228,8 +228,7 @@ public final class ContentEnvironments {
 
     public static GrowSwitchDef growthOf(ResourceLocation dimension, String environment) {
         Map<String, DimensionDef> sets = SETS.get(dimension);
-        DimensionDef set = sets == null ? null : sets.get(environment);
-        return set == null ? GrowSwitchDef.NONE : GROWS.getOrDefault(set, GrowSwitchDef.NONE);
+        return pick(GROWS, sets == null ? null : sets.get(environment), GrowSwitchDef.NONE);
     }
 
     public static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
@@ -247,7 +246,7 @@ public final class ContentEnvironments {
         Map<String, DimensionDef> sets = active == null ? null : SETS.get(dimension);
         if (sets == null) { return List.of(); }
         List<SpawnSwitchDef> regions = new ArrayList<>();
-        for (String name : active) { regions.add(SPAWNS.getOrDefault(sets.get(name), SpawnSwitchDef.NONE)); }
+        for (String name : active) { regions.add(pick(SPAWNS, sets.get(name), SpawnSwitchDef.NONE)); }
         return regions;
     }
 
@@ -351,6 +350,16 @@ public final class ContentEnvironments {
     }
 
     public static void view(Holder<Biome> biome) { viewed = biome; }
+
+    public static boolean anyLook(Predicate<SkyLookDef> test) {
+        for (DimensionDef def : ContentDimensions.available()) {
+            if (def.look() != null && test.test(def.look())) { return true; }
+        }
+        for (SkyLookDef look : looks()) {
+            if (test.test(look)) { return true; }
+        }
+        return false;
+    }
 
     public static List<SkyLookDef> looks() {
         List<SkyLookDef> found = new ArrayList<>();

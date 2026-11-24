@@ -47,7 +47,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
     private void refresh(ServerLevel level, BlockPos pos, BlockState state) {
         level.scheduleTick(pos, this, POLL);
         int power = power(level);
-        if (power != state.getValue(POWER)) { level.setBlock(pos, state.setValue(POWER, power), 3); }
+        if (power != state.getValue(POWER)) { level.setBlock(pos, state.setValue(POWER, power), Block.UPDATE_ALL); }
     }
 
     private int power(ServerLevel level) {

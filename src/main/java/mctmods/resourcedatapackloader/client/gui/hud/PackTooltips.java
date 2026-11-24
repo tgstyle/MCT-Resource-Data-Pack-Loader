@@ -74,7 +74,9 @@ public final class PackTooltips {
 
     private static void kept(ItemStack stack, List<Component> tooltip) {
         CompoundTag held = stack.getTagElement(ContentPouchInventory.HELD);
-        if (held != null && ContentContainerBlockItem.holdsKept(stack) && !held.getList(ITEMS, Tag.TAG_COMPOUND).isEmpty()) { tooltip.add(Component.translatable("rdpl.container.kept", held.getList(ITEMS, Tag.TAG_COMPOUND).size()).withStyle(ChatFormatting.GRAY)); }
+        if (held == null || !ContentContainerBlockItem.holdsKept(stack)) { return; }
+        int count = held.getList(ITEMS, Tag.TAG_COMPOUND).size();
+        if (count > 0) { tooltip.add(Component.translatable("rdpl.container.kept", count).withStyle(ChatFormatting.GRAY)); }
     }
 
     private static void diet(ItemStack stack, List<Component> tooltip) {

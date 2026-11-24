@@ -37,9 +37,13 @@ public final class BiomeNames {
                 TagKey<Biome> tag = tag(one.substring(1));
                 if (tag != null && biome.is(tag)) { return true; }
             }
-            else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
+            else if (names(one, name)) { return true; }
         }
         return false;
+    }
+
+    private static boolean names(String one, @Nullable ResourceLocation name) {
+        return name != null && (one.equals(name.toString()) || one.equals(name.getPath()));
     }
 
     public static String title(Holder<Biome> biome) {

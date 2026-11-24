@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.orders.OrderItems;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
 
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -54,7 +55,7 @@ public final class DigGoal extends Goal {
     }
 
     @Override public void stop() {
-        if (digging != null) { mob.level().destroyBlockProgress(mob.getId(), digging, -1); }
+        if (digging != null) { BlockBreak.clear(mob, digging); }
         digging = null;
         target = null;
     }
@@ -86,7 +87,7 @@ public final class DigGoal extends Goal {
                 return;
             }
         }
-        mob.getLookControl().setLookAt(aim, 30.0F, 30.0F);
+        Looking.at(mob, aim);
         mob.getMoveControl().setWantedPosition(aim.getX(), aim.getY(), aim.getZ(), SPEED);
     }
 

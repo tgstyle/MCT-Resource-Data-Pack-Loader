@@ -7,11 +7,13 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.plant.DynamicTrees;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -50,11 +52,17 @@ import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ContentSneakGrow {
-    private static final List<String> KEYS = List.of("chance", "radius", "height", "blocks", "mode", "ticks", "hunger", "cooldown", "items", "equipment", "enchantment", "damage", "except", "grass", "sound", "toggle", "most", "particles", "gameModes");
+    private static final String CHANCE = "chance";
+    private static final String RADIUS = "radius";
+    private static final String HEIGHT = "height";
+    private static final String TICKS = "ticks";
+    private static final String HUNGER = "hunger";
+    private static final String COOLDOWN = "cooldown";
+    private static final String DAMAGE = "damage";
+    private static final List<String> KEYS = List.of(CHANCE, RADIUS, HEIGHT, "blocks", "mode", TICKS, HUNGER, COOLDOWN, "items", "equipment", "enchantment", DAMAGE, "except", "grass", "sound", "toggle", "most", "particles", "gameModes");
     private static final List<String> MODES = List.of("bonemeal", "tick", "auto");
     private static final List<String> GAME_MODES = List.of("survival", "creative", "adventure");
     private static final List<String> SLOTS = List.of("head", "chest", "legs", "feet", "mainhand", "offhand");
@@ -65,7 +73,7 @@ public final class ContentSneakGrow {
     private static final String OFF = "rdplSneakOff";
     private static final int BONEMEAL_PARTICLES = 15;
     private static final long NEVER = Long.MIN_VALUE / 2;
-    private static final Map<UUID, long[]> STATE = new ConcurrentHashMap<>();
+    private static final Map<UUID, long[]> STATE = PlayerLogout.track(new ConcurrentHashMap<>());
     private static boolean any;
 
     private ContentSneakGrow() {}
@@ -83,7 +91,7 @@ public final class ContentSneakGrow {
         return fallback;
     }
 
-    @Nullable private static String text(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? value.getAsString() : null; }
+    @Nullable private static String text(JsonElement value) { return Json.isString(value) ? value.getAsString() : null; }
 
     private static List<BlockMatch> blockList(String owner, String key, JsonElement value) {
         List<BlockMatch> found = new ArrayList<>();
@@ -148,20 +156,20 @@ public final class ContentSneakGrow {
 
     private static void numbers(String owner, String key, JsonElement value, SneakGrowDef.Builder builder) {
         switch (key) {
-            case "chance" -> {
+            case CHANCE -> {
                 Float chance = ContentGrowSwitch.within(owner, PART + ".chance", value, false, 0.0F, 1.0F);
                 if (chance != null && chance > 0.0F) { builder.chance = chance; }
                 else if (chance != null) { bad(owner, key, value, "above 0"); }
             }
-            case "hunger" -> {
+            case HUNGER -> {
                 Float hunger = ContentGrowSwitch.within(owner, PART + ".hunger", value, false, 0.0F, 20.0F);
                 if (hunger != null) { builder.hunger = hunger; }
             }
-            case "radius" -> builder.radius = whole(owner, key, value, 1, 16, builder.radius);
-            case "height" -> builder.height = whole(owner, key, value, 0, 2, builder.height);
-            case "ticks" -> builder.ticks = whole(owner, key, value, 1, 16, builder.ticks);
-            case "cooldown" -> builder.cooldown = whole(owner, key, value, 4, 600, builder.cooldown);
-            case "damage" -> builder.damage = whole(owner, key, value, 0, 64, builder.damage);
+            case RADIUS -> builder.radius = whole(owner, key, value, 1, 16, builder.radius);
+            case HEIGHT -> builder.height = whole(owner, key, value, 0, 2, builder.height);
+            case TICKS -> builder.ticks = whole(owner, key, value, 1, 16, builder.ticks);
+            case COOLDOWN -> builder.cooldown = whole(owner, key, value, 4, 600, builder.cooldown);
+            case DAMAGE -> builder.damage = whole(owner, key, value, 0, 64, builder.damage);
             default -> builder.most = whole(owner, key, value, 1, 256, builder.most);
         }
     }
@@ -218,7 +226,6 @@ public final class ContentSneakGrow {
         else { PlayerPersisted.of(player, OFF).remove(OFF); }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { STATE.remove(event.getEntity().getUUID()); }
 
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (!any || event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || player instanceof FakePlayer) { return; }

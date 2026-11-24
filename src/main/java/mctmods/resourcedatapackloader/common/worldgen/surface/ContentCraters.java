@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentD
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapStructure;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,8 +59,8 @@ public final class ContentCraters {
 
     private record Crater(int x, int z, int radius, int depth) {
         boolean near(int minX, int minZ, int maxX, int maxZ, int keep) {
-            long dx = Math.max(0, Math.max(minX - x, x - maxX));
-            long dz = Math.max(0, Math.max(minZ - z, z - maxZ));
+            long dx = MathUtil.gap(x, minX, maxX);
+            long dz = MathUtil.gap(z, minZ, maxZ);
             return dx * dx + dz * dz < (long) keep * keep;
         }
 

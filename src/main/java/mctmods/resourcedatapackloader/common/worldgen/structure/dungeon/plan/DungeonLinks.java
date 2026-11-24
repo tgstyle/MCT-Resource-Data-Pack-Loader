@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Dun
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Segment;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Shaft;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -23,9 +24,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+import net.minecraft.util.Mth;
 
 public final class DungeonLinks {
-    private static final String[] SHAFT_NAMES = {"ladder", "spiral", "stairs"};
     private static final int SHAFT_SIDE = 3;
     private static final int[] STEP_X = {1, 0};
     private static final int[] STEP_Z = {0, 1};
@@ -114,13 +115,11 @@ public final class DungeonLinks {
 
     private int high(long key) { return (int) (key % n); }
 
-    private static long cellKey(int gx, int gz) { return ((long) gx << 32) ^ (gz & 0xffffffffL); }
-
     private void findAdjacent() {
         Map<Long, Integer> at = new HashMap<>();
         for (int i = 0; i < n; i++) {
             for (int dx = 0; dx < rooms[i].kx; dx++) {
-                for (int dz = 0; dz < rooms[i].kz; dz++) { at.put(cellKey(rooms[i].gx + dx, rooms[i].gz + dz), i); }
+                for (int dz = 0; dz < rooms[i].kz; dz++) { at.put(Longs.pack(rooms[i].gx + dx, rooms[i].gz + dz), i); }
             }
         }
         for (int i = 0; i < n; i++) {
@@ -129,7 +128,7 @@ public final class DungeonLinks {
                     int gx = rooms[i].gx + dx;
                     int gz = rooms[i].gz + dz;
                     for (int s = 0; s < STEP_X.length; s++) {
-                        Integer j = at.get(cellKey(gx + STEP_X[s], gz + STEP_Z[s]));
+                        Integer j = at.get(Longs.pack(gx + STEP_X[s], gz + STEP_Z[s]));
                         if (j == null || j == i) { continue; }
                         int[] cells = i < j ? new int[] {gx, gz, gx + STEP_X[s], gz + STEP_Z[s]} : new int[] {gx + STEP_X[s], gz + STEP_Z[s], gx, gz};
                         pairs.computeIfAbsent(key(i, j), k -> new ArrayList<>()).add(cells);
@@ -172,7 +171,7 @@ public final class DungeonLinks {
             if (!edges.contains(edge) && low(edge) != bossAt && high(edge) != bossAt) { spare.add(edge); }
         }
         Collections.shuffle(spare, random("loops", 0));
-        int count = spare.size() * Math.max(0, Math.min(100, def.loops())) / 100;
+        int count = spare.size() * Mth.clamp(def.loops(), 0, 100) / 100;
         edges.addAll(spare.subList(0, count));
     }
 
@@ -180,19 +179,12 @@ public final class DungeonLinks {
         double bx = (rooms[bossAt].x0 + rooms[bossAt].x1) / 2.0;
         double bz = (rooms[bossAt].z0 + rooms[bossAt].z1) / 2.0;
         Random random = random("boss", 1);
-        List<Integer> best = new ArrayList<>();
-        double near = Double.MAX_VALUE;
-        for (int to : neighbors.get(bossAt)) {
+        Integer best = BestPick.of(neighbors.get(bossAt), to -> {
             double dx = (rooms[to].x0 + rooms[to].x1) / 2.0 - bx;
             double dz = (rooms[to].z0 + rooms[to].z1) / 2.0 - bz;
-            double distance = dx * dx + dz * dz;
-            if (distance < near) {
-                near = distance;
-                best.clear();
-            }
-            if (distance == near) { best.add(to); }
-        }
-        if (!best.isEmpty()) { edges.add(key(bossAt, best.get(random.nextInt(best.size())))); }
+            return dx * dx + dz * dz;
+        }, false, random);
+        if (best != null) { edges.add(key(bossAt, best)); }
     }
 
     private int[] distances() {
@@ -222,17 +214,12 @@ public final class DungeonLinks {
     }
 
     private int farthest(int[] dist, boolean[] eligible, String purpose) {
-        int far = -1;
-        List<Integer> ties = new ArrayList<>();
+        List<Integer> pool = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            if (!eligible[i] || dist[i] < 0) { continue; }
-            if (dist[i] > far) {
-                far = dist[i];
-                ties.clear();
-            }
-            if (dist[i] == far) { ties.add(i); }
+            if (eligible[i] && dist[i] >= 0) { pool.add(i); }
         }
-        return ties.isEmpty() ? start : ties.get(random(purpose, 0).nextInt(ties.size()));
+        Integer far = BestPick.of(pool, i -> dist[i], true, random(purpose, 0));
+        return far == null ? start : far;
     }
 
     private void checkReach() {
@@ -304,8 +291,8 @@ public final class DungeonLinks {
         Random random = random("exit", 1);
         int x = shaftSpot(room.x0, room.x1, random);
         int z = shaftSpot(room.z0, room.z1, random);
-        String name = PickDef.pick(def.shafts(), random("shaftType", 0), SHAFT_NAMES[PlanRecords.SHAFT_LADDER]);
-        int type = Arrays.asList(SHAFT_NAMES).indexOf(name);
+        String name = PickDef.pick(def.shafts(), random("shaftType", 0), DungeonDef.SHAFTS.get(PlanRecords.SHAFT_LADDER));
+        int type = DungeonDef.SHAFTS.indexOf(name);
         return new Shaft(Math.max(PlanRecords.SHAFT_LADDER, type), x, z, room.floorY, bottomY);
     }
 

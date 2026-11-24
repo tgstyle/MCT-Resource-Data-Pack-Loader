@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.items.DietDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
@@ -61,7 +62,7 @@ public final class ContentDiet {
     private static final List<String> DIET_KEYS = List.of("requires", "keepOnDeath", "memory", "repeat", "variety", "exempt", "groups", "messages", "tooltip");
     private static final List<String> KEEP_KEYS = List.of("hunger", "saturation");
     private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentDiet::eaten, ContentDiet::tooltip, RDPLNetwork::sendEaten);
-    private static final Map<UUID, float[]> BEFORE = new HashMap<>();
+    private static final Map<UUID, float[]> BEFORE = PlayerLogout.track(new HashMap<>());
     private static final Map<PotionEffectDef, MobEffect> EFFECTS = new IdentityHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final String KEEP_ON_DEATH = "keepOnDeath";
@@ -170,11 +171,6 @@ public final class ContentDiet {
         seen[1] = food.getSaturationLevel();
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        BEFORE.remove(event.getEntity().getUUID());
-        SYNC.forget(event.getEntity());
-    }
-
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         if (GENERATION.stale()) { reload(); }
@@ -203,10 +199,10 @@ public final class ContentDiet {
         String key = rules.kind(event.getItem(), ContentStacks.id(event.getItem().getItem()));
         int count = 0;
         for (String meal : meals) { if (meal.equals(key)) { count++; } }
-        int distinctBefore = new HashSet<>(meals).size();
+        int distinctBefore = distinct(meals);
         meals.add(key);
         while (meals.size() > rules.memory()) { meals.remove(0); }
-        int distinctAfter = new HashSet<>(meals).size();
+        int distinctAfter = distinct(meals);
         int everBefore = eaten.size();
         eaten.add(key);
         ListTag ever = new ListTag();
@@ -217,9 +213,9 @@ public final class ContentDiet {
         float multiplier = repeat * variety;
         String message = variety > 1.0F ? rules.varietyMessage() : repeat < 1.0F ? rules.repeatMessage() : "";
         if (!message.isEmpty()) { player.displayClientMessage(Component.literal(Lang.tr(player, message)), true); }
-        int level = Math.max(0, Math.min(20, (int) seen[0] + Math.round(Math.max(0, foodGain) * multiplier)));
+        int level = Mth.clamp((int) seen[0] + Math.round(Math.max(0, foodGain) * multiplier), 0, (int) FULL);
         food.setFoodLevel(level);
-        food.setSaturation(Math.max(0, Math.min(level, seen[1] + Math.max(0, satGain) * multiplier)));
+        food.setSaturation(Mth.clamp(seen[1] + Math.max(0, satGain) * multiplier, 0, level));
         ListTag written = new ListTag();
         for (String meal : meals) { written.add(StringTag.valueOf(meal)); }
         section.put(MEALS, written);
@@ -246,7 +242,9 @@ public final class ContentDiet {
         return rules != null && rules.hasTier(distinct);
     }
 
-    public static int distinct(Player player) { return diet == null ? 0 : new HashSet<>(meals(PlayerPersisted.section(player, SECTION))).size(); }
+    public static int distinct(Player player) { return diet == null ? 0 : distinct(meals(PlayerPersisted.section(player, SECTION))); }
+
+    private static int distinct(List<String> meals) { return new HashSet<>(meals).size(); }
 
     public static int eatenEver(Player player) { return diet == null ? 0 : eaten(player).size(); }
 

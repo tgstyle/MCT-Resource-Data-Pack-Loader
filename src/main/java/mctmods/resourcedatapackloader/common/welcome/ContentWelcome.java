@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregenHold;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -30,14 +31,12 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public final class ContentWelcome {
     private static final String KEY = "welcomeSays";
-    private static final Set<UUID> ARRIVED = new HashSet<>();
+    private static final Set<UUID> ARRIVED = PlayerLogout.track(new HashSet<>());
     private static final Pattern NUMERIC = Pattern.compile("-?\\d+");
 
     private ContentWelcome() {}
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player && ContentPregenHold.welcomesNow(player) && ContentIntroPlay.skips(player)) { welcome(player); } }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ARRIVED.remove(event.getEntity().getUUID()); }
 
     public static boolean arrived(ServerPlayer player) { return ARRIVED.contains(player.getUUID()); }
 

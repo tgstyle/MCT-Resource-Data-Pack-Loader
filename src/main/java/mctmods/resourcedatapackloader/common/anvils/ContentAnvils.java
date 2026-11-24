@@ -65,22 +65,18 @@ public final class ContentAnvils {
     private static final float BREAK_CHANCE = 0.12F;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
     private static final int MOST_LEVEL = 255;
-    private static final Map<AnvilDef, List<ItemStack>> ITEMS = new IdentityHashMap<>();
-    private static final Map<AnvilDef, List<ItemStack>> WITH = new IdentityHashMap<>();
-    private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
-    private static final Map<AnvilDef, Map<Enchantment, Integer>> ENCHANTMENTS = new IdentityHashMap<>();
+    private static final Map<AnvilDef, Resolved> RESOLVED = new IdentityHashMap<>();
     private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
     private static final List<String> ANVIL_KEYS = List.of("requires", "match", "repairWith", "repairPerUnit", "repairCost", "combineCost", "bookCost", "penalty", "repair", "combine", TOO_EXPENSIVE, "item", "with", "result", "levels", "enchantments", "grants", "locks");
     private static final List<String> STACK_KEYS = List.of("item", "count");
 
     private ContentAnvils() {}
 
+    private record Resolved(List<ItemStack> item, List<ItemStack> with, @Nullable ItemStack result, Map<Enchantment, Integer> enchantments) {}
+
     public static void load() {
         DEFS.clear();
-        ITEMS.clear();
-        WITH.clear();
-        RESULTS.clear();
-        ENCHANTMENTS.clear();
+        RESOLVED.clear();
         AnvilCosts.resetAnvil();
         AnvilRules.reset();
         if (Config.data.anvilsOff()) { return; }
@@ -98,10 +94,10 @@ public final class ContentAnvils {
             List<ItemStack> stack = stacks(key, def.item());
             List<ItemStack> with = stacks(key, def.with());
             if (stack.isEmpty() || with.isEmpty()) { return; }
+            ItemStack result = null;
             if (!def.result().isEmpty()) {
-                ItemStack result = ContentStacks.parse(key, def.result(), def.resultCount());
+                result = ContentStacks.parse(key, def.result(), def.resultCount());
                 if (result.isEmpty()) { return; }
-                RESULTS.put(def, result);
             }
             Map<Enchantment, Integer> found = new LinkedHashMap<>();
             for (Map.Entry<String, Integer> entry : def.enchantments().entrySet()) {
@@ -114,9 +110,7 @@ public final class ContentAnvils {
                 found.put(enchantment, entry.getValue());
             }
             DEFS.add(def);
-            ITEMS.put(def, stack);
-            WITH.put(def, with);
-            ENCHANTMENTS.put(def, found);
+            RESOLVED.put(def, new Resolved(stack, with, result, found));
         });
         if (!DEFS.isEmpty()) { Summary.info("anvils", "Loaded " + DEFS.size() + " piece(s) of anvil work"); }
         if (AnvilRules.count() > 0) { Summary.info("anvils", "Loaded " + AnvilRules.count() + " anvil rule(s)"); }
@@ -153,7 +147,7 @@ public final class ContentAnvils {
             }
             enchantments.put(Settings.lower(entry.getKey()),Mth.clamp(Json.asInt(entry.getValue(), entry.getKey(), 1), 1, MOST_LEVEL));
         }
-        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), resultOf(json), countOf(json, "result"), Math.max(1, Json.getInt(json, "levels", 1)),
+        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), resultOf(json), countOf(json, "result"), Json.atLeast(json, "levels", 1, 1),
                 enchantments, Json.getString(json, "grants", "").trim(), Json.getBoolean(json, "locks", false));
     }
 
@@ -198,23 +192,27 @@ public final class ContentAnvils {
     private static int countOf(JsonObject json, String name) {
         if (!GsonHelper.isObjectNode(json, name)) { return 1; }
         Json.unknownKeys(Json.getJsonObject(json, name), name, STACK_KEYS);
-        return Math.max(1, Json.getInt(Json.getJsonObject(json, name), "count", 1));
+        return Json.atLeast(Json.getJsonObject(json, name), "count", 1, 1);
     }
 
     @Nullable private static AnvilDef holding(ItemStack held) {
         if (held.isEmpty()) { return null; }
         for (AnvilDef def : DEFS) {
-            if (any(held, ITEMS.get(def))) { return def; }
+            if (any(held, RESOLVED.get(def).item())) { return def; }
         }
         return null;
     }
 
-    private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) { return any(left, ITEMS.get(def)) && left.getCount() >= def.itemCount() && any(right, WITH.get(def)) && right.getCount() >= def.withCount(); }
+    private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) {
+        Resolved resolved = RESOLVED.get(def);
+        return any(left, resolved.item()) && left.getCount() >= def.itemCount() && any(right, resolved.with()) && right.getCount() >= def.withCount();
+    }
 
     private static ItemStack worked(AnvilDef def, ItemStack left) {
         ItemStack output = left.copy();
         output.setCount(def.itemCount());
-        ItemStack result = RESULTS.get(def);
+        Resolved resolved = RESOLVED.get(def);
+        ItemStack result = resolved.result();
         if (result != null) {
             output = result.copy();
             CompoundTag carried = left.getTag();
@@ -227,7 +225,7 @@ public final class ContentAnvils {
         }
         Map<Enchantment, Integer> held = EnchantmentHelper.getEnchantments(output);
         boolean rises = false;
-        for (Map.Entry<Enchantment, Integer> entry : ENCHANTMENTS.get(def).entrySet()) {
+        for (Map.Entry<Enchantment, Integer> entry : resolved.enchantments().entrySet()) {
             Integer already = held.get(entry.getKey());
             if (already != null && already >= entry.getValue()) { continue; }
             held.put(entry.getKey(), entry.getValue());
@@ -250,14 +248,12 @@ public final class ContentAnvils {
         if (def == null || !pairs(def, event.getLeft(), event.getRight())) { return false; }
         ItemStack output = worked(def, event.getLeft());
         if (output.isEmpty()) {
-            if (!ENCHANTMENTS.get(def).isEmpty() || def.grants().isEmpty()) { return false; }
+            if (!RESOLVED.get(def).enchantments().isEmpty() || def.grants().isEmpty()) { return false; }
             output = event.getLeft().copy();
             output.setCount(def.itemCount());
         }
         OFFERED.put(output, def);
-        event.setOutput(output);
-        event.setCost(def.levels());
-        event.setMaterialCost(def.withCount());
+        AnvilRules.offer(event, output, def.levels(), def.withCount());
         return true;
     }
 
@@ -292,7 +288,7 @@ public final class ContentAnvils {
 
     private static boolean ignores(ItemStack stack) {
         for (AnvilDef def : DEFS) {
-            if (any(stack, WITH.get(def))) { return false; }
+            if (any(stack, RESOLVED.get(def).with())) { return false; }
         }
         return true;
     }

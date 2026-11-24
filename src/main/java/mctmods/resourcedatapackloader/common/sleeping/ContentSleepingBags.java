@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.sleeping;
 
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -11,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.entity.player.SleepingLocationCheckEvent;
 import java.util.HashMap;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentSleepingBags {
-    private static final Map<UUID, BlockPos> SLEEPERS = new HashMap<>();
+    private static final Map<UUID, BlockPos> SLEEPERS = PlayerLogout.track(new HashMap<>());
 
     private ContentSleepingBags() {}
 
@@ -61,5 +62,4 @@ public final class ContentSleepingBags {
 
     public static void onWakeUp(PlayerWakeUpEvent event) { SLEEPERS.remove(event.getEntity().getUUID()); }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SLEEPERS.remove(event.getEntity().getUUID()); }
 }

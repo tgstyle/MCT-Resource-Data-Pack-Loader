@@ -86,7 +86,7 @@ public final class ContentTeleporter implements ITeleporter {
 
     @Override public PortalInfo getPortalInfo(Entity entity, ServerLevel destination, Function<ServerLevel, PortalInfo> fallback) {
         BlockPos step = arrive(destination, entity);
-        return new PortalInfo(new Vec3(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D), Vec3.ZERO, entity.getYRot(), entity.getXRot());
+        return new PortalInfo(Vec3.atBottomCenterOf(step), Vec3.ZERO, entity.getYRot(), entity.getXRot());
     }
 
     @Override public boolean playTeleportSound(ServerPlayer player, ServerLevel source, ServerLevel destination) { return false; }
@@ -122,7 +122,7 @@ public final class ContentTeleporter implements ITeleporter {
         Block block = block(def.platformBlock());
         int low = level.getMinBuildHeight() + SEARCH_LOW + 1;
         int high = level.getMinBuildHeight() + level.dimensionType().logicalHeight() - height - 1;
-        BlockPos portalPos = new BlockPos(mapped.getX(), Mth.clamp(mapped.getY() - (standsOn() ? 1 : 0), low, high), mapped.getZ());
+        BlockPos portalPos = new BlockPos(mapped.getX(), Mth.clamp(mapped.getY() - (standsOn(portalState) ? 1 : 0), low, high), mapped.getZ());
         Room room = room(portalPos);
         carve(level, portalPos, room, height);
         if (def.platform()) { floorRoom(level, room, portalPos.getY(), block); }
@@ -135,10 +135,10 @@ public final class ContentTeleporter implements ITeleporter {
     private int roomHeight() {
         if (fit == null || fit.holes().isEmpty()) { return 3; }
         int span = highest(fit.holes()).getY() - lowest(fit.holes()).getY() + 2;
-        return standsOn() ? Math.max(span, 3) : span;
+        return standsOn(portalState) ? Math.max(span, 3) : span;
     }
 
-    private boolean standsOn() { return portalState.getValue(ContentPortalBlock.AXIS) == Direction.Axis.Y || (portalState.getBlock() instanceof ContentPortalBlock block && block.getDef().fullCube()); }
+    private static boolean standsOn(BlockState state) { return state.getValue(ContentPortalBlock.AXIS) == Direction.Axis.Y || (state.getBlock() instanceof ContentPortalBlock block && block.getDef().fullCube()); }
 
     private Room room(BlockPos portalPos) {
         List<BlockPos> placed = new ArrayList<>();
@@ -175,7 +175,7 @@ public final class ContentTeleporter implements ITeleporter {
                     hold(level, at);
                     BlockState found = level.getBlockState(at);
                     if (found.isAir() || found.getBlock() instanceof ContentPortalBlock || room.edges().contains(at) || kept(level, at, found)) { continue; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
                 }
             }
         }
@@ -227,10 +227,8 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static BlockPos stepOut(ServerLevel level, BlockPos portalPos) {
         BlockState held = level.getBlockState(portalPos);
-        if (!(held.getBlock() instanceof ContentPortalBlock block)) { return portalPos.above(); }
-        Direction.Axis axis = held.getValue(ContentPortalBlock.AXIS);
-        if (axis == Direction.Axis.Y || block.getDef().fullCube()) { return portalPos.above(); }
-        Direction[] sides = axis == Direction.Axis.X ? new Direction[] { Direction.NORTH, Direction.SOUTH } : new Direction[] { Direction.WEST, Direction.EAST };
+        if (!(held.getBlock() instanceof ContentPortalBlock) || standsOn(held)) { return portalPos.above(); }
+        Direction[] sides = held.getValue(ContentPortalBlock.AXIS) == Direction.Axis.X ? new Direction[] { Direction.NORTH, Direction.SOUTH } : new Direction[] { Direction.WEST, Direction.EAST };
         for (Direction side : sides) {
             BlockPos beside = portalPos.relative(side);
             if (!level.isLoaded(beside)) { continue; }

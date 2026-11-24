@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.annotation.Nullable;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -41,6 +42,20 @@ final class RecipeSelector {
     private int invalid;
 
     int invalid() { return invalid; }
+
+    static boolean lacksRecipes(String kind, ResourceLocation key, JsonObject json) {
+        if (json.has("recipes") && json.get("recipes").isJsonObject()) { return false; }
+        ContentLog.LOGGER.error("{} file {} needs a recipes object saying which recipes it covers, ignoring it", kind, key);
+        return true;
+    }
+
+    @Nullable static RecipeSelector scopeOf(String kind, ResourceLocation key, JsonObject json) {
+        RecipeSelector scope = new RecipeSelector();
+        scope.read(key, json);
+        if (!scope.isEmpty()) { return scope; }
+        ContentLog.LOGGER.error("{} file {} selects no recipes, ignoring it", kind, key);
+        return null;
+    }
 
     void clear() {
         invalid = 0;

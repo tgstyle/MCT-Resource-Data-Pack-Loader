@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.util.ContentPixelImages;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.tints.TintFactory;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -35,7 +36,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 public final class ContentPixelMaps {
-    public static final String PNG = ".png";
+    public static final String PNG = IdNames.PNG;
     public static final String CACHE_DIRECTORY = "pixelmap-cache";
     private static final String EXTENDS = "extends";
     private static final String PALETTE = "palette";
@@ -79,7 +80,7 @@ public final class ContentPixelMaps {
         Resolved resolved;
         try { resolved = resolve(namespace, path, overriding); }
         catch (RuntimeException ex) {
-            ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", namespace, path, ex);
+            fail("could not be read", namespace, path, ex);
             return null;
         }
         if (resolved == null) { return null; }
@@ -108,12 +109,12 @@ public final class ContentPixelMaps {
         Set<String> seen = new LinkedHashSet<>();
         while (at != null) {
             if (!seen.add(where + ":" + at)) {
-                ContentLog.LOGGER.error("Pixel map {}:{} reaches itself again through {}:{}, so nothing is drawn", namespace, path, where, at);
+                fail("reaches itself again through {}:{}", namespace, path, where, at);
                 return null;
             }
             String contents = read(where, at, overriding);
             if (contents == null) {
-                ContentLog.LOGGER.error("Pixel map {}:{} needs {}:{}, which no pack provides, so nothing is drawn", namespace, path, where, at);
+                fail("needs {}:{}, which no pack provides", namespace, path, where, at);
                 return null;
             }
             sources.append(where).append(':').append(at).append('\n').append(contents).append('\n');
@@ -121,17 +122,17 @@ public final class ContentPixelMaps {
             JsonObject json;
             try { json = Json.GSON.fromJson(contents, JsonObject.class); }
             catch (JsonParseException ex) {
-                ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", where, at, ex);
+                fail("could not be read", where, at, ex);
                 return null;
             }
             if (json == null) {
-                ContentLog.LOGGER.error("Pixel map {}:{} is empty, so nothing is drawn", where, at);
+                fail("is empty", where, at);
                 return null;
             }
             for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
                 if (palette.containsKey(entry.getKey())) { continue; }
                 if (!entry.getValue().isJsonPrimitive()) {
-                    ContentLog.LOGGER.error("Pixel map {}:{} gives the palette key '{}' something other than a color, so nothing is drawn", where, at, entry.getKey());
+                    fail("gives the palette key '{}' something other than a color", where, at, entry.getKey());
                     return null;
                 }
                 palette.put(entry.getKey(), entry.getValue().getAsString());
@@ -146,7 +147,7 @@ public final class ContentPixelMaps {
                 rows = new ArrayList<>(listed.size());
                 for (JsonElement row : listed) {
                     if (!row.isJsonPrimitive()) {
-                        ContentLog.LOGGER.error("Pixel map {}:{} has a row that is not text, so nothing is drawn", where, at);
+                        fail("has a row that is not text", where, at);
                         return null;
                     }
                     rows.add(row.getAsString());
@@ -156,14 +157,14 @@ public final class ContentPixelMaps {
                 JsonObject asked = Json.getJsonObject(json, TINT);
                 tint = TintFactory.of(asked);
                 if (tint == null) {
-                    ContentLog.LOGGER.error("Pixel map {}:{} tints from '{}' to '{}', and both must be #RRGGBB or #AARRGGBB, so nothing is drawn", where, at, Json.getString(asked, TintFactory.FROM, ""), Json.getString(asked, TintFactory.TO, ""));
+                    fail("tints from '{}' to '{}', and both must be #RRGGBB or #AARRGGBB", where, at, Json.getString(asked, TintFactory.FROM, ""), Json.getString(asked, TintFactory.TO, ""));
                     return null;
                 }
             }
             if (size == null && json.has(SIZE)) {
                 size = size(Json.getString(json, SIZE, ""));
                 if (size == null) {
-                    ContentLog.LOGGER.error("Pixel map {}:{} has the size '{}', which is not written as widthxheight such as 16x16 or 16x32, so nothing is drawn", where, at, Json.getString(json, SIZE, ""));
+                    fail("has the size '{}', which is not written as widthxheight such as 16x16 or 16x32", where, at, Json.getString(json, SIZE, ""));
                     return null;
                 }
             }
@@ -179,7 +180,7 @@ public final class ContentPixelMaps {
             }
             int[][] image = image(nextWhere, nextPath);
             if (image == null) {
-                ContentLog.LOGGER.error("Pixel map {}:{} builds on {}:{}, which is neither a pixel map nor an image any pack or the game provides, so nothing is drawn", namespace, path, nextWhere, nextPath);
+                fail("builds on {}:{}, which is neither a pixel map nor an image any pack or the game provides", namespace, path, nextWhere, nextPath);
                 return null;
             }
             if (size == null) { size = image[0]; }
@@ -194,16 +195,16 @@ public final class ContentPixelMaps {
             return null;
         }
         if (base == null && (rows == null || rows.isEmpty())) {
-            ContentLog.LOGGER.error("Pixel map {}:{} has no rows and inherits none, so nothing is drawn", namespace, path);
+            fail("has no rows and inherits none", namespace, path);
             return null;
         }
         if (size[0] < 1 || size[1] < 1 || size[0] > MAX_SIDE || size[1] > MAX_SIDE) {
-            ContentLog.LOGGER.error("Pixel map {}:{} asks for {} by {}, and each side must be between 1 and {}, so nothing is drawn", namespace, path, size[0], size[1], MAX_SIDE);
+            fail("asks for {} by {}, and each side must be between 1 and {}", namespace, path, size[0], size[1], MAX_SIDE);
             return null;
         }
         if (base != null) {
             if (base.length != size[0] * size[1]) {
-                ContentLog.LOGGER.error("Pixel map {}:{} builds on {}, which is not {} by {}, so nothing is drawn", namespace, path, baseFrom, size[0], size[1]);
+                fail("builds on {}, which is not {} by {}", namespace, path, baseFrom, size[0], size[1]);
                 return null;
             }
             return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, base, sources.toString());
@@ -311,7 +312,7 @@ public final class ContentPixelMaps {
             return out.toByteArray();
         }
         catch (IOException ex) {
-            ContentLog.LOGGER.error("Pixel map {}:{} could not be written out, so nothing is drawn", namespace, path, ex);
+            fail("could not be written out", namespace, path, ex);
             return null;
         }
     }
@@ -353,6 +354,8 @@ public final class ContentPixelMaps {
         }
         catch (IOException ex) { ContentLog.LOGGER.warn("Pixel map {}:{} could not be cached, it will be drawn again next time", namespace, path, ex); }
     }
+
+    private static void fail(String reason, Object... args) { ContentLog.LOGGER.error("Pixel map {}:{} " + reason + ", so nothing is drawn", args); }
 
     private static String name(String path) {
         int slash = path.lastIndexOf('/');

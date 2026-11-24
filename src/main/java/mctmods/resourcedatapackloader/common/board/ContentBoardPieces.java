@@ -30,6 +30,8 @@ final class ContentBoardPieces {
     private static final String KIND = "rdplKind";
     private static final String SPAWN = "rdplSpawn";
     private static final int STRIKE_TICKS = 10;
+    private static final double CENTER = 0.5D;
+    private static final double MATCH_RANGE_SQ = 0.01D;
     private static final Set<String> UNMADE = new HashSet<>();
 
     private ContentBoardPieces() {}
@@ -76,10 +78,12 @@ final class ContentBoardPieces {
 
     @Nullable private static Entity standing(ServerLevel level, BoardGame game, BoardRules rules, int square) {
         for (Entity piece : held(level, game)) {
-            if (piece.distanceToSqr(game.x + square % rules.files + 0.5D, game.y, game.z + Math.floorDiv(square, rules.files) + 0.5D) < 0.01D) { return piece; }
+            if (at(piece, game, square % rules.files, Math.floorDiv(square, rules.files))) { return piece; }
         }
         return null;
     }
+
+    private static boolean at(Entity piece, BoardGame game, double file, double rank) { return piece.distanceToSqr(game.x + file + CENTER, game.y, game.z + rank + CENTER) < MATCH_RANGE_SQ; }
 
     static void sync(ServerLevel level, BoardGame game, BoardRules rules) {
         BoardState state = game.state;
@@ -106,7 +110,7 @@ final class ContentBoardPieces {
         for (double[] spot : wanted) {
             Entity there = null;
             for (Entity piece : pool) {
-                if (key(piece) == (int) spot[2] && piece.distanceToSqr(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D) < 0.01D) { there = piece; }
+                if (key(piece) == (int) spot[2] && at(piece, game, spot[0], spot[1])) { there = piece; }
             }
             if (there == null) { open.add(spot); }
             else { pool.remove(there); }
@@ -119,7 +123,7 @@ final class ContentBoardPieces {
             if (moved == null) { spawn(level, game, rules, spot); }
             else {
                 pool.remove(moved);
-                moved.teleportTo(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D);
+                moved.teleportTo(game.x + spot[0] + CENTER, game.y, game.z + spot[1] + CENTER);
             }
         }
         for (Entity piece : pool) { piece.discard(); }
@@ -158,7 +162,7 @@ final class ContentBoardPieces {
             return;
         }
         float yaw = side == 0 ? 0.0F : 180.0F;
-        made.moveTo(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D, yaw, 0.0F);
+        made.moveTo(game.x + spot[0] + CENTER, game.y, game.z + spot[1] + CENTER, yaw, 0.0F);
         made.setYHeadRot(yaw);
         if (made instanceof Mob living) {
             living.setNoAi(true);

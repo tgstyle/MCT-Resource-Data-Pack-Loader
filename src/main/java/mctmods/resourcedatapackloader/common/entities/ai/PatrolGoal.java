@@ -43,16 +43,7 @@ public final class PatrolGoal extends Goal {
     @Nullable private PathfinderMob leaderNear() {
         AABB around = mob.getBoundingBox().inflate(MUSTER, 8.0D, MUSTER);
         List<? extends PathfinderMob> others = mob.level().getEntitiesOfClass(mob.getClass(), around, other -> other != mob && other.isAlive() && other.getType() == mob.getType() && leads(other));
-        PathfinderMob best = null;
-        double nearest = Double.MAX_VALUE;
-        for (PathfinderMob other : others) {
-            double away = mob.distanceToSqr(other);
-            if (away < nearest) {
-                nearest = away;
-                best = other;
-            }
-        }
-        return best;
+        return Walking.nearest(others, mob::distanceToSqr, Double.MAX_VALUE);
     }
 
     @Override public boolean canUse() {

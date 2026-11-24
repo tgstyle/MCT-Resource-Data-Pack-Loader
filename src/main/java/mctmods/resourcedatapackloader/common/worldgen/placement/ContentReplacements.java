@@ -30,6 +30,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ContentReplacements {
+    public static final String REPLACE_PREFIX = "replace:";
     private static final Map<BlockState, BlockState> EXACT = new HashMap<>();
     private static final Map<Block, BlockState> WHOLE = new LinkedHashMap<>();
     private static final Map<BlockState, String> KEYS = new IdentityHashMap<>();
@@ -130,7 +131,7 @@ public final class ContentReplacements {
     private static void load() {
         dimensions = new HashSet<>();
         if (ContentControl.off(ContentControl.REPLACEMENTS)) {
-            token = "replace:off";
+            token = REPLACE_PREFIX + "off";
             wanted = false;
             return;
         }
@@ -152,7 +153,7 @@ public final class ContentReplacements {
         blacklist = ContentControl.flag(ContentControl.REPLACEMENTS, "blockReplacementDimensionsAreBlacklist", Config.worldgen.blockReplacementDimensionsAreBlacklist());
         logging = ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements());
         wanted = !EXACT.isEmpty() || !WHOLE.isEmpty();
-        token = "replace:" + Integer.toHexString(sources().hashCode()) + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey()).trim();
+        token = REPLACE_PREFIX + Integer.toHexString(sources().hashCode()) + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey()).trim();
         if (wanted) { Summary.info("replacements.setup", "Replacing " + (EXACT.size() + WHOLE.size()) + " kind(s) of block in chunks that already exist, between y" + minHeight + " and y" + maxHeight); }
     }
 

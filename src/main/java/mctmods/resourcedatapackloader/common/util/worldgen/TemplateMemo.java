@@ -20,5 +20,13 @@ public final class TemplateMemo<T> {
         return held;
     }
 
+    public boolean stale() {
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (read && active == from) { return false; }
+        from = active;
+        read = true;
+        return true;
+    }
+
     public void forget() { read = false; }
 }

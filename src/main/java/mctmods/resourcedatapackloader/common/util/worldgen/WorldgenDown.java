@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import net.minecraft.util.GsonHelper;
 
 public final class WorldgenDown {
@@ -27,13 +28,17 @@ public final class WorldgenDown {
     private static final String SEQUENCE = "sequence";
     private static final String SPAWN_TARGET = "spawn_target";
     private static final String ARGUMENT = "argument";
+    private static final String ARGUMENT1 = "argument1";
+    private static final String ARGUMENT2 = "argument2";
+    private static final String INPUT = "input";
+    private static final String AXIS = "axis";
     private static final String ATTRIBUTES = "attributes";
     private static final String COUNT = "count";
     private static final String START = "start_vertical_radius_multiplier";
-    private static final String CAVE_COUNT = "{\"type\":\"minecraft:very_biased_to_bottom\",\"max_inclusive\":14,\"min_inclusive\":0}";
-    private static final String NETHER_COUNT = "{\"type\":\"minecraft:very_biased_to_bottom\",\"max_inclusive\":9,\"min_inclusive\":0}";
-    private static final String CAVE_THICKNESS = "{\"type\":\"minecraft:trapezoid\",\"max\":3.0,\"min\":0.0,\"plateau\":1.0}";
-    private static final String NETHER_THICKNESS = "{\"type\":\"minecraft:trapezoid\",\"max\":6.0,\"min\":0.0,\"plateau\":2.0}";
+    private static final JsonElement CAVE_COUNT = JsonParser.parseString("{\"type\":\"minecraft:very_biased_to_bottom\",\"max_inclusive\":14,\"min_inclusive\":0}");
+    private static final JsonElement NETHER_COUNT = JsonParser.parseString("{\"type\":\"minecraft:very_biased_to_bottom\",\"max_inclusive\":9,\"min_inclusive\":0}");
+    private static final JsonElement CAVE_THICKNESS = JsonParser.parseString("{\"type\":\"minecraft:trapezoid\",\"max\":3.0,\"min\":0.0,\"plateau\":1.0}");
+    private static final JsonElement NETHER_THICKNESS = JsonParser.parseString("{\"type\":\"minecraft:trapezoid\",\"max\":6.0,\"min\":0.0,\"plateau\":2.0}");
     private static final List<String> CATEGORIES = List.of("ambient", "axolotls", "creature", "misc", "monster", "underground_water_creature", "water_ambient", "water_creature");
     private static final Set<String> STATE_KEYS = Set.of("result_state", "state", "output_state", "block_state", "default_fluid", "default_block", "pointed_block", "base_block", "valid_base_block", "stem_state", "hat_state", "decor_state", "water_state", "lava_state", "barrier_state", "air_state", "rim", "default_state", "contents", "states", "high_states", "low_states", "inner_placements", "target");
     private static final Set<String> PROVIDER_KEYS = Set.of("to_place", "then", "fallback", "ground_state", "provider", "fluid", "barrier", "source");
@@ -79,7 +84,7 @@ public final class WorldgenDown {
             JsonElement weird = out.remove("weird_thickness_bias");
             JsonElement start = out.remove(START);
             boolean biased = weird != null && weird.getAsBoolean();
-            boolean vanilla = nether ? JsonParser.parseString(NETHER_COUNT).equals(count) && JsonParser.parseString(NETHER_THICKNESS).equals(thickness) && !biased && new JsonPrimitive(5.0).equals(start) : JsonParser.parseString(CAVE_COUNT).equals(count) && JsonParser.parseString(CAVE_THICKNESS).equals(thickness) && biased;
+            boolean vanilla = nether ? NETHER_COUNT.equals(count) && NETHER_THICKNESS.equals(thickness) && !biased && new JsonPrimitive(5.0).equals(start) : CAVE_COUNT.equals(count) && CAVE_THICKNESS.equals(thickness) && biased;
             if (!vanilla) { note.accept("sets its own cave count, thickness or start height, which 26.2 cannot, so the vanilla " + (nether ? "nether" : "overworld") + " cave shape is used"); }
             if (nether) { out.addProperty(TYPE, MINECRAFT + "nether_cave"); }
             JsonElement room = out.remove("room_vertical_radius_multiplier");
@@ -148,7 +153,7 @@ public final class WorldgenDown {
         for (int i = 0; i < count; i++) { modifiers.add(listed != null && listed.isJsonArray() && i < listed.getAsJsonArray().size() ? listed.getAsJsonArray().get(i).getAsDouble() : 1.0); }
         double base = noise.has("base_amplitude") ? noise.get("base_amplitude").getAsDouble() : 1.0;
         double scale = base / NoiseParity.baseAmplitude(modifiers);
-        if (noise.has("normalize") && !(noise.get("normalize").isJsonPrimitive() && noise.get("normalize").getAsJsonPrimitive().isBoolean() && noise.get("normalize").getAsBoolean())) { note.accept("sets its own noise normalization, which 26.2 cannot, so the standard one is used"); }
+        if (noise.has("normalize") && !(GsonHelper.isBooleanValue(noise.get("normalize")) && noise.get("normalize").getAsBoolean())) { note.accept("sets its own noise normalization, which 26.2 cannot, so the standard one is used"); }
         JsonArray amplitudes = new JsonArray();
         for (double modifier : modifiers) { amplitudes.add(Math.abs(scale - 1.0) < 1.0E-9 ? modifier : modifier * scale); }
         JsonObject out = new JsonObject();
@@ -200,14 +205,14 @@ public final class WorldgenDown {
             }
             return out;
         }
-        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) { return value; }
+        if (!GsonHelper.isStringValue(value)) { return value; }
         JsonObject out = new JsonObject();
         out.add("Name", value);
         return out;
     }
 
     private static JsonElement provided(JsonElement value, String key, Consumer<String> note) {
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() && !"fallback".equals(key)) {
+        if (GsonHelper.isStringValue(value) && !"fallback".equals(key)) {
             note.accept("names the block state provider " + value.getAsString() + ", which 26.2 has no registry for, so it is kept as written and will not load");
             return value;
         }
@@ -234,15 +239,17 @@ public final class WorldgenDown {
         out.addProperty("ore_veins_enabled", false);
         if (aquifers != null && (aquifers.has("exclusion") || aquifers.has("surface_level"))) { note.accept("sets its aquifer exclusion and surface level, which 26.2 builds in, so its own are dropped"); }
         JsonObject routed = new JsonObject();
-        for (String key : AQUIFER_KEYS) { routed.add(key, aquifers != null && aquifers.has(key) ? density(aquifers.get(key), note) : new JsonPrimitive(0.0)); }
-        for (String key : CLIMATE_KEYS) { routed.add(key, router.has(key) ? density(router.get(key), note) : new JsonPrimitive(0.0)); }
+        for (String key : AQUIFER_KEYS) { routed.add(key, densityOr(aquifers, key, note)); }
+        for (String key : CLIMATE_KEYS) { routed.add(key, densityOr(router, key, note)); }
         routed.add("preliminary_surface_level", router.has("chunk_surface_level") ? density(uninterpolated(router.get("chunk_surface_level")), note) : new JsonPrimitive(0.0));
-        routed.add("final_density", router.has("final_density") ? density(router.get("final_density"), note) : new JsonPrimitive(0.0));
+        routed.add("final_density", densityOr(router, "final_density", note));
         for (String key : VEIN_KEYS) { routed.addProperty(key, 0.0); }
         out.add(ROUTER, routed);
         out.add(SPAWN_TARGET, spawnTargets(settings.get(SPAWN_TARGET), router, note));
         return out;
     }
+
+    private static JsonElement densityOr(@Nullable JsonObject holder, String key, Consumer<String> note) { return holder != null && holder.has(key) ? density(holder.get(key), note) : new JsonPrimitive(0.0); }
 
     public static JsonElement density(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> density(item, note)); }
@@ -274,15 +281,15 @@ public final class WorldgenDown {
             }
             case "reciprocal" -> out.addProperty(TYPE, MINECRAFT + "invert");
             case "negate" -> { return binary("mul", new JsonPrimitive(-1.0), out.get(ARGUMENT)); }
-            case "sub" -> { return binary("add", out.get("argument1"), binary("mul", new JsonPrimitive(-1.0), out.get("argument2"))); }
+            case "sub" -> { return binary("add", out.get(ARGUMENT1), binary("mul", new JsonPrimitive(-1.0), out.get(ARGUMENT2))); }
             case "div" -> {
-                JsonElement right = out.get("argument2");
-                if (right != null && right.isJsonPrimitive() && right.getAsJsonPrimitive().isNumber() && right.getAsDouble() != 0.0) { return binary("mul", out.get("argument1"), new JsonPrimitive(1.0 / right.getAsDouble())); }
+                JsonElement right = out.get(ARGUMENT2);
+                if (right != null && GsonHelper.isNumberValue(right) && right.getAsDouble() != 0.0) { return binary("mul", out.get(ARGUMENT1), new JsonPrimitive(1.0 / right.getAsDouble())); }
                 return dropped("divides by a density function", note);
             }
             case "pow" -> {
                 JsonElement exponent = out.get("exponent");
-                double power = exponent != null && exponent.isJsonPrimitive() && exponent.getAsJsonPrimitive().isNumber() ? exponent.getAsDouble() : Double.NaN;
+                double power = exponent != null && GsonHelper.isNumberValue(exponent) ? exponent.getAsDouble() : Double.NaN;
                 if (power == 1.0) { return out.get("base"); }
                 if (power != 2.0 && power != 3.0) { return dropped("raises a density function to a power other than 1, 2 or 3", note); }
                 JsonObject raised = new JsonObject();
@@ -291,11 +298,11 @@ public final class WorldgenDown {
                 return raised;
             }
             case "slice" -> {
-                if (!"y".equals(Json.text(out, "axis")) || !"0".equals(Json.text(out, "coordinate"))) { return dropped("slices a density function at a fixed x, z or y other than 0", note); }
+                if (!"y".equals(Json.text(out, AXIS)) || !"0".equals(Json.text(out, "coordinate"))) { return dropped("slices a density function at a fixed x, z or y other than 0", note); }
                 note.accept("slices a density function at y 0, which 26.2 writes as a flat cache sampled every 4 blocks");
                 JsonObject flat = new JsonObject();
                 flat.addProperty(TYPE, MINECRAFT + "flat_cache");
-                flat.add(ARGUMENT, out.get("input"));
+                flat.add(ARGUMENT, out.get(INPUT));
                 return flat;
             }
             case "lerp" -> {
@@ -304,9 +311,9 @@ public final class WorldgenDown {
                 return binary("add", first, binary("mul", out.get("alpha"), span));
             }
             case "gradient" -> {
-                if (out.has("axis") && "y".equals(out.get("axis").getAsString())) {
+                if (out.has(AXIS) && "y".equals(out.get(AXIS).getAsString())) {
                     out.addProperty(TYPE, MINECRAFT + "y_clamped_gradient");
-                    out.remove("axis");
+                    out.remove(AXIS);
                 }
                 else { return dropped("uses a gradient along x or z", note); }
             }
@@ -324,9 +331,9 @@ public final class WorldgenDown {
 
     private static String densityKey(String key, String type) {
         return switch (key) {
-            case "left" -> BINARY.contains(type) ? "argument1" : key;
-            case "right" -> BINARY.contains(type) ? "argument2" : key;
-            case "input" -> UNARY.contains(type) ? ARGUMENT : key;
+            case "left" -> BINARY.contains(type) ? ARGUMENT1 : key;
+            case "right" -> BINARY.contains(type) ? ARGUMENT2 : key;
+            case INPUT -> UNARY.contains(type) ? ARGUMENT : key;
             case "noise" -> SHIFTS.contains(type) ? ARGUMENT : key;
             case "from_coordinate" -> "gradient".equals(type) ? "from_y" : key;
             case "to_coordinate" -> "gradient".equals(type) ? "to_y" : key;
@@ -337,15 +344,15 @@ public final class WorldgenDown {
     private static JsonObject binary(String type, JsonElement left, JsonElement right) {
         JsonObject out = new JsonObject();
         out.addProperty(TYPE, MINECRAFT + type);
-        out.add("argument1", left == null ? new JsonPrimitive(0.0) : left);
-        out.add("argument2", right == null ? new JsonPrimitive(0.0) : right);
+        out.add(ARGUMENT1, left == null ? new JsonPrimitive(0.0) : left);
+        out.add(ARGUMENT2, right == null ? new JsonPrimitive(0.0) : right);
         return out;
     }
 
     private static JsonElement uninterpolated(JsonElement surface) {
         if (!surface.isJsonObject()) { return surface; }
         JsonObject held = surface.getAsJsonObject();
-        return "interpolated".equals(IdNames.bare(type(held))) && held.has("input") ? held.get("input") : surface;
+        return "interpolated".equals(IdNames.bare(type(held))) && held.has(INPUT) ? held.get(INPUT) : surface;
     }
 
     private static JsonElement surfaceRule(JsonElement rule, Consumer<String> note) {

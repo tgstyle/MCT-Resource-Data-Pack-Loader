@@ -18,6 +18,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -48,6 +49,8 @@ public final class ClaimSettings {
 
     private static final String GROUP = ContentControl.CLAIMS;
     private static boolean foreignAnnounced;
+    private static final int RADIUS_MOST = 64;
+    private static final int LEVEL_MOST = 4;
     private static final int MOST = 100000;
     private static volatile View view = build();
 
@@ -217,6 +220,8 @@ public final class ClaimSettings {
 
     public static boolean yieldsToForeign() { return view.ftbPolicy != FtbPolicy.INDEPENDENT && ForeignClaimsHolder.get().isActive(); }
 
+    public static boolean yieldsAt(ServerLevel level, int chunkX, int chunkZ) { return yieldsToForeign() && (ftbPolicy() == FtbPolicy.EXCLUSIVE || ForeignClaimsHolder.get().isClaimed(level, chunkX, chunkZ)); }
+
     public static void announceForeign() {
         FtbPolicy policy = view.ftbPolicy;
         if (foreignAnnounced || policy == FtbPolicy.INDEPENDENT || ForeignClaimsHolder.get().isActive()) { return; }
@@ -229,15 +234,15 @@ public final class ClaimSettings {
         ResourceLocation key = ResourceDataPackLoader.id("claims");
         built.methods = methods(ContentControl.list(GROUP, "methods", Config.claims.methods()));
         built.who = ContentControl.choice(GROUP, "claimWho", Config.claims.claimWho(), OwnershipSettings.Who.TEAM);
-        built.commandRadius = ContentControl.ranged(GROUP, "commandRadius", Config.claims.commandRadius(), 0, 64);
-        built.commandLevel = ContentControl.ranged(GROUP, "commandLevel", Config.claims.commandLevel(), 0, 4);
-        built.opLevel = ContentControl.ranged(GROUP, "opLevel", Config.claims.opLevel(), 0, 4);
-        built.item = new ItemSelection("claim item", "claims");
+        built.commandRadius = ContentControl.ranged(GROUP, "commandRadius", Config.claims.commandRadius(), 0, RADIUS_MOST);
+        built.commandLevel = ContentControl.ranged(GROUP, "commandLevel", Config.claims.commandLevel(), 0, LEVEL_MOST);
+        built.opLevel = ContentControl.ranged(GROUP, "opLevel", Config.claims.opLevel(), 0, LEVEL_MOST);
+        built.item = new ItemSelection("claim item", GROUP);
         built.item.readNames(named("item", Config.claims.item()), key);
         built.item.unknown();
         built.itemConsume = ContentControl.flag(GROUP, "itemConsume", Config.claims.itemConsume());
-        built.block = new BlockSelection("claim block", "claims", named("block", Config.claims.block()), key);
-        built.blockRadius = ContentControl.ranged(GROUP, "blockRadius", Config.claims.blockRadius(), 0, 64);
+        built.block = new BlockSelection("claim block", GROUP, named("block", Config.claims.block()), key);
+        built.blockRadius = ContentControl.ranged(GROUP, "blockRadius", Config.claims.blockRadius(), 0, RADIUS_MOST);
         built.blockOverlap = ContentControl.choice(GROUP, "blockOverlap", Config.claims.blockOverlap(), Overlap.REFUSE);
         built.checkTicks = ContentControl.ranged(GROUP, "claimCheckTicks", Config.claims.claimCheckTicks(), 1, 1200);
         built.limitMode = ContentControl.choice(GROUP, "limitMode", Config.claims.limitMode(), LimitMode.FLAT);
@@ -245,8 +250,8 @@ public final class ClaimSettings {
         built.limitPerMember = ContentControl.ranged(GROUP, "limitPerMember", Config.claims.limitPerMember(), 0, MOST);
         built.limitScore = ContentControl.text(GROUP, "limitScore", Config.claims.limitScore()).trim();
         built.mustTouch = ContentControl.flag(GROUP, "mustTouch", Config.claims.mustTouch());
-        built.minDistance = ContentControl.ranged(GROUP, "minDistance", Config.claims.minDistance(), 0, 64);
-        built.spawnRadius = ContentControl.ranged(GROUP, "spawnRadius", Config.claims.spawnRadius(), 0, 64);
+        built.minDistance = ContentControl.ranged(GROUP, "minDistance", Config.claims.minDistance(), 0, RADIUS_MOST);
+        built.spawnRadius = ContentControl.ranged(GROUP, "spawnRadius", Config.claims.spawnRadius(), 0, RADIUS_MOST);
         built.dimensions = ContentControl.list(GROUP, "dimensions", Config.claims.dimensions());
         built.dimensionsAreBlacklist = ContentControl.flag(GROUP, "dimensionsAreBlacklist", Config.claims.dimensionsAreBlacklist());
         built.orphanAccess = ContentControl.choice(GROUP, "orphanAccess", Config.claims.orphanAccess(), Orphan.LOCKED);

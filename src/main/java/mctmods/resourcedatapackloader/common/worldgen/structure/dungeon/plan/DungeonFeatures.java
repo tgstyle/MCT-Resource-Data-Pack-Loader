@@ -60,24 +60,8 @@ public final class DungeonFeatures {
     private static int[] rollsOf(Level.Builder level, Room room, RoomKindDef kind) {
         int[] rolls = level.rolls();
         if (kind == null) { return rolls; }
-        for (int i = 0; i < rolls.length; i++) {
-            Degree degree = kind.rolls().get(DungeonDef.ROLLS.get(i));
-            if (degree != null && degree.valid()) { rolls[i] = draw(degree, SeedStreams.random(room.seed, "kindrolls", i)); }
-        }
+        Degree.apply(rolls, kind.rolls(), room.seed, "kindrolls", 0);
         return rolls;
-    }
-
-    private static int draw(Degree degree, Random random) {
-        int total = 0;
-        for (int weight : degree.weights()) {
-            total += Math.max(0, weight);
-        }
-        int roll = random.nextInt(total);
-        for (int i = 0; i < degree.weights().length; i++) {
-            roll -= Math.max(0, degree.weights()[i]);
-            if (roll < 0) { return i; }
-        }
-        return 0;
     }
 
     private static final class Placer {
@@ -99,7 +83,7 @@ public final class DungeonFeatures {
             this.base = room.y0;
         }
 
-        private boolean hit(int roll) { return random.nextInt(100) < Degree.CHANCES[rolls[roll]]; }
+        private boolean hit(int roll) { return Degree.chance(random, Degree.CHANCES[rolls[roll]]); }
 
         private int slot() { return hit(VARIABILITY) ? 1 + random.nextInt(VARIANT_SLOTS) : 0; }
 

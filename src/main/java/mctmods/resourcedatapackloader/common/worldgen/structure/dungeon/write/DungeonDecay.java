@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 
-import mctmods.resourcedatapackloader.common.blocks.ContentStates;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeightDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef.LevelRule;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
@@ -12,13 +10,11 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Dun
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Link;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Room;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Segment;
-import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Entrance;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Shaft;
-import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,12 +22,10 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public final class DungeonDecay {
     private static final String FAMILY = "decay";
@@ -44,7 +38,6 @@ public final class DungeonDecay {
     private static final int COLLAPSE_ABOVE = 85;
     private static final int COLLAPSE_RATE = 5;
     private static final int COLLAPSE_SIZE = 3;
-    private static final int ENTRANCE_KEEP = 3;
     private static final long HASH_SALT = 0x5DECA7L;
     private static final long COLLAPSE_SALT = 0xC011A95EL;
     private static final int DEGENERACY = DungeonDef.ROLLS.indexOf("degeneracy");
@@ -77,12 +70,7 @@ public final class DungeonDecay {
     }
 
     private static BlockState[] resolve(DungeonThemeDef theme) {
-        List<BlockState> found = new ArrayList<>();
-        for (BlockWeightDef entry : theme.blocks().getOrDefault(FAMILY, Collections.emptyList())) {
-            Block block = Registered.find(ForgeRegistries.BLOCKS, entry.block());
-            if (block != null) { found.add(ContentStates.state(block, entry.properties(), theme.key())); }
-        }
-        return found.toArray(NO_STATES);
+        return DungeonShapes.Palette.found(theme, FAMILY, null).toArray(NO_STATES);
     }
 
     private static boolean falling(BlockState state) { return state.getBlock() instanceof FallingBlock; }
@@ -101,7 +89,7 @@ public final class DungeonDecay {
         private Tier(DungeonPlan plan, DungeonDef def, Level level) {
             this.seed = plan.site.siteSeed();
             this.index = level.index;
-            this.depth = level.index / (double) Math.max(1, plan.levels.size() - 1);
+            this.depth = DungeonDef.depthOf(level.index, plan.levels.size());
             DungeonThemeDef theme = level.themeId == null ? null : ContentDungeonThemes.byName(level.themeId);
             DungeonDef.Decay held = def.decay() != null ? def.decay() : theme != null && theme.decay() != null ? theme.decay() : new DungeonDef.Decay(DungeonDef.Decay.DEFAULT_BASE, DungeonDef.Decay.DEFAULT_PER_DEPTH);
             for (LevelRule rule : def.levelRules()) {
@@ -171,11 +159,7 @@ public final class DungeonDecay {
         }
 
         private RoomKindDef kindOf(Room room) {
-            List<RoomKindDef> kinds = def.roomKinds();
-            for (LevelRule rule : def.levelRules()) {
-                if (rule.fromDepth() <= tier.depth && rule.roomKinds() != null) { kinds = rule.roomKinds(); }
-            }
-            for (RoomKindDef kind : kinds) {
+            for (RoomKindDef kind : def.kindsAt(tier.depth)) {
                 if (kind.kind().equals(room.kind)) { return kind; }
             }
             return HALL;
@@ -186,7 +170,7 @@ public final class DungeonDecay {
             extra = tier.degeneracy;
             shaft = held;
             bottom = DungeonShafts.bottomOf(plan, held);
-            box(held.x(), bottom, held.z(), held.x() + 2, held.topY() - 1, held.z() + 2);
+            box(held.minX(0), bottom, held.minZ(0), held.maxX(0), held.topY() - 1, held.maxZ(0));
             shaft = null;
         }
 
@@ -204,20 +188,15 @@ public final class DungeonDecay {
         private void corridor(Link link) {
             template = false;
             extra = tier.degeneracy;
-            int lo = -((link.width - 1) / 2);
-            int hi = link.width / 2;
             for (Segment s : link.segments) {
-                int minX = Math.min(s.x0(), s.x1());
-                int maxX = Math.max(s.x0(), s.x1());
-                int minZ = Math.min(s.z0(), s.z1());
-                int maxZ = Math.max(s.z0(), s.z1());
-                int fx0 = minX != maxX ? minX : minX + lo;
-                int fx1 = minX != maxX ? maxX : maxX + hi;
-                int fz0 = minZ != maxZ ? minZ : minZ + lo;
-                int fz1 = minZ != maxZ ? maxZ : maxZ + hi;
+                int[] foot = link.footprint(s);
+                int fx0 = foot[0];
+                int fz0 = foot[1];
+                int fx1 = foot[2];
+                int fz1 = foot[3];
                 for (int x = Math.max(columns.minX(), fx0 - 1); x <= Math.min(columns.maxX(), fx1 + 1); x++) {
                     for (int z = Math.max(columns.minZ(), fz0 - 1); z <= Math.min(columns.maxZ(), fz1 + 1); z++) {
-                        int floor = s.floorAt(Math.max(minX, Math.min(maxX, x)), Math.max(minZ, Math.min(maxZ, z)));
+                        int floor = s.floorClamped(x, z);
                         for (int y = Math.max(columns.minY(), floor - 1); y <= Math.min(columns.maxY(), floor + link.height); y++) {
                             int kind = ring(x, y, z, fx0, floor, fz0, fx1, floor + link.height - 1, fz1);
                             if (kind != NONE) { cell(x, y, z, kind); }
@@ -251,13 +230,7 @@ public final class DungeonDecay {
             if (air(have) || have.hasBlockEntity()) { return true; }
             if (template ? !have.isCollisionShapeFullBlock(world, pos.set(x, y, z)) : have != DungeonShapes.at(plan, bucket, x, y, z, palette)) { return true; }
             if (shaft != null && DungeonShafts.at(shaft, bottom, x, y, z, palette.of(shaft)) != null) { return true; }
-            if (plan.entrance == null) { return false; }
-            List<Entrance> all = new ArrayList<>(plan.entrance.extras());
-            all.add(plan.entrance);
-            for (Entrance e : all) {
-                if (Math.abs(x - e.x()) <= ENTRANCE_KEEP && Math.abs(z - e.z()) <= ENTRANCE_KEEP) { return true; }
-            }
-            return false;
+            return DungeonShapes.nearEntrance(plan, x, z);
         }
 
         private void cell(int x, int y, int z, int kind) {
@@ -268,7 +241,7 @@ public final class DungeonDecay {
                 DungeonWriter.set(world, pos.set(x, y, z), Blocks.AIR.defaultBlockState());
                 return;
             }
-            int hash = (int) Math.floorMod(Hashes.mix(tier.seed ^ HASH_SALT, x, y, z), 100L);
+            int hash = MathUtil.percent(Hashes.mix(tier.seed ^ HASH_SALT, x, y, z));
             BlockState[] list = tier.list;
             int step = 100 / (list.length + 1);
             int index = Math.min(list.length, Math.max(0, field - hash) / step) - 1;
@@ -293,7 +266,7 @@ public final class DungeonDecay {
             int centerZ = alongZ ? along * COLLAPSE_SIZE + 1 : z;
             int field = tier.at(centerX, centerZ) + extra;
             long hash = Hashes.mix(tier.seed ^ COLLAPSE_SALT, along, Math.floorDiv(y, COLLAPSE_SIZE), face * 2 + (alongZ ? 1 : 0));
-            return Math.floorMod(hash, 100L) < (long) (field - COLLAPSE_ABOVE) * COLLAPSE_RATE;
+            return MathUtil.percent(hash) < (long) (field - COLLAPSE_ABOVE) * COLLAPSE_RATE;
         }
 
         @SuppressWarnings("deprecation") private boolean open(int x, int y, int z) {

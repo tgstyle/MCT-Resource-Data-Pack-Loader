@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Pla
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -155,25 +156,19 @@ public final class ContentDungeons {
         for (DungeonSites.Site site : DungeonSites.sitesNear(world, from, LOCATE_REACH)) {
             if (name.equals(site.def.locateAs())) { named.add(site); }
         }
-        named.sort(Comparator.comparingLong(site -> away(site.originX, site.originZ, from)));
+        named.sort(Comparator.comparingLong(site -> site.distanceSq(from.getX(), from.getZ())));
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
         for (DungeonSites.Site site : named.subList(0, Math.min(named.size(), LOCATE_PLANS))) {
             PlanRecords.Entrance entrance = DungeonPlanner.get(world, site.def, site).entrance;
             BlockPos pin = entrance == null ? new BlockPos(site.originX, 64, site.originZ) : new BlockPos(entrance.x(), 64, entrance.z());
             if (skipped.test(pin)) { continue; }
-            long away = away(pin.getX(), pin.getZ(), from);
+            long away = MathUtil.dist2(pin.getX(), pin.getZ(), from.getX(), from.getZ());
             if (away >= bestAway) { continue; }
             bestAway = away;
             best = pin;
         }
         return best;
-    }
-
-    private static long away(int x, int z, BlockPos from) {
-        long dx = x - (long) from.getX();
-        long dz = z - (long) from.getZ();
-        return dx * dx + dz * dz;
     }
 
     private static BoundingBox footprint(PlanRecords.Entrance entrance) { return new BoundingBox(entrance.x() - PlanRecords.ENTRANCE_REACH, 0, entrance.z() - PlanRecords.ENTRANCE_REACH, entrance.x() + PlanRecords.ENTRANCE_REACH, 0, entrance.z() + PlanRecords.ENTRANCE_REACH); }

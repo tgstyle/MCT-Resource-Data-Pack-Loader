@@ -91,7 +91,7 @@ public final class ContentItemLocks {
     }
 
     private static void read(List<Group> into, ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         Json.unknownKeys(json, "the top level", LOCK_KEYS);
         ItemSelection selection = new ItemSelection("Item lock", "locks");
         selection.read(json, key);

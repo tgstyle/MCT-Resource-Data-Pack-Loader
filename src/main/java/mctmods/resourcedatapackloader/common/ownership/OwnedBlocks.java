@@ -13,6 +13,11 @@ import net.minecraft.nbt.Tag;
 public final class OwnedBlocks {
     public static final String TAG = "rdpl_owned";
     private static final int VERSION = 1;
+    private static final String BLOCKS = "blocks";
+    private static final String POS = "pos";
+    private static final String BLOCK = "block";
+    private static final String OWNER = "owner";
+    private static final String EPOCH = "epoch";
     private final List<String> palette = new ArrayList<>();
     private final Map<Integer, Entry> entries = new HashMap<>();
     private int epoch;
@@ -65,11 +70,11 @@ public final class OwnedBlocks {
         for (String name : palette) { names.add(StringTag.valueOf(name)); }
         CompoundTag tag = new CompoundTag();
         tag.putInt("v", VERSION);
-        tag.put("blocks", names);
-        tag.putIntArray("pos", pos);
-        tag.putIntArray("block", block);
-        tag.putIntArray("owner", owner);
-        tag.putInt("epoch", epoch);
+        tag.put(BLOCKS, names);
+        tag.putIntArray(POS, pos);
+        tag.putIntArray(BLOCK, block);
+        tag.putIntArray(OWNER, owner);
+        tag.putInt(EPOCH, epoch);
         out.put(TAG, tag);
         return out;
     }
@@ -80,12 +85,12 @@ public final class OwnedBlocks {
         epoch = 0;
         if (!in.contains(TAG, Tag.TAG_COMPOUND)) { return; }
         CompoundTag tag = in.getCompound(TAG);
-        epoch = tag.getInt("epoch");
-        ListTag names = tag.getList("blocks", Tag.TAG_STRING);
+        epoch = tag.getInt(EPOCH);
+        ListTag names = tag.getList(BLOCKS, Tag.TAG_STRING);
         for (int i = 0; i < names.size(); i++) { palette.add(names.getString(i)); }
-        int[] pos = tag.getIntArray("pos");
-        int[] block = tag.getIntArray("block");
-        int[] owner = tag.getIntArray("owner");
+        int[] pos = tag.getIntArray(POS);
+        int[] block = tag.getIntArray(BLOCK);
+        int[] owner = tag.getIntArray(OWNER);
         int count = Math.min(pos.length, Math.min(block.length, owner.length));
         for (int i = 0; i < count; i++) {
             if (block[i] >= 0 && block[i] < palette.size()) { entries.put(pos[i], new Entry(block[i], owner[i])); }

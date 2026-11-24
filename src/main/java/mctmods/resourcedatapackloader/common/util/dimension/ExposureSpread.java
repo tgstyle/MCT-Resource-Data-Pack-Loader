@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -23,17 +25,18 @@ public final class ExposureSpread {
 
     public static int carrierLevel(ExposureDef def, LivingEntity living) {
         if (def.carriers().isEmpty()) { return 0; }
-        return CARRIER_LEVELS.computeIfAbsent(def, held -> {
-            warnUnknown(held, held.carriers().keySet(), "carrier");
-            return new IdentityHashMap<>();
-        }).computeIfAbsent(living.getType(), type -> def.carriers().getOrDefault(ForgeRegistries.ENTITY_TYPES.getKey(type), 0));
+        return cached(CARRIER_LEVELS, def, living, held -> warnUnknown(held, held.carriers().keySet(), "carrier"), type -> def.carriers().getOrDefault(ForgeRegistries.ENTITY_TYPES.getKey(type), 0));
     }
 
     public static boolean catches(ExposureDef def, LivingEntity living) {
-        return CATCHERS.computeIfAbsent(def, held -> {
-            warnUnknown(held, held.catchers(), "catcher");
+        return cached(CATCHERS, def, living, held -> warnUnknown(held, held.catchers(), "catcher"), type -> def.catchers().contains(ForgeRegistries.ENTITY_TYPES.getKey(type)));
+    }
+
+    private static <V> V cached(Map<ExposureDef, Map<EntityType<?>, V>> cache, ExposureDef def, LivingEntity living, Consumer<ExposureDef> warn, Function<EntityType<?>, V> value) {
+        return cache.computeIfAbsent(def, held -> {
+            warn.accept(held);
             return new IdentityHashMap<>();
-        }).computeIfAbsent(living.getType(), type -> def.catchers().contains(ForgeRegistries.ENTITY_TYPES.getKey(type)));
+        }).computeIfAbsent(living.getType(), value);
     }
 
     public static int caughtLevel(ExposureDef def, LivingEntity living) {

@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 
+import mctmods.resourcedatapackloader.core.util.Enums;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -17,14 +19,18 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.Block;
@@ -77,8 +83,20 @@ public final class ValueCoercer {
             ItemStack stack = ContentStacks.parse(owner, text, 1);
             return stack.isEmpty() ? no(type) : yes(stack);
         }
+        if (type == Tier.class && text.indexOf(':') < 0) {
+            Tiers tier = Enums.byName(Tiers.class, text);
+            return tier == null ? no(type) : yes(tier);
+        }
         if (registry(type) != null) { return entry(type, text); }
         return no(type);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"}) @Nullable static TagKey<?> tag(@Nullable Type generic, @Nullable Object current, ResourceLocation id) {
+        if (generic instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments()[0] instanceof Class<?> element) {
+            IForgeRegistry<?> registry = registry(element);
+            if (registry != null) { return TagKey.create((ResourceKey) registry.getRegistryKey(), id); }
+        }
+        return current instanceof TagKey<?> key ? TagKey.create((ResourceKey) key.registry(), id) : null;
     }
 
     private static Result array(JsonArray json, Class<?> type, Type generic, ResourceLocation owner) {
@@ -117,11 +135,16 @@ public final class ValueCoercer {
     }
 
     private static Result entry(Class<?> type, String text) {
+        Object found = entryOf(type, text);
+        return found == null ? no(type) : yes(found);
+    }
+
+    @Nullable static Object entryOf(Class<?> type, String text) {
         IForgeRegistry<?> registry = registry(type);
         ResourceLocation name = ResourceLocation.tryParse(text);
-        if (registry == null || name == null || !registry.containsKey(name)) { return no(type); }
+        if (registry == null || name == null || !registry.containsKey(name)) { return null; }
         Object found = registry.getValue(name);
-        return type.isInstance(found) ? yes(found) : no(type);
+        return type.isInstance(found) ? found : null;
     }
 
     @Nullable static IForgeRegistry<?> registry(Class<?> type) {

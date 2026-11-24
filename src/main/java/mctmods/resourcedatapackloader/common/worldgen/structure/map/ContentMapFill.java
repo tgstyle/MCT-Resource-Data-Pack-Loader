@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -49,7 +50,7 @@ public final class ContentMapFill {
             named = PickDef.pick(usable, RandomSource.create(Hashes.mix(seed, info.pos().getX(), info.pos().getY(), info.pos().getZ())));
         }
         if (named == null) { return info; }
-        CompoundTag copy = saved == null ? new CompoundTag() : saved.copy();
+        CompoundTag copy = copyOrNew(saved);
         CompoundTag entity = new CompoundTag();
         entity.putString("id", ResourceLocation.parse(named).toString());
         CompoundTag data = new CompoundTag();
@@ -63,11 +64,17 @@ public final class ContentMapFill {
         CompoundTag saved = info.nbt();
         ResourceLocation loot = override != null ? override : rules.loot();
         if (loot == null || keepsChest(saved)) { return info; }
-        CompoundTag copy = saved == null ? new CompoundTag() : saved.copy();
-        copy.putString("LootTable", loot.toString());
-        copy.putLong("LootTableSeed", new Random(Hashes.mix(seed, info.pos().getX(), info.pos().getY(), info.pos().getZ())).nextLong());
-        return new StructureTemplate.StructureBlockInfo(info.pos(), info.state(), copy);
+        return new StructureTemplate.StructureBlockInfo(info.pos(), info.state(), lootTag(saved, loot, seed, info.pos()));
     }
+
+    public static CompoundTag lootTag(@Nullable CompoundTag saved, ResourceLocation table, long seed, BlockPos at) {
+        CompoundTag copy = copyOrNew(saved);
+        copy.putString("LootTable", table.toString());
+        copy.putLong("LootTableSeed", new Random(Hashes.mix(seed, at.getX(), at.getY(), at.getZ())).nextLong());
+        return copy;
+    }
+
+    private static CompoundTag copyOrNew(@Nullable CompoundTag saved) { return saved == null ? new CompoundTag() : saved.copy(); }
 
     public static boolean keepsSpawner(@Nullable CompoundTag saved) {
         if (saved == null) { return false; }

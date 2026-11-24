@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.util.dimension.IDayLength;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import java.util.HashSet;
@@ -91,7 +92,7 @@ public final class ContentRuleSwitch {
                     }
                 }
                 case "difficulty" -> {
-                    Difficulty held = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? ContentServer.difficultyFrom(value.getAsString()) : null;
+                    Difficulty held = Json.isString(value) ? ContentServer.difficultyFrom(value.getAsString()) : null;
                     if (held == null) { ContentLog.LOGGER.error("{} gives rules.{} as {}, which is not one of peaceful, easy, normal or hard, ignoring it", owner, key, value); }
                     else {
                         difficulty = held;
@@ -171,14 +172,14 @@ public final class ContentRuleSwitch {
     }
 
     private static int snowMode(String owner, String key, JsonElement value) {
-        int mode = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? SnowRuleDef.MODES.indexOf(Settings.lower(value.getAsString())) : -1;
+        int mode = Json.isString(value) ? SnowRuleDef.MODES.indexOf(Settings.lower(value.getAsString())) : -1;
         if (mode >= 0) { return mode; }
         ContentLog.LOGGER.error("{} gives {} as {}, which is not one of default, biome, any or never, ignoring it", owner, key, value);
         return SnowRuleDef.DEFAULT;
     }
 
     private static boolean melt(String owner, JsonElement value) {
-        String name = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? Settings.lower(value.getAsString()) : "";
+        String name = Json.isString(value) ? Settings.lower(value.getAsString()) : "";
         if (name.equals("always")) { return true; }
         if (!name.equals("never")) { ContentLog.LOGGER.error("{} gives rules.snow.melt as {}, which is not never or always, ignoring it", owner, value); }
         return false;
@@ -201,7 +202,7 @@ public final class ContentRuleSwitch {
         }
         Set<ResourceLocation> blocks = new HashSet<>();
         for (JsonElement entry : value.getAsJsonArray()) {
-            ResourceLocation id = entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString() ? ResourceLocation.tryParse(Settings.lower(entry.getAsString().trim())) : null;
+            ResourceLocation id = Json.isString(entry) ? ResourceLocation.tryParse(Settings.lower(entry.getAsString().trim())) : null;
             if (id == null) {
                 ContentLog.LOGGER.error("{} gives rules.snow.meltBlocks an entry {} that is not a block id, ignoring it", owner, entry);
                 continue;
@@ -212,7 +213,7 @@ public final class ContentRuleSwitch {
     }
 
     private static int weatherKind(String owner, JsonElement value, boolean precipitation) {
-        int kind = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? WEATHERS.indexOf(Settings.lower(value.getAsString())) : -1;
+        int kind = Json.isString(value) ? WEATHERS.indexOf(Settings.lower(value.getAsString())) : -1;
         if (kind < 0) {
             ContentLog.LOGGER.error("{} gives rules.weather as {}, which is not clear, rain or thunder, ignoring it", owner, value);
             return RuleSwitchDef.UNSET;

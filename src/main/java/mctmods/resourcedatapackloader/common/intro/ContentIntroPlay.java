@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.intro;
 import mctmods.resourcedatapackloader.common.cards.CardFire;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregenHold;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
@@ -15,7 +16,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public final class ContentIntroPlay {
     private static final String SEEN = "rdplIntroSeen";
-    private static final Set<UUID> PLAYING = new HashSet<>();
+    private static final Set<UUID> PLAYING = PlayerLogout.track(new HashSet<>());
 
     private ContentIntroPlay() {}
 
@@ -32,7 +33,6 @@ public final class ContentIntroPlay {
         RDPLNetwork.playIntro(player, ContentPregen.landBeingMade());
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { PLAYING.remove(event.getEntity().getUUID()); }
 
     public static boolean reading(UUID player) { return PLAYING.contains(player); }
 

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGr
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeEntry;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeShape;
+import mctmods.resourcedatapackloader.core.util.text.Placeholders;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -58,16 +59,16 @@ final class TreeCommand {
             return 1;
         }
         TreeShape shape = entry.phase == 0 ? null : ContentTreeGrowth.shape(level, entry);
-        String height = shape == null ? "-" : String.valueOf(shape.height());
-        String radius = shape == null ? "-" : String.valueOf(shape.radius());
-        String loose = shape == null ? "-" : String.valueOf(shape.looseLogs(ContentTreeGrowth.current(level, entry)));
+        String height = Placeholders.orDash(shape == null ? null : shape.height());
+        String radius = Placeholders.orDash(shape == null ? null : shape.radius());
+        String loose = Placeholders.orDash(shape == null ? null : shape.looseLogs(ContentTreeGrowth.current(level, entry)));
         String kind = TreePickDef.Kind.values()[entry.kind].name().toLowerCase(Locale.ROOT);
         CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.tree", entry.rule, origin.getX(), origin.getY(), origin.getZ(), kind, entry.source, entry.pick, entry.turn, entry.mirror, entry.step, entry.steps, height, radius, loose));
         TreeGrowthDef growth = ContentTreeRules.byId(entry.rule);
         String mode = growth == null ? "-" : growth.timed() ? "time" : "chance";
-        String ticks = growth == null ? "-" : String.valueOf(growth.stepTicks());
+        String ticks = Placeholders.orDash(growth == null ? null : growth.stepTicks());
         String reason = ContentTreeClock.reason(level, entry.pos);
-        CommandShared.send(source, ChatFormatting.GRAY, CommandShared.tr("rdpl.command.treeclock", entry.phase, mode, entry.progress, ticks, level.getGameTime() - entry.started, reason == null ? "-" : reason));
+        CommandShared.send(source, ChatFormatting.GRAY, CommandShared.tr("rdpl.command.treeclock", entry.phase, mode, entry.progress, ticks, level.getGameTime() - entry.started, Placeholders.orDash(reason)));
         CommandShared.send(source, ChatFormatting.GRAY, CommandShared.tr("rdpl.command.treeowned", entry.owned.size(), entry.gone.size()));
         return 1;
     }

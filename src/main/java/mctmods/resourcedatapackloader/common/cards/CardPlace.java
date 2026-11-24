@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.cards;
 
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -65,11 +66,13 @@ public final class CardPlace {
         return false;
     }
 
-    public static long day(Level level) { return level.getDayTime() / Level.TICKS_PER_DAY; }
+    public static long day(long time) { return time / Level.TICKS_PER_DAY; }
+
+    public static long day(Level level) { return day(level.getDayTime()); }
 
     public static int timeOfDay(Level level) { return (int) (level.getDayTime() % Level.TICKS_PER_DAY); }
 
     public static int tickOf(JsonObject json, String member) { return json.has(member) ? Math.floorMod(Json.getInt(json, member), Level.TICKS_PER_DAY) : -1; }
 
-    public static boolean within(int time, int from, int to) { return from <= to ? time >= from && time <= to : time >= from || time <= to; }
+    public static boolean within(int time, int from, int to) { return DimensionTraitsDef.inWindow(time, from, to, true); }
 }

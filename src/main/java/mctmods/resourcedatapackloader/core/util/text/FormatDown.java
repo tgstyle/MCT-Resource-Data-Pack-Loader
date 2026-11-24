@@ -7,6 +7,7 @@ import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
+import mctmods.resourcedatapackloader.core.util.json.NumberSlots;
 import mctmods.resourcedatapackloader.core.util.json.Snbt;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
 
@@ -28,7 +29,8 @@ import net.minecraft.util.GsonHelper;
 
 public final class FormatDown {
     private static final String TYPE = "type";
-    private static final String BRICK = "minecraft:brick";
+    private static final String BRICK = MINECRAFT + "brick";
+    private static final String TRIM = "trim/";
     private static final String SEQUENCE = "sequence";
     private static final String MATERIAL_RULE = "worldgen/material_rule";
     private static final String MATERIAL_CONDITION = "worldgen/material_condition";
@@ -38,7 +40,6 @@ public final class FormatDown {
     private static final Set<String> STRAW_KEYS = Set.of("minecraft:gameplay/straw_bed_rule", "gameplay/straw_bed_rule");
     private static final Set<String> ENCLOSING = Set.of("then_run", "if_true", "invert");
     private static final Set<String> NEW_COMMANDS = Set.of("compute", "posteffect");
-    private static final int DEPTH = 8;
     private static final String TABLE = "/assets/resourcedatapackloader/port/vanilla263.json";
     private static final String CONFIGURED = "worldgen/configured_feature";
     private static final String PLACED = "worldgen/placed_feature";
@@ -91,7 +92,7 @@ public final class FormatDown {
         if (palette == null || !palette.isJsonPrimitive()) { return out; }
         String id = palette.getAsString();
         String path = IdNames.path(id);
-        String name = path.startsWith("trim/") ? path.substring("trim/".length()) : path.substring(path.lastIndexOf('/') + 1);
+        String name = path.startsWith(TRIM) ? path.substring(TRIM.length()) : path.substring(path.lastIndexOf('/') + 1);
         out.addProperty("asset_name", name);
         if (!Snbt.TRIM_PALETTES.contains(name)) { note.accept("colors trims with the palette " + id + ", which 26.2 reads through the armor_trims atlas, so that atlas must list " + name + " for the trims to show"); }
         return out;
@@ -118,7 +119,7 @@ public final class FormatDown {
         else if (path.startsWith("equipment/") && out.remove("trim_overrides") != null) { note.accept("colors trims per equipment with trim_overrides, which 26.2 reads from the trim material's override_armor_assets, so those palettes are dropped"); }
         else if (path.startsWith("atlases/") && GsonHelper.isArrayNode(out, "sources")) {
             for (JsonElement source : out.getAsJsonArray("sources")) {
-                if (!source.isJsonObject() || !"paletted_permutations".equals(IdNames.bare(Json.text(source.getAsJsonObject(), TYPE)))) { continue; }
+                if (!source.isJsonObject() || !"paletted_permutations".equals(NumberSlots.type(source.getAsJsonObject()))) { continue; }
                 JsonObject permuted = source.getAsJsonObject();
                 if (permuted.has("palette_key")) { permuted.addProperty("palette_key", palette(Json.text(permuted, "palette_key"))); }
                 if (GsonHelper.isObjectNode(permuted, "permutations")) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new JsonPrimitive(palette(entry.getValue().getAsString())))); }
@@ -133,7 +134,7 @@ public final class FormatDown {
         String namespace = colon < 0 ? "minecraft" : id.substring(0, colon);
         String path = id.substring(colon + 1);
         if ("trim_base".equals(path)) { return namespace + ":" + OLD_PALETTES + "trim_palette"; }
-        return namespace + ":" + (path.startsWith("trim/") ? OLD_PALETTES + path.substring("trim/".length()) : "palettes/" + path);
+        return namespace + ":" + (path.startsWith(TRIM) ? OLD_PALETTES + path.substring(TRIM.length()) : "palettes/" + path);
     }
 
     public static String function(String text, ILineNote note) {
@@ -221,14 +222,14 @@ public final class FormatDown {
             JsonElement value = entry.getValue();
             String folder = folder(key, in);
             String features = features(key, in);
-            if (features != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { value = feature(features, value.getAsString(), note); }
+            if (features != null && Json.isString(value)) { value = feature(features, value.getAsString(), note); }
             else if (FEATURES.equals(key) && value.isJsonArray() && !value.getAsJsonArray().isEmpty() && value.getAsJsonArray().get(0).isJsonArray()) { value = steps(value.getAsJsonArray(), note); }
-            else if (FEATURES.equals(key) && value.isJsonArray() && "simple_random_selector".equals(IdNames.bare(Json.text(in, TYPE)))) {
+            else if (FEATURES.equals(key) && value.isJsonArray() && "simple_random_selector".equals(NumberSlots.type(in))) {
                 JsonArray listed = new JsonArray();
-                for (JsonElement item : value.getAsJsonArray()) { listed.add(item.isJsonPrimitive() && item.getAsJsonPrimitive().isString() ? feature(PLACED, item.getAsString(), note) : item); }
+                for (JsonElement item : value.getAsJsonArray()) { listed.add(Json.isString(item) ? feature(PLACED, item.getAsString(), note) : item); }
                 value = listed;
             }
-            else if (folder != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
+            else if (folder != null && Json.isString(value)) {
                 JsonElement carried = resolved(folder, value.getAsString(), note, depth);
                 if (carried == null && "material_rule".equals(key)) {
                     out.add(key, value);
@@ -239,16 +240,18 @@ public final class FormatDown {
                     if (ENCLOSING.contains(key)) { return null; }
                     continue;
                 }
-                value = carried;
+                out.add(key, carried);
+                continue;
             }
-            else if (SEQUENCE.equals(key) && value.isJsonArray() && SEQUENCE.equals(IdNames.bare(Json.text(in, TYPE)))) {
+            else if (SEQUENCE.equals(key) && value.isJsonArray() && SEQUENCE.equals(NumberSlots.type(in))) {
                 JsonArray steps = new JsonArray();
                 for (JsonElement step : value.getAsJsonArray()) {
-                    JsonElement held = step.isJsonPrimitive() && step.getAsJsonPrimitive().isString() ? resolved(MATERIAL_RULE, step.getAsString(), note, depth) : step;
-                    if (held == null) { note.accept("names the material_rule " + step.getAsString() + ", which the pack does not carry and 26.2 has no registry for, so it is dropped"); }
-                    else { steps.add(held); }
+                    JsonElement held = Json.isString(step) ? resolved(MATERIAL_RULE, step.getAsString(), note, depth) : inline(step, note, depth);
+                    if (held == null && Json.isString(step)) { note.accept("names the material_rule " + step.getAsString() + ", which the pack does not carry and 26.2 has no registry for, so it is dropped"); }
+                    else if (held != null) { steps.add(held); }
                 }
-                value = steps;
+                out.add(key, steps);
+                continue;
             }
             JsonElement held = inline(value, note, depth);
             if (held == null && ENCLOSING.contains(key)) { return null; }
@@ -258,7 +261,7 @@ public final class FormatDown {
     }
 
     @Nullable private static JsonElement resolved(String folder, String id, ILineNote note, int depth) {
-        JsonElement carried = depth < DEPTH ? note.carried(folder, id) : null;
+        JsonElement carried = note.carried(folder, id, depth);
         if (carried == null) { carried = vanilla(folder, id); }
         return carried == null ? null : inline(carried, note, depth + 1);
     }
@@ -286,7 +289,7 @@ public final class FormatDown {
             }
             JsonArray kept = new JsonArray();
             for (JsonElement item : step.getAsJsonArray()) {
-                boolean string = item.isJsonPrimitive() && item.getAsJsonPrimitive().isString();
+                boolean string = Json.isString(item);
                 if (string && vanilla(PLACED, item.getAsString()) != null && note.carried(PLACED, item.getAsString()) == null) { note.accept("places the 26.3 feature " + item.getAsString() + ", which 26.2 has no counterpart for, so the biome leaves it out"); }
                 else { kept.add(item); }
             }

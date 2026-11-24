@@ -8,12 +8,14 @@ import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.VanillaClients;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
@@ -31,23 +33,25 @@ public final class BossBars {
     @Nullable public static BossBarDef read(Object owner, JsonObject json) { return read(owner, json, BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS); }
 
     @Nullable public static BossBarDef read(Object owner, JsonObject json, BossEvent.BossBarColor fallbackColor, BossEvent.BossBarOverlay fallbackStyle) {
-        if (!json.has(KEY)) { return null; }
-        if (!json.get(KEY).isJsonObject()) {
-            ContentLog.LOGGER.error("{} sets {} to something that is not an object with a name, color and style, so it has no boss bar", owner, KEY);
-            return null;
-        }
-        JsonObject bar = json.getAsJsonObject(KEY);
+        JsonObject bar = object(owner, json, KEY, KEY, "a name, color and style", "boss bar");
+        if (bar == null) { return null; }
         Json.unknownKeys(bar, KEY, BAR_KEYS);
         return new BossBarDef(Json.getString(bar, "name", "").trim(), pick(owner, bar, "color", BossEvent.BossBarColor.class, fallbackColor), pick(owner, bar, "style", BossEvent.BossBarOverlay.class, fallbackStyle), background(owner, bar));
     }
 
-    @Nullable private static BossBackgroundDef background(Object owner, JsonObject bar) {
-        if (!bar.has("background")) { return null; }
-        if (!bar.get("background").isJsonObject()) {
-            ContentLog.LOGGER.error("{} sets {} background to something that is not an object with a texture, so it has no background", owner, KEY);
+    @Nullable private static JsonObject object(Object owner, JsonObject json, String member, String shown, String fields, String lost) {
+        JsonElement found = json.get(member);
+        if (found == null) { return null; }
+        if (!found.isJsonObject()) {
+            ContentLog.LOGGER.error("{} sets {} to something that is not an object with {}, so it has no {}", owner, shown, fields, lost);
             return null;
         }
-        JsonObject background = bar.getAsJsonObject("background");
+        return found.getAsJsonObject();
+    }
+
+    @Nullable private static BossBackgroundDef background(Object owner, JsonObject bar) {
+        JsonObject background = object(owner, bar, "background", KEY + " background", "a texture", "background");
+        if (background == null) { return null; }
         Json.unknownKeys(background, KEY + ".background", BACKGROUND_KEYS);
         String texture = Json.getString(background, "texture", "").trim();
         if (texture.isEmpty()) {
@@ -106,6 +110,8 @@ public final class BossBars {
     public static void clear(ServerBossEvent bar) {
         for (ServerPlayer watching : new ArrayList<>(bar.getPlayers())) { remove(bar, watching); }
     }
+
+    public static List<ServerPlayer> near(ServerLevel level, BlockPos center, double reach) { return near(level, center.getX() + 0.5D, center.getY() + 0.5D, center.getZ() + 0.5D, reach); }
 
     public static List<ServerPlayer> near(ServerLevel level, double x, double y, double z, double reach) {
         List<ServerPlayer> present = new ArrayList<>();

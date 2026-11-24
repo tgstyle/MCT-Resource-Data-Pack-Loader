@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.command.custom;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.scripts.ScriptRef;
 import mctmods.resourcedatapackloader.common.scripts.RdplApi;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEvents;
 import mctmods.resourcedatapackloader.common.scripts.ScriptSender;
 import mctmods.resourcedatapackloader.common.scripts.engine.ScriptEngine;
 
@@ -21,8 +22,8 @@ final class CommandScript {
         ScriptSender who = new ScriptSender(source);
         Map<String, Object> bindings = new HashMap<>();
         for (CommandArg arg : args) { bindings.put(arg.name, typed(arg, values.get(arg.name))); }
-        bindings.put("rdpl", new RdplApi(source.getLevel(), who.player()));
-        bindings.put("sender", who);
+        bindings.put(ScriptEvents.RDPL, new RdplApi(source.getLevel(), who.player()));
+        bindings.put(ScriptEvents.SENDER, who);
         if (ScriptEngine.failed(script, bindings)) { throw new SimpleCommandExceptionType(Component.literal("The command /" + name + " failed; the server log names the script")).create(); }
     }
 

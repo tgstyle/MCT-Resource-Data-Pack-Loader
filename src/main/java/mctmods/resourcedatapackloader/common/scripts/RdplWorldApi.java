@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.core.rhino.Context;
 import mctmods.resourcedatapackloader.core.rhino.Function;
@@ -55,9 +56,7 @@ public final class RdplWorldApi {
         Predicate<ItemStack> test = predicate(match);
         IItemHandler handler = items(x, y, z);
         if (test == null || handler == null) { return 0; }
-        int total = 0;
-        for (int slot = 0; slot < handler.getSlots(); slot++) { total += count(handler.getStackInSlot(slot), test); }
-        return total;
+        return (int) ItemHandlers.sum(handler, stack -> count(stack, test));
     }
 
     @Nullable public Object capability(double x, double y, double z, String type) {

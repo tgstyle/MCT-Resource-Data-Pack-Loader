@@ -73,13 +73,9 @@ public final class DungeonPlan {
                 spread(s.x() - 1, s.z() - 1, s.x() + 3, s.z() + 3, null, null, s, null, null);
             }
         }
-        if (entrance != null) {
-            List<Entrance> all = new ArrayList<>(entrance.extras());
-            all.add(0, entrance);
-            for (Entrance e : all) {
-                grow(box, e.x() - PlanRecords.ENTRANCE_REACH, site.surfaceY() - PlanRecords.ENTRANCE_DOWN, e.z() - PlanRecords.ENTRANCE_REACH, e.x() + PlanRecords.ENTRANCE_REACH, site.surfaceY() + PlanRecords.ENTRANCE_UP, e.z() + PlanRecords.ENTRANCE_REACH);
-                spread(e.x() - PlanRecords.ENTRANCE_REACH, e.z() - PlanRecords.ENTRANCE_REACH, e.x() + PlanRecords.ENTRANCE_REACH, e.z() + PlanRecords.ENTRANCE_REACH, null, null, null, null, e);
-            }
+        for (Entrance e : entrances()) {
+            grow(box, e.x() - PlanRecords.ENTRANCE_REACH, site.surfaceY() - PlanRecords.ENTRANCE_DOWN, e.z() - PlanRecords.ENTRANCE_REACH, e.x() + PlanRecords.ENTRANCE_REACH, site.surfaceY() + PlanRecords.ENTRANCE_UP, e.z() + PlanRecords.ENTRANCE_REACH);
+            spread(e.x() - PlanRecords.ENTRANCE_REACH, e.z() - PlanRecords.ENTRANCE_REACH, e.x() + PlanRecords.ENTRANCE_REACH, e.z() + PlanRecords.ENTRANCE_REACH, null, null, null, null, e);
         }
         for (Spawner s : spawners) {
             grow(box, s.x(), s.y(), s.z(), s.x(), s.y(), s.z());
@@ -104,6 +100,14 @@ public final class DungeonPlan {
         box[3] = Math.max(box[3], x1);
         box[4] = Math.max(box[4], y1);
         box[5] = Math.max(box[5], z1);
+    }
+
+    public List<Entrance> entrances() {
+        List<Entrance> all = new ArrayList<>();
+        if (entrance == null) { return all; }
+        all.add(entrance);
+        all.addAll(entrance.extras());
+        return all;
     }
 
     private Bucket bucketFor(int chunkX, int chunkZ) { return buckets.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), k -> new Bucket()); }
@@ -134,7 +138,7 @@ public final class DungeonPlan {
 
     public int roll(int index) { return rolls[index]; }
 
-    public int roll(String name) { return rolls[DungeonDef.ROLLS.indexOf(name)]; }
+    public int roll(String name) { return rolls[DungeonDef.rollIndex(name)]; }
 
     public int roomCount() {
         int n = 0;
@@ -257,7 +261,7 @@ public final class DungeonPlan {
 
         public int roll(int index) { return rolls[index]; }
 
-        public int roll(String name) { return rolls[DungeonDef.ROLLS.indexOf(name)]; }
+        public int roll(String name) { return rolls[DungeonDef.rollIndex(name)]; }
 
         public static final class Builder {
             private final int[] rolls = new int[DungeonDef.ROLLS.size()];
@@ -410,6 +414,10 @@ public final class DungeonPlan {
             int span = Math.abs(floorYEnd - floorYStart);
             return floorYStart + Integer.signum(floorYEnd - floorYStart) * Math.min(along, span);
         }
+
+        public int floorClamped(int x, int z) {
+            return floorAt(Math.max(Math.min(x0, x1), Math.min(Math.max(x0, x1), x)), Math.max(Math.min(z0, z1), Math.min(Math.max(z0, z1), z)));
+        }
     }
 
     public static final class Link {
@@ -449,6 +457,20 @@ public final class DungeonPlan {
             this.floorYA = floorYA;
             this.floorYB = floorYB;
             this.segments = List.copyOf(segments);
+        }
+
+        public static int low(int width) { return -((width - 1) / 2); }
+
+        public static int high(int width) { return width / 2; }
+
+        public int[] footprint(Segment s) {
+            int lo = low(width);
+            int hi = high(width);
+            int minX = Math.min(s.x0(), s.x1());
+            int maxX = Math.max(s.x0(), s.x1());
+            int minZ = Math.min(s.z0(), s.z1());
+            int maxZ = Math.max(s.z0(), s.z1());
+            return new int[] {minX != maxX ? minX : minX + lo, minZ != maxZ ? minZ : minZ + lo, minX != maxX ? maxX : maxX + hi, minZ != maxZ ? maxZ : maxZ + hi};
         }
     }
 

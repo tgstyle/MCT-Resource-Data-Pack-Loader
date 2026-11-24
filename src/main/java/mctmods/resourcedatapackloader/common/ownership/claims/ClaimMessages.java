@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.TellThrottle;
 
 import java.util.HashMap;
@@ -14,13 +15,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public final class ClaimMessages {
     private static final int DENY_EVERY = 40;
     private static final int WATCH_EVERY = 5;
     private static final TellThrottle DENIED = new TellThrottle(DENY_EVERY);
-    private static final Map<UUID, Seen> SEEN = new HashMap<>();
+    private static final Map<UUID, Seen> SEEN = PlayerLogout.track(new HashMap<>());
 
     private record Seen(ResourceKey<Level> dimension, int chunkX, int chunkZ, int owner) {}
 
@@ -32,7 +32,11 @@ public final class ClaimMessages {
         if (!DENIED.ready(target.getScoreboardName(), now)) { return; }
         DENIED.mark(target.getScoreboardName(), now);
         String label = ClaimOwners.labelOf(target.server, claimHandle);
-        target.displayClientMessage((label.isEmpty() ? Component.translatable("rdpl.claim.protected.orphan") : Component.translatable("rdpl.claim.protected", label)).withStyle(ChatFormatting.RED), true);
+        target.displayClientMessage(labelled(label, "rdpl.claim.protected.orphan", "rdpl.claim.protected").withStyle(ChatFormatting.RED), true);
+    }
+
+    private static MutableComponent labelled(String label, String orphanKey, String key) {
+        return label.isEmpty() ? Component.translatable(orphanKey) : Component.translatable(key, label);
     }
 
     public static void onTick(TickEvent.PlayerTickEvent event) {
@@ -45,18 +49,17 @@ public final class ClaimMessages {
         else if (ClaimSettings.messageWilderness()) { leave(player, last.owner); }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SEEN.remove(event.getEntity().getUUID()); }
 
     private static void enter(ServerPlayer player, int owner) {
         String label = ClaimOwners.labelOf(player.server, owner);
-        MutableComponent line = label.isEmpty() ? Component.translatable("rdpl.claim.enter.orphan") : Component.translatable("rdpl.claim.enter", label);
+        MutableComponent line = labelled(label, "rdpl.claim.enter.orphan", "rdpl.claim.enter");
         ChatFormatting color = ClaimOwners.isMember(player, owner) ? ChatFormatting.GREEN : label.isEmpty() ? ChatFormatting.YELLOW : ChatFormatting.RED;
         player.displayClientMessage(line.withStyle(color), true);
     }
 
     private static void leave(ServerPlayer player, int owner) {
         String label = ClaimOwners.labelOf(player.server, owner);
-        MutableComponent line = label.isEmpty() ? Component.translatable("rdpl.claim.leave.orphan") : Component.translatable("rdpl.claim.leave", label);
+        MutableComponent line = labelled(label, "rdpl.claim.leave.orphan", "rdpl.claim.leave");
         player.displayClientMessage(line.append(" - ").append(Component.translatable("rdpl.claim.wilderness")), true);
     }
 }

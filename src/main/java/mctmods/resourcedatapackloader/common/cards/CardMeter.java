@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -30,7 +31,7 @@ final class CardMeter {
         int max = worn.getMaxDamage();
         boolean wears = worn.isDamageableItem();
         int left = wears ? max - worn.getDamageValue() : 0;
-        int percent = wears && max > 0 ? Math.max(0, Math.min(100, left * 100 / max)) : 100;
+        int percent = wears && max > 0 ? Mth.clamp(left * 100 / max, 0, 100) : 100;
         int full = Math.round(percent * GAUGE / 100.0F);
         StringBuilder bar = new StringBuilder();
         for (int cell = 0; cell < GAUGE; cell++) { bar.append(cell < full ? '|' : '.'); }

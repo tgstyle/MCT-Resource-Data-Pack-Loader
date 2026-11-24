@@ -57,7 +57,7 @@ public final class PackSchedules {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", SCHEDULE_KEYS);
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (runs.isEmpty()) {
             ContentLog.LOGGER.error("Schedule file {} names no function to run, ignoring it", key);
             return;

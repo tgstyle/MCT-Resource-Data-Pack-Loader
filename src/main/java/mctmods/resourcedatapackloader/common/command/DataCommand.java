@@ -110,9 +110,10 @@ final class DataCommand {
     @Nullable private static SyncValue own(CommandSourceStack source, @Nullable ServerPlayer target, String name) {
         SyncData data = SyncData.peek(source.getLevel());
         if (data == null) { return null; }
-        Map<String, SyncValue> values = target == null ? data.worldValues() : data.playerValues(target.getUUID());
-        return values.get(name);
+        return values(data, target).get(name);
     }
+
+    private static Map<String, SyncValue> values(SyncData data, @Nullable ServerPlayer target) { return target == null ? data.worldValues() : data.playerValues(target.getUUID()); }
 
     private static int get(CommandSourceStack source, @Nullable ServerPlayer target, String name) {
         SyncValue value = target == null ? own(source, null, name) : SyncData.read(target, name);
@@ -166,7 +167,7 @@ final class DataCommand {
         ServerPlayer target = target(source, word);
         CommandShared.ran(source, root, "data list " + word);
         SyncData data = SyncData.peek(source.getLevel());
-        Map<String, SyncValue> values = data == null ? Collections.emptyMap() : target == null ? data.worldValues() : data.playerValues(target.getUUID());
+        Map<String, SyncValue> values = data == null ? Collections.emptyMap() : values(data, target);
         if (values.isEmpty()) {
             CommandShared.send(source, ChatFormatting.YELLOW, CommandShared.tr("rdpl.command.datanone", label(target)));
             return 0;

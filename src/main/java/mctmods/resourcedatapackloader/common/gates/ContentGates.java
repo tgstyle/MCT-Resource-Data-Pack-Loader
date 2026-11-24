@@ -104,9 +104,11 @@ public final class ContentGates {
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
         Json.unknownKeys(unlock, "unlock", UNLOCK_KEYS);
         String owner = "Gate " + key;
+        String killedName = Json.getString(unlock, "killed", "").trim();
+        ResourceLocation killed = killedName.isEmpty() ? null : ResourceLocation.tryParse(killedName);
         return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), scope, Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS), Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", "").trim(), Json.getString(unlock, "consume", "").trim(), Math.max(1, Json.getInt(unlock, "consumeCount", 1)),
-                Json.getString(unlock, "hold", "").trim(), Json.getString(unlock, "advancement", "").trim(), Json.getString(unlock, "killed", "").trim(),
+                Json.getString(unlock, "hold", "").trim(), Json.getString(unlock, "advancement", "").trim(), killed,
                 Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Json.choice(unlock, "killedTally", GateDef.PLAYER, owner, TALLIES),
                 ContentRanks.key(key.getNamespace(), Json.getString(unlock, "killedRank", "").trim()), Standing.parse(unlock), Json.choice(unlock, "teamAndScore", GateDef.ALONE, owner, STANDINGS), Json.strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"), Json.getString(json, "unlockedMessage", "%dim% is now open"),
@@ -179,7 +181,7 @@ public final class ContentGates {
         String team = GateStorage.teamFor(player, def);
         ContentLog.LOGGER.debug("Gate {} opened for {}{}", def.key(), player.getName().getString(), def.global() ? " and everyone" : team.isEmpty() ? "" : " and team " + team);
         if (!announce || def.unlockedMessage().isEmpty()) { return; }
-        String message = def.unlockedMessage().replace("%dim%", def.name()).replace("%player%", player.getName().getString());
+        String message = Says.fill(def.unlockedMessage(), "%dim%", def.name(), "%player%", player.getName().getString());
         if (def.global() || !team.isEmpty()) {
             for (ServerPlayer online : player.server.getPlayerList().getPlayers()) {
                 if (team.isEmpty() || team.equals(Standing.teamOf(online))) { Says.line(online, CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
@@ -199,7 +201,7 @@ public final class ContentGates {
         String needed = def.consume().isEmpty() ? def.craft() : def.consume();
         if (needed.isEmpty()) { needed = def.hold(); }
         Component shown = needed.isEmpty() && def.worn().present() ? Component.literal(def.worn().describe()) : describe(needed);
-        String[] parts = def.blockedMessage().replace("%dim%", def.name()).split("%item%", -1);
+        String[] parts = Says.fill(def.blockedMessage(), "%dim%", def.name()).split("%item%", -1);
         MutableComponent message = Component.literal(parts[0]);
         for (int at = 1; at < parts.length; at++) { message.append(shown).append(parts[at]); }
         Says.bar(player, CardIds.GATE_BLOCKED, ChatFormatting.RED, message);

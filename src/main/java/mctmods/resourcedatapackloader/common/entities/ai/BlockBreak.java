@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
@@ -9,7 +11,9 @@ final class BlockBreak {
 
     private BlockBreak() {}
 
-    static void look(PathfinderMob mob, BlockPos pos) { mob.getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F); }
+    static void look(PathfinderMob mob, BlockPos pos) { Looking.at(mob, pos); }
+
+    static void clear(PathfinderMob mob, BlockPos pos) { mob.level().destroyBlockProgress(mob.getId(), pos, -1); }
 
     static int step(PathfinderMob mob, BlockPos pos, int total, int left) {
         look(mob, pos);

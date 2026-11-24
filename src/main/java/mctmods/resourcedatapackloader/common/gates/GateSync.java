@@ -37,8 +37,6 @@ public final class GateSync {
         if (event.getEntity() instanceof ServerPlayer player) { SYNC.fresh(player); }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.getEntity()); }
-
     private static Set<String> open(ServerPlayer player) {
         Set<String> open = new HashSet<>();
         for (String name : WATCHED) {

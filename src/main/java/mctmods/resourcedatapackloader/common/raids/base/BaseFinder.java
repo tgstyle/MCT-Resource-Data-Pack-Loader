@@ -28,8 +28,6 @@ public final class BaseFinder {
     private static final int CLUSTER_CAP = 64;
     private static final int CLAIM_CAP = 100;
     private static final int CHEST_CAP = 8;
-    private static final int MINUTE_CAP = 60;
-    private static final int TICKS_PER_MINUTE = 1200;
     private static final int TICKS_PER_DAY = 24000;
     private static final int CELL = 16;
     private static final Map<ServerLevel, Cache> caches = new WeakHashMap<>();
@@ -163,8 +161,8 @@ public final class BaseFinder {
             BaseDef.Weights w = def.weights();
             double score = beds * (w.bed() + w.spawn());
             if (cell != null) {
-                boolean real = cell.ticks() >= TICKS_PER_MINUTE || beds > 0 || cell.chest() > 0;
-                double raw = Math.min(cell.chest(), CHEST_CAP) * w.chest() + (real ? cell.placed() * w.placed() : 0) + Math.min(cell.ticks() / TICKS_PER_MINUTE, MINUTE_CAP) * w.minutes();
+                boolean real = cell.ticks() >= BaseDef.TICKS_PER_MINUTE || beds > 0 || cell.chest() > 0;
+                double raw = Math.min(cell.chest(), CHEST_CAP) * w.chest() + (real ? cell.placed() * w.placed() : 0) + cell.minutes() * w.minutes();
                 score += raw * decay(cell);
             }
             return score;

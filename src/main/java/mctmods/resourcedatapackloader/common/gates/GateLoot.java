@@ -1,8 +1,12 @@
 package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.cards.CardIds;
+import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -34,7 +38,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
@@ -43,17 +47,17 @@ import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 public final class GateLoot {
     public static final GateLoot NONE = new GateLoot(false, Collections.emptySet(), true, "");
+    private static final String DROP_ON_LEAVE = "dropOnLeave";
     private static final String MARK = "rdplLoot";
     private static final String BLOCK_ENTITY = "BlockEntityTag";
     private static final int PICKUP_DELAY = 40;
-    private static final Map<UUID, BlockPos> POSITIONS = new HashMap<>();
-    private static final Map<UUID, List<ItemStack>> OPEN = new HashMap<>();
-    private static final Map<UUID, List<ItemStack>> OWN = new HashMap<>();
+    private static final Map<UUID, BlockPos> POSITIONS = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, List<ItemStack>> OPEN = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, List<ItemStack>> OWN = PlayerLogout.track(new HashMap<>());
     private static final List<String> LOOT_KEYS = List.of("keep", "enderChest", "message");
 
     private final boolean enabled;
@@ -69,15 +73,12 @@ public final class GateLoot {
     }
 
     public static GateLoot parse(JsonObject json, ResourceLocation key, @Nullable ResourceLocation dimension) {
-        if (!json.has("dropOnLeave")) { return NONE; }
-        JsonElement element = json.get("dropOnLeave");
-        if (!element.isJsonObject() && !Json.getBoolean(json, "dropOnLeave", false)) { return NONE; }
-        if (dimension == null) {
-            ContentLog.LOGGER.error("Gate {} sets dropOnLeave without dimension, so nothing is marked", key);
-            return NONE;
-        }
+        if (!json.has(DROP_ON_LEAVE)) { return NONE; }
+        JsonElement element = json.get(DROP_ON_LEAVE);
+        if (!element.isJsonObject() && !Json.getBoolean(json, DROP_ON_LEAVE, false)) { return NONE; }
+        if (GateDef.dimensionMissing(dimension, key, DROP_ON_LEAVE, "nothing is marked")) { return NONE; }
         JsonObject options = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
-        Json.unknownKeys(options, "dropOnLeave", LOOT_KEYS);
+        Json.unknownKeys(options, DROP_ON_LEAVE, LOOT_KEYS);
         Set<Item> keep = new HashSet<>();
         for (String named : Json.strings(options, "keep")) {
             Item item = named.indexOf(':') < 0 ? null : ContentStacks.item(ResourceLocation.tryParse(named));
@@ -89,7 +90,6 @@ public final class GateLoot {
 
     public static void register() {
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onTick);
-        MinecraftForge.EVENT_BUS.addListener(GateLoot::onLogout);
         MinecraftForge.EVENT_BUS.addListener(GateLoot::onPickup);
         MinecraftForge.EVENT_BUS.addListener(GateLoot::onCrafted);
         MinecraftForge.EVENT_BUS.addListener(GateLoot::onSmelted);
@@ -121,17 +121,13 @@ public final class GateLoot {
         }
     }
 
-    private static void snapshot(Player player) {
-        List<ItemStack> own = new ArrayList<>();
-        for (ItemStack stack : held(player)) { own.add(stack.copy()); }
-        OWN.put(player.getUUID(), own);
+    private static List<ItemStack> copies(Player player) {
+        List<ItemStack> copies = new ArrayList<>();
+        for (ItemStack stack : Stacks.held(player)) { copies.add(stack.copy()); }
+        return copies;
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        POSITIONS.remove(event.getEntity().getUUID());
-        OPEN.remove(event.getEntity().getUUID());
-        OWN.remove(event.getEntity().getUUID());
-    }
+    private static void snapshot(Player player) { OWN.put(player.getUUID(), copies(player)); }
 
     public static void onPickup(EntityItemPickupEvent event) {
         GateDef def = ContentGates.lootDimension(event.getEntity().level().dimension().location());
@@ -157,9 +153,7 @@ public final class GateLoot {
     public static void onOpen(PlayerContainerEvent.Open event) {
         Player player = event.getEntity();
         if (player.level().isClientSide() || ContentGates.lootDimension(player.level().dimension().location()) == null) { return; }
-        List<ItemStack> before = new ArrayList<>();
-        for (ItemStack stack : held(player)) { before.add(stack.copy()); }
-        OPEN.put(player.getUUID(), before);
+        OPEN.put(player.getUUID(), copies(player));
     }
 
     public static void onClose(PlayerContainerEvent.Close event) {
@@ -192,7 +186,7 @@ public final class GateLoot {
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         GateDef def = ContentGates.lootDimension(player.level().dimension().location());
-        if (def != null && player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) { drop(player, def, player.serverLevel(), player.blockPosition(), false); }
+        if (def != null && PlayerLoot.keepInventory(player.level())) { drop(player, def, player.serverLevel(), player.blockPosition(), false); }
     }
 
     private static void mark(GateDef def, ItemStack stack) {
@@ -213,14 +207,7 @@ public final class GateLoot {
                 if (key.equals(items.getCompound(index).getCompound("tag").getString(MARK))) { return true; }
             }
         }
-        return stack.getCapability(ForgeCapabilities.ITEM_HANDLER).map(handler -> handles(handler, key)).orElse(false);
-    }
-
-    private static boolean handles(IItemHandler handler, String key) {
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            if (marked(handler.getStackInSlot(slot), key)) { return true; }
-        }
-        return false;
+        return stack.getCapability(ForgeCapabilities.ITEM_HANDLER).map(handler -> ItemHandlers.any(handler, held -> marked(held, key))).orElse(false);
     }
 
     private static boolean carriesMarked(Entity entity, String key) {
@@ -238,18 +225,8 @@ public final class GateLoot {
         return all;
     }
 
-    private static List<ItemStack> held(Player player) {
-        List<ItemStack> all = new ArrayList<>();
-        for (List<ItemStack> part : List.of(player.getInventory().items, player.getInventory().armor, player.getInventory().offhand)) {
-            for (ItemStack stack : part) {
-                if (!stack.isEmpty()) { all.add(stack); }
-            }
-        }
-        return all;
-    }
-
     private static List<ItemStack> carried(Player player, boolean enderChest) {
-        List<ItemStack> all = held(player);
+        List<ItemStack> all = Stacks.held(player);
         if (enderChest) { all.addAll(contents(player.getEnderChestInventory())); }
         if (player.getVehicle() instanceof Container vehicle) { all.addAll(contents(vehicle)); }
         if (!ContentCurios.missing()) { all.addAll(ContentCurios.worn(player, stack -> !stack.isEmpty())); }
@@ -265,7 +242,7 @@ public final class GateLoot {
     }
 
     private static void markTaken(Player player, GateDef def, List<ItemStack> before) {
-        List<ItemStack> now = held(player);
+        List<ItemStack> now = Stacks.held(player);
         List<ItemStack> done = new ArrayList<>();
         List<ItemStack> split = new ArrayList<>();
         for (ItemStack kind : now) {
@@ -300,12 +277,11 @@ public final class GateLoot {
             if (marked(dropped, key)) { dropped.removeTagKey(MARK); }
             stack.setCount(0);
             count += dropped.getCount();
-            ItemEntity item = new ItemEntity(level, at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, dropped);
-            item.setPickUpDelay(PICKUP_DELAY);
-            level.addFreshEntity(item);
+            Vec3 feet = Vec3.atBottomCenterOf(at);
+            Stacks.dropAt(level, feet.x, feet.y, feet.z, dropped, PICKUP_DELAY);
         }
         if (count == 0) { return; }
         ContentLog.LOGGER.info("Gate {} dropped {} marked item(s) of {} on leaving dimension {}", key, count, player.getName().getString(), def.dimension());
-        Says.bar(player, CardIds.GATE_LOOT_LEFT, ChatFormatting.YELLOW, def.loot().message.replace("%dim%", def.name()).replace("%count%", Integer.toString(count)));
+        Says.bar(player, CardIds.GATE_LOOT_LEFT, ChatFormatting.YELLOW, Says.fill(def.loot().message, "%dim%", def.name(), "%count%", Integer.toString(count)));
     }
 }

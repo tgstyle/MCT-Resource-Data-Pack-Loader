@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.core.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ public record EnvironmentsMessage(Map<ResourceLocation, List<String>> active, bo
         for (Map.Entry<ResourceLocation, List<String>> entry : message.active.entrySet()) {
             buf.writeResourceLocation(entry.getKey());
             buf.writeVarInt(entry.getValue().size());
-            for (String name : entry.getValue()) { buf.writeUtf(name); }
+            StringListCodec.writeStrings(buf, entry.getValue(), entry.getValue().size());
         }
     }
 
@@ -24,10 +23,7 @@ public record EnvironmentsMessage(Map<ResourceLocation, List<String>> active, bo
         Map<ResourceLocation, List<String>> active = new LinkedHashMap<>();
         for (int i = 0; i < count; i++) {
             ResourceLocation dimension = buf.readResourceLocation();
-            int size = buf.readVarInt();
-            List<String> names = new ArrayList<>();
-            for (int name = 0; name < size; name++) { names.add(buf.readUtf()); }
-            active.put(dimension, names);
+            active.put(dimension, StringListCodec.readStrings(buf, buf.readVarInt()));
         }
         return new EnvironmentsMessage(active, whole);
     }

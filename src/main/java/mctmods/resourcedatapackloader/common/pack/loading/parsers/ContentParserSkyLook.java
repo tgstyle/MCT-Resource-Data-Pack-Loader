@@ -50,14 +50,15 @@ public final class ContentParserSkyLook {
         Json.unknownKeys(sun, "sun", SUN_KEYS);
         if (!sample && KEYS.stream().noneMatch(sky::has) && HAZE.stream().noneMatch(sun::has)) { return null; }
         float cloudSpeed = Json.getFloat(sky, "cloudSpeed", 1.0F);
+        String owner = "Dimension " + key + " sky.sun";
         return new SkyLookDef(sample, unit(key, sky, "fogDensity", 0.0F), unit(key, sky, "fogGroundWeight", GROUND_WEIGHT), color(key, sky, "lightSkyColor"), color(key, sky, "lightBlockColor"),
                 unit(key, sky, "skyFactor", 1.0F), cloudSpeed, layers(key, sky, cloudHeight, cloudSpeed, cloudColor), unit(key, sky, "sunBrightness", 1.0F), unit(key, sky, "moonBrightness", 1.0F),
                 sky.has("heat") ? heat(key, Json.getJsonObject(sky, "heat")) : null, color(key, sky, "snowColor"), color(key, sky, "waterFogColor"), color(key, sky, "lavaFogColor"),
                 color(key, sky, "starColor"), unit(key, sky, "starTwinkle", 0.0F), color(key, sky, "lightningColor"), skybox(key, sky),
                 sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null, Json.getBoolean(sky, "rainbow", false),
                 color(key, sun, "color"), color(key, sun, "auraColor"), auraSize(key, sun), finite(key, sun, "sky.sun", "auraHorizon"),
-                (int) Json.ranged(sun, "lineCount", 0.0F, 0.0F, 64.0F, "Dimension " + key + " sky.sun"), Json.ranged(sun, "lineStart", 0.25F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
-                Json.ranged(sun, "lineLength", 3.0F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"), Json.ranged(sun, "lineWidth", 0.02F, 0.0F, 10.0F, "Dimension " + key + " sky.sun"), argb(key, sun), color(key, sky, "grassTint"), color(key, sky, "foliageTint"), color(key, sky, "birchTint"), color(key, sky, "nightVisionColor"));
+                (int) Json.ranged(sun, "lineCount", 0.0F, 0.0F, 64.0F, owner), Json.ranged(sun, "lineStart", 0.25F, 0.0F, 1000.0F, owner),
+                Json.ranged(sun, "lineLength", 3.0F, 0.0F, 1000.0F, owner), Json.ranged(sun, "lineWidth", 0.02F, 0.0F, 10.0F, owner), argb(key, sun), color(key, sky, "grassTint"), color(key, sky, "foliageTint"), color(key, sky, "birchTint"), color(key, sky, "nightVisionColor"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {

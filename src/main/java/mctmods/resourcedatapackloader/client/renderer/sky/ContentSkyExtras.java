@@ -4,6 +4,7 @@ import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -155,11 +156,11 @@ public final class ContentSkyExtras {
         float along = (float) step / AURORA_STEPS;
         float around = (float) Math.toRadians(-70.0F + 140.0F * along + 4.0F * Mth.sin(time * 0.05F + step * 0.35F + band * 2.0F));
         float base = 18.0F + band * 6.0F + 3.0F * Mth.sin(time * 0.03F + step * 0.2F + band);
-        float height = 18.0F + 10.0F * (0.5F + 0.5F * Mth.sin(time * 0.07F + step * 0.5F + band * 1.3F));
+        float height = 18.0F + 10.0F * MathUtil.wave(time * 0.07F + step * 0.5F + band * 1.3F, 0.5F, 0.5F);
         float up = (float) Math.toRadians(top ? base + height : base);
         float flat = Mth.cos(up) * SIZE;
         int color = top ? aurora.topColor() : aurora.color();
-        float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * (0.6F + 0.4F * Mth.sin(time * 0.11F + step * 0.9F + band * 0.7F));
+        float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * MathUtil.wave(time * 0.11F + step * 0.9F + band * 0.7F, 0.6F, 0.4F);
         buffer.vertex(pose, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat).color(Rgb.red(color), Rgb.green(color), Rgb.blue(color), alpha).endVertex();
     }
 

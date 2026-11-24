@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -15,7 +16,6 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
@@ -75,7 +75,7 @@ public final class ContentStars {
         float blue = Rgb.blue(color);
         float time = (level.getGameTime() % Level.TICKS_PER_DAY + partialTick) / SharedConstants.TICKS_PER_SECOND;
         for (int group = 0; group < GROUPS; ++group) {
-            float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
+            float shown = brightness * (1.0F - twinkle * MathUtil.wave(time * SPEED[group] + group * PHASE, 0.5F, 0.5F));
             RenderSystem.setShaderColor(red * shown, green * shown, blue * shown, shown);
             VertexBuffer buffer = meshes[group];
             buffer.bind();

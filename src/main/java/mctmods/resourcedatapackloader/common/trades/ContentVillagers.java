@@ -19,7 +19,6 @@ import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -128,22 +127,12 @@ public final class ContentVillagers {
         if (json == null) { return; }
         Json.unknownKeys(json, "the top level", TRADE_FILE_KEYS);
         if (json.has("clear")) {
-            for (JsonElement element : Json.getJsonArray(json, "clear")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("A clear in {} is not an object, skipping it", key);
-                    continue;
-                }
-                readClear(key, element.getAsJsonObject());
-            }
+            for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "clear"), "A clear in {} is not an object, skipping it", key)) { readClear(key, element); }
         }
         if (!json.has("trades")) { return; }
-        for (JsonElement element : Json.getJsonArray(json, "trades")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
-                continue;
-            }
-            Json.unknownKeys(element.getAsJsonObject(), "trades", TRADE_KEYS);
-            TradeDef def = trade(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "trades"), "A trade in {} is not an object, skipping it", key)) {
+            Json.unknownKeys(element, "trades", TRADE_KEYS);
+            TradeDef def = trade(key, element);
             if (def != null) { TRADES.add(def); }
         }
     }

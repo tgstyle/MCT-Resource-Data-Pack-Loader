@@ -32,7 +32,7 @@ public final class ContentEntityBars {
             HELD.put(living.getUUID(), bar);
         }
         if (!fresh && level.getGameTime() % EVERY != 0L) { return; }
-        BossBars.progress(bar, living.getHealth() / living.getMaxHealth());
+        BossBars.progress(bar, MobStats.health(living));
         BossBars.sync(bar, BossBars.near(level, living.getX(), living.getY(), living.getZ(), def.tracking().range()));
     }
 

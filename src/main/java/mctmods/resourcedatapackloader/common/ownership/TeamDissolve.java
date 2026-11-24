@@ -48,7 +48,7 @@ public final class TeamDissolve {
 
     private static void dissolve(OwnerTable table, int handle, String source) {
         table.markDissolved(handle);
-        ClaimDissolve.apply(handle, OwnerRecord.SOURCE_FTB.equals(source) ? OwnershipSettings.ftbDissolveMode(ClaimSettings.dissolveMode()) : ClaimSettings.dissolveMode());
+        ClaimDissolve.apply(handle, OwnershipSettings.dissolveMode(source, ClaimSettings.dissolveMode()));
     }
 
     public static void onLogin(ServerPlayer player) {

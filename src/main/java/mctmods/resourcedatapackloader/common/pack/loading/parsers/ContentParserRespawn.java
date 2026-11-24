@@ -18,11 +18,11 @@ public final class ContentParserRespawn {
 
     @Nullable public static RespawnDef parse(ResourceLocation key, JsonObject owner) {
         if (!owner.has(KEY)) { return null; }
-        if (!owner.get(KEY).isJsonObject()) {
+        JsonObject json = Json.objectOrNull(owner, KEY);
+        if (json == null) {
             ContentLog.LOGGER.error("Definition {} writes 'respawn' as something other than an object, so it does not respawn", key);
             return null;
         }
-        JsonObject json = owner.getAsJsonObject(KEY);
         Json.unknownKeys(json, KEY, RESPAWN_KEYS);
         String where = "Respawn of " + key;
         if (!json.has("after")) {

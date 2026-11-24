@@ -108,7 +108,7 @@ public final class ContentFireworks {
         event.setCancellationResult(InteractionResult.SUCCESS);
         if (player.level().isClientSide) { return; }
         Item item = held.getItem();
-        FireworkRockets.spawn(player.level(), at.x, at.y, at.z, FireworkRockets.stack(item, entry.def()), FireworkDef.MODE_BURST.equals(entry.def().mode()));
+        FireworkRockets.spawn(player.level(), at.x, at.y, at.z, FireworkRockets.stack(item, entry.def()), entry.def().burstMode());
         if (entry.def().consume() && !player.getAbilities().instabuild) { held.shrink(1); }
         if (entry.cooldown() > 0) { player.getCooldowns().addCooldown(item, entry.cooldown()); }
     }

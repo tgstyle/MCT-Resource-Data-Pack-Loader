@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.Blocked;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
 import com.google.gson.JsonObject;
@@ -68,7 +69,7 @@ public record ContentOreControl() implements BiomeModifier {
         List<String> types = types();
         if (blockOres()) { Summary.info("oregen", "Blocking ore generation except from " + (whitelist.isEmpty() ? "nothing" : whitelist)); }
         if (!types.isEmpty()) { Summary.info("oregen.types", (blacklist() ? "Blocking these ore types outright: " : "Allowing only these ore types to generate: ") + types); }
-        if (!blockOres() && !whitelist.contains("minecraft")) { ContentLog.LOGGER.warn("oreWhitelist leaves out minecraft, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything"); }
+        if (!blockOres() && !whitelist.contains(IdNames.NAMESPACE)) { ContentLog.LOGGER.warn("oreWhitelist leaves out {}, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything", IdNames.NAMESPACE); }
     }
 
     @Override public void modify(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
@@ -144,7 +145,7 @@ public record ContentOreControl() implements BiomeModifier {
         List<String> types = types();
         boolean blacklist = blacklist();
         boolean byType = !types.isEmpty() && (types.contains("IRON") == blacklist || types.contains("COPPER") == blacklist);
-        boolean byMod = blockOres() && !whitelist().contains("minecraft");
+        boolean byMod = blockOres() && !whitelist().contains(IdNames.NAMESPACE);
         return byType || byMod;
     }
 

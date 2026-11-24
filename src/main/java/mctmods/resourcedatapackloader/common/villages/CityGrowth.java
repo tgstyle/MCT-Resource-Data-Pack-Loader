@@ -24,6 +24,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.CityLi
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Capped;
 import mctmods.resourcedatapackloader.core.util.concurrent.Raced;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,9 +80,7 @@ public final class CityGrowth {
                 if (ring > 0 && least == 0) { break rings; }
                 if (ring > 0) {
                     int[] at = CityDistricts.plazaCenter(cell[0], cell[1], cross);
-                    long awayX = at[0] - first[0];
-                    long awayZ = at[1] - first[1];
-                    if (awayX * awayX + awayZ * awayZ > (long) march * march) {
+                    if (MathUtil.dist2(at[0], at[1], first[0], first[1]) > (long) march * march) {
                         far++;
                         continue;
                     }

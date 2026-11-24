@@ -149,11 +149,7 @@ public final class HeartReward {
 
     private static List<ItemMatch> foodMatches(ResourceLocation owner, List<String> names) {
         List<ItemMatch> matches = new ArrayList<>();
-        for (String name : names) {
-            ItemMatch match = ItemMatch.parse(owner, name);
-            if (match == null) { throw new IllegalArgumentException("foods entry '" + name + "' matches nothing"); }
-            matches.add(match);
-        }
+        for (String name : names) { matches.add(ItemMatch.parseOrThrow(owner, name, "foods entry")); }
         return Collections.unmodifiableList(matches);
     }
 

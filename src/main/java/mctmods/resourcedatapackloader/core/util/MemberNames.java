@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
 
@@ -36,7 +37,7 @@ public final class MemberNames {
         int dot = key.lastIndexOf('.');
         String owner = dot < 0 ? "" : key.substring(0, dot);
         String name = dot < 0 ? key : key.substring(dot + 1);
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) {
             if (!owner.isEmpty() && !level.getSimpleName().equals(owner) && !level.getName().equals(owner)) { continue; }
             for (Field field : level.getDeclaredFields()) {
                 if (readable(field.getName()).equals(name)) { return field; }
@@ -46,11 +47,27 @@ public final class MemberNames {
         return null;
     }
 
+    @Nullable public static Field find(Class<?> type, String name, Predicate<Field> keep) {
+        for (Class<?> level : levels(type)) {
+            for (Field field : level.getDeclaredFields()) {
+                if (keep.test(field) && readable(field.getName()).equals(name)) { return field; }
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasMethod(Class<?> type, String name) {
+        for (Method method : methods(type)) {
+            if (readable(method.getName()).equals(name)) { return true; }
+        }
+        return false;
+    }
+
     @Nullable public static Method method(Class<?> type, String key) {
         int paren = key.indexOf('(');
         String name = paren < 0 ? key : key.substring(0, paren);
         List<String> wanted = paren < 0 ? null : parameters(key.substring(paren + 1, key.length() - (key.endsWith(")") ? 1 : 0)));
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) {
             List<Method> found = new ArrayList<>();
             for (Method method : level.getDeclaredMethods()) {
                 if (!method.isBridge() && readable(method.getName()).equals(name) && (wanted == null || parameters(method).equals(wanted))) { found.add(method); }
@@ -63,7 +80,7 @@ public final class MemberNames {
         }
         List<Method> defaults = new ArrayList<>();
         Set<Class<?>> seen = new HashSet<>();
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) { interfaces(level, defaults, seen); }
+        for (Class<?> level : levels(type)) { interfaces(level, defaults, seen); }
         List<Method> found = new ArrayList<>();
         for (Method method : defaults) {
             if (!method.isBridge() && readable(method.getName()).equals(name) && (wanted == null || parameters(method).equals(wanted))) { found.add(method); }
@@ -79,10 +96,16 @@ public final class MemberNames {
 
     public static List<Method> methods(Class<?> type) {
         List<Method> all = new ArrayList<>();
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) { Collections.addAll(all, level.getDeclaredMethods()); }
+        for (Class<?> level : levels(type)) { Collections.addAll(all, level.getDeclaredMethods()); }
         Set<Class<?>> seen = new HashSet<>();
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) { interfaces(level, all, seen); }
+        for (Class<?> level : levels(type)) { interfaces(level, all, seen); }
         return all;
+    }
+
+    private static List<Class<?>> levels(Class<?> type) {
+        List<Class<?>> levels = new ArrayList<>();
+        for (Class<?> level = type; level != null; level = level.getSuperclass()) { levels.add(level); }
+        return levels;
     }
 
     private static void interfaces(Class<?> from, List<Method> into, Set<Class<?>> seen) {

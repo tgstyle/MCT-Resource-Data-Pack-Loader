@@ -29,6 +29,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 public final class RecipeRemainders {
     private static final String REMAINDER = "remainder";
     private static final String RECIPES = "recipes";
+    private static final String KIND = "Recipe remainder";
     private static final List<String> REMAINDER_KEYS = List.of("ingredient", "returns");
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<ResourceLocation, List<Remainder>> BY_RECIPE = new HashMap<>();
@@ -83,10 +84,7 @@ public final class RecipeRemainders {
     private static void read(ResourceLocation key, JsonObject json) {
         if (!json.has(REMAINDER)) { return; }
         if (!json.has("swaps") && !json.has("transfer")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
-        if (!json.has(RECIPES) || !json.get(RECIPES).isJsonObject()) {
-            ContentLog.LOGGER.error("Recipe remainder file {} needs a recipes object saying which recipes it covers, ignoring it", key);
-            return;
-        }
+        if (RecipeSelector.lacksRecipes(KIND, key, json)) { return; }
         List<Remainder> remainders = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(json, REMAINDER)) {
             Remainder remainder = element.isJsonObject() ? remainder(key, element.getAsJsonObject()) : null;
@@ -94,14 +92,9 @@ public final class RecipeRemainders {
             else { remainders.add(remainder); }
         }
         if (remainders.isEmpty()) { return; }
-        RecipeSelector scope = new RecipeSelector();
         Json.unknownKeys(json.getAsJsonObject(RECIPES), RECIPES, RecipeSelector.KEYS);
-        scope.read(key, json.getAsJsonObject(RECIPES));
-        if (scope.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe remainder file {} selects no recipes, ignoring it", key);
-            return;
-        }
-        ENTRIES.add(new Entry(scope, remainders));
+        RecipeSelector scope = RecipeSelector.scopeOf(KIND, key, json.getAsJsonObject(RECIPES));
+        if (scope != null) { ENTRIES.add(new Entry(scope, remainders)); }
     }
 
     @Nullable private static Remainder remainder(ResourceLocation key, JsonObject json) {

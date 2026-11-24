@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 
 final class ContentParserShields {
     private static final int DEFAULT_RADIUS = 32;
@@ -24,8 +23,8 @@ final class ContentParserShields {
     private ContentParserShields() {}
 
     @Nullable static SpawnShieldDef spawns(JsonObject json, ResourceLocation key) {
-        if (!json.has("blocksSpawns") || !json.get("blocksSpawns").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "blocksSpawns");
+        JsonObject held = Json.objectOrNull(json, "blocksSpawns");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "blocksSpawns", SPAWN_KEYS);
         String mobs = Json.choice(held, "mobs", "hostile", key, MOBS);
         List<ResourceLocation> entities = new ArrayList<>();
@@ -41,11 +40,11 @@ final class ContentParserShields {
     }
 
     @Nullable static WeatherShieldDef weather(JsonObject json) {
-        if (!json.has("blocksWeather") || !json.get("blocksWeather").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "blocksWeather");
+        JsonObject held = Json.objectOrNull(json, "blocksWeather");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "blocksWeather", WEATHER_KEYS);
         return new WeatherShieldDef(radius(held));
     }
 
-    private static int radius(JsonObject held) { return Mth.clamp(Json.getInt(held, "radius", DEFAULT_RADIUS), 1, MAX_RADIUS); }
+    private static int radius(JsonObject held) { return Json.clamped(held, "radius", DEFAULT_RADIUS, 1, MAX_RADIUS); }
 }

@@ -46,14 +46,16 @@ public final class ScriptEventDef {
         this.className = className;
     }
 
+    public boolean due(long time) { return every == 1 || time % every == 0; }
+
     public static boolean disablesOnError(String kind) { return NEW_KINDS.contains(kind); }
 
     private static int defaultEvery(String kind) { return PLAYER_TICK.equals(kind) || SERVER_TICK.equals(kind) ? 20 : 1; }
 
     @Nullable private static Set<String> filterKeys(String kind) {
         return switch (kind) {
-            case PLAYER_TICK, DIMENSION_CHANGE -> new HashSet<>(Arrays.asList("dimension", "item"));
-            case LOOT_DROP, ENTITY_TRAVEL -> new HashSet<>(Arrays.asList("dimension", "entity", "item"));
+            case PLAYER_TICK, DIMENSION_CHANGE -> new HashSet<>(Arrays.asList(EventFilter.DIMENSION, EventFilter.ITEM));
+            case LOOT_DROP, ENTITY_TRAVEL -> new HashSet<>(Arrays.asList(EventFilter.DIMENSION, EventFilter.ENTITY, EventFilter.ITEM));
             case SERVER_TICK, MOD_EVENT -> NO_KEYS;
             default -> null;
         };

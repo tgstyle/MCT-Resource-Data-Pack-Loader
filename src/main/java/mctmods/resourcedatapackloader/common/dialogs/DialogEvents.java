@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.DialogDef
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 public final class DialogEvents {
@@ -23,6 +22,4 @@ public final class DialogEvents {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DialogTalk.forget(event.getEntity().getUUID()); }
 }
