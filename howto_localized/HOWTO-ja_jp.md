@@ -2376,6 +2376,7 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 | `true`、`false`      | `boolean`                                          |                                                                                                              |
 | 文字列               | `String`、`char`                                   | `char` は1文字の文字列を取ります                                                                             |
 | 文字列               | 列挙型                                             | 定数名です。大文字でも小文字でも構いません                                                                   |
+| 文字列               | 段階（tier）                                       | バニラの段階名。コロンを含まない名前で、`wood`、`stone`、`iron`、`gold`、`diamond`、`netherite` のいずれか   |
 | 文字列               | `ResourceLocation`                                 | `mod:name`                                                                                                   |
 | 文字列               | `Component`                                        | プレーンテキストを、書かれたとおりに表示します                                                               |
 | 文字列               | `ItemStack`                                        | パックファイルでほかの場所のスタックを書くときと同じ形式です。空になってはいけません                         |
@@ -2383,12 +2384,13 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 | 配列                 | 配列、または `List`、`Set`、`Collection`           | 各要素はこの表に従います。コレクションのフィールドは追加されず、丸ごと置き換えられます                       |
 | オブジェクト         | そのほかのオブジェクト                             | ネストしたオブジェクトです。下を参照してください                                                             |
 | 文字列 `<ns>:<item>` | そのほかのオブジェクト                             | 同じ場所で別の派生アイテムが作ったオブジェクトを再利用します。下を参照してください                           |
+| 文字列 `#<ns>:<tag>` | `TagKey` のフィールド                              | フィールドのレジストリのタグです。アイテムタグなら `#c:ingots/iron` のように書きます                         |
 
 文字列で名前を書けるレジストリは、アイテム、ブロック、流体、エンティティの種類、モブ効果、ポーション、サウンド、属性、防具の素材、楽器、パーティクルの種類、エンチャントです。エンチャントは、ワールドが動き出してから探されます。
 
 **ネストしたオブジェクト。** `set` の下にある JSON オブジェクトは、ファイル全体と同じ3つのキー、`set`、`returns`、`addTo` を持てます。フィールドが持つオブジェクトのコピーを変更するため、元のアイテムや同じオブジェクトを共有するほかのものは元のままです。これは書き込み時コピーで、書き込む経路上のオブジェクトだけがコピーされ、ほかのフィールドは元と同じオブジェクトを指し続けます。
 
-段階（tier）は、修理素材を保ったまま新しい段階としてコピーされます。そのフィールドは `uses`、`speed`、`attackDamageBonus`、`enchantmentValue` です。ほかの列挙型をネストしたオブジェクトとして指定すると拒否され、`java.` パッケージのオブジェクトも同様です。配列やコレクションの中には入りません。経路がそれを通ることはできず、コレクションのフィールドは JSON 配列から丸ごと置き換えられます。
+段階（tier）は、修理素材を保ったまま新しい段階としてコピーされます。そのフィールドは `uses`、`speed`、`attackDamageBonus`、`enchantmentValue` です。段階のフィールドには段階の名前だけを書くこともでき、`"tier": "netherite"` は、コピーせずにそのまま設定します。段階をオブジェクトで書くのは、新しい数値が欲しいときだけにしてください。ほかの列挙型をネストしたオブジェクトとして指定すると拒否され、`java.` パッケージのオブジェクトも同様です。配列やコレクションの中には入りません。経路がそれを通ることはできず、コレクションのフィールドは JSON 配列から丸ごと置き換えられます。
 
 レコードはオブジェクトとしてコピーされませんが、ドットで区切った経路はレコードの中を通れます。レコードは新しい値で組み直されて戻されます。`"set": { "someRecord.size": 3 }` がその例です。レコードのフィールドにない名前はログに記録されます。
 
@@ -2418,6 +2420,76 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 元が別の派生アイテムである、または別の派生アイテムのオブジェクトを再利用する派生アイテムは、その後に作られます。派生アイテム同士が循環して依存している場合は、そのすべてがログに記録され、除外されます。`requires` の条件を満たさない派生アイテムは飛ばされるため、別のModの元アイテムには同じ `requires` が必要です。すでに登録されているアイテム名は飛ばされます。
 
 次の3つの場合は、アイテム全体が除外されます。元のアイテムがない、元がブロックアイテムである、または元のクラスが final である場合です。
+
+#### 例: 独自のドリルヘッド
+
+Immersive Engineering は、ドリルヘッドの数値をすべて、ヘッドのアイテムが持つ `perms` という1つのオブジェクトにまとめています。派生アイテムは書き込む前にそのオブジェクトをコピーするため、独自のヘッドを作るのにコードもスクリプトも必要ありません。IE の鋼のドリルヘッドをコピーして、欲しい数値を設定します。ドリルはドリルヘッドであるアイテムなら何でも受け付けるため、新しいヘッドも IE 純正のヘッドと同じようにドリルに入ります。
+
+`data/mypack/items/drillhead_tungsten.json`
+
+```json
+{
+  "item": "immersiveengineering:drillhead_steel",
+  "requires": ["immersiveengineering"],
+  "name": "Tungsten Drill Head",
+  "set": {
+    "perms.drillSize": 5,
+    "perms.drillDepth": 2,
+    "perms.drillSpeed": 14.0,
+    "perms.drillAttack": 9.0,
+    "perms.maxDamage": 20000,
+    "perms.texture": "mypack:item/drill_tungsten",
+    "perms.repairMaterial": "#c:ingots/iron",
+    "perms.drillLevel": "netherite"
+  }
+}
+```
+
+パックには、アイテムのファイルのほかに、テクスチャのファイルが2つ必要です。どちらも IE のテクスチャを再着色するため、パックに PNG は含めません。
+
+`assets/mypack/textures/item/drillhead_tungsten.png.json` はヘッドのアイコンです。アイテムは、パックのほかのアイテムと同じように、モデルをこのテクスチャから得ます。
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drillhead_steel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+`assets/mypack/textures/item/drill_tungsten.png.json` は、ドリルがヘッドに描くテクスチャです。
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drill_diesel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+各項目の働き:
+
+| 項目                   | 変わるもの                                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `perms.drillSize`      | 掘削する範囲の幅と高さ（ブロック数）                                                                 |
+| `perms.drillDepth`     | 掘り進む深さ（ブロック数）                                                                           |
+| `perms.drillSpeed`     | 採掘速度                                                                                             |
+| `perms.drillAttack`    | 攻撃ダメージ                                                                                         |
+| `perms.maxDamage`      | 壊れるまでに受けられる摩耗量                                                                         |
+| `perms.texture`        | ドリルがこのヘッドに描くテクスチャ。`textures/` の下の `mod:path` で、フォルダと `.png` は含めません |
+| `perms.repairMaterial` | ヘッドを修理するアイテム。`#` で始まる文字列はアイテムタグです                                       |
+| `perms.drillLevel`     | 採掘レベル。バニラの段階名（`wood`、`stone`、`iron`、`gold`、`diamond`、`netherite`）                |
+
+`perms` はヘッドアイテムのフィールドなので、`set` はその中に入り、最初にコピーします。IE の鋼のヘッドは元の数値を保ちます。
+
+ヘッドの説明文には 5x5x2、Netherite、速度 14、攻撃 9、耐久 20000 と表示され、ドリルは新しいテクスチャを描きます。レベルそのものを変えるには、段階の名前だけを書きます。`perms.drillLevel` の下にオブジェクトを書くと、自分の数値を持つ段階のコピーが作られますが、説明文には元になった段階の名前（Diamond など）が表示されます。
+
+ヘッドと、それを持つドリルを自分に渡すには:
+
+```
+/give @s mypack:drillhead_tungsten
+/give @s immersiveengineering:drill[immersiveengineering:items=[{slot:0,item:{id:"mypack:drillhead_tungsten",count:1}}]]
+```
+
+コピーは IE の鋼のヘッドのレシピを引き継がないため、新しいヘッドには独自のレシピを用意してください。
 
 #### ログのメッセージ
 
@@ -2468,6 +2540,7 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | メンバーがコレクションではない                                                        |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | コレクションの要素型がそのアイテムを受け入れない                                      |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo` が失敗した。たとえばクラスが存在しない                                        |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | タグフィールドの `#` が、レジストリで作れるタグを指していない                         |
 | `Registered {} derived item(s) from packs`                                                                                | 作られたアイテムの数を含む、まとめの行                                                |
 
 ## 流体
@@ -10825,7 +10898,298 @@ Modを導入したクライアントでは、会話は画面下部のパネル�
 
 ## スクリプト
 
-パックのJSONが `scriptFile`（パック内の `.js` ファイル）か `script`（JSONに直接書いたJavaScript）で指定したスクリプトは実行されます。JSONが指定していない `.js` ファイルは決して実行されません。スクリプトは約ES6レベルのJavaScriptです。RDPLはModに組み込まれたRhinoエンジンで、解釈されるコードとして実行します。
+パックのJSONが `scriptFile`（パック内の `.js` ファイル）か `script`（JSONに直接書いたJavaScript）で指定したときだけ、スクリプトは実行されます。どのJSONからも指定されていない `.js` ファイルは決して実行されません。
+
+スクリプトはES6のJavaScriptで、Modに組み込まれたRhinoエンジンが解釈モードで実行します。
+
+このセクションは、まず動くスクリプトを1つ順に追うところから始まります。そのあとのリファレンスでは、イベント、`rdpl` オブジェクト、スクリプトが受け取る値、使えるJavaScript、エラーの行き先を説明します。
+
+### スクリプトを有効にする
+
+スイッチはありません。有効な項目が入った `scripts/events/*.json` ファイルを持つパックは、読み込まれた時点でそのスクリプトを実行します。`/rdplserver reload` でふたたび読み込みます。設定ファイルのどの項目も、イベントスクリプト、アイテムスクリプト、`rdpl` をオフにはできません。また、スクリプトが無効なためにスキップされたという行は、ログには出ません。
+
+レジストリのスクリプトだけは例外です。ゲームの読み込み中に実行されるため、`content` カテゴリーで `load` がオン（既定）かつ `vanillaClients` がオフ（既定）であることが必要です。どちらかが変更されていると、レジストリのスクリプトは一切実行されず、その旨の行も出ません。`load` がオンで `vanillaClients` がオフのとき、どのModもレジストリを提供していない項目は、`no mod provides the registry '<name>', ignoring it` とログに記録されます。
+
+インストールされているのに何もしないスクリプトが、オフにされることはありません。代わりにパックのJSONとログを確認してください（[エラーの行き先](#エラーの行き先)を参照）。
+
+### 最初のスクリプト
+
+このパックは、中に金塊を入れて使うチェストを置きます。プレイヤーがチェストを壊すと、アクションバーに、そのチェストが持っていた金塊の数が表示されます。パックは `rdploader/` にあるzipで、次の構成です。
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta` は通常のものです。
+
+```json
+{
+  "pack": {
+    "pack_format": 48,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json` は、イベントを指定し、チェストに絞り込み、スクリプトのファイルを指します。
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js`:
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+スクリプトが `pos`（壊されたブロックの位置）と `rdpl` を受け取るのは、`block_break` がそれらを渡すからで、イベントの種類の表に示されています。`rdpl.world.scanAt` はその位置のコンテナにある金塊を数え、`rdpl.actionbar` はブロックを壊したプレイヤーにテキストを表示します。
+
+ためすには:
+
+1. zipを `rdploader/` に入れてワールドを起動するか、すでに動いているワールドで `/rdplserver reload` を実行します。
+2. チェストを置き、金塊をいくつか入れて、壊します。
+3. アクションバーに、数を含めた `Chest held 3 gold ingots, item handler: true` が表示されます。
+
+何も起きない場合は、ゲームフォルダーの `logs/rdpl.log` を開いてください。次の項目は飛ばされ、ログにファイル名が出ます:
+
+- キーのつづりの誤り
+- 不明なイベント
+- `scripts/` で始まり `.js` で終わらない `scriptFile`
+
+エラーを出したスクリプトは、行番号とともに `Script shrine:scripts/chest_broken.js failed: ...` と記録されます。
+
+### その他の例
+
+最後の2つを除き、ここにあるものはすべてRDPLExampleScriptsパックの `data/shrine/` にあります。
+
+インラインの `script` は、短いスクリプトを `.js` ファイルを使わずにJSONへ書きます。最後の値が決め手です。文字列 `'cancel'` で終わると、そのイベントはキャンセルされます。次の項目は、プレイヤーが棒を持っているときに羊への攻撃を拒否し、棒を2秒のクールダウンにします。
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+`rdpl.data()` で保存されたデータを使うと、スクリプトは実行をまたいで覚えていられます。実行のたびに変数は新しくなるためです。`player_login` の項目で実行される `scripts/login.js` は、プレイヤーの訪問回数を数えます。
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule` は、関数をあとで実行します。`scripts/altar_placed.js` は、プレイヤーがオーバーワールドに金ブロックを置いたときに実行されます。ワールドのデータ、プレイヤーのデータ、チームのデータを使い、羊を出現させ、5秒後に2つ目のアクションバーのメッセージを表示します。
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+`loot_drop` のスクリプトは、`drops` を通して、モブのドロップを変更します。この例は、ゾンビのドロップから腐肉を取り除き、エメラルドを1つ加えます。
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  var id = String(drops.stack(i).getItem().builtInRegistryHolder().key().location());
+  if (id === "minecraft:rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+ループは後ろから数えるので、スタックを取り除いても、まだ確認していないものの位置はずれません。
+
+レジストリのスクリプトは、読み込み中にアイテムを追加します。その項目は `scripts/events/` ではなく `scripts/registries/` にあります。
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Item = java("net.minecraft.world.item.Item");
+var Props = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationModifier(0.3).build();
+registry.register("shrine:script_food", new Item(new Props().food(food)));
+```
+
+名前はパック自身の名前空間、ここでは `shrine` になければなりません。ゲームで正しく見えるようにするには、アイテムにはまだモデル、テクスチャー、言語エントリーが必要です。
+
+### 使えるJavaScript
+
+エンジンはRhinoで、ES6の言語レベルに設定され、解釈モードで動きます。次が使えます:
+
+- `var`、`let`、`const`。`let` と `const` はそのブロックの中に限られます
+- アロー関数、既定の引数、スプレッド構文とrest `...`
+- テンプレートリテラル（例：`` `Visit ${visits}` ``）
+- 配列とオブジェクトの分割代入（宣言でも引数でも）
+- `for...of`、`function*` によるジェネレーター、`Symbol`
+- `Map`、`Set`、`WeakMap`、`WeakSet`
+- `JSON.parse` と `JSON.stringify`、`Math`（`**` 演算子を含む）
+- `??`、`??=`、`?.`
+- `includes`、`startsWith`、`repeat`、`at` などの文字列メソッド、`includes`、`at`、`flatMap` などの配列メソッド、`Object.assign` と `Object.fromEntries`
+
+次は動きません:
+
+- `class`。予約語で、パーサーが拒否するため、これを使うスクリプトはコンパイルされません。代わりに関数とオブジェクトを使ってください。
+- `async` と `await`、`import` と `export`。
+- イベントスクリプトとアイテムスクリプトでの `java` と `Packages`、およびすべてのスクリプトでの `Packages`（[スクリプトが使える範囲](#スクリプトが使える範囲)を参照）。
+- `console`、`setTimeout`、`require` などのブラウザーやNodeの名前。スクリプトにはこれらは与えられません。待つには `rdpl.schedule` を使い、報告にはログを使ってください。
+
+実行のたびに変数は新しく作られます。ある実行で設定された `var` は、次の実行では消えます。残しておく必要があるものは `rdpl.data()` に入れてください。
+
+どの実行にも、次の2つの制限が適用されます（[制限](#制限)を参照）:
+
+- 実行は約50ミリ秒で止まります。
+- 200段より深いコールスタックは失敗します。
+
+### スクリプトが受け取る値
+
+各イベントは、それぞれ独自の値をスクリプトに渡します（イベントの種類の表を参照）。これらはゲームのオブジェクトそのものなので、スクリプトはゲームのMojangのメソッド名（`pos.getX()` や `player.getScoreboardName()` など）で呼びます。ゲームはその名前で動いているため、名前の対応づけは要りません。下の表にないパブリックメソッドも、Mojangの名前で動きます。
+
+注意点は2つあります:
+
+- `DamageSource` のように、ゲームの型を引数に取るメソッドは、スクリプトがその型を作れないため、イベントスクリプトからは呼べません。
+- 名前、表示名、アイテム名は、テキストコンポーネントとして返されます。プレーンテキストにするには `getString()` を呼んでください。
+
+```js
+var below = pos.below();
+var id = String(state.getBlock().builtInRegistryHolder().key().location());
+if (id === "minecraft:gold_block" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos`（ブロック位置）:
+
+| メンバー                                 | 内容                      |
+| ---------------------------------------- | ------------------------- |
+| `getX()`, `getY()`, `getZ()`             | 座標（数値）              |
+| `above()`, `below()`                     | 1ブロック上または下の位置 |
+| `north()`, `south()`, `east()`, `west()` | 1ブロック横の位置         |
+| `offset(x, y, z)`                        | 指定の分だけ動かした位置  |
+
+`state`（ブロックの状態）:
+
+| メンバー                                              | 内容                                       |
+| ----------------------------------------------------- | ------------------------------------------ |
+| `getBlock()`                                          | ブロック                                   |
+| `getBlock().builtInRegistryHolder().key().location()` | ブロックのID（例：`minecraft:gold_block`） |
+| `isAir()`                                             | 空気のときは真                             |
+
+`entity` と `player`（プレイヤーは、さらに多くを持つエンティティです）:
+
+| メンバー                                     | 内容                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `getName()`                                  | テキストコンポーネントとしての名前。テキストには `getString()` を呼ぶ |
+| `getScoreboardName()`                        | スコア、タグ、コマンドが使う名前（テキスト）                          |
+| `getId()`, `getUUID()`                       | 数値のIDと、UUID（`toString()` を呼ぶ）                               |
+| `blockPosition()`                            | 立っているブロックの位置                                              |
+| `getX()`, `getY()`, `getZ()`                 | 正確な位置（数値）                                                    |
+| `isRemoved()`                                | 削除されているときは真                                                |
+| `isOnFire()`, `isCrouching()`, `isInWater()` | 燃えている、しゃがんでいる、または水中にいるときは真                  |
+| `getHealth()`, `getMaxHealth()`              | 生き物（モブまたはプレイヤー）の現在と最大の体力                      |
+| `setHealth(value)`                           | 生き物の体力を設定する                                                |
+| `getMainHandItem()`                          | メインハンドのスタック                                                |
+| `level()`                                    | いるワールド                                                          |
+| `getDisplayName()`                           | チャットに表示される名前（テキストコンポーネント）                    |
+| `getFoodData().getFoodLevel()`（プレイヤー） | プレイヤーの空腹度                                                    |
+| `isCreative()`（プレイヤー）                 | クリエイティブモードのときは真                                        |
+| `giveExperienceLevels(n)`（プレイヤー）      | レベルを与える                                                        |
+| `getTags()`                                  | エンティティのタグ（`addStage` が設定したものを含む）                 |
+
+アイテムスタック（`player.getMainHandItem()` や `drops.stack(0)` など）には、次のメンバーがあります:
+
+- `getCount()` は、スタックにあるアイテムの個数を返します。
+- `isEmpty()` は、空のスタックのとき `true` を返します。
+- `getItem().builtInRegistryHolder().key().location()` は、アイテムのIDを返します。
+- `getDisplayName()` は、アイテムの名前をテキストコンポーネントとして返します。
+
+単純な値:
+
+| 名前         | イベント                            | 内容                                                                                    |
+| ------------ | ----------------------------------- | --------------------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`、`loot_drop`          | 攻撃したエンティティ。落下や火などの場合は何もありません。使う前に確認してください      |
+| `damageType` | `entity_hurt`、`loot_drop`          | テキスト。ダメージの種類のメッセージID（`player`、`mob`、`fall`、`lava`、`drown` など） |
+| `amount`     | `entity_hurt`                       | ダメージ（数値）                                                                        |
+| `from`, `to` | `dimension_change`、`entity_travel` | ディメンション名のテキスト（`minecraft:overworld` や `minecraft:the_nether` など）      |
+| `tick`       | `server_tick`                       | オーバーワールドのゲーム時刻                                                            |
+| `event`      | `mod_event`                         | `class` で指定したクラスのイベントオブジェクト。そのパブリックメソッドが使えます        |
+| `drops`      | `loot_drop`                         | ドロップの一覧。イベントの種類の表の後を参照                                            |
+
+`rdpl.level` はサーバーのワールドです。`rdpl.level.getBlockState(pos)` はブロックの状態を返し、`rdpl.level.getGameTime()` はゲーム時刻を返します。
+
+### エラーの行き先
+
+すべてのスクリプトのメッセージは、ゲームフォルダーの `logs/rdpl.log` に記録されます。失敗したスクリプトがゲームをクラッシュさせることも、ほかのスクリプトを止めることもありません。行の名前は、ファイルの場合は `<namespace>:<path>`（例：`shrine:scripts/chest_broken.js`）、インラインのスクリプトの場合は `<entry file id>#<number>` の形です。
+
+| 場合                                      | 行                                                                                                                                                                                                                                             |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ファイル名はあるが見つからない            | `Script <name> not found`                                                                                                                                                                                                                      |
+| コンパイルエラー（つづりの誤り、`class`） | `Script <name> did not compile: <message>`。次の再読み込みまでそのスクリプトはスキップされます                                                                                                                                                 |
+| 実行時エラー                              | `Script <name> failed: <message>`、その後にスクリプトのスタックを行番号付きで表示                                                                                                                                                              |
+| 50ミリ秒を超えた                          | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                                                                |
+| 予約された関数が多すぎる                  | `Script scheduler: too many scheduled script functions, dropped`。一度だけ書かれます。その後は `rdpl.schedule` が、行を出さずに以降の関数を捨て、再読み込みまで続きます                                                                        |
+| 停止された                                | `Script <name> is turned off until the next reload`。失敗または時間切れの後に書かれます。対象は `player_tick`、`server_tick`、`dimension_change`、`loot_drop`、`entity_travel`、`mod_event` のスクリプトと、すべてのレジストリのスクリプトです |
+| Javaへのアクセスを拒否された              | `Script <name> failed: Scripts may not use <class>`。スクリプトが到達する `Class`、`ClassLoader`、`Thread`、`Runtime`、またはリフレクションのオブジェクトが対象です                                                                            |
+| 予約された関数が失敗した                  | `Script scheduled function took longer than 50 ms, stopped`、または `Script scheduled function failed: <message>`                                                                                                                              |
+| 項目が読み込めない                        | `<file id>: <reason>, ignoring it`。理由はイベントとレジストリの表の下に挙げてあります                                                                                                                                                         |
+
+コンパイルに失敗したスクリプトは、`/rdplserver reload` まで失敗のままです。ファイルを直して再読み込みしてください。
+
+イベントスクリプトの `java` と `Packages` は拒否ではありません。その名前が存在しないだけで、ログには参照エラーとともに `Script <name> failed:` と出ます。
 
 ### スクリプトイベント
 
@@ -10854,43 +11218,83 @@ Modを導入したクライアントでは、会話は画面下部のパネル�
 
 フィルターのキー:
 
-| キー        | 値                               | 一致するもの                     |
-| ----------- | -------------------------------- | -------------------------------- |
-| `dimension` | ディメンションID、またはその一覧 | イベントが発生するディメンション |
-| `block`     | ブロックID、または `#` の形      | 置かれた、または壊されたブロック |
-| `entity`    | エンティティID                   | イベントの対象になるエンティティ |
-| `item`      | アイテムID、または `#` の形      | プレイヤーが持っているアイテム   |
+| キー        | 値                               | 一致するもの                                                   |
+| ----------- | -------------------------------- | -------------------------------------------------------------- |
+| `dimension` | ディメンションID、またはその一覧 | イベントが発生するディメンション                               |
+| `block`     | ブロックID、または `#` の形      | 置かれた、または壊されたブロック                               |
+| `entity`    | エンティティID                   | イベントの対象になるエンティティ                               |
+| `item`      | アイテムID、または `#` の形      | メインハンドのアイテム（プレイヤー、攻撃者、設置者。下を参照） |
+
+ブロックのないイベントは、`block` フィルターに決して一致しません。`block` キーを持つ `entity_hurt`、`entity_spawn`、`entity_despawn`、`player_login` の項目は、決して実行されません。
+
+`item` フィルターが確認するのは、次のメインハンドです:
+
+- `entity_hurt` の攻撃者（モブも含みます）
+- `block_break` と `player_login` のプレイヤー
+- `block_place` の設置者。ただし、ブロックを置いたプレイヤーは、どちらの手でも一致します
 
 イベントの種類:
 
-| イベント           | 発生するとき                                                                             | スクリプトが受け取る値                                                               | `"cancel"` が効くか                          |
-| ------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------- |
-| `block_place`      | ブロックが置かれたとき                                                                   | `rdpl`、`pos`、`state`、`entity`（置いた者）                                         | はい                                         |
-| `block_break`      | プレイヤーがブロックを壊したとき                                                         | `rdpl`、`pos`、`state`、`player`                                                     | はい                                         |
-| `entity_hurt`      | プレイヤーを含むすべての生き物が、ダメージを受けようとしたとき                           | `rdpl`、`entity`、`attacker`、`damageType`、`amount`                                 | はい                                         |
-| `entity_spawn`     | モブが初めてワールドに加わったとき（プレイヤーは除く）                                   | `rdpl`、`entity`                                                                     | はい。そのエンティティは現れません           |
-| `entity_despawn`   | モブがデスポーンしたとき、またはエンティティのバリアントの時間制限による削除で消えたとき | `rdpl`、`entity`                                                                     | いいえ                                       |
-| `player_login`     | プレイヤーが参加したとき                                                                 | `rdpl`、`player`                                                                     | いいえ                                       |
-| `player_tick`      | `every` ティックごとに、プレイヤーごとにティックの後                                     | `rdpl`、`player`、`pos`                                                              | いいえ                                       |
-| `server_tick`      | `every` ティックごとに、1回だけティックの後                                              | `rdpl`（オーバーワールド）、`tick`（ワールド時刻）                                   | いいえ                                       |
-| `dimension_change` | プレイヤーが別のディメンションに到着したとき                                             | `rdpl`、`player`、`from`、`to`（`minecraft:the_nether` などのディメンション名）      | いいえ                                       |
-| `loot_drop`        | モブが死に、そのドロップが現れようとしているとき                                         | `rdpl`、`entity`、`attacker`、`damageType`（ダメージの種類のメッセージ ID）、`drops` | いいえ                                       |
-| `entity_travel`    | エンティティが別のディメンションへ移動しようとしているとき                               | `rdpl`、`entity`、`from`、`to`（`minecraft:the_nether` などのディメンション名）      | はい。エンティティはそのままその場に残ります |
-| `mod_event`        | `class` で指定したイベントがサーバーで発生したとき                                       | `rdpl`、`event`、`player`                                                            | はい。そのイベントがキャンセルできる場合     |
+| イベント           | 発生するとき                                                                                                                                                 | スクリプトが受け取る値                                                               | `"cancel"` が効くか                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `block_place`      | ブロックが置かれたとき                                                                                                                                       | `rdpl`、`pos`、`state`、`entity`（置いた者）                                         | はい                                         |
+| `block_break`      | プレイヤーがブロックを壊したとき                                                                                                                             | `rdpl`、`pos`、`state`、`player`                                                     | はい                                         |
+| `entity_hurt`      | プレイヤーを含む生き物が、ダメージを受けようとしたとき（そのダメージに無敵の生き物、すでに死んでいる生き物、火のダメージに対して耐火の効果中の生き物を除く） | `rdpl`、`entity`、`attacker`、`damageType`、`amount`                                 | はい                                         |
+| `entity_spawn`     | モブが初めてワールドに加わったとき（プレイヤーは除く）                                                                                                       | `rdpl`、`entity`                                                                     | はい。そのエンティティは現れません           |
+| `entity_despawn`   | モブがデスポーンしたとき、またはエンティティのバリアントの時間制限による削除で消えたとき                                                                     | `rdpl`、`entity`                                                                     | いいえ                                       |
+| `player_login`     | プレイヤーが参加したとき                                                                                                                                     | `rdpl`、`player`                                                                     | いいえ                                       |
+| `player_tick`      | `every` ティックごとに、プレイヤーごとにティックの後                                                                                                         | `rdpl`、`player`、`pos`                                                              | いいえ                                       |
+| `server_tick`      | `every` ティックごとに、1回だけティックの後                                                                                                                  | `rdpl`（オーバーワールド）、`tick`（ワールド時刻）                                   | いいえ                                       |
+| `dimension_change` | プレイヤーが別のディメンションに到着したとき                                                                                                                 | `rdpl`、`player`、`from`、`to`（`minecraft:the_nether` などのディメンション名）      | いいえ                                       |
+| `loot_drop`        | モブが死に、そのドロップが現れようとしているとき                                                                                                             | `rdpl`、`entity`、`attacker`、`damageType`（ダメージの種類のメッセージ ID）、`drops` | いいえ                                       |
+| `entity_travel`    | エンティティが別のディメンションへ移動しようとしているとき                                                                                                   | `rdpl`、`entity`、`from`、`to`（`minecraft:the_nether` などのディメンション名）      | はい。エンティティはそのままその場に残ります |
+| `mod_event`        | `class` で指定したイベントがサーバーで発生したとき                                                                                                           | `rdpl`、`event`、`player`                                                            | はい。そのイベントがキャンセルできる場合     |
 
-スクリプトの最後の値が文字列 `"cancel"` のとき、表で効くと示されたイベントはキャンセルされます。ゾーンのルールやほかのModがすでにキャンセルしたイベントは、スクリプトに届きません。`entity_despawn` は、倒された場合、チャンクのアンロック、`/kill` では発生しません。
+スクリプトの最後の値が文字列 `"cancel"` のとき、表で効くと示されたイベントはキャンセルされます。
 
-新しい種類は、一部のフィルターキーだけを読み取ります。`player_tick` と `dimension_change` は `dimension` と `item` を読みます。`loot_drop` と `entity_travel` は `dimension`、`entity`、`item` を読みます。`server_tick` と `mod_event` は何も読みません。イベントが読まないフィルターキーがあると、そのエントリーは飛ばされ、ログには `the <event> event does not read the filter key '<key>', skipping the entry` と出ます。`entity` には、ID、種類の `#monster`、`#creature`、`#ambient`、`#water_creature`、そして `#minecraft:skeletons` のような名前空間付きのエンティティタイプタグを指定できます。`loot_drop` では、`entity` は死んだモブで、`item` はそのキラーが持っているものです。`entity_travel` では、`entity` は移動するエンティティです。`player_tick` と `server_tick` は、`every` で別の指定がない限り、20ティックごとに実行されます。`server_tick` はサーバーにつき一度だけ、オーバーワールドの時計で実行され、プレイヤーはいません。
+イベントについては、さらに次の3つの規則があります:
+
+- ゾーンのルールやほかのModがすでにキャンセルしたイベントは、スクリプトに届きません。
+- `entity_despawn` は、倒された場合、チャンクのアンロック、`/kill` では発生しません。
+- `player_tick` と `server_tick` は、`every` で別の指定がない限り、20ティックごとに実行されます。
+
+新しい種類は、一部のフィルターキーだけを読み取ります:
+
+- `player_tick` と `dimension_change` は `dimension` と `item` を読みます。
+- `loot_drop` と `entity_travel` は `dimension`、`entity`、`item` を読みます。
+- `server_tick` と `mod_event` は、フィルターキーを何も読みません。
+
+イベントが読まないフィルターキーがある項目は飛ばされ、ログには `the <event> event does not read the filter key '<key>', skipping the entry` と出ます。
+
+`entity` フィルターには、ID、種類の `#monster`、`#creature`、`#ambient`、`#water_creature`、そして `#minecraft:skeletons` のような名前空間付きのエンティティタイプタグを指定できます。`loot_drop` では、`entity` は死んだモブで、`item` はそのキラーが持っているものです。`entity_travel` では、`entity` は移動するエンティティです。
+
+`server_tick` はサーバーにつき一度だけ、オーバーワールドの時計で実行され、プレイヤーはいません。
 
 新しい種類（`player_tick`、`server_tick`、`dimension_change`、`loot_drop`、`entity_travel`、`mod_event`）のスクリプトが失敗したり、制限時間を超えたりすると、次の再読み込みまでオフになり、ログには `Script <name> is turned off until the next reload` と出ます。古い種類のスクリプトは実行され続けます。
 
-`loot_drop` の `drops` は、モブがドロップするものの一覧です。`drops.size()` はその数を数え、`drops.stack(index)` は指定の位置にあるアイテムスタックを返し、`drops.remove(index)` は1つを取り除き、`drops.clear()` はすべて取り除き、`drops.add(item, count)` はモブが死んだ場所に現れるスタックを追加します。スクリプトは1回の死亡につき最大32スタックまで追加できます。それ以上追加すると、スクリプトは `A loot_drop script can add at most 32 stacks` で止まります。不明なアイテムや個数が1未満の場合は `Unknown item` で止まります。どちらもほかのスクリプトエラーと同じです。
+`loot_drop` の `drops` は、モブがドロップするものの一覧です:
 
-`mod_event` を使うと、スクリプトは別のModのイベント、またはゲーム自身のイベントを、クラス名で聞き取れます。クラスを `class` に完全なクラス名で書いてください。次の場合、項目は無視され、ログにその旨が出ます。`class` がない場合（`a mod_event needs a class`）、そのクラスが存在しない場合（`the class <name> was not found`）、聞き取れるイベントのクラスでない場合（`the class <name> is not a Forge event`）です。指定した正確なクラスだけが対象になります。それを継承するだけのイベントでは、スクリプトは実行されません。スクリプトはサーバーのスレッドでのみ実行され、イベントのエンティティがいるワールド、またはイベントがワールドを持つ場合はそのワールドで動きます。どちらもないイベントはオーバーワールドで実行されます。スクリプト自身が引き起こした同じクラスのイベントでは、再び実行されません。受け取るのは `rdpl`、`event`（イベントのオブジェクト）、`player`（イベントが関係するプレイヤー。なければ何もなし）です。`every` とほかのキーは、どのイベントでも同じように働きます。`"cancel"` の結果は、キャンセルできるイベントをキャンセルします。
+- `drops.size()` は、スタックの数を返します。
+- `drops.stack(index)` は、その位置のアイテムスタックを返します。
+- `drops.remove(index)` は、そのスタックを取り除きます。
+- `drops.clear()` は、すべてのスタックを取り除きます。
+- `drops.add(item, count)` は、モブが死んだ場所に現れるスタックを追加します。
+
+スクリプトは1回の死亡につき最大32スタックまで追加できます。それ以上追加すると、スクリプトは `A loot_drop script can add at most 32 stacks` で止まります。不明なアイテムや個数が1未満の場合は `Unknown item` で止まります。どちらもほかのスクリプトエラーと同じです。
+
+`mod_event` を使うと、スクリプトは別のModのイベント、またはゲーム自身のイベントを、クラス名で聞き取れます。クラスを `class` に完全なクラス名で書いてください。指定した正確なクラスだけが対象になります。それを継承するだけのイベントでは、スクリプトは実行されません。スクリプトが受け取るのは `rdpl`、`event`（イベントのオブジェクト）、`player`（イベントが関係するプレイヤー。なければ `null`）です。`every` とほかのキーは、どのイベントでも同じように働きます。`"cancel"` の結果は、キャンセルできるイベントをキャンセルします。
+
+次の場合、項目は無視され、ログにその旨が出ます:
+
+- `class` がない場合（`a mod_event needs a class`）
+- そのクラスが存在しない場合（`the class <name> was not found`）
+- 聞き取れるイベントのクラスでない場合（`the class <name> is not a Forge event`）
+
+`mod_event` のスクリプトはサーバーのスレッドでのみ実行され、イベントのエンティティがいるワールド、またはイベントがワールドを持つ場合はそのワールドで動きます。どちらもないイベントはオーバーワールドで実行されます。スクリプト自身が引き起こした同じクラスのイベントでは、再び実行されません。
 
 ### レジストリのスクリプト
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
 ファイル名は自由に決められ、読み取られるのはフォルダーだけで、複数のファイルは重ねられます。レジストリのスクリプトは、ゲームの読み込み中に、ゲーム組み込みのレジストリの1つにオブジェクトを追加します。パックだけではこれはできません。`content` カテゴリーで `load` がオン、`vanillaClients` がオフであることが必要です。ブロックやアイテムと同じです。
 
@@ -10913,13 +11317,47 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | どちらか一方 | テキスト     | なし       | 実行するインラインのJavaScript                                                                                        |
 | `scriptFile` | どちらか一方 | パス         | なし       | 同じ名前空間の `scripts/` 以下のパスで、`.js` で終わるもの                                                            |
 
-スクリプトは、そのレジストリが登録のために開かれたとき、すべてのModが自分の登録を終えた後に一度だけ実行されます。受け取るものは2つです。`registry` は1つのメソッド `register(name, object)` を持ち、`object` を `name` で追加します。`java(className)` は完全なクラス名で指定されたJavaクラスを返すので、スクリプトはオブジェクトを作れます。存在しないクラスは `The class <name> was not found` で失敗します。ワールドはまだ存在しないので、スクリプトは `rdpl` を受け取りません。
+スクリプトは、そのレジストリが登録のために開かれたとき、すべてのModが自分の登録を終えた後に一度だけ実行されます。受け取るものは2つです:
 
-`register` は、次の場合に拒否してログに記録し、スクリプトは続きます。オブジェクトがそのレジストリの持つ種類でないとき（`is not a <type>, not registering it`）、名前が正しい ID でないとき（`could not be registered: not a valid name`）、名前がパック自身の名前空間にないとき（`is not in the pack namespace <namespace>, not registering it`）、名前がすでに使われているとき（`is already registered in <registry>, skipping it`）、レジストリ自身が拒否したとき（`could not be registered`）です。成功すると `Script <name> registered <id> in <registry>` とログに出ます。エントリー自体は、`registry` がないとき（`needs a registry`）、スクリプトがないとき（`needs script or scriptFile`）、レジストリがスクリプトで追加できるものでないとき（`the registry '<name>' is not a registry that scripts can add to, ignoring it`）、どのModもそのレジストリを提供していないとき（`no mod provides the registry '<name>', ignoring it`）に、ログに記録され無視されます。失敗した、または上限を超えたスクリプトは、次の再読み込みまで止められます。この方法で登録されたオブジェクトは、スクリプトが与えたものだけを持ちます。ブロックやアイテムには、それ自身のモデル、テクスチャー、言語エントリーがまだ必要です。
+- `registry` は1つのメソッド `register(name, object)` を持ち、`object` を `name` で追加します。
+- `java(className)` は完全なクラス名で指定されたJavaクラスを返すので、スクリプトはオブジェクトを作れます。存在しないクラスは `The class <name> was not found` で失敗します。
+
+ワールドはまだ存在しないので、スクリプトは `rdpl` を受け取りません。
+
+`register` は、次の場合にオブジェクトを拒否してログに記録し、スクリプトは続きます:
+
+- オブジェクトがそのレジストリの持つ種類でないとき（`is not a <type>, not registering it`）
+- 名前が正しい ID でないとき（`could not be registered: not a valid name`）
+- 名前がパック自身の名前空間にないとき（`is not in the pack namespace <namespace>, not registering it`）
+- 名前がすでに使われているとき（`is already registered in <registry>, skipping it`）
+- レジストリ自身がオブジェクトを拒否したとき（`could not be registered`）
+
+成功すると `Script <name> registered <id> in <registry>` とログに出ます。
+
+エントリー自体は、次の場合にログに記録され、無視されます:
+
+- `registry` がないとき（`needs a registry`）
+- スクリプトがないとき（`needs script or scriptFile`）
+- レジストリがスクリプトで追加できるものでないとき（`the registry '<name>' is not a registry that scripts can add to, ignoring it`）
+- どのModもそのレジストリを提供していないとき（`no mod provides the registry '<name>', ignoring it`）
+
+失敗した、または上限を超えたスクリプトは、次の再読み込みまで止められます。
+
+この方法で登録されたオブジェクトは、スクリプトが与えたものだけを持ちます。ブロックやアイテムには、それ自身のモデル、テクスチャー、言語エントリーがまだ必要です。
 
 ### スクリプトファイルの置き場所
 
-スクリプトに関するものはすべて、パックの `scripts/` フォルダーの下に置きます。イベントの項目は `scripts/events/` に入れます。`.js` ファイルは `scripts/` の下のどこにでも置けて、パック内のパスで指定します。つまり `"scriptFile": "scripts/trophy_altar.js"` は `<namespace>/scripts/trophy_altar.js` を読みます。アイテムも同じように、`script` または `scriptFile` で名前を指定します（[アイテム](#アイテム)を参照）。レシピの入れ替えファイルも同じ形式です（[レシピの入れ替え](#レシピの入れ替え)を参照）。
+スクリプトに関するものはすべて、パックの `scripts/` フォルダーの下に置きます。イベントの項目は `scripts/events/` に、レジストリの項目は `scripts/registries/` に入れます。`.js` ファイルは `scripts/` の下のどこにでも置けて、パック内のパスで指定します。つまり `"scriptFile": "scripts/trophy_altar.js"` は `<namespace>/scripts/trophy_altar.js` を読みます。
+
+アイテム、レシピの書き換えファイル、パックのコマンドも、同じように `script` または `scriptFile` でスクリプトを指定します:
+
+- アイテム（[アイテム](#アイテム)を参照）
+- レシピの書き換えファイル（[レシピの入れ替え](#レシピの入れ替え)を参照）
+- パックのコマンド（[コマンド](#コマンド)を参照）
+
+アイテムのスクリプトは、プレイヤーがアイテムを右クリックするとサーバーで実行されます。受け取るのは `rdpl`、`item`（その手にあるスタック）、`hand`（文字列 `MAIN_HAND` または `OFF_HAND`）です。結果が `"cancel"` の場合は、アイテムの `cooldown` を飛ばすだけです。右クリック自体はキャンセルされません。
+
+コマンドのスクリプトは、`rdpl`、`sender`（メソッドは[コマンド](#コマンド)を参照）と、引数ごとの変数を1つずつ受け取ります。
 
 ### rdplオブジェクト
 
@@ -10929,40 +11367,48 @@ registry.register("mypack:script_item", new I(new P()));
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| メンバー                                             | 説明                                                                                                                                                                                                                                                       |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | プレイヤー。イベントにプレイヤーがなければ何もありません                                                                                                                                                                                                   |
-| `level`                                              | ワールド                                                                                                                                                                                                                                                   |
-| `runCommand(command)`                                | プレイヤーとして、プレイヤーがいなければワールドのスポーン地点で、権限レベル2のコマンドを実行します。成功すると true を返します                                                                                                                            |
-| `give(item, count)`                                  | プレイヤーに、指定の個数のアイテムを与えます                                                                                                                                                                                                               |
-| `actionbar(text)`                                    | プレイヤーのアクションバーにテキストを表示します                                                                                                                                                                                                           |
-| `cooldown(item, ticks)`                              | プレイヤーのそのアイテムを、指定のティック数だけクールダウンにします                                                                                                                                                                                       |
-| `card(id, "key=value", ...)`                         | 引数を付けてカードを表示します                                                                                                                                                                                                                             |
-| `schedule(ticks, function)`                          | 指定のティック後に関数を実行します。同時に待てるのは最大1000件です。再読み込みで待ち行列は消去されます                                                                                                                                                     |
-| `data()`, `data(player)`, `teamData(name)`           | `get`、`set`、`has`、`remove` を持つ保存データです。テキスト、数値、真偽値を保持し、ワールドのセーブに保存されます。`data()` はワールド、`data(player)` はプレイヤー、`teamData(name)` はチームのものです                                                  |
-| `sync(name, value)`                                  | プレイヤーの同期値を設定します。イベントにプレイヤーがなければ、ワールドの値を設定します。値はテキスト、数値、または真偽値です。設定できれば true、ルールで拒否されれば false を返し、その旨はログに出ます。ほかの型の値を渡すとスクリプトエラーになります |
-| `syncTo(player, name, value)`                        | 同じですが、指定したプレイヤーに対して行います                                                                                                                                                                                                             |
-| `syncAll(name, value)`                               | 同じですが、ワールドに対して行います                                                                                                                                                                                                                       |
-| `unsync(name)`                                       | プレイヤーの値を削除します。イベントにプレイヤーがなければ、ワールドの値を削除します。削除できた値があれば true を返します                                                                                                                                 |
-| `synced(name)`                                       | 読み取りの結果です。プレイヤー自身の値、次にワールドの値、次に既定値の順に使われます。イベントにプレイヤーがなければ、ワールドの値、次に既定値です。どれも設定されていなければ何もありません                                                               |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | プレイヤーのタグを確認、追加、削除します                                                                                                                                                                                                                   |
-| `score(objective)`, `setScore(objective, value)`     | プレイヤーのスコアボードの目標のスコアを読む、または設定します                                                                                                                                                                                             |
-| `hasAdvancement(id)`                                 | プレイヤーがその進捗を持っていれば真です                                                                                                                                                                                                                   |
-| `world.scan(player, match)`                          | プレイヤーのインベントリと、その中のシュルカーボックスにある、一致するアイテムを数えます。`match` はアイテムID、`#` の形、または各スタックを受け取る関数です                                                                                               |
-| `world.scanAt(x, y, z, match)`                       | 同じですが、その位置にあるコンテナブロックが対象です                                                                                                                                                                                                       |
-| `world.capability(x, y, z, type)`                    | その位置のブロックのハンドラーを、`"items"`、`"fluids"`、`"energy"` で取得します                                                                                                                                                                           |
-| `world.placeStructure(template, x, y, z)`            | その位置に構造物テンプレートを置きます                                                                                                                                                                                                                     |
-| `world.summon(id, x, y, z, nbt)`                     | その位置にエンティティを、任意でNBTを付けて出現させます                                                                                                                                                                                                    |
+| メンバー                                             | 説明                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | プレイヤー。イベントにプレイヤーがなければ `null`                                                                                                                                                                                                                                                                                                           |
+| `level`                                              | ワールド                                                                                                                                                                                                                                                                                                                                                    |
+| `runCommand(command)`                                | プレイヤーとして、プレイヤーがいなければワールドのスポーン地点で、権限レベル2のコマンドを実行します。成功すると true を返します                                                                                                                                                                                                                             |
+| `give(item, count)`                                  | プレイヤーに、指定の個数のアイテムを与えます                                                                                                                                                                                                                                                                                                                |
+| `actionbar(text)`                                    | プレイヤーのアクションバーにテキストを表示します。プレイヤーがいなければ何もしません                                                                                                                                                                                                                                                                        |
+| `cooldown(item, ticks)`                              | プレイヤーのそのアイテムを、指定のティック数だけクールダウンにします。プレイヤーがいなければ何もしません。不明なアイテムは、プレイヤーの有無にかかわらずスクリプトエラーになります                                                                                                                                                                          |
+| `card(id, "key=value", ...)`                         | 引数を付けてカードを表示します。不明なカードIDの場合、またはプレイヤーがいない場合は `false` を、それ以外は `true` を返します。`key=value` の形でない引数は捨てられます                                                                                                                                                                                     |
+| `schedule(ticks, function)`                          | 指定のティック数の後に関数を実行します（最低でも1ティック後）。同時に待てるのは最大1000件で、それを超えた分は捨てられます。待ち行列は再読み込みとサーバー停止時に消去されます。プレイヤーのいるイベントで予約された関数は、実行時にそのプレイヤーがオフラインなら捨てられます                                                                               |
+| `data()`, `data(player)`, `teamData(name)`           | `get`、`set`、`has`、`remove` を持つ保存データです。テキスト、数値、真偽値を保持し、ワールドのセーブに保存されます。`data()` はワールド、`data(player)` はプレイヤー、`teamData(name)` はチームのものです。`data()` と `teamData` は、ワールドにストレージがないとき `null` を返します。`data(player)` は、プレイヤーがいないときスクリプトエラーになります |
+| `sync(name, value)`                                  | プレイヤーの同期値を設定します。イベントにプレイヤーがなければ、ワールドの値を設定します。値はテキスト、数値、または真偽値です。設定できれば true、ルールで拒否されれば false を返し、その旨はログに出ます。ほかの型の値を渡すとスクリプトエラーになります                                                                                                  |
+| `syncTo(player, name, value)`                        | 同じですが、指定したプレイヤーに対して行います                                                                                                                                                                                                                                                                                                              |
+| `syncAll(name, value)`                               | 同じですが、ワールドに対して行います                                                                                                                                                                                                                                                                                                                        |
+| `unsync(name)`                                       | プレイヤーの値を削除します。イベントにプレイヤーがなければ、ワールドの値を削除します。削除できた値があれば true を返します                                                                                                                                                                                                                                  |
+| `synced(name)`                                       | 読み取りの結果です。プレイヤー自身の値、次にワールドの値、次に既定値の順に使われます。イベントにプレイヤーがなければ、ワールドの値、次に既定値です。どれも設定されていなければ何もありません                                                                                                                                                                |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | プレイヤーのタグを確認、追加、削除します。プレイヤーがいないとき、`hasStage` は `false` を返し、ほかの2つは何もしません                                                                                                                                                                                                                                     |
+| `score(objective)`, `setScore(objective, value)`     | プレイヤーのスコアボードの目標のスコアを読む、または設定します。プレイヤーがいないとき、`score` は 0 を返し、`setScore` は何もしません。`setScore` は不明な目標に対してスクリプトエラーになります                                                                                                                                                           |
+| `hasAdvancement(id)`                                 | プレイヤーがその進捗を持っていれば真です                                                                                                                                                                                                                                                                                                                    |
+| `world.scan(player, match)`                          | プレイヤーのインベントリと、その中のシュルカーボックスにある、一致するアイテムを数えます。`match` はアイテムID、`#` の形、または各スタックを受け取る関数です                                                                                                                                                                                                |
+| `world.scanAt(x, y, z, match)`                       | 同じですが、その位置にあるコンテナブロックが対象です                                                                                                                                                                                                                                                                                                        |
+| `world.capability(x, y, z, type)`                    | その位置のブロックのハンドラーを、サイドを指定せずに、`"items"`、`"fluids"`、`"energy"` で取得します（NeoForgeのブロックのキャパビリティ `ItemHandler`、`FluidHandler`、`EnergyStorage`）。ブロックが読み込まれていない、ブロックエンティティがない、またはタイプがそれ以外の場合は `null` を返します                                                       |
+| `world.placeStructure(template, x, y, z)`            | その位置に構造物テンプレートを置きます。そのようなテンプレートがないとき `false` を返します                                                                                                                                                                                                                                                                 |
+| `world.summon(id, x, y, z, nbt)`                     | その位置にエンティティを、任意でNBTを付けて出現させます。不正なNBTはスクリプトエラー（`Bad entity NBT`）になります。エンティティを作れないときは `false` を返します。NBTが空の場合、モブには `/summon` コマンドが与えるスポーンの設定も与えられます                                                                                                         |
 
 ### スクリプトが使える範囲
 
-スクリプトから見えるのは、`rdpl` オブジェクト、各イベントが渡す値（イベントの種類の表を参照）、そして返される値のゲームの型だけです。`Packages` はどのスクリプトにも存在せず、`java` はレジストリのスクリプトにだけ存在します（[レジストリのスクリプト](#レジストリのスクリプト)を参照）。イベント、アイテム、コマンド、レシピの書き換えのスクリプトには `java` がありません。それ以外を求めると拒否され、その拒否は1度だけログに記録されます。
+イベントスクリプト、アイテムスクリプト、予約された関数が使えるのは、次のものだけです:
 
-スクリプトは、`java.util.UUID` のように完全なクラス名で指定すれば、どのJavaクラスも使えます。実際には、`java(className)` でクラスを求めるレジストリのスクリプトで使います。
+- `rdpl` オブジェクト
+- イベントが渡す値（イベントの種類の表を参照）
+- それらのオブジェクトのメソッドが返すもの
+
+これらでは `java` と `Packages` は存在しないため、Javaクラスを名前で指定したり、`new` でオブジェクトを作ったりできません。コマンドスクリプトとレシピの書き換えスクリプトにも `java` はありません。`Packages` はどのスクリプトにも存在しません。
+
+レジストリのスクリプトは、さらに `java(className)` を受け取ります。これは完全なクラス名（例：`net.minecraft.world.item.Item`）のクラスを返します。ゲームが読み込めるクラスなら、許可リストなしでこの方法により求められます。呼び出しは、まだ読み込まれていないクラスを読み込んで初期化します。クラスでない名前は `The class <name> was not found` で失敗します。
+
+すべてのスクリプトで、次の種類のオブジェクトは、呼び出しがそれを返すとき、または渡されるときに拒否されます。`Class`、`ClassLoader`、`Thread`、`Runtime`、`System`、およびリフレクションのオブジェクト（`Method`、`Field`、`Constructor`）です。スクリプトは `Scripts may not use <class>` で止まり、ログには `Script <name> failed:` の行が出ます。
 
 ### 制限
 
-- 1回の実行は50ミリ秒で止まります。ログのエラーにはスクリプト名が出ます。
+- 1回の実行は50ミリ秒で止まり、ログのエラーにはスクリプト名が出ます。時間は10000命令ごとに確認されるため、停止は概算で、少し超えることがあります。
 - `try`/`catch` は、その上限を超えて実行を続けさせることはできません。
 - エラーはスクリプトのパック内のパスとともにログに記録されます。ゲームがクラッシュすることはありません。
 - `every` とフィルターは、スクリプトの実行前に確認されるので、コストを抑えられます。

@@ -2370,25 +2370,27 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 `set` 只用于真正的字段：是一个对象，键为点分的字段路径，值为要写入的数值。`"tier": ...` 会在副本上写入字段 `tier`。`"tier.enchantmentValue": 30` 会进入 `tier` 所持有的对象并在其中写入。静态字段永远不会被写入，因为那样所有物品都会共享这一改动。凡是属于组件的内容都应写在 `components` 中，而不是这里。
 
-| JSON 值              | 字段类型                                          | 说明                                                                       |
-| -------------------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| 数字                 | `int`、`long`、`short`、`byte`、`float`、`double` | 整数类型只接受整数，且值必须在该类型的范围内                               |
-| `true`、`false`      | `boolean`                                         |                                                                            |
-| 字符串               | `String`、`char`                                  | `char` 接受只含一个字符的字符串                                            |
-| 字符串               | 枚举                                              | 常量名，大小写均可                                                         |
-| 字符串               | `ResourceLocation`                                | `mod:name`                                                                 |
-| 字符串               | `Component`                                       | 纯文本，按原样显示                                                         |
-| 字符串               | `ItemStack`                                       | 以资源包其他地方书写堆叠的方式来写。不能为空                               |
-| 字符串               | 注册表条目，如 `Item`、`Block`、`Potion`          | 注册名。必须已经注册。这些类型的 `Holder<T>` 和 `Supplier<T>` 字段同样适用 |
-| 数组                 | 数组，或 `List`、`Set`、`Collection`              | 每个元素都遵循本表。集合字段会被整体替换，从不追加                         |
-| 对象                 | 其他任何对象                                      | 嵌套对象，见下文                                                           |
-| 字符串 `<ns>:<item>` | 其他任何对象                                      | 复用该派生物品在同一路径上构建的对象，见下文                               |
+| JSON 值              | 字段类型                                          | 说明                                                                            |
+| -------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 数字                 | `int`、`long`、`short`、`byte`、`float`、`double` | 整数类型只接受整数，且值必须在该类型的范围内                                    |
+| `true`、`false`      | `boolean`                                         |                                                                                 |
+| 字符串               | `String`、`char`                                  | `char` 接受只含一个字符的字符串                                                 |
+| 字符串               | 枚举                                              | 常量名，大小写均可                                                              |
+| 字符串               | 工具等级（tier）                                  | 原版等级名，不带冒号：`wood`、`stone`、`iron`、`gold`、`diamond` 或 `netherite` |
+| 字符串               | `ResourceLocation`                                | `mod:name`                                                                      |
+| 字符串               | `Component`                                       | 纯文本，按原样显示                                                              |
+| 字符串               | `ItemStack`                                       | 以资源包其他地方书写堆叠的方式来写。不能为空                                    |
+| 字符串               | 注册表条目，如 `Item`、`Block`、`Potion`          | 注册名。必须已经注册。这些类型的 `Holder<T>` 和 `Supplier<T>` 字段同样适用      |
+| 数组                 | 数组，或 `List`、`Set`、`Collection`              | 每个元素都遵循本表。集合字段会被整体替换，从不追加                              |
+| 对象                 | 其他任何对象                                      | 嵌套对象，见下文                                                                |
+| 字符串 `<ns>:<item>` | 其他任何对象                                      | 复用该派生物品在同一路径上构建的对象，见下文                                    |
+| 字符串 `#<ns>:<tag>` | `TagKey` 字段                                     | 该字段所属注册表的标签，例如物品标签 `#c:ingots/iron`                           |
 
 字符串可以指定的注册表包括物品、方块、流体、实体类型、药水效果、药水、音效、属性、盔甲材料、乐器、粒子类型和附魔。附魔要等世界运行后才会查找。
 
 **嵌套对象。** `set` 下的 JSON 对象与文件本身有相同的三个键：`set`、`returns` 和 `addTo`。它修改的是字段所持对象的一份副本，因此基础物品以及与之共享该对象的其他一切都保持原样。这是写时复制：只有你所写路径上的对象会被复制，其他字段仍指向与基础物品相同的对象。
 
-工具等级会被复制为一个新的等级，并保留修复材料。它的字段包括 `uses`、`speed`、`attackDamageBonus` 和 `enchantmentValue`。其他任何枚举作为嵌套对象都会被拒绝，来自 `java.` 包的对象同样如此。不会深入数组和集合：路径无法穿过它们，集合字段则由 JSON 数组整体替换。
+工具等级会被复制为一个新的等级，并保留修复材料。它的字段包括 `uses`、`speed`、`attackDamageBonus` 和 `enchantmentValue`。`tier` 字段也接受普通的等级名，因此 `"tier": "netherite"` 无需复制即可设置它。只有在需要新数值时，才把等级写成对象。其他任何枚举作为嵌套对象都会被拒绝，来自 `java.` 包的对象同样如此。不会深入数组和集合：路径无法穿过它们，集合字段则由 JSON 数组整体替换。
 
 记录类（record）不会作为对象被复制，但点分路径可以穿过它：记录会以新值重新构建并放回原处。`"set": { "someRecord.size": 3 }` 即是如此。若名称不是该记录的字段，则会记录日志。
 
@@ -2418,6 +2420,76 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 以另一个派生物品为基础，或复用了另一个派生物品对象的派生物品，会在它之后构建。若派生物品之间形成循环依赖，它们全部都会记录日志并被略去。`requires` 不满足的派生物品会被跳过，因此来自其他模组的基础物品需要相同的 `requires`。已注册的物品名称会被跳过。
 
 有三种情况会整体略去该物品：基础物品不存在、基础物品是方块物品，或基础类是 final 的。
+
+#### 示例：自定义钻头
+
+Immersive Engineering 把每个钻头头部的数值保存在一个对象 `perms` 中，该对象由头部物品持有。派生物品会在写入前先复制这个对象，因此自定义的钻头头部无需代码或脚本。复制 IE 的钢制头部，再设置你想要的数值。钻头接受任何是钻头头部的物品，所以新头部可以像 IE 自带的头部一样装入钻机。
+
+`data/mypack/items/drillhead_tungsten.json` 是物品文件：
+
+```json
+{
+  "item": "immersiveengineering:drillhead_steel",
+  "requires": ["immersiveengineering"],
+  "name": "Tungsten Drill Head",
+  "set": {
+    "perms.drillSize": 5,
+    "perms.drillDepth": 2,
+    "perms.drillSpeed": 14.0,
+    "perms.drillAttack": 9.0,
+    "perms.maxDamage": 20000,
+    "perms.texture": "mypack:item/drill_tungsten",
+    "perms.repairMaterial": "#c:ingots/iron",
+    "perms.drillLevel": "netherite"
+  }
+}
+```
+
+资源包除物品文件外还需要两个纹理文件。两者都是对 IE 纹理的重新着色，因此资源包不附带 PNG。
+
+`assets/mypack/textures/item/drillhead_tungsten.png.json` 是头部的图标。物品像资源包中的任何物品一样从该纹理获取模型。
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drillhead_steel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+`assets/mypack/textures/item/drill_tungsten.png.json` 是钻头在头部上绘制的纹理。
+
+```json
+{
+  "extends": "immersiveengineering:textures/item/drill_diesel.png",
+  "tint": { "from": "#2A0A3A", "to": "#E8A0FF" }
+}
+```
+
+各条目的作用：
+
+| 条目                   | 改变的内容                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `perms.drillSize`      | 钻头破坏区域的宽度和高度，以方块计                                              |
+| `perms.drillDepth`     | 向下破坏的方块数                                                                |
+| `perms.drillSpeed`     | 挖掘速度                                                                        |
+| `perms.drillAttack`    | 攻击伤害                                                                        |
+| `perms.maxDamage`      | 头部损坏前可承受的磨损量                                                        |
+| `perms.texture`        | 钻头为此头部绘制的纹理：`textures/` 下的 `mod:path`，不含文件夹和 `.png`        |
+| `perms.repairMaterial` | 可修复该头部的物品。以 `#` 开头的字符串是物品标签                               |
+| `perms.drillLevel`     | 挖掘等级，原版等级名：`wood`、`stone`、`iron`、`gold`、`diamond` 或 `netherite` |
+
+`perms` 是头部物品的一个字段，因此 `set` 会进入其中并先将其复制。IE 的钢制头部保留自己的数值。
+
+头部的提示显示 5x5x2、等级 `netherite`、速度 14、攻击 9 和耐久 20000，钻头会绘制新纹理。若要改变等级本身，写入普通的等级名。`perms.drillLevel` 下的对象会复制出一个带有你数值的等级，但提示仍显示其来源等级的名称，例如 `diamond`。
+
+给自己头部和装有它的钻机：
+
+```
+/give @s mypack:drillhead_tungsten
+/give @s immersiveengineering:drill[immersiveengineering:items=[{slot:0,item:{id:"mypack:drillhead_tungsten",count:1}}]]
+```
+
+副本不会获得 IE 钢制头部的配方，因此请为新头部另行提供配方。
 
 #### 日志消息
 
@@ -2468,6 +2540,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `Derived item {} adds itself to {}, which holds no collection, leaving it out`                                            | 该成员不是集合                                                     |
 | `Derived item {} adds itself to {}, which holds {}, not {}, leaving it out`                                               | 集合的元素类型不接受该物品                                         |
 | `Derived item {} could not be added to {}: {}`                                                                            | `addTo` 失败，例如类不存在                                         |
+| `{} sets {} to {}, which is not a tag of a known registry, leaving it out`                                                | `#` 字符串出现在标签字段上，但注册表无法构建它所指的标签           |
 | `Registered {} derived item(s) from packs`                                                                                | 汇总行，含制作的物品数量                                           |
 
 ## 流体
@@ -10825,7 +10898,298 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 ## 脚本
 
-只有当资源包的 JSON 指定了脚本时，脚本才会运行：通过 `scriptFile`（资源包中的 `.js` 文件）或 `script`（写在 JSON 中的内联 JavaScript）指定。没有任何 JSON 指定的 `.js` 文件永远不会运行。脚本为接近 ES6 水平的 JavaScript。RDPL 使用模组内置的 Rhino 引擎以解释方式运行它们。
+只有资源包的 JSON 指定了脚本，脚本才会运行。JSON 可以通过 `scriptFile`（资源包中的一个 `.js` 文件）或 `script`（直接写在 JSON 中的 JavaScript）来指定。没有任何 JSON 指定的 `.js` 文件永远不会运行。
+
+脚本为 ES6 JavaScript，由模组内置的 Rhino 引擎以解释模式运行。
+
+本节先以一个可运行的脚本为例进行讲解，之后是参考内容：事件、`rdpl` 对象、脚本收到的值、可用的 JavaScript 语法，以及错误的记录位置。
+
+### 启用脚本
+
+资源包中只要有一个带有效条目的 `scripts/events/*.json` 文件，资源包加载时其脚本就会立即运行，`/rdplserver reload` 会重新加载它们。游戏的配置文件中没有任何设置能够关闭事件脚本、物品脚本或 `rdpl`，日志中也不会出现因脚本被关闭或不被允许而跳过的记录。
+
+注册表脚本是例外。它们在游戏加载时运行，因此需要 `content` 分组的 `load` 开启（默认开启），且 `vanillaClients` 关闭（默认关闭）。若任一项被改动，注册表脚本将永远不会运行，也不会有任何提示。在 `load` 开启、`vanillaClients` 关闭的情况下，如果没有任何模组提供某个条目所指定的注册表，日志会记录 `no mod provides the registry '<name>', ignoring it`。
+
+因此，已安装但什么都不做的脚本永远不会被关闭：请检查资源包的 JSON 和日志（见[错误记录在哪里](#错误记录在哪里)）。
+
+### 你的第一个脚本
+
+这个资源包在玩家破坏箱子时，报告箱子里装有多少金锭，结果显示在动作栏上。资源包是 `rdploader/` 中的一个 zip 文件，结构如下：
+
+```
+ShrineScripts.zip
+  pack.mcmeta
+  data/shrine/scripts/events/break_chest.json
+  data/shrine/scripts/chest_broken.js
+```
+
+`pack.mcmeta` 为常规写法：
+
+```json
+{
+  "pack": {
+    "pack_format": 48,
+    "description": "My first script"
+  }
+}
+```
+
+`data/shrine/scripts/events/break_chest.json` 指定事件、将其过滤为箱子，并指向脚本文件：
+
+```json
+{
+  "event": "block_break",
+  "filter": { "block": "minecraft:chest" },
+  "scriptFile": "scripts/chest_broken.js"
+}
+```
+
+`data/shrine/scripts/chest_broken.js`：
+
+```js
+var x = pos.getX();
+var y = pos.getY();
+var z = pos.getZ();
+var gold = rdpl.world.scanAt(x, y, z, "minecraft:gold_ingot");
+var handler = rdpl.world.capability(x, y, z, "items");
+rdpl.actionbar("Chest held " + gold + " gold ingots, item handler: " + (handler !== null));
+```
+
+脚本能获得 `pos`（被破坏方块的位置）和 `rdpl`，因为 `block_break` 会提供它们，见事件类型表。`rdpl.world.scanAt` 统计该位置容器中的金锭数量，`rdpl.actionbar` 则向破坏方块的玩家显示文本。
+
+测试方法：
+
+1. 将 zip 放入 `rdploader/` 并启动世界，或在已运行的世界中执行 `/rdplserver reload`。
+2. 放置一个箱子，在其中放入几个金锭，然后将其破坏。
+3. 动作栏会显示 `Chest held 3 gold ingots, item handler: true`，其中的数量即为你放入的实际数量。
+
+如果没有任何反应，请打开游戏目录中的 `logs/rdpl.log`。以下条目会被跳过，日志中会写明文件名：
+
+- 键名拼错
+- 未知的事件
+- `scriptFile` 未以 `scripts/` 开头，或未以 `.js` 结尾
+
+脚本抛出错误时，会记录为 `Script shrine:scripts/chest_broken.js failed: ...`，并附上行号。
+
+### 更多示例
+
+以下示例都位于 RDPLExampleScripts 资源包的 `data/shrine/` 下，最后两个除外。
+
+内联的 `script` 可以把一段简短的脚本直接写在 JSON 中，无需 `.js` 文件。若脚本的最终值为文本 `'cancel'`，则取消该事件。此条目在玩家手持木棍攻击绵羊时阻止伤害，并使木棍进入两秒冷却：
+
+```json
+{
+  "event": "entity_hurt",
+  "filter": { "entity": "minecraft:sheep", "item": "minecraft:stick" },
+  "script": "rdpl.cooldown('minecraft:stick', 40); rdpl.actionbar('Sheep are sacred at the shrine'); 'cancel';"
+}
+```
+
+每次运行都以全新的变量开始，因此需要跨运行记住信息的脚本要用 `rdpl.data()` 保存。由 `player_login` 条目运行的 `scripts/login.js` 会统计玩家的登录次数：
+
+```json
+{
+  "event": "player_login",
+  "scriptFile": "scripts/login.js"
+}
+```
+
+```js
+rdpl.runCommand("scoreboard objectives add shrine dummy");
+var seen = rdpl.data(rdpl.player);
+var visits = (seen.has("visits") ? seen.get("visits") : 0) + 1;
+seen.set("visits", visits);
+rdpl.actionbar("Shrine pack: visit " + visits + (rdpl.hasStage("shrine_blessed") ? ", blessed" : ", not blessed"));
+```
+
+`rdpl.schedule` 可以延迟运行一个函数。`scripts/altar_placed.js` 在玩家于主世界放置金块时运行，它会读写世界数据、玩家数据和队伍数据，生成一只绵羊，并在五秒后显示第二条动作栏消息：
+
+```json
+{
+  "event": "block_place",
+  "filter": { "dimension": "minecraft:overworld", "block": "minecraft:gold_block" },
+  "scriptFile": "scripts/altar_placed.js"
+}
+```
+
+```js
+if (rdpl.player) {
+  var store = rdpl.data();
+  var altars = (store.has("altars") ? store.get("altars") : 0) + 1;
+  store.set("altars", altars);
+  rdpl.data(rdpl.player).set("last_altar", pos.getX() + "," + pos.getY() + "," + pos.getZ());
+  rdpl.teamData("shrine").set("founded", true);
+  rdpl.addStage("shrine_builder");
+  rdpl.world.summon("minecraft:sheep", pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, "{Color:11b}");
+  rdpl.world.placeStructure("minecraft:igloo/top", pos.getX() + 3, pos.getY(), pos.getZ());
+  rdpl.runCommand("playsound minecraft:entity.player.levelup master @s");
+  rdpl.card("shrine:altar", "count=" + altars);
+  rdpl.schedule(100, function () { rdpl.actionbar("The altar glows"); });
+}
+```
+
+`loot_drop` 脚本通过 `drops` 改变生物的掉落物。以下脚本从僵尸的掉落物中去掉腐肉，并添加一个绿宝石：
+
+```json
+{
+  "event": "loot_drop",
+  "filter": { "entity": "minecraft:zombie" },
+  "scriptFile": "scripts/zombie_drops.js"
+}
+```
+
+```js
+for (var i = drops.size() - 1; i >= 0; i--) {
+  var id = String(drops.stack(i).getItem().builtInRegistryHolder().key().location());
+  if (id === "minecraft:rotten_flesh") {
+    drops.remove(i);
+  }
+}
+drops.add("minecraft:emerald", 1);
+```
+
+循环从后往前计数，这样移除一组堆叠时，不会让尚未检查的堆叠发生移位。
+
+注册表脚本在游戏加载时添加物品。它的条目位于 `scripts/registries/` 下，而不是 `scripts/events/`：
+
+```json
+{
+  "registry": "minecraft:item",
+  "scriptFile": "scripts/my_items.js"
+}
+```
+
+```js
+var Item = java("net.minecraft.world.item.Item");
+var Props = java("net.minecraft.world.item.Item$Properties");
+var Food = java("net.minecraft.world.food.FoodProperties$Builder");
+var food = new Food().nutrition(4).saturationModifier(0.3).build();
+registry.register("shrine:script_food", new Item(new Props().food(food)));
+```
+
+名称必须位于资源包自己的命名空间中，此例为 `shrine`。该物品在游戏中显示正常之前，仍需要模型、材质和语言条目。
+
+### 可用的 JavaScript
+
+引擎为 Rhino，语言级别设为 ES6，以解释模式运行。以下写法可以使用：
+
+- `var`、`let` 和 `const`，其中 `let` 与 `const` 的作用域限定在所在的代码块内
+- 箭头函数、默认参数，以及展开与剩余参数 `...`
+- 模板字符串，例如 `` `Visit ${visits}` ``
+- 数组与对象的解构，可用于声明和参数中
+- `for...of`、使用 `function*` 的生成器，以及 `Symbol`
+- `Map`、`Set`、`WeakMap` 和 `WeakSet`
+- `JSON.parse` 与 `JSON.stringify`，以及 `Math`，包括 `**` 运算符
+- `??`、`??=` 和 `?.`
+- 字符串方法如 `includes`、`startsWith`、`repeat` 和 `at`，数组方法如 `includes`、`at` 和 `flatMap`，以及 `Object.assign` 和 `Object.fromEntries`
+
+以下写法不可用：
+
+- `class`。它是解析器拒绝的保留字，使用它的脚本无法编译。请改用函数和对象。
+- `async` 与 `await`，以及 `import` 与 `export`。
+- 事件或物品脚本中的 `java` 和 `Packages`，以及所有脚本中的 `Packages`（见[脚本可以触及的内容](#脚本可以触及的内容)）。
+- 浏览器或 Node 的名称，如 `console`、`setTimeout` 和 `require`。脚本不会获得这些。等待请使用 `rdpl.schedule`，汇报信息请使用日志。
+
+每次运行都以一组全新的变量开始：一次运行中设置的 `var` 在下次运行时即消失。需要持久保存的内容请放在 `rdpl.data()` 中。
+
+每次运行都受两项限制（见[限制](#限制)）：
+
+- 一次运行约在 50 毫秒后停止。
+- 调用栈深度超过 200 则失败。
+
+### 脚本获得的值
+
+每个事件都会向脚本提供其自身的值（见事件类型表）。这些是游戏自身的对象，因此脚本使用 Mojang 方法名调用它们，例如 `pos.getX()` 和 `player.getScoreboardName()`。游戏本身就以这些名称运行，因此无需映射。下表未列出的公开方法同样可以用其 Mojang 名称调用。
+
+需要注意两点：
+
+- 事件脚本不能调用以游戏类型作为参数的方法，例如 `DamageSource`，因为脚本无法构造它。
+- 名称、显示名或物品名称是文本组件。调用 `getString()` 即可获得纯文本。
+
+```js
+var below = pos.below();
+var id = String(state.getBlock().builtInRegistryHolder().key().location());
+if (id === "minecraft:gold_block" && player.isCreative()) { rdpl.actionbar("Creative break at " + below.getY()); }
+```
+
+`pos`（方块位置）：
+
+| 成员                                     | 提供的内容             |
+| ---------------------------------------- | ---------------------- |
+| `getX()`, `getY()`, `getZ()`             | 坐标，为数字           |
+| `above()`, `below()`                     | 上方或下方一格的位置   |
+| `north()`, `south()`, `east()`, `west()` | 相邻一格的位置         |
+| `offset(x, y, z)`                        | 按该偏移量移动后的位置 |
+
+`state`（方块状态）：
+
+| 成员                                                  | 提供的内容                             |
+| ----------------------------------------------------- | -------------------------------------- |
+| `getBlock()`                                          | 方块                                   |
+| `getBlock().builtInRegistryHolder().key().location()` | 方块的 id，例如 `minecraft:gold_block` |
+| `isAir()`                                             | 为空气时为 true                        |
+
+`entity` 与 `player`（玩家是带有更多成员的实体）：
+
+| 成员                                         | 提供的内容                                    |
+| -------------------------------------------- | --------------------------------------------- |
+| `getName()`                                  | 名称，为文本组件；调用 `getString()` 获取文本 |
+| `getScoreboardName()`                        | 计分板、标签和命令所使用的名称，为文本        |
+| `getId()`, `getUUID()`                       | 数字 id，以及 UUID（对其调用 `toString()`）   |
+| `blockPosition()`                            | 其所站立的方块位置                            |
+| `getX()`, `getY()`, `getZ()`                 | 精确坐标，为数字                              |
+| `isRemoved()`                                | 已被移除时为 true                             |
+| `isOnFire()`, `isCrouching()`, `isInWater()` | 在着火、潜行或在水中时为 true                 |
+| `getHealth()`, `getMaxHealth()`              | 生物（怪物或玩家）当前与最大生命值            |
+| `setHealth(value)`                           | 设置生物的生命值                              |
+| `getMainHandItem()`                          | 主手中的物品堆叠                              |
+| `level()`                                    | 其所在的世界                                  |
+| `getDisplayName()`                           | 聊天中显示的名称，为文本组件                  |
+| `getFoodData().getFoodLevel()`（玩家）       | 玩家的饱食度                                  |
+| `isCreative()`（玩家）                       | 创造模式时为 true                             |
+| `giveExperienceLevels(n)`（玩家）            | 给予等级                                      |
+| `getTags()`                                  | 实体身上的标签，包括 `addStage` 设置的标签    |
+
+物品堆叠（例如 `player.getMainHandItem()` 或 `drops.stack(0)`）有以下成员：
+
+- `getCount()` 返回堆叠中的物品数量。
+- `isEmpty()` 对空堆叠返回 true。
+- `getItem().builtInRegistryHolder().key().location()` 返回物品 id。
+- `getDisplayName()` 以文本组件形式返回物品名称。
+
+普通值：
+
+| 名称         | 在事件中                            | 含义                                                                       |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------- |
+| `attacker`   | `entity_hurt`、`loot_drop`          | 造成伤害的实体；跌落、着火等情况下为空。使用前需先检查                     |
+| `damageType` | `entity_hurt`、`loot_drop`          | 文本，即伤害类型的消息 id，例如 `player`、`mob`、`fall`、`lava` 或 `drown` |
+| `amount`     | `entity_hurt`                       | 伤害值，为数字                                                             |
+| `from`, `to` | `dimension_change`、`entity_travel` | 维度名称文本，例如 `minecraft:overworld` 或 `minecraft:the_nether`         |
+| `tick`       | `server_tick`                       | 主世界的游戏时间                                                           |
+| `event`      | `mod_event`                         | `class` 所指定类的事件对象；其公开方法可用                                 |
+| `drops`      | `loot_drop`                         | 掉落物列表，见事件类型表之后                                               |
+
+`rdpl.level` 为服务器世界。`rdpl.level.getBlockState(pos)` 返回方块状态，`rdpl.level.getGameTime()` 返回游戏时间。
+
+### 错误记录在哪里
+
+脚本的所有消息都会记入游戏目录中的 `logs/rdpl.log`。脚本失败不会使游戏崩溃，也不会停止其他脚本。日志行中的名称格式为：文件使用 `<namespace>:<path>`，例如 `shrine:scripts/chest_broken.js`；内联脚本使用 `<entry file id>#<number>`。
+
+| 情况                          | 日志行                                                                                                                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 指定了文件但文件缺失          | `Script <name> not found`                                                                                                                                                                        |
+| 编译错误（拼写错误、`class`） | `Script <name> did not compile: <message>`，该脚本在下次重新加载前被跳过                                                                                                                         |
+| 运行时错误                    | `Script <name> failed: <message>`，随后是带行号的脚本调用栈                                                                                                                                      |
+| 超过 50 毫秒                  | `Script <name> took longer than 50 ms, stopped`                                                                                                                                                  |
+| 预定函数过多                  | `Script scheduler: too many scheduled script functions, dropped`，只记录一次；此后 `rdpl.schedule` 会直接丢弃更多函数，不再记录，直到重新加载                                                    |
+| 被关闭                        | `Script <name> is turned off until the next reload`，在 `player_tick`、`server_tick`、`dimension_change`、`loot_drop`、`entity_travel` 或 `mod_event` 脚本失败或超时之后写入，所有注册表脚本亦然 |
+| 拒绝 Java 访问                | `Script <name> failed: Scripts may not use <class>`，针对脚本所获取的 `Class`、`ClassLoader`、`Thread`、`Runtime` 或反射对象                                                                     |
+| 预定函数失败                  | `Script scheduled function took longer than 50 ms, stopped`，或 `Script scheduled function failed: <message>`                                                                                    |
+| 条目无法加载                  | `<file id>: <reason>, ignoring it`，原因列在事件表和注册表表之下                                                                                                                                 |
+
+编译失败的脚本在 `/rdplserver reload` 之前一直处于失败状态：修改文件后重新加载即可。
+
+事件脚本中的 `java` 和 `Packages` 并不会被拒绝。它们在那里并不存在，因此日志会以 `Script <name> failed:` 记录一条针对该名称的引用错误。
 
 ### 脚本事件
 
@@ -10854,43 +11218,83 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 过滤键：
 
-| 键          | 值                   | 匹配               |
-| ----------- | -------------------- | ------------------ |
-| `dimension` | 维度 ID，或其列表    | 事件发生的维度     |
-| `block`     | 方块 ID，或 `#` 形式 | 被放置或破坏的方块 |
-| `entity`    | 实体 ID              | 事件所涉及的实体   |
-| `item`      | 物品 ID，或 `#` 形式 | 玩家手持的物品     |
+| 键          | 值                   | 匹配                                     |
+| ----------- | -------------------- | ---------------------------------------- |
+| `dimension` | 维度 ID，或其列表    | 事件发生的维度                           |
+| `block`     | 方块 ID，或 `#` 形式 | 被放置或破坏的方块                       |
+| `entity`    | 实体 ID              | 事件所涉及的实体                         |
+| `item`      | 物品 ID，或 `#` 形式 | 攻击者、玩家或放置者主手中的物品，见下文 |
+
+没有方块的事件永远不会匹配 `block` 过滤器。带有 `block` 键的 `entity_hurt`、`entity_spawn`、`entity_despawn` 或 `player_login` 条目永远不会运行。
+
+`item` 过滤器检查以下对象主手中的物品：
+
+- `entity_hurt` 中的攻击者（生物也算在内）
+- `block_break` 和 `player_login` 中的玩家
+- `block_place` 中的放置者；但玩家放置方块时，无论哪只手都可以匹配
 
 事件类型：
 
-| 事件               | 触发时机                                    | 脚本获得的值                                                             | `"cancel"` 是否有效    |
-| ------------------ | ------------------------------------------- | ------------------------------------------------------------------------ | ---------------------- |
-| `block_place`      | 方块被放置                                  | `rdpl`、`pos`、`state`、`entity`（放置者）                               | 是                     |
-| `block_break`      | 玩家破坏方块                                | `rdpl`、`pos`、`state`、`player`                                         | 是                     |
-| `entity_hurt`      | 任何生物（包括玩家）即将受到伤害            | `rdpl`、`entity`、`attacker`、`damageType`、`amount`                     | 是                     |
-| `entity_spawn`     | 生物第一次进入世界（不含玩家）              | `rdpl`、`entity`                                                         | 是，且该实体不会出现   |
-| `entity_despawn`   | 生物消失，或实体变种的计时移除使其消失      | `rdpl`、`entity`                                                         | 否                     |
-| `player_login`     | 玩家加入                                    | `rdpl`、`player`                                                         | 否                     |
-| `player_tick`      | 每 `every` 刻一次，对每名玩家，在该刻之后   | `rdpl`、`player`、`pos`                                                  | 否                     |
-| `server_tick`      | 每 `every` 刻一次，整体运行一次，在该刻之后 | `rdpl`（主世界）、`tick`（世界时间）                                     | 否                     |
-| `dimension_change` | 玩家已抵达另一个维度                        | `rdpl`、`player`、`from`、`to`（维度名称，例如 `minecraft:the_nether`）  | 否                     |
-| `loot_drop`        | 生物已死亡，其掉落物即将出现                | `rdpl`、`entity`、`attacker`、`damageType`（伤害类型的消息 id）、`drops` | 否                     |
-| `entity_travel`    | 实体即将前往另一个维度                      | `rdpl`、`entity`、`from`、`to`（维度名称，例如 `minecraft:the_nether`）  | 是，实体留在原地       |
-| `mod_event`        | 由 `class` 指定的事件在服务器上触发         | `rdpl`、`event`、`player`                                                | 是，当该事件可以取消时 |
+| 事件               | 触发时机                                                                               | 脚本获得的值                                                             | `"cancel"` 是否有效    |
+| ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------- |
+| `block_place`      | 方块被放置                                                                             | `rdpl`、`pos`、`state`、`entity`（放置者）                               | 是                     |
+| `block_break`      | 玩家破坏方块                                                                           | `rdpl`、`pos`、`state`、`player`                                         | 是                     |
+| `entity_hurt`      | 任何生物（包括玩家）即将受到伤害；不包括对其无敌、已死亡，或因抗火而免受火焰伤害的情况 | `rdpl`、`entity`、`attacker`、`damageType`、`amount`                     | 是                     |
+| `entity_spawn`     | 生物第一次进入世界（不含玩家）                                                         | `rdpl`、`entity`                                                         | 是，且该实体不会出现   |
+| `entity_despawn`   | 生物消失，或实体变种的计时移除使其消失                                                 | `rdpl`、`entity`                                                         | 否                     |
+| `player_login`     | 玩家加入                                                                               | `rdpl`、`player`                                                         | 否                     |
+| `player_tick`      | 每 `every` 刻一次，对每名玩家，在该刻之后                                              | `rdpl`、`player`、`pos`                                                  | 否                     |
+| `server_tick`      | 每 `every` 刻一次，整体运行一次，在该刻之后                                            | `rdpl`（主世界）、`tick`（世界时间）                                     | 否                     |
+| `dimension_change` | 玩家已抵达另一个维度                                                                   | `rdpl`、`player`、`from`、`to`（维度名称，例如 `minecraft:the_nether`）  | 否                     |
+| `loot_drop`        | 生物已死亡，其掉落物即将出现                                                           | `rdpl`、`entity`、`attacker`、`damageType`（伤害类型的消息 id）、`drops` | 否                     |
+| `entity_travel`    | 实体即将前往另一个维度                                                                 | `rdpl`、`entity`、`from`、`to`（维度名称，例如 `minecraft:the_nether`）  | 是，实体留在原地       |
+| `mod_event`        | 由 `class` 指定的事件在服务器上触发                                                    | `rdpl`、`event`、`player`                                                | 是，当该事件可以取消时 |
 
-最终值为文本 `"cancel"` 的脚本，会在表中标明有效的地方取消该事件。已被区域规则或其他模组取消的事件永远不会到达脚本。`entity_despawn` 不会因击杀、区块卸载或 `/kill` 而触发。
+最终值为文本 `"cancel"` 的脚本，会在表中标明有效的地方取消该事件。
 
-新增的类型只读取部分过滤键。`player_tick` 和 `dimension_change` 读取 `dimension` 和 `item`。`loot_drop` 和 `entity_travel` 读取 `dimension`、`entity` 和 `item`。`server_tick` 和 `mod_event` 不读取任何过滤键。事件未读取的过滤键会跳过该条目，日志写着 `the <event> event does not read the filter key '<key>', skipping the entry`。`entity` 接受 id、类别 `#monster`、`#creature`、`#ambient` 和 `#water_creature`，以及带命名空间的生物类型标签，例如 `#minecraft:skeletons`。在 `loot_drop` 中，`entity` 是死亡的生物，`item` 是其击杀者手持的物品；在 `entity_travel` 中，`entity` 是旅行者。除非 `every` 另有设定，`player_tick` 和 `server_tick` 每 20 刻运行一次。`server_tick` 以服务器身份、按主世界的时钟运行一次，没有玩家。
+事件还有三条规则：
+
+- 已被区域规则或其他模组取消的事件永远不会到达脚本。
+- `entity_despawn` 不会因击杀、区块卸载或 `/kill` 而触发。
+- `player_tick` 和 `server_tick` 默认每 20 刻运行一次，除非 `every` 另有设定。
+
+新类型只读取部分过滤键：
+
+- `player_tick` 和 `dimension_change` 读取 `dimension` 和 `item`。
+- `loot_drop` 和 `entity_travel` 读取 `dimension`、`entity` 和 `item`。
+- `server_tick` 和 `mod_event` 不读取任何过滤键。
+
+条目使用了其事件不读取的过滤键时，该条目会被跳过，日志写着 `the <event> event does not read the filter key '<key>', skipping the entry`。
+
+`entity` 过滤器接受实体 id、类别 `#monster`、`#creature`、`#ambient` 和 `#water_creature`，以及带命名空间的实体类型标签，例如 `#minecraft:skeletons`。在 `loot_drop` 中，`entity` 是死亡的生物，`item` 是其击杀者手持的物品；在 `entity_travel` 中，`entity` 是旅行者。
+
+`server_tick` 以服务器为对象，按主世界的时钟运行一次，没有玩家。
 
 新增类型（`player_tick`、`server_tick`、`dimension_change`、`loot_drop`、`entity_travel`、`mod_event`）的脚本若失败或超过时间限制，会被关闭直到下次重新加载，日志中会写明 `Script <name> is turned off until the next reload`。旧类型的脚本则继续运行。
 
-`drops` 在 `loot_drop` 中是该生物掉落物的列表。`drops.size()` 统计数量，`drops.stack(index)` 为某一位置的物品堆叠，`drops.remove(index)` 移除其中一项，`drops.clear()` 全部移除，`drops.add(item, count)` 添加一组堆叠，它会出现在生物死亡的位置。每次死亡，脚本最多可添加 32 组堆叠。超出时脚本会停止，并显示 `A loot_drop script can add at most 32 stacks`；未知物品或数量小于 1 会以 `Unknown item` 停止，与其他脚本错误相同。
+`drops` 在 `loot_drop` 中是该生物掉落物的列表：
 
-`mod_event` 让脚本可以按类名监听其他模组或游戏本身的事件。将完整类名填入 `class`。出现以下情况时条目会被忽略，并在日志中说明：缺少 `class`（`a mod_event needs a class`）、类不存在（`the class <name> was not found`），以及它不是可监听的事件类（`the class <name> is not a Forge event`）。只有这个确切的类会触发脚本，继承它的事件不会触发。脚本只在服务器线程上运行，运行在事件的实体或世界所在的世界中；若事件两者都没有，则在主世界运行。脚本自己引起的同类事件不会再次运行该脚本。脚本获得 `rdpl`、`event`（事件对象）和 `player`（事件相关的玩家，或为空）。`every` 及其他键的作用与任何事件相同。当事件可以取消时，返回 `"cancel"` 会取消该事件。
+- `drops.size()` 返回堆叠的数量。
+- `drops.stack(index)` 返回该位置的物品堆叠。
+- `drops.remove(index)` 移除该堆叠。
+- `drops.clear()` 移除所有堆叠。
+- `drops.add(item, count)` 添加一组堆叠，它会出现在生物死亡的位置。
+
+每次死亡，脚本最多可添加 32 组堆叠。添加更多时，脚本会以 `A loot_drop script can add at most 32 stacks` 停止；未知物品或数量小于 1 会以 `Unknown item` 停止。
+
+`mod_event` 让脚本可以监听其他模组或游戏本身的事件。将事件的完整类名填入 `class`。只有这个确切的类会触发脚本，继承它的事件不会触发。脚本获得 `rdpl`、`event`（事件对象）和 `player`（事件相关的玩家，或为 `null`）。`every` 及其他键的作用与任何事件相同。当该事件可以取消时，返回 `"cancel"` 会取消该事件。
+
+出现以下情况时，条目会被忽略，日志中会说明原因：
+
+- 缺少 `class`（`a mod_event needs a class`）
+- 类不存在（`the class <name> was not found`）
+- 该类不是可监听的事件类（`the class <name> is not a Forge event`）
+
+`mod_event` 脚本只在服务器线程上运行，运行在事件的实体或世界所在的世界中；若事件两者都没有，则在主世界运行。脚本自己引起的同类事件不会再次运行该脚本。
 
 ### 注册表脚本
 
-`<namespace>/scripts/registries/*.json`
+`data/<namespace>/scripts/registries/*.json`
 
 文件名可自行选择，只读取文件夹，多个文件会叠加生效。注册表脚本会在游戏加载时向游戏内置的注册表添加对象，这是资源包单靠其他方式无法做到的。它需要 `content` 分组中的 `load` 开启、`vanillaClients` 关闭，与方块和物品相同。
 
@@ -10913,13 +11317,47 @@ registry.register("mypack:script_item", new I(new P()));
 | `script`     | 二选一 | 文本       | 无     | 要运行的内联 JavaScript                                                                        |
 | `scriptFile` | 二选一 | 路径       | 无     | `scripts/` 下同一命名空间中、以 `.js` 结尾的路径                                               |
 
-脚本只运行一次，即该注册表在所有模组完成自身注册之后开始接受注册时运行。它获得两样东西。`registry` 只有一个方法 `register(name, object)`，会以 `name` 添加 `object`。`java(className)` 返回一个 Java 类，使脚本能够构造该对象；类不存在则显示 `The class <name> was not found`。脚本不会获得 `rdpl`，因为此时还不存在世界。
+脚本只运行一次，即该注册表在所有模组完成自身注册之后开始接受注册时运行。它获得两样东西：
 
-`register` 在以下情况下会拒绝并记录日志，脚本继续运行：对象不是该注册表所持有的类型（`is not a <type>, not registering it`）、名称不是合法 id（`could not be registered: not a valid name`）、名称不在资源包自己的命名空间中（`is not in the pack namespace <namespace>, not registering it`）、名称已被占用（`is already registered in <registry>, skipping it`），以及注册表自身拒绝它（`could not be registered`）。成功时记录 `Script <name> registered <id> in <registry>`。条目在缺少 `registry`（`needs a registry`）、没有脚本（`needs script or scriptFile`）、注册表不是脚本可以添加的注册表（`the registry '<name>' is not a registry that scripts can add to, ignoring it`），以及没有任何模组提供该注册表（`no mod provides the registry '<name>', ignoring it`）时，会被记录并忽略。脚本失败或超过限制后，会被关闭直到下次重新加载。以这种方式注册的对象只拥有脚本赋予它的内容：方块或物品仍需要自己的模型、材质和语言条目。
+- `registry` 只有一个方法 `register(name, object)`，会以 `name` 添加 `object`。
+- `java(className)` 返回一个 Java 类，使脚本能够构造该对象；类不存在则显示 `The class <name> was not found`。
+
+脚本不会获得 `rdpl`，因为此时还不存在世界。
+
+`register` 在以下情况下会记录日志并拒绝该对象，脚本继续运行：
+
+- 对象不是该注册表所持有的类型（`is not a <type>, not registering it`）。
+- 名称不是合法的 id（`could not be registered: not a valid name`）。
+- 名称不在资源包自己的命名空间中（`is not in the pack namespace <namespace>, not registering it`）。
+- 名称已被占用（`is already registered in <registry>, skipping it`）。
+- 注册表自身拒绝该对象（`could not be registered`）。
+
+成功时记录 `Script <name> registered <id> in <registry>`。
+
+以下情况下，条目本身会被记录并忽略：
+
+- 缺少 `registry`（`needs a registry`）。
+- 条目没有脚本（`needs script or scriptFile`）。
+- 该注册表不是脚本可以添加的注册表（`the registry '<name>' is not a registry that scripts can add to, ignoring it`）。
+- 没有任何模组提供该注册表（`no mod provides the registry '<name>', ignoring it`）。
+
+注册表脚本若失败或超过限制，会被关闭直到下次重新加载。
+
+以这种方式注册的对象只拥有脚本赋予它的内容：方块或物品仍需要自己的模型、材质和语言条目。
 
 ### 脚本文件的存放位置
 
-所有脚本都位于资源包的 `scripts/` 文件夹下。事件条目放在 `scripts/events/` 中。`.js` 文件可以放在 `scripts/` 下的任何位置，并以其资源包路径命名，因此 `"scriptFile": "scripts/trophy_altar.js"` 读取的是 `<namespace>/scripts/trophy_altar.js`。物品同样以 `script` 或 `scriptFile` 指定其脚本（见[物品](#物品)）。配方替换文件也是如此（见[配方替换](#配方替换)）。
+所有脚本文件都位于资源包的 `scripts/` 文件夹下。事件条目放在 `scripts/events/` 中，注册表条目放在 `scripts/registries/` 中。`.js` 文件可以放在 `scripts/` 下的任何位置。脚本以其在资源包中的路径命名，因此 `"scriptFile": "scripts/trophy_altar.js"` 读取的是 `data/<namespace>/scripts/trophy_altar.js`。
+
+物品、配方替换文件和命令同样以 `script` 或 `scriptFile` 指定其脚本：
+
+- 物品（见[物品](#物品)）
+- 配方替换文件（见[配方替换](#配方替换)）
+- 命令（见[命令](#命令)）
+
+物品脚本在玩家右键点击该物品时于服务器上运行。它获得 `rdpl`、`item`（该手中的物品堆叠）和 `hand`（字符串 `MAIN_HAND` 或 `OFF_HAND`）。返回 `"cancel"` 只会跳过该物品的 `cooldown`，右键操作本身不会被取消。
+
+命令脚本获得 `rdpl`、`sender`（其方法见[命令](#命令)），以及每个参数对应的一个变量。
 
 ### rdpl 对象
 
@@ -10929,40 +11367,48 @@ registry.register("mypack:script_item", new I(new P()));
 if (rdpl.score("altar") < 3) { rdpl.setScore("altar", rdpl.score("altar") + 1); rdpl.actionbar("The altar hums"); } else { "cancel"; }
 ```
 
-| 成员                                                 | 作用                                                                                                                                                                               |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `player`                                             | 玩家；事件没有玩家时为空                                                                                                                                                           |
-| `level`                                              | 世界                                                                                                                                                                               |
-| `runCommand(command)`                                | 以玩家身份运行命令；没有玩家时，在世界出生点运行，权限等级为 2。成功时返回 true                                                                                                    |
-| `give(item, count)`                                  | 给予玩家指定数量的物品                                                                                                                                                             |
-| `actionbar(text)`                                    | 在玩家的动作栏上显示文本                                                                                                                                                           |
-| `cooldown(item, ticks)`                              | 使该物品对玩家进入冷却，持续指定的刻数                                                                                                                                             |
-| `card(id, "key=value", ...)`                         | 以其参数显示一张卡片                                                                                                                                                               |
-| `schedule(ticks, function)`                          | 在指定刻数之后运行该函数。最多同时等待 1000 个。重新加载时队列会被清空                                                                                                             |
-| `data()`, `data(player)`, `teamData(name)`           | 已保存的数据存储，带有 `get`、`set`、`has` 和 `remove`。可存放文本、数字以及 true/false，并保存在世界存档中。`data()` 为世界的，`data(player)` 为玩家的，`teamData(name)` 为队伍的 |
-| `sync(name, value)`                                  | 为玩家设置一个同步值；事件没有玩家时则为世界设置。值可以是文本、数字或 true/false。设置成功时返回 true；被规则拒绝时返回 false，日志中会说明。其他类型的值会抛出脚本错误           |
-| `syncTo(player, name, value)`                        | 同上，但为另一名玩家设置                                                                                                                                                           |
-| `syncAll(name, value)`                               | 同上，但为世界设置                                                                                                                                                                 |
-| `unsync(name)`                                       | 移除玩家的值；事件没有玩家时移除世界的值。存在该值时返回 true                                                                                                                      |
-| `synced(name)`                                       | 读取得到的值：先是玩家自己的值，然后是世界的值，最后是默认值；事件没有玩家时则依次为世界的值和默认值。都未设置时为空                                                               |
-| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 检查、添加或移除玩家身上的标签                                                                                                                                                     |
-| `score(objective)`, `setScore(objective, value)`     | 读取或设置玩家在某计分板目标上的分数                                                                                                                                               |
-| `hasAdvancement(id)`                                 | 玩家拥有该进度时为 true                                                                                                                                                            |
-| `world.scan(player, match)`                          | 统计玩家物品栏及其中潜影盒里匹配的物品数量。`match` 为物品 ID、`#` 形式，或一个接收每个堆叠的函数                                                                                  |
-| `world.scanAt(x, y, z, match)`                       | 同上，针对该位置的容器方块                                                                                                                                                         |
-| `world.capability(x, y, z, type)`                    | 该位置方块对于 `"items"`、`"fluids"` 或 `"energy"` 的处理器                                                                                                                        |
-| `world.placeStructure(template, x, y, z)`            | 在该位置放置一个结构模板                                                                                                                                                           |
-| `world.summon(id, x, y, z, nbt)`                     | 在该位置生成一个实体，可带可选的 NBT                                                                                                                                               |
+| 成员                                                 | 作用                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `player`                                             | 玩家；事件没有玩家时为空                                                                                                                                                                                                                                                                    |
+| `level`                                              | 世界                                                                                                                                                                                                                                                                                        |
+| `runCommand(command)`                                | 以玩家身份运行命令；没有玩家时，在世界出生点运行，权限等级为 2。成功时返回 true                                                                                                                                                                                                             |
+| `give(item, count)`                                  | 给予玩家指定数量的物品                                                                                                                                                                                                                                                                      |
+| `actionbar(text)`                                    | 在玩家的动作栏上显示文本；没有玩家时不做任何事                                                                                                                                                                                                                                              |
+| `cooldown(item, ticks)`                              | 使该物品对玩家进入冷却，持续指定的刻数；没有玩家时不做任何事。未知物品会抛出脚本错误，无论有无玩家                                                                                                                                                                                          |
+| `card(id, "key=value", ...)`                         | 以其参数显示一张卡片。卡片 id 未知或没有玩家时返回 `false`，否则返回 `true`；不是 `key=value` 形式的参数会被丢弃                                                                                                                                                                            |
+| `schedule(ticks, function)`                          | 在指定刻数之后运行该函数，且至少晚 1 刻。最多同时等待 1000 个函数，超出的会被丢弃。重新加载和服务器关闭时队列会被清空。由带有玩家的事件安排的函数，若到时该玩家已离线，则会被丢弃                                                                                                           |
+| `data()`, `data(player)`, `teamData(name)`           | 已保存的数据存储，带有 `get`、`set`、`has` 和 `remove`。可存放文本、数字以及 `true`/`false`，保存在世界存档中。`data()` 为世界的存储，`data(player)` 为玩家的，`teamData(name)` 为队伍的。世界没有存储空间时，`data()` 和 `teamData` 返回 `null`；没有玩家时，`data(player)` 会抛出脚本错误 |
+| `sync(name, value)`                                  | 为玩家设置一个同步值；事件没有玩家时则为世界设置。值为文本、数字或 `true`/`false`，其他值会抛出脚本错误。设置成功时返回 `true`；被规则拒绝时返回 `false`，日志中会说明原因                                                                                                                  |
+| `syncTo(player, name, value)`                        | 同 `sync`，但为另一名玩家设置                                                                                                                                                                                                                                                               |
+| `syncAll(name, value)`                               | 同 `sync`，但为世界设置                                                                                                                                                                                                                                                                     |
+| `unsync(name)`                                       | 移除玩家的值；事件没有玩家时移除世界的值。存在可移除的值时返回 `true`                                                                                                                                                                                                                       |
+| `synced(name)`                                       | 读取值：先是玩家自己的值，其次是世界的值，最后是默认值。事件没有玩家时，依次为世界的值和默认值。都未设置时返回 `null`                                                                                                                                                                       |
+| `hasStage(tag)`, `addStage(tag)`, `removeStage(tag)` | 检查、添加或移除玩家身上的标签。没有玩家时，`hasStage` 返回 `false`，另外两个不做任何事                                                                                                                                                                                                     |
+| `score(objective)`, `setScore(objective, value)`     | 读取或设置玩家在某计分板目标上的分数。没有玩家时，`score` 返回 0，`setScore` 不做任何事；`setScore` 对未知的目标会抛出脚本错误                                                                                                                                                              |
+| `hasAdvancement(id)`                                 | 玩家拥有该进度时为 true                                                                                                                                                                                                                                                                     |
+| `world.scan(player, match)`                          | 统计玩家物品栏及其中潜影盒里匹配的物品数量。`match` 为物品 ID、`#` 形式，或一个接收每个堆叠的函数                                                                                                                                                                                           |
+| `world.scanAt(x, y, z, match)`                       | 同上，针对该位置的容器方块                                                                                                                                                                                                                                                                  |
+| `world.capability(x, y, z, type)`                    | 该位置方块的处理器，以无方向方式查询，类型为 `"items"`、`"fluids"` 或 `"energy"`（即 NeoForge 的方块能力 `ItemHandler`、`FluidHandler` 和 `EnergyStorage`）。方块未加载、没有方块实体，或类型不在此列时返回 `null`                                                                          |
+| `world.placeStructure(template, x, y, z)`            | 在该位置放置一个结构模板。没有该模板时返回 `false`                                                                                                                                                                                                                                          |
+| `world.summon(id, x, y, z, nbt)`                     | 在该位置生成一个实体，可带可选的 NBT。NBT 有误会抛出脚本错误（`Bad entity NBT`）。实体无法创建时返回 `false`。NBT 为空时，生物还会获得 `/summon` 命令给予它的生成设置                                                                                                                       |
 
 ### 脚本可以触及的内容
 
-脚本只能看到 `rdpl` 对象、每个事件交给它的值（见事件类型表），以及这些值所返回的游戏类型。`Packages` 在任何脚本中都不存在，`java` 只存在于注册表脚本中（见[注册表脚本](#注册表脚本)）；事件、物品、命令和配方改写脚本都没有它。请求其他任何内容都会被拒绝，且拒绝会记录一次到日志。
+事件脚本、物品脚本和预定函数只能使用以下内容：
 
-脚本可以使用任何 Java 类，按完整类名引用，例如 `java.util.UUID` 或 `net.minecraft.world.item.ItemStack`。实际上这通常是注册表脚本，它用 `java(className)` 请求一个类。
+- `rdpl` 对象
+- 事件交给它们的值（见事件类型表）
+- 这些对象的方法所返回的任何内容
+
+事件和物品脚本中不存在 `java` 与 `Packages`，因此它们无法使用 Java 类名，也无法通过 `new` 构造对象。命令脚本和配方改写脚本同样没有 `java`。任何脚本中都不存在 `Packages`。
+
+注册表脚本还能获得 `java(className)`，它返回指定完整类名的类，例如 `net.minecraft.world.item.Item`。游戏能够加载的任何类都可以以此方式获取，没有白名单。该调用会加载并初始化尚未加载的类。不是类的名称会失败，并提示 `The class <name> was not found`。
+
+在任何脚本中，若某个调用返回了以下类型的对象或将其交给脚本，该对象都会被拒绝：`Class`、`ClassLoader`、`Thread`、`Runtime`、`System`，以及反射对象（`Method`、`Field`、`Constructor`）。脚本会以 `Scripts may not use <class>` 停止，并在日志中记录一行 `Script <name> failed:`。
 
 ### 限制
 
-- 一次运行在 50 毫秒后停止。日志中的错误会指出该脚本。
+- 一次运行在 50 毫秒后停止，日志错误会指出该脚本。时钟每 10000 条指令检查一次，因此停止时间只是近似值，一次运行可能略微超出。
 - `try`/`catch` 无法让一次运行超过该限制而继续。
 - 错误会按脚本的资源包路径记录到日志，绝不会使游戏崩溃。
 - `every` 和过滤器会在脚本运行之前检查，从而降低开销。
