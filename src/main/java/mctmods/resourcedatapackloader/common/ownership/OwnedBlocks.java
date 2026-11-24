@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.ownership;
 
+import mctmods.resourcedatapackloader.common.util.NbtStrings;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,13 +9,16 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.util.Constants.NBT;
 
 public final class OwnedBlocks {
     public static final String TAG = "rdpl_owned";
     private static final int VERSION = 1;
+    private static final String BLOCKS = "blocks";
+    private static final String POS = "pos";
+    private static final String BLOCK = "block";
+    private static final String OWNER = "owner";
+    private static final String EPOCH = "epoch";
     private final List<String> palette = new ArrayList<>();
     private final Map<Integer, Entry> entries = new HashMap<>();
     private int epoch;
@@ -62,15 +67,13 @@ public final class OwnedBlocks {
             owner[at] = each.getValue().handle;
             at++;
         }
-        NBTTagList names = new NBTTagList();
-        for (String name : palette) { names.appendTag(new NBTTagString(name)); }
         NBTTagCompound tag = new NBTTagCompound();
         tag.setInteger("v", VERSION);
-        tag.setTag("blocks", names);
-        tag.setIntArray("pos", pos);
-        tag.setIntArray("block", block);
-        tag.setIntArray("owner", owner);
-        tag.setInteger("epoch", epoch);
+        tag.setTag(BLOCKS, NbtStrings.write(palette));
+        tag.setIntArray(POS, pos);
+        tag.setIntArray(BLOCK, block);
+        tag.setIntArray(OWNER, owner);
+        tag.setInteger(EPOCH, epoch);
         out.setTag(TAG, tag);
         return out;
     }
@@ -81,12 +84,11 @@ public final class OwnedBlocks {
         epoch = 0;
         if (!in.hasKey(TAG, NBT.TAG_COMPOUND)) { return; }
         NBTTagCompound tag = in.getCompoundTag(TAG);
-        epoch = tag.getInteger("epoch");
-        NBTTagList names = tag.getTagList("blocks", NBT.TAG_STRING);
-        for (int i = 0; i < names.tagCount(); i++) { palette.add(names.getStringTagAt(i)); }
-        int[] pos = tag.getIntArray("pos");
-        int[] block = tag.getIntArray("block");
-        int[] owner = tag.getIntArray("owner");
+        epoch = tag.getInteger(EPOCH);
+        NbtStrings.read(tag.getTagList(BLOCKS, NBT.TAG_STRING), palette);
+        int[] pos = tag.getIntArray(POS);
+        int[] block = tag.getIntArray(BLOCK);
+        int[] owner = tag.getIntArray(OWNER);
         int count = Math.min(pos.length, Math.min(block.length, owner.length));
         for (int i = 0; i < count; i++) {
             if (block[i] >= 0 && block[i] < palette.size()) { entries.put(pos[i], new Entry(block[i], owner[i])); }

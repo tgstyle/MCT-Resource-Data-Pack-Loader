@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.layout;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public final class BeardKeep {
         HELD.addAll(spots);
     }
 
-    public static void holdSpot(int x, int y, int z) { hold(Collections.singleton(packed(x, y, z))); }
+    public static void holdSpot(int x, int y, int z) { hold(Collections.singleton(Longs.packPos(x, y, z))); }
 
     public static void watch(World world, StructureComponent piece, StructureBoundingBox clip) {
         forget();
@@ -149,7 +150,7 @@ public final class BeardKeep {
                     at.setPos(x, y, z);
                     IBlockState now = world.getBlockState(at);
                     if (now == was || now.getBlock() == Blocks.AIR || decayCheckOnly(was, now)) { continue; }
-                    mine.add(packed(x, y, z));
+                    mine.add(Longs.packPos(x, y, z));
                 }
             }
         }
@@ -177,14 +178,14 @@ public final class BeardKeep {
         if (LAMPS.isEmpty()) { return false; }
         for (int offX = -1; offX <= 1; offX++) {
             for (int offZ = -1; offZ <= 1; offZ++) {
-                if (LAMPS.containsKey(packed(x + offX, 0, z + offZ))) { return true; }
+                if (LAMPS.containsKey(Longs.packPos(x + offX, 0, z + offZ))) { return true; }
             }
         }
         return false;
     }
 
     @Nullable public static Set<Long> takeLamp(int x, int z) {
-        Set<Long> cells = LAMPS.remove(packed(x, 0, z));
+        Set<Long> cells = LAMPS.remove(Longs.packPos(x, 0, z));
         if (cells == null) { return null; }
         for (long cell : cells) {
             LAMPS.remove(column(cell));
@@ -231,11 +232,9 @@ public final class BeardKeep {
         }
     }
 
-    public static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFF); }
+    public static boolean holds(int x, int y, int z) { return HELD.contains(Longs.packPos(x, y, z)); }
 
-    public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
-
-    public static void letGo(int x, int y, int z) { HELD.remove(packed(x, y, z)); }
+    public static void letGo(int x, int y, int z) { HELD.remove(Longs.packPos(x, y, z)); }
 
     @Nullable public static StructureBoundingBox watchingBox() { return watched; }
 

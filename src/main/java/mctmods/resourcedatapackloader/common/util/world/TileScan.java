@@ -3,11 +3,20 @@ package mctmods.resourcedatapackloader.common.util.world;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.function.Predicate;
 
 public final class TileScan {
     private TileScan() {}
+
+    public static void clearSection(WorldServer world, Collection<BlockPos> positions, int sectionY) {
+        for (BlockPos pos : new ArrayList<>(positions)) {
+            if (pos.getY() >> 4 == sectionY) { world.removeTileEntity(pos); }
+        }
+    }
 
     public static void within(World world, BlockPos center, int radius, Predicate<TileEntity> visit) {
         for (int cx = center.getX() - radius >> 4; cx <= center.getX() + radius >> 4; cx++) {

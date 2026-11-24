@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AttributeDef;
 import mctmods.resourcedatapackloader.common.util.ContentAttributes;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,7 +24,7 @@ public class ContentPotion extends Potion {
     public ContentPotion(PotionDef def) {
         super(def.badEffect, def.liquidColor);
         this.def = def;
-        this.icon = def.iconTexture.isEmpty() ? null : new ResourceLocation(def.iconTexture);
+        this.icon = IdNames.optional(def.iconTexture);
         setRegistryName(def.registryName);
         setPotionName(def.name);
         setIconIndex(def.iconX, def.iconY);

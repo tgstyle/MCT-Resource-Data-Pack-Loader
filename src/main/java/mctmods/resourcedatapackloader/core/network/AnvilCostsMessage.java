@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core.network;
 
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
@@ -26,27 +27,16 @@ public class AnvilCostsMessage implements IMessage {
 
     @Override public void fromBytes(ByteBuf buf) {
         cap = buf.readInt();
-        paid = readSlots(buf);
-        lapis = readSlots(buf);
+        paid = PacketUtils.readInts(buf, AnvilCosts.SLOTS);
+        lapis = PacketUtils.readInts(buf, AnvilCosts.SLOTS);
         opening = buf.readBoolean();
-    }
-
-    private static int[] readSlots(ByteBuf buf) {
-        int[] values = new int[Math.min(buf.readByte(), AnvilCosts.SLOTS)];
-        for (int slot = 0; slot < values.length; slot++) { values[slot] = buf.readInt(); }
-        return values;
     }
 
     @Override public void toBytes(ByteBuf buf) {
         buf.writeInt(cap);
-        writeSlots(buf, paid);
-        writeSlots(buf, lapis);
+        PacketUtils.writeInts(buf, paid);
+        PacketUtils.writeInts(buf, lapis);
         buf.writeBoolean(opening);
-    }
-
-    private static void writeSlots(ByteBuf buf, int[] values) {
-        buf.writeByte(values.length);
-        for (int each : values) { buf.writeInt(each); }
     }
 
     public static class Handler extends AbstractClientMessageHandler<AnvilCostsMessage> {

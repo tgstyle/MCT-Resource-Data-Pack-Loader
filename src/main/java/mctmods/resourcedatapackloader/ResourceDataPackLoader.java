@@ -18,10 +18,13 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 
 @Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.14,);after:baubles;before:jei;") public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
+    public static final String PACK_ID = "rdpl";
     public static final String ICON = "textures/gui/icon.png";
     @Mod.Instance(MOD_ID) public static ResourceDataPackLoader INSTANCE;
 
     public static ResourceLocation id(String path) { return new ResourceLocation(MOD_ID, path); }
+
+    public static ResourceLocation rdpl(String path) { return new ResourceLocation(PACK_ID, path); }
 
     static { ModSetup.buckets(); }
 

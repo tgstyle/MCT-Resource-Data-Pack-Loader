@@ -55,6 +55,7 @@ public final class ContentParserSkyLook {
         Json.unknownKeys(sun, "sun", SUN_KEYS);
         if (!sample && KEYS.stream().noneMatch(sky::has) && HAZE.stream().noneMatch(sun::has)) { return null; }
         float cloudSpeed = Json.getFloat(sky, "cloudSpeed", 1.0F);
+        String owner = "Dimension " + key + " sky.sun";
         return new SkyLookDef(sample,
                 unit(key, sky, "fogDensity", 0.0F),
                 unit(key, sky, "fogGroundWeight", GROUND_WEIGHT),
@@ -77,12 +78,12 @@ public final class ContentParserSkyLook {
                 Json.getBoolean(sky, "rainbow", false),
                 color(key, sun, "color"),
                 color(key, sun, "auraColor"),
-                Json.ranged(sun, "auraSize", AURA_SIZE, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
-                Json.ranged(sun, "auraHorizon", 0.0F, 0.0F, 90.0F, "Dimension " + key + " sky.sun"),
-                (int) Json.ranged(sun, "lineCount", 0.0F, 0.0F, 64.0F, "Dimension " + key + " sky.sun"),
-                Json.ranged(sun, "lineStart", 0.25F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
-                Json.ranged(sun, "lineLength", 3.0F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
-                Json.ranged(sun, "lineWidth", 0.02F, 0.0F, 10.0F, "Dimension " + key + " sky.sun"),
+                Json.ranged(sun, "auraSize", AURA_SIZE, 0.0F, 1000.0F, owner),
+                Json.ranged(sun, "auraHorizon", 0.0F, 0.0F, 90.0F, owner),
+                (int) Json.ranged(sun, "lineCount", 0.0F, 0.0F, 64.0F, owner),
+                Json.ranged(sun, "lineStart", 0.25F, 0.0F, 1000.0F, owner),
+                Json.ranged(sun, "lineLength", 3.0F, 0.0F, 1000.0F, owner),
+                Json.ranged(sun, "lineWidth", 0.02F, 0.0F, 10.0F, owner),
                 argb(key, sun),
                 color(key, sky, "grassTint"),
                 color(key, sky, "foliageTint"),
@@ -149,7 +150,7 @@ public final class ContentParserSkyLook {
 
     static int color(ResourceLocation key, JsonObject json, String member) {
         String value = Json.getString(json, member, "").trim();
-        return value.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(value, key + " sky." + member) & 0xFFFFFF;
+        return value.isEmpty() ? SkyLookDef.UNSET : ContentTypes.rgb(value, key + " sky." + member);
     }
 
     static int argb(ResourceLocation key, JsonObject json) {
@@ -166,7 +167,7 @@ public final class ContentParserSkyLook {
             JsonObject layer = Json.getJsonObject(element, "cloud layer");
             Json.unknownKeys(layer, "cloudLayers", LAYER_KEYS);
             String tint = Json.getString(layer, "color", "").trim();
-            layers.add(new SkyLookDef.CloudLayer(Json.getFloat(layer, "height", cloudHeight), Json.getFloat(layer, "speed", cloudSpeed), tint.isEmpty() ? cloudColor : ContentTypes.color(tint, key + " sky.cloudLayers") & 0xFFFFFF));
+            layers.add(new SkyLookDef.CloudLayer(Json.getFloat(layer, "height", cloudHeight), Json.getFloat(layer, "speed", cloudSpeed), tint.isEmpty() ? cloudColor : ContentTypes.rgb(tint, key + " sky.cloudLayers")));
         }
         return Collections.unmodifiableList(layers);
     }
@@ -176,7 +177,7 @@ public final class ContentParserSkyLook {
         return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), Json.getFloat(heat, "minTemperature", HOT), Json.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat));
     }
 
-    private static boolean followsWorld(ResourceLocation key, JsonObject heat) { return WORLD.equals(Json.choice(heat, "mode", SCREEN, "Dimension " + key + " sky.heat", MODES)); }
+    private static boolean followsWorld(ResourceLocation key, JsonObject heat) { return Json.choiceIs(heat, "mode", SCREEN, "Dimension " + key + " sky.heat", MODES, WORLD); }
 
     private static float startDistance(ResourceLocation key, JsonObject heat) {
         float value = Json.getFloat(heat, "startDistance", HEAT_START);

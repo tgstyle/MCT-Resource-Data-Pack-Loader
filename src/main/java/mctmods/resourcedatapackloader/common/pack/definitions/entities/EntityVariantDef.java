@@ -65,7 +65,7 @@ public final class EntityVariantDef {
     public final int trackingRange;
     public final int trackingFrequency;
     public final boolean trackVelocity;
-    public final Map<String, Double> attributes;
+    public final PhaseDef combat;
     public final boolean hostile;
     public final boolean passive;
     public final List<String> targets;
@@ -93,19 +93,14 @@ public final class EntityVariantDef {
     public final List<String> biomes;
     public final List<String> biomeTypes;
     public final List<String> requires;
-    public final boolean charges;
-    public final boolean pounces;
     public final int sniffs;
     public final boolean sleepsByDay;
     public final int home;
     public final float fleesWhenHurt;
     public final boolean patrols;
     public final boolean swoops;
-    public final boolean gusts;
-    public final float gustPower;
     public final int threatLeast;
     public final int threatHostile;
-    public final List<TaskDef> tasks;
     public final float attackReach;
     public final int hurtResistance;
     public final float stepHeight;
@@ -133,7 +128,6 @@ public final class EntityVariantDef {
     @Nullable public final RocketDef rocket;
     @Nullable public final StorageDef storage;
     public final SpawnGateDef gate;
-    @Nullable public final BossBarDef bossBar;
     public final List<PhaseDef> phases;
     public final String dialog;
 
@@ -200,7 +194,7 @@ public final class EntityVariantDef {
         this.trackingRange = trackingRange;
         this.trackingFrequency = trackingFrequency;
         this.trackVelocity = trackVelocity;
-        this.attributes = attributes;
+        this.combat = new PhaseDef(1.0F, attributes, tasks, charges, pounces, gusts, gustPower, bossBar);
         this.hostile = hostile;
         this.passive = passive;
         this.targets = targets;
@@ -228,19 +222,14 @@ public final class EntityVariantDef {
         this.biomes = biomes;
         this.biomeTypes = biomeTypes;
         this.requires = requires;
-        this.charges = charges;
-        this.pounces = pounces;
         this.sniffs = sniffs;
         this.sleepsByDay = sleepsByDay;
         this.home = home;
         this.fleesWhenHurt = fleesWhenHurt;
         this.patrols = patrols;
         this.swoops = swoops;
-        this.gusts = gusts;
-        this.gustPower = gustPower;
         this.threatLeast = threatLeast;
         this.threatHostile = threatHostile;
-        this.tasks = tasks;
         this.attackReach = attackReach;
         this.hurtResistance = hurtResistance;
         this.stepHeight = stepHeight;
@@ -268,7 +257,6 @@ public final class EntityVariantDef {
         this.rocket = rocket;
         this.storage = storage;
         this.gate = gate;
-        this.bossBar = bossBar;
         this.phases = phases;
         this.dialog = dialog;
     }

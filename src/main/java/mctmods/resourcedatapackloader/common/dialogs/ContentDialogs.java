@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import static mctmods.resourcedatapackloader.common.pack.loading.parsers.CardParser.optional;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -51,7 +52,7 @@ public final class ContentDialogs {
         for (Map.Entry<ResourceLocation, DialogDef> entry : read.entrySet()) {
             if (ContentRegistry.available(entry.getValue().requires, entry.getKey())) { BY_KEY.put(entry.getValue().key, entry.getValue()); }
         }
-        if (!BY_KEY.isEmpty()) { Summary.info("dialogs", "Loaded " + BY_KEY.size() + " dialog(s)"); }
+        Summary.loaded("dialogs", BY_KEY.size(), "dialog(s)");
         for (EntityVariantDef variant : ContentEntities.variants()) {
             if (!variant.dialog.isEmpty() && find(variant.dialog) == null) { ContentLog.LOGGER.error("Entity variant {} names the dialog {}, which no pack provides, so it has no dialog", variant.registryName, variant.dialog); }
         }
@@ -80,19 +81,17 @@ public final class ContentDialogs {
             return null;
         }
         return new DialogDef(key, start, optional(json, "title"), optional(json, "icon"), optional(json, "color"), optional(json, "image"),
-                json.has("background") ? Json.getBoolean(json, "background") : null, optional(json, "font"),
+                Json.flagOrNull(json, "background"), optional(json, "font"),
                 optional(json, "titleColor"), optional(json, "textColor"), optional(json, "replyColor"), optional(json, "hoverColor"), optional(json, "hoverBackground"),
-                json.has("history") ? Json.getBoolean(json, "history") : null, Json.strings(json, "requires"), nodes);
+                Json.flagOrNull(json, "history"), Json.strings(json, ContentRegistry.REQUIRES), nodes);
     }
 
     private static Map<String, DialogDef.Node> nodes(String key, JsonObject json) {
         JsonObject raw = Json.getJsonObject(json, "nodes", new JsonObject());
         List<String> names = new ArrayList<>();
-        for (Map.Entry<String, JsonElement> entry : raw.entrySet()) {
-            if (!entry.getValue().isJsonObject()) { ContentLog.LOGGER.error("Dialog {} has a node '{}' that is not an object, skipping it", key, entry.getKey()); }
-            else if (names.size() >= MOST_NODES) { ContentLog.LOGGER.error("Dialog {} has more than {} nodes, skipping '{}'", key, MOST_NODES, entry.getKey()); }
-            else { names.add(entry.getKey()); }
-        }
+        Json.eachCapped(raw.entrySet(), MOST_NODES, entry -> entry.getValue().isJsonObject(), entry -> names.add(entry.getKey()),
+                entry -> ContentLog.LOGGER.error("Dialog {} has a node '{}' that is not an object, skipping it", key, entry.getKey()),
+                entry -> ContentLog.LOGGER.error("Dialog {} has more than {} nodes, skipping '{}'", key, MOST_NODES, entry.getKey()));
         Map<String, DialogDef.Node> nodes = new LinkedHashMap<>();
         for (String name : names) { nodes.put(name, node(key, name, raw.getAsJsonObject(name), names)); }
         return nodes;
@@ -101,19 +100,15 @@ public final class ContentDialogs {
     private static DialogDef.Node node(String key, String name, JsonObject json, List<String> names) {
         Json.unknownKeys(json, "nodes." + name, NODE_KEYS);
         List<String> lines = new ArrayList<>();
-        for (JsonElement element : Json.getJsonArray(json, "lines", new JsonArray())) {
-            if (!element.isJsonPrimitive()) { ContentLog.LOGGER.error("Dialog {} node {} has a line that is not text, skipping it", key, name); }
-            else if (lines.size() < MOST_LINES) { lines.add(Json.asString(element, "lines", "")); }
-        }
+        Json.eachCapped(Json.getJsonArray(json, "lines", new JsonArray()), MOST_LINES, JsonElement::isJsonPrimitive, element -> lines.add(Json.asString(element, "lines", "")),
+                element -> ContentLog.LOGGER.error("Dialog {} node {} has a line that is not text, skipping it", key, name),
+                element -> { });
         List<DialogDef.Reply> replies = new ArrayList<>();
-        for (JsonElement element : Json.getJsonArray(json, "replies", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("Dialog {} node {} has a reply that is not an object, skipping it", key, name);
-                continue;
-            }
+        Json.eachCapped(Json.getJsonArray(json, "replies", new JsonArray()), MOST_REPLIES, JsonElement::isJsonObject, element -> {
             DialogDef.Reply reply = reply(key, name, element.getAsJsonObject(), names);
-            if (reply != null && replies.size() < MOST_REPLIES) { replies.add(reply); }
-        }
+            return reply != null && replies.add(reply);
+        }, element -> ContentLog.LOGGER.error("Dialog {} node {} has a reply that is not an object, skipping it", key, name),
+                element -> reply(key, name, element.getAsJsonObject(), names));
         return new DialogDef.Node(optional(json, "title"), Collections.unmodifiableList(lines), Collections.unmodifiableList(replies));
     }
 
@@ -131,8 +126,6 @@ public final class ContentDialogs {
             return null;
         }
         CardWhen when = json.has("when") ? CardParser.when(Json.getJsonObject(json, "when"), new ResourceLocation(key), "Dialog") : null;
-        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade, DataSets.parse(json, "Dialog", key, "node " + node));
+        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, Json.RUNS, "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade, DataSets.parse(json, "Dialog", key, "node " + node));
     }
-
-    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }
 }

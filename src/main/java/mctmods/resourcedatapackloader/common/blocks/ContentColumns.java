@@ -6,9 +6,9 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.world.WorldEvents;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
@@ -33,10 +33,8 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class ContentColumns {
-    private static final String BLOCKS = "blocks";
     private static final String ALTERNATE = "alternate";
-    private static final int WORLD_EVENT_BREAK = 2001;
-    private static final List<String> COLUMN_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, ALTERNATE, "limit", "includeSelf", "unlessSneaking"));
+    private static final List<String> COLUMN_KEYS = Collections.unmodifiableList(Arrays.asList("requires", ContentParser.BLOCKS, ALTERNATE, "limit", "includeSelf", "unlessSneaking"));
     private static final List<String> ALTERNATE_KEYS = Collections.unmodifiableList(Arrays.asList("item", "chance"));
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -64,18 +62,18 @@ public final class ContentColumns {
 
     public static boolean clearing() { return clearing; }
 
-    private static void reload() {
-        RULES.clear();
-        GENERATION.stale();
-        Json.eachObject(PackManager.COLUMNS, "falling column", ContentColumns::read);
-        if (!RULES.isEmpty()) { Summary.info("content.columns", "Loaded " + RULES.size() + " falling column group(s)"); }
+    private static boolean idle() {
+        if (GENERATION.stale()) { reload(); }
+        return RULES.isEmpty();
     }
+
+    private static void reload() { PackGeneration.reload(RULES, PackManager.COLUMNS, "falling column", "content.columns", "falling column group(s)", ContentColumns::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", COLUMN_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         BlockGroup group = new BlockGroup();
-        for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, key, BLOCKS); }
+        for (BlockMatchDef match : ContentParser.matches(key, json, ContentParser.BLOCKS)) { group.add(match, key, ContentParser.BLOCKS); }
         if (group.isEmpty()) {
             ContentLog.LOGGER.error("Falling column {} names no registered blocks, ignoring it", key);
             return;
@@ -107,9 +105,7 @@ public final class ContentColumns {
         World world = event.getWorld();
         if (clearing || ContentCarry.breaking() || ContentCarry.probing() || world.isRemote || !(event.getPlayer() instanceof EntityPlayerMP) || event.getPlayer() instanceof FakePlayer) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
-        if (player.isSpectator()) { return; }
-        if (GENERATION.stale()) { reload(); }
-        if (RULES.isEmpty()) { return; }
+        if (player.isSpectator() || idle()) { return; }
         BlockPos origin = event.getPos();
         Rule rule = ruleFor(world.getBlockState(origin.up()));
         if (rule == null || rule.unlessSneaking && player.isSneaking() || !rule.includeSelf && rule.group.contains(event.getState())) { return; }
@@ -129,7 +125,7 @@ public final class ContentColumns {
             if (broken.isCanceled()) { return; }
             if (!player.isCreative()) { drop(world, pos, state, rule); }
             world.setBlockToAir(pos);
-            world.playEvent(null, WORLD_EVENT_BREAK, pos, Block.getStateId(state));
+            WorldEvents.breakEffect(world, null, pos, state);
         }
     }
 

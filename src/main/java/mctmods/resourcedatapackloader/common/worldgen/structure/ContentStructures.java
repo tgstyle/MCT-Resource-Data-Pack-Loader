@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTempla
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.util.worldgen.IForgettingStarts;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
@@ -127,15 +128,15 @@ public final class ContentStructures {
 
     private static Map<String, String> structureNames() {
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("Village", "villages");
-        map.put("Mineshaft", "mineshafts");
-        map.put("Stronghold", "strongholds");
-        map.put("Temple", "temples");
-        map.put("Monument", "monuments");
-        map.put("Mansion", "mansions");
-        map.put("Fortress", "netherbridges");
-        map.put("EndCity", "endcities");
-        map.put("reccomplex", "reccomplex");
+        map.put("Village", ContentStructurePlacement.VILLAGES);
+        map.put("Mineshaft", ContentStructurePlacement.MINESHAFTS);
+        map.put("Stronghold", ContentStructurePlacement.STRONGHOLDS);
+        map.put("Temple", ContentStructurePlacement.TEMPLES);
+        map.put("Monument", ContentStructurePlacement.MONUMENTS);
+        map.put("Mansion", ContentStructurePlacement.MANSIONS);
+        map.put("Fortress", ContentStructurePlacement.FORTRESSES);
+        map.put("EndCity", ContentStructurePlacement.ENDCITIES);
+        map.put(ContentStructurePlacement.RECCOMPLEX, ContentStructurePlacement.RECCOMPLEX);
         return Collections.unmodifiableMap(map);
     }
 
@@ -143,21 +144,21 @@ public final class ContentStructures {
         Set<String> keys = new LinkedHashSet<>();
         keys.add("caves");
         keys.add("ravines");
-        keys.add("mineshafts");
-        keys.add("villages");
-        keys.add("strongholds");
-        keys.add("temples");
-        keys.add("monuments");
-        keys.add("mansions");
-        keys.add("netherbridges");
-        keys.add("endcities");
-        keys.add("reccomplex");
+        keys.add(ContentStructurePlacement.MINESHAFTS);
+        keys.add(ContentStructurePlacement.VILLAGES);
+        keys.add(ContentStructurePlacement.STRONGHOLDS);
+        keys.add(ContentStructurePlacement.TEMPLES);
+        keys.add(ContentStructurePlacement.MONUMENTS);
+        keys.add(ContentStructurePlacement.MANSIONS);
+        keys.add(ContentStructurePlacement.FORTRESSES);
+        keys.add(ContentStructurePlacement.ENDCITIES);
+        keys.add(ContentStructurePlacement.RECCOMPLEX);
         return Collections.unmodifiableSet(keys);
     }
 
     private static Map<String, PopulateChunkEvent.Populate.EventType> populates() {
         Map<String, PopulateChunkEvent.Populate.EventType> map = new LinkedHashMap<>();
-        map.put("dungeons", PopulateChunkEvent.Populate.EventType.DUNGEON);
+        map.put(ContentStructurePlacement.DUNGEONS, PopulateChunkEvent.Populate.EventType.DUNGEON);
         map.put("waterlakes", PopulateChunkEvent.Populate.EventType.LAKE);
         map.put("lavalakes", PopulateChunkEvent.Populate.EventType.LAVA);
         map.put("netherlava", PopulateChunkEvent.Populate.EventType.NETHER_LAVA);

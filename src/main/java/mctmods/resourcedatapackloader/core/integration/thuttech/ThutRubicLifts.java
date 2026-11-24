@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.core.integration.thuttech;
 
-import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
@@ -30,6 +29,7 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ThutRubicLifts {
@@ -56,7 +56,7 @@ public final class ThutRubicLifts {
         }
 
         @SubscribeEvent public void onWorldTick(TickEvent.WorldTickEvent event) {
-            if (event.phase != TickEvent.Phase.END || !(event.world instanceof WorldServer)) { return; }
+            if (!SideUtils.serverEnd(event)) { return; }
             if (!GenHeights.rubic(event.world)) { return; }
             WorldServer world = (WorldServer) event.world;
             long time = world.getTotalWorldTime();
@@ -141,7 +141,7 @@ public final class ThutRubicLifts {
 
     private static void release(WorldServer world, Pin pin) {
         if (!pin.pinned) { return; }
-        Cube cube = ((CubeProviderServer) world.getChunkProvider()).getLoadedCube(pin.cubeX, pin.cubeY, pin.cubeZ);
+        Cube cube = ((IRubicWorldInternal.IServer) world).rdpl$getCubeCache().getLoadedCube(pin.cubeX, pin.cubeY, pin.cubeZ);
         if (cube != null) { cube.getTickets().remove(pin.ticket); }
         pin.pinned = false;
     }

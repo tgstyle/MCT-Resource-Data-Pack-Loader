@@ -38,6 +38,8 @@ public final class ContentStructurePlacement {
     public static final String ENDCITIES = "endcities";
     public static final String DUNGEONS = "dungeons";
     public static final String VILLAGES = "villages";
+    public static final int MIN_SPACING = 9;
+    public static final String RECCOMPLEX = "reccomplex";
     private static final Map<String, Integer> SPACING = new LinkedHashMap<>();
     private static final Map<String, Integer> SEPARATION = new LinkedHashMap<>();
     private static final Map<String, Integer> SPAWN_DISTANCE = new LinkedHashMap<>();
@@ -72,16 +74,18 @@ public final class ContentStructurePlacement {
         load();
         if (ContentControl.off(ContentControl.STRUCTURES) || world == null) { return true; }
         if (AT.containsKey(key)) { return pinned(key, chunkX, chunkZ); }
+        int centerX = chunkX * 16 + 8;
+        int centerZ = chunkZ * 16 + 8;
         int least = SPAWN_DISTANCE.getOrDefault(key, 0);
         if (least > 0) {
             BlockPos spawn = world.getSpawnPoint();
-            double dx = (chunkX * 16 + 8) - spawn.getX();
-            double dz = (chunkZ * 16 + 8) - spawn.getZ();
+            double dx = centerX - spawn.getX();
+            double dz = centerZ - spawn.getZ();
             if (dx * dx + dz * dz < (double) least * least) { return false; }
         }
         Set<String> wanted = BIOMES.get(key);
         if (wanted == null || wanted.isEmpty()) { return true; }
-        Biome biome = world.getBiomeProvider().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
+        Biome biome = world.getBiomeProvider().getBiome(new BlockPos(centerX, 0, centerZ));
         return Listing.allows(matches(biome, wanted), BLACKLISTS.getOrDefault(key, Boolean.FALSE));
     }
 

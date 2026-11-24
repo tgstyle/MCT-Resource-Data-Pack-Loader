@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.mixin.integration.forge.IASMEventHandler;
 import mctmods.resourcedatapackloader.mixin.integration.forge.IEventBus;
 
@@ -18,10 +19,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
-import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
@@ -46,43 +46,29 @@ public class CompatHandler {
     public static Set<String> getModsForStacktrace(StackTraceElement[] stacktrace) {
         Set<String> mods = new HashSet<>();
         for (StackTraceElement traceElement : stacktrace) {
-            try {
-                Class<?> cl = Class.forName(traceElement.getClassName());
-                String modid = packageToModId.get(getPackageName(cl));
-                if (modid != null && !modid.equals("minecraft") && !modid.equals("forge") && !modid.equals(Rubic.MODID)) { mods.add(modid); }
-            }
-            catch (ClassNotFoundException ignored) {}
+            String modid = modForClassName(traceElement.getClassName());
+            if (modid != null && !modid.equals(IdNames.VANILLA) && !modid.equals("forge") && !modid.equals(Rubic.MODID)) { mods.add(modid); }
         }
         return mods;
     }
 
     public static String getModForStacktraceElement(StackTraceElement traceElement) {
-        try {
-            Class<?> cl = Class.forName(traceElement.getClassName());
-            String modid = packageToModId.get(getPackageName(cl));
-            if (modid != null) { return modid; }
-        }
-        catch (ClassNotFoundException ignored) {}
-        return "(no mod)";
+        String modid = modForClassName(traceElement.getClassName());
+        return modid != null ? modid : "(no mod)";
     }
 
-    public static void beforePopulate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
+    @Nullable private static String modForClassName(String className) {
+        try { return packageToModId.get(getPackageName(Class.forName(className))); }
+        catch (ClassNotFoundException ignored) { return null; }
+    }
 
-    public static void afterPopulate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(0); }
+    public static void fakeVanillaHeight(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
 
-    public static void beforeGenerate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
+    public static void restoreHeight(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(0); }
 
-    public static void afterGenerate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(0); }
-
-    public static void postChunkPopulatePreWithFakeWorldHeight(EventBus bus, PopulateChunkEvent.Pre event) { postEventPerModFakeHeight(bus, event.getWorld(), event); }
-
-    public static void postBiomeDecorateWithFakeWorldHeight(EventBus bus, DecorateBiomeEvent.Decorate event) { postEventPerModFakeHeight(bus, event.getWorld(), event); }
-
-    public static boolean postBiomePostDecorateWithFakeWorldHeight(EventBus bus, DecorateBiomeEvent.Post event) { return postEventPerModFakeHeight(bus, event.getWorld(), event); }
-
-    private static boolean postEventPerModFakeHeight(EventBus bus, World world, Event event) {
+    public static boolean postWithFakeWorldHeight(EventBus bus, World world, Event event) {
         if (!(bus instanceof IEventBus) || !GenHeights.rubic(world)) { return bus.post(event); }
-        return postEvent(bus, (IRubicWorldInternal.IServer) world, event, w -> w.rdpl$fakeWorldHeight(VANILLA_HEIGHT), w -> w.rdpl$fakeWorldHeight(0));
+        return postEvent(bus, world, event, CompatHandler::fakeVanillaHeight, CompatHandler::restoreHeight);
     }
 
     public static void onCubeLoad(ChunkEvent.Load load) {
@@ -97,33 +83,19 @@ public class CompatHandler {
     private static void onChunkLoadImpl(ChunkEvent.Load load) {
         IEventBus bus = (IEventBus) MinecraftForge.EVENT_BUS;
         if (bus.isShutdown()) { return; }
-        int i = -1;
-        try {
-            for (i = 0; i < fakeChunkLoadListeners.length; i++) {
-                IEventListener fakeChunkLoadListener = fakeChunkLoadListeners[i];
-                fakeChunkLoadListener.invoke(load);
-            }
-        }
-        catch (Throwable throwable) {
-            bus.getExceptionHandler().handleException(MinecraftForge.EVENT_BUS, load, fakeChunkLoadListeners, i, throwable);
-            Throwables.throwIfUnchecked(throwable);
-            throw new RuntimeException(throwable);
-        }
+        dispatch(bus, MinecraftForge.EVENT_BUS, load, fakeChunkLoadListeners, () -> {}, () -> {});
     }
 
-    private static <T> boolean postEvent(EventBus bus, T ctx, Event event, Consumer<T> preEvt, Consumer<T> postEvt) {
-        IEventBus forgeEventBus = (IEventBus) bus;
-        if (forgeEventBus.isShutdown()) { return false; }
-        IEventListener[] listeners = event.getListenerList().getListeners(forgeEventBus.getBusID());
+    private static boolean dispatch(IEventBus forgeEventBus, EventBus bus, Event event, IEventListener[] listeners, Runnable before, Runnable after) {
         int index = 0;
         try {
             for (; index < listeners.length; index++) {
                 try {
                     IEventListener listener = listeners[index];
-                    preEvt.accept(ctx);
+                    before.run();
                     listener.invoke(event);
                 }
-                finally { postEvt.accept(ctx); }
+                finally { after.run(); }
             }
         }
         catch (Throwable throwable) {
@@ -132,6 +104,13 @@ public class CompatHandler {
             throw new RuntimeException(throwable);
         }
         return event.isCancelable() && event.isCanceled();
+    }
+
+    private static <T> boolean postEvent(EventBus bus, T ctx, Event event, Consumer<T> preEvt, Consumer<T> postEvt) {
+        IEventBus forgeEventBus = (IEventBus) bus;
+        if (forgeEventBus.isShutdown()) { return false; }
+        IEventListener[] listeners = event.getListenerList().getListeners(forgeEventBus.getBusID());
+        return dispatch(forgeEventBus, bus, event, listeners, () -> preEvt.accept(ctx), () -> postEvt.accept(ctx));
     }
 
     private static IEventListener[] getFakeEventListeners(ListenerList listenerList) {

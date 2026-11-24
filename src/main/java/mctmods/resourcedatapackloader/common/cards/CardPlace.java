@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.cards;
 
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.common.util.dimension.DimensionNames;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -11,10 +12,8 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
 
 public final class CardPlace {
     public static final int NEAR = 32;
@@ -25,7 +24,7 @@ public final class CardPlace {
     public static boolean elsewhere(String wanted, int dimension) {
         if (wanted.isEmpty()) { return false; }
         try { return Integer.parseInt(wanted) != dimension; }
-        catch (NumberFormatException ignored) { return !bare(wanted).equals(bare(dimensionName(dimension))); }
+        catch (NumberFormatException ignored) { return !bare(wanted).equals(bare(DimensionNames.dimensionName(dimension))); }
     }
 
     public static boolean inAny(List<String> wanted, int dimension) {
@@ -33,12 +32,6 @@ public final class CardPlace {
             if (!elsewhere(name, dimension)) { return true; }
         }
         return false;
-    }
-
-    static String dimensionName(int dimension) {
-        if (!DimensionManager.isDimensionRegistered(dimension)) { return Integer.toString(dimension); }
-        DimensionType type = DimensionManager.getProviderType(dimension);
-        return type == null ? Integer.toString(dimension) : type.getName();
     }
 
     private static String bare(String name) {
@@ -68,11 +61,13 @@ public final class CardPlace {
         return false;
     }
 
-    public static long day(World world) { return world.getWorldTime() / DimensionTraitsDef.VANILLA_DAY; }
+    public static long day(long time) { return time / DimensionTraitsDef.VANILLA_DAY; }
+
+    public static long day(World world) { return day(world.getWorldTime()); }
 
     public static int timeOfDay(World world) { return (int) (world.getWorldTime() % DimensionTraitsDef.VANILLA_DAY); }
 
     public static int tickOf(JsonObject json, String member) { return json.has(member) ? Math.floorMod(Json.getInt(json, member), (int) DimensionTraitsDef.VANILLA_DAY) : -1; }
 
-    public static boolean within(int time, int from, int to) { return from <= to ? time >= from && time <= to : time >= from || time <= to; }
+    public static boolean within(int time, int from, int to) { return DimensionTraitsDef.inWindow(time, from, to, true); }
 }

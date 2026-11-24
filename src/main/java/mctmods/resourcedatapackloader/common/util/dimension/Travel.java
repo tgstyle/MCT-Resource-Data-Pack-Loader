@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.common.util.dimension;
 
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ITeleporter;
 import javax.annotation.Nullable;
@@ -11,6 +14,11 @@ public final class Travel {
     private Travel() {}
 
     public static boolean to(Entity entity, int dimension, double x, double y, double z, float yaw, float pitch) { return move(entity, dimension, x, y, z, yaw, pitch) != null; }
+
+    public static boolean to(Entity entity, int dimension, BlockPos at, float yaw, float pitch) {
+        Vec3d feet = Walking.feet(at);
+        return to(entity, dimension, feet.x, feet.y, feet.z, yaw, pitch);
+    }
 
     @Nullable public static Entity move(Entity entity, int dimension, double x, double y, double z, float yaw, float pitch) {
         Entity moved = entity;

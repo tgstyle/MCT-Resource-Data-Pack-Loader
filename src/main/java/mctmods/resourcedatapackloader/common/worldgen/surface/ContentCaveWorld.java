@@ -32,10 +32,9 @@ import net.minecraftforge.event.terraingen.InitMapGenEvent;
 import net.minecraftforge.event.terraingen.TerrainGen;
 
 public final class ContentCaveWorld implements IChunkGenerator {
-    private static final int HEIGHT = 256;
+    static final int HEIGHT = 256;
     private static final int CELLS_Y = 32;
     private static final int SLIDE = 24;
-    private static final int BEDROCK_BAND = 5;
     private static final double SOLIDNESS = 0.3;
     private static final Set<String> UNUSABLE = new HashSet<>();
     private final World world;
@@ -135,8 +134,8 @@ public final class ContentCaveWorld implements IChunkGenerator {
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int floor = rand.nextInt(BEDROCK_BAND);
-                int roof = HEIGHT - 1 - rand.nextInt(BEDROCK_BAND);
+                int floor = rand.nextInt(ContentBedrock.MAX_LAYERS);
+                int roof = HEIGHT - 1 - rand.nextInt(ContentBedrock.MAX_LAYERS);
                 for (int y = 0; y <= floor; y++) { primer.setBlockState(x, y, z, bedrock); }
                 for (int y = roof; y < HEIGHT; y++) { primer.setBlockState(x, y, z, bedrock); }
             }

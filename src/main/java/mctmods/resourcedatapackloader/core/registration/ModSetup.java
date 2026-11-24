@@ -166,6 +166,7 @@ import mctmods.resourcedatapackloader.core.integration.streams.StreamsRubicValle
 import mctmods.resourcedatapackloader.core.integration.thuttech.ThutRubicLifts;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 
 import java.nio.file.Path;
 import net.minecraft.server.MinecraftServer;
@@ -176,9 +177,9 @@ import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.fml.relauncher.Side;
 
 public class ModSetup {
     public static void buckets() {
@@ -205,7 +206,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(ContentColumns.class);
         MinecraftForge.EVENT_BUS.register(ContentPairedDoors.class);
-        if (ContentLeafDecay.load()) { MinecraftForge.EVENT_BUS.register(LeafDecays.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentLeafDecay.load(), LeafDecays.class);
         MinecraftForge.EVENT_BUS.register(ContentTreeStore.class);
         MinecraftForge.EVENT_BUS.register(ContentTreeClock.class);
         MinecraftForge.EVENT_BUS.register(ContentTreeEvents.class);
@@ -222,7 +223,7 @@ public class ModSetup {
         LootTableList.register(ContentPierCargo.LOOT_TABLE);
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
-        if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentFuels.load(), ContentFuels.class);
         StructureSetup.villagePieces();
         GameRegistry.registerTileEntity(TileEntityPackContainer.class, ResourceDataPackLoader.id("container"));
         GameRegistry.registerTileEntity(TileEntityPackBell.class, ResourceDataPackLoader.id("bell"));
@@ -248,7 +249,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);
         MinecraftForge.EVENT_BUS.register(AnvilCosts.class);
-        if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentIntroPlay.enabled(), ContentIntroPlay.class);
         WorldgenSetup.applyBiomeControl();
         ContentSetup.applyFire();
         WorldgenSetup.terrainListeners();
@@ -261,16 +262,16 @@ public class ModSetup {
         }
         MinecraftForge.EVENT_BUS.register(ShieldEvents.class);
         MinecraftForge.EVENT_BUS.register(RespawnEvents.class);
-        if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
-        if (ContentDarkDamage.enabled()) { MinecraftForge.EVENT_BUS.register(ContentDarkDamage.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentPhysics.enabled(), ContentPhysics.class);
+        registerIf(MinecraftForge.EVENT_BUS, ContentDarkDamage.enabled(), ContentDarkDamage.class);
         VanillaFluidRules.load();
-        if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
-        if (FluidReactionQueue.wanted()) { MinecraftForge.EVENT_BUS.register(FluidReactionQueue.class); }
+        registerIf(MinecraftForge.EVENT_BUS, VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted(), VanillaFluidRules.class);
+        registerIf(MinecraftForge.EVENT_BUS, FluidReactionQueue.wanted(), FluidReactionQueue.class);
         WorldgenSetup.caveAmbience();
         MinecraftForge.EVENT_BUS.register(ContentProspect.class);
         WorldgenSetup.seams();
-        if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
-        if (ContentExposures.spreads()) { MinecraftForge.EVENT_BUS.register(ContentExposures.Mobs.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentExposures.enabled(), ContentExposures.class);
+        registerIf(MinecraftForge.EVENT_BUS, ContentExposures.spreads(), ContentExposures.Mobs.class);
         WorldgenSetup.biomeListeners();
         WorldgenSetup.worldTypeListeners();
         ContentDimensions.load();
@@ -279,9 +280,9 @@ public class ModSetup {
         ContentScoring.load();
         ContentDice.load();
         ContentBoards.load();
-        if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentRaids.load(), ContentRaids.class);
         MinecraftForge.EVENT_BUS.register(BaseSignals.class);
-        if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBellBlock.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentRaids.belled(), ContentBellBlock.class);
         SpawnLocks.load();
         SpawnSwaps.load();
         MinecraftForge.EVENT_BUS.register(SpawnSwaps.class);
@@ -309,10 +310,10 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);
             MinecraftForge.EVENT_BUS.register(ContentBlink.class);
             MinecraftForge.EVENT_BUS.register(EntityStorage.class);
-            if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
+            registerIf(MinecraftForge.EVENT_BUS, ContentOrders.load(), ContentOrders.class);
         }
-        if (ContentRanks.load()) { MinecraftForge.EVENT_BUS.register(ContentRanks.class); }
-        if (ContentRanks.stealing()) { MinecraftForge.EVENT_BUS.register(RankSteal.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentRanks.load(), ContentRanks.class);
+        registerIf(MinecraftForge.EVENT_BUS, ContentRanks.stealing(), RankSteal.class);
         ContentHearts.load();
         MinecraftForge.EVENT_BUS.register(ContentHearts.class);
         StructureSetup.villages();
@@ -320,8 +321,8 @@ public class ModSetup {
         ContentFtbLib.install();
         ContentFtbUtilities.install();
         ContentGates.load();
-        if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
-        if (ContentGates.looting()) { MinecraftForge.EVENT_BUS.register(GateLoot.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentGates.enabled(), GateEvents.class);
+        registerIf(MinecraftForge.EVENT_BUS, ContentGates.looting(), GateLoot.class);
         MinecraftForge.EVENT_BUS.register(GateSync.class);
         MinecraftForge.EVENT_BUS.register(SyncDataEvents.class);
         MinecraftForge.EVENT_BUS.register(ItemLockSync.class);
@@ -332,7 +333,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(DialogEvents.class);
         MinecraftForge.EVENT_BUS.register(CardEvents.class);
         MinecraftForge.EVENT_BUS.register(CardScan.class);
-        if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
+        registerIf(MinecraftForge.EVENT_BUS, !Loader.isModLoaded("universaltweaks"), VanillaPortalLink.class);
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
         WorldgenSetup.planets();
@@ -340,8 +341,8 @@ public class ModSetup {
         StructureSetup.pathListeners();
         WorldgenSetup.generators();
         boolean anvils = ContentAnvils.load();
-        if (ContentAffixes.load()) { MinecraftForge.EVENT_BUS.register(ContentAffixes.class); }
-        if (anvils || ContentAffixes.sockets()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentAffixes.load(), ContentAffixes.class);
+        registerIf(MinecraftForge.EVENT_BUS, anvils || ContentAffixes.sockets(), ContentAnvils.class);
         ContentEnchanting.load();
         ContentSleep.load();
         MinecraftForge.EVENT_BUS.register(TableLapis.class);
@@ -368,7 +369,7 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);
         }
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientProxy.init(); }
+        if (SideUtils.isClient()) { ClientProxy.init(); }
     }
 
     public static void interModComms() {
@@ -383,7 +384,7 @@ public class ModSetup {
 
     public static void loadComplete() {
         ContentVillagers.applyTrades();
-        if (ContentTradeGate.active()) { MinecraftForge.EVENT_BUS.register(ContentTradeGate.class); }
+        registerIf(MinecraftForge.EVENT_BUS, ContentTradeGate.active(), ContentTradeGate.class);
         ContentOreDict.copyMatching();
         RecipeSwaps.apply();
         RecipeDisabled.apply();
@@ -427,7 +428,7 @@ public class ModSetup {
         StructureSetup.reloadVillages();
         ContentChunkSaves.reload();
         ContentSpawnChunks.reload();
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientProxy.reload(); }
+        if (SideUtils.isClient()) { ClientProxy.reload(); }
         CardRules.load();
         ContentDialogs.load();
         CommandGuards.load();
@@ -443,15 +444,16 @@ public class ModSetup {
     }
 
     public static void onServerStarted() {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         PackSchedules.restart();
         ContentCelestial.serverStarted();
-        ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
-        ContentEnvironments.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
-        ContentMobSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
-        ContentLootSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentBoards.rebuild(server);
+        ContentEnvironments.serverStarted(server);
+        ContentMobSwitch.serverStarted(server);
+        ContentLootSwitch.serverStarted(server);
         ContentTradeSwitch.serverStarted();
-        ContentItemLocks.report(FMLCommonHandler.instance().getMinecraftServerInstance());
-        FunctionOverrides.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentItemLocks.report(server);
+        FunctionOverrides.serverStarted(server);
     }
 
     public static void onServerStopping() { WorldgenSetup.serverStopping(); }
@@ -471,7 +473,11 @@ public class ModSetup {
         GateEvents.serverStopped();
         SyncData.stopped();
         DissolvePass.clear();
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
+        if (SideUtils.isClient()) { return; }
         PackManager.get().close();
+    }
+
+    static void registerIf(EventBus bus, boolean when, Class<?> listener) {
+        if (when) { bus.register(listener); }
     }
 }

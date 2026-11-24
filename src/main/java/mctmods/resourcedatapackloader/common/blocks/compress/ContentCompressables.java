@@ -69,7 +69,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
             if (source == null || !ContentRegistry.available(source.requires, def.key)) { continue; }
             CompressedSet set = new CompressedSet(def, source);
             Map<ResourceLocation, BlockDef> made = new LinkedHashMap<>();
-            for (int index = 0; index < set.blockCount(); index++) { made.put(set.blockName(index * BlockDef.MAX_META + set.low()), blockDef(set, index)); }
+            for (int index = 0; index < set.blockCount(); index++) { made.put(set.blockName(set.first(index)), blockDef(set, index)); }
             ResourceLocation taken = null;
             for (ResourceLocation name : made.keySet()) {
                 if (defs.containsKey(name)) { taken = name; }
@@ -87,8 +87,8 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
     private static BlockDef blockDef(CompressedSet set, int index) {
         CompressedSource source = set.source;
-        int first = index * BlockDef.MAX_META + set.low();
-        int last = Math.min(set.layers, first + BlockDef.MAX_META - 1);
+        int first = set.first(index);
+        int last = set.last(index);
         ResourceLocation name = set.blockName(first);
         BlockVariant[] byMeta = new BlockVariant[BlockDef.MAX_META];
         List<BlockVariant> visible = new ArrayList<>();

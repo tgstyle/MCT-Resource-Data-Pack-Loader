@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.entity.player;
 
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -17,6 +18,6 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
         if (!GenHeights.rubic(worldIn)) { return orig; }
         EntityPlayerMP self = (EntityPlayerMP) (Object) this;
         if (!worldIn.isBlockLoaded(new BlockPos(self))) { return Double.NEGATIVE_INFINITY; }
-        return GenHeights.ceiling(worldIn, 256) - 1;
+        return GenHeights.ceiling(worldIn, CompatHandler.VANILLA_HEIGHT) - 1;
     }
 }

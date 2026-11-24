@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.blocks.compress.CompressedSet;
 import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import javax.annotation.Nonnull;
 import net.minecraft.block.Block;
@@ -26,7 +27,7 @@ import net.minecraft.item.ItemStack;
 
     @Override @Nonnull public String getItemStackDisplayName(@Nonnull ItemStack stack) {
         CompressedSet set = ContentCompressables.owner(def.registryName);
-        return set == null ? super.getItemStackDisplayName(stack) : CompressedNames.of(set, set.layerOf(def.registryName, stack.getMetadata()), getTranslationKey(stack) + ".name");
+        return set == null ? super.getItemStackDisplayName(stack) : CompressedNames.of(set, set.layerOf(def.registryName, stack.getMetadata()), Lang.nameKey(getTranslationKey(stack)));
     }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) { return def.at(stack.getMetadata()).rarity; }

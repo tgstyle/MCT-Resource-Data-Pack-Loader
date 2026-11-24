@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVarian
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.CompressableDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.Collections;
@@ -67,7 +68,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
     private static List<String> requires(ResourceLocation name) {
         String namespace = name.getNamespace();
-        return "minecraft".equals(namespace) ? Collections.emptyList() : Collections.singletonList(namespace);
+        return IdNames.VANILLA.equals(namespace) ? Collections.emptyList() : Collections.singletonList(namespace);
     }
 
     @Nullable private static CompressedSource pack(CompressableDef def, Map<ResourceLocation, BlockDef> defs) {

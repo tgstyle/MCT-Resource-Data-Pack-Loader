@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.mixin.world;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 
@@ -48,8 +47,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "isDaytime", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$lockedDaytime(CallbackInfoReturnable<Boolean> cir) {
         int wanted = rdpl$wanted();
         if (wanted < 0) { return; }
-        long time = wanted % DimensionTraitsDef.VANILLA_DAY;
-        cir.setReturnValue(time < 12300L || time > 23850L);
+        cir.setReturnValue(ContentDimensionRules.daytime(wanted));
     }
 
     @Unique private int rdpl$wanted() {

@@ -33,6 +33,7 @@ import mctmods.resourcedatapackloader.common.scoring.ContentRoundReset;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.scoring.RoundSay;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentOreVein;
@@ -49,9 +50,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
+import java.util.function.ToIntFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.command.CommandBase;
@@ -73,7 +77,12 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "data", "environment", "game", "raid", "portway", "talk", "sneak", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry", "tree");
+    private static final String GOTO_LEVEL = "gotoLevel";
+    private static final String GOTO_NEXT_LEVEL = "gotoNextLevel";
+    private static final String GOTO_BACK_LEVEL = "gotoBackLevel";
+    private static final String GOTO_PLACE_LEVELS = "gotoPlaceLevels";
+    private static final String NAME_LEVEL = "name=level";
+    private static final List<String> SUBCOMMANDS = subcommands();
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -92,7 +101,58 @@ public class ServerCommands extends CommandBase {
         STRUCTURE_ALIASES.put("endcities", "EndCity");
     }
 
-    @Override @Nonnull public String getName() { return "rdplserver"; }
+    private static final Map<String, IntSupplier> LEVELS = new LinkedHashMap<>();
+    static {
+        LEVELS.put("card", () -> CardCommand.LEVEL);
+        LEVELS.put("data", () -> CardCommand.LEVEL);
+        LEVELS.put("portway", () -> PortwayCommand.LEVEL);
+        LEVELS.put("environment", () -> EnvironmentCommand.LEVEL);
+        for (String name : ClaimCommand.NAMES) { LEVELS.put(name, ClaimSettings::commandLevel); }
+    }
+
+    private interface Run { void run(MinecraftServer server, ICommandSender sender, String[] args, String usage) throws CommandException; }
+
+    private interface Complete { List<String> complete(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos); }
+
+    private static final Map<String, Run> RUNNERS = new HashMap<>();
+    static {
+        RUNNERS.put("gate", GateCommand::run);
+        RUNNERS.put("portway", PortwayCommand::run);
+        RUNNERS.put("card", CardCommand::run);
+        RUNNERS.put("data", DataCommand::run);
+        RUNNERS.put("game", (server, sender, args, usage) -> GameCommand.run(server, sender, args));
+        RUNNERS.put("raid", RaidCommand::run);
+        RUNNERS.put("environment", EnvironmentCommand::run);
+        RUNNERS.put("talk", TalkCommand::run);
+        RUNNERS.put("weight", (server, sender, args, usage) -> { if (args.length > 2) { throw new WrongUsageException(usage); } WeightCommand.run(server, sender, args); });
+        RUNNERS.put("sneak", (server, sender, args, usage) -> { if (!SneakCommand.valid(args)) { throw new WrongUsageException(usage); } SneakCommand.run(sender, args); });
+        RUNNERS.put("tree", (server, sender, args, usage) -> { if (!TreeCommand.valid(args)) { throw new WrongUsageException(usage); } TreeCommand.run(sender, args); });
+        RUNNERS.put("ownership", OwnershipCommand::run);
+    }
+
+    private static final Map<String, Complete> COMPLETERS = new HashMap<>();
+    static {
+        COMPLETERS.put("data", (server, sender, args, targetPos) -> DataCommand.complete(server, args));
+        COMPLETERS.put("game", (server, sender, args, targetPos) -> GameCommand.complete(server, sender, args));
+        COMPLETERS.put("environment", (server, sender, args, targetPos) -> EnvironmentCommand.complete(args));
+        COMPLETERS.put("gate", (server, sender, args, targetPos) -> GateCommand.complete(server, args));
+        COMPLETERS.put("portway", (server, sender, args, targetPos) -> PortwayCommand.complete(server, args));
+        COMPLETERS.put("talk", (server, sender, args, targetPos) -> TalkCommand.complete(server, args));
+        COMPLETERS.put("weight", (server, sender, args, targetPos) -> WeightCommand.complete(server, args));
+        COMPLETERS.put("sneak", (server, sender, args, targetPos) -> SneakCommand.complete(args));
+        COMPLETERS.put("tree", (server, sender, args, targetPos) -> TreeCommand.complete(args, targetPos));
+        COMPLETERS.put("ownership", (server, sender, args, targetPos) -> OwnershipCommand.complete(args));
+        COMPLETERS.put("raid", (server, sender, args, targetPos) -> RaidCommand.complete(server, args));
+    }
+
+    private static List<String> subcommands() {
+        List<String> names = new ArrayList<>(Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "data", "environment", "game", "raid", "portway", "talk", "sneak", "weight", "ownership"));
+        names.addAll(ClaimCommand.NAMES);
+        names.addAll(Arrays.asList("dumpregistry", "tree"));
+        return names;
+    }
+
+    @Override @Nonnull public String getName() { return CommandShared.NAME; }
 
     @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return Lang.tr(sender, "rdpl.command.serverusage"); }
 
@@ -106,7 +166,7 @@ public class ServerCommands extends CommandBase {
 
     static int listedLevel(String key, String[] global, String name, int fallback) {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, key, global)) {
-            String[] parts = Settings.pair(entry, key, "name=level");
+            String[] parts = Settings.pair(entry, key, NAME_LEVEL);
             if (parts == null) { continue; }
             if (!parts[0].trim().equalsIgnoreCase(name)) { continue; }
             int parsed = parsedLevel(key, entry, parts);
@@ -121,31 +181,44 @@ public class ServerCommands extends CommandBase {
         return parsed == null ? -1 : parsed;
     }
 
-    private static int neededFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels, place, level(key, fallback)); }
+    private static int neededFor(String place, String key, int fallback) { return listedLevel(GOTO_PLACE_LEVELS, Config.commands.gotoPlaceLevels, place, level(key, fallback)); }
 
     public static int locateLevel() { return level("locateLevel", Config.commands.locateLevel); }
 
     public static void point(EntityPlayerMP player, String asked, Consumer<BlockPos> found) {
         World world = player.world;
-        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        String name = aliased(asked);
         Biome biome = biomeFor(world, name);
         if (biome != null) { ContentBiomeSearch.start(player, String.valueOf(biome.getRegistryName()), biome, false, found); }
         else if (ContentLocate.names(world).contains(name)) { found.accept(ContentLocate.nearest(world, name, player.getPosition())); }
         else { ContentStructureSearch.start(player, name, keyFor(name), false, false, found); }
     }
 
-    private static int lowestGotoLevel() {
+    static int lowest(Iterable<String> keys, ToIntFunction<String> level) {
         int lowest = OPERATOR;
-        lowest = Math.min(lowest, level("gotoLevel", Config.commands.gotoLevel));
-        lowest = Math.min(lowest, level("gotoNextLevel", Config.commands.gotoNextLevel));
-        lowest = Math.min(lowest, level("gotoBackLevel", Config.commands.gotoBackLevel));
-        for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
-            String[] parts = Settings.pair(entry, "gotoPlaceLevels", "name=level");
-            if (parts == null) { continue; }
-            int parsed = parsedLevel("gotoPlaceLevels", entry, parts);
-            if (parsed >= 0) { lowest = Math.min(lowest, parsed); }
-        }
+        for (String key : keys) { lowest = Math.min(lowest, level.applyAsInt(key)); }
         return lowest;
+    }
+
+    private static int gotoLevelOf(String key) {
+        switch (key) {
+            case GOTO_LEVEL: return level(key, Config.commands.gotoLevel);
+            case GOTO_NEXT_LEVEL: return level(key, Config.commands.gotoNextLevel);
+            case GOTO_BACK_LEVEL: return level(key, Config.commands.gotoBackLevel);
+            default: return OPERATOR;
+        }
+    }
+
+    private static int placeLevelOf(String entry) {
+        String[] parts = Settings.pair(entry, GOTO_PLACE_LEVELS, NAME_LEVEL);
+        if (parts == null) { return OPERATOR; }
+        int parsed = parsedLevel(GOTO_PLACE_LEVELS, entry, parts);
+        return parsed >= 0 ? parsed : OPERATOR;
+    }
+
+    private static int lowestGotoLevel() {
+        int keyed = lowest(Arrays.asList(GOTO_LEVEL, GOTO_NEXT_LEVEL, GOTO_BACK_LEVEL), ServerCommands::gotoLevelOf);
+        return Math.min(keyed, lowest(Arrays.asList(ContentControl.list(ContentControl.COMMANDS, GOTO_PLACE_LEVELS, Config.commands.gotoPlaceLevels)), ServerCommands::placeLevelOf));
     }
 
     private static List<String> forOperator() {
@@ -172,19 +245,9 @@ public class ServerCommands extends CommandBase {
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
-        if (args.length >= 2 && "data".equals(args[0])) { return DataCommand.complete(server, args); }
-        if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
-        if (args.length >= 2 && "environment".equals(args[0])) { return EnvironmentCommand.complete(args); }
-        if (args.length >= 2 && "gate".equals(args[0])) { return GateCommand.complete(server, args); }
-        if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
-        if (args.length >= 2 && "talk".equals(args[0])) { return TalkCommand.complete(server, args); }
-        if (args.length >= 2 && "weight".equals(args[0])) { return WeightCommand.complete(server, args); }
-        if (args.length >= 2 && "sneak".equals(args[0])) { return SneakCommand.complete(args); }
-        if (args.length >= 2 && "tree".equals(args[0])) { return TreeCommand.complete(args, targetPos); }
-        if (args.length >= 2 && "ownership".equals(args[0])) { return OwnershipCommand.complete(args); }
+        if (args.length >= 2 && COMPLETERS.containsKey(args[0])) { return COMPLETERS.get(args[0]).complete(server, sender, args, targetPos); }
         if (args.length >= 2 && ClaimCommand.handles(args[0])) { return ClaimCommand.complete(server, sender, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
-        if (args.length >= 2 && "raid".equals(args[0])) { return RaidCommand.complete(server, args); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
         if (args.length == 2 && "vein".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentWorldgen.veinNames()); }
@@ -204,7 +267,7 @@ public class ServerCommands extends CommandBase {
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
             known.addAll(ContentDungeons.locateNames(sender.getEntityWorld()));
             known.addAll(biomeNames());
-            known.removeIf(place -> !sender.canUseCommand(neededFor(place, "gotoLevel", Config.commands.gotoLevel), getName()));
+            known.removeIf(place -> !sender.canUseCommand(neededFor(place, GOTO_LEVEL, Config.commands.gotoLevel), getName()));
             return getListOfStringsMatchingLastWord(args, known);
         }
         if (args.length == 3 && "goto".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Arrays.asList("next", "back")); }
@@ -218,14 +281,12 @@ public class ServerCommands extends CommandBase {
             if (args.length < 2) { throw new WrongUsageException(getUsage(sender)); }
             String place = placeOf(args);
             String direction = directionOf(args);
-            if ("next".equals(direction)) { allowGoto(sender, neededFor(place, "gotoNextLevel", Config.commands.gotoNextLevel)); }
-            else if ("back".equals(direction)) { allowGoto(sender, neededFor(place, "gotoBackLevel", Config.commands.gotoBackLevel)); }
-            else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
+            if ("next".equals(direction)) { allowGoto(sender, neededFor(place, GOTO_NEXT_LEVEL, Config.commands.gotoNextLevel)); }
+            else if ("back".equals(direction)) { allowGoto(sender, neededFor(place, GOTO_BACK_LEVEL, Config.commands.gotoBackLevel)); }
+            else { allowGoto(sender, neededFor(place, GOTO_LEVEL, Config.commands.gotoLevel)); }
         }
-        else if ("card".equals(args[0]) || "data".equals(args[0]) || "talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
-        else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
-        else if (ClaimCommand.handles(args[0])) { allow(sender, ClaimSettings.commandLevel()); }
-        else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
+        else if (LEVELS.containsKey(args[0])) { allow(sender, LEVELS.get(args[0]).getAsInt()); }
+        else if ("talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && !"sneak".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (ClaimCommand.handles(args[0])) { ClaimCommand.run(server, sender, args, getUsage(sender)); }
@@ -234,8 +295,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender, "rdpl.command.serverunusednote"); }
         else if (args.length == 1 && "oregen".equals(args[0])) { oregen(sender); }
         else if (args.length == 1 && "generators".equals(args[0])) { generators(sender); }
-        else if ("gate".equals(args[0])) { GateCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("portway".equals(args[0])) { PortwayCommand.run(server, sender, args, getUsage(sender)); }
+        else if (RUNNERS.containsKey(args[0])) { RUNNERS.get(args[0]).run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else if (args.length >= 2 && "biome".equals(args[0]) && "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }
@@ -252,16 +312,6 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
         else if ("goto".equals(args[0])) { goWhere(sender, args); }
         else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
-        else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("data".equals(args[0])) { DataCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
-        else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
-        else if ("weight".equals(args[0]) && args.length <= 2) { WeightCommand.run(server, sender, args); }
-        else if ("sneak".equals(args[0]) && SneakCommand.valid(args)) { SneakCommand.run(sender, args); }
-        else if ("tree".equals(args[0]) && TreeCommand.valid(args)) { TreeCommand.run(sender, args); }
-        else if ("ownership".equals(args[0])) { OwnershipCommand.run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "dumpregistry".equals(args[0])) { RegistryDumpCommand.run(server, sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
@@ -284,7 +334,7 @@ public class ServerCommands extends CommandBase {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
         EntityPlayerMP player = CommandShared.goer(sender);
         World world = player.world;
-        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        String name = aliased(asked);
         Biome biome = biomeFor(world, name);
         if (biome != null) {
             if (ContentBiomeSearch.looking()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotobusy")); }
@@ -308,7 +358,7 @@ public class ServerCommands extends CommandBase {
     private void goBack(ICommandSender sender, String asked) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
         EntityPlayerMP player = CommandShared.goer(sender);
-        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        String name = aliased(asked);
         Biome biome = biomeFor(player.world, name);
         if (biome != null) { name = String.valueOf(biome.getRegistryName()); }
         BlockPos previous = ContentStructureSearch.stepBack(player, name);
@@ -318,6 +368,8 @@ public class ServerCommands extends CommandBase {
         player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(player.world, landing), landing.getZ() + 0.5D);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
     }
+
+    private static String aliased(String asked) { return STRUCTURE_ALIASES.getOrDefault(asked, asked); }
 
     @Nullable private static Biome biomeFor(World world, String name) {
         if (STRUCTURE_NAMES.contains(name) || ContentLocate.names(world).contains(name) || ContentDungeons.locateNames(world).contains(name)) { return null; }
@@ -404,7 +456,7 @@ public class ServerCommands extends CommandBase {
         }
         if ("claim".equals(args[1])) {
             if (mine == null) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.claim.noteam")); return; }
-            if (!"claim".equals(mine.lead)) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.claim.noclaim", mine.displayName)); return; }
+            if (!TeamDef.LEAD_CLAIM.equals(mine.lead)) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.claim.noclaim", mine.displayName)); return; }
             boolean took = ContentTeams.claim(player.world, player.getName(), mine);
             send(sender, took ? mine.color : TextFormatting.RED,
                     took ? mine.leadSays.replace("{side}", mine.displayName) : Lang.tr(sender, "rdpl.team.claim.held", ContentTeams.holding(mine), mine.displayName));
@@ -456,10 +508,12 @@ public class ServerCommands extends CommandBase {
         if (CubicChunksWorlds.cubic(sender.getEntityWorld())) { throw new CommandException(Lang.tr(sender, "rdpl.command.cubicchunks")); }
         int radius = parseInt(args[1], 0, 8192);
         BlockPos at = sender.getPosition();
-        int dimension = sender.getEntityWorld().provider.getDimension();
-        long total = ContentPregen.start(sender, dimension, at.getX() >> 4, at.getZ() >> 4, radius, lightOnly);
-        if (lightOnly) { send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.relighting", total, at.getX() >> 4, at.getZ() >> 4, dimension)); }
-        else { send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.making", total, at.getX() >> 4, at.getZ() >> 4, dimension)); }
+        int dimension = CommandShared.dimensionOf(sender);
+        int chunkX = Coords.blockToCube(at.getX());
+        int chunkZ = Coords.blockToCube(at.getZ());
+        long total = ContentPregen.start(sender, dimension, chunkX, chunkZ, radius, lightOnly);
+        if (lightOnly) { send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.relighting", total, chunkX, chunkZ, dimension)); }
+        else { send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.making", total, chunkX, chunkZ, dimension)); }
     }
 
     private void reload(MinecraftServer server, ICommandSender sender) throws CommandException {
@@ -493,8 +547,8 @@ public class ServerCommands extends CommandBase {
         ContentOreVein shape = (ContentOreVein) def.getShape();
         World world = sender.getEntityWorld();
         BlockPos here = sender.getPosition();
-        int chunkX = here.getX() >> 4;
-        int chunkZ = here.getZ() >> 4;
+        int chunkX = Coords.blockToCube(here.getX());
+        int chunkZ = Coords.blockToCube(here.getZ());
         List<ContentOreVein.Vein> found = new ArrayList<>();
         for (int cx = chunkX - radius; cx <= chunkX + radius; cx++) {
             for (int cz = chunkZ - radius; cz <= chunkZ + radius; cz++) {

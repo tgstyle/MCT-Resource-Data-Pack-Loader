@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AttributeDef;
@@ -28,6 +29,14 @@ public final class ContentParserContainers {
     private static final List<String> BLOCK_KEYS = Collections.unmodifiableList(Arrays.asList("inherits", "variants", "type", "material", "mapColor", "soundType", "expDrop", "opaque", "maxAge", "creativeTab", "harvestTool", "harvestToolLevel", "silkHarvest", "explosionResistanceDivisor", "requires", "renderLayer", "fullCube", "lightOpacity", "slipperiness", "bounds", "flammability", "fireSpread", "modelBlock", "modelMeta", "itemModel", "particle", "smoke", "particleColor", "seed", "produce", "sapling", "portal", "growth", "plantTypes", "behavesAs", "tint", "leafSapling", "leafSaplingChance", "opensWith", "openSound", "container", "bell", "seasonSensor", "spreadsOnto", "needsOxygen", "portway", "weight", "tall", "blocksSpawns", "blocksWeather", "tagged", "compressable"));
     private static final List<String> ITEM_KEYS = Collections.unmodifiableList(Arrays.asList("inherits", "variants", "type", "creativeTab", "alwaysEdible", "requires", "useDuration", "eat", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "cooldown", "rocket", "rolls", "rollStore", "passesTurn", "wornEffects", "sleepingBag", "runs", "scriptFile", "script", "locates", "locatesEye", "locatesSound", "locatesRange", "containerItem", "container", "bauble", "opensWith", "wornAttributes", "upgrade", "attackReach", "fireSeconds", "sweep", "combo", "finisher", "portway", "weight", "firework", "seasonClock", "jukebox"));
 
+    private static final List<String> UNOPENED_LOOT = Collections.unmodifiableList(Arrays.asList("refuse", "carry"));
+    private static final List<String> CONTENTS = Collections.unmodifiableList(Arrays.asList("container", "slots", "nbt"));
+    private static final List<String> LINKED = Collections.unmodifiableList(Arrays.asList("refuse", "half"));
+    private static final List<String> FEWER_SLOTS = Collections.unmodifiableList(Arrays.asList("refuse", "fit"));
+    private static final List<String> STATE = Collections.unmodifiableList(Arrays.asList("carry", "named"));
+    private static final List<String> IDLE_CONTAINER = Collections.unmodifiableList(Arrays.asList("linked", "fewerSlots", "strict", "state"));
+    private static final List<String> IDLE_NBT = Collections.unmodifiableList(Arrays.asList("linked", "fewerSlots"));
+
     private ContentParserContainers() {}
 
     static void itemKeys(JsonObject json) { Json.unknownKeys(json, "the top level", ITEM_KEYS); }
@@ -40,7 +49,11 @@ public final class ContentParserContainers {
         return JsonUtils.isJsonPrimitive(json, "container") ? Json.getString(json, "container", "") : "";
     }
 
-    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null; }
+    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return containerObject(json) == null ? null : container(key, json); }
+
+    @Nullable private static JsonObject containerObject(JsonObject json) { return Json.objectOrNull(json, "container"); }
+
+    private static boolean chestModel(@Nullable JsonElement asked) { return asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean()); }
 
     @Nullable static ContainerDef container(ResourceLocation key, JsonObject json) {
         if (!json.has("container")) { return null; }
@@ -51,8 +64,7 @@ public final class ContentParserContainers {
         int rows = MathHelper.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
         int columns = MathHelper.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
         if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
-        String named = Json.getString(held, "guiTexture", "").trim();
-        ResourceLocation texture = named.isEmpty() ? null : new ResourceLocation(named);
+        ResourceLocation texture = Json.location(held, "guiTexture");
         int wide = Json.getInt(held, "guiWidth", 0);
         int tall = Json.getInt(held, "guiHeight", 0);
         if (texture != null && (wide <= 0 || tall <= 0)) {
@@ -60,7 +72,7 @@ public final class ContentParserContainers {
             texture = null;
         }
         JsonElement asked = held.get("chestModel");
-        boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+        boolean chest = chestModel(asked);
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
         boolean ender = Json.getBoolean(held, "ender", false);
         String loot = Json.getString(held, "lootTable", "").trim();
@@ -90,43 +102,37 @@ public final class ContentParserContainers {
             paths.add(path(key, element.getAsJsonObject(), from, to));
         }
         if (paths.isEmpty()) { ContentLog.LOGGER.error("The container upgrade {} has no valid path, so it fits nothing", key); }
-        boolean carry = "carry".equals(Json.choice(held, "unopenedLoot", "refuse", "Container upgrade " + key, Arrays.asList("refuse", "carry")));
+        boolean carry = Json.choiceIs(held, "unopenedLoot", "refuse", "Container upgrade " + key, UNOPENED_LOOT, "carry");
         return new ContainerUpgradeDef(Collections.unmodifiableList(paths), Json.getBoolean(held, "consume", true), carry);
     }
 
     private static ContainerUpgradeDef.Path path(ResourceLocation key, JsonObject entry, String from, String to) {
         String owner = "Container upgrade " + key;
         Json.unknownKeys(entry, "upgrade.paths", PATH_KEYS);
-        ContainerUpgradeDef.Contents contents = ContainerUpgradeDef.Contents.valueOf(Json.choice(entry, "contents", "container", owner, Arrays.asList("container", "slots", "nbt")).toUpperCase(Locale.ROOT));
-        for (String idle : idleKeys(contents)) {
-            if (entry.has(idle)) { ContentLog.LOGGER.error("The container upgrade {} sets {} on the path from {}, which has no effect on this path", key, idle, from); }
-        }
-        boolean half = "half".equals(Json.choice(entry, "linked", "refuse", owner, Arrays.asList("refuse", "half")));
-        boolean fit = "fit".equals(Json.choice(entry, "fewerSlots", "refuse", owner, Arrays.asList("refuse", "fit")));
-        boolean carry = "carry".equals(Json.choice(entry, "state", "carry", owner, Arrays.asList("carry", "named")));
+        ContainerUpgradeDef.Contents contents = ContainerUpgradeDef.Contents.valueOf(Json.choice(entry, "contents", "container", owner, CONTENTS).toUpperCase(Locale.ROOT));
+        for (String idle : Json.present(entry, idleKeys(contents))) { ContentLog.LOGGER.error("The container upgrade {} sets {} on the path from {}, which has no effect on this path", key, idle, from); }
+        boolean half = Json.choiceIs(entry, "linked", "refuse", owner, LINKED, "half");
+        boolean fit = Json.choiceIs(entry, "fewerSlots", "refuse", owner, FEWER_SLOTS, "fit");
+        boolean carry = Json.choiceIs(entry, "state", "carry", owner, STATE, "carry");
         return new ContainerUpgradeDef.Path(from, to, contents, half, fit, Json.getBoolean(entry, "strict", true), carry);
     }
 
     private static List<String> idleKeys(ContainerUpgradeDef.Contents contents) {
-        if (contents == ContainerUpgradeDef.Contents.CONTAINER) { return Arrays.asList("linked", "fewerSlots", "strict", "state"); }
-        return contents == ContainerUpgradeDef.Contents.NBT ? Arrays.asList("linked", "fewerSlots") : Collections.emptyList();
+        if (contents == ContainerUpgradeDef.Contents.CONTAINER) { return IDLE_CONTAINER; }
+        return contents == ContainerUpgradeDef.Contents.NBT ? IDLE_NBT : Collections.emptyList();
     }
 
     static String bauble(JsonObject json) {
         String named = Settings.lower(Json.getString(json, "bauble", ""));
-        if (!named.isEmpty() || !json.has("container") || !json.get("container").isJsonObject()) { return named; }
-        return Settings.lower(Json.getString(json.getAsJsonObject("container"), "bauble", ""));
+        JsonObject held = containerObject(json);
+        if (!named.isEmpty() || held == null) { return named; }
+        return Settings.lower(Json.getString(held, "bauble", ""));
     }
 
     static List<AttributeDef> wornAttributes(ResourceLocation key, JsonObject json) {
         List<AttributeDef> found = new ArrayList<>();
         if (!json.has("wornAttributes")) { return found; }
-        for (JsonElement element : Json.getJsonArray(json, "wornAttributes")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A worn attribute in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "wornAttributes"), "A worn attribute in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "wornAttributes", ATTRIBUTE_KEYS);
             String attribute = Json.getString(entry, "attribute", "");
             int operation = Json.getInt(entry, "operation", 0);
@@ -140,9 +146,8 @@ public final class ContentParserContainers {
     }
 
     static boolean chested(JsonObject json) {
-        if (!json.has("container") || !json.get("container").isJsonObject()) { return false; }
-        JsonElement asked = json.getAsJsonObject("container").get("chestModel");
-        return asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+        JsonObject held = containerObject(json);
+        return held != null && chestModel(held.get("chestModel"));
     }
 
     @Nullable private static ResourceLocation sheetOf(String named, String key) {
@@ -151,11 +156,6 @@ public final class ContentParserContainers {
             return null;
         }
         ResourceLocation asked = new ResourceLocation(named);
-        return new ResourceLocation(asked.getNamespace(), "textures/" + asked.getPath() + ".png");
-    }
-
-    @Nullable static ResourceLocation opensWith(JsonObject json) {
-        String named = Json.getString(json, "opensWith", "").trim();
-        return named.isEmpty() ? null : new ResourceLocation(named);
+        return new ResourceLocation(asked.getNamespace(), CompressedAssets.texture(asked.getPath()));
     }
 }

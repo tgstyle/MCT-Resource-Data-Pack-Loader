@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.util;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -12,7 +13,7 @@ public final class BlockMatches {
 
     @Nullable public static BlockMatch parse(String owner, String text, String part) {
         String name = text.trim();
-        if (!name.startsWith("#")) {
+        if (!IdNames.isTag(name)) {
             Block block = ContentStates.block(name, owner + " " + part);
             return block == null ? null : BlockMatch.of(block);
         }

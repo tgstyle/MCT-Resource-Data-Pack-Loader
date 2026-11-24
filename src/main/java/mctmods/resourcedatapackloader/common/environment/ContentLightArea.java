@@ -41,7 +41,7 @@ public final class ContentLightArea {
         int reach = area.wideLoaded ? 2 : area.ringLoaded ? 1 : 0;
         Arrays.fill(area.nearby, null);
         for (int dx = -reach; dx <= reach; dx++) {
-            for (int dz = -reach; dz <= reach; dz++) { area.nearby[(dx + 2) * 5 + dz + 2] = world.getChunk(x + dx, z + dz); }
+            for (int dz = -reach; dz <= reach; dz++) { area.nearby[slot(dx, dz)] = world.getChunk(x + dx, z + dz); }
         }
     }
 
@@ -72,8 +72,10 @@ public final class ContentLightArea {
         int dx = (pos.getX() >> 4) - area.chunkX;
         int dz = (pos.getZ() >> 4) - area.chunkZ;
         if (dx < -2 || dx > 2 || dz < -2 || dz > 2) { return null; }
-        return area.nearby[(dx + 2) * 5 + dz + 2];
+        return area.nearby[slot(dx, dz)];
     }
+
+    private static int slot(int dx, int dz) { return (dx + 2) * 5 + dz + 2; }
 
     public static boolean skyUnsettled(World world, BlockPos pos) {
         int y = pos.getY();

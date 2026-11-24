@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.integration.cbmultipart;
 
-import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import codechicken.lib.packet.PacketCustom;
 import codechicken.multipart.handler.MultipartSPH$;
@@ -13,5 +13,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = MultipartSPH$.class, remap = false) public abstract class MixinMultipartColumnDesc {
-    @Inject(method = "getDescPacket(Lnet/minecraft/world/chunk/Chunk;Ljava/util/Iterator;)Lcodechicken/lib/packet/PacketCustom;", at = @At("HEAD"), cancellable = true) private void rdpl$skipRubicDesc(Chunk chunk, Iterator<TileEntity> it, CallbackInfoReturnable<PacketCustom> cir) { if (CbmpRubicParts.rubic(chunk.getWorld())) { cir.setReturnValue(null); } }
+    @Inject(method = "getDescPacket(Lnet/minecraft/world/chunk/Chunk;Ljava/util/Iterator;)Lcodechicken/lib/packet/PacketCustom;", at = @At("HEAD"), cancellable = true) private void rdpl$skipRubicDesc(Chunk chunk, Iterator<TileEntity> it, CallbackInfoReturnable<PacketCustom> cir) { if (GenHeights.rubic(chunk.getWorld())) { cir.setReturnValue(null); } }
 }

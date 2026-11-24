@@ -55,7 +55,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int hidden = 0;
         for (String id : settings.resourcePacks) {
             PackListRules.Rule rule = PackListRules.rule(id);
-            if (rule == null || rule.fixed || !foreign(id)) { continue; }
+            if (rule.fixed || !foreign(id)) { continue; }
             if (rule.hidden && Boolean.TRUE.equals(rule.top)) { high.add(id); }
             else if (rule.hidden) { low.add(hidden++, id); }
             else if (Boolean.FALSE.equals(rule.top) && !before.contains(id)) { low.add(id); }
@@ -102,7 +102,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GameSettings settings = Minecraft.getMinecraft().gameSettings;
         for (ResourcePackRepository.Entry entry : KEPT) {
             settings.resourcePacks.add(entry.getResourcePackName());
-            if (entry.getPackFormat() != 3) { settings.incompatibleResourcePacks.add(entry.getResourcePackName()); }
+            if (entry.getPackFormat() != RDPLResourcePack.PACK_FORMAT) { settings.incompatibleResourcePacks.add(entry.getResourcePackName()); }
         }
         KEPT.clear();
     }

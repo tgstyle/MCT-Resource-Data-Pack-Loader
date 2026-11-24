@@ -3,8 +3,8 @@ package mctmods.resourcedatapackloader.common.blocks.plant;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
+import mctmods.resourcedatapackloader.common.util.plant.CropStacks;
 import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
@@ -13,7 +13,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockCrops;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -26,22 +25,14 @@ import net.minecraft.world.World;
 @SuppressWarnings("deprecation") public class ContentCropBlock extends BlockCrops implements IContentBlock {
     public static final int MAX_VARIANTS = 1;
     private final BlockDef def;
-    private ItemStack seed = new ItemStack(Items.WHEAT_SEEDS);
-    private ItemStack crop = new ItemStack(Items.WHEAT);
+    private final CropStacks stacks = new CropStacks();
 
     public ContentCropBlock(BlockDef def) {
         this.def = def;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        ContentSetup.properties(this, def);
-        setTranslationKey(def.registryName + "." + variant.name);
-        if (def.soundType != null) { setSoundType(def.soundType); }
+        ContentSetup.plantNamed(this, def);
     }
 
-    public void resolve(ItemStack seedStack, ItemStack cropStack) {
-        if (!seedStack.isEmpty()) { this.seed = seedStack.copy(); }
-        if (!cropStack.isEmpty()) { this.crop = cropStack.copy(); }
-    }
+    public CropStacks stacks() { return stacks; }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -84,22 +75,22 @@ import net.minecraft.world.World;
         return tall != null && getAge(state) >= tall.riseAt(1) ? FULL_BLOCK_AABB : super.getBoundingBox(state, world, pos);
     }
 
-    @Override @Nonnull protected Item getSeed() { return seed.getItem(); }
+    @Override @Nonnull protected Item getSeed() { return stacks.seedItem(); }
 
-    @Override @Nonnull protected Item getCrop() { return crop.getItem(); }
+    @Override @Nonnull protected Item getCrop() { return stacks.cropItem(); }
 
-    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return seed.copy(); }
+    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return stacks.seed(); }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
         int age = getAge(state);
         if (age < getMaxAge()) {
-            drops.add(seed.copy());
+            drops.add(stacks.seed());
             return;
         }
         Random rand = world instanceof World ? ((World) world).rand : RANDOM;
-        drops.add(crop.copy());
+        drops.add(stacks.crop());
         for (int i = 0; i < 3 + fortune; i++) {
-            if (rand.nextInt(2 * getMaxAge()) <= age) { drops.add(seed.copy()); }
+            if (rand.nextInt(2 * getMaxAge()) <= age) { drops.add(stacks.seed()); }
         }
     }
 }

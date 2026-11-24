@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.command.custom;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.scripts.ScriptRef;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEvents;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
@@ -15,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,8 +38,8 @@ public final class PackCommands {
 
     private static void read(FMLServerStartingEvent event, CommandHandler handler, ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", COMMAND_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
-        String runs = Json.getString(json, "runs", "").trim();
+        if (!ContentRegistry.available(json, key)) { return; }
+        String runs = Json.getString(json, Json.RUNS, "").trim();
         boolean inline = !Json.getString(json, "script", "").trim().isEmpty();
         boolean file = !Json.getString(json, "scriptFile", "").trim().isEmpty();
         boolean hasScript = inline || file;
@@ -54,7 +54,7 @@ public final class PackCommands {
         }
         ScriptRef script = hasScript ? ScriptRef.read(key, json) : null;
         if (hasScript && script == null) { return; }
-        String name = Json.getString(json, "name", key.getPath()).trim().toLowerCase(Locale.ROOT);
+        String name = Json.getLowerString(json, "name", key.getPath());
         if (!NAME.matcher(name).matches()) {
             ContentLog.LOGGER.error("Command file {} has the name '{}', which is not lowercase letters, digits and underscores, ignoring it", key, name);
             return;
@@ -89,7 +89,7 @@ public final class PackCommands {
                 ContentLog.LOGGER.error("Command file {} has an argument with no usable name, ignoring that argument", key);
                 continue;
             }
-            if (script && ("rdpl".equals(name) || "sender".equals(name))) {
+            if (script && (ScriptEvents.RDPL.equals(name) || ScriptEvents.SENDER.equals(name))) {
                 ContentLog.LOGGER.error("Command file {} has an argument named {}, which a script command uses itself, ignoring that argument", key, name);
                 continue;
             }
@@ -109,7 +109,7 @@ public final class PackCommands {
     }
 
     private static String type(ResourceLocation key, JsonObject object, boolean last, String name) {
-        String type = Json.getString(object, "type", CommandArg.STRING).trim().toLowerCase(Locale.ROOT);
+        String type = Json.getLowerString(object, "type", CommandArg.STRING);
         if (!TYPES.contains(type)) {
             ContentLog.LOGGER.error("Command file {} has the argument type '{}', which is not one of player, int, number, string and text, using string", key, type);
             return CommandArg.STRING;

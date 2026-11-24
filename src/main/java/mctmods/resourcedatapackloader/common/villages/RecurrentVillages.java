@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.villages;
 
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.RecurrentPlots;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -26,7 +28,7 @@ public final class RecurrentVillages {
     private RecurrentVillages() {}
 
     public static void register() {
-        if (registered || !Loader.isModLoaded("reccomplex")) { return; }
+        if (registered || !Loader.isModLoaded(ContentStructurePlacement.RECCOMPLEX)) { return; }
         registered = true;
         VillagePieces.recurrent();
         VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
@@ -84,7 +86,7 @@ public final class RecurrentVillages {
             int[] size = RecurrentPlots.sizeOf(chosen.structure);
             if (size == null) { return null; }
             Rotation turned = facingFront(chosen.front);
-            boolean quarter = turned == Rotation.CLOCKWISE_90 || turned == Rotation.COUNTERCLOCKWISE_90;
+            boolean quarter = Coords.quarter(turned);
             int wide = quarter ? size[2] : size[0];
             int deep = quarter ? size[0] : size[2];
             EnumFacing road = facing.getOpposite();

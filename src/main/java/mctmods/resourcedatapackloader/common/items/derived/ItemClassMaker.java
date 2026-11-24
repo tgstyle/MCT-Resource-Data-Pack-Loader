@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.common.items.IContentItem;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -47,7 +48,7 @@ public final class ItemClassMaker {
         }
         String full = base.getName();
         int dot = full.lastIndexOf('.');
-        String name = (dot < 0 ? "" : full.substring(0, dot + 1)) + "RdplDerived_" + (key.getNamespace() + "_" + key.getPath()).replaceAll("[^A-Za-z0-9_]", "_");
+        String name = (dot < 0 ? "" : full.substring(0, dot + 1)) + "RdplDerived_" + IdNames.javaSafe(key.getNamespace() + "_" + key.getPath());
         try { return loader.loadClass(name); }
         catch (ClassNotFoundException expected) { ContentLog.LOGGER.debug("Making a class for derived item {}", key); }
         byte[] bytes = write(name, key, base, overrides);

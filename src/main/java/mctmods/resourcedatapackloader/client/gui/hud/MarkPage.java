@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.client.util.CardFont;
+import mctmods.resourcedatapackloader.client.util.ContentPixelImages;
 import mctmods.resourcedatapackloader.client.util.Crisp;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.util.messages.MarkLines;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 import mctmods.resourcedatapackloader.common.util.messages.Marks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -12,11 +15,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -122,8 +122,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         ResourceLocation where = new ResourceLocation(line.lead);
         int width;
         int tall;
-        try (IResource resource = Minecraft.getMinecraft().getResourceManager().getResource(where)) {
-            BufferedImage read = TextureUtil.readBufferedImage(resource.getInputStream());
+        try {
+            BufferedImage read = ContentPixelImages.load(where);
             width = read.getWidth();
             tall = read.getHeight();
         }
@@ -161,8 +161,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GlStateManager.scale(size, size, 1.0F);
         float x = Crisp.fine(left + row.indent * scale, size) / size;
         float at = Crisp.fine(y, size) / size;
-        MarkText.draw(row.lead, x, at, 0xFF000000 | row.color);
-        MarkText.draw(row.pieces, x + row.shift, at, 0xFF000000 | row.color);
+        MarkText.draw(row.lead, x, at, Colors.withAlpha(row.color, 0xFF));
+        MarkText.draw(row.pieces, x + row.shift, at, Colors.withAlpha(row.color, 0xFF));
         GlStateManager.popMatrix();
     }
 
@@ -181,10 +181,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GlStateManager.pushMatrix();
         GlStateManager.scale(scale, scale, 1.0F);
         GlStateManager.enableBlend();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(row.image);
         int shownHeight = Math.round(row.height) - GAP;
-        Gui.drawModalRectWithCustomSizedTexture(Math.round(left / scale), Math.round(y / scale), 0.0F, 0.0F, row.imageWidth, shownHeight, row.imageWidth, shownHeight);
+        Draw.blitTinted(row.image, Math.round(left / scale), Math.round(y / scale), row.imageWidth, shownHeight, 1.0F);
         GlStateManager.popMatrix();
     }
 }

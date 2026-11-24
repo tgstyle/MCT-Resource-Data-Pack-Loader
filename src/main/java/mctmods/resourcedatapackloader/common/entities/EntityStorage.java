@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.FilterDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.StorageDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.common.collect.MapMaker;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.energy.CapabilityEnergy;
@@ -54,7 +56,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
     private static final UUID SLOWED = UUID.fromString("5c3f1a2e-8d47-4b61-9f0a-2e7d6c1b8a94");
-    private static final int SECOND = 20;
+    private static final int SECOND = MathUtil.TICKS_PER_SECOND;
     private static final Map<Entity, EntityStorage> HELD = new MapMaker().weakKeys().makeMap();
     @Nullable private final Items items;
     @Nullable private final Tank tank;
@@ -115,7 +117,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
     }
 
     @Nullable public static StorageDef def(@Nullable Entity entity) {
-        EntityVariantDef def = entity == null ? null : ContentEntities.BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = entity == null ? null : ContentEntities.variantOf(entity);
         return def == null ? null : def.storage;
     }
 
@@ -193,12 +195,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
 
     @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) { return held(capability) != null; }
 
-    @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && items != null) { return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(items); }
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY && tank != null) { return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(tank); }
-        if (capability == CapabilityEnergy.ENERGY && energy != null) { return CapabilityEnergy.ENERGY.cast(energy); }
-        return null;
-    }
+    @SuppressWarnings("unchecked") @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) { return (T) held(capability); }
 
     @Nullable private Object held(Capability<?> capability) { return capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY ? items : capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY ? tank : capability == CapabilityEnergy.ENERGY ? energy : null; }
 
@@ -256,7 +253,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
     private static final class Energy extends EnergyStorage {
         private Energy(int capacity, int transfer) { super(capacity, transfer); }
 
-        private void load(int stored) { energy = Math.min(capacity, Math.max(0, stored)); }
+        private void load(int stored) { energy = MathHelper.clamp(stored, 0, capacity); }
 
         private void spend(int used) { energy = Math.max(0, energy - used); }
     }

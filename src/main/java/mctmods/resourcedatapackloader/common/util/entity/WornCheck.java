@@ -1,8 +1,6 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
-import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
-import mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -45,11 +43,7 @@ public final class WornCheck {
 
     public ItemStack found(EntityPlayer player) {
         if (wanted.isEmpty()) { return ItemStack.EMPTY; }
-        for (ItemStack stack : player.inventory.armorInventory) {
-            if (ContentStacks.matches(stack, wanted.getItem(), wanted.getMetadata())) { return stack; }
-        }
-        if (!ContentContainerItem.baubled()) { return ItemStack.EMPTY; }
-        for (ItemStack stack : BaublesPouch.wornStacks(player)) {
+        for (ItemStack stack : Worn.worn(player)) {
             if (ContentStacks.matches(stack, wanted.getItem(), wanted.getMetadata())) { return stack; }
         }
         return ItemStack.EMPTY;

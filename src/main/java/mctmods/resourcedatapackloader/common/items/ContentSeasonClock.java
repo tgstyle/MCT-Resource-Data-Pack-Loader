@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.common.environment.SeasonState;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.SeasonClockDef;
 
 import javax.annotation.Nullable;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.IItemPropertyGetter;
@@ -37,8 +36,7 @@ public final class ContentSeasonClock {
     }
 
     @Nullable private static SeasonState state(SeasonClockDef def, ItemStack stack, @Nullable World world, @Nullable EntityLivingBase holder) {
-        Entity entity = holder != null ? holder : stack.getItemFrame();
-        World where = world != null ? world : entity == null ? null : entity.world;
+        World where = ItemVariants.where(stack, world, holder);
         return where == null ? null : ContentSeasons.state(def.dimension, where.provider.getDimension());
     }
 }

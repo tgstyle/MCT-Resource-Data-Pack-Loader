@@ -4,10 +4,8 @@ import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 
-import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockVine;
@@ -16,8 +14,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public final class ContentVines implements IContentShape {
-    private final ContentPlacer placer;
+public final class ContentVines extends ContentPlacedShape {
     private final AmountDef count;
     private final AmountDef drop;
     private final int scatterX;
@@ -25,15 +22,13 @@ public final class ContentVines implements IContentShape {
     private final int scatterZ;
 
     public ContentVines(ContentPlacer placer, AmountDef count, ShapeDef shape) {
-        this.placer = placer;
+        super(placer);
         this.count = count;
         this.drop = shape.stack;
         this.scatterX = shape.scatterX;
         this.scatterY = shape.scatterY;
         this.scatterZ = shape.scatterZ;
     }
-
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         boolean placed = false;

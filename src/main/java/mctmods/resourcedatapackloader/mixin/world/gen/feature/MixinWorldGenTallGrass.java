@@ -20,8 +20,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "generate", at = @At("HEAD")) private void rdpl$onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) { this.rdpl$minY = Coords.getMinCubePopulationPos(position.getY()); }
 
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, ordinal = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO)) private int rdpl$getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) {
-        if (GenHeights.rubic(worldIn)) { return rdpl$minY; }
-        return orig;
-    }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, ordinal = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO)) private int rdpl$getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.rubicOr(worldIn, rdpl$minY, orig); }
 }

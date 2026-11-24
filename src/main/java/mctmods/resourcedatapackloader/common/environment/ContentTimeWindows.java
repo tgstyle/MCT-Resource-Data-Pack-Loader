@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.TimeWindowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.util.Lists;
 
 import javax.annotation.Nullable;
 import net.minecraft.world.World;
@@ -25,9 +26,6 @@ public final class ContentTimeWindows {
     @Nullable public static TimeWindowDef active(World world, DimensionDef def) {
         if (def.windows.isEmpty()) { return null; }
         long tick = dayTick(world, def);
-        for (TimeWindowDef window : def.windows) {
-            if (window.contains(tick)) { return window; }
-        }
-        return null;
+        return Lists.first(def.windows, window -> window.contains(tick));
     }
 }

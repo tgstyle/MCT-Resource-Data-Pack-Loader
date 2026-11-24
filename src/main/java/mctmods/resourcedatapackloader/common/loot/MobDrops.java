@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -27,7 +28,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -41,17 +41,15 @@ public final class MobDrops {
     private MobDrops() {}
 
     public static void load() {
-        RULES.clear();
-        GENERATION.stale();
-        if (!Config.data.mobDrops) { return; }
-        Json.eachObject(PackManager.MOB_DROPS, "mob drop file", MobDrops::read);
-        if (!RULES.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + RULES.size() + " mob drop file(s)"); }
+        GENERATION.load(Config.data.mobDrops, RULES::clear, PackManager.MOB_DROPS, "mob drop file", MobDrops::read, () -> {
+            if (!RULES.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + RULES.size() + " mob drop file(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        List<String> entities = json.has("entities") ? MobStats.entities("Mob drop file " + key, "entities", json.get("entities")) : null;
-        if (entities == null || entities.isEmpty()) {
+        List<String> entities = MobStats.required("Mob drop file " + key, json, "entities", "entities");
+        if (entities == null) {
             ContentLog.LOGGER.error("Mob drop file {} names no entities, ignoring it", key);
             return;
         }
@@ -76,14 +74,14 @@ public final class MobDrops {
         ItemStack item = ContentStacks.parse(key, Json.getString(json, "item", ""), 1);
         if (item.isEmpty()) { return null; }
         AmountDef count = ContentParser.amount(json, "count", 1, 1);
-        float chance = MathHelper.clamp(Json.getFloat(json, "chance", 1.0F), 0.0F, 1.0F);
+        float chance = Json.chance(json, "chance", 1.0F);
         return new MobDropsDef.Add(item, count, chance, matchers(key, json, "killerHolds", false), Json.strings(json, "damageTypes"), Json.getBoolean(json, "requireAll", false), matchers(key, json, "unlessDropped", true));
     }
 
     private static List<FilterDef.Entry> matchers(ResourceLocation key, JsonObject json, String member, boolean anyMeta) {
         List<FilterDef.Entry> found = new ArrayList<>();
         for (String value : Json.strings(json, member)) {
-            if (value.startsWith("#")) { found.add(new FilterDef.Entry(key, "", value.substring(1), "", 0)); }
+            if (IdNames.isTag(value)) { found.add(new FilterDef.Entry(key, "", IdNames.tagPath(value), "", 0)); }
             else { found.add(new FilterDef.Entry(key, anyMeta && value.split(":").length < 3 ? value + ":*" : value, "", "", 0)); }
         }
         return found;

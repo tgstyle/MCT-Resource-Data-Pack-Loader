@@ -2,25 +2,22 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
-import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-public final class ContentGeode implements IContentShape {
+public final class ContentGeode extends ContentShapeBase {
     private static final int LEAST_BUBBLES = 4;
     private static final int MOST_EXTRA_BUBBLES = 4;
     private static final double CRACK_REACH = 1.5D;
-    private final ContentPlacer placer;
-    private final ShapeDef shape;
     private final IBlockState outline;
     @Nullable private final IBlockState fill;
     @Nullable private final IBlockState middle;
@@ -28,8 +25,7 @@ public final class ContentGeode implements IContentShape {
     @Nullable private final IBlockState crystal;
 
     public ContentGeode(ContentPlacer placer, ShapeDef shape, IBlockState outline, @Nullable IBlockState fill, ResourceLocation key) {
-        this.placer = placer;
-        this.shape = shape;
+        super(placer, shape);
         this.outline = outline;
         this.fill = fill;
         this.middle = layer(key, shape.middle, "middle");
@@ -44,11 +40,9 @@ public final class ContentGeode implements IContentShape {
         return state;
     }
 
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
-
     @Override public boolean generate(World world, Random random, BlockPos origin) {
-        int width = MathHelper.clamp(shape.width.pick(random), 3, ShapeDef.MOST_REACH * 2);
-        int height = Math.max(3, shape.height.pick(random));
+        int width = radius(random, shape.width, 3, ShapeDef.MOST_REACH * 2);
+        int height = rise(random, 3);
         int baseY = origin.getY() - height / 2;
         if (baseY <= ContentPlacer.floorY(world)) { return false; }
         int baseX = origin.getX() - width / 2;
@@ -60,68 +54,43 @@ public final class ContentGeode implements IContentShape {
         boolean[] cracked = new boolean[cells];
         carve(random, width, height, body, hollow);
         if (middle != null) {
-            for (int x = 0; x < width; x++) {
-                for (int z = 0; z < width; z++) {
-                    for (int y = 0; y < height; y++) {
-                        int at = index(x, z, y, width, height);
-                        mid[at] = !body[at] && touches(body, x, z, y, width, height);
-                    }
-                }
-            }
+            forEachCell(width, height, 0, (x, z, y, at) -> {
+                mid[at] = !body[at] && touches(body, x, z, y, width, height);
+                return false;
+            });
         }
         if (fill != null && shape.crack > 0.0F && random.nextFloat() < shape.crack) { crack(random, width, height, cracked); }
         if (blocked(world, baseX, baseY, baseZ, width, height, body, hollow, mid)) { return false; }
-        boolean placed = false;
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < width; z++) {
-                for (int y = 0; y < height; y++) {
-                    int at = index(x, z, y, width, height);
-                    if (!body[at] || cracked[at]) { continue; }
-                    if (placer.place(world, random, baseX + x, baseY + y, baseZ + z)) { placed = true; }
-                    else { body[at] = false; }
-                }
-            }
-        }
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < width; z++) {
-                for (int y = 0; y < height; y++) {
-                    int at = index(x, z, y, width, height);
-                    int placeX = baseX + x;
-                    int placeY = baseY + y;
-                    int placeZ = baseZ + z;
-                    if (fill != null && (hollow[at] || cracked[at] && (body[at] || mid[at] || shell(body, mid, x, z, y, width, height)))) { placed |= placer.placeExactly(world, fill, placeX, placeY, placeZ); }
-                    else if (!cracked[at] && mid[at]) { placed |= placer.placeExactly(world, middle, placeX, placeY, placeZ); }
-                    else if (!cracked[at] && shell(body, mid, x, z, y, width, height)) { placed |= placer.placeExactly(world, outline, placeX, placeY, placeZ); }
-                }
-            }
-        }
+        boolean placed = forEachCell(width, height, 0, (x, z, y, at) -> {
+            if (!body[at] || cracked[at]) { return false; }
+            if (placer.place(world, random, baseX + x, baseY + y, baseZ + z)) { return true; }
+            body[at] = false;
+            return false;
+        });
+        placed |= forEachCell(width, height, 0, (x, z, y, at) -> {
+            int placeX = baseX + x;
+            int placeY = baseY + y;
+            int placeZ = baseZ + z;
+            if (fill != null && (hollow[at] || cracked[at] && (body[at] || mid[at] || shell(body, mid, x, z, y, width, height)))) { return placer.placeExactly(world, fill, placeX, placeY, placeZ); }
+            if (!cracked[at] && mid[at]) { return placer.placeExactly(world, middle, placeX, placeY, placeZ); }
+            return !cracked[at] && shell(body, mid, x, z, y, width, height) && placer.placeExactly(world, outline, placeX, placeY, placeZ);
+        });
         if (budding != null && fill != null) { placed |= bud(world, random, baseX, baseY, baseZ, width, height, body, hollow, cracked); }
         return placed;
     }
 
     private boolean bud(World world, Random random, int baseX, int baseY, int baseZ, int width, int height, boolean[] body, boolean[] hollow, boolean[] cracked) {
-        boolean placed = false;
         boolean[] budded = new boolean[body.length];
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < width; z++) {
-                for (int y = 0; y < height; y++) {
-                    int at = index(x, z, y, width, height);
-                    if (!body[at] || hollow[at] || cracked[at] || !touches(hollow, x, z, y, width, height) || random.nextFloat() >= shape.buddingChance) { continue; }
-                    budded[at] = placer.placeExactly(world, budding, baseX + x, baseY + y, baseZ + z);
-                    placed |= budded[at];
-                }
-            }
-        }
+        boolean placed = forEachCell(width, height, 0, (x, z, y, at) -> {
+            if (!body[at] || hollow[at] || cracked[at] || !touches(hollow, x, z, y, width, height) || random.nextFloat() >= shape.buddingChance) { return false; }
+            budded[at] = placer.placeExactly(world, budding, baseX + x, baseY + y, baseZ + z);
+            return budded[at];
+        });
         if (crystal == null) { return placed; }
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < width; z++) {
-                for (int y = 0; y < height; y++) {
-                    int at = index(x, z, y, width, height);
-                    if (!hollow[at] || cracked[at] || !touches(budded, x, z, y, width, height) || random.nextFloat() >= shape.crystalChance) { continue; }
-                    placed |= placer.placeExactly(world, crystal, baseX + x, baseY + y, baseZ + z);
-                }
-            }
-        }
+        placed |= forEachCell(width, height, 0, (x, z, y, at) -> {
+            if (!hollow[at] || cracked[at] || !touches(budded, x, z, y, width, height) || random.nextFloat() >= shape.crystalChance) { return false; }
+            return placer.placeExactly(world, crystal, baseX + x, baseY + y, baseZ + z);
+        });
         return placed;
     }
 
@@ -135,16 +104,12 @@ public final class ContentGeode implements IContentShape {
             double centerY = random.nextDouble() * (height - spanY - 4.0D) + 2.0D + spanY / 2.0D;
             double centerZ = random.nextDouble() * (width - spanZ - 2.0D) + 1.0D + spanZ / 2.0D;
             double inner = shape.isHollow() ? random.nextGaussian() * 0.15D + 0.4D : 0.0D;
-            for (int x = 1; x < width - 1; x++) {
-                for (int z = 1; z < width - 1; z++) {
-                    for (int y = 1; y < height - 1; y++) {
-                        double reach = away(x, centerX, spanX) + away(y, centerY, spanY) + away(z, centerZ, spanZ);
-                        int at = index(x, z, y, width, height);
-                        if (reach < 1.0D) { body[at] = true; }
-                        if (shape.isHollow() && reach <= inner) { hollow[at] = true; }
-                    }
-                }
-            }
+            forEachCell(width, height, 1, (x, z, y, at) -> {
+                double reach = away(x, centerX, spanX) + away(y, centerY, spanY) + away(z, centerZ, spanZ);
+                if (reach < 1.0D) { body[at] = true; }
+                if (shape.isHollow() && reach <= inner) { hollow[at] = true; }
+                return false;
+            });
         }
     }
 
@@ -157,21 +122,18 @@ public final class ContentGeode implements IContentShape {
         double dirX = Math.cos(angle) * Math.cos(tilt);
         double dirY = Math.sin(tilt);
         double dirZ = Math.sin(angle) * Math.cos(tilt);
-        for (int x = 0; x < width; x++) {
-            for (int z = 0; z < width; z++) {
-                for (int y = 0; y < height; y++) {
-                    double offX = x + 0.5D - centerX;
-                    double offY = y + 0.5D - centerY;
-                    double offZ = z + 0.5D - centerZ;
-                    double along = offX * dirX + offY * dirY + offZ * dirZ;
-                    if (along <= 0.0D) { continue; }
-                    double sideX = offX - along * dirX;
-                    double sideY = offY - along * dirY;
-                    double sideZ = offZ - along * dirZ;
-                    if (sideX * sideX + sideY * sideY + sideZ * sideZ <= CRACK_REACH * CRACK_REACH) { cracked[index(x, z, y, width, height)] = true; }
-                }
-            }
-        }
+        forEachCell(width, height, 0, (x, z, y, at) -> {
+            double offX = x + 0.5D - centerX;
+            double offY = y + 0.5D - centerY;
+            double offZ = z + 0.5D - centerZ;
+            double along = offX * dirX + offY * dirY + offZ * dirZ;
+            if (along <= 0.0D) { return false; }
+            double sideX = offX - along * dirX;
+            double sideY = offY - along * dirY;
+            double sideZ = offZ - along * dirZ;
+            if (sideX * sideX + sideY * sideY + sideZ * sideZ <= CRACK_REACH * CRACK_REACH) { cracked[at] = true; }
+            return false;
+        });
     }
 
     private boolean blocked(World world, int baseX, int baseY, int baseZ, int width, int height, boolean[] body, boolean[] hollow, boolean[] mid) {
@@ -187,24 +149,36 @@ public final class ContentGeode implements IContentShape {
         return false;
     }
 
+    private static boolean forEachCell(int width, int height, int inset, CellVisitor visit) {
+        boolean result = false;
+        for (int x = inset; x < width - inset; x++) {
+            for (int z = inset; z < width - inset; z++) {
+                for (int y = inset; y < height - inset; y++) { result |= visit.visit(x, z, y, index(x, z, y, width, height)); }
+            }
+        }
+        return result;
+    }
+
+    private interface CellVisitor {
+        boolean visit(int x, int z, int y, int at);
+    }
+
     private static boolean shell(boolean[] body, boolean[] mid, int x, int z, int y, int width, int height) {
         int at = index(x, z, y, width, height);
         return !body[at] && !mid[at] && (touches(body, x, z, y, width, height) || touches(mid, x, z, y, width, height));
     }
 
     private static boolean touches(boolean[] body, int x, int z, int y, int width, int height) {
-        return (x + 1 < width && body[index(x + 1, z, y, width, height)])
-                || (x > 0 && body[index(x - 1, z, y, width, height)])
-                || (z + 1 < width && body[index(x, z + 1, y, width, height)])
-                || (z > 0 && body[index(x, z - 1, y, width, height)])
-                || (y + 1 < height && body[index(x, z, y + 1, width, height)])
-                || (y > 0 && body[index(x, z, y - 1, width, height)]);
+        for (EnumFacing face : EnumFacing.VALUES) {
+            int nx = x + face.getXOffset();
+            int ny = y + face.getYOffset();
+            int nz = z + face.getZOffset();
+            if (nx >= 0 && nx < width && nz >= 0 && nz < width && ny >= 0 && ny < height && body[index(nx, nz, ny, width, height)]) { return true; }
+        }
+        return false;
     }
 
-    private static double away(int block, double center, double span) {
-        double offset = (block - center) / (span / 2.0D);
-        return offset * offset;
-    }
+    private static double away(int block, double center, double span) { return MathUtil.away(block, center, span / 2.0D, 0.0D); }
 
     private static int index(int x, int z, int y, int width, int height) { return (x * width + z) * height + y; }
 }

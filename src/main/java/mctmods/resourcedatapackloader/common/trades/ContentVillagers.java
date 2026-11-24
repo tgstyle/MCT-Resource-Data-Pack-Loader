@@ -12,11 +12,11 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import static mctmods.resourcedatapackloader.core.util.json.Json.strings;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -55,24 +55,22 @@ public final class ContentVillagers {
         loaded = true;
         if (!Config.content.villagers) { return false; }
         if (Config.registersToClients()) {
-            Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
-                if (!ContentOwners.reserved(key)) { readVillager(key, contents); }
+            Json.eachObject(PackManager.VILLAGERS, "villager file", (key, json) -> {
+                if (!ContentOwners.reserved(key)) { readVillager(key, json); }
             });
         }
-        Json.eachFile(PackManager.TRADES, "trade file", (key, contents) -> {
-            if (!ContentOwners.reserved(key)) { readTrades(key, contents); }
+        Json.eachObject(PackManager.TRADES, "trade file", (key, json) -> {
+            if (!ContentOwners.reserved(key)) { readTrades(key, json); }
         });
-        if (!VILLAGERS.isEmpty()) { Summary.info("villagers", "Loaded " + VILLAGERS.size() + " villager profession(s) from packs"); }
-        if (!TRADES.isEmpty()) { Summary.info("trades", "Loaded " + TRADES.size() + " villager trade(s) from packs"); }
-        if (!CLEARS.isEmpty()) { Summary.info("trade_clears", "Loaded " + CLEARS.size() + " villager trade clear(s) from packs"); }
+        Summary.loaded("villagers", VILLAGERS.size(), "villager profession(s) from packs");
+        Summary.loaded("trades", TRADES.size(), "villager trade(s) from packs");
+        Summary.loaded("trade_clears", CLEARS.size(), "villager trade clear(s) from packs");
         return wanted();
     }
 
     public static boolean wanted() { return !VILLAGERS.isEmpty() || !TRADES.isEmpty() || !CLEARS.isEmpty(); }
 
-    private static void readVillager(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "villager file");
-        if (json == null) { return; }
+    private static void readVillager(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", VILLAGER_KEYS);
         List<String> careers = strings(json, "careers");
         if (careers.isEmpty()) {
@@ -86,18 +84,12 @@ public final class ContentVillagers {
                 strings(json, "requires")));
     }
 
-    private static void readTrades(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "trade file");
-        if (json == null) { return; }
+    private static void readTrades(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", TRADE_FILE_KEYS);
         if (json.has("trades")) {
-            for (JsonElement element : Json.getJsonArray(json, "trades")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
-                    continue;
-                }
-                Json.unknownKeys(element.getAsJsonObject(), "trades", TRADE_KEYS);
-                TradeDef def = trade(key, element.getAsJsonObject());
+            for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "trades"), "A trade in {} is not an object, skipping it", key)) {
+                Json.unknownKeys(element, "trades", TRADE_KEYS);
+                TradeDef def = trade(key, element);
                 if (def != null) { TRADES.add(def); }
             }
         }
@@ -105,12 +97,8 @@ public final class ContentVillagers {
     }
 
     private static void readClears(ResourceLocation key, JsonObject json) {
-        for (JsonElement element : Json.getJsonArray(json, "clear")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A clear in {} is not an object, skipping it", key);
-                continue;
-            }
-            TradeClearDef def = clear(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "clear"), "A clear in {} is not an object, skipping it", key)) {
+            TradeClearDef def = clear(key, element);
             if (def != null) { CLEARS.add(def); }
         }
     }
@@ -122,20 +110,22 @@ public final class ContentVillagers {
             ContentLog.LOGGER.error("A clear in {} names no profession, skipping it", key);
             return null;
         }
-        int level = entry.has("level") ? Json.getInt(entry, "level", TradeClearDef.ALL_LEVELS) : TradeClearDef.ALL_LEVELS;
-        if (entry.has("level") && level < 1) {
-            ContentLog.LOGGER.error("A clear in {} has level {}, but levels start at 1, skipping it", key, level);
-            return null;
-        }
+        Integer level = level(key, entry, "A clear", TradeClearDef.ALL_LEVELS);
+        if (level == null) { return null; }
         return new TradeClearDef(key, profession, Json.getString(entry, "career", "").trim(), level, strings(entry, "requires"));
     }
 
+    @Nullable private static Integer level(ResourceLocation key, JsonObject entry, String what, int fallback) {
+        if (!entry.has("level")) { return fallback; }
+        int level = Json.getInt(entry, "level", fallback);
+        if (level >= 1) { return level; }
+        ContentLog.LOGGER.error("{} in {} has level {}, but levels start at 1, skipping it", what, key, level);
+        return null;
+    }
+
     @Nullable public static TradeDef trade(ResourceLocation key, JsonObject entry) {
-        int level = Json.getInt(entry, "level", 1);
-        if (level < 1) {
-            ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
-            return null;
-        }
+        Integer level = level(key, entry, "A trade", 1);
+        if (level == null) { return null; }
         TradeStackDef sell = stack(entry, "sell");
         TradeStackDef buy = stack(entry, "buy");
         if (sell.isEmpty() || buy.isEmpty()) {
@@ -220,12 +210,9 @@ public final class ContentVillagers {
     public static boolean known(TradeDef def) { return career(def) != null; }
 
     @Nullable private static VillagerRegistry.VillagerProfession profession(ResourceLocation key, String what, String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        if (!ForgeRegistries.VILLAGER_PROFESSIONS.containsKey(location)) {
-            ContentLog.LOGGER.error("{} in {} names profession '{}', which is not registered, skipping it", what, key, name);
-            return null;
-        }
-        return ForgeRegistries.VILLAGER_PROFESSIONS.getValue(location);
+        VillagerRegistry.VillagerProfession found = Registries.find(ForgeRegistries.VILLAGER_PROFESSIONS, new ResourceLocation(name));
+        if (found == null) { ContentLog.LOGGER.error("{} in {} names profession '{}', which is not registered, skipping it", what, key, name); }
+        return found;
     }
 
     private static List<VillagerRegistry.VillagerCareer> careers(VillagerRegistry.VillagerProfession profession) {

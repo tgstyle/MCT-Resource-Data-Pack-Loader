@@ -56,6 +56,8 @@ public final class RaidDef {
 
     public List<RaidTarget.Kind> target() { return target; }
 
+    public boolean guarded() { return RaidTarget.Kind.anyGuarded(target); }
+
     @Nullable public BaseDef base() { return base; }
 
     public static final class Group {

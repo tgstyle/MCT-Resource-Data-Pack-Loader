@@ -2,9 +2,12 @@ package mctmods.resourcedatapackloader.common.util.dimension;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
@@ -16,7 +19,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ExposureSpread {
-    private static final ResourceLocation PLAYER = new ResourceLocation("minecraft", "player");
+    private static final ResourceLocation PLAYER = new ResourceLocation(IdNames.PLAYER);
     private static final String CAUGHT = "RDPLCaught";
     private static final String CAUGHT_UNTIL = "RDPLCaughtUntil";
     private static final Map<ExposureDef, Map<Class<?>, Integer>> CARRIER_LEVELS = new IdentityHashMap<>();
@@ -26,17 +29,18 @@ public final class ExposureSpread {
 
     public static int carrierLevel(ExposureDef def, EntityLivingBase living) {
         if (def.carriers.isEmpty()) { return 0; }
-        return CARRIER_LEVELS.computeIfAbsent(def, held -> {
-            warnUnknown(held, held.carriers.keySet(), "carrier");
-            return new IdentityHashMap<>();
-        }).computeIfAbsent(living.getClass(), type -> def.carriers.getOrDefault(id(living), 0));
+        return cached(CARRIER_LEVELS, def, living, held -> warnUnknown(held, held.carriers.keySet(), "carrier"), () -> def.carriers.getOrDefault(id(living), 0));
     }
 
     public static boolean catches(ExposureDef def, EntityLivingBase living) {
-        return CATCHERS.computeIfAbsent(def, held -> {
-            warnUnknown(held, held.catchers, "catcher");
+        return cached(CATCHERS, def, living, held -> warnUnknown(held, held.catchers, "catcher"), () -> def.catchers.contains(id(living)));
+    }
+
+    private static <V> V cached(Map<ExposureDef, Map<Class<?>, V>> cache, ExposureDef def, EntityLivingBase living, Consumer<ExposureDef> warn, Supplier<V> value) {
+        return cache.computeIfAbsent(def, held -> {
+            warn.accept(held);
             return new IdentityHashMap<>();
-        }).computeIfAbsent(living.getClass(), type -> def.catchers.contains(id(living)));
+        }).computeIfAbsent(living.getClass(), type -> value.get());
     }
 
     public static int caughtLevel(ExposureDef def, EntityLivingBase living) {

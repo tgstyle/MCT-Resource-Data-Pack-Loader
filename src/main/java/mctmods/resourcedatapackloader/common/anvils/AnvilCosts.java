@@ -16,10 +16,8 @@ public final class AnvilCosts {
     private static volatile int servedCap = VANILLA_CAP;
     private static volatile int shownCap = VANILLA_CAP;
     private static volatile int[] levels = VANILLA;
-    private static volatile int[] servedPaid = VANILLA;
-    private static volatile int[] shownPaid = VANILLA;
-    private static volatile int[] servedLapis = VANILLA;
-    private static volatile int[] shownLapis = VANILLA;
+    private static final SlotCosts PAID = new SlotCosts();
+    private static final SlotCosts LAPIS = new SlotCosts();
     private static volatile boolean servedOpening;
     private static volatile boolean shownOpening;
 
@@ -29,8 +27,8 @@ public final class AnvilCosts {
 
     public static void resetTable() {
         levels = VANILLA;
-        servedPaid = VANILLA;
-        servedLapis = VANILLA;
+        PAID.reset();
+        LAPIS.reset();
         servedOpening = false;
     }
 
@@ -42,13 +40,13 @@ public final class AnvilCosts {
 
     public static void serveLevels(int[] shown) { levels = shown.clone(); }
 
-    public static int[] servedPaid() { return servedPaid.clone(); }
+    public static int[] servedPaid() { return PAID.served(); }
 
-    public static void servePaid(int[] paid) { servedPaid = paid.clone(); }
+    public static void servePaid(int[] paid) { PAID.serve(paid); }
 
-    public static int[] servedLapis() { return servedLapis.clone(); }
+    public static int[] servedLapis() { return LAPIS.served(); }
 
-    public static void serveLapis(int[] lapis) { servedLapis = lapis.clone(); }
+    public static void serveLapis(int[] lapis) { LAPIS.serve(lapis); }
 
     public static boolean servedOpening() { return servedOpening; }
 
@@ -56,20 +54,18 @@ public final class AnvilCosts {
 
     public static void show(int cap, int[] paid, int[] lapis, boolean opening) {
         shownCap = cap;
-        shownPaid = paid.length == SLOTS ? paid.clone() : VANILLA;
-        shownLapis = lapis.length == SLOTS ? lapis.clone() : VANILLA;
+        PAID.show(paid);
+        LAPIS.show(lapis);
         shownOpening = opening;
     }
 
     public static int cap(boolean client) { return client ? shownCap : servedCap; }
 
-    public static int paid(boolean client, int slot) { return perSlot(client ? shownPaid : servedPaid, slot); }
+    public static int paid(boolean client, int slot) { return PAID.at(client, slot); }
 
-    public static int lapis(boolean client, int slot) { return perSlot(client ? shownLapis : servedLapis, slot); }
+    public static int lapis(boolean client, int slot) { return LAPIS.at(client, slot); }
 
     public static boolean opening(boolean client) { return client ? shownOpening : servedOpening; }
-
-    private static int perSlot(int[] held, int slot) { return held.length == SLOTS && slot >= 0 && slot < SLOTS ? held[slot] : slot + 1; }
 
     @SubscribeEvent public static void onLevelSet(EnchantmentLevelSetEvent event) {
         int[] held = levels;

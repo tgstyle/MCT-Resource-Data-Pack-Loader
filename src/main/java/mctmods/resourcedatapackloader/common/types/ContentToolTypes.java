@@ -1,11 +1,10 @@
 package mctmods.resourcedatapackloader.common.types;
 
-import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.common.util.NamedRegistry;
 
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -43,17 +42,11 @@ public final class ContentToolTypes {
     }
 
     @Nullable public static Profile tool(String name, Object context) {
-        Profile profile = TOOLS.get(name == null ? "" : name.toLowerCase(Locale.ROOT));
-        if (profile != null) { return profile; }
-        ContentLog.LOGGER.error("Unknown toolClass '{}' in {}, the item is skipped. Known classes are {}", name, context, TOOLS.keySet());
-        return null;
+        return NamedRegistry.skippingIgnoreCase(TOOLS, "toolClass", "classes", name, context);
     }
 
     @Nullable public static EntityEquipmentSlot slot(String name, Object context) {
-        EntityEquipmentSlot slot = SLOTS.get(name == null ? "" : name.toLowerCase(Locale.ROOT));
-        if (slot != null) { return slot; }
-        ContentLog.LOGGER.error("Unknown armor slot '{}' in {}, the item is skipped. Known slots are {}", name, context, SLOTS.keySet());
-        return null;
+        return NamedRegistry.skippingIgnoreCase(SLOTS, "armor slot", "slots", name, context);
     }
 
     public static final class Profile {

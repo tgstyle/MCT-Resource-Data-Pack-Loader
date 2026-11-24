@@ -6,10 +6,10 @@ import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 
 public final class GateStorage extends WorldSavedData {
@@ -26,26 +26,28 @@ public final class GateStorage extends WorldSavedData {
     public GateStorage(String name) { super(name); }
 
     public static int tally(EntityPlayer player, GateDef def) {
-        if (def.global()) { return tallyGlobally(player.world, def.getKey()); }
-        String team = tallyTeam(player, def);
+        String team = scopeTeam(player, def, def.tallyByTeam());
+        if (team == null) { return tallyGlobally(player.world, def.getKey()); }
         return team.isEmpty() ? tallyFor(player, def.getKey()) : tallyByTeam(player.world, team, def.getKey());
     }
 
     public static void clearTally(EntityPlayer player, GateDef def) {
-        String team = tallyTeam(player, def);
-        if (def.global()) { clearTallyGlobally(player.world, def.getKey()); }
+        String team = scopeTeam(player, def, def.tallyByTeam());
+        if (team == null) { clearTallyGlobally(player.world, def.getKey()); }
         else if (team.isEmpty()) { clearTallyFor(player, def.getKey()); }
         else { clearTallyByTeam(player.world, team, def.getKey()); }
     }
 
-    private static String tallyTeam(EntityPlayer player, GateDef def) { return def.tallyByTeam() ? Standing.teamOf(player) : ""; }
+    @Nullable private static String scopeTeam(EntityPlayer player, GateDef def, boolean byTeam) {
+        if (def.global()) { return null; }
+        return byTeam ? Standing.teamOf(player) : "";
+    }
 
     private static int tallyByTeam(World world, String team, String key) {
         GateStorage data = get(world);
         if (data == null) { return 0; }
         NBTTagCompound counts = data.teamKills.getCompoundTag(team);
-        int now = counts.getInteger(key) + 1;
-        counts.setInteger(key, now);
+        int now = PlayerPersisted.bump(counts, key);
         keep(data.teamKills, team, counts);
         data.markDirty();
         return now;
@@ -66,21 +68,21 @@ public final class GateStorage extends WorldSavedData {
     }
 
     public static boolean unlocked(EntityPlayer player, GateDef def) {
-        if (def.global()) { return unlockedGlobally(player.world, def.getKey()); }
-        String team = teamFor(player, def);
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { return unlockedGlobally(player.world, def.getKey()); }
         return team.isEmpty() ? unlockedFor(player, def.getKey()) : unlockedByTeam(player.world, team, def.getKey());
     }
 
     public static void unlock(EntityPlayer player, GateDef def) {
-        String team = teamFor(player, def);
-        if (def.global()) { unlockGlobally(player.world, def.getKey()); }
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { unlockGlobally(player.world, def.getKey()); }
         else if (team.isEmpty()) { unlockFor(player, def.getKey()); }
         else { unlockByTeam(player.world, team, def.getKey(), true); }
     }
 
     public static void lock(EntityPlayer player, GateDef def) {
-        String team = teamFor(player, def);
-        if (def.global()) { lockGlobally(player.world, def.getKey()); }
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { lockGlobally(player.world, def.getKey()); }
         else if (team.isEmpty()) { lockFor(player, def.getKey()); }
         else { unlockByTeam(player.world, team, def.getKey(), false); }
     }
@@ -96,25 +98,28 @@ public final class GateStorage extends WorldSavedData {
         GateStorage data = get(world);
         if (data == null) { return; }
         NBTTagCompound gates = data.teams.getCompoundTag(team);
-        if (unlocked) { gates.setBoolean(key, true); }
-        else { gates.removeTag(key); }
+        setFlag(gates, key, unlocked);
         keep(data.teams, team, gates);
         data.markDirty();
     }
 
     public static boolean unlockedFor(EntityPlayer player, String key) { return PlayerPersisted.read(player, TAG).getBoolean(key); }
 
-    public static void unlockFor(EntityPlayer player, String key) { PlayerPersisted.section(player, TAG).setBoolean(key, true); }
+    public static void unlockFor(EntityPlayer player, String key) { setFlag(PlayerPersisted.section(player, TAG), key, true); }
 
-    public static void lockFor(EntityPlayer player, String key) { PlayerPersisted.section(player, TAG).removeTag(key); }
+    public static void lockFor(EntityPlayer player, String key) { setFlag(PlayerPersisted.section(player, TAG), key, false); }
+
+    private static void setFlag(NBTTagCompound tag, String key, boolean on) {
+        if (on) { tag.setBoolean(key, true); }
+        else { tag.removeTag(key); }
+    }
 
     public static int tallyFor(EntityPlayer player, String key) { return PlayerPersisted.tally(player, KILLS, key); }
 
     public static int tallyGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return 0; }
-        int now = data.kills.getInteger(key) + 1;
-        data.kills.setInteger(key, now);
+        int now = PlayerPersisted.bump(data.kills, key);
         data.markDirty();
         return now;
     }
@@ -145,21 +150,19 @@ public final class GateStorage extends WorldSavedData {
     public static void unlockGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return; }
-        data.open.setBoolean(key, true);
+        setFlag(data.open, key, true);
         data.markDirty();
     }
 
     public static void lockGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return; }
-        data.open.removeTag(key);
+        setFlag(data.open, key, false);
         data.markDirty();
     }
 
     private static GateStorage get(World world) {
-        MapStorage storage = world.getMapStorage();
-        if (storage == null) { return null; }
-        return SavedData.get(storage, GateStorage.class, NAME, GateStorage::new);
+        return SavedData.of(world.getMapStorage(), GateStorage.class, NAME, GateStorage::new);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {

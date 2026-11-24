@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.rubic.world.interfaces;
 
+import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.core.util.address.IXZAddressable;
 
 import java.util.Collection;
@@ -15,6 +16,8 @@ public interface IColumn extends IXZAddressable {
     IHeightMap getOpacityIndex();
 
     Collection<? extends ICube> getLoadedCubes();
+
+    @SuppressWarnings("unchecked") default Collection<Cube> loadedCubes() { return (Collection<Cube>) getLoadedCubes(); }
 
     Iterable<? extends ICube> getLoadedCubes(int startY, int endY);
 

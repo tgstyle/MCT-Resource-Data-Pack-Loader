@@ -16,8 +16,10 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import net.minecraft.block.Block;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 
 public final class ClaimSettings {
     public enum Method { COMMAND, ITEM, BLOCK }
@@ -45,6 +47,8 @@ public final class ClaimSettings {
     private static final String GROUP = ContentControl.CLAIMS;
     private static boolean foreignAnnounced;
     private static final int MOST = 100000;
+    private static final int RADIUS_MOST = 64;
+    private static final int LEVEL_MOST = 4;
     private static volatile View view = build();
 
     private ClaimSettings() {}
@@ -113,6 +117,8 @@ public final class ClaimSettings {
 
     public static int opLevel() { return view.opLevel; }
 
+    public static boolean isOp(ICommandSender sender) { return sender.canUseCommand(view.opLevel, "rdplserver"); }
+
     public static boolean isClaimItem(ItemStack stack) { return view.item.matches(stack); }
 
     public static boolean itemConsume() { return view.itemConsume; }
@@ -141,7 +147,7 @@ public final class ClaimSettings {
 
     public static boolean dimensionBarred(int dimension) {
         View held = view;
-        return !held.dimensions.isEmpty() && !Listing.allows(held.dimensions.contains(dimension), held.dimensionsAreBlacklist);
+        return !held.dimensions.isEmpty() && Listing.blocks(held.dimensions.contains(dimension), held.dimensionsAreBlacklist);
     }
 
     public static boolean orphansOpen() { return view.orphanAccess == Orphan.OPEN; }
@@ -203,6 +209,8 @@ public final class ClaimSettings {
 
     public static boolean yieldsToForeign() { return view.ftbPolicy != FtbPolicy.INDEPENDENT && ForeignClaimsHolder.get().isActive(); }
 
+    public static boolean yieldsAt(World world, int chunkX, int chunkZ) { return yieldsToForeign() && (ftbPolicy() == FtbPolicy.EXCLUSIVE || ForeignClaimsHolder.get().isClaimed(world, chunkX, chunkZ)); }
+
     public static void announceForeign() {
         FtbPolicy policy = view.ftbPolicy;
         if (foreignAnnounced || policy == FtbPolicy.INDEPENDENT || ForeignClaimsHolder.get().isActive()) { return; }
@@ -216,13 +224,13 @@ public final class ClaimSettings {
         Config.Claims set = Config.claims;
         built.methods = methods(ContentControl.list(GROUP, "methods", set.methods));
         built.who = ContentControl.choice(GROUP, "claimWho", set.claimWho, OwnershipSettings.Who.TEAM);
-        built.commandRadius = ContentControl.ranged(GROUP, "commandRadius", set.commandRadius, 0, 64);
-        built.commandLevel = ContentControl.ranged(GROUP, "commandLevel", set.commandLevel, 0, 4);
-        built.opLevel = ContentControl.ranged(GROUP, "opLevel", set.opLevel, 0, 4);
+        built.commandRadius = ContentControl.ranged(GROUP, "commandRadius", set.commandRadius, 0, RADIUS_MOST);
+        built.commandLevel = ContentControl.ranged(GROUP, "commandLevel", set.commandLevel, 0, LEVEL_MOST);
+        built.opLevel = ContentControl.ranged(GROUP, "opLevel", set.opLevel, 0, LEVEL_MOST);
         built.item = named(ContentControl.text(GROUP, "item", set.item), "claim item", key);
         built.itemConsume = ContentControl.flag(GROUP, "itemConsume", set.itemConsume);
         built.block = named(ContentControl.text(GROUP, "block", set.block), "claim block", key);
-        built.blockRadius = ContentControl.ranged(GROUP, "blockRadius", set.blockRadius, 0, 64);
+        built.blockRadius = ContentControl.ranged(GROUP, "blockRadius", set.blockRadius, 0, RADIUS_MOST);
         built.blockOverlap = ContentControl.choice(GROUP, "blockOverlap", set.blockOverlap, Overlap.REFUSE);
         built.checkTicks = ContentControl.ranged(GROUP, "claimCheckTicks", set.claimCheckTicks, 1, 1200);
         built.limitMode = ContentControl.choice(GROUP, "limitMode", set.limitMode, LimitMode.FLAT);
@@ -230,8 +238,8 @@ public final class ClaimSettings {
         built.limitPerMember = ContentControl.ranged(GROUP, "limitPerMember", set.limitPerMember, 0, MOST);
         built.limitScore = ContentControl.text(GROUP, "limitScore", set.limitScore).trim();
         built.mustTouch = ContentControl.flag(GROUP, "mustTouch", set.mustTouch);
-        built.minDistance = ContentControl.ranged(GROUP, "minDistance", set.minDistance, 0, 64);
-        built.spawnRadius = ContentControl.ranged(GROUP, "spawnRadius", set.spawnRadius, 0, 64);
+        built.minDistance = ContentControl.ranged(GROUP, "minDistance", set.minDistance, 0, RADIUS_MOST);
+        built.spawnRadius = ContentControl.ranged(GROUP, "spawnRadius", set.spawnRadius, 0, RADIUS_MOST);
         built.dimensions = new HashSet<>();
         for (int dimension : ContentControl.numbers(GROUP, "dimensions", set.dimensions)) { built.dimensions.add(dimension); }
         built.dimensionsAreBlacklist = ContentControl.flag(GROUP, "dimensionsAreBlacklist", set.dimensionsAreBlacklist);
@@ -247,8 +255,8 @@ public final class ClaimSettings {
         built.protectPistons = ContentControl.flag(GROUP, "protectPistons", set.protectPistons);
         built.protectFire = ContentControl.flag(GROUP, "protectFire", set.protectFire);
         built.protectPvp = ContentControl.flag(GROUP, "protectPvp", set.protectPvp);
-        built.useBlocks = new BlockSelection("claims", "protects", ContentControl.list(GROUP, "useBlocks", set.useBlocks), key);
-        built.useExceptions = new BlockSelection("claims", "excepts", ContentControl.list(GROUP, "useExceptions", set.useExceptions), key);
+        built.useBlocks = new BlockSelection(GROUP, "protects", ContentControl.list(GROUP, "useBlocks", set.useBlocks), key);
+        built.useExceptions = new BlockSelection(GROUP, "excepts", ContentControl.list(GROUP, "useExceptions", set.useExceptions), key);
         built.message = ContentControl.flag(GROUP, "message", set.message);
         built.messageWilderness = ContentControl.flag(GROUP, "messageWilderness", set.messageWilderness);
         built.onDissolve = ContentControl.choice(GROUP, "claimOnDissolve", set.claimOnDissolve, OwnershipSettings.Dissolve.KEEP);
@@ -276,7 +284,7 @@ public final class ClaimSettings {
     }
 
     private static ItemSelection named(String name, String kind, ResourceLocation key) {
-        ItemSelection selection = new ItemSelection(kind, "claims");
+        ItemSelection selection = new ItemSelection(kind, GROUP);
         selection.readNames(Collections.singletonList(name), key);
         selection.resolve();
         return selection;

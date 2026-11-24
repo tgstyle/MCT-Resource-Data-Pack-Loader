@@ -36,7 +36,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.def = def;
         this.variant = BlockVariants.property();
         ContentSetup.apply(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
         setDefaultState(this.blockState.getBaseState().withProperty(this.variant, def.at(0).name));
     }
@@ -61,23 +60,22 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).light; }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).light; }
 
-    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
+    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return ContentSetup.variantOf(def, variant, state).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).hardness; }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, ContentSetup.variantOf(def, variant, world.getBlockState(pos))); }
 
     @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        if (def.at(getMetaFromState(state)).drops.isEmpty()) { super.getDrops(drops, world, pos, state, fortune); }
-        else { VariantDrops.roll(this, drops, world, state, def.at(getMetaFromState(state)), fortune); }
+        VariantDrops.drops(this, drops, world, state, ContentSetup.variantOf(def, variant, state), fortune, () -> super.getDrops(drops, world, pos, state, fortune));
     }
 
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
+        BlockVariants.breakDrops(world, pos, ContentSetup.variantOf(def, variant, state));
         super.breakBlock(world, pos, state);
     }
 

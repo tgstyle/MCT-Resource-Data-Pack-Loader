@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.board;
 
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
+import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.DiceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.ScoreDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
@@ -14,6 +15,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
+import mctmods.resourcedatapackloader.core.util.text.Placeholders;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
@@ -44,6 +46,9 @@ import net.minecraft.world.World;
 
 public final class ContentDice {
     public static final String COIN = "coin";
+    private static final String BAD_ROLL = "badroll";
+    private static final String NO_DECK = "nodeck";
+    private static final String NO_OBJECTIVE = "noobjective";
     public static final String SILENT = "silent";
     public static final String SELF = "self";
     public static final String TEAM = "team";
@@ -169,7 +174,7 @@ public final class ContentDice {
 
     public static Result dice(Random random, String roll) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         List<Integer> rolls = throwOf(random, spec);
         int total = sum(rolls, spec);
         Spell spelled = new Spell(spec[0], spec[1], spec[2]);
@@ -179,7 +184,7 @@ public final class ContentDice {
 
     public static Result edge(Random random, String roll, boolean higher) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         int first = sum(throwOf(random, spec), spec);
         int second = sum(throwOf(random, spec), spec);
         int kept = higher ? Math.max(first, second) : Math.min(first, second);
@@ -196,7 +201,7 @@ public final class ContentDice {
 
     public static Result draw(World world, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         int card = ContentDicePile.draw(world, deck, cards.size(), world.rand);
         boolean again = card < 0 && !FIXED.contains(deck);
         if (again) {
@@ -209,14 +214,14 @@ public final class ContentDice {
 
     public static Result shuffle(World world, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         ContentDicePile.shuffle(world, deck);
         return new Result(cards.size()).say("shuffle", "deck", deck, "left", cards.size());
     }
 
     public static Result left(World world, String deck) {
         List<String> cards = DECKS.get(deck);
-        if (cards == null) { return Result.refused("nodeck", "deck", deck); }
+        if (cards == null) { return Result.refused(NO_DECK, "deck", deck); }
         int left = ContentDicePile.left(world, deck, cards.size());
         return new Result(left).say("left", "deck", deck, "left", left);
     }
@@ -245,7 +250,7 @@ public final class ContentDice {
 
     public static Result teamroll(MinecraftServer server, ICommandSender sender, String roll) {
         int[] spec = parse(roll);
-        if (spec == null) { return Result.refused("badroll", "roll", roll); }
+        if (spec == null) { return Result.refused(BAD_ROLL, "roll", roll); }
         List<String> members = new ArrayList<>();
         for (EntityPlayerMP mate : teammates(server, sender)) { members.add(mate.getName()); }
         if (members.isEmpty()) { members.add(sender.getName()); }
@@ -268,7 +273,7 @@ public final class ContentDice {
         Scoreboard board = ContentTeams.board(server);
         String name = objective == null ? tieObjective() : objective;
         ScoreObjective held = name == null ? null : board.getObjective(name);
-        if (held == null) { return Result.refused("noobjective", "objective", name == null ? "-" : name); }
+        if (held == null) { return Result.refused(NO_OBJECTIVE, "objective", Placeholders.orDash(name)); }
         List<Score> top = ContentScoringTie.top(board.getSortedScores(held));
         if (top.size() < 2) { return Result.refused("notie", "objective", name); }
         Score drawn = top.get(random(server).nextInt(top.size()));
@@ -297,7 +302,7 @@ public final class ContentDice {
     public static void announce(MinecraftServer server, ICommandSender sender, String command, Result result, Audience audience, @Nullable String store) {
         String who = sender.getName();
         String english = text(null, result, who);
-        ContentLog.LOGGER.info("{} ran /rdplserver game {} and got {}", who, command, english);
+        ContentLog.LOGGER.info("{} ran /{} game {} and got {}", who, CommandShared.NAME, command, english);
         RECENT.addFirst(new SimpleDateFormat("HH:mm:ss").format(new Date()) + " " + english);
         while (RECENT.size() > KEPT) { RECENT.removeLast(); }
         if (store != null) {
@@ -318,7 +323,7 @@ public final class ContentDice {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
         if (!store.isEmpty() && lacks(server, store)) {
-            Says.chat(player, TextFormatting.RED, words(player, "noobjective", "objective", store));
+            Says.chat(player, TextFormatting.RED, words(player, NO_OBJECTIVE, "objective", store));
             return;
         }
         Result result = named(server, rolls);

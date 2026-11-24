@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core.integration.forgemultipartcbe;
 
 import mctmods.resourcedatapackloader.common.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -19,7 +20,7 @@ public final class CbmpPlayerCubes {
         EntityPlayerMP player = current;
         if (player == null) { return true; }
         WorldServer world = player.getServerWorld();
-        if (!CbmpRubicParts.rubic(world)) { return true; }
+        if (!GenHeights.rubic(world)) { return true; }
         CubePos cube = CubePos.fromBlockCoords(pos);
         return ((PlayerCubeMap) world.getPlayerChunkMap()).isPlayerWatchingCube(player, cube.getX(), cube.getY(), cube.getZ());
     }

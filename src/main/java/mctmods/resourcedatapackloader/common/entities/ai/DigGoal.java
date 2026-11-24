@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.orders.OrderItems;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
@@ -50,7 +51,7 @@ public final class DigGoal extends EntityAIBase {
     }
 
     @Override public void resetTask() {
-        if (digging != null) { mob.world.sendBlockBreakProgress(mob.getEntityId(), digging, -1); }
+        if (digging != null) { BlockBreak.clear(mob, digging); }
         digging = null;
         target = null;
     }
@@ -79,7 +80,7 @@ public final class DigGoal extends EntityAIBase {
                 return;
             }
         }
-        mob.getLookHelper().setLookPositionWithEntity(aim, 30.0F, 30.0F);
+        Looking.at(mob, aim);
         mob.getMoveHelper().setMoveTo(aim.posX, aim.posY, aim.posZ, SPEED);
     }
 

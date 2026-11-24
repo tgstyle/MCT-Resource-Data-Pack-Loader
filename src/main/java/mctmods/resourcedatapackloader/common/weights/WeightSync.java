@@ -51,8 +51,6 @@ public final class WeightSync {
         if (event.player instanceof EntityPlayerMP) { SYNC.fresh((EntityPlayerMP) event.player); }
     }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.player); }
-
     private static Snapshot snapshot(EntityPlayerMP player) {
         PlayerWeights.Entry entry = PlayerWeights.current(player);
         return new Snapshot(entry.total, entry.limit, entry.tier, !PlayerWeights.counted(player, ContentWeights.settings()));

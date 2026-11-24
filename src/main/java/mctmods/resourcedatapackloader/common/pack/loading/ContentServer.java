@@ -8,11 +8,14 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -23,6 +26,23 @@ import net.minecraft.world.GameType;
 public final class ContentServer {
     private static final Set<String> WARNED = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final DimensionValues<EnumDifficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentServer::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
+
+    private static final List<Setting<?>> SETTINGS = Arrays.asList(
+        new Setting<>("force-gamemode", ContentServer::forceGameMode),
+        new Setting<>("pvp", ContentServer::pvp),
+        new Setting<>("allow-flight", ContentServer::flight),
+        new Setting<>("spawn-protection", () -> count(spawnProtection())),
+        new Setting<>("allow-nether", ContentServer::nether),
+        new Setting<>("enable-command-block", ContentServer::commandBlocks),
+        new Setting<>("player-idle-timeout", () -> count(idleTimeout())),
+        new Setting<>("motd", () -> words(motd())),
+        new Setting<>("max-world-size", () -> count(maxSize())),
+        new Setting<>("generate-structures", ContentServer::structures),
+        new Setting<>("spawn-monsters", ContentServer::spawnMonsters),
+        new Setting<>("spawn-animals", ContentServer::spawnAnimals),
+        new Setting<>("spawn-npcs", ContentServer::spawnNpcs),
+        new Setting<>("view-distance", () -> count(viewDistance())),
+        new Setting<>("max-build-height", () -> count(buildHeight())));
 
     private ContentServer() {}
 
@@ -122,30 +142,12 @@ public final class ContentServer {
 
     public static Map<String, String> properties(String levelType) {
         Map<String, String> asked = new LinkedHashMap<>();
-        put(asked, "force-gamemode", forceGameMode());
-        put(asked, "pvp", pvp());
-        put(asked, "allow-flight", flight());
-        put(asked, "spawn-protection", spawnProtection());
-        put(asked, "allow-nether", nether());
-        put(asked, "enable-command-block", commandBlocks());
-        put(asked, "player-idle-timeout", idleTimeout());
-        if (!motd().isEmpty()) { asked.put("motd", motd()); }
-        put(asked, "max-world-size", maxSize());
-        put(asked, "generate-structures", structures());
-        put(asked, "spawn-monsters", spawnMonsters());
-        put(asked, "spawn-animals", spawnAnimals());
-        put(asked, "spawn-npcs", spawnNpcs());
-        put(asked, "view-distance", viewDistance());
-        put(asked, "max-build-height", buildHeight());
+        for (Setting<?> setting : SETTINGS) { setting.into(asked); }
         EnumDifficulty difficulty = difficultyFor(0);
         if (difficulty != null) { asked.put("difficulty", Integer.toString(difficulty.getId())); }
         ContentTerrain.properties(asked, levelType);
         return asked;
     }
-
-    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) { if (value != null) { asked.put(key, value.toString()); } }
-
-    private static void put(Map<String, String> asked, String key, int value) { if (value >= 0) { asked.put(key, Integer.toString(value)); } }
 
     public static void applyTo(MinecraftServer server) {
         Boolean pvp = pvp();
@@ -164,5 +166,24 @@ public final class ContentServer {
         if (!motd.isEmpty()) { server.setMOTD(motd); }
         int height = buildHeight();
         if (height >= 0) { server.setBuildLimit(height); }
+    }
+
+    @Nullable private static Integer count(int value) { return value >= 0 ? value : null; }
+
+    @Nullable private static String words(String value) { return value.isEmpty() ? null : value; }
+
+    private static final class Setting<T> {
+        private final String key;
+        private final Supplier<T> read;
+
+        private Setting(String key, Supplier<T> read) {
+            this.key = key;
+            this.read = read;
+        }
+
+        private void into(Map<String, String> asked) {
+            T value = read.get();
+            if (value != null) { asked.put(key, value.toString()); }
+        }
     }
 }

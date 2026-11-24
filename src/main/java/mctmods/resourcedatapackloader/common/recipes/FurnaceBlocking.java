@@ -7,8 +7,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import net.minecraft.item.ItemStack;
 
@@ -41,18 +39,7 @@ public final class FurnaceBlocking {
 
     public static void apply() {
         if (BLOCKING.disabled()) { return; }
-        Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
-        Map<ItemStack, Float> experience = net.minecraft.item.crafting.FurnaceRecipes.instance().experienceList;
-        Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
-        int removed = 0;
-        while (iterator.hasNext()) {
-            Map.Entry<ItemStack, ItemStack> entry = iterator.next();
-            if (TRUSTED_OUTPUTS.contains(entry.getValue())) { continue; }
-            if (!rejects(entry.getValue())) { continue; }
-            experience.remove(entry.getValue());
-            iterator.remove();
-            removed++;
-        }
+        int removed = FurnaceRecipes.removeWhere((in, out) -> !TRUSTED_OUTPUTS.contains(out) && rejects(out));
         BLOCKING.report(", " + removed + " of them already registered before the block list could be read");
     }
 }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.renderer;
 
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
 
 import net.minecraft.client.Minecraft;
@@ -28,13 +29,11 @@ import org.lwjgl.opengl.GL11;
         float right = -across + half[2] * 2.0F * across;
         float near = -down + half[1] * 2.0F * down;
         float far = -down + half[3] * 2.0F * down;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        BufferBuilder buffer = Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         buffer.pos(left, 100.0D, near).tex(half[0], half[1]).endVertex();
         buffer.pos(right, 100.0D, near).tex(half[2], half[1]).endVertex();
         buffer.pos(right, 100.0D, far).tex(half[2], half[3]).endVertex();
         buffer.pos(left, 100.0D, far).tex(half[0], half[3]).endVertex();
-        tessellator.draw();
+        Tessellator.getInstance().draw();
     }
 }

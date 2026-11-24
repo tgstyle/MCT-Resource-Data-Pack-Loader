@@ -44,7 +44,7 @@ public final class RaidTargets {
     @Nullable private static RaidTarget village(WorldServer world, EntityPlayerMP player) {
         Village village = ActiveRaid.nearestVillage(world, new BlockPos(player), 0);
         if (village == null || RaidStorage.get(world).near(village.getCenter(), VILLAGE_SEARCH + village.getVillageRadius()) != null) { return null; }
-        return new RaidTarget(RaidTarget.Kind.VILLAGE, village.getCenter(), village.getVillageRadius(), 0, null, false, 0);
+        return new RaidTarget(RaidTarget.Kind.VILLAGE, village.getCenter(), village.getVillageRadius(), 0, null, 0);
     }
 
     @Nullable private static RaidTarget base(WorldServer world, EntityPlayerMP player, RaidDef def) {
@@ -52,7 +52,7 @@ public final class RaidTargets {
         if (rules == null) { return null; }
         Base base = BaseFinder.find(world, player, rules);
         if (base == null || refused(world, rules, base.ownerHandle(), base.center(), base.radius())) { return null; }
-        return new RaidTarget(RaidTarget.Kind.BASE, base.center(), base.radius(), base.ownerHandle(), player.getUniqueID(), false, (int) Math.round(base.score()));
+        return new RaidTarget(RaidTarget.Kind.BASE, base.center(), base.radius(), base.ownerHandle(), player.getUniqueID(), (int) Math.round(base.score()));
     }
 
     @Nullable private static RaidTarget player(WorldServer world, EntityPlayerMP player, RaidDef def) {
@@ -61,13 +61,13 @@ public final class RaidTargets {
         int owner = RaidOwner.of(player);
         BlockPos at = new BlockPos(player);
         if (refused(world, rules, owner, at, rules.radius)) { return null; }
-        return new RaidTarget(RaidTarget.Kind.PLAYER, at, rules.radius, owner, player.getUniqueID(), false, 0);
+        return new RaidTarget(RaidTarget.Kind.PLAYER, at, rules.radius, owner, player.getUniqueID(), 0);
     }
 
     @Nullable private static RaidTarget free(WorldServer world, EntityPlayerMP player, RaidDef def) {
         BlockPos at = new BlockPos(player);
         if (RaidStorage.get(world).near(at, def.reach) != null) { return null; }
-        return new RaidTarget(RaidTarget.Kind.FREE, at, def.reach, 0, null, true, 0);
+        return new RaidTarget(RaidTarget.Kind.FREE, at, def.reach, 0, null, 0);
     }
 
     private static boolean refused(WorldServer world, BaseDef rules, int owner, BlockPos center, int radius) {

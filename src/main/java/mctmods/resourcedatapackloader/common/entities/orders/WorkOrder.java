@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.orders;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.common.util.world.TileScan;
 
 import java.util.ArrayDeque;
@@ -25,6 +26,7 @@ public final class WorkOrder {
     private static final int QUEUE = 64;
     private static final int REST = 200;
     private static final int STOCK_ROW = 9;
+    private static final String STOCK = "Stock";
     public final int id;
     public final OrderDef def;
     public final BlockPos chest;
@@ -61,7 +63,7 @@ public final class WorkOrder {
         if (sign != null) { tag.setTag("Sign", NBTUtil.createPosTag(sign)); }
         tag.setString("Team", team);
         if (owner != null) { tag.setUniqueId("Owner", owner); }
-        tag.setBoolean("Stock", stock);
+        tag.setBoolean(STOCK, stock);
         tag.setInteger("Left", left);
         tag.setInteger("Spawned", spawned);
         return tag;
@@ -72,7 +74,7 @@ public final class WorkOrder {
         if (def == null) { return null; }
         BlockPos sign = tag.hasKey("Sign") ? NBTUtil.getPosFromTag(tag.getCompoundTag("Sign")) : null;
         UUID owner = tag.hasUniqueId("Owner") ? tag.getUniqueId("Owner") : null;
-        WorkOrder order = new WorkOrder(tag.getInteger("Id"), def, NBTUtil.getPosFromTag(tag.getCompoundTag("Chest")), sign, tag.getString("Team"), owner, tag.getBoolean("Stock"), tag.getInteger("Left"));
+        WorkOrder order = new WorkOrder(tag.getInteger("Id"), def, NBTUtil.getPosFromTag(tag.getCompoundTag("Chest")), sign, tag.getString("Team"), owner, tag.getBoolean(STOCK), tag.getInteger("Left"));
         order.spawned = tag.getInteger("Spawned");
         return order;
     }
@@ -174,16 +176,14 @@ public final class WorkOrder {
     }
 
     private boolean holds(IItemHandler items, @Nullable List<ItemStack> wants) {
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) { continue; }
-            if (wants == null && OrderItems.matches(def, stack)) { return true; }
-            if (wants == null) { continue; }
+        return ItemHandlers.any(items, stack -> {
+            if (stack.isEmpty()) { return false; }
+            if (wants == null) { return OrderItems.matches(def, stack); }
             for (ItemStack want : wants) {
                 if (ItemHandlerHelper.canItemStacksStack(want, stack)) { return true; }
             }
-        }
-        return false;
+            return false;
+        });
     }
 
     int working(long now) {

@@ -2,14 +2,14 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ReturningThrow;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockTNT;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityTNTPrimed;
@@ -17,7 +17,6 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -30,7 +29,6 @@ public final class ThrowerGoal extends EntityAIBase {
     private static final double RETREAT_SPEED = 1.4D;
     private static final float TRIDENT_DAMAGE = 8.0F;
     private static final float TRIDENT_SPEED = 1.6F;
-    private static final int THROW_SOUND = 5;
     private final EntityCreature mob;
     private final int fuse;
     private final int reload;
@@ -63,8 +61,7 @@ public final class ThrowerGoal extends EntityAIBase {
         if (retreating > 0 || reloading > 0) { return true; }
         EntityLivingBase found = mob.getAttackTarget();
         if (found == null || held().isEmpty()) { return false; }
-        double away = mob.getDistanceSq(found);
-        return away < range * range && away > REACH * REACH && mob.getEntitySenses().canSee(found);
+        return RestingEngageGoal.inBand(mob, found, REACH * REACH, range * range);
     }
 
     @Override public boolean shouldContinueExecuting() { return retreating > 0 || reloading > 0 || shouldExecute(); }
@@ -86,9 +83,9 @@ public final class ThrowerGoal extends EntityAIBase {
             if (!thrown.isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY); }
             return;
         }
-        mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         mob.getNavigator().clearPath();
-        if (thrown.isEmpty() || mob.world.isRemote) { return; }
+        if (thrown.isEmpty()) { return; }
         Vec3d at = new Vec3d(target.posX - mob.posX, target.posY + target.getEyeHeight() - (mob.posY + mob.getEyeHeight()), target.posZ - mob.posZ);
         double far = Math.max(1.0D, at.length());
         Vec3d push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
@@ -130,7 +127,7 @@ public final class ThrowerGoal extends EntityAIBase {
     }
 
     private void flung(ItemStack thrown, EntityLivingBase aimed) {
-        IAttributeInstance strength = mob.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
+        IAttributeInstance strength = StrikeGoal.damage(mob);
         ReturningThrow flying = new ReturningThrow(mob.world, mob, thrown, strength == null ? TRIDENT_DAMAGE : (float) strength.getAttributeValue());
         double dx = aimed.posX - mob.posX;
         double dy = aimed.getEntityBoundingBox().minY + aimed.height / 3.0F - flying.posY;
@@ -150,18 +147,14 @@ public final class ThrowerGoal extends EntityAIBase {
         thrownWith(SoundEvents.ENTITY_SNOWBALL_THROW);
     }
 
-    private void thrownWith(SoundEvent fallback) {
-        SoundEvent own = ContentEntities.soundEvent(mob, THROW_SOUND);
-        mob.playSound(own != null ? own : fallback, 1.0F, 1.0F);
-    }
+    private void thrownWith(SoundEvent fallback) { mob.playSound(ContentEntities.soundEvent(mob, ContentEntities.THROW, () -> fallback), 1.0F, 1.0F); }
 
     private void backAway() {
         if (target == null || !mob.getNavigator().noPath()) { return; }
-        Vec3d away = RandomPositionGenerator.findRandomTargetBlockAwayFrom(mob, 12, 5, new Vec3d(target.posX, target.posY, target.posZ));
-        if (away != null) { mob.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, RETREAT_SPEED); }
+        Walking.awayFrom(mob, new Vec3d(target.posX, target.posY, target.posZ), 12, 5, RETREAT_SPEED);
     }
 
-    private ItemStack held() { return mob.getHeldItem(EnumHand.MAIN_HAND); }
+    private ItemStack held() { return mob.getHeldItemMainhand(); }
 
     private static boolean isTnt(ItemStack stack) { return stack.getItem() instanceof ItemBlock && ((ItemBlock) stack.getItem()).getBlock() instanceof BlockTNT; }
 }

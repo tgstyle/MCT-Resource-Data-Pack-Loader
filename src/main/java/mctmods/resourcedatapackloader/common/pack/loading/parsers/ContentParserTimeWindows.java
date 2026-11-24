@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
@@ -88,8 +87,6 @@ final class ContentParserTimeWindows {
     }
 
     private static void unknown(String owner, JsonObject json, List<String> known) {
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-            if (!known.contains(entry.getKey())) { ContentLog.LOGGER.error("{} gives '{}', which a time window cannot change, ignoring it", owner, entry.getKey()); }
-        }
+        for (String key : Json.unknownKeys(json, known)) { ContentLog.LOGGER.error("{} gives '{}', which a time window cannot change, ignoring it", owner, key); }
     }
 }

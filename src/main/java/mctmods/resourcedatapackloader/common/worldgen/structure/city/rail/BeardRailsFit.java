@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardSite;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardLayout;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardSurface;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardLinks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
@@ -31,7 +30,7 @@ public final class BeardRailsFit {
     private BeardRailsFit() {}
 
     public static void found(World world, StructureStart start, StructureVillagePieces.Start well, Random rand) {
-        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        if (ContentBeard.idle(world)) { return; }
         found(world, start, well, rand, false);
         found(world, start, well, rand, true);
     }
@@ -40,7 +39,7 @@ public final class BeardRailsFit {
         for (StructureComponent piece : pieces) {
             if (!(piece instanceof StructureVillagePieces.Start)) { continue; }
             StructureBoundingBox well = piece.getBoundingBox();
-            if ((alongX ? well.maxX : well.maxZ) < (alongX ? box.minX : box.minZ) || (alongX ? well.minX : well.minZ) > (alongX ? box.maxX : box.maxZ)) { continue; }
+            if ((BeardPlots.most(well, alongX)) < (BeardPlots.least(box, alongX)) || (BeardPlots.least(well, alongX)) > (BeardPlots.most(box, alongX))) { continue; }
             if (!BeardRails.clearsWell(well, alongX, center, true)) { return true; }
         }
         return false;
@@ -96,15 +95,13 @@ public final class BeardRailsFit {
     }
 
     private static int offPlaza(StructureBoundingBox plaza, boolean alongX, int center, int side) {
-        int least = alongX ? plaza.minZ : plaza.minX;
-        int most = alongX ? plaza.maxZ : plaza.maxX;
+        int least = BeardPlots.acrossLeast(plaza, alongX);
+        int most = BeardPlots.acrossMost(plaza, alongX);
         int middle = least + (most - least + 1) / 2;
         int mouth = ContentBeard.streetHalf() + 1 + MOUTH + BeardRoads.pathExtraWidth();
         int low = Math.min(least - ContentBeard.plazaReach(), middle - mouth) - BeardRails.MARGIN;
         int high = Math.max(most + ContentBeard.plazaReach(), middle + mouth) + BeardRails.MARGIN;
-        int half = BeardRails.half(false);
-        if (center + half < low || center - half > high) { return center; }
-        return side >= 0 ? high + half + 1 : low - half - 1;
+        return BeardRails.pushOff(center, BeardRails.half(false), low, high, side);
     }
 
     private static void seekRoad(List<StructureComponent> components, List<StructureComponent> everyone, RailPiece rail, boolean alongX, int reach) {
@@ -174,8 +171,8 @@ public final class BeardRailsFit {
             for (StructureComponent other : components) {
                 if (other instanceof RailPiece) { continue; }
                 StructureBoundingBox box = other.getBoundingBox();
-                least = Math.min(least, alongX ? box.minX : box.minZ);
-                most = Math.max(most, alongX ? box.maxX : box.maxZ);
+                least = Math.min(least, BeardPlots.least(box, alongX));
+                most = Math.max(most, BeardPlots.most(box, alongX));
             }
             if (least > most) { continue; }
             StructureBoundingBox box = rail.getBoundingBox();
@@ -190,8 +187,8 @@ public final class BeardRailsFit {
                 if (components.contains(other)) { continue; }
                 StructureBoundingBox met = other.getBoundingBox();
                 if (!met.intersectsWith(plan.minX, plan.minZ, plan.maxX, plan.maxZ)) { continue; }
-                int metLeast = alongX ? met.minX : met.minZ;
-                int metMost = alongX ? met.maxX : met.maxZ;
+                int metLeast = BeardPlots.least(met, alongX);
+                int metMost = BeardPlots.most(met, alongX);
                 if (metLeast > wellAt ? linkedHigh : metMost < wellAt && linkedLow) {
                     ContentLog.LOGGER.warn("Railway line {} of the village at {}, {} is linked past {} of another village at {}, {}, which should have kept clear of the link", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, other.getClass().getSimpleName(), met.minX, met.minZ);
                     continue;
@@ -266,7 +263,7 @@ public final class BeardRailsFit {
             StructureBoundingBox road = other.getBoundingBox();
             boolean roadAlongX = BeardPlots.longerAlongX(road);
             if (roadAlongX == alongX || (!narrow && BeardRoads.roadNarrow(road, roadAlongX))) { continue; }
-            if (center < (alongX ? road.minZ : road.minX) || center > (alongX ? road.maxZ : road.maxX)) { continue; }
+            if (center < (BeardPlots.acrossLeast(road, alongX)) || center > (BeardPlots.acrossMost(road, alongX))) { continue; }
             boxes.add(alongX ? new int[] {road.minX, road.maxX} : new int[] {road.minZ, road.maxZ});
         }
         return boxes;
@@ -309,8 +306,8 @@ public final class BeardRailsFit {
         int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
         int[] rising = rail.risingKnown();
         List<RailPiece> only = Collections.singletonList(rail);
-        int from = Math.max(alongX ? met.minX : met.minZ, rail.rowLeast());
-        int to = Math.min(alongX ? met.maxX : met.maxZ, rail.rowMost());
+        int from = Math.max(BeardPlots.least(met, alongX), rail.rowLeast());
+        int to = Math.min(BeardPlots.most(met, alongX), rail.rowMost());
         int roof = Integer.MIN_VALUE;
         for (int row = from; row <= to; row++) {
             if (BeardRails.surfaced(rising, row)) { continue; }

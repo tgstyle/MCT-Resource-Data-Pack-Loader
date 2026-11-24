@@ -11,7 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 public final class PlayerValueSync<T> {
-    private final Map<UUID, T> sent = new HashMap<>();
+    private final Map<UUID, T> sent = PlayerLogout.track(new HashMap<>());
     private final Function<EntityPlayerMP, T> compute;
     private final BooleanSupplier watching;
     private final BiConsumer<EntityPlayerMP, T> send;
@@ -36,7 +36,7 @@ public final class PlayerValueSync<T> {
         push(player);
     }
 
-    public void forget(EntityPlayer player) { sent.remove(player.getUniqueID()); }
+    private void forget(EntityPlayer player) { sent.remove(player.getUniqueID()); }
 
     public boolean told(EntityPlayerMP player) { return sent.containsKey(player.getUniqueID()); }
 

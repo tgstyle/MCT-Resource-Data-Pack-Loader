@@ -5,14 +5,13 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeGrowthD
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeRuleDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentTreeRules;
+import mctmods.resourcedatapackloader.common.util.world.PlacePositions;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.entity.player.BonemealEvent;
 import net.minecraftforge.event.terraingen.SaplingGrowTreeEvent;
 import net.minecraftforge.event.world.BlockEvent;
@@ -29,8 +28,8 @@ public final class ContentTreeEvents {
         if (!(event.getWorld() instanceof WorldServer) || event.getResult() == Event.Result.DENY || TreeRecorder.recording()) { return; }
         WorldServer world = (WorldServer) event.getWorld();
         IBlockState state = world.getBlockState(event.getPos());
-        TreeGrowthDef growth = ContentTreeRules.growth(state);
-        if (state.getBlock() instanceof ContentSaplingBlock || growth == null || !growth.growing()) { return; }
+        TreeGrowthDef growth = ContentTreeRules.growing(state);
+        if (state.getBlock() instanceof ContentSaplingBlock || growth == null) { return; }
         event.setResult(Event.Result.DENY);
         ContentTreeGrowth.start(world, event.getPos(), state, ContentTreeRules.ruleId(state), growth, null);
     }
@@ -45,12 +44,7 @@ public final class ContentTreeEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onPlace(BlockEvent.EntityPlaceEvent event) {
         if (!(event.getWorld() instanceof WorldServer)) { return; }
         WorldServer world = (WorldServer) event.getWorld();
-        List<BlockPos> placed = new ArrayList<>();
-        if (event instanceof BlockEvent.EntityMultiPlaceEvent) {
-            for (BlockSnapshot snapshot : ((BlockEvent.EntityMultiPlaceEvent) event).getReplacedBlockSnapshots()) { placed.add(snapshot.getPos()); }
-        }
-        else { placed.add(event.getPos()); }
-        for (BlockPos pos : placed) { placed(world, pos); }
+        for (BlockPos pos : PlacePositions.of(event)) { placed(world, pos); }
     }
 
     public static boolean randomTick(WorldServer world, BlockPos pos, IBlockState state, Random rand) {
@@ -65,7 +59,7 @@ public final class ContentTreeEvents {
         }
         if (ContentGrowSwitch.skips(world, pos, state.getBlock(), rand) || ContentTreeGrowth.conditions(world, pos, growth) != null) { return true; }
         if (!growth.decidesRandomTick()) { return false; }
-        if (growth.chance >= 0.0 && rand.nextDouble() >= growth.chance) { return true; }
+        if (!growth.rolls(rand)) { return true; }
         ContentTreeGrowth.drive(world, pos, state, rand);
         return true;
     }
@@ -82,7 +76,7 @@ public final class ContentTreeEvents {
     }
 
     private static Outcome onTree(WorldServer world, TreeEntry entry, BlockPos pos, boolean budget) {
-        TreeGrowthDef growth = entry.phase == 1 ? ContentTreeRules.byId(entry.rule) : null;
+        TreeGrowthDef growth = entry.phase == TreeEntry.PHASE_GROWING ? ContentTreeRules.byId(entry.rule) : null;
         TreeShape shape = growth == null ? null : ContentTreeGrowth.shape(world, entry);
         if (shape == null || !shape.trunk().contains(pos.subtract(BlockPos.fromLong(entry.pos)))) { return Outcome.NONE; }
         TreeGrowthDef.Bonemeal mode = growth.bonemeal == TreeGrowthDef.Bonemeal.UNSET ? TreeGrowthDef.Bonemeal.STEP : growth.bonemeal;
@@ -91,21 +85,25 @@ public final class ContentTreeEvents {
             ContentTreeClock.credit(world, entry, growth.bonemealTicks);
             return Outcome.USED;
         }
-        if (growth.bonemealChecks && ContentTreeGrowth.conditions(world, entry, growth) != null || budget && !ContentTreeClock.spend(world)) { return Outcome.KEPT; }
+        if (kept(world, growth, () -> ContentTreeGrowth.conditions(world, entry, growth), budget)) { return Outcome.KEPT; }
         return ContentTreeGrowth.step(world, entry, growth, growth.timed()) == null ? Outcome.USED : Outcome.KEPT;
+    }
+
+    private static boolean kept(WorldServer world, TreeGrowthDef growth, Supplier<String> conditions, boolean budget) {
+        return growth.bonemealChecks && conditions.get() != null || budget && !ContentTreeClock.spend(world);
     }
 
     private static Outcome onSapling(WorldServer world, BlockPos pos, IBlockState state, boolean budget) {
         boolean own = state.getBlock() instanceof ContentSaplingBlock;
-        TreeGrowthDef growth = ContentTreeRules.growth(state);
-        if (growth == null || !growth.growing() || !own && growth.bonemeal == TreeGrowthDef.Bonemeal.UNSET) { return Outcome.NONE; }
+        TreeGrowthDef growth = ContentTreeRules.growing(state);
+        if (growth == null || !own && growth.bonemeal == TreeGrowthDef.Bonemeal.UNSET) { return Outcome.NONE; }
         if (growth.bonemeal == TreeGrowthDef.Bonemeal.OFF) { return Outcome.KEPT; }
         TreeEntry waiting = ContentTreeStore.get(world, pos.toLong());
-        if (growth.bonemeal == TreeGrowthDef.Bonemeal.TIME && waiting != null && waiting.phase == 0) {
+        if (growth.bonemeal == TreeGrowthDef.Bonemeal.TIME && waiting != null && waiting.phase == TreeEntry.PHASE_SAPLING) {
             ContentTreeClock.credit(world, waiting, growth.bonemealTicks);
             return Outcome.USED;
         }
-        if (growth.bonemealChecks && ContentTreeGrowth.conditions(world, pos, growth) != null || budget && !ContentTreeClock.spend(world)) { return Outcome.KEPT; }
+        if (kept(world, growth, () -> ContentTreeGrowth.conditions(world, pos, growth), budget)) { return Outcome.KEPT; }
         if (own) { return Outcome.NONE; }
         ContentTreeGrowth.drive(world, pos, state, world.rand);
         return Outcome.USED;
@@ -115,13 +113,13 @@ public final class ContentTreeEvents {
         TreeEntry owner = ContentTreeStore.ownerOf(world, pos.toLong());
         if (owner != null) {
             BlockPos offset = pos.subtract(BlockPos.fromLong(owner.pos));
-            int packed = TreeEntry.pack(offset.getX(), offset.getY(), offset.getZ());
+            int packed = TreeEntry.pack(offset);
             ContentTreeStore.removeOwned(world, owner, packed);
             owner.gone.add(packed);
             ContentTreeStore.dirty(world, owner);
         }
         IBlockState state = world.getBlockState(pos);
-        TreeGrowthDef growth = state.getBlock() instanceof ContentSaplingBlock ? null : ContentTreeRules.growth(state);
-        if (growth != null && growth.growing() && growth.timed()) { ContentTreeGrowth.plant(world, pos, state, ContentTreeRules.ruleId(state)); }
+        TreeGrowthDef growth = state.getBlock() instanceof ContentSaplingBlock ? null : ContentTreeRules.growing(state);
+        if (growth != null && growth.timed()) { ContentTreeGrowth.plant(world, pos, state, ContentTreeRules.ruleId(state)); }
     }
 }

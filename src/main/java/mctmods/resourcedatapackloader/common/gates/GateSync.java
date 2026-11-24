@@ -2,13 +2,13 @@ package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -26,7 +26,7 @@ public final class GateSync {
     @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || WATCHED.isEmpty()) { return; }
         if (++ticks % INTERVAL != 0) { return; }
-        SYNC.pushAll(FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers());
+        SYNC.pushAll(Players.online());
     }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { refresh(event.player); }
@@ -35,10 +35,9 @@ public final class GateSync {
 
     @SubscribeEvent public static void onDimension(PlayerEvent.PlayerChangedDimensionEvent event) { refresh(event.player); }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.player); }
-
     private static void refresh(EntityPlayer player) {
-        if (player instanceof EntityPlayerMP) { SYNC.fresh((EntityPlayerMP) player); }
+        EntityPlayerMP server = Players.serverPlayer(player);
+        if (server != null) { SYNC.fresh(server); }
     }
 
     private static Set<String> open(EntityPlayerMP player) {

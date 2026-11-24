@@ -16,7 +16,7 @@ import net.minecraft.util.math.MathHelper;
 final class ContentParserDarkness {
     private static final String DARKNESS = "darkness";
     private static final String MOON_LIGHT = "moonLight";
-    private static final List<String> MODES = Arrays.asList(DarknessDef.FULL, DarknessDef.BLOCK, DarknessDef.MOON);
+    private static final List<String> MODES = Collections.unmodifiableList(Arrays.asList(DarknessDef.FULL, DarknessDef.BLOCK, DarknessDef.MOON));
     private static final List<String> DARKNESS_KEYS = Collections.unmodifiableList(Arrays.asList("mode", MOON_LIGHT, "grayNight", "endGlow", "gamma"));
     private static final float[] MOON_DEFAULT = {0.0F, 0.075F, 0.15F, 0.225F, 0.3F};
 

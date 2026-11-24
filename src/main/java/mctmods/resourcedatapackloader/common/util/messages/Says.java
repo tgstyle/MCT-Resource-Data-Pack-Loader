@@ -95,6 +95,12 @@ public final class Says {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, rule, color, said); }
     }
 
+    public static String fill(String template, String... pairs) {
+        String filled = template;
+        for (int i = 0; i + 1 < pairs.length; i += 2) { filled = filled.replace(pairs[i], pairs[i + 1]); }
+        return filled;
+    }
+
     public static ITextComponent marked(String said, TextFormatting color) {
         ITextComponent all = new TextComponentString("").setStyle(new Style().setColor(color));
         for (Marks.Run run : Marks.runs(said)) {
@@ -118,7 +124,7 @@ public final class Says {
 
     public static int background() {
         String colorName = text("saysColor", Config.chunks.saysColor);
-        return colorName.isEmpty() ? CARD_BACKGROUND : ContentTypes.color(colorName, "saysColor") & 0xFFFFFF;
+        return colorName.isEmpty() ? CARD_BACKGROUND : ContentTypes.rgb(colorName, "saysColor");
     }
 
     public static String image() { return text("saysImage", Config.chunks.saysImage); }

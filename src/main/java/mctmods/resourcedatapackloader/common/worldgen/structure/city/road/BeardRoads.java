@@ -61,6 +61,14 @@ public final class BeardRoads {
     }
 
     public static final class Grade {
+        private static final String START = "RdplStart";
+        private static final String CAPPED = "RdplCapped";
+        private static final String PROFILE = "RdplProfile";
+        private static final String GROUND = "RdplGround";
+        private static final String DECK = "RdplDeck";
+        private static final String BRIDGED = "RdplBridged";
+        private static final String HELD = "RdplHeld";
+        private static final String LAID = "RdplLaid";
         public final int[] profile;
         public final int[] ground;
         public final boolean[] bridged;
@@ -137,26 +145,26 @@ public final class BeardRoads {
         public boolean sameAs(Grade other) { return start == other.start && Arrays.equals(profile, other.profile) && Arrays.equals(deck, other.deck) && Arrays.equals(bridged, other.bridged) && Arrays.equals(held, other.held); }
 
         public void write(NBTTagCompound tag) {
-            tag.setInteger("RdplStart", start);
-            tag.setInteger("RdplCapped", capped);
-            tag.setIntArray("RdplProfile", profile);
-            tag.setIntArray("RdplGround", ground);
-            tag.setIntArray("RdplDeck", deck);
-            tag.setByteArray("RdplBridged", packed(bridged));
-            tag.setByteArray("RdplHeld", packed(held));
-            tag.setByteArray("RdplLaid", packed(covered));
+            tag.setInteger(START, start);
+            tag.setInteger(CAPPED, capped);
+            tag.setIntArray(PROFILE, profile);
+            tag.setIntArray(GROUND, ground);
+            tag.setIntArray(DECK, deck);
+            tag.setByteArray(BRIDGED, packed(bridged));
+            tag.setByteArray(HELD, packed(held));
+            tag.setByteArray(LAID, packed(covered));
         }
 
         @Nullable public static Grade read(NBTTagCompound tag) {
-            if (!tag.hasKey("RdplProfile", 11)) { return null; }
-            int[] profile = tag.getIntArray("RdplProfile");
-            int[] ground = tag.getIntArray("RdplGround");
-            int[] deck = tag.getIntArray("RdplDeck");
+            if (!tag.hasKey(PROFILE, 11)) { return null; }
+            int[] profile = tag.getIntArray(PROFILE);
+            int[] ground = tag.getIntArray(GROUND);
+            int[] deck = tag.getIntArray(DECK);
             if (profile.length == 0 || ground.length != profile.length || deck.length != profile.length) { return null; }
-            boolean[] bridged = unpacked(tag.getByteArray("RdplBridged"), profile.length);
-            boolean[] held = unpacked(tag.getByteArray("RdplHeld"), profile.length);
-            boolean[] covered = unpacked(tag.getByteArray("RdplLaid"), profile.length);
-            return new Grade(profile, ground, bridged, held, deck, covered, tag.getInteger("RdplStart"), tag.getInteger("RdplCapped"));
+            boolean[] bridged = unpacked(tag.getByteArray(BRIDGED), profile.length);
+            boolean[] held = unpacked(tag.getByteArray(HELD), profile.length);
+            boolean[] covered = unpacked(tag.getByteArray(LAID), profile.length);
+            return new Grade(profile, ground, bridged, held, deck, covered, tag.getInteger(START), tag.getInteger(CAPPED));
         }
 
         static int carried(int[] profile, int i) {
@@ -229,8 +237,10 @@ public final class BeardRoads {
     private static final TemplateMemo<Map<String, Widths>> KEYED_WIDTHS = new TemplateMemo<>();
     private static final Map<StructureBoundingBox, JsonObject> DRAWN = Collections.synchronizedMap(new WeakHashMap<>());
 
+    private static final String PATH_KEY = "villagePathBlock";
+
     private static final class Widths {
-        final boolean chosen = !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty();
+        final boolean chosen = !ContentControl.text(ContentControl.VILLAGES, PATH_KEY, Config.worldgen.villagePathBlock).isEmpty();
         final int extraWidth = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth));
         final int lineColumns = ContentControl.text(ContentControl.VILLAGES, "villagePathLineBlock", Config.worldgen.villagePathLineBlock).isEmpty() ? 0 : 1;
         final int sidewalkWidth = ContentControl.text(ContentControl.VILLAGES, "villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock).isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathSidewalkWidth", Config.worldgen.villagePathSidewalkWidth));
@@ -269,6 +279,8 @@ public final class BeardRoads {
 
     public static int pathExtraWidth() { return widths().extraWidth; }
 
+    public static int junctionReach() { return 1 + pathExtraWidth() + 3; }
+
     public static int pathLineColumns() { return widths().lineColumns; }
 
     public static int pathSidewalkWidth() { return widths().sidewalkWidth; }
@@ -277,7 +289,7 @@ public final class BeardRoads {
 
     public static IBlockState alleyBlock(IBlockState path) { return pathBlock("villagePathAlleyBlock", Config.worldgen.villagePathAlleyBlock, path); }
 
-    public static IBlockState surfaceBlock(IBlockState vanilla) { return pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, vanilla); }
+    public static IBlockState surfaceBlock(IBlockState vanilla) { return pathBlock(PATH_KEY, Config.worldgen.villagePathBlock, vanilla); }
 
     public static IBlockState lineBlock(IBlockState path) { return pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path); }
 
@@ -287,7 +299,9 @@ public final class BeardRoads {
 
     public static IBlockState supportBlock(IBlockState vanilla) { return pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, vanilla); }
 
-    public static IBlockState bridgeBlock() { return pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState()); }
+    public static IBlockState bridgeBlock() { return bridgeBlock(Blocks.PLANKS.getDefaultState()); }
+
+    public static IBlockState bridgeBlock(IBlockState deck) { return pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck); }
 
     public static IBlockState bridgeSidewalkBlock(IBlockState walk) { return pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk); }
 
@@ -299,8 +313,10 @@ public final class BeardRoads {
 
     public static boolean roadNarrow(StructureBoundingBox box, boolean alongX) {
         if (DRAWN.containsKey(box)) { return false; }
-        return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1 < pathFullWidth();
+        return BeardPlots.roadSpan(box, alongX) < pathFullWidth();
     }
+
+    public static boolean roadNarrow(StructureComponent piece) { return roadNarrow(piece.getBoundingBox(), BeardPlots.roadAlongX(piece)); }
 
     public static int roadCore(StructureBoundingBox box, boolean alongX) { return BeardPlots.coreOf(BeardPlots.roadSpan(box, alongX)); }
 

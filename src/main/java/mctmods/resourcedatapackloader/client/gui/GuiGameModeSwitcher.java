@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.client.gui;
 
 import mctmods.resourcedatapackloader.client.util.IPreviousGameType;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.io.IOException;
 import net.minecraft.client.Minecraft;
@@ -30,7 +32,6 @@ import org.lwjgl.input.Keyboard;
     private static final int SLOT_FILL = 0xC0303030;
     private static final int SLOT_EDGE = 0xFF8B8B8B;
     private static final int SELECTED_EDGE = 0xFFFFFFFF;
-    private static final int WHITE = 0xFFFFFF;
     private final ItemStack[] icons = {new ItemStack(Blocks.GRASS), new ItemStack(Items.IRON_SWORD), new ItemStack(Items.MAP), new ItemStack(Items.ENDER_EYE)};
     private int hovered;
     private int firstMouseX;
@@ -67,8 +68,8 @@ import org.lwjgl.input.Keyboard;
         int panelTop = centerY - SLOT_STEP - 27;
         drawFrame(panelLeft, panelTop, PANEL_WIDTH, PANEL_HEIGHT, PANEL_FILL, PANEL_EDGE);
         super.drawScreen(mouseX, mouseY, partialTicks);
-        drawCenteredString(fontRenderer, I18n.format("gameMode." + MODES[hovered].getName()), centerX, centerY - SLOT_STEP - 20, WHITE);
-        drawCenteredString(fontRenderer, I18n.format("rdpl.debug.gamemodes.select_next", TextFormatting.AQUA + I18n.format("rdpl.debug.gamemodes.press_f4") + TextFormatting.RESET), centerX, centerY + ICON_INSET, WHITE);
+        drawCenteredString(fontRenderer, I18n.format("gameMode." + MODES[hovered].getName()), centerX, centerY - SLOT_STEP - 20, Colors.WHITE_TEXT);
+        drawCenteredString(fontRenderer, I18n.format("rdpl.debug.gamemodes.select_next", TextFormatting.AQUA + I18n.format("rdpl.debug.gamemodes.press_f4") + TextFormatting.RESET), centerX, centerY + ICON_INSET, Colors.WHITE_TEXT);
         if (!mousePlaced) {
             firstMouseX = mouseX;
             firstMouseY = mouseY;
@@ -82,7 +83,7 @@ import org.lwjgl.input.Keyboard;
             RenderHelper.enableGUIStandardItemLighting();
             itemRender.renderItemAndEffectIntoGUI(icons[i], slotLeft + ICON_INSET, slotTop + ICON_INSET);
             RenderHelper.disableStandardItemLighting();
-            if (!mouseStill && mouseX >= slotLeft && mouseX < slotLeft + SLOT && mouseY >= slotTop && mouseY < slotTop + SLOT) { hovered = i; }
+            if (!mouseStill && MathUtil.inside(mouseX, mouseY, slotLeft, slotTop, SLOT, SLOT)) { hovered = i; }
         }
     }
 

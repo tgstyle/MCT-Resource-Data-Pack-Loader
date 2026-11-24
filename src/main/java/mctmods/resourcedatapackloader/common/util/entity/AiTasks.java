@@ -5,6 +5,7 @@ import net.minecraft.entity.ai.EntityAITasks;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 public final class AiTasks {
     private AiTasks() {}
@@ -13,6 +14,13 @@ public final class AiTasks {
         for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(tasks.taskEntries)) {
             if (match.test(entry.action)) { tasks.removeTask(entry.action); }
         }
+    }
+
+    @Nullable public static <T extends EntityAIBase> T first(EntityAITasks tasks, Class<T> kind) {
+        for (EntityAITasks.EntityAITaskEntry entry : tasks.taskEntries) {
+            if (kind.isInstance(entry.action)) { return kind.cast(entry.action); }
+        }
+        return null;
     }
 
     public static void clear(EntityAITasks tasks) { remove(tasks, action -> true); }

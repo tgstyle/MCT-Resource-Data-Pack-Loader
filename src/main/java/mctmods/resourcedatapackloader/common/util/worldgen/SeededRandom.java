@@ -17,4 +17,6 @@ public final class SeededRandom {
     public static Random at(long seed, int x, int y, int z) { return new Random(seed ^ (x * ACROSS + z * ALONG + y * UPRIGHT)); }
 
     public static Random at(World world, int x, int y, int z) { return at(world.getSeed(), x, y, z); }
+
+    public static boolean rolls(World world, int x, int y, int z, int percent) { return at(world, x, y, z).nextInt(100) < percent; }
 }

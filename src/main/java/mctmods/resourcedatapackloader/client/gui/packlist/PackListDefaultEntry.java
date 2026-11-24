@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.gui.packlist;
 
+import mctmods.resourcedatapackloader.client.util.ClientText;
 import mctmods.resourcedatapackloader.common.pack.loading.PackListRules;
 
 import javax.annotation.Nonnull;
@@ -16,7 +17,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.rule = rule;
     }
 
-    @Override @Nonnull protected String getResourcePackName() { return rule.title == null ? super.getResourcePackName() : PackListText.shown(rule.title); }
+    @Override @Nonnull protected String getResourcePackName() { return ClientText.or(rule.title, super.getResourcePackName()); }
 
-    @Override @Nonnull protected String getResourcePackDescription() { return rule.description == null ? super.getResourcePackDescription() : PackListText.shown(rule.description); }
+    @Override @Nonnull protected String getResourcePackDescription() { return ClientText.or(rule.description, super.getResourcePackDescription()); }
 }

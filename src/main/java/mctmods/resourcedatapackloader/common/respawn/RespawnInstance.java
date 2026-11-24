@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.respawn;
 
+import mctmods.resourcedatapackloader.core.util.math.Turns;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -20,7 +22,24 @@ public final class RespawnInstance {
     public static final int CAVE = 2;
     public static final int PLOT = 3;
     public static final int DUNGEON = 4;
+    public static final int WHOLE = 100;
     private static final String[] KINDS = {"imprint", "map", "cave", "plot", "dungeon"};
+    private static final String ID_KEY = "id";
+    private static final String KIND_KEY = "kind";
+    private static final String DEF_KEY = "def";
+    private static final String TPL_KEY = "tpl";
+    private static final String POS_KEY = "pos";
+    private static final String ROW_POS_KEY = "pos";
+    private static final String ROT_KEY = "rot";
+    private static final String MIR_KEY = "mir";
+    private static final String INTEG_KEY = "integ";
+    private static final String SEED_KEY = "seed";
+    private static final String BOX_KEY = "box";
+    private static final String LAST_KEY = "last";
+    private static final String LOOT_KEY = "loot";
+    private static final String TABLE_KEY = "table";
+    private static final String SPAWN_KEY = "spawn";
+    private static final String NBT_KEY = "nbt";
     public final String id;
     public final int kind;
     public final String def;
@@ -67,51 +86,51 @@ public final class RespawnInstance {
 
     public NBTTagCompound write() {
         NBTTagCompound tag = new NBTTagCompound();
-        tag.setString("id", id);
-        tag.setByte("kind", (byte) kind);
-        tag.setString("def", def);
-        tag.setString("tpl", tpl);
-        tag.setIntArray("pos", new int[] {pos.getX(), pos.getY(), pos.getZ()});
-        tag.setByte("rot", (byte) rotation.ordinal());
-        tag.setByte("mir", (byte) mirror.ordinal());
-        tag.setByte("integ", (byte) integrity);
-        tag.setLong("seed", seed);
-        tag.setIntArray("box", box.clone());
-        tag.setLong("last", last);
+        tag.setString(ID_KEY, id);
+        tag.setByte(KIND_KEY, (byte) kind);
+        tag.setString(DEF_KEY, def);
+        tag.setString(TPL_KEY, tpl);
+        tag.setIntArray(POS_KEY, new int[] {pos.getX(), pos.getY(), pos.getZ()});
+        tag.setByte(ROT_KEY, (byte) rotation.ordinal());
+        tag.setByte(MIR_KEY, (byte) mirror.ordinal());
+        tag.setByte(INTEG_KEY, (byte) integrity);
+        tag.setLong(SEED_KEY, seed);
+        tag.setIntArray(BOX_KEY, box.clone());
+        tag.setLong(LAST_KEY, last);
         NBTTagList lootRows = new NBTTagList();
         for (Map.Entry<Long, String> row : loot.entrySet()) {
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setLong("pos", row.getKey());
-            entry.setString("table", row.getValue());
+            entry.setLong(ROW_POS_KEY, row.getKey());
+            entry.setString(TABLE_KEY, row.getValue());
             lootRows.appendTag(entry);
         }
-        tag.setTag("loot", lootRows);
+        tag.setTag(LOOT_KEY, lootRows);
         NBTTagList spawnRows = new NBTTagList();
         for (Map.Entry<Long, NBTTagCompound> row : spawn.entrySet()) {
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setLong("pos", row.getKey());
-            entry.setTag("nbt", row.getValue());
+            entry.setLong(ROW_POS_KEY, row.getKey());
+            entry.setTag(NBT_KEY, row.getValue());
             spawnRows.appendTag(entry);
         }
-        tag.setTag("spawn", spawnRows);
+        tag.setTag(SPAWN_KEY, spawnRows);
         return tag;
     }
 
     @Nullable public static RespawnInstance read(NBTTagCompound tag) {
-        int kind = tag.getByte("kind");
-        int[] at = tag.getIntArray("pos");
-        int[] area = tag.getIntArray("box");
+        int kind = tag.getByte(KIND_KEY);
+        int[] at = tag.getIntArray(POS_KEY);
+        int[] area = tag.getIntArray(BOX_KEY);
         if (kind < 0 || kind >= KINDS.length || at.length != 3 || area.length != 6) { return null; }
-        Rotation[] turns = Rotation.values();
+        Rotation[] turns = Turns.ALL;
         Mirror[] flips = Mirror.values();
-        Rotation rotation = turns[MathHelper.clamp(tag.getByte("rot"), 0, turns.length - 1)];
-        Mirror mirror = flips[MathHelper.clamp(tag.getByte("mir"), 0, flips.length - 1)];
-        RespawnInstance made = new RespawnInstance(kind, tag.getString("def"), tag.getString("tpl"), new BlockPos(at[0], at[1], at[2]), rotation, mirror, tag.getByte("integ"), tag.getLong("seed"), area);
-        made.last = tag.getLong("last");
-        NBTTagList lootRows = tag.getTagList("loot", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < lootRows.tagCount(); i++) { made.loot.put(lootRows.getCompoundTagAt(i).getLong("pos"), lootRows.getCompoundTagAt(i).getString("table")); }
-        NBTTagList spawnRows = tag.getTagList("spawn", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < spawnRows.tagCount(); i++) { made.spawn.put(spawnRows.getCompoundTagAt(i).getLong("pos"), spawnRows.getCompoundTagAt(i).getCompoundTag("nbt")); }
+        Rotation rotation = turns[MathHelper.clamp(tag.getByte(ROT_KEY), 0, turns.length - 1)];
+        Mirror mirror = flips[MathHelper.clamp(tag.getByte(MIR_KEY), 0, flips.length - 1)];
+        RespawnInstance made = new RespawnInstance(kind, tag.getString(DEF_KEY), tag.getString(TPL_KEY), new BlockPos(at[0], at[1], at[2]), rotation, mirror, tag.getByte(INTEG_KEY), tag.getLong(SEED_KEY), area);
+        made.last = tag.getLong(LAST_KEY);
+        NBTTagList lootRows = tag.getTagList(LOOT_KEY, Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < lootRows.tagCount(); i++) { made.loot.put(lootRows.getCompoundTagAt(i).getLong(ROW_POS_KEY), lootRows.getCompoundTagAt(i).getString(TABLE_KEY)); }
+        NBTTagList spawnRows = tag.getTagList(SPAWN_KEY, Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < spawnRows.tagCount(); i++) { made.spawn.put(spawnRows.getCompoundTagAt(i).getLong(ROW_POS_KEY), spawnRows.getCompoundTagAt(i).getCompoundTag(NBT_KEY)); }
         return made;
     }
 }

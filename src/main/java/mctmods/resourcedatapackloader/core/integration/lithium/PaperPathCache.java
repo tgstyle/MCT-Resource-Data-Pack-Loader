@@ -45,10 +45,14 @@ public final class PaperPathCache {
         catch (Exception ex) { return false; }
     }
 
-    private static void stepAside() {
+    private static void forget() {
         opens = null;
         closes = null;
         switched = null;
+    }
+
+    private static void stepAside() {
+        forget();
         ContentLog.LOGGER.info("PaperFixes now asks for its own note of which chunk sections are safe to walk beside, so this mod has stopped switching it on for it");
     }
 
@@ -63,17 +67,11 @@ public final class PaperPathCache {
             switched.setAccessible(true);
             ContentLog.LOGGER.info("PaperFixes keeps a note of which chunk sections are safe to walk beside, but never asks for it. It is switched on around each path search now, which is what it was written for");
         }
-        catch (Throwable missing) {
-            opens = null;
-            closes = null;
-            switched = null;
-        }
+        catch (Throwable missing) { forget(); }
     }
 
     private static void give(Exception ex) {
-        opens = null;
-        closes = null;
-        switched = null;
+        forget();
         if (told) { return; }
         told = true;
         ContentLog.LOGGER.error("PaperFixes would not take its own note of safe chunk sections, so it is left switched off", ex);

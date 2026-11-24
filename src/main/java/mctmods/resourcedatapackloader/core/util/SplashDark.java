@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.core.util;
 
-import java.io.ByteArrayOutputStream;
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,14 +11,16 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 public final class SplashDark {
-    private static final String FILE = "config/splash.properties";
+    private static final String FILE = ConfigCore.CONFIG_DIR + "/splash.properties";
+    private static final String TEXTURE_KEY = "forgeTexture";
     private static final String FORGE_LOGO = "fml:textures/gui/forge.png";
-    private static final String OUR_LOGO = "resourcedatapackloader:textures/gui/splash.png";
-    private static final String OLD_LOGO = "resourcedatapackloader:textures/gui/hold.png";
-    private static final String LOGO_PATH = "assets/resourcedatapackloader/textures/gui/splash.png";
+    private static final String OUR_LOGO = ResourceDataPackLoader.MOD_ID + ":textures/gui/splash.png";
+    private static final String OLD_LOGO = ResourceDataPackLoader.MOD_ID + ":textures/gui/hold.png";
+    private static final String LOGO_PATH = "assets/" + ResourceDataPackLoader.MOD_ID + "/textures/gui/splash.png";
     private static final Map<String, Integer> DARK = new LinkedHashMap<>();
     private static final Map<String, Integer> FORGE = new LinkedHashMap<>();
 
@@ -49,14 +52,14 @@ public final class SplashDark {
             for (Map.Entry<String, Integer> color : (dark ? DARK : FORGE).entrySet()) { held.setProperty(color.getKey(), "0x" + Integer.toHexString(color.getValue()).toUpperCase()); }
             changed = true;
         }
-        String logo = held.getProperty("forgeTexture", FORGE_LOGO).trim();
+        String logo = held.getProperty(TEXTURE_KEY, FORGE_LOGO).trim();
         if (dark && (FORGE_LOGO.equals(logo) || OLD_LOGO.equals(logo)) && placed(mcDir, held, log)) {
-            held.setProperty("forgeTexture", OUR_LOGO);
+            held.setProperty(TEXTURE_KEY, OUR_LOGO);
             changed = true;
         }
         else if (dark && OUR_LOGO.equals(logo)) { placed(mcDir, held, log); }
         else if (!dark && (OUR_LOGO.equals(logo) || OLD_LOGO.equals(logo))) {
-            held.setProperty("forgeTexture", FORGE_LOGO);
+            held.setProperty(TEXTURE_KEY, FORGE_LOGO);
             changed = true;
         }
         if (!changed) { return; }
@@ -75,7 +78,7 @@ public final class SplashDark {
                 log.warn("The pack loader's logo is not in its own jar, so the loading screen keeps Forge's");
                 return false;
             }
-            byte[] logo = readAll(in);
+            byte[] logo = IOUtils.toByteArray(in);
             if (to.isFile() && Arrays.equals(Files.readAllBytes(to.toPath()), logo)) { return true; }
             Files.createDirectories(to.toPath().getParent());
             Files.write(to.toPath(), logo);
@@ -85,14 +88,6 @@ public final class SplashDark {
             log.warn("Could not put the pack loader's logo at {}, so the loading screen keeps Forge's", to, broken);
             return false;
         }
-    }
-
-    private static byte[] readAll(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] chunk = new byte[4096];
-        int read;
-        while ((read = in.read(chunk)) >= 0) { out.write(chunk, 0, read); }
-        return out.toByteArray();
     }
 
     private static boolean holds(Properties held, Map<String, Integer> palette) {

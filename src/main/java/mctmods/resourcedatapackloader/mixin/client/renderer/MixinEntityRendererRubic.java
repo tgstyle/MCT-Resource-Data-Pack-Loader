@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import net.minecraft.client.Minecraft;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
     @Shadow @Final private Minecraft mc;
 
     @Redirect(method = {"updateRenderer", "setupCameraTransform", "renderWorldPass", "updateFogColor"}, at = @At(value = "FIELD", target = "Lnet/minecraft/client/settings/GameSettings;renderDistanceChunks:I", opcode = Opcodes.GETFIELD)) private int rdpl$getRenderDistance(GameSettings settings) {
-        if (!((IRubicWorld) mc.world).rdpl$isRubicWorld()) { return settings.renderDistanceChunks; }
+        if (!GenHeights.rubic(mc.world)) { return settings.renderDistanceChunks; }
         return Math.max(settings.renderDistanceChunks, Config.client.verticalCubeLoadDistance);
     }
 }

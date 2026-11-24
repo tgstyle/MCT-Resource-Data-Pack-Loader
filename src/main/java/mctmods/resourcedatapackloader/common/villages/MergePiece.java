@@ -11,7 +11,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 
-public class MergePiece extends StructureVillagePieces.Road {
+public class MergePiece extends RoadPiece {
     public static final String ID = "RdplMerge";
     private int fromCenter;
     private int toCenter;
@@ -19,21 +19,16 @@ public class MergePiece extends StructureVillagePieces.Road {
     @SuppressWarnings("unused") public MergePiece() {}
 
     public MergePiece(StructureVillagePieces.Start start, StructureBoundingBox box, boolean alongX, int fromCenter, int toCenter) {
-        super(start, 0);
-        setCoordBaseMode(alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
-        this.boundingBox = box;
+        super(start);
+        lay(box, alongX);
         this.fromCenter = fromCenter;
         this.toCenter = toCenter;
     }
 
-    public boolean alongX() {
+    @Override public boolean alongX() {
         EnumFacing facing = getCoordBaseMode();
         return facing != null && facing.getAxis() == EnumFacing.Axis.X;
     }
-
-    public int rowLeast() { return alongX() ? boundingBox.minX : boundingBox.minZ; }
-
-    public int rowMost() { return alongX() ? boundingBox.maxX : boundingBox.maxZ; }
 
     public int centerAt(int row) {
         int rows = rowMost() - rowLeast() + 1;

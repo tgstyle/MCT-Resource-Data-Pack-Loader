@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeGrowthDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentTreeRules;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.world.ChunkDataEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -63,8 +63,8 @@ public final class ContentTreeClock {
     public static void credit(WorldServer world, TreeEntry entry, long ticks) {
         entry.progress += ticks;
         ContentTreeStore.dirty(world, entry);
-        TreeGrowthDef growth = ContentTreeRules.byId(entry.rule);
-        if (growth != null && growth.timed() && entry.progress >= growth.stepTicks) { state(world).queue.merge(entry.pos, 0, Integer::sum); }
+        TreeGrowthDef growth = ContentTreeRules.timedById(entry.rule);
+        if (growth != null && entry.progress >= growth.stepTicks) { state(world).queue.merge(entry.pos, 0, Integer::sum); }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onChunkLoad(ChunkDataEvent.Load event) {
@@ -75,8 +75,8 @@ public final class ContentTreeClock {
         ChunkPos chunk = event.getChunk().getPos();
         for (TreeEntry entry : ContentTreeStore.entries(world, chunk.x, chunk.z)) {
             track(world, entry);
-            TreeGrowthDef growth = ContentTreeRules.byId(entry.rule);
-            if (growth == null || !growth.timed()) { continue; }
+            TreeGrowthDef growth = ContentTreeRules.timedById(entry.rule);
+            if (growth == null) { continue; }
             if (growth.catchUp == TreeGrowthDef.CatchUp.PAUSE) { entry.seen = now; }
             else { state.fresh.add(entry.pos); }
         }
@@ -92,9 +92,7 @@ public final class ContentTreeClock {
         state.spent = 0;
     }
 
-    @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
-        if (!event.getWorld().isRemote) { STATES.remove(event.getWorld().provider.getDimension()); }
-    }
+    static void forget(int dimension) { STATES.remove(dimension); }
 
     private static void unload(WorldServer world, ChunkPos chunk) {
         State state = STATES.get(world.provider.getDimension());
@@ -106,7 +104,7 @@ public final class ContentTreeClock {
 
     private static boolean inChunk(long pos, ChunkPos chunk) {
         BlockPos at = BlockPos.fromLong(pos);
-        return at.getX() >> 4 == chunk.x && at.getZ() >> 4 == chunk.z;
+        return Coords.blockToCube(at.getX()) == chunk.x && Coords.blockToCube(at.getZ()) == chunk.z;
     }
 
     private static void visit(WorldServer world, State state, long pos) {
@@ -127,7 +125,7 @@ public final class ContentTreeClock {
             ContentLog.LOGGER.info("Tree at {} {} {} dropped: rule {} gone", at.getX(), at.getY(), at.getZ(), entry.rule);
             return;
         }
-        boolean sapling = entry.phase == 0;
+        boolean sapling = entry.phase == TreeEntry.PHASE_SAPLING;
         Map<BlockPos, IBlockState> current = sapling ? Collections.emptyMap() : ContentTreeGrowth.current(world, entry);
         TreeShape shape = sapling ? null : ContentTreeGrowth.shape(world, entry);
         if (ContentTreeFelling.visit(world, entry, current, shape)) { state.reasons.put(pos, "chunk not loaded"); }
@@ -172,7 +170,7 @@ public final class ContentTreeClock {
         int owed = 0;
         for (int i = 0; i < ticks; i++) {
             for (int tries = ContentGrowSwitch.draws(scale, random); tries > 0; tries--) {
-                if (growth.chance < 0.0 || random.nextDouble() < growth.chance) { owed++; }
+                if (growth.rolls(random)) { owed++; }
                 else { state.reasons.put(entry.pos, "chance"); }
             }
         }
@@ -180,7 +178,7 @@ public final class ContentTreeClock {
     }
 
     private static float scale(WorldServer world, TreeEntry entry) {
-        IBlockState sapling = entry.saplings.get(TreeEntry.pack(0, 0, 0));
+        IBlockState sapling = entry.originSapling();
         return sapling == null ? 1.0F : ContentGrowSwitch.scale(world, BlockPos.fromLong(entry.pos), sapling.getBlock());
     }
 
@@ -203,8 +201,8 @@ public final class ContentTreeClock {
                 return;
             }
             String reason = null;
-            if (entry.phase == 0) {
-                IBlockState sapling = entry.saplings.get(TreeEntry.pack(0, 0, 0));
+            if (entry.phase == TreeEntry.PHASE_SAPLING) {
+                IBlockState sapling = entry.originSapling();
                 BlockPos at = BlockPos.fromLong(pos);
                 IBlockState now = world.getBlockState(at);
                 if (sapling != null && now.getBlock() == sapling.getBlock()) { ContentTreeGrowth.drive(world, at, now, world.rand); }

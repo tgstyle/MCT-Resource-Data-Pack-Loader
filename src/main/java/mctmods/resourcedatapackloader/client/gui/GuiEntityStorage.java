@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.gui.ContainerEntityStorage;
 import mctmods.resourcedatapackloader.common.gui.ContainerPack;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.StorageDef;
@@ -23,7 +24,6 @@ import org.lwjgl.opengl.GL11;
 public class GuiEntityStorage extends GuiPackContainer {
     private static final int TROUGH = 0xFF373737;
     private static final int ENERGY = 0xFFC03030;
-    private static final int TEXT = 0xFFFFFF;
     private static final int TILE = 16;
     private static final int FILL_TALL = ContainerPack.SLOT - 4;
     private final ContainerEntityStorage storage;
@@ -78,10 +78,8 @@ public class GuiEntityStorage extends GuiPackContainer {
         int color = held.getFluid().getColor(held);
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.enableBlend();
-        GlStateManager.color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F,(color >>> 24) / 255.0F);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        GlStateManager.color(Colors.redF(color), Colors.greenF(color), Colors.blueF(color),(color >>> 24) / 255.0F);
+        BufferBuilder buffer = Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         for (int across = 0; across < wide; across += TILE) {
             int step = Math.min(TILE, wide - across);
             double right = sprite.getInterpolatedU(step);
@@ -91,10 +89,10 @@ public class GuiEntityStorage extends GuiPackContainer {
             buffer.pos(x + across + step, y, zLevel).tex(right, sprite.getMinV()).endVertex();
             buffer.pos(x + across, y, zLevel).tex(sprite.getMinU(), sprite.getMinV()).endVertex();
         }
-        tessellator.draw();
+        Tessellator.getInstance().draw();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.disableBlend();
     }
 
-    private void label(int band, String text) { drawCenteredString(fontRenderer, text, xSize / 2, ContainerPack.HEADER + band * ContainerPack.SLOT + 5, TEXT); }
+    private void label(int band, String text) { drawCenteredString(fontRenderer, text, xSize / 2, ContainerPack.HEADER + band * ContainerPack.SLOT + 5, Colors.WHITE_TEXT); }
 }

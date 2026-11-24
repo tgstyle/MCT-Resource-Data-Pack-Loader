@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public final class TreeGrowthDef {
     public enum Blocked { WAIT, RESET, DROP }
@@ -55,4 +56,6 @@ public final class TreeGrowthDef {
     public boolean timed() { return growBy == GrowBy.TIME; }
 
     public boolean decidesRandomTick() { return chance >= 0.0 || light >= 0; }
+
+    public boolean rolls(Random random) { return chance < 0.0 || random.nextDouble() < chance; }
 }

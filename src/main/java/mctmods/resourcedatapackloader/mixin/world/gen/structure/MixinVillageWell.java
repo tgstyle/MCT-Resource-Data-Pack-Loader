@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
+import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardBlocks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardKeep;
@@ -16,7 +17,6 @@ import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -39,15 +39,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         StructureBoundingBox box = getBoundingBox();
         WeightedPicks.Pick chosen = rdpl$chosen(worldIn, box);
         if (chosen == null) { return; }
-        WorldServer server = (WorldServer) worldIn;
-        Template loaded = server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(chosen.name));
+        Template loaded = ContentImprint.template(worldIn, chosen.name);
         if (loaded == null) {
             ContentLog.LOGGER.error("villageWellStructure names '{}', which could not be loaded, so the well is built instead", chosen.name);
             return;
         }
         int ground = box.maxY - 3;
         BlockPos span = loaded.getSize();
-        IBlockState floor = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState()));
+        IBlockState floor = BeardRoads.surfaceBlock(getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState()));
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = box.minX; x <= box.maxX; x++) {
             for (int z = box.minZ; z <= box.maxZ; z++) {
@@ -74,8 +73,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique @Nullable private static WeightedPicks.Pick rdpl$chosen(World worldIn, StructureBoundingBox box) {
         if (rdpl$CENTERPIECES.stale()) { rdpl$CENTERPIECES.load(ContentControl.list(ContentControl.VILLAGES, "villageWellStructure", Config.worldgen.villageWellStructure)); }
         if (rdpl$CENTERPIECES.isEmpty()) { return null; }
-        WeightedPicks.Pick chosen = rdpl$CENTERPIECES.pick(SeededRandom.at(worldIn, box.minX, box.minZ));
-        return chosen == null || WeightedPicks.EMPTY.equals(chosen.name) ? null : chosen;
+        return rdpl$CENTERPIECES.pickFilled(SeededRandom.at(worldIn, box.minX, box.minZ));
     }
 
     @Unique private int rdpl$seated(World worldIn, int found) {

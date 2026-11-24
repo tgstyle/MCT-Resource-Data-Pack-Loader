@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.tints;
 
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.google.gson.JsonObject;
 import java.util.Arrays;
@@ -38,17 +39,15 @@ public final class TintFactory {
         if (digits != 6 && digits != 8) { return null; }
         Long value = ContentTypes.hex(written);
         if (value == null) { return null; }
-        return digits == 6 ? (int) (value | 0xFF000000L) : value.intValue();
+        return digits == 6 ? opaque(value.intValue()) : value.intValue();
     }
 
     public int shade(int color) {
-        int level = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
-        return (color & 0xFF000000) | (ramp(level, 16) << 16) | (ramp(level, 8) << 8) | ramp(level, 0);
+        int level = (Colors.red(color) + Colors.green(color) + Colors.blue(color)) / 3;
+        return (color & OPAQUE) | Colors.rgb(ramp(level, Colors.red(from), Colors.red(to)), ramp(level, Colors.green(from), Colors.green(to)), ramp(level, Colors.blue(from), Colors.blue(to)));
     }
 
-    private int ramp(int level, int shift) {
-        int starts = (from >> shift) & 0xFF;
-        int ends = (to >> shift) & 0xFF;
+    private static int ramp(int level, int starts, int ends) {
         int made = (int) Math.floor(starts + level * (ends - starts) / 255.0 + 0.5);
         return MathHelper.clamp(made, 0, 255);
     }

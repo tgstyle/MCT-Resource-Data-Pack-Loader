@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.io.port.convert;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -17,16 +18,14 @@ public final class ConvertRecipes {
 
     private ConvertRecipes() {}
 
-    public static boolean noTwinRecipe(String type) { return type.startsWith(Ids.MINECRAFT + ":") && !TWINNED_RECIPES.contains(type); }
+    public static boolean noTwinRecipe(String type) { return type.startsWith(IdNames.MINECRAFT) && !TWINNED_RECIPES.contains(type); }
 
     public static String recipe(JsonObject json, String from, Ported pack) {
         conditions(json);
         boolean ores = false;
-        if (json.has("key") && json.get("key").isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) {
-                entry.setValue(ingredient(entry.getValue(), from, pack));
-                ores |= usesOre(entry.getValue());
-            }
+        for (Map.Entry<String, JsonElement> entry : Json.object(json, "key").entrySet()) {
+            entry.setValue(ingredient(entry.getValue(), from, pack));
+            ores |= usesOre(entry.getValue());
         }
         if (JsonUtils.isJsonArray(json, "ingredients")) {
             JsonArray ingredients = json.getAsJsonArray("ingredients");
@@ -38,7 +37,7 @@ public final class ConvertRecipes {
         if (json.has("result")) { json.add("result", stack(json.get("result"), from, pack)); }
         json.remove("category");
         json.remove("show_notification");
-        String type = JsonUtils.isJsonPrimitive(json, "type") ? Ids.namespaced(json.get("type").getAsString()) : "";
+        String type = Ids.type(json);
         if (ores && "minecraft:crafting_shaped".equals(type)) { json.addProperty("type", "forge:ore_shaped"); }
         if (ores && "minecraft:crafting_shapeless".equals(type)) { json.addProperty("type", "forge:ore_shapeless"); }
         return Ported.GSON.toJson(json);
@@ -73,7 +72,7 @@ public final class ConvertRecipes {
             }
             return false;
         }
-        return element.isJsonObject() && "forge:ore_dict".equals(Json.text(element.getAsJsonObject(), "type"));
+        return element.isJsonObject() && Ids.ORE_DICT.equals(Json.text(element.getAsJsonObject(), "type"));
     }
 
     private static JsonElement ingredient(JsonElement element, String from, Ported pack) {
@@ -85,7 +84,7 @@ public final class ConvertRecipes {
         if (element.isJsonPrimitive()) {
             String text = element.getAsString();
             JsonObject held = new JsonObject();
-            if (text.startsWith("#")) { held.addProperty("tag", text.substring(1)); }
+            if (IdNames.isTag(text)) { held.addProperty("tag", IdNames.tagPath(text)); }
             else { held.addProperty("item", text); }
             return ingredient(held, from, pack);
         }
@@ -95,25 +94,24 @@ public final class ConvertRecipes {
         if (type.endsWith(":compound") && held.has("children")) { return ingredient(held.get("children"), from, pack); }
         if (held.has("tag")) {
             String tag = held.get("tag").getAsString();
-            String ore = Ids.oreName(tag);
-            if (ore == null) { ore = Ids.camel(Ids.namespaced(tag).replace(':', '_').replace('/', '_'), false); }
+            String ore = Ids.oreKey(tag);
             JsonObject out = new JsonObject();
-            out.addProperty("type", "forge:ore_dict");
+            out.addProperty("type", Ids.ORE_DICT);
             out.addProperty("ore", ore);
             return out;
         }
-        if (!type.isEmpty() && !type.endsWith(":item") && !type.endsWith(":nbt") && !type.endsWith(":components") && !type.endsWith(":partial_nbt")) { pack.note("'" + from + "' uses the ingredient type " + type + ", which has no twin on 1.12.2, so it is served as written"); }
+        if (!type.isEmpty() && !type.endsWith(":item") && !type.endsWith(":nbt") && !type.endsWith(":components") && !type.endsWith(":partial_nbt")) { pack.note(Ported.where(from) + " uses the ingredient type " + type + ", which has no twin on 1.12.2, so it is served as written"); }
         String named = held.has("item") ? held.get("item").getAsString() : JsonUtils.isJsonPrimitive(held, "items") ? held.get("items").getAsString() : "";
         if (named.isEmpty()) { return held; }
-        Convert.Ref ref = Convert.item(named, pack, "'" + from + "'");
+        Convert.Ref ref = Convert.item(named, pack, Ported.where(from));
         JsonObject out = new JsonObject();
-        out.addProperty("item", ref == null ? named : ref.id);
+        out.addProperty("item", Convert.idOr(ref, named));
         out.addProperty("data", ref == null ? 0 : ref.meta);
         if (held.has("nbt")) {
             out.addProperty("type", "minecraft:item_nbt");
             out.add("nbt", held.get("nbt"));
         }
-        else if (held.has("components")) { pack.note("'" + from + "' asks for " + named + " with item components, which have no twin on 1.12.2, so any " + named + " is accepted"); }
+        else if (held.has("components")) { pack.note(Ported.where(from) + " asks for " + named + " with item components, which have no twin on 1.12.2, so any " + named + " is accepted"); }
         return out;
     }
 
@@ -125,25 +123,23 @@ public final class ConvertRecipes {
         }
         else if (element.isJsonObject()) { held = element.getAsJsonObject(); }
         else { return element; }
-        if (held.has("id") && !held.has("item")) { held.add("item", held.remove("id")); }
+        Json.moveKey(held, "id", "item");
         if (!held.has("item")) { return held; }
         String named = held.get("item").getAsString();
-        Convert.Ref ref = Convert.item(named, pack, "'" + from + "'");
+        Convert.Ref ref = Convert.item(named, pack, Ported.where(from));
         if (ref != null) {
             held.addProperty("item", ref.id);
             held.addProperty("data", ref.meta);
         }
-        if (held.has("components")) {
-            held.remove("components");
-            pack.note("'" + from + "' gives " + named + " with item components, which have no twin on 1.12.2, so the plain item is given");
-        }
+        pack.dropMember(held, "components", Ported.where(from) + " gives " + named + " with item components, which have no twin on 1.12.2, so the plain item is given");
         return held;
     }
 
     @Nullable public static JsonObject smelting(JsonObject json, Ported pack) {
         String from = "a smelting recipe";
         JsonElement ingredient = json.get("ingredient");
-        if (ingredient != null && ingredient.isJsonArray() && ingredient.getAsJsonArray().size() > 0) { ingredient = ingredient.getAsJsonArray().get(0); }
+        JsonElement head = ingredient == null ? null : Json.first(ingredient);
+        if (head != null) { ingredient = head; }
         if (ingredient == null || !ingredient.isJsonObject() || !ingredient.getAsJsonObject().has("item")) {
             pack.note("A smelting recipe smelts " + ingredient + ", which is not one item, and 1.12.2's furnace takes one item, so it is left out");
             return null;

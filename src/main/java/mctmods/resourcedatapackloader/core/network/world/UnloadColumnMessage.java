@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core.network.world;
 
 import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
@@ -18,12 +19,9 @@ public class UnloadColumnMessage implements IMessage {
 
     public UnloadColumnMessage(ChunkPos chunkPos) { this.chunkPos = chunkPos; }
 
-    @Override public void fromBytes(ByteBuf buf) { this.chunkPos = new ChunkPos(buf.readInt(), buf.readInt()); }
+    @Override public void fromBytes(ByteBuf buf) { this.chunkPos = PacketUtils.readChunkPos(buf); }
 
-    @Override public void toBytes(ByteBuf buf) {
-        buf.writeInt(chunkPos.x);
-        buf.writeInt(chunkPos.z);
-    }
+    @Override public void toBytes(ByteBuf buf) { PacketUtils.write(buf, chunkPos); }
 
     ChunkPos getColumnPos() { return Preconditions.checkNotNull(chunkPos); }
 

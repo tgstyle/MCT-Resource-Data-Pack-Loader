@@ -43,7 +43,7 @@ public final class ContentParserCelestial {
     private ContentParserCelestial() {}
 
     @Nullable public static CelestialDef celestial(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
+        JsonObject json = Json.strictObject(contents);
         if (json == null) { return null; }
         String kind = Settings.lower(Json.getString(json, "kind", ""));
         if (CelestialDef.SYSTEM.equals(kind)) { return system(key, json); }
@@ -66,14 +66,14 @@ public final class ContentParserCelestial {
         if (body == null) { return null; }
         String landing = Json.choice(json, "landing", GalacticraftDef.LANDER, owner, LANDINGS);
         String arrival = Json.choice(json, "arrival", GalacticraftDef.DEPARTURE, owner, ARRIVALS);
-        String gui = Json.getString(json, "rocketGui", "").trim();
+        ResourceLocation gui = Json.location(json, "rocketGui");
         JsonObject air = Json.getJsonObject(json, "atmosphere", new JsonObject());
         Json.unknownKeys(air, "atmosphere", ATMOSPHERE_KEYS);
-        Boolean breathable = air.has("breathable") ? Json.getBoolean(air, "breathable") : null;
+        Boolean breathable = Json.flagOrNull(air, "breathable");
         List<String> gases = gases(key, air);
         JsonObject dungeon = Json.getJsonObject(json, "dungeon", new JsonObject());
         Json.unknownKeys(dungeon, "dungeon", DUNGEON_KEYS);
-        String chest = Json.getString(dungeon, "chest", "").trim();
+        ResourceLocation chest = Json.location(dungeon, "chest");
         return new GalacticraftDef(body,
                 Json.getBoolean(json, "reachable", true),
                 Json.getInt(json, "minTier", body.tier),
@@ -81,21 +81,21 @@ public final class ContentParserCelestial {
                 Json.getFloat(json, "landingHeight", -1.0F),
                 arrival,
                 Json.getFloat(json, "exitHeight", -1.0F),
-                gui.isEmpty() ? null : new ResourceLocation(gui),
+                gui,
                 strings(json, "checklist"),
                 breathable,
                 gases,
                 Json.getBoolean(air, "corrosive", false),
                 Json.getFloat(air, "temperature", 0.0F),
-                Math.max(0.0F, Json.getFloat(air, "wind", gases.isEmpty() ? 0.0F : 1.0F)),
-                Math.max(0.0F, Json.getFloat(air, "density", 1.0F)),
+                Json.atLeast(air, "wind", gases.isEmpty() ? 0.0F : 1.0F, 0.0F),
+                Json.atLeast(air, "density", 1.0F, 0.0F),
                 Json.getFloat(json, "meteorFrequency", -1.0F),
-                Math.max(0.0F, Json.getFloat(json, "fuelMultiplier", 1.0F)),
+                Json.atLeast(json, "fuelMultiplier", 1.0F, 0.0F),
                 Json.getFloat(json, "soundReduction", -1.0F),
-                Math.max(0.0F, Json.getFloat(json, "solarEnergy", 1.0F)),
+                Json.atLeast(json, "solarEnergy", 1.0F, 0.0F),
                 Json.getBoolean(json, "netherPortals", false),
-                Math.max(0, Json.getInt(dungeon, "spacing", 0)),
-                chest.isEmpty() ? null : new ResourceLocation(chest),
+                Json.atLeast(dungeon, "spacing", 0, 0),
+                chest,
                 ContentParserModPlanets.extraPlanets(key, json),
                 recipe(key, json),
                 Json.getBoolean(json, "showName", false));
@@ -122,10 +122,8 @@ public final class ContentParserCelestial {
             ContentLog.LOGGER.error("Celestial override {} names no body, so it changes nothing", key);
             return null;
         }
-        String icon = Json.getString(json, "icon", "").trim();
-        String ring = Json.getString(json, "ring", "").trim();
-        return new CelestialDef(key, CelestialDef.OVERRIDE, body, "", icon.isEmpty() ? null : new ResourceLocation(icon), 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0,
-                ring.isEmpty() ? null : new ResourceLocation(ring), Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)), ringFront(key, json), 0.0F, -1,
+        return new CelestialDef(key, CelestialDef.OVERRIDE, body, "", Json.location(json, "icon"), 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0,
+                Json.location(json, "ring"), Json.atLeast(json, "ringSize", BodyRings.DEFAULT_SIZE, 0.1F), ringFront(key, json), 0.0F, -1,
                 "", null, 0.0F, 0.0F, 0.0F, null, strings(json, "requires"), ContentParserModPlanets.galaxySpace(key, json));
     }
 
@@ -155,14 +153,13 @@ public final class ContentParserCelestial {
         Json.unknownKeys(starJson, "star", BODY_KEYS);
         CelestialDef star = body(key, starJson, CelestialDef.STAR, name, -1, Collections.emptyList());
         if (star == null) { return null; }
-        String galaxy = Json.getString(json, "galaxy", "milky_way").trim().toLowerCase(Locale.ROOT);
+        String galaxy = Json.getLowerString(json, "galaxy", "milky_way");
         if (!GALAXY.matcher(galaxy).matches()) {
             ContentLog.LOGGER.error("Star system {} names galaxy '{}', which may hold only the letters a to z, digits and underscores, so it is left off the map", key, galaxy);
             return null;
         }
-        String image = Json.getString(json, "galaxyImage", "").trim();
         return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, BodyRings.Front.BOTTOM, 0.0F, -1,
-                galaxy, image.isEmpty() ? null : new ResourceLocation(image),
+                galaxy, Json.location(json, "galaxyImage"),
                 Json.asFloat(at.get(0), "at", 0.0F), Json.asFloat(at.get(1), "at", 0.0F), at.size() > 2 ? Json.asFloat(at.get(2), "at", 0.0F) : 0.0F,
                 star, strings(json, "requires"), null);
     }
@@ -181,13 +178,12 @@ public final class ContentParserCelestial {
             return null;
         }
         float distance = Json.getFloat(json, "distance", station ? 9.0F : moon ? 13.0F : 1.0F);
-        String ringPath = Json.getString(json, "ring", "").trim();
-        ResourceLocation ring = ringPath.isEmpty() ? null : new ResourceLocation(ringPath);
+        ResourceLocation ring = Json.location(json, "ring");
         if (ring != null && !moon && !CelestialDef.PLANET.equals(kind)) {
             ContentLog.LOGGER.error("Celestial body {} is a {} and sets a ring, which only a planet or moon can have, ignoring it", key, kind);
             ring = null;
         }
-        float beltWidth = Math.max(0.0F, Json.getFloat(json, "beltWidth", 0.0F));
+        float beltWidth = Json.atLeast(json, "beltWidth", 0.0F, 0.0F);
         if (beltWidth > 0.0F && !CelestialDef.ASTEROIDS.equals(kind)) {
             ContentLog.LOGGER.error("Celestial body {} is a {} and sets a beltWidth, which only an asteroid belt can have, ignoring it", key, kind);
             beltWidth = 0.0F;
@@ -201,7 +197,7 @@ public final class ContentParserCelestial {
                 Json.getFloat(json, "phaseShift", station ? Float.NaN : 0.0F),
                 ContentTypes.color(Json.getString(json, "ringColor", RING), key + " ringColor"),
                 ring,
-                Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
+                Json.atLeast(json, "ringSize", BodyRings.DEFAULT_SIZE, 0.1F),
                 ringFront(key, json),
                 beltWidth,
                 CelestialDef.STAR.equals(kind) || CelestialDef.SUBSYSTEM.equals(kind) ? -1 : Json.getInt(json, "tier", tier),

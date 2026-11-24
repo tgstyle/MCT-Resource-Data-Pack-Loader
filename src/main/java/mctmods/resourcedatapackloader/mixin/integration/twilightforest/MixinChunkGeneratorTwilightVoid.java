@@ -15,8 +15,7 @@ import twilightforest.world.ChunkGeneratorTwilightVoid;
     @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private MixinChunkGeneratorTwilightVoid() { super(null, 0L, false, false); }
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(world, x, z);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(world)) { cir.setReturnValue(ContentVoidWorld.emptyChunk(world, x, z)); }
     }
 
     @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int x, int z, CallbackInfo ci) {

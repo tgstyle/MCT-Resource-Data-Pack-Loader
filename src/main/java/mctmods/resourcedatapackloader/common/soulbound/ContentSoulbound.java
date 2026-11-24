@@ -27,6 +27,10 @@ public final class ContentSoulbound {
     private static final String GRAVES = "graves";
     private static final String PLAYER = "player";
     private static final String GRAVE = "grave";
+    private static final String ROLL_ON_KEEP_INVENTORY = "rollOnKeepInventory";
+    private static final String LOSE_FIRST = "loseFirst";
+    private static final String KEEP_VANISHING = "keepVanishing";
+    private static final String TOOLTIP = "tooltip";
     private static final String DEFAULT_TOOLTIP = "rdpl.tooltip.soulbound";
     private static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList(ENCHANTMENT, ITEMS, NBT, LOSE_CHANCE, GRAVES, "rollOnKeepInventory", "loseFirst", "keepVanishing", "tooltip"));
     private static final List<SoulboundMark> MARKS = new ArrayList<>();
@@ -39,7 +43,7 @@ public final class ContentSoulbound {
         GENERATION.stale();
         if (!Config.data.soulbound) { return; }
         Json.eachObject(PackManager.SOULBOUND, "soulbound file", ContentSoulbound::read);
-        if (!MARKS.isEmpty()) { Summary.info("soulbound", "Loaded " + MARKS.size() + " soulbound mark(s)"); }
+        Summary.loaded("soulbound", MARKS.size(), "soulbound mark(s)");
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
@@ -76,8 +80,8 @@ public final class ContentSoulbound {
         }
         if (kind == SoulboundMark.Kind.ITEMS && json.has(LOSE_CHANCE)) { ContentLog.LOGGER.error("Soulbound file {} sets {} on an items mark, which cannot be lost, so the key is ignored", key, LOSE_CHANCE); }
         float chance = kind == SoulboundMark.Kind.ITEMS ? 0.0F : Json.ranged(json, LOSE_CHANCE, 0.0F, 0.0F, 1.0F, key);
-        boolean grave = Json.choice(json, GRAVES, PLAYER, key, Arrays.asList(PLAYER, GRAVE)).equals(GRAVE);
-        MARKS.add(new SoulboundMark(kind, key, name, items, chance, Json.getBoolean(json, "rollOnKeepInventory", false), grave, Json.getBoolean(json, "loseFirst", false), Json.getBoolean(json, "keepVanishing", false), Json.getString(json, "tooltip", DEFAULT_TOOLTIP)));
+        boolean grave = Json.choiceIs(json, GRAVES, PLAYER, key, Arrays.asList(PLAYER, GRAVE), GRAVE);
+        MARKS.add(new SoulboundMark(kind, key, name, items, chance, Json.getBoolean(json, ROLL_ON_KEEP_INVENTORY, false), grave, Json.getBoolean(json, LOSE_FIRST, false), Json.getBoolean(json, KEEP_VANISHING, false), Json.getString(json, TOOLTIP, DEFAULT_TOOLTIP)));
     }
 
     static List<SoulboundMark> matching(ItemStack stack) {

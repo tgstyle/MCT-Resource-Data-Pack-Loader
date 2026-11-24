@@ -12,7 +12,6 @@ import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.GameRules;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 
 public final class GameRuleStorage extends WorldSavedData {
@@ -24,9 +23,7 @@ public final class GameRuleStorage extends WorldSavedData {
     public GameRuleStorage(String name) { super(name); }
 
     @Nullable static GameRuleStorage get(MinecraftServer server) {
-        MapStorage storage = server.getWorld(0).getMapStorage();
-        if (storage == null) { return null; }
-        return SavedData.get(storage, GameRuleStorage.class, NAME, GameRuleStorage::new);
+        return SavedData.overworld(server, GameRuleStorage.class, NAME, GameRuleStorage::new);
     }
 
     static Map<String, String> values(GameRules rules) {

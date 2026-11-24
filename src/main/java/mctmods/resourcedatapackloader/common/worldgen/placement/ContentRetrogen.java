@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.HardnessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.NbtStrings;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentBedrock;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -21,8 +22,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.ChunkDataEvent;
@@ -33,6 +32,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 public final class ContentRetrogen {
     public static final String TAG = "rdpl_retrogen";
+    public static final String BEDROCK_PREFIX = "bedrock:";
     private static final Map<Integer, Deque<Pending>> QUEUES = new HashMap<>();
     private static final Map<Integer, Map<ChunkPos, Set<String>>> DONE = new HashMap<>();
     private static List<WorldgenDef> defs = new ArrayList<>();
@@ -52,7 +52,7 @@ public final class ContentRetrogen {
     }
 
     public static String bedrockToken() {
-        return "bedrock:" + ContentBedrock.layers()
+        return BEDROCK_PREFIX + ContentBedrock.layers()
                 + (ContentBedrock.roofWanted() ? ":roof" : "")
                 + "#" + Config.worldgen.flatBedrockRetrogenKey;
     }
@@ -123,9 +123,7 @@ public final class ContentRetrogen {
         if (byChunk == null) { return; }
         Set<String> already = byChunk.get(event.getChunk().getPos());
         if (already == null || already.isEmpty()) { return; }
-        NBTTagList list = new NBTTagList();
-        for (String name : already) { list.appendTag(new NBTTagString(name)); }
-        event.getData().setTag(TAG, list);
+        event.getData().setTag(TAG, NbtStrings.write(already));
         if (!event.getChunk().isLoaded()) { byChunk.remove(event.getChunk().getPos()); }
     }
 
@@ -133,7 +131,6 @@ public final class ContentRetrogen {
         if (event.getWorld().isRemote) { return; }
         DONE.remove(event.getWorld().provider.getDimension());
         Deque<Pending> queue = QUEUES.remove(event.getWorld().provider.getDimension());
-        DONE.remove(event.getWorld().provider.getDimension());
         if (queue != null) { queued -= queue.size(); }
         if (QUEUES.isEmpty()) { queued = 0; }
     }
@@ -196,8 +193,7 @@ public final class ContentRetrogen {
     private static Set<String> read(NBTTagCompound data) {
         Set<String> already = new HashSet<>();
         if (!data.hasKey(TAG, 9)) { return already; }
-        NBTTagList list = data.getTagList(TAG, 8);
-        for (int i = 0; i < list.tagCount(); i++) { already.add(list.getStringTagAt(i)); }
+        NbtStrings.read(data.getTagList(TAG, 8), already);
         return already;
     }
 
@@ -212,7 +208,7 @@ public final class ContentRetrogen {
 
     private static boolean hasVeinTokens(Set<String> already) {
         for (String token : already) {
-            if (!token.startsWith("bedrock:") && !token.startsWith("replace:") && !token.startsWith("swap:")) { return true; }
+            if (!token.startsWith(BEDROCK_PREFIX) && !token.startsWith(ContentReplacements.REPLACE_PREFIX) && !token.startsWith(ContentHardness.SWAP_PREFIX)) { return true; }
         }
         return false;
     }

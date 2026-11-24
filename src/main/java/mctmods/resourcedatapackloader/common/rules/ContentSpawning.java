@@ -49,8 +49,11 @@ public final class ContentSpawning {
     private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
     private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
     public static final String ANIMALS = "animals";
+    public static final String BUSH = "bush";
+    public static final String PATH = "path";
+    public static final String TILL = "till";
     public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
-            ANIMALS, "bush", "path", "till")));
+            ANIMALS, BUSH, PATH, TILL)));
     private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
 
     private ContentSpawning() {}
@@ -68,10 +71,10 @@ public final class ContentSpawning {
 
     public static void applyCaps() {
         if (ContentControl.off(ContentControl.SPAWNING)) { return; }
-        cap(EnumCreatureType.MONSTER, ContentControl.number(ContentControl.SPAWNING, "monsterCap", Config.worldgen.monsterCap));
-        cap(EnumCreatureType.CREATURE, ContentControl.number(ContentControl.SPAWNING, "creatureCap", Config.worldgen.creatureCap));
-        cap(EnumCreatureType.AMBIENT, ContentControl.number(ContentControl.SPAWNING, "ambientCap", Config.worldgen.ambientCap));
-        cap(EnumCreatureType.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, "waterCreatureCap", Config.worldgen.waterCreatureCap));
+        cap(EnumCreatureType.MONSTER, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAPS.get(0), Config.worldgen.monsterCap));
+        cap(EnumCreatureType.CREATURE, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAPS.get(1), Config.worldgen.creatureCap));
+        cap(EnumCreatureType.AMBIENT, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAPS.get(2), Config.worldgen.ambientCap));
+        cap(EnumCreatureType.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAPS.get(3), Config.worldgen.waterCreatureCap));
     }
 
     private static void cap(@Nonnull EnumCreatureType type, int wanted) {
@@ -163,10 +166,10 @@ public final class ContentSpawning {
             if (wanted >= 0.0F) { return wanted; }
         }
         float[] rates = RATES.get(() -> new float[] {
-                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate),
-                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate),
-                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate),
-                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate) });
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATES.get(0), Config.worldgen.surfaceDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATES.get(1), Config.worldgen.surfaceNightMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATES.get(2), Config.worldgen.undergroundDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATES.get(3), Config.worldgen.undergroundNightMonsterRate) });
         if (sky) { return day ? rates[0] : rates[1]; }
         return day ? rates[2] : rates[3];
     }

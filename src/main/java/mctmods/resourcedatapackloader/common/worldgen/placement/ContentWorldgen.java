@@ -102,6 +102,10 @@ public final class ContentWorldgen implements IWorldGenerator {
         int dimension = world.provider.getDimension();
         int baseX = chunkX * 16;
         int baseZ = chunkZ * 16;
+        int lowX = baseX + 8;
+        int lowZ = baseZ + 8;
+        int highX = baseX + 23;
+        int highZ = baseZ + 23;
         for (WorldgenDef def : subset) {
             IContentShape figure = def.getShape();
             if (figure == null || !def.allowsDimension(dimension)) { continue; }
@@ -130,7 +134,7 @@ public final class ContentWorldgen implements IWorldGenerator {
                     ContentOreVein vein = (ContentOreVein) figure;
                     Predicate<BlockPos> valid = source -> allows(def, world, source, filtered);
                     vein.generateChunk(world, chunkX, chunkZ, valid);
-                    for (BlockPos led : vein.originsIn(world, chunkX, chunkZ, valid)) { after(def, world, random, led, baseX + 8, baseZ + 8, baseX + 23, baseZ + 23, new ArrayList<>()); }
+                    for (BlockPos led : vein.originsIn(world, chunkX, chunkZ, valid)) { after(def, world, random, led, lowX, lowZ, highX, highZ, new ArrayList<>()); }
                     continue;
                 }
                 int tries = def.attempts.pick(random);
@@ -147,17 +151,15 @@ public final class ContentWorldgen implements IWorldGenerator {
                         if (pos == null) { continue; }
                         if (def.snapDepth > 0) {
                             pos = ceiling ? pos.up(def.snapDepth) : pos.down(def.snapDepth);
-                            if (world.isOutsideBuildHeight(pos) || !world.isBlockLoaded(pos)) { continue; }
+                            if (unplaceable(world, pos)) { continue; }
                         }
                     }
                     if (!def.caveRegions.isEmpty()) {
                         CaveRegionDef cave = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
                         if (cave == null || !def.inCaveRegion(cave.key)) { continue; }
                     }
-                    Biome biome = world.getBiome(pos);
-                    if (filtered && BiomeFilter.blocked(def.namedBiomes(), def.getTypes(), def.biomesAreBlacklist, biome)) { continue; }
-                    if (!def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall())) { continue; }
-                    if (figure.generate(world, random, pos)) { after(def, world, random, pos, baseX + 8, baseZ + 8, baseX + 23, baseZ + 23, new ArrayList<>()); }
+                    if (!allows(def, world, pos, filtered)) { continue; }
+                    if (figure.generate(world, random, pos)) { after(def, world, random, pos, lowX, lowZ, highX, highZ, new ArrayList<>()); }
                 }
             }
             finally { ContentOreControl.endPack(); }
@@ -195,7 +197,7 @@ public final class ContentWorldgen implements IWorldGenerator {
             int dy = chosen.depthOr(def.thenDepth, random);
             if (dx == 0 && dy == 0 && dz == 0) { dy = -1; }
             BlockPos pos = edgeOf(world, def, origin, dx, dy, dz, lowX, lowZ, highX, highZ);
-            if (world.isOutsideBuildHeight(pos) || !world.isBlockLoaded(pos)) { continue; }
+            if (unplaceable(world, pos)) { continue; }
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The {} at {}, {}, {} queues {} at {}, {}, {}, off its edge", def.registryName, origin.getX(), origin.getY(), origin.getZ(), chosen.name, pos.getX(), pos.getY(), pos.getZ()); }
             ContentOreControl.beginPack(next.registryName.getNamespace());
             try {
@@ -227,6 +229,8 @@ public final class ContentWorldgen implements IWorldGenerator {
         for (BlockWeightDef weighted : def.blocks) { if (name.equals(weighted.block)) { return true; } }
         return false;
     }
+
+    private static boolean unplaceable(World world, BlockPos pos) { return world.isOutsideBuildHeight(pos) || !world.isBlockLoaded(pos); }
 
     @Nullable private static BlockPos snap(World world, BlockPos pos, boolean ceiling) {
         BlockPos at = pos;

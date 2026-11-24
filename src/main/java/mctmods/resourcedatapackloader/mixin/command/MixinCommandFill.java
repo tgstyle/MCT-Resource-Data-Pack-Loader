@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.command;
 
+import mctmods.resourcedatapackloader.common.rubic.world.CommandHeights;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import static mctmods.resourcedatapackloader.common.util.world.Coords.blockToCube;
 
 import java.lang.ref.WeakReference;
@@ -30,13 +32,10 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
     @Unique private Integer rdpl$minY;
     @Unique private Integer rdpl$maxY;
 
-    @Inject(method = "execute", at = @At(value = "HEAD"), require = 1) private void rdpl$getWorldFromExecute(MinecraftServer server, ICommandSender sender, String[] args, CallbackInfo cbi) { rdpl$commandWorld = new WeakReference<>((IRubicWorld) sender.getEntityWorld()); }
+    @Inject(method = "execute", at = @At(value = "HEAD"), require = 1) private void rdpl$getWorldFromExecute(MinecraftServer server, ICommandSender sender, String[] args, CallbackInfo cbi) { rdpl$commandWorld = CommandHeights.of(sender.getEntityWorld()); }
 
     @SuppressWarnings("InvalidInjectorMethodSignature") @ModifyConstant(method = "execute", constant = { @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO, ordinal = 0), @Constant(intValue = 256, ordinal = 0) }, slice = @Slice(from = @At(value = "CONSTANT", args = "stringValue=commands.fill.tooManyBlocks")), require = 2) private int rdpl$execute_getMinHeight(int original) {
-        if (rdpl$commandWorld == null) { return original; }
-        IRubicWorld world = rdpl$commandWorld.get();
-        if (world == null) { return original; }
-        return original == 0 ? world.rdpl$getMinHeight() : world.rdpl$getMaxHeight();
+        return original == 0 ? CommandHeights.minY(rdpl$commandWorld, original) : CommandHeights.maxY(rdpl$commandWorld, original);
     }
 
     @Inject(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/command/ICommandSender;getEntityWorld()Lnet/minecraft/world/World;"), locals = LocalCapture.CAPTURE_FAILSOFT) private void rdpl$onGetEntityWorld(MinecraftServer server, ICommandSender sender, String[] args, CallbackInfo c,
@@ -46,7 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
     }
 
     @Redirect(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/math/BlockPos;)Z")) private boolean rdpl$isBlockLoadedCheckForHeightRangeRedirect(World world, BlockPos pos) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld() || !(world instanceof WorldServer)) { return world.isBlockLoaded(pos); }
+        if (!GenHeights.rubic(world) || !(world instanceof WorldServer)) { return world.isBlockLoaded(pos); }
         if (rdpl$minY == null) {
             assert rdpl$maxY == null;
             return ((IRubicWorld) world).rdpl$isBlockColumnLoaded(pos);

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.world.gen;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.generator.DeepGeneration;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardSeat;
@@ -48,8 +49,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(world, x, z);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(world)) { cir.setReturnValue(ContentVoidWorld.emptyChunk(world, x, z)); }
     }
 
     @Inject(method = "replaceBiomeBlocks", at = @At("RETURN")) private void rdpl$packStone(int x, int z, ChunkPrimer primer, Biome[] biomesIn, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomesIn); }
@@ -84,7 +84,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "generateHeightmap", at = @At("RETURN")) private void rdpl$seatStructures(int x, int y, int z, CallbackInfo ci) {
         if (!mapFeaturesEnabled || !ContentBeard.wanted()) { return; }
         MapGenStructure[] generators = { villageGenerator, strongholdGenerator, mineshaftGenerator, oceanMonumentGenerator, woodlandMansionGenerator };
-        String[] names = { "villages", "strongholds", "mineshafts", "monuments", "mansions" };
+        String[] names = { ContentStructurePlacement.VILLAGES, ContentStructurePlacement.STRONGHOLDS, ContentStructurePlacement.MINESHAFTS, ContentStructurePlacement.MONUMENTS, ContentStructurePlacement.MANSIONS };
         ContentBeardSeat.apply(world, generators, names, heightMap, x / 4, z / 4);
     }
 }

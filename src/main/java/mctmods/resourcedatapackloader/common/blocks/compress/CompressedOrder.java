@@ -22,8 +22,7 @@ public final class CompressedOrder {
         Map<CompressedSet, List<ItemStack>> found = new LinkedHashMap<>();
         for (ItemStack stack : list) {
             if (!(stack.getItem() instanceof ItemBlock)) { continue; }
-            ResourceLocation name = Block.REGISTRY.getNameForObject(((ItemBlock) stack.getItem()).getBlock());
-            CompressedSet set = ContentCompressables.owner(name);
+            CompressedSet set = ContentCompressables.owner(blockName(stack));
             if (set != null) { found.computeIfAbsent(set, key -> new ArrayList<>()).add(stack); }
         }
         for (CompressedSet set : ContentCompressables.sets()) {
@@ -52,7 +51,9 @@ public final class CompressedOrder {
         }
     }
 
-    private static int layer(CompressedSet set, ItemStack stack) { return set.layerOf(Block.REGISTRY.getNameForObject(((ItemBlock) stack.getItem()).getBlock()), stack.getMetadata()); }
+    private static ResourceLocation blockName(ItemStack stack) { return Block.REGISTRY.getNameForObject(((ItemBlock) stack.getItem()).getBlock()); }
+
+    private static int layer(CompressedSet set, ItemStack stack) { return set.layerOf(blockName(stack), stack.getMetadata()); }
 
     private static int indexOf(List<ItemStack> list, ItemStack base) {
         for (int index = 0; index < list.size(); index++) {

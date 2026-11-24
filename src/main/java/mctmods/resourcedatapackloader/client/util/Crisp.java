@@ -3,12 +3,15 @@ package mctmods.resourcedatapackloader.client.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
 public final class Crisp {
     private static final int LIFTED = 2;
     private static final double CRISP = 2.0D;
 
     private Crisp() {}
+
+    public static boolean hudBlocked(RenderGameOverlayEvent event) { return event.getType() != RenderGameOverlayEvent.ElementType.ALL || Minecraft.getMinecraft().currentScreen != null; }
 
     private static int real() { return new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(); }
 

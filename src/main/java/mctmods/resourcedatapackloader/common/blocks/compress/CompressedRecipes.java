@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.compress;
 
-import mctmods.resourcedatapackloader.common.pack.loading.ContentOwners;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
 import net.minecraft.item.ItemStack;
@@ -42,10 +42,8 @@ public final class CompressedRecipes {
                 nineBack.setCount(GRID);
                 IRecipe pack = new ShapedRecipes("", 3, 3, nine, upper.copy());
                 IRecipe unpack = new ShapelessRecipes("", nineBack, one);
-                ContentOwners.as(namespace, () -> {
-                    registry.register(pack.setRegistryName(packId));
-                    registry.register(unpack.setRegistryName(unpackId));
-                });
+                Registries.register(registry, namespace, () -> pack.setRegistryName(packId));
+                Registries.register(registry, namespace, () -> unpack.setRegistryName(unpackId));
                 added += 2;
             }
         }

@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.common.villages;
 
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.RecurrentPlots;
+import mctmods.resourcedatapackloader.core.util.math.Turns;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -18,7 +21,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 
-public class RecurrentVillagePiece extends StructureVillagePieces.Village {
+public class RecurrentVillagePiece extends GroundedVillagePiece {
     private String structure = "";
     private String generation = "";
     private int courses;
@@ -54,7 +57,7 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         generation = tag.getString("rdpl_rc_generation");
         courses = tag.getInteger("rdpl_rc_courses");
         seat = tag.getInteger("rdpl_rc_seat");
-        turned = Rotation.values()[tag.getInteger("rdpl_rc_turn") & 3];
+        turned = Turns.ALL[tag.getInteger("rdpl_rc_turn") & 3];
     }
 
     public String structureId() { return structure; }
@@ -69,22 +72,19 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         if (structure.isEmpty()) { return true; }
         int[] size = RecurrentPlots.sizeOf(structure);
         if (size == null) { return true; }
-        if (averageGroundLvl < 0) {
-            averageGroundLvl = getAverageGroundLevel(world, clip);
-            if (averageGroundLvl < 0) { return true; }
-            boundingBox.offset(0, averageGroundLvl - boundingBox.minY + seat, 0);
-        }
+        if (!settle(world, clip, seat)) { return true; }
         int wide = size[0];
         int tall = size[1];
         int deep = size[2];
-        boolean quarter = turned == Rotation.CLOCKWISE_90 || turned == Rotation.COUNTERCLOCKWISE_90;
+        boolean quarter = Coords.quarter(turned);
         int localWide = quarter ? deep : wide;
         int localDeep = quarter ? wide : deep;
         for (int pass = 0; pass < 2; pass++) {
             for (int lx = 0; lx < localWide; lx++) {
                 for (int lz = 0; lz < localDeep; lz++) {
-                    int sx = sourceX(lx, lz, wide);
-                    int sz = sourceZ(lx, lz, deep);
+                    int[] source = Coords.toSource(lx, lz, wide, deep, turned);
+                    int sx = source[0];
+                    int sz = source[1];
                     for (int ly = 0; ly < tall; ly++) {
                         int kind = RecurrentPlots.classify(structure, sx, ly, sz);
                         if (kind == RecurrentPlots.SKIPPED) { continue; }
@@ -104,20 +104,16 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
             }
         }
         for (NBTTagCompound tag : RecurrentPlots.tiles(structure)) {
-            int sx = tag.getInteger("x");
-            int sy = tag.getInteger("y");
-            int sz = tag.getInteger("z");
-            int lx = localX(sx, sz, wide, deep);
-            int lz = localZ(sx, sz, wide, deep);
+            BlockPos source = Coords.readPos(tag);
+            int sy = source.getY();
+            int[] local = Coords.toLocal(source.getX(), source.getZ(), wide, deep, turned);
+            int lx = local[0];
+            int lz = local[1];
             BlockPos at = new BlockPos(getXWithOffset(lx, lz), getYWithOffset(sy), getZWithOffset(lx, lz));
             if (!clip.isVecInside(at)) { continue; }
             TileEntity tile = world.getTileEntity(at);
             if (tile == null) { continue; }
-            NBTTagCompound moved = tag.copy();
-            moved.setInteger("x", at.getX());
-            moved.setInteger("y", at.getY());
-            moved.setInteger("z", at.getZ());
-            tile.readFromNBT(moved);
+            tile.readFromNBT(TileData.at(tag, at));
             tile.markDirty();
         }
         return true;
@@ -129,33 +125,5 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         boolean buried = ly + 1 < tall && RecurrentPlots.classify(structure, sx, ly + 1, sz) == RecurrentPlots.GROUND;
         IBlockState laid = buried ? biome.fillerBlock : biome.topBlock;
         return laid != null ? laid : Blocks.DIRT.getDefaultState();
-    }
-
-    private int sourceX(int lx, int lz, int wide) {
-        if (turned == Rotation.CLOCKWISE_90) { return lz; }
-        if (turned == Rotation.COUNTERCLOCKWISE_90) { return wide - 1 - lz; }
-        if (turned == Rotation.CLOCKWISE_180) { return wide - 1 - lx; }
-        return lx;
-    }
-
-    private int sourceZ(int lx, int lz, int deep) {
-        if (turned == Rotation.CLOCKWISE_90) { return deep - 1 - lx; }
-        if (turned == Rotation.COUNTERCLOCKWISE_90) { return lx; }
-        if (turned == Rotation.CLOCKWISE_180) { return deep - 1 - lz; }
-        return lz;
-    }
-
-    private int localX(int sx, int sz, int wide, int deep) {
-        if (turned == Rotation.CLOCKWISE_90) { return deep - 1 - sz; }
-        if (turned == Rotation.COUNTERCLOCKWISE_90) { return sz; }
-        if (turned == Rotation.CLOCKWISE_180) { return wide - 1 - sx; }
-        return sx;
-    }
-
-    private int localZ(int sx, int sz, int wide, int deep) {
-        if (turned == Rotation.CLOCKWISE_90) { return sx; }
-        if (turned == Rotation.COUNTERCLOCKWISE_90) { return wide - 1 - sx; }
-        if (turned == Rotation.CLOCKWISE_180) { return deep - 1 - sz; }
-        return sz;
     }
 }

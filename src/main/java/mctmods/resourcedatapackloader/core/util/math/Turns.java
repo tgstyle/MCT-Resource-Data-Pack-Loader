@@ -19,8 +19,10 @@ public final class Turns {
         if (ShapeDef.QUARTER.equals(named)) { return Rotation.CLOCKWISE_90; }
         if (ShapeDef.HALF.equals(named)) { return Rotation.CLOCKWISE_180; }
         if (ShapeDef.THREEQUARTER.equals(named)) { return Rotation.COUNTERCLOCKWISE_90; }
-        return ALL[random.nextInt(ALL.length)];
+        return pick(random);
     }
+
+    public static Rotation pick(Random random) { return ALL[random.nextInt(ALL.length)]; }
 
     public static Mirror mirror(List<PickDef> mirrors, Random random) {
         String named = PickDef.pick(mirrors, random, "");

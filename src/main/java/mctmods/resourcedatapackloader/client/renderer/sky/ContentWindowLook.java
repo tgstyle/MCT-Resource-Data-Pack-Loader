@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.TimeWindowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import javax.annotation.Nullable;
 import net.minecraft.util.math.MathHelper;
@@ -38,7 +39,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         }
         for (int index = 0; index < weights.length; index++) {
             float aim = def.windows.get(index) == active ? 1.0F : 0.0F;
-            weights[index] = arrived ? aim : weights[index] + (aim - weights[index]) * EASE;
+            weights[index] = arrived ? aim : MathUtil.lerp(EASE, weights[index], aim);
         }
     }
 
@@ -49,49 +50,41 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     static float fogDensity(@Nullable World world, float base) {
         DimensionDef def = current(world);
         if (def == null) { return base; }
-        float density = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows.get(index);
-            if (window.gives(TimeWindowDef.FOG_DENSITY)) { density += (window.fogDensity - density) * weights[index]; }
-        }
-        return density;
+        float[] density = {base};
+        each(def, TimeWindowDef.FOG_DENSITY, (window, weight) -> density[0] = MathUtil.lerp(weight, density[0], window.fogDensity));
+        return density[0];
     }
 
     public static Vec3d fogColor(@Nullable World world, Vec3d base, float celestialAngle) {
         DimensionDef def = current(world);
         if (def == null) { return base; }
-        Vec3d color = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows.get(index);
-            if (weights[index] <= 0.0F || !window.gives(TimeWindowDef.FOG_COLOR)) { continue; }
+        Vec3d[] color = {base};
+        each(def, TimeWindowDef.FOG_COLOR, (window, weight) -> {
+            if (weight <= 0.0F) { return; }
             Vec3d aim = window.sampleFog ? ContentFogSampler.color(base) : ContentDimensionRules.fogColor(window.fogColor, celestialAngle);
-            color = color.add(aim.subtract(color).scale(weights[index]));
-        }
-        return color;
+            color[0] = color[0].add(aim.subtract(color[0]).scale(weight));
+        });
+        return color[0];
     }
 
     public static float colorFog(@Nullable World world) {
         DimensionDef def = current(world);
         if (def == null) { return 0.0F; }
-        float lit = 0.0F;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows.get(index);
-            if (window.gives(TimeWindowDef.FOG_COLOR) && !window.sampleFog) { lit += (1.0F - lit) * weights[index]; }
-        }
-        return lit;
+        float[] lit = {0.0F};
+        each(def, TimeWindowDef.FOG_COLOR, (window, weight) -> {
+            if (!window.sampleFog) { lit[0] = MathUtil.lerp(weight, lit[0], 1.0F); }
+        });
+        return lit[0];
     }
 
     @Nullable static float[] sunTint(@Nullable World world) {
         SkyLookDef look = ContentFogSampler.look(world);
         TimeWindowDef first = first(world, TimeWindowDef.SUN_COLOR);
         if ((look == null || look.sunColor == SkyLookDef.UNSET) && first == null) { return null; }
-        float[] tint = look == null || look.sunColor == SkyLookDef.UNSET ? new float[] {1.0F, 1.0F, 1.0F, 1.0F} : rgba(look.sunColor, 1.0F);
+        float[] tint = look == null || look.sunColor == SkyLookDef.UNSET ? new float[] {1.0F, 1.0F, 1.0F, 1.0F} : Colors.unit(look.sunColor, 1.0F);
         DimensionDef def = current(world);
         if (def == null) { return tint; }
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows.get(index);
-            if (window.gives(TimeWindowDef.SUN_COLOR)) { blend(tint, rgba(window.sunColor, 1.0F), weights[index]); }
-        }
+        each(def, TimeWindowDef.SUN_COLOR, (window, weight) -> blend(tint, Colors.unit(window.sunColor, 1.0F), weight));
         return tint;
     }
 
@@ -99,15 +92,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         SkyLookDef look = ContentFogSampler.look(world);
         TimeWindowDef first = first(world, TimeWindowDef.SUN_AURA);
         if ((look == null || look.sunAuraColor == SkyLookDef.UNSET) && first == null) { return null; }
-        float[] aura = look == null || look.sunAuraColor == SkyLookDef.UNSET ? rgba(first.sunAuraColor, 0.0F) : rgba(look.sunAuraColor, 1.0F);
+        float[] aura = look == null || look.sunAuraColor == SkyLookDef.UNSET ? Colors.unit(first.sunAuraColor, 0.0F) : Colors.unit(look.sunAuraColor, 1.0F);
         DimensionDef def = current(world);
-        if (def != null) {
-            for (int index = 0; index < weights.length; index++) {
-                TimeWindowDef window = def.windows.get(index);
-                if (window.gives(TimeWindowDef.SUN_AURA)) { blend(aura, rgba(window.sunAuraColor, 1.0F), weights[index]); }
-            }
-        }
-        if (look != null && look.sunAuraHorizon > 0.0F) { aura[3] *= 1.0F - MathHelper.clamp(Math.abs((float) Math.toDegrees(Math.asin(MathHelper.clamp(height, -1.0F, 1.0F)))) / look.sunAuraHorizon, 0.0F, 1.0F); }
+        if (def != null) { each(def, TimeWindowDef.SUN_AURA, (window, weight) -> blend(aura, Colors.unit(window.sunAuraColor, 1.0F), weight)); }
+        if (look != null && look.sunAuraHorizon > 0.0F) { aura[3] *= 1.0F - MathHelper.clamp(Math.abs((float) Math.toDegrees(MathUtil.asinClamped(height))) / look.sunAuraHorizon, 0.0F, 1.0F); }
         return aura;
     }
 
@@ -117,9 +105,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         return def.windows.stream().filter(window -> window.gives(key)).findFirst().orElse(null);
     }
 
-    private static float[] rgba(int rgb, float alpha) { return new float[] {Colors.red(rgb) / 255.0F, Colors.green(rgb) / 255.0F, Colors.blue(rgb) / 255.0F, alpha}; }
+    private static void each(DimensionDef def, String key, WindowStep step) {
+        for (int index = 0; index < weights.length; index++) {
+            TimeWindowDef window = def.windows.get(index);
+            if (window.gives(key)) { step.apply(window, weights[index]); }
+        }
+    }
+
+    private interface WindowStep { void apply(TimeWindowDef window, float weight); }
 
     private static void blend(float[] color, float[] aim, float weight) {
-        for (int channel = 0; channel < color.length; channel++) { color[channel] += (aim[channel] - color[channel]) * weight; }
+        for (int channel = 0; channel < color.length; channel++) { color[channel] = MathUtil.lerp(weight, color[channel], aim[channel]); }
     }
 }

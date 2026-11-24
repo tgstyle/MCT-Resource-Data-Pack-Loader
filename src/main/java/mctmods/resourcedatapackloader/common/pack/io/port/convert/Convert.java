@@ -2,8 +2,11 @@ package mctmods.resourcedatapackloader.common.pack.io.port.convert;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
+import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.text.CommandWords;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -27,6 +30,7 @@ import net.minecraft.util.JsonUtils;
 
 public final class Convert {
     static final String FLAT = "flat";
+    static final String WILDCARD = ":*";
     private static final Set<String> BLOCK_KEYS = set("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "middle", "budding", "crystal", "bell", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock", "fromBlock", "toBlock");
     private static final Set<String> ITEM_KEYS = set("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "immuneItems", "ignitedBy", "saysIcon", "outputs", "with", "strip", "killerHolds", "unlessDropped");
     private static final Set<String> ENTITY_KEYS = set("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes", "picksFrom", "mob", "mobs");
@@ -34,7 +38,6 @@ public final class Convert {
     private static final Set<String> DIMENSION_KEYS = set("dimensions", "weatherDimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "rubicWorldDimensions");
     private static final Set<String> DIMENSION_PREFIXED = set("welcomeSays", "worldDifficulty", "cloudHeight", "weatherCeiling", "worldGravity", "worldFallDamage", "worldJumpStrength", "worldTerminalVelocity", "worldBelow", "worldAbove", "flatBedrockFillers", "structureBiomes", "structureBiomesAreBlacklist");
     private static final Set<String> RAW_CONTAINERS = set("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
-    private static final Set<String> BEHAVIORS = set("animals", "bush", "path", "till");
     private static final Set<String> FLAT_TYPES = set(FLAT, "superflat");
     private static final Pattern DIM_PREFIX = Pattern.compile("^([a-z0-9_.-]+:[a-z0-9_./-]+)=(.*)$");
     private static final Pattern REPLACEMENT = Pattern.compile("^([^=]+)=([^=]+)$");
@@ -50,7 +53,7 @@ public final class Convert {
 
     private Convert() {}
 
-    static Set<String> set(String... values) { return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(values))); }
+    public static Set<String> set(String... values) { return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(values))); }
 
     private enum Context { NONE, BLOCK, ITEM, ENTITY, BIOME, DIMENSION }
 
@@ -74,8 +77,8 @@ public final class Convert {
         int open = text.indexOf('[');
         if (open < 0 || !text.endsWith("]")) { return text; }
         for (String pair : text.substring(open + 1, text.length() - 1).split(",")) {
-            int equals = pair.indexOf('=');
-            if (equals > 0) { properties.put(pair.substring(0, equals).trim(), pair.substring(equals + 1).trim()); }
+            String[] property = CommandWords.pair(pair);
+            if (property != null) { properties.put(property[0], property[1]); }
         }
         return text.substring(0, open);
     }
@@ -86,6 +89,8 @@ public final class Convert {
         return head.isEmpty() || head.indexOf(':') <= 0 || head.indexOf('=') >= 0 || head.indexOf(' ') >= 0 || head.split(":").length != 2;
     }
 
+    private static boolean vanillaId(String trimmed) { return !notAnId(trimmed) && Ids.vanilla(trimmed); }
+
     @Nullable public static Ref block(String text, Map<String, String> given, Ported pack, String where) {
         String trimmed = text.trim();
         if (notAnId(trimmed)) { return null; }
@@ -93,7 +98,7 @@ public final class Convert {
         String name = Ids.namespaced(stateName(trimmed, properties));
         Ported.Own own = pack.ownBlock(name);
         if (own != null) {
-            String id = "slab".equals(own.type) && "double".equals(properties.get("type")) ? own.id() + "_double" : own.id();
+            String id = own.slabId(properties);
             return new Ref(id, own.meta, own.variants > 1 || own.meta > 0, false);
         }
         if (!Ids.vanilla(name)) { return new Ref(name, 0, false, false); }
@@ -113,7 +118,7 @@ public final class Convert {
 
     static String biomeString(String text) {
         String trimmed = text.trim();
-        return notAnId(trimmed) || !Ids.vanilla(trimmed) ? text : Ids.biome(trimmed);
+        return vanillaId(trimmed) ? Ids.biome(trimmed) : text;
     }
 
     @Nullable public static Ref item(String text, Ported pack, String where) {
@@ -123,9 +128,9 @@ public final class Convert {
             pack.note(where + " gives " + trimmed + ", whose item components have no twin on 1.12.2, so only the item is kept");
             trimmed = trimmed.substring(0, components);
         }
-        if (trimmed.endsWith(":*")) {
-            Ref inner = item(trimmed.substring(0, trimmed.length() - 2), pack, where);
-            return inner == null ? null : new Ref(inner.id + ":*", 0, false, inner.vanilla);
+        if (trimmed.endsWith(WILDCARD)) {
+            Ref inner = item(trimmed.substring(0, trimmed.length() - WILDCARD.length()), pack, where);
+            return inner == null ? null : new Ref(inner.id + WILDCARD, 0, false, inner.vanilla);
         }
         if (notAnId(trimmed)) { return null; }
         String name = Ids.namespaced(trimmed);
@@ -151,6 +156,10 @@ public final class Convert {
         Ref ref = item(text, pack, where);
         return ref == null ? text : ref.text();
     }
+
+    static String idOr(@Nullable Ref ref, String text) { return ref == null ? text : ref.id; }
+
+    static String itemId(String text, Ported pack, String where) { return idOr(item(text, pack, where), text); }
 
     public static int flatShift(JsonObject settings) {
         if (!JsonUtils.isJsonPrimitive(settings, "worldType") || !FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString()))) { return 0; }
@@ -180,7 +189,7 @@ public final class Convert {
                 dimensionKeys(json, pack, where);
                 break;
             case "blastplaster":
-                if (json.has("dimensions") && json.get("dimensions").isJsonObject()) { dimensionKeys(json.getAsJsonObject("dimensions"), pack, where); }
+                dimensionKeys(Json.object(json, "dimensions"), pack, where);
                 break;
             case "worldtemplates":
                 ConvertDefinitions.template(json, pack, where);
@@ -189,18 +198,18 @@ public final class Convert {
                 ConvertDefinitions.team(json, pack, where);
                 break;
             case "scoring":
-                if (json.has("opens") && json.get("opens").isJsonObject()) { ConvertDefinitions.movedPoint(json.getAsJsonObject("opens"), "lobby", pack.overworldShift(), pack, where); }
+                ConvertDefinitions.movedPoint(Json.object(json, "opens"), "lobby", pack.overworldShift(), pack, where);
                 break;
             case "dimensions":
                 ConvertDefinitions.dimension(json, namespace + ":" + file, pack);
                 ConvertDefinitions.environments(json, pack, where);
                 break;
             case "caveregions":
-                renamed(json, "ambientSound", Ids.sound(Json.text(json,"ambientSound")));
-                particle(json);
+                Json.rewriteText(json, "ambientSound", Ids::sound);
+                Json.rewriteText(json, "particle", held -> held.isEmpty() ? null : Ids.particle(held));
                 break;
             case "raids":
-                renamed(json, "sound", Ids.sound(Json.text(json,"sound")));
+                Json.rewriteText(json, "sound", Ids::sound);
                 ConvertDefinitions.loot(json);
                 break;
             case "orders":
@@ -213,7 +222,7 @@ public final class Convert {
                 ConvertDefinitions.anvil(json, pack, where);
                 break;
             case "player_loot":
-                if (JsonUtils.isJsonPrimitive(json, "table")) { json.addProperty("table", Ids.lootTable(json.get("table").getAsString())); }
+                Json.rewriteText(json, "table", Ids::lootTable);
                 break;
             case "fuels":
                 ConvertDefinitions.fuels(json, pack, where);
@@ -231,10 +240,7 @@ public final class Convert {
                     json.add("careers", careers);
                     pack.note(where + " names no careers, which a 1.12.2 profession needs, so it has the one career '" + namespace + "." + file + "'");
                 }
-                if (json.has("jobSite")) {
-                    json.remove("jobSite");
-                    pack.note(where + " names a job site block, which 1.12.2 villagers do not have, so it is left out");
-                }
+                pack.dropMember(json, "jobSite", where + " names a job site block, which 1.12.2 villagers do not have, so it is left out");
                 break;
             case "trades":
                 ConvertDefinitions.trades(json, pack, where);
@@ -246,29 +252,20 @@ public final class Convert {
         return Ported.GSON.toJson(json);
     }
 
-    private static void renamed(JsonObject json, String key, String mapped) { if (JsonUtils.isJsonPrimitive(json, key) && !mapped.isEmpty()) { json.addProperty(key, mapped); } }
-
-    private static void particle(JsonObject json) {
-        String held = Json.text(json, "particle");
-        String mapped = held.isEmpty() ? null : Ids.particle(held);
-        if (mapped != null) { json.addProperty("particle", mapped); }
-    }
-
     private static void content(JsonObject json, Ported pack, String where) {
         behaviors(json, pack);
         if (JsonUtils.isJsonPrimitive(json, "creativeTab")) { json.addProperty("creativeTab", tab(json.get("creativeTab").getAsString().trim(), pack)); }
         for (String key : new String[] {"still", "flow"}) {
-            if (JsonUtils.isJsonPrimitive(json, key)) { json.addProperty(key, ConvertAssets.textureRef(json.get(key).getAsString())); }
+            Json.rewriteText(json, key, ConvertAssets::textureRef);
         }
-        if (!json.has("variants") || !json.get("variants").isJsonObject()) { return; }
         int meta = 0;
-        for (Map.Entry<String, JsonElement> variant : json.getAsJsonObject("variants").entrySet()) {
+        for (Map.Entry<String, JsonElement> variant : Json.object(json, "variants").entrySet()) {
             if (!variant.getValue().isJsonObject()) { continue; }
             JsonObject held = variant.getValue().getAsJsonObject();
             if (!held.has("meta")) { held.addProperty("meta", meta); }
             meta++;
             if (!JsonUtils.isJsonArray(held, "tags")) { continue; }
-            JsonArray ores = JsonUtils.isJsonArray(held, "oreDict") ? held.getAsJsonArray("oreDict") : new JsonArray();
+            JsonArray ores = Json.array(held, "oreDict");
             for (JsonElement tag : held.remove("tags").getAsJsonArray()) {
                 String ore = Ids.oreName(tag.getAsString());
                 if (ore == null) { pack.note(where + " tags the variant '" + variant.getKey() + "' with " + tag.getAsString() + ", which has no ore dictionary name, so it is left out"); }
@@ -284,18 +281,16 @@ public final class Convert {
         for (JsonElement held : json.getAsJsonArray("behavesAs")) {
             if (!held.isJsonPrimitive()) { continue; }
             String name = Settings.lower(held.getAsString());
-            if (BEHAVIORS.contains(name)) { kept.add(name); }
+            if (ContentSpawning.BEHAVIORS.contains(name)) { kept.add(name); }
             else { pack.note("A block behaves as '" + name + "', which 1.12.2 does not have, so it is left out"); }
         }
-        if (kept.size() > 0) { json.add("behavesAs", kept); }
-        else { json.remove("behavesAs"); }
+        Json.putOrRemove(json, "behavesAs", kept);
     }
 
     static String tab(String given, Ported pack) {
-        int colon = given.indexOf(':');
-        if (colon < 0) { return given; }
-        String namespace = given.substring(0, colon);
-        String path = given.substring(colon + 1);
+        if (given.indexOf(':') < 0) { return given; }
+        String namespace = IdNames.namespace(given);
+        String path = IdNames.path(given);
         if (Ids.MINECRAFT.equals(namespace)) { return TABS.getOrDefault(path, "misc"); }
         return pack.ownsNamespace(namespace) ? path : given;
     }
@@ -303,11 +298,8 @@ public final class Convert {
     private static void dimensionKeys(JsonObject json, Ported pack, String where) {
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
             if (entry.getKey().indexOf(':') < 0) { continue; }
-            Integer number = pack.dimensionNumber(entry.getKey());
-            if (number == null) {
-                pack.noTwin(entry.getKey(), where);
-                continue;
-            }
+            Integer number = pack.dimensionOrNote(entry.getKey(), where);
+            if (number == null) { continue; }
             json.remove(entry.getKey());
             json.add(String.valueOf(number), entry.getValue());
         }
@@ -345,10 +337,7 @@ public final class Convert {
                 }
                 if ("modelBlock".equals(key) && value.getAsJsonPrimitive().isString()) {
                     Ref ref = block(value.getAsString(), Collections.emptyMap(), pack, where);
-                    if (ref != null) {
-                        json.addProperty(key, ref.id);
-                        if (ref.specific && !json.has("modelMeta")) { json.addProperty("modelMeta", ref.meta); }
-                    }
+                    if (ref != null) { writeRef(json, key, "modelMeta", ref); }
                     continue;
                 }
                 JsonElement replaced = primitive(key, value.getAsJsonPrimitive(), context, pack, where);
@@ -361,9 +350,13 @@ public final class Convert {
         Map<String, String> properties = json.has("properties") && json.get("properties").isJsonObject() ? stringMap(json.getAsJsonObject("properties")) : Collections.emptyMap();
         Ref ref = block(json.get("block").getAsString(), properties, pack, where);
         if (ref == null) { return; }
-        json.addProperty("block", ref.id);
-        if (ref.specific && !json.has("meta")) { json.addProperty("meta", ref.meta); }
+        writeRef(json, "block", "meta", ref);
         if (ref.vanilla && !properties.isEmpty()) { json.remove("properties"); }
+    }
+
+    private static void writeRef(JsonObject json, String idKey, String metaKey, Ref ref) {
+        json.addProperty(idKey, ref.id);
+        if (ref.specific && !json.has(metaKey)) { json.addProperty(metaKey, ref.meta); }
     }
 
     private static Map<String, String> stringMap(JsonObject json) {
@@ -406,12 +399,8 @@ public final class Convert {
             if (value.isNumber()) { return null; }
             String named = value.getAsString().trim();
             if (named.indexOf(':') < 0) { return null; }
-            Integer number = pack.dimensionNumber(named);
-            if (number == null) {
-                pack.noTwin(named, where);
-                return null;
-            }
-            return new JsonPrimitive(number);
+            Integer number = pack.dimensionOrNote(named, where);
+            return number == null ? null : new JsonPrimitive(number);
         }
         if (!value.isString()) { return null; }
         String text = value.getAsString();
@@ -456,12 +445,14 @@ public final class Convert {
                 return ref == null ? null : new JsonPrimitive(ref.text());
             }
             case ENTITY: {
-                if (notAnId(text.trim()) || !Ids.vanilla(text.trim())) { return null; }
-                return new JsonPrimitive(Ids.entity(text));
+                String trimmed = text.trim();
+                if (!vanillaId(trimmed)) { return null; }
+                return new JsonPrimitive(Ids.entity(trimmed));
             }
             case BIOME: {
-                if (notAnId(text.trim()) || !Ids.vanilla(text.trim())) { return null; }
-                return new JsonPrimitive(Ids.biome(text));
+                String trimmed = text.trim();
+                if (!vanillaId(trimmed)) { return null; }
+                return new JsonPrimitive(Ids.biome(trimmed));
             }
             default: return null;
         }
@@ -510,7 +501,7 @@ public final class Convert {
     }
 
     private static void container(JsonObject held) {
-        if (JsonUtils.isJsonPrimitive(held, "lootTable")) { held.addProperty("lootTable", Ids.lootTable(held.get("lootTable").getAsString())); }
+        Json.rewriteText(held, "lootTable", Ids::lootTable);
         for (String key : new String[] {"chestModel", "guiTexture"}) {
             if (JsonUtils.isJsonPrimitive(held, key) && held.getAsJsonPrimitive(key).isString()) { held.addProperty(key, ConvertAssets.textureRef(held.get(key).getAsString())); }
         }

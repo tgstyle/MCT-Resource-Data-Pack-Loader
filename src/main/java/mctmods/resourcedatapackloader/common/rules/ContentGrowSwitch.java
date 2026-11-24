@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDe
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
+import mctmods.resourcedatapackloader.common.util.ticks.RandomTicks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,7 +22,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.util.math.BlockPos;
@@ -30,6 +31,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentGrowSwitch {
@@ -58,24 +60,12 @@ public final class ContentGrowSwitch {
         }
     }
 
-    @Nullable static Float within(String owner, String key, JsonElement value, boolean whole, float low, float high) {
-        Float number = ContentSpawnSwitch.number(owner, key, value, whole);
-        if (number == null) { return null; }
-        if (number < low || number > high) {
-            ContentLog.LOGGER.error("{} gives {} as {}, which is outside {} to {}, ignoring it", owner, key, number, low, high);
-            return null;
-        }
-        return number;
-    }
-
     private static List<GrowSwitchDef.Match> byBlock(String owner, JsonElement element) {
         List<GrowSwitchDef.Match> found = new ArrayList<>();
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth.byBlock that is not an object of block ids or #names to scales, ignoring it", owner);
-            return found;
-        }
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
-            Float scale = within(owner, "growth.byBlock." + entry.getKey(), entry.getValue(), false, 0.0F, MOST);
+        JsonObject json = Json.object(owner, "growth.byBlock", element, "an object of block ids or #names to scales");
+        if (json == null) { return found; }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            Float scale = Json.within(owner, "growth.byBlock." + entry.getKey(), entry.getValue(), false, 0.0F, MOST);
             BlockMatch match = scale == null ? null : BlockMatches.parse(owner, entry.getKey(), GROWTH);
             if (match != null) { found.add(new GrowSwitchDef.Match(match, scale)); }
         }
@@ -83,8 +73,8 @@ public final class ContentGrowSwitch {
     }
 
     private static int tooltip(String owner, JsonElement element) {
-        int mode = element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() ? TOOLTIPS.indexOf(element.getAsString()) : -1;
-        if (mode < 0) { ContentLog.LOGGER.error("{} gives growth.tooltip as {}, which is not one of {}, ignoring it", owner, element, TOOLTIPS); }
+        int mode = TOOLTIPS.indexOf(Json.text(element));
+        if (mode < 0) { Json.bad(owner, "growth.tooltip", element, "one of " + TOOLTIPS); }
         return Math.max(mode, GrowSwitchDef.TOOLTIP_OFF);
     }
 
@@ -94,11 +84,12 @@ public final class ContentGrowSwitch {
             return;
         }
         for (JsonElement entry : element.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
+            String name = Json.text(entry);
+            if (name == null) {
                 ContentLog.LOGGER.error("{} gives {} an entry {} that is not a block id or #name, ignoring it", owner, key, entry);
                 continue;
             }
-            BlockMatch match = BlockMatches.parse(owner, entry.getAsString(), GROWTH);
+            BlockMatch match = BlockMatches.parse(owner, name, GROWTH);
             if (match != null) { into.add(match); }
         }
     }
@@ -118,11 +109,8 @@ public final class ContentGrowSwitch {
     }
 
     @Nullable private static WaiverDef waiver(String owner, JsonElement element) {
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth.waiver that is not an object of blocks, within, scale, kinds and clear keys, ignoring it", owner);
-            return null;
-        }
-        JsonObject json = element.getAsJsonObject();
+        JsonObject json = Json.object(owner, "growth.waiver", element, "an object of blocks, within, scale, kinds and clear keys");
+        if (json == null) { return null; }
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (!WAIVER_KEYS.contains(entry.getKey())) { ContentLog.LOGGER.error("{} gives growth.waiver.{}, which is not a waiver key, ignoring it", owner, entry.getKey()); }
         }
@@ -132,29 +120,24 @@ public final class ContentGrowSwitch {
             ContentLog.LOGGER.error("{} gives growth.waiver with no usable blocks, ignoring it", owner);
             return null;
         }
-        Float within = json.has("within") ? within(owner, "growth.waiver.within", json.get("within"), true, 1.0F, WaiverDef.MAX_WITHIN) : null;
-        Float scale = json.has("scale") ? within(owner, "growth.waiver.scale", json.get("scale"), false, 0.0F, MOST) : null;
+        Float within = json.has("within") ? Json.within(owner, "growth.waiver.within", json.get("within"), true, 1.0F, WaiverDef.MAX_WITHIN) : null;
+        Float scale = json.has("scale") ? Json.within(owner, "growth.waiver.scale", json.get("scale"), false, 0.0F, MOST) : null;
         boolean[] kinds = json.has("kinds") ? kindList(owner, "growth.waiver.kinds", json.get("kinds")) : WaiverDef.bothKinds();
-        JsonElement clearing = json.get("clear");
-        boolean clear = false;
-        if (clearing != null && clearing.isJsonPrimitive() && clearing.getAsJsonPrimitive().isBoolean()) { clear = clearing.getAsBoolean(); }
-        else if (clearing != null) { ContentLog.LOGGER.error("{} gives growth.waiver.clear as {}, which is not true or false, ignoring it", owner, clearing); }
+        boolean clear = json.has("clear") && Json.flag(owner, "growth.waiver.clear", json.get("clear"), false);
         return new WaiverDef(blocks, within == null ? WaiverDef.DEFAULT_WITHIN : within.intValue(), scale == null ? WaiverDef.DEFAULT_SCALE : scale, kinds, clear);
     }
 
     @Nullable public static GrowSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals, breeding, byBlock, tooltip, waiver, water and sneak keys, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "growth", element, "an object of crops, saplings, animals, breeding, byBlock, tooltip, waiver, water and sneak keys");
+        if (json == null) { return null; }
         float[] scales = GrowSwitchDef.filled(1.0F);
         List<GrowSwitchDef.Match> matches = new ArrayList<>();
         WaiverDef waiver = null;
         WaterDef water = null;
         SneakGrowDef sneak = null;
         int tooltip = GrowSwitchDef.TOOLTIP_OFF;
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (BY_BLOCK.equals(entry.getKey())) {
                 matches = byBlock(owner, entry.getValue());
                 continue;
@@ -180,7 +163,7 @@ public final class ContentGrowSwitch {
                 ContentLog.LOGGER.error("{} gives growth.{}, which is not a growth key, ignoring it", owner, entry.getKey());
                 continue;
             }
-            Float value = ContentSpawnSwitch.number(owner, "growth." + entry.getKey(), entry.getValue(), false);
+            Float value = Json.number(owner, "growth." + entry.getKey(), entry.getValue(), false);
             if (value == null) { continue; }
             if (value > MOST) {
                 ContentLog.LOGGER.error("{} gives growth.{} as {}, which is above {}, ignoring it", owner, entry.getKey(), value, (int) MOST);
@@ -219,11 +202,15 @@ public final class ContentGrowSwitch {
 
     public static boolean skips(World world, BlockPos pos, Block block, Random rand) {
         if (draining || world.isRemote) { return false; }
+        return rollQueued(world, pos, block, GrowSwitchDef.SAPLINGS, rand) <= 0;
+    }
+
+    private static int rollQueued(World world, BlockPos pos, Block block, int kind, Random rand) {
         GrowSwitchDef def = ContentEnvironments.growth(world, pos);
-        if (ContentGrowWater.broke(def, world, pos, block, GrowSwitchDef.SAPLINGS)) { return true; }
-        int steps = steps(def, world, pos, block, GrowSwitchDef.SAPLINGS, rand);
+        if (ContentGrowWater.broke(def, world, pos, block, kind)) { return -1; }
+        int steps = steps(def, world, pos, block, kind, rand);
         if (steps > 1) { queue(world, pos, block, steps - 1); }
-        return steps == 0;
+        return steps;
     }
 
     private static void queue(World world, BlockPos pos, Block block, int extra) {
@@ -241,19 +228,12 @@ public final class ContentGrowSwitch {
         if (draining || world.isRemote) { return; }
         BlockPos pos = event.getPos();
         Block block = event.getState().getBlock();
-        GrowSwitchDef def = ContentEnvironments.growth(world, pos);
-        if (ContentGrowWater.broke(def, world, pos, block, GrowSwitchDef.CROPS)) {
-            event.setResult(Event.Result.DENY);
-            return;
-        }
-        int steps = steps(def, world, pos, block, GrowSwitchDef.CROPS, world.rand);
-        if (steps == 0) { event.setResult(Event.Result.DENY); }
-        else if (steps > 1) { queue(world, pos, block, steps - 1); }
+        if (rollQueued(world, pos, block, GrowSwitchDef.CROPS, world.rand) <= 0) { event.setResult(Event.Result.DENY); }
     }
 
     @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
         World world = event.world;
-        if (event.phase != TickEvent.Phase.END || world.isRemote || PENDING.isEmpty()) { return; }
+        if (!SideUtils.serverEnd(event) || PENDING.isEmpty()) { return; }
         Map<BlockPos, Pending> queued = PENDING.remove(world.provider.getDimension());
         if (queued == null) { return; }
         draining = true;
@@ -268,11 +248,7 @@ public final class ContentGrowSwitch {
         BlockPos at = pos;
         if (world.getBlockState(at).getBlock() != pending.block) { at = pos.down(); }
         if (world.getBlockState(at).getBlock() != pending.block) { at = pos.up(); }
-        for (int index = 0; index < pending.extra; index++) {
-            IBlockState state = world.getBlockState(at);
-            if (state.getBlock() != pending.block) { return; }
-            pending.block.randomTick(world, at, state, world.rand);
-        }
+        RandomTicks.run(world, at, pending.block, pending.extra, null);
     }
 
     @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {

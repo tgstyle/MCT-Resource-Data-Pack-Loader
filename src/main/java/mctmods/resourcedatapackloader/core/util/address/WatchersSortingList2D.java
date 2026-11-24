@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.core.util.address;
 
-import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 
 import java.util.Collection;
@@ -8,9 +7,7 @@ import java.util.function.Supplier;
 import net.minecraft.entity.player.EntityPlayer;
 
 public class WatchersSortingList2D<T extends IBucketSorterEntry & IXZAddressable> extends WatchersSortingList<T> {
-    private static final int BUCKET_COUNT = (int) (Rubic.MAX_RENDER_DISTANCE * Math.sqrt(2)) + 1;
-
-    public WatchersSortingList2D(int intrusiveCollectionId, Supplier<Collection<EntityPlayer>> playersSupplier) { super(BUCKET_COUNT, intrusiveCollectionId, playersSupplier); }
+    public WatchersSortingList2D(int intrusiveCollectionId, Supplier<Collection<EntityPlayer>> playersSupplier) { super(bucketCountFor(2), intrusiveCollectionId, playersSupplier); }
 
     @Override protected int coordinatesPerPlayer() { return 2; }
 

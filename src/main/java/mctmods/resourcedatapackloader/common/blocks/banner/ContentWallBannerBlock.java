@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.blocks.banner;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -31,12 +30,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     public ContentWallBannerBlock(BlockDef def) {
         this.def = def;
-        BlockVariant variant = def.at(0);
         ContentSetup.material(this, def);
         setRegistryName(new ResourceLocation(def.registryName.getNamespace(), def.registryName.getPath() + WALL_SUFFIX));
-        setTranslationKey(def.registryName + "." + variant.name);
+        setTranslationKey(ContentSetup.singleKey(def));
         ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
         ContentSetup.properties(this, def);
     }
 

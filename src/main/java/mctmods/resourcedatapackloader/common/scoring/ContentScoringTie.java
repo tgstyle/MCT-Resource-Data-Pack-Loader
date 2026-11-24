@@ -26,6 +26,12 @@ public final class ContentScoringTie {
         return top;
     }
 
+    static int bestPoints(Scoreboard board, @Nullable ScoreObjective objective) {
+        if (objective == null) { return 0; }
+        List<Score> top = top(board.getSortedScores(objective));
+        return top.isEmpty() ? 0 : Math.max(0, top.get(0).getScorePoints());
+    }
+
     public static List<String> names(List<Score> scores) {
         List<String> names = new ArrayList<>();
         for (Score one : scores) { names.add(one.getPlayerName()); }

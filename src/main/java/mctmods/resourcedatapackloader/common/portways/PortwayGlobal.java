@@ -9,10 +9,8 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
@@ -24,9 +22,7 @@ public final class PortwayGlobal extends WorldSavedData {
     public PortwayGlobal(String name) { super(name); }
 
     @Nullable private static PortwayGlobal get(@Nullable MinecraftServer server) {
-        if (server == null) { return null; }
-        MapStorage storage = server.getWorld(0).getMapStorage();
-        return storage == null ? null : SavedData.get(storage, PortwayGlobal.class, NAME, PortwayGlobal::new);
+        return SavedData.overworld(server, PortwayGlobal.class, NAME, PortwayGlobal::new);
     }
 
     public static List<PortwayStop> list(@Nullable MinecraftServer server) {
@@ -42,10 +38,11 @@ public final class PortwayGlobal extends WorldSavedData {
     public static void upsert(@Nullable MinecraftServer server, PortwayStop stop) {
         PortwayGlobal data = get(server);
         if (data == null) { return; }
-        int at = data.stops.indexOf(stop);
-        if (at >= 0 && data.stops.get(at).name.equals(stop.name) && data.stops.get(at).block.equals(stop.block)) { return; }
-        if (at >= 0) { data.stops.set(at, stop.keeping(data.stops.get(at))); }
-        else { data.stops.add(stop.fresh()); }
+        if (data.stops.contains(stop)) {
+            if (stop.refreshIn(data.stops)) { data.markDirty(); }
+            return;
+        }
+        data.stops.add(stop.fresh());
         data.markDirty();
     }
 
@@ -58,14 +55,11 @@ public final class PortwayGlobal extends WorldSavedData {
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
         stops.clear();
-        NBTTagList tags = compound.getTagList(STOPS, Constants.NBT.TAG_COMPOUND);
-        for (int index = 0; index < tags.tagCount(); index++) { stops.add(PortwayStop.read(tags.getCompoundTagAt(index))); }
+        stops.addAll(PortwayStop.readAll(compound.getTagList(STOPS, Constants.NBT.TAG_COMPOUND)));
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-        NBTTagList tags = new NBTTagList();
-        for (PortwayStop stop : stops) { tags.appendTag(stop.write()); }
-        compound.setTag(STOPS, tags);
+        compound.setTag(STOPS, PortwayStop.writeAll(stops));
         return compound;
     }
 }

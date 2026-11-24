@@ -220,12 +220,7 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
         int capacity = loc.getSize() * this.sectorSize;
         long position = (long) loc.getOffset() * this.sectorSize;
         ByteBuffer buffer = ByteBuffer.allocate(capacity);
-        long at = position;
-        while (buffer.hasRemaining()) {
-            int read = this.file.read(buffer, at);
-            if (read < 0) { break; }
-            at += read;
-        }
+        Utils.fill(this.file, buffer, position);
         buffer.flip();
         if (buffer.remaining() < Integer.BYTES) { throw new ICorruptedDataException("Expected " + Integer.BYTES + " byte(s) at " + position + " but the file ends there"); }
         int dataLength = buffer.getInt();

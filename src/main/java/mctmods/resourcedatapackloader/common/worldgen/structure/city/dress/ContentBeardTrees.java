@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -62,12 +61,8 @@ public final class ContentBeardTrees {
         Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare && !road, top);
         felled += fellTrees(world, seeds, within, at);
         for (BlockPos leaf : canopy) {
-            IBlockState held = world.getBlockState(leaf);
-            if (held.getMaterial() != Material.LEAVES) { continue; }
-            if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
-            if (sustained(world, leaf, within)) { continue; }
-            at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
-            felled += BeardBlocks.fellAt(world, at);
+            at.setPos(leaf);
+            felled += fellLeaf(world, at, within);
         }
         return felled;
     }
@@ -84,11 +79,11 @@ public final class ContentBeardTrees {
             TreeCollector.Tree tree = TreeCollector.collect(world, seed, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
-                at.setPos(log.getX(), log.getY(), log.getZ());
+                at.setPos(log);
                 felled += BeardBlocks.fellAt(world, at);
             }
             for (BlockPos leaf : tree.leaves) {
-                at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
+                at.setPos(leaf);
                 felled += BeardBlocks.fellAt(world, at);
             }
             for (BlockPos log : tree.logs) {
@@ -97,11 +92,7 @@ public final class ContentBeardTrees {
                         for (int y = log.getY() - 5; y <= log.getY() + 5; y++) {
                             at.setPos(x, y, z);
                             if (!within.test(at)) { continue; }
-                            IBlockState held = world.getBlockState(at);
-                            if (held.getMaterial() != Material.LEAVES) { continue; }
-                            if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
-                            if (sustained(world, at.toImmutable(), within)) { continue; }
-                            felled += BeardBlocks.fellAt(world, at);
+                            felled += fellLeaf(world, at, within);
                         }
                     }
                 }
@@ -118,10 +109,15 @@ public final class ContentBeardTrees {
         }
         int felled = 0;
         for (BlockPos part : whole) {
-            at.setPos(part.getX(), part.getY(), part.getZ());
+            at.setPos(part);
             felled += BeardBlocks.clearAt(world, at);
         }
         return felled;
+    }
+
+    private static int fellLeaf(World world, BlockPos.MutableBlockPos at, Predicate<BlockPos> within) {
+        if (!BeardBlocks.overhang(world.getBlockState(at)) || sustained(world, at.toImmutable(), within)) { return 0; }
+        return BeardBlocks.fellAt(world, at);
     }
 
     private static boolean sustained(World world, BlockPos leaf, Predicate<BlockPos> within) { return BeardClearing.sustainer(world, leaf, within) != null; }

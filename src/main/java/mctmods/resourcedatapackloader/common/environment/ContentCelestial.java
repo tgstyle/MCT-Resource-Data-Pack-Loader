@@ -36,7 +36,7 @@ public final class ContentCelestial {
     public static void register() {
         if (registered) { return; }
         registered = true;
-        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
+        if (!Config.loads(Config.content.dimensions)) { return; }
         List<CelestialDef> bodies = new ArrayList<>();
         Json.eachFile(PackManager.CELESTIAL, "celestial body", (key, contents) -> {
             CelestialDef def = ContentParserCelestial.celestial(key, contents);

@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -40,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private int rdpl$renderDistance = 16;
 
     @Inject(method = "updateChunkPositions", at = @At(value = "HEAD"), cancellable = true, require = 1) private void rdpl$updateChunkPositionsInject(double viewEntityX, double viewEntityZ, CallbackInfo cbi) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+        if (!GenHeights.rubic(world)) { return; }
         Entity view = Minecraft.getMinecraft().getRenderViewEntity();
         if (view == null) {
             cbi.cancel();
@@ -142,11 +141,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private static int rdpl$getBlockCoord(int index, int d, int p, int min) {
         int coord = p + index;
         if (coord < min) { coord += d; }
-        return coord << 4;
+        return Coords.cubeToMinBlock(coord);
     }
 
     @Inject(method = "getRenderChunk", at = @At(value = "HEAD"), cancellable = true, require = 1) private void rdpl$getRenderChunkInject(BlockPos pos, CallbackInfoReturnable<RenderChunk> cbi) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+        if (!GenHeights.rubic(world)) { return; }
         int x = Coords.blockToCube(pos.getX());
         int y = Coords.blockToCube(pos.getY());
         int z = Coords.blockToCube(pos.getZ());
@@ -168,20 +167,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @ModifyArg(method = "updateChunkPositions", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;setPosition(III)V"), index = 1) private int rdpl$modifyRenderChunkPosWhenUpdatingPositions(int y) { return y + GenHeights.floor(world, 0); }
 
-    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 2) private int modifyMinYForUpdate(int minY) {
-        if (GenHeights.rubic(world)) { return minY; }
-        return minY - GenHeights.floor(world, 0);
-    }
+    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 2) private int rdpl$modifyMinYForUpdate(int minY) { return minY; }
 
-    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 5) private int rdpl$modifyMaxYForUpdate(int maxY) {
-        if (GenHeights.rubic(world)) { return maxY; }
-        return maxY - GenHeights.floor(world, 0);
-    }
+    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 5) private int rdpl$modifyMaxYForUpdate(int maxY) { return maxY; }
 
-    @Redirect(method = "getRenderChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I")) private int rdpl$modifyMaxYForUpdate(BlockPos instance) {
-        if (GenHeights.rubic(world)) { return instance.getY(); }
-        return instance.getY() - GenHeights.floor(world, 0);
-    }
+    @Redirect(method = "getRenderChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I")) private int rdpl$modifyMaxYForUpdate(BlockPos instance) { return instance.getY(); }
 
     @ModifyConstant(method = "setCountChunksXYZ", constant = @Constant(intValue = 16)) private int rdpl$getYViewDistance(int oldDistance) { return rdpl$renderDistance; }
 }

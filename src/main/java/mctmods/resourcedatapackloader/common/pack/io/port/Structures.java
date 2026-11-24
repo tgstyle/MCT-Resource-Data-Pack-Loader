@@ -78,7 +78,7 @@ final class Structures {
             Tag palettes = structure.remove("palettes");
             if (!structure.containsKey("palette") && palettes != null && !palettes.list().isEmpty()) {
                 structure.put("palette", palettes.list().get(0));
-                pack.note("'" + from + "' holds " + palettes.list().size() + " palettes, and a 1.12.2 structure holds one, so the first is kept");
+                pack.note(Ported.where(from) + " holds " + palettes.list().size() + " palettes, and a 1.12.2 structure holds one, so the first is kept");
             }
             Set<String> lost = new LinkedHashSet<>();
             Tag palette = structure.get("palette");
@@ -99,12 +99,11 @@ final class Structures {
                 for (Tag entity : entities.list()) {
                     Tag nbt = entity.compound().get("nbt");
                     if (nbt == null) { continue; }
-                    Tag id = nbt.compound().get("id");
-                    if (id != null && id.type == STRING && Ids.vanilla(id.string())) { id.value = Ids.entity(id.string()); }
+                    spawnedEntity(nbt);
                     items(nbt, pack, from);
                 }
             }
-            if (!lost.isEmpty()) { pack.note("'" + from + "' places " + String.join(", ", lost) + ", which have no twin on 1.12.2 and are left as written, so 1.12.2 places air there"); }
+            if (!lost.isEmpty()) { pack.note(Ported.where(from) + " places " + String.join(", ", lost) + ", which have no twin on 1.12.2 and are left as written, so 1.12.2 places air there"); }
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             try (DataOutputStream out = new DataOutputStream(new GZIPOutputStream(bytes))) {
                 out.writeByte(COMPOUND);
@@ -127,7 +126,7 @@ final class Structures {
         String modern = Ids.namespaced(name.string());
         Ported.Own own = pack.ownBlock(modern);
         if (own != null) {
-            name.value = "slab".equals(own.type) && "double".equals(properties.get("type")) ? own.id() + "_double" : own.id();
+            name.value = own.slabId(properties);
             String half = properties.remove("type");
             if ("slab".equals(own.type) && half != null && !"double".equals(half)) { properties.put("half", half); }
             if (own.variantProperty()) { properties.put("blocks", own.variant); }
@@ -182,13 +181,13 @@ final class Structures {
         Tag id = compound.get("id");
         Tag count = compound.containsKey("Count") ? compound.get("Count") : compound.get("count");
         if (id != null && id.type == STRING && count != null) {
-            Convert.Ref ref = Convert.item(id.string(), pack, "'" + from + "'");
+            Convert.Ref ref = Convert.item(id.string(), pack, Ported.where(from));
             if (ref != null) {
                 id.value = ref.id;
                 compound.remove("count");
                 compound.put("Count", new Tag(BYTE, (byte) count.number()));
                 if (!compound.containsKey("Damage")) { compound.put("Damage", new Tag(SHORT, (short) ref.meta)); }
-                if (compound.remove("components") != null) { pack.note("'" + from + "' holds an item with components, which have no twin on 1.12.2, so the plain item is kept"); }
+                if (compound.remove("components") != null) { pack.note(Ported.where(from) + " holds an item with components, which have no twin on 1.12.2, so the plain item is kept"); }
             }
         }
         for (Tag inner : new ArrayList<>(compound.values())) { items(inner, pack, from); }

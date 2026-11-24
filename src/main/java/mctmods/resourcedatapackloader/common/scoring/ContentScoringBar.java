@@ -8,8 +8,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.scoreboard.Score;
-import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
@@ -43,11 +41,7 @@ final class ContentScoringBar {
         if (def.endsAfterMinutes > 0) { return 1.0F - ticks / (float) (def.endsAfterMinutes * ContentScoring.MINUTE_TICKS); }
         if (def.endsAtScore <= 0) { return 1.0F; }
         Scoreboard board = ContentTeams.board(server);
-        ScoreObjective objective = board.getObjective(def.name);
-        int best = 0;
-        if (objective != null) {
-            for (Score score : board.getSortedScores(objective)) { best = Math.max(best, score.getScorePoints()); }
-        }
+        int best = ContentScoringTie.bestPoints(board, board.getObjective(def.name));
         return best / (float) def.endsAtScore;
     }
 }

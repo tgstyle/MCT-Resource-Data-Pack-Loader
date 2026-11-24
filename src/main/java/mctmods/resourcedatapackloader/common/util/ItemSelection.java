@@ -5,14 +5,17 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -45,6 +48,21 @@ public final class ItemSelection {
         oreNames.addAll(Json.strings(json, "oreDict"));
     }
 
+    public static ItemSelection fromText(String kind, ResourceLocation key, Iterable<String> texts) {
+        ItemSelection selection = new ItemSelection(kind, "matches");
+        List<String> raw = new ArrayList<>();
+        for (String text : texts) {
+            String ore = oreName(text);
+            if (ore != null) {
+                if (!ore.isEmpty()) { selection.oreNames.add(ore); }
+            }
+            else { raw.add(text); }
+        }
+        selection.readNames(raw, key);
+        selection.resolve();
+        return selection;
+    }
+
     public void readNames(Iterable<String> raw, ResourceLocation key) {
         for (String each : raw) {
             String name = Settings.lower(each);
@@ -56,6 +74,8 @@ public final class ItemSelection {
         String[] parts = Settings.lower(name).split(":");
         return parts.length == 3 && !"*".equals(parts[2]);
     }
+
+    @Nullable public static String oreName(String text) { return text.startsWith("#") ? text.substring(1) : null; }
 
     public static boolean isPrefixName(String name) { return Settings.lower(name).endsWith("*") && Settings.lower(name).split(":").length == 2; }
 

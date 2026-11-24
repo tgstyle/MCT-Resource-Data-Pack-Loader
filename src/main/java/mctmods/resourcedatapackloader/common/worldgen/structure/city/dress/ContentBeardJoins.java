@@ -42,12 +42,10 @@ public final class ContentBeardJoins {
             int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
             int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
             if (ahead > 1 && ahead <= ContentBeard.attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && ContentBeard.beside(everyone, ContentBeard.strip(box, alongX, from, to), alongX, piece) == null && !BeardRoadsTunnels.frontsHill(other, ContentBeard.strip(box, alongX, from, to))) {
-                if (alongX) { box.maxX = met.minX - 1; }
-                else { box.maxZ = met.minZ - 1; }
+                BeardPlots.setEnd(box, alongX, true, (alongX ? met.minX : met.minZ) - 1);
             }
             else if (behind > 1 && behind <= ContentBeard.attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && ContentBeard.beside(everyone, ContentBeard.strip(box, alongX, from, to), alongX, piece) == null && !BeardRoadsTunnels.frontsHill(other, ContentBeard.strip(box, alongX, from, to))) {
-                if (alongX) { box.minX = met.maxX + 1; }
-                else { box.minZ = met.maxZ + 1; }
+                BeardPlots.setEnd(box, alongX, false, (alongX ? met.maxX : met.maxZ) + 1);
             }
         }
         for (StructureComponent other : everyone) {
@@ -150,8 +148,7 @@ public final class ContentBeardJoins {
         if (backRows != null && plazaHeld(pieces, box, alongX, backRows[0], backRows[1])) { backRows = null; }
         if (backRows != null) {
             if (free(pieces, piece, box, alongX, backRows[0], backRows[1]) && ContentBeard.beside(pieces, ContentBeard.strip(box, alongX, backRows[0], backRows[1]), alongX, piece) == null && !ContentBeard.taken(pieces, ContentBeard.strip(box, alongX, backRows[0], backRows[1]))) {
-                if (alongX) { box.minX = backRows[0]; }
-                else { box.minZ = backRows[0]; }
+                BeardPlots.setEnd(box, alongX, false, backRows[0]);
                 grew = true;
                 ContentLog.LOGGER.debug("The road at {}, {} squares its corner back from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, backRows[1] + 1, backRows[0], met.minX, met.minZ);
             }
@@ -161,8 +158,7 @@ public final class ContentBeardJoins {
         if (outRows != null && plazaHeld(pieces, box, alongX, outRows[0], outRows[1])) { outRows = null; }
         if (outRows != null) {
             if (free(pieces, piece, box, alongX, outRows[0], outRows[1]) && ContentBeard.beside(pieces, ContentBeard.strip(box, alongX, outRows[0], outRows[1]), alongX, piece) == null && !ContentBeard.taken(pieces, ContentBeard.strip(box, alongX, outRows[0], outRows[1]))) {
-                if (alongX) { box.maxX = outRows[1]; }
-                else { box.maxZ = outRows[1]; }
+                BeardPlots.setEnd(box, alongX, true, outRows[1]);
                 grew = true;
                 ContentLog.LOGGER.debug("The road at {}, {} squares its corner out from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, outRows[0] - 1, outRows[1], met.minX, met.minZ);
             }
@@ -176,14 +172,8 @@ public final class ContentBeardJoins {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = other.boundingBox;
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
-            int[] back = cornerRows(box, alongX, met, true);
-            if (back != null && !plazaHeld(pieces, box, alongX, back[0], back[1]) && !free(pieces, null, box, alongX, back[0], back[1])) { return false; }
-            int[] out = cornerRows(box, alongX, met, false);
-            if (out != null && !plazaHeld(pieces, box, alongX, out[0], out[1]) && !free(pieces, null, box, alongX, out[0], out[1])) { return false; }
-            int[] metBack = cornerRows(met, !alongX, box, true);
-            if (metBack != null && !plazaHeld(pieces, met, !alongX, metBack[0], metBack[1]) && !free(pieces, other, met, !alongX, metBack[0], metBack[1])) { return false; }
-            int[] metOut = cornerRows(met, !alongX, box, false);
-            if (metOut != null && !plazaHeld(pieces, met, !alongX, metOut[0], metOut[1]) && !free(pieces, other, met, !alongX, metOut[0], metOut[1])) { return false; }
+            if (cornerBlocked(pieces, null, box, alongX, met, true) || cornerBlocked(pieces, null, box, alongX, met, false)) { return false; }
+            if (cornerBlocked(pieces, other, met, !alongX, box, true) || cornerBlocked(pieces, other, met, !alongX, box, false)) { return false; }
         }
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
@@ -193,6 +183,11 @@ public final class ContentBeardJoins {
             if (square(pieces, other, met, !alongX, box)) { BeardRoads.clearLayout(other); }
         }
         return true;
+    }
+
+    private static boolean cornerBlocked(List<StructureComponent> pieces, @Nullable StructureComponent owner, StructureBoundingBox box, boolean alongX, StructureBoundingBox met, boolean back) {
+        int[] rows = cornerRows(box, alongX, met, back);
+        return rows != null && !plazaHeld(pieces, box, alongX, rows[0], rows[1]) && !free(pieces, owner, box, alongX, rows[0], rows[1]);
     }
 
     private static boolean free(List<StructureComponent> pieces, @Nullable StructureComponent piece, StructureBoundingBox box, boolean alongX, int least, int most) {

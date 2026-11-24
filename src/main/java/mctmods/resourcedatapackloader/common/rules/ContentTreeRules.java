@@ -82,7 +82,7 @@ public final class ContentTreeRules {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         TreeRuleDef def = ContentParserTrees.rule(key, json);
         if (def == null) { return; }
         Entry entry = new Entry(def);
@@ -154,9 +154,21 @@ public final class ContentTreeRules {
         return rule == null ? null : rule.growth;
     }
 
+    @Nullable public static TreeGrowthDef growing(IBlockState state) {
+        TreeGrowthDef growth = growth(state);
+        return growth != null && growth.growing() ? growth : null;
+    }
+
+    @Nullable public static TreeGrowthDef timedById(String id) {
+        TreeGrowthDef growth = byId(id);
+        return growth != null && growth.timed() ? growth : null;
+    }
+
+    public static String saplingId(Block block) { return String.valueOf(block.getRegistryName()); }
+
     @Nullable public static String ruleId(IBlockState state) {
         SaplingDef sapling = own(state.getBlock());
-        if (sapling != null) { return sapling.growth.growing() ? String.valueOf(state.getBlock().getRegistryName()) : null; }
+        if (sapling != null) { return sapling.growth.growing() ? saplingId(state.getBlock()) : null; }
         TreeRuleDef rule = rule(state);
         return rule == null ? null : rule.id;
     }

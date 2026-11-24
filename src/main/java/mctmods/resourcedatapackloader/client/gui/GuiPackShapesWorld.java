@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
@@ -22,7 +24,7 @@ public class GuiPackShapesWorld extends GuiScreen {
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.title"), width / 2, height / 4, 0xFFFFFF);
+        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.title"), width / 2, height / 4, Colors.WHITE_TEXT);
         drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.owner", owner), width / 2, height / 4 + 30, 0xA0A0A0);
         drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.hint"), width / 2, height / 4 + 45, 0xA0A0A0);
         super.drawScreen(mouseX, mouseY, partialTicks);

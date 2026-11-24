@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
+
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 
@@ -12,13 +14,8 @@ public class HeartColorsMessage implements IMessage {
     public HeartColorsMessage(int[] colors) { this.colors = colors; }
 
     @Override public void fromBytes(ByteBuf buf) {
-        colors = new int[Math.min(buf.readByte(), MOST)];
-        for (int i = 0; i < colors.length; i++) { colors[i] = buf.readInt(); }
+        colors = PacketUtils.readInts(buf, MOST);
     }
 
-    @Override public void toBytes(ByteBuf buf) {
-        int count = Math.min(colors.length, MOST);
-        buf.writeByte(count);
-        for (int i = 0; i < count; i++) { buf.writeInt(colors[i]); }
-    }
+    @Override public void toBytes(ByteBuf buf) { PacketUtils.writeInts(buf, colors, MOST); }
 }

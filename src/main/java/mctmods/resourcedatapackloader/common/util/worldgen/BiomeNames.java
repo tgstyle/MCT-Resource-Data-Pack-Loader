@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.util.worldgen;
 
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.util.List;
 import java.util.Locale;
@@ -8,6 +9,7 @@ import java.util.Set;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class BiomeNames {
     private BiomeNames() {}
@@ -16,12 +18,23 @@ public final class BiomeNames {
         if (wanted.isEmpty()) { return true; }
         ResourceLocation name = biome.getRegistryName();
         for (String one : wanted) {
-            if (one.startsWith("#")) {
-                if (BiomeDictionary.hasType(biome, BiomeDictionary.Type.getType(one.substring(1).toUpperCase(Locale.ROOT)))) { return true; }
+            if (IdNames.isTag(one)) {
+                if (BiomeDictionary.hasType(biome, BiomeDictionary.Type.getType(IdNames.tagPath(one).toUpperCase(Locale.ROOT)))) { return true; }
             }
-            else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
+            else if (names(one, name)) { return true; }
         }
         return false;
+    }
+
+    public static boolean known(String name) {
+        for (ResourceLocation held : ForgeRegistries.BIOMES.getKeys()) {
+            if (names(name, held)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean names(String one, ResourceLocation name) {
+        return name != null && (one.equals(name.toString()) || one.equals(name.getPath()));
     }
 
     public static String title(Biome biome) {

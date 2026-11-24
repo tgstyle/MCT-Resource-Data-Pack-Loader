@@ -9,7 +9,7 @@ public final class EarlyConfig {
 
     public static boolean flag(File mcDir, String file, String prefix, boolean fallback) {
         try {
-            File held = new File(mcDir, "config/" + file);
+            File held = new File(new File(mcDir, ConfigCore.CONFIG_DIR), file);
             if (!held.isFile()) { return fallback; }
             for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
                 String trimmed = line.trim();

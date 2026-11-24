@@ -32,6 +32,8 @@ public final class BeardRoadsGrade {
     @Nullable public static BeardRoads.Grade roadProfile(World world, @Nullable StructureComponent piece, @Nullable EnumFacing facing, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, boolean junctions) {
         int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, acrossLeast, acrossMost);
         if (profile == null) { return null; }
+        int startX = alongX ? rowLeast : acrossLeast;
+        int startZ = alongX ? acrossLeast : rowLeast;
         int[] ground = profile.clone();
         BeardGrade.flatRuns(world, alongX, rowLeast, acrossLeast, acrossMost, profile);
         boolean[] bridged = BeardGrade.smooth(profile);
@@ -46,19 +48,19 @@ public final class BeardRoadsGrade {
             boolean[] aproned = plaza.clone();
             BeardRoadsHolds.clampToWell(world, alongX, rowLeast, acrossLeast, acrossMost, profile, plaza);
             int railed = BeardRails.hold(world, piece, alongX, rowLeast, acrossLeast, acrossMost, profile, plaza);
-            if (railed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Held {} row(s) of the road at {}, {} to the level of the railway line it crosses", railed, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (railed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Held {} row(s) of the road at {}, {} to the level of the railway line it crosses", railed, startX, startZ); }
             for (int i = 0; i < pinned.length; i++) { if (plaza[i]) { pinned[i] = true; } }
             BeardRoadsHolds.frontHold(piece, alongX, rowLeast, acrossLeast, acrossMost, profile, pinned);
             boolean[] keep = new boolean[profile.length];
             for (int i = 0; i < keep.length; i++) { keep[i] = square[i] || footed[i] || (plaza[i] && !aproned[i]); }
             int ramped = BeardGrade.ramp(profile, pinned, keep);
-            if (ramped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} had held rows meeting with a step of more than one block, so {} row(s) beside the step(s) are let go to ramp between the levels", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, ramped); }
+            if (ramped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} had held rows meeting with a step of more than one block, so {} row(s) beside the step(s) are let go to ramp between the levels", startX, startZ, ramped); }
             BeardGrade.settle(profile, pinned);
             boolean[] bored = BeardGrade.bore(profile, ground, pinned, bridged, BeardRoadsTunnels.tunnelDepth(), farLow(facing, alongX), farHigh(facing, alongX));
             if (ContentLog.LOGGER.debugEnabled()) {
                 int level = 0;
                 for (boolean row : bored) { if (row) { level++; } }
-                if (level > 0) { ContentLog.LOGGER.debug("Held {} row(s) of the road at {}, {} level through a hill, to be bored where the ground over them is deep enough", level, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+                if (level > 0) { ContentLog.LOGGER.debug("Held {} row(s) of the road at {}, {} level through a hill, to be bored where the ground over them is deep enough", level, startX, startZ); }
             }
             boolean[] fixed = plaza.clone();
             boolean[] authority = new boolean[profile.length];
@@ -106,7 +108,7 @@ public final class BeardRoadsGrade {
             }
             BeardGrade.sag(profile, bridged, world.getSeaLevel());
             int held = BeardGrade.holdCauseway(profile, bridged, world.getSeaLevel());
-            if (held > 0) { ContentLog.LOGGER.debug("Held {} short land row(s) of the road at {}, {} up to the deck crossing them, so the causeway stays level over its shoals", held, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (held > 0) { ContentLog.LOGGER.debug("Held {} short land row(s) of the road at {}, {} up to the deck crossing them, so the causeway stays level over its shoals", held, startX, startZ); }
             int piers = 0;
             for (int i = 0; i < profile.length; i++) {
                 if (ground[i] == Integer.MIN_VALUE && profile[i] != Integer.MIN_VALUE && profile[i] < world.getSeaLevel()) {
@@ -114,19 +116,19 @@ public final class BeardRoadsGrade {
                     piers++;
                 }
             }
-            if (piers > 0) { ContentLog.LOGGER.debug("Held {} pier row(s) of the road at {}, {} up to the water line, so they meet the decks either side", piers, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (piers > 0) { ContentLog.LOGGER.debug("Held {} pier row(s) of the road at {}, {} up to the water line, so they meet the decks either side", piers, startX, startZ); }
             int filled = piece == null ? 0 : BeardGrade.fillDips(profile, authority);
-            if (filled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Lifted {} row(s) of the road at {}, {} out of a dip, so it carries across at the level it meets on either side", filled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (filled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Lifted {} row(s) of the road at {}, {} out of a dip, so it carries across at the level it meets on either side", filled, startX, startZ); }
             boolean[] anchored = new boolean[profile.length];
             for (int i = 0; i < anchored.length; i++) { anchored[i] = plaza[i] && !aproned[i]; }
             int raised = piece == null ? 0 : CityLayout.lift(world, piece, alongX, rowLeast, acrossLeast, acrossMost, profile, bridged, anchored);
-            if (raised > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Raised {} row(s) of the road at {}, {} onto the deck its city map draws there", raised, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (raised > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Raised {} row(s) of the road at {}, {} onto the deck its city map draws there", raised, startX, startZ); }
             int decked = BeardGrade.deckDrops(profile, ground, bridged, authority, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeDrop", Config.worldgen.villagePathBridgeDrop)));
-            if (decked > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Decked {} row(s) of the road at {}, {} where its grade stands clear of the ground, so the drop is bridged rather than filled", decked, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (decked > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Decked {} row(s) of the road at {}, {} where its grade stands clear of the ground, so the drop is bridged rather than filled", decked, startX, startZ); }
             boolean[] unmoved = new boolean[profile.length];
             for (int i = 0; i < unmoved.length; i++) { unmoved[i] = (authority[i] && !(aproned[i] && bridged[i])) || (square[i] && !decks[i]); }
             int leveled = BeardGrade.levelDecks(profile, bridged, unmoved, 1);
-            if (leveled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Leveled {} row(s) of the road at {}, {} so each of its decks lies at one height end to end", leveled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (leveled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Leveled {} row(s) of the road at {}, {} so each of its decks lies at one height end to end", leveled, startX, startZ); }
             if (!BeardGrade.walkable(profile, bridged) || steppedOntoDeck(profile, bridged)) {
                 boolean[] standing = new boolean[profile.length];
                 for (int i = 0; i < standing.length; i++) { standing[i] = hold[i] || bridged[i]; }
@@ -138,13 +140,13 @@ public final class BeardRoadsGrade {
                     BeardGrade.settle(profile, standing);
                     if (BeardGrade.walkable(profile, bridged) && !steppedOntoDeck(profile, bridged)) { break; }
                 }
-                if (freed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} met its held rows with a step of more than one block after every pin was known, so {} held row(s) beside the step(s) are let go to ramp between the levels, and it {}", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, freed, BeardGrade.walkable(profile, bridged) && !steppedOntoDeck(profile, bridged) ? "walks now" : "still steps"); }
+                if (freed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} met its held rows with a step of more than one block after every pin was known, so {} held row(s) beside the step(s) are let go to ramp between the levels, and it {}", startX, startZ, freed, BeardGrade.walkable(profile, bridged) && !steppedOntoDeck(profile, bridged) ? "walks now" : "still steps"); }
             }
             for (int i = 0; i < square.length; i++) { if (square[i] && !decks[i]) { bridged[i] = false; } }
         }
         else { capped = BeardGrade.capEmbankment(profile, ground, bridged, plaza); }
         int trimmed = BeardGrade.groundDeckEnds(world, alongX, rowLeast, acrossLeast, acrossMost, profile, bridged);
-        if (trimmed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} lets {} end row(s) of its decks go back to road, since most of each such row stands on the ground, so every deck left is a whole rectangle", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, trimmed); }
+        if (trimmed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} lets {} end row(s) of its decks go back to road, since most of each such row stands on the ground, so every deck left is a whole rectangle", startX, startZ, trimmed); }
         return new BeardRoads.Grade(profile, ground, bridged, footed, rowLeast, capped);
     }
 
@@ -168,26 +170,19 @@ public final class BeardRoadsGrade {
         return false;
     }
 
-    private static void rein(int[] profile, boolean[] held, boolean[] bridged) {
-        for (int i = 1; i < profile.length; i++) {
-            if (held[i] || bridged[i] || bridged[i - 1] || profile[i] == Integer.MIN_VALUE || profile[i - 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; }
-        }
-        for (int i = profile.length - 2; i >= 0; i--) {
-            if (held[i] || bridged[i] || bridged[i + 1] || profile[i] == Integer.MIN_VALUE || profile[i + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; }
-        }
+    private static void rein(int[] profile, boolean[] held, boolean[] bridged) { limitSteps(profile, held, bridged, 1); }
+
+    private static void ramp(int[] profile, boolean[] bridged, boolean[] fixed) { limitSteps(profile, fixed, bridged, -1); }
+
+    private static void limitSteps(int[] profile, boolean[] keep, boolean[] bridged, int sign) {
+        for (int i = 1; i < profile.length; i++) { limitStep(profile, keep, bridged, sign, i, i - 1); }
+        for (int i = profile.length - 2; i >= 0; i--) { limitStep(profile, keep, bridged, sign, i, i + 1); }
     }
 
-    private static void ramp(int[] profile, boolean[] bridged, boolean[] fixed) {
-        for (int i = 1; i < profile.length; i++) {
-            if (fixed[i] || bridged[i] || bridged[i - 1] || profile[i] == Integer.MIN_VALUE || profile[i - 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; }
-        }
-        for (int i = profile.length - 2; i >= 0; i--) {
-            if (fixed[i] || bridged[i] || bridged[i + 1] || profile[i] == Integer.MIN_VALUE || profile[i + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; }
-        }
+    private static void limitStep(int[] profile, boolean[] keep, boolean[] bridged, int sign, int i, int neighbor) {
+        if (keep[i] || bridged[i] || bridged[neighbor] || profile[i] == Integer.MIN_VALUE || profile[neighbor] == Integer.MIN_VALUE) { return; }
+        int bound = profile[neighbor] + sign;
+        if (sign > 0 ? profile[i] > bound : profile[i] < bound) { profile[i] = bound; }
     }
 
     public static int roadReach(StructureBoundingBox box, EnumFacing facing) { return roadReach(box, facing, 0); }

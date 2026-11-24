@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+
 import java.util.Set;
 
 public final class TimeWindowDef {
@@ -35,7 +37,7 @@ public final class TimeWindowDef {
 
     public boolean gives(String key) { return given.contains(key); }
 
-    public boolean contains(long tick) { return from <= to ? tick >= from && tick < to : tick >= from || tick < to; }
+    public boolean contains(long tick) { return DimensionTraitsDef.inWindow(tick, from, to, false); }
 
     public boolean holdsDry() { return gives(PRECIPITATION) && !precipitation; }
 }

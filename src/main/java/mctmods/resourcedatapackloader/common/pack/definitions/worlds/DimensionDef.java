@@ -54,6 +54,7 @@ public final class DimensionDef {
     public final boolean renderClouds;
     public final boolean renderWeather;
     public final int cloudColor;
+    public static final int NO_RESPAWN_DIMENSION = Integer.MIN_VALUE;
     public final int respawnDimension;
     public final Map<String, String> gameRules;
     public final List<String> requires;
@@ -109,6 +110,8 @@ public final class DimensionDef {
         this.darkness = darkness;
         this.given = given;
     }
+
+    public boolean hasRespawnDimension() { return respawnDimension != NO_RESPAWN_DIMENSION; }
 
     public boolean gives(String option) { return given.contains(option); }
 

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.loading;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.ModJars;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,11 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class StrayPacks {
@@ -59,11 +58,7 @@ public final class StrayPacks {
 
     private static boolean zipPack(Path zip) {
         try (ZipFile file = new ZipFile(zip.toFile())) {
-            Enumeration<? extends ZipEntry> entries = file.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (!entry.isDirectory() && definition(entry.getName())) { return true; }
-            }
+            return ModJars.anyEntry(file, entry -> !entry.isDirectory() && definition(entry.getName()));
         }
         catch (IOException | RuntimeException unreadable) { ContentLog.LOGGER.warn("Could not read '{}' while looking for RDPL packs, so it is left where it is", zip, unreadable); }
         return false;

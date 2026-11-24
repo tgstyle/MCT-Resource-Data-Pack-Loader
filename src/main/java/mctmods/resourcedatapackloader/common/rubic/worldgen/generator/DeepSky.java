@@ -61,10 +61,10 @@ final class DeepSky {
         this.deep = deep;
         this.world = world;
         this.offsetBlocks = offsetBlocks;
-        this.skyStone = DeepGeneration.parseState(deep.scoped("skyStone", Config.worldgen.skyStone), "skyStone");
+        this.skyStone = DeepGeneration.parseState(deep.scoped(SkyStone.STONE_KEY, Config.worldgen.skyStone), SkyStone.STONE_KEY);
         this.skyShape = DeepGeneration.choice(deep.scoped("skyShape", Config.worldgen.skyShape), "skyShape", SKY_SHAPES, SKY_ISLAND_SHAPE);
-        this.skyIslands = parseIslands(ContentControl.decimal(ContentControl.TERRAIN, "skyIslands", Config.worldgen.skyIslands));
-        this.skyThickness = parseThickness(ContentControl.decimal(ContentControl.TERRAIN, "skyThickness", Config.worldgen.skyThickness));
+        this.skyIslands = parseIslands(ContentControl.decimal(ContentControl.TERRAIN, SkyStone.ISLANDS_KEY, Config.worldgen.skyIslands));
+        this.skyThickness = parseThickness(ContentControl.decimal(ContentControl.TERRAIN, SkyStone.THICKNESS_KEY, Config.worldgen.skyThickness));
         int[] band = parseHeights(ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights));
         this.skyLowest = band[0];
         this.skyHighest = band[1];
@@ -93,21 +93,21 @@ final class DeepSky {
         int steps = (Cube.SIZE + SKY_LOOKUP) / 8 + 1;
         double[][][] regions = null;
         if (skyShape != SKY_CAVES) {
-            regions = DeepGeneration.lattice(cubeX << 4, genBase, cubeZ << 4, steps, deep.cheeseWide::sample);
+            regions = DeepGeneration.lattice(Coords.cubeToMinBlock(cubeX), genBase, Coords.cubeToMinBlock(cubeZ), steps, deep.cheeseWide::sample);
             double[] ends = span(regions);
             if (ends[1] <= skyMaskIslands) {
                 if (tracing) { ContentLog.LOGGER.debug("Sky cube {},{},{} left empty: mask {} to {} never clears {}, corners {} and {}", cubeX, cubeY, cubeZ, fixed(ends[0]), fixed(ends[1]), fixed(skyMaskIslands), fixed(regions[0][0][0]), fixed(regions[4][0][4])); }
                 return;
             }
         }
-        double[][][] lattice = deep.sampleLattice(cubeX << 4, genBase, cubeZ << 4, steps);
+        double[][][] lattice = deep.sampleLattice(Coords.cubeToMinBlock(cubeX), genBase, Coords.cubeToMinBlock(cubeZ), steps);
         int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
-        Biome[] column = world.getBiomeProvider().getBiomes(null, cubeX << 4, cubeZ << 4, Cube.SIZE, Cube.SIZE);
+        Biome[] column = world.getBiomeProvider().getBiomes(null, Coords.cubeToMinBlock(cubeX), Coords.cubeToMinBlock(cubeZ), Cube.SIZE, Cube.SIZE);
         int placed = 0;
         for (int z = 0; z < Cube.SIZE; z++) {
             for (int x = 0; x < Cube.SIZE; x++) {
                 Biome biome = column[AddressTools.getLocalAddress(x, z)];
-                CaveRegionDef region = skyRegions ? ContentCaveRegions.regionAt(world, (cubeX << 4) + x, worldBase + 8, (cubeZ << 4) + z) : null;
+                CaveRegionDef region = skyRegions ? ContentCaveRegions.regionAt(world, Coords.cubeToMinBlock(cubeX) + x, worldBase + 8, Coords.cubeToMinBlock(cubeZ) + z) : null;
                 BiomeDef band = skyBands ? ContentBiomes3D.shapesSkyAt(biome, worldBase + 8) : null;
                 Biome surface = skySurfaceBiome(biome, region, band);
                 IBlockState stone = skyStoneFor(biome, region, band);
@@ -116,7 +116,7 @@ final class DeepSky {
                 double islands = skyIslandsFor(biome, region, band);
                 double thickness = skyThicknessFor(biome, region, band);
                 BiomeMesa mesa = surface instanceof BiomeMesa ? bandedMesa((BiomeMesa) surface) : null;
-                int base = skyDepthAt((cubeX << 4) + x, (cubeZ << 4) + z);
+                int base = skyDepthAt(Coords.cubeToMinBlock(cubeX) + x, Coords.cubeToMinBlock(cubeZ) + z);
                 int depth = base;
                 int under = solidAbove(regions, lattice, x, z, worldBase, genBase, worldTop, islands, thickness, base);
                 for (int y = Cube.SIZE - 1; y >= 0; y--) {
@@ -126,10 +126,10 @@ final class DeepSky {
                     }
                     if (under == 0) { depth = stretched(base, lattice, x, y, z, (steps - 1) * 8 - 1); }
                     IBlockState state = mesa != null
-                            ? mesaState(mesa, top, stone, under, depth, (cubeX << 4) + x, worldBase + y, (cubeZ << 4) + z, genBase + y)
-                            : skyState(top, filler, stone, under, depth, (cubeX << 4) + x, genBase + y, (cubeZ << 4) + z);
+                            ? mesaState(mesa, top, stone, under, depth, Coords.cubeToMinBlock(cubeX) + x, worldBase + y, Coords.cubeToMinBlock(cubeZ) + z, genBase + y)
+                            : skyState(top, filler, stone, under, depth, Coords.cubeToMinBlock(cubeX) + x, genBase + y, Coords.cubeToMinBlock(cubeZ) + z);
                     primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
-                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
+                            Coords.localToBlock(vanillaY, y), topBedrock, bottomBedrock));
                     under++;
                     placed++;
                 }
@@ -282,13 +282,13 @@ final class DeepSky {
     }
 
     private static double parseIslands(float value) {
-        if (value >= -1.0F && value <= 1.0F) { return value; }
+        if (SkyStone.islands(value)) { return value; }
         ContentLog.LOGGER.error("skyIslands is {}, which is outside -1 to 1, so the islands keep their usual reach", value);
         return 0.5D;
     }
 
     private static double parseThickness(float value) {
-        if (value >= 0.0F) { return value; }
+        if (value >= SkyStone.LEAST_THICKNESS) { return value; }
         ContentLog.LOGGER.error("skyThickness is {}, which is below zero, so the islands keep their usual thickness", value);
         return 2.0D;
     }

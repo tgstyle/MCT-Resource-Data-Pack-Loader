@@ -135,10 +135,10 @@ public final class ContentInherits {
         return null;
     }
 
-    private static String tail(ResourceLocation name) {
+    public static String tail(ResourceLocation name) {
         String path = name.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
     }
 
-    private static JsonObject copy(JsonObject held) { return new JsonParser().parse(held.toString()).getAsJsonObject(); }
+    private static JsonObject copy(JsonObject held) { return Json.parse(held.toString()).getAsJsonObject(); }
 }

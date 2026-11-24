@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.AmbienceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     public static MusicTicker.MusicType music(AmbienceDef ambience) { return MUSIC.computeIfAbsent(ambience, held -> EnumHelperClient.addMusicType("RDPL_AMBIENCE_" + MUSIC.size(), sound(held.music), held.musicMinDelay, held.musicMaxDelay)); }
 
     private static SoundEvent sound(ResourceLocation name) {
-        SoundEvent registered = ForgeRegistries.SOUND_EVENTS.getValue(name);
+        SoundEvent registered = Registries.find(ForgeRegistries.SOUND_EVENTS, name);
         return registered == null ? new SoundEvent(name) : registered;
     }
 
@@ -99,13 +100,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         double green = 0.0D;
         double blue = 0.0D;
         if (ambience.particleColor != AmbienceDef.NO_COLOR && colored(type)) {
-            red = Math.max(Colors.red(ambience.particleColor) / 255.0F, NO_RED);
-            green = Colors.green(ambience.particleColor) / 255.0F;
-            blue = Colors.blue(ambience.particleColor) / 255.0F;
+            red = Math.max(Colors.redF(ambience.particleColor), NO_RED);
+            green = Colors.greenF(ambience.particleColor);
+            blue = Colors.blueF(ambience.particleColor);
         }
-        int x = MathHelper.floor(view.posX);
-        int y = MathHelper.floor(view.posY);
-        int z = MathHelper.floor(view.posZ);
+        BlockPos feet = new BlockPos(view);
+        int x = feet.getX();
+        int y = feet.getY();
+        int z = feet.getZ();
         Minecraft mc = Minecraft.getMinecraft();
         RainDef rain = ContentDimensions.rain(world);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();

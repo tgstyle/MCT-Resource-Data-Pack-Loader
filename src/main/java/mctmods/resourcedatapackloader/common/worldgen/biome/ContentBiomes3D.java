@@ -46,7 +46,7 @@ public final class ContentBiomes3D {
         }
 
         boolean accepts(int y, @Nullable String under) {
-            if (y < def.minHeight || y > def.maxHeight) { return false; }
+            if (!GenHeights.within(y, def.minHeight, def.maxHeight)) { return false; }
             return replaces.isEmpty() || (under != null && replaces.contains(under));
         }
     }

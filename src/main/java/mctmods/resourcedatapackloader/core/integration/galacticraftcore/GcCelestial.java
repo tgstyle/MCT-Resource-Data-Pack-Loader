@@ -11,7 +11,9 @@ import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
 import mctmods.resourcedatapackloader.core.integration.extraplanets.EpPlanets;
 import mctmods.resourcedatapackloader.core.integration.galaxyspace.GsBodies;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import micdoodle8.mods.galacticraft.api.GalacticraftRegistry;
 import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
+import micdoodle8.mods.galacticraft.api.galaxies.CelestialObject;
 import micdoodle8.mods.galacticraft.api.galaxies.GalaxyRegistry;
 import micdoodle8.mods.galacticraft.api.galaxies.IChildBody;
 import micdoodle8.mods.galacticraft.api.galaxies.Moon;
@@ -35,11 +38,8 @@ import micdoodle8.mods.galacticraft.api.world.AtmosphereInfo;
 import micdoodle8.mods.galacticraft.api.world.EnumAtmosphericGas;
 import micdoodle8.mods.galacticraft.core.util.WorldUtil;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.relauncher.Side;
 
 public final class GcCelestial {
     static final ResourceLocation ROCKET_GUI = new ResourceLocation("galacticraftcore", "textures/gui/overworld_rocket_gui.png");
@@ -49,7 +49,7 @@ public final class GcCelestial {
     private static final Map<String, Integer> RADIATION = new HashMap<>();
     private static final List<CelestialBody> SUBSYSTEMS = new ArrayList<>();
     static final boolean GALAXY_SPACE = Loader.isModLoaded(ContentParserModPlanets.GALAXY_SPACE);
-    private static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
+    static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
     static final String PLANETS = "galacticraftplanets";
     private static boolean stations;
 
@@ -62,8 +62,6 @@ public final class GcCelestial {
     @Nullable public static CelestialBody body(int dimension) { return BODIES.get(dimension); }
 
     public static float beltWidth(CelestialBody body) { return BELTS.getOrDefault(body, 0.0F); }
-
-    @Nullable static DimensionType registeredType(int dimension) { return DimensionManager.isDimensionRegistered(dimension) ? DimensionManager.getProviderType(dimension) : null; }
 
     public static boolean holds(int dimension) { return GalaxyRegistry.getCelestialBodyFromDimensionID(dimension) != null || stationType(dimension); }
 
@@ -112,7 +110,7 @@ public final class GcCelestial {
             }
             else { ContentLog.LOGGER.error("Dimension {} could not be put on the Galacticraft map, so it is not registered", dimension.registryName); }
         }
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { GcRings.hook(); }
+        if (SideUtils.isClient()) { GcRings.hook(); }
         if (!made.isEmpty()) { Summary.info("galacticraft", "Put " + made.size() + " pack body(ies) on the Galacticraft map: " + made); }
     }
 
@@ -221,7 +219,7 @@ public final class GcCelestial {
         body.setRelativeDistanceFromCenter(new CelestialBody.ScalableDistance(def.distance, def.scaledDistance));
         body.setRelativeOrbitTime(def.orbitTime);
         body.setPhaseShift(def.phaseShift);
-        body.setRingColorRGB(((def.ringColor >> 16) & 255) / 255.0F, ((def.ringColor >> 8) & 255) / 255.0F, (def.ringColor & 255) / 255.0F);
+        body.setRingColorRGB(Colors.redF(def.ringColor), Colors.greenF(def.ringColor), Colors.blueF(def.ringColor));
         body.setTierRequired(def.tier);
         body.setBodyIcon(def.icon);
         BodyRings.register(def);
@@ -284,8 +282,12 @@ public final class GcCelestial {
     }
 
     @Nullable private static SolarSystem solarSystem(String name) {
-        for (SolarSystem held : GalaxyRegistry.getSolarSystems()) {
-            if (held.getName().equalsIgnoreCase(name) || held.getTranslationKey().equalsIgnoreCase(name)) { return held; }
+        return named(GalaxyRegistry.getSolarSystems(), name);
+    }
+
+    @Nullable private static <T extends CelestialObject> T named(Iterable<T> held, String name) {
+        for (T object : held) {
+            if (object.getName().equalsIgnoreCase(name) || object.getTranslationKey().equalsIgnoreCase(name)) { return object; }
         }
         return null;
     }
@@ -304,16 +306,10 @@ public final class GcCelestial {
     }
 
     @Nullable static Planet planet(String name) {
-        for (Planet held : GalaxyRegistry.getPlanets()) {
-            if (held.getName().equalsIgnoreCase(name) || held.getTranslationKey().equalsIgnoreCase(name)) { return held; }
-        }
-        return null;
+        return named(GalaxyRegistry.getPlanets(), name);
     }
 
     @Nullable static Moon moon(String name) {
-        for (Moon held : GalaxyRegistry.getMoons()) {
-            if (held.getName().equalsIgnoreCase(name) || held.getTranslationKey().equalsIgnoreCase(name)) { return held; }
-        }
-        return null;
+        return named(GalaxyRegistry.getMoons(), name);
     }
 }

@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
+import mctmods.resourcedatapackloader.common.util.plant.LeafDecay;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.Collections;
@@ -24,8 +27,8 @@ public final class ContentTreeFelling {
 
     public static boolean visit(WorldServer world, TreeEntry entry, Map<BlockPos, IBlockState> step, @Nullable TreeShape shape) {
         BlockPos start = BlockPos.fromLong(entry.pos);
-        if (entry.phase == 0 || entry.step == 0) {
-            IBlockState sapling = entry.saplings.get(TreeEntry.pack(0, 0, 0));
+        if (entry.phase == TreeEntry.PHASE_SAPLING || entry.step == 0) {
+            IBlockState sapling = entry.originSapling();
             if (!world.isBlockLoaded(start)) { return true; }
             if (sapling != null && world.getBlockState(start).getBlock() != sapling.getBlock()) { fell(world, entry, start, Collections.emptyMap()); }
             return false;
@@ -39,7 +42,7 @@ public final class ContentTreeFelling {
         BlockPos start = BlockPos.fromLong(entry.pos);
         IntList kept = new IntArrayList();
         for (int packed : entry.release) {
-            BlockPos pos = at(start, packed);
+            BlockPos pos = TreeEntry.at(start, packed);
             if (!world.isBlockLoaded(pos)) { kept.add(packed); }
             else { loosen(world, pos, null); }
         }
@@ -55,11 +58,11 @@ public final class ContentTreeFelling {
         if (touchesUnloaded(world, entry, start)) { return false; }
         shed(world, entry, start, packed(step));
         for (Map.Entry<Integer, IBlockState> sapling : entry.saplings.entrySet()) {
-            BlockPos pos = at(start, sapling.getKey());
-            if (replaceable(world, pos)) { TreeRecorder.write(world, pos, sapling.getValue(), 3); }
+            BlockPos pos = TreeEntry.at(start, sapling.getKey());
+            if (replaceable(world, pos)) { TreeRecorder.write(world, pos, sapling.getValue(), BlockFlags.UPDATE_ALL); }
         }
         if (timed) {
-            entry.phase = 0;
+            entry.phase = TreeEntry.PHASE_SAPLING;
             entry.step = 0;
             entry.gone.clear();
             ContentTreeStore.dirty(world, entry);
@@ -74,7 +77,7 @@ public final class ContentTreeFelling {
         shed(world, entry, start, packed(step));
         for (Map.Entry<Integer, IBlockState> sapling : entry.saplings.entrySet()) {
             IBlockState state = sapling.getValue();
-            state.getBlock().dropBlockAsItem(world, at(start, sapling.getKey()), state, 0);
+            state.getBlock().dropBlockAsItem(world, TreeEntry.at(start, sapling.getKey()), state, 0);
         }
         ContentTreeStore.remove(world, entry.pos);
         return true;
@@ -84,10 +87,10 @@ public final class ContentTreeFelling {
         boolean changed = false;
         for (int packed : entry.owned.toIntArray()) {
             IBlockState want = expected.get(packed);
-            BlockPos pos = at(start, packed);
+            BlockPos pos = TreeEntry.at(start, packed);
             if (want == null || !world.isBlockLoaded(pos) || world.getBlockState(pos).getBlock() == want.getBlock()) { continue; }
             ContentTreeStore.removeOwned(world, entry, packed);
-            BlockPos rel = at(BlockPos.ORIGIN, packed);
+            BlockPos rel = TreeEntry.unpack(packed);
             IBlockState last = shape == null ? null : shape.whole().get(rel);
             if (last == null || !TreeShape.isLog(rel, last) || TreeShape.isLog(rel, want)) { entry.gone.add(packed); }
             changed = true;
@@ -114,7 +117,7 @@ public final class ContentTreeFelling {
                 skipped = true;
                 continue;
             }
-            if (!entry.owned.contains(TreeEntry.pack(log.getX(), log.getY(), log.getZ()))) {
+            if (!entry.owned.contains(TreeEntry.pack(log))) {
                 fell(world, entry, start, expected);
                 return false;
             }
@@ -126,8 +129,8 @@ public final class ContentTreeFelling {
         IntList pending = new IntArrayList();
         for (int packed : entry.owned.toIntArray()) {
             IBlockState want = expected.get(packed);
-            if (want != null && want.getPropertyKeys().contains(BlockLeaves.DECAYABLE)) {
-                BlockPos pos = at(start, packed);
+            if (want != null && LeafDecay.decays(want)) {
+                BlockPos pos = TreeEntry.at(start, packed);
                 if (world.isBlockLoaded(pos)) { loosen(world, pos, want.getBlock()); }
                 else { pending.add(packed); }
             }
@@ -143,36 +146,32 @@ public final class ContentTreeFelling {
     private static void loosen(WorldServer world, BlockPos pos, @Nullable Block block) {
         IBlockState now = world.getBlockState(pos);
         if (block != null && now.getBlock() != block) { return; }
-        if (!now.getPropertyKeys().contains(BlockLeaves.DECAYABLE) || now.getValue(BlockLeaves.DECAYABLE)) { return; }
-        IBlockState loose = now.withProperty(BlockLeaves.DECAYABLE, true);
-        if (loose.getPropertyKeys().contains(BlockLeaves.CHECK_DECAY)) { loose = loose.withProperty(BlockLeaves.CHECK_DECAY, true); }
-        TreeRecorder.write(world, pos, loose, 3);
+        if (!LeafDecay.decays(now) || now.getValue(BlockLeaves.DECAYABLE)) { return; }
+        TreeRecorder.write(world, pos, LeafDecay.loose(now), BlockFlags.UPDATE_ALL);
     }
 
     private static void shed(WorldServer world, TreeEntry entry, BlockPos start, Map<Integer, IBlockState> expected) {
         for (int packed : entry.owned.toIntArray()) {
             IBlockState want = expected.get(packed);
-            BlockPos pos = at(start, packed);
-            if (want != null && world.getBlockState(pos).getBlock() == want.getBlock()) { TreeRecorder.write(world, pos, Blocks.AIR.getDefaultState(), 3); }
+            BlockPos pos = TreeEntry.at(start, packed);
+            if (want != null && world.getBlockState(pos).getBlock() == want.getBlock()) { TreeRecorder.clear(world, pos); }
             ContentTreeStore.removeOwned(world, entry, packed);
         }
     }
 
     private static boolean touchesUnloaded(WorldServer world, TreeEntry entry, BlockPos start) {
         for (int packed : entry.owned.toIntArray()) {
-            if (!world.isBlockLoaded(at(start, packed))) { return true; }
+            if (!world.isBlockLoaded(TreeEntry.at(start, packed))) { return true; }
         }
         for (int packed : entry.saplings.keySet()) {
-            if (!world.isBlockLoaded(at(start, packed))) { return true; }
+            if (!world.isBlockLoaded(TreeEntry.at(start, packed))) { return true; }
         }
         return false;
     }
 
     private static Map<Integer, IBlockState> packed(Map<BlockPos, IBlockState> step) {
         Map<Integer, IBlockState> out = new HashMap<>();
-        for (Map.Entry<BlockPos, IBlockState> entry : step.entrySet()) { out.put(TreeEntry.pack(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()), entry.getValue()); }
+        for (Map.Entry<BlockPos, IBlockState> entry : step.entrySet()) { out.put(TreeEntry.pack(entry.getKey()), entry.getValue()); }
         return out;
     }
-
-    private static BlockPos at(BlockPos start, int packed) { return start.add(TreeEntry.unpackX(packed), TreeEntry.unpackY(packed), TreeEntry.unpackZ(packed)); }
 }

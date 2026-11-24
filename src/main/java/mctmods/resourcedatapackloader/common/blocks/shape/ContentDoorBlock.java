@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.blocks.shape;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -28,12 +27,7 @@ public class ContentDoorBlock extends BlockDoor implements IContentBlock {
     public ContentDoorBlock(BlockDef def) {
         super(def.material);
         this.def = def;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        ContentSetup.properties(this, def);
-        setTranslationKey(def.registryName + "." + variant.name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
+        ContentSetup.named(this, def);
     }
 
     @Override public BlockDef getDef() { return def; }
@@ -42,7 +36,7 @@ public class ContentDoorBlock extends BlockDoor implements IContentBlock {
 
     @Override @Nullable public Item createItem() {
         ItemDoor item = new ItemDoor(this);
-        item.setTranslationKey(def.registryName + "." + def.at(0).name);
+        item.setTranslationKey(ContentSetup.singleKey(def));
         ContentSetup.apply(item, def.creativeTab);
         this.door = item;
         return item;

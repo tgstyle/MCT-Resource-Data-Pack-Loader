@@ -2,10 +2,8 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import net.minecraft.block.Block;
@@ -13,8 +11,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public final class ContentDecoration implements IContentShape {
-    private final ContentPlacer placer;
+public final class ContentDecoration extends ContentPlacedShape {
     private final AmountDef size;
     private final AmountDef stack;
     private final Set<Block> surface;
@@ -25,7 +22,7 @@ public final class ContentDecoration implements IContentShape {
     private final int scatterZ;
 
     public ContentDecoration(ContentPlacer placer, AmountDef size, ShapeDef shape, Set<Block> surface) {
-        this.placer = placer;
+        super(placer);
         this.size = size;
         this.stack = shape.stack;
         this.surface = surface;
@@ -35,8 +32,6 @@ public final class ContentDecoration implements IContentShape {
         this.scatterY = shape.scatterY;
         this.scatterZ = shape.scatterZ;
     }
-
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         boolean placed = false;

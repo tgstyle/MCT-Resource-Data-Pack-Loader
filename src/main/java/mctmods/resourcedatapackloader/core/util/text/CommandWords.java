@@ -2,9 +2,15 @@ package mctmods.resourcedatapackloader.core.util.text;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class CommandWords {
     private CommandWords() {}
+
+    @Nullable public static String[] pair(String text) {
+        int equals = text.indexOf('=');
+        return equals <= 0 ? null : new String[] {text.substring(0, equals).trim(), text.substring(equals + 1).trim()};
+    }
 
     public static List<String> split(String line) {
         List<String> out = new ArrayList<>();

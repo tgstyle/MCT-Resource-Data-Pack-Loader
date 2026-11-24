@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.villages.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.BeardPlaza;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardLamps;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardSeat;
@@ -75,7 +76,7 @@ public final class ContentBeard {
     private static List<StructureComponent> LAYING;
 
     private static boolean recurrent() {
-        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        if (recurrent == null) { recurrent = Loader.isModLoaded(ContentStructurePlacement.RECCOMPLEX); }
         return recurrent;
     }
 
@@ -171,9 +172,9 @@ public final class ContentBeard {
             try {
                 List<StructureBoundingBox> repaved = BeardRoadsPaving.repairRoads(event.getWorld(), start);
                 int seams = BeardSeams.levelSeams(start, event.getWorld(), clip, at);
-                if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                villageLog(start, seams, "Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting");
                 int freed = BeardClearing.freeDoors(start, event.getWorld(), clip, at, repaved);
-                if (freed > 0) { ContentLog.LOGGER.debug("Freed {} block(s) that had closed a doorway of the village at {}, {} after the roads were repaired", freed, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                villageLog(start, freed, "Freed {} block(s) that had closed a doorway of the village at {}, {} after the roads were repaired");
                 for (StructureComponent piece : start.getComponents()) {
                     if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
                     StructureBoundingBox box = piece.getBoundingBox();
@@ -201,15 +202,19 @@ public final class ContentBeard {
                     }
                 }
                 int swept = BeardClearing.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
-                if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                villageLog(start, swept, "Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge");
                 int pits = BeardSeams.fillPlotPits(start, event.getWorld(), clip, at);
-                if (pits > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of pit left open inside the plots of the village at {}, {}, where a plot kept a column of its box clear that the rings around it skip", pits, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                villageLog(start, pits, "Filled {} block(s) of pit left open inside the plots of the village at {}, {}, where a plot kept a column of its box clear that the rings around it skip");
             }
             finally { building(null); }
         }
         for (StructureStart start : starts) {
             if (start != null && start.isSizeableStructure() && BeardCrown.crowns(start, clip)) { crownWindow(start, event, clip, born); }
         }
+    }
+
+    private static void villageLog(StructureStart start, int count, String text) {
+        if (count > 0) { ContentLog.LOGGER.debug(text, count, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
     }
 
     private static void crownWindow(StructureStart start, PopulateChunkEvent.Post event, StructureBoundingBox clip, @Nullable BeardCrown.Born born) {
@@ -348,7 +353,9 @@ public final class ContentBeard {
 
     public static int attachGap() { return Math.max(ATTACH_GAP, BeardRoads.pathFullWidth() + 2); }
 
-    public static StructureBoundingBox strip(StructureBoundingBox box, boolean alongX, int from, int to) { return alongX ? new StructureBoundingBox(from, box.minY, box.minZ, to, box.maxY, box.maxZ) : new StructureBoundingBox(box.minX, box.minY, from, box.maxX, box.maxY, to); }
+    public static StructureBoundingBox strip(StructureBoundingBox box, boolean alongX, int from, int to) { return span(alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, box.minY, box.maxY); }
+
+    public static StructureBoundingBox span(boolean alongX, int alongLo, int alongHi, int acrossLo, int acrossHi, int minY, int maxY) { return alongX ? new StructureBoundingBox(alongLo, minY, acrossLo, alongHi, maxY, acrossHi) : new StructureBoundingBox(acrossLo, minY, alongLo, acrossHi, maxY, alongHi); }
 
     @Nullable public static StructureBoundingBox beside(List<StructureComponent> own, StructureBoundingBox strip, boolean alongX, @Nullable StructureComponent laying) { return besideWithin(own, strip, alongX, ContentVillages.blockOf(laying)); }
 
@@ -381,12 +388,36 @@ public final class ContentBeard {
 
     public static List<StructureComponent> everyone(World world, @Nullable List<StructureComponent> own) {
         List<StructureComponent> all = own == null ? new ArrayList<>() : new ArrayList<>(own);
-        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other.getComponents() == own) { continue; }
-            all.addAll(other.getComponents());
-        }
+        all.addAll(othersOf(world, own));
         all.addAll(BeardLinks.planned(world, own));
         return all;
+    }
+
+    private static List<StructureStart> otherStarts(World world, @Nullable List<StructureComponent> own) {
+        List<StructureStart> others = new ArrayList<>();
+        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
+            if (other.getComponents() != own) { others.add(other); }
+        }
+        return others;
+    }
+
+    public static List<StructureComponent> othersOf(World world, @Nullable List<StructureComponent> own) {
+        List<StructureComponent> pieces = new ArrayList<>();
+        for (StructureStart other : otherStarts(world, own)) { pieces.addAll(other.getComponents()); }
+        return pieces;
+    }
+
+    public static List<RailPiece> plannedOver(World world, @Nullable List<StructureComponent> own, StructureBoundingBox box) {
+        List<RailPiece> over = new ArrayList<>();
+        for (RailPiece piece : BeardLinks.planned(world, own)) {
+            if (piece.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ) && !BeardRails.buriedUnder(piece, box)) { over.add(piece); }
+        }
+        return over;
+    }
+
+    private static int roomTo(StructureBoundingBox met, int from, int step, boolean alongX) {
+        int near = step > 0 ? (alongX ? met.minX : met.minZ) - 1 : (alongX ? met.maxX : met.maxZ) + 1;
+        return Math.max(0, step > 0 ? near - from + 1 : from - near + 1);
     }
 
     public static boolean taken(@Nullable List<StructureComponent> own, StructureBoundingBox box) {
@@ -395,20 +426,17 @@ public final class ContentBeard {
             ContentLog.LOGGER.debug("No world is held for the layout, so {} cannot be tested against other villages", box);
             return false;
         }
-        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other.getComponents() == own) { continue; }
+        for (StructureStart other : otherStarts(world, own)) {
             for (StructureComponent piece : other.getComponents()) {
                 if (!piece.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { continue; }
                 ContentLog.LOGGER.debug("{} would stand on {} of the village at {}, {}", box, piece.getClass().getSimpleName(), other.getBoundingBox().minX, other.getBoundingBox().minZ);
                 return true;
             }
         }
-        for (RailPiece piece : BeardLinks.planned(world, own)) {
-            if (!piece.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ) || BeardRails.buriedUnder(piece, box)) { continue; }
-            ContentLog.LOGGER.debug("{} would stand on the railway link planned at {}", box, piece.getBoundingBox());
-            return true;
-        }
-        return false;
+        List<RailPiece> rails = plannedOver(world, own, box);
+        if (rails.isEmpty()) { return false; }
+        ContentLog.LOGGER.debug("{} would stand on the railway link planned at {}", box, rails.get(0).getBoundingBox());
+        return true;
     }
 
     public static int roomFor(@Nullable List<StructureComponent> own, StructureBoundingBox box, EnumFacing facing) {
@@ -418,21 +446,11 @@ public final class ContentBeard {
         int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
         int from = step > 0 ? (alongX ? box.minX : box.minZ) : (alongX ? box.maxX : box.maxZ);
         int room = Integer.MAX_VALUE;
-        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other.getComponents() == own) { continue; }
-            for (StructureComponent piece : other.getComponents()) {
-                StructureBoundingBox met = piece.getBoundingBox();
-                if (!met.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { continue; }
-                int near = step > 0 ? (alongX ? met.minX : met.minZ) - 1 : (alongX ? met.maxX : met.maxZ) + 1;
-                room = Math.min(room, Math.max(0, step > 0 ? near - from + 1 : from - near + 1));
-            }
-        }
-        for (RailPiece piece : BeardLinks.planned(world, own)) {
+        for (StructureComponent piece : othersOf(world, own)) {
             StructureBoundingBox met = piece.getBoundingBox();
-            if (!met.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ) || BeardRails.buriedUnder(piece, box)) { continue; }
-            int near = step > 0 ? (alongX ? met.minX : met.minZ) - 1 : (alongX ? met.maxX : met.maxZ) + 1;
-            room = Math.min(room, Math.max(0, step > 0 ? near - from + 1 : from - near + 1));
+            if (met.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { room = Math.min(room, roomTo(met, from, step, alongX)); }
         }
+        for (RailPiece piece : plannedOver(world, own, box)) { room = Math.min(room, roomTo(piece.getBoundingBox(), from, step, alongX)); }
         return room;
     }
 
@@ -470,6 +488,8 @@ public final class ContentBeard {
     public static int plazaReach() { return 3 + (BeardRoads.pathFullWidth() - 3) / 2; }
 
     public static int streetHalf() { return (BeardRoads.pathFullWidth() - 1) / 2; }
+
+    public static boolean idle(World world) { return !wanted() || BeardSurface.unreadable(world); }
 
     public static boolean wanted() { return WANTED.get(() -> ContentControl.flag(ContentControl.STRUCTURES, "terrainAdaptation", Config.worldgen.terrainAdaptation)); }
 }

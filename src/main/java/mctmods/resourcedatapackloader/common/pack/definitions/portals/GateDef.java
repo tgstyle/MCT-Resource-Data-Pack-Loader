@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.gates.GateStay;
 import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.List;
 import net.minecraft.util.ResourceLocation;
@@ -79,9 +80,19 @@ public final class GateDef {
 
     public boolean guardsDimension() { return dimension != NO_DIMENSION; }
 
-    public boolean global() { return GLOBAL.equals(scope); }
+    public static boolean dimensionMissing(int dimension, ResourceLocation key, String option, String consequence) {
+        if (dimension != NO_DIMENSION) { return false; }
+        ContentLog.LOGGER.error("Gate {} sets {} without dimension, so {}", key, option, consequence);
+        return true;
+    }
 
-    public boolean teamWide() { return TEAM.equals(scope); }
+    public static boolean global(String scope) { return GLOBAL.equals(scope); }
+
+    public static boolean teamWide(String scope) { return TEAM.equals(scope); }
+
+    public boolean global() { return global(scope); }
+
+    public boolean teamWide() { return teamWide(scope); }
 
     public boolean perPlayer() { return PLAYER.equals(scope); }
 

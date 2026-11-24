@@ -101,7 +101,7 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(World world, IBlockState state, int x, int y, int z) {
-        if (y < floorY(world) || y >= ceilingY(world) || keeps(x, z)) { return false; }
+        if (outsideBuild(world, y, 0) || keeps(x, z)) { return false; }
         return world.setBlockState(new BlockPos(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
@@ -111,7 +111,7 @@ public final class ContentPlacer {
     }
 
     public boolean replaces(World world, int x, int y, int z) {
-        if (y < floorY(world) || y >= ceilingY(world)) { return false; }
+        if (outsideBuild(world, y, 0)) { return false; }
         BlockPos pos = scratch.setPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
         return found.getBlock().isReplaceableOreGen(found, world, pos, replaceable);
@@ -122,7 +122,7 @@ public final class ContentPlacer {
         for (int offX = -1; offX <= 1; offX++) {
             for (int offY = -1; offY <= 1; offY++) {
                 int nearY = y + offY;
-                if (nearY < floorY(world) - 1 || nearY >= ceilingY(world)) { continue; }
+                if (outsideBuild(world, nearY, 1)) { continue; }
                 for (int offZ = -1; offZ <= 1; offZ++) {
                     if (offX == 0 && offY == 0 && offZ == 0) { continue; }
                     pos.setPos(x + offX, nearY, z + offZ);
@@ -144,6 +144,8 @@ public final class ContentPlacer {
         }
         return true;
     }
+
+    static boolean outsideBuild(World world, int y, int floorMargin) { return y < floorY(world) - floorMargin || y >= ceilingY(world); }
 
     public static int floorY(World world) { return GenHeights.floor(world, 1); }
 

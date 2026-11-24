@@ -2,8 +2,7 @@ package mctmods.resourcedatapackloader.mixin.tileentity;
 
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.tileentity.TileEntityEndGateway;
 import net.minecraft.util.math.MathHelper;
@@ -23,11 +22,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
     @Unique private static int rdpl$topFilled(Chunk chunk) {
         int top = chunk.getTopFilledSegment();
-        if (!((IRubicWorld) chunk.getWorld()).rdpl$isRubicWorld()) { return top; }
-        for (ICube cube : ((IColumn) chunk).getLoadedCubes()) {
-            if (!cube.isEmpty()) { return Math.max(top, 0); }
-        }
-        return 0;
+        if (!GenHeights.rubic(chunk.getWorld())) { return top; }
+        return GenHeights.topFilledCubeY((IColumn) chunk) != Integer.MIN_VALUE ? Math.max(top, 0) : 0;
     }
 
     /**
@@ -36,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
      */
     @Overwrite private static Chunk getChunk(World world, Vec3d pos) {
         Chunk chunk = world.getChunk(MathHelper.floor(pos.x / Cube.SIZE_D), MathHelper.floor(pos.z / Cube.SIZE_D));
-        if (((IRubicWorld) chunk.getWorld()).rdpl$isRubicWorld()) {
+        if (GenHeights.rubic(chunk.getWorld())) {
             for (int cubeY = 0; cubeY < 16; cubeY++) { ((IColumn) chunk).getCube(cubeY); }
         }
         return chunk;

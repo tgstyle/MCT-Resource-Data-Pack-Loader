@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBear
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -26,6 +27,7 @@ public final class ContentBeardSeat {
     private static final int RADIUS = 12;
     private static final int SIZE = 24;
     private static final double SCALE = 8.0D;
+    private static final double SHARE = 0.8D;
     private static final float[] KERNEL = new float[SIZE * SIZE * SIZE];
     public static final Map<String, Mode> MODES = new LinkedHashMap<>();
     private static boolean modesLoaded;
@@ -34,7 +36,7 @@ public final class ContentBeardSeat {
     static {
         for (int z = 0; z < SIZE; z++) {
             for (int x = 0; x < SIZE; x++) {
-                for (int y = 0; y < SIZE; y++) { KERNEL[z * SIZE * SIZE + x * SIZE + y] = (float) seed(x - RADIUS, (double) (y - RADIUS) + 0.5D, z - RADIUS); }
+                for (int y = 0; y < SIZE; y++) { KERNEL[kernelIndex(x, y, z)] = (float) seed(x - RADIUS, (double) (y - RADIUS) + 0.5D, z - RADIUS); }
             }
         }
     }
@@ -104,16 +106,16 @@ public final class ContentBeardSeat {
         double sum = 0.0D;
         for (int i = 0; i < boxes.size(); i++) {
             StructureBoundingBox box = boxes.get(i);
-            int dx = Math.max(0, Math.max(box.minX - x, x - box.maxX));
-            int dz = Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
+            int dx = MathUtil.gap(x, box.minX, box.maxX);
+            int dz = MathUtil.gap(z, box.minZ, box.maxZ);
             if (dx > RADIUS || dz > RADIUS) { continue; }
             int base = bases.getInt(i);
             int dy = y - base;
             Mode mode = modes.get(i);
             if (mode == Mode.BURY) { sum += bury(dx, dy / 2.0D, dz); }
-            else if (mode == Mode.BEARD_THIN) { sum += beard(dx, dy, dz, dy) * 0.8D; }
-            else if (mode == Mode.BEARD_BOX) { sum += beard(dx, Math.max(0, Math.max(base - y, y - box.maxY)), dz, dy) * 0.8D; }
-            else if (mode == Mode.ENCAPSULATE) { sum += bury(dx / 2.0D, Math.max(0, Math.max(box.minY - y, y - box.maxY)) / 2.0D, dz / 2.0D) * 0.8D; }
+            else if (mode == Mode.BEARD_THIN) { sum += beard(dx, dy, dz, dy) * SHARE; }
+            else if (mode == Mode.BEARD_BOX) { sum += beard(dx, MathUtil.gap(y, base, box.maxY), dz, dy) * SHARE; }
+            else if (mode == Mode.ENCAPSULATE) { sum += bury(dx / 2.0D, MathUtil.gap(y, box.minY, box.maxY) / 2.0D, dz / 2.0D) * SHARE; }
         }
         return sum;
     }
@@ -159,8 +161,10 @@ public final class ContentBeardSeat {
         double lifted = (double) height + 0.5D;
         double squared = (double) x * (double) x + lifted * lifted + (double) z * (double) z;
         double falloff = -lifted * MathHelper.fastInvSqrt(squared / 2.0D) / 2.0D;
-        return falloff * (double) KERNEL[atZ * SIZE * SIZE + atX * SIZE + atY];
+        return falloff * (double) KERNEL[kernelIndex(atX, atY, atZ)];
     }
+
+    private static int kernelIndex(int x, int y, int z) { return z * SIZE * SIZE + x * SIZE + y; }
 
     private static double seed(int x, double y, int z) {
         double squared = (double) x * (double) x + y * y + (double) z * (double) z;

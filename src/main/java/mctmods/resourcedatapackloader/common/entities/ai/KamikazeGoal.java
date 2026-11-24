@@ -49,7 +49,6 @@ public final class KamikazeGoal extends EntityAIBase {
         }
         lit++;
         if (lit < fuse) { return; }
-        if (mob.world.isRemote) { return; }
         mob.world.newExplosion(mob, mob.posX, mob.posY, mob.posZ, power, fire, MobGriefing.allowed(mob));
         mob.setDead();
     }

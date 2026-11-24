@@ -44,6 +44,7 @@ public final class ZoneRules {
     private static final List<String> PLACE_KEYS = Collections.unmodifiableList(Arrays.asList("allow", "deny", "on"));
     private static final List<String> OPEN_KEYS = Collections.unmodifiableList(Arrays.asList("allow", "deny", "close"));
     private static final String ALL = "all";
+    private static final String DAMAGE = "damage";
     private static final int BOX_VALUES = 6;
     private static final List<ZoneDef> ZONES = new ArrayList<>();
     private static final Map<Integer, List<ZoneDef>> BY_DIMENSION = new HashMap<>();
@@ -73,7 +74,7 @@ public final class ZoneRules {
     @Nullable public static ZoneDef covering(EntityPlayer player, BlockPos pos, Predicate<ZoneDef> wanted) { return covering(player.world, player, pos, wanted); }
 
     @Nullable public static ZoneDef covering(World world, @Nullable EntityPlayer player, BlockPos pos, Predicate<ZoneDef> wanted) {
-        List<ZoneDef> here = BY_DIMENSION.computeIfAbsent(world.provider.getDimension(), ZoneRules::inDimension);
+        List<ZoneDef> here = here(world);
         if (here.isEmpty()) { return null; }
         for (ZoneDef zone : here) {
             if (wanted.test(zone) && inside(zone, world, pos) && !excepts(zone, player)) { return zone; }
@@ -82,8 +83,7 @@ public final class ZoneRules {
     }
 
     @Nullable public static ZoneDef refusingDamage(EntityLivingBase victim, @Nullable Entity attacker, @Nullable EntityPlayer by) {
-        List<ZoneDef> here = BY_DIMENSION.computeIfAbsent(victim.world.provider.getDimension(), ZoneRules::inDimension);
-        for (ZoneDef zone : here) {
+        for (ZoneDef zone : here(victim.world)) {
             ZoneDamageDef damage = zone.damage;
             if (damage == null || !damage.covers(victim) || !inside(zone, victim.world, victim.posX, victim.posY, victim.posZ) || excepts(zone, by)) { continue; }
             if (attacker == null ? !damage.allowNoAttacker : !(damage.unlessAttackerInside && inside(zone, victim.world, attacker.posX, attacker.posY, attacker.posZ))) { return zone; }
@@ -101,12 +101,9 @@ public final class ZoneRules {
 
     private static boolean inside(ZoneDef zone, World world, BlockPos pos) { return inBox(zone, pos.getX(), pos.getY(), pos.getZ()) && (!zone.claim || ClaimGuard.covers(world, pos) != 0); }
 
-    private static boolean inside(ZoneDef zone, World world, double x, double y, double z) {
-        int blockX = MathHelper.floor(x);
-        int blockY = MathHelper.floor(y);
-        int blockZ = MathHelper.floor(z);
-        return inBox(zone, blockX, blockY, blockZ) && (!zone.claim || ClaimGuard.covers(world, new BlockPos(blockX, blockY, blockZ)) != 0);
-    }
+    private static boolean inside(ZoneDef zone, World world, double x, double y, double z) { return inside(zone, world, new BlockPos(MathHelper.floor(x), MathHelper.floor(y), MathHelper.floor(z))); }
+
+    private static List<ZoneDef> here(World world) { return BY_DIMENSION.computeIfAbsent(world.provider.getDimension(), ZoneRules::inDimension); }
 
     private static boolean inBox(ZoneDef zone, int x, int y, int z) {
         int[] box = zone.box;
@@ -142,7 +139,7 @@ public final class ZoneRules {
         EnumSet<ZoneTool> tools = EnumSet.noneOf(ZoneTool.class);
         if (!json.has(TOOLS)) { return tools; }
         JsonElement value = json.get(TOOLS);
-        boolean text = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString();
+        boolean text = Json.isString(value);
         if (!text && !value.isJsonArray()) {
             ContentLog.LOGGER.error("Zone file {} gives denyToolActions that is not a list of hoe_till, axe_strip or shovel_flatten, ignoring it", key);
             return tools;
@@ -151,7 +148,7 @@ public final class ZoneRules {
         if (text) { entries.add(value); }
         else { entries = value.getAsJsonArray(); }
         for (JsonElement entry : entries) {
-            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
+            if (!Json.isString(entry)) {
                 ContentLog.LOGGER.error("Zone file {} gives denyToolActions an entry {} that is not text, ignoring it", key, entry);
                 continue;
             }
@@ -164,19 +161,20 @@ public final class ZoneRules {
     }
 
     @Nullable private static ZoneDamageDef readDamage(ResourceLocation key, JsonObject json) {
-        if (!json.has("damage")) { return null; }
-        if (!json.get("damage").isJsonObject()) {
+        JsonElement held = json.get(DAMAGE);
+        if (held == null) { return null; }
+        if (!held.isJsonObject()) {
             ContentLog.LOGGER.error("Zone file {} gives damage that is not an object, ignoring it", key);
             return null;
         }
-        JsonObject damage = json.getAsJsonObject("damage");
+        JsonObject damage = held.getAsJsonObject();
         Json.unknownKeys(damage, "damage", DAMAGE_KEYS);
-        List<String> entities = damage.has("entities") ? MobStats.entities("Zone file " + key, "damage entities", damage.get("entities")) : null;
-        if (entities == null || entities.isEmpty()) {
+        List<String> entities = MobStats.required("Zone file " + key, damage, "entities", "damage entities");
+        if (entities == null) {
             ContentLog.LOGGER.error("Zone file {} has a damage rule with no entities, ignoring it", key);
             return null;
         }
-        return new ZoneDamageDef(entities, bool(key, damage, "damage", "unlessAttackerInside"), bool(key, damage, "damage", "allowNoAttacker"));
+        return new ZoneDamageDef(entities, bool(key, damage, DAMAGE, "unlessAttackerInside"), bool(key, damage, DAMAGE, "allowNoAttacker"));
     }
 
     private static boolean bool(ResourceLocation key, JsonObject rule, String part, String member) {

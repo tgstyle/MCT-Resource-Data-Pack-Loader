@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardR
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardStations;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 
 public final class BeardRoadsDecks {
     private static final int PILING_REACH = 24;
+    private static final int POST_SPACING = 4;
     private static final int CORNER_REACH = 3;
 
     private BeardRoadsDecks() {}
@@ -63,20 +65,14 @@ public final class BeardRoadsDecks {
 
         boolean endRow(int row) { return row == (outward ? to : from); }
 
-        boolean postRow(int row) { return (outward ? to - row : row - from) % 4 == 0; }
+        boolean postRow(int row) { return (outward ? to - row : row - from) % POST_SPACING == 0; }
 
         int edgeIn(int span) { return style == 2 ? railEdge(span) : (span - 1) / 2; }
     }
 
     @Nullable static Pier pierFor(World world, StructureComponent piece, boolean alongX, StructureBoundingBox box, BeardRoads.Grade graded) {
         if (BeardRoads.roadNarrow(box, alongX)) { return null; }
-        String[] wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathPiers", Config.worldgen.villagePathPiers);
-        if (wanted.length == 0) { return null; }
-        List<Integer> styles = new ArrayList<>();
-        for (String name : wanted) {
-            int style = Pier.styleOf(name);
-            if (style >= 0 && !styles.contains(style)) { styles.add(style); }
-        }
+        List<Integer> styles = pierStyles();
         if (styles.isEmpty()) { return null; }
         int rows = graded.rows();
         List<StructureComponent> nearby = BeardRoads.villagePieces(world);
@@ -95,8 +91,8 @@ public final class BeardRoadsDecks {
             if (held == 0) { continue; }
             int from = outward ? end - held + 1 : end;
             int to = outward ? end : end + held - 1;
-            int endX = alongX ? (outward ? box.maxX : box.minX) : (box.minX + box.maxX) / 2;
-            int endZ = alongX ? (box.minZ + box.maxZ) / 2 : (outward ? box.maxZ : box.minZ);
+            int endX = alongX ? (outward ? box.maxX : box.minX) : BeardPlots.roadCenter(box, false);
+            int endZ = alongX ? BeardPlots.roadCenter(box, true) : (outward ? box.maxZ : box.minZ);
             int style = styles.get(SeededRandom.at(world, endX, endZ).nextInt(styles.size()));
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} dead-ends over water, so its {} bridged row(s) from {} to {} become a {} pier", box.minX, box.minZ, held, from, to, Pier.NAMES[style]); }
             return new Pier(from, to, outward, style);
@@ -104,10 +100,18 @@ public final class BeardRoadsDecks {
         return null;
     }
 
+    private static List<Integer> pierStyles() {
+        List<Integer> styles = new ArrayList<>();
+        for (String name : ContentControl.list(ContentControl.VILLAGES, "villagePathPiers", Config.worldgen.villagePathPiers)) {
+            int style = Pier.styleOf(name);
+            if (style >= 0 && !styles.contains(style)) { styles.add(style); }
+        }
+        return styles;
+    }
+
     public static void pierOut(World world, StructureStart start) {
         if (!ContentBeard.wanted()) { return; }
-        String[] wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathPiers", Config.worldgen.villagePathPiers);
-        if (wanted.length == 0 || BeardSurface.unreadable(world)) { return; }
+        if (ContentControl.list(ContentControl.VILLAGES, "villagePathPiers", Config.worldgen.villagePathPiers).length == 0 || BeardSurface.unreadable(world)) { return; }
         List<StructureComponent> nearby = ContentBeard.everyone(world, start.getComponents());
         for (StructureComponent piece : start.getComponents()) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
@@ -116,7 +120,7 @@ public final class BeardRoadsDecks {
     }
 
     private static void pierOut(World world, StructureComponent piece, boolean alongX, StructureBoundingBox box, List<StructureComponent> nearby) {
-        int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+        int center = BeardPlots.roadCenter(box, alongX);
         for (int side = 0; side < 2; side++) {
             boolean outward = side == 1;
             int dir = outward ? 1 : -1;
@@ -193,7 +197,7 @@ public final class BeardRoadsDecks {
         int middle = (acrossLeast + acrossMost) / 2;
         int edge = railEdge(acrossMost - acrossLeast + 1);
         if (edge < 1) { return true; }
-        return Math.floorMod(row, 4) == 0 && Math.abs(across - middle) == edge;
+        return Math.floorMod(row, POST_SPACING) == 0 && Math.abs(across - middle) == edge;
     }
 
     static boolean[] bridgeFrames(int[] profile, boolean[] bridged) {
@@ -266,7 +270,7 @@ public final class BeardRoadsDecks {
             if (!decking(profile, bridged, i)) { continue; }
             int end = i;
             while (end + 1 < rows && decking(profile, bridged, end + 1)) { end++; }
-            for (int at = i; at <= end; at += 4) { legs[at] = true; }
+            for (int at = i; at <= end; at += POST_SPACING) { legs[at] = true; }
             legs[end] = true;
             i = end;
         }
@@ -391,13 +395,13 @@ public final class BeardRoadsDecks {
         for (int x = fromX; x <= toX; x++) {
             for (int z = fromZ; z <= toZ; z++) {
                 if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
-                int toBox = Math.max(0, Math.max(box.minX - x, x - box.maxX)) + Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
-                int toNear = Math.max(0, Math.max(near.minX - x, x - near.maxX)) + Math.max(0, Math.max(near.minZ - z, z - near.maxZ));
+                int toBox = MathUtil.gap(x, box.minX, box.maxX) + MathUtil.gap(z, box.minZ, box.maxZ);
+                int toNear = MathUtil.gap(x, near.minX, near.maxX) + MathUtil.gap(z, near.minZ, near.maxZ);
                 int base = toBox <= toNear ? box.minY : near.minY;
                 int bed = BeardGround.roadTop(world, start, at, x, z, base + 1, base + 12);
                 for (int y = bed == Integer.MIN_VALUE ? base + 1 : bed + 1; y <= base + 12; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     if (BeardBlocks.opening(held.getMaterial()) || BeardBlocks.overhang(held)) { cleared += BeardBlocks.clearAt(world, at); }
                 }
@@ -523,15 +527,9 @@ public final class BeardRoadsDecks {
                 int offZ = Math.abs(cellZ - centerZ);
                 int core = 1 + BeardRoads.pathExtraWidth();
                 int reach = BeardRoadsSurface.arms(ew, ns, box, crossed);
-                boolean west = (reach & 1) != 0;
-                boolean east = (reach & 2) != 0;
-                boolean north = (reach & 4) != 0;
-                boolean south = (reach & 8) != 0;
-                boolean onEW = offZ <= core && (offX <= core || (cellX < centerX && west) || (cellX > centerX && east));
-                boolean onNS = offX <= core && (offZ <= core || (cellZ < centerZ && north) || (cellZ > centerZ && south));
-                if (onEW || onNS) { corner = false; break; }
-                boolean armX = cellX > centerX ? east : cellX >= centerX || west;
-                boolean armZ = cellZ > centerZ ? south : cellZ >= centerZ || north;
+                if (BeardRoadsSurface.onArm(reach, cellX, cellZ, centerX, centerZ, core)) { corner = false; break; }
+                boolean armX = BeardRoadsSurface.armSide(reach, cellX, centerX, true);
+                boolean armZ = BeardRoadsSurface.armSide(reach, cellZ, centerZ, false);
                 int halfX = (ns.maxX - ns.minX) / 2;
                 int halfZ = (ew.maxZ - ew.minZ) / 2;
                 if (!armX && offX == halfX) { corner = true; }

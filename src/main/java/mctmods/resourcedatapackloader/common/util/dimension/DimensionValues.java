@@ -39,8 +39,8 @@ public final class DimensionValues<T> {
                 }
                 if (sides == null) { bare = found; }
                 else {
-                    try { scoped.put(Integer.parseInt(sides[0]), found); }
-                    catch (NumberFormatException wrongDimension) { ContentLog.LOGGER.error("{} names '{}', whose dimension is not a whole number, ignoring it", key, line); }
+                    Integer scope = Settings.whole(sides[0], "{} names '{}', whose dimension is not a whole number, ignoring it", key, line);
+                    if (scope != null) { scoped.put(scope, found); }
                 }
             }
             now = new Snapshot<>(asked.clone(), bare, scoped);

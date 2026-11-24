@@ -33,6 +33,8 @@ public final class TableMath {
         }
     }
 
+    public static double perLevel(double base, double perLevel, int level) { return base + perLevel * (level - 1); }
+
     public static int level(Random rand, int slot, int power, int enchantability, int shelfCap) {
         if (enchantability <= 0) { return 0; }
         int held = Math.min(power, shelfCap);

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayDef;
+import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 
 import java.util.List;
 import java.util.Locale;
@@ -133,7 +134,7 @@ public final class BlockDef {
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }
 
     public boolean sustains(EnumPlantType plant) {
-        if (plant == EnumPlantType.Plains && behavesAs.contains("bush")) { return true; }
+        if (plant == EnumPlantType.Plains && behavesAs.contains(ContentSpawning.BUSH)) { return true; }
         return plantTypes.contains(plant.name().toLowerCase(Locale.ROOT));
     }
 }

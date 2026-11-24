@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.cards;
 
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,8 +16,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 
 public final class CardFire {
-    private static final int TICKS_PER_SECOND = 20;
-    private static final Map<UUID, Set<String>> SESSION = new HashMap<>();
+    private static final Map<UUID, Set<String>> SESSION = PlayerLogout.track(new HashMap<>());
 
     private CardFire() {}
 
@@ -32,16 +33,14 @@ public final class CardFire {
     public static void builtin(String key, EntityPlayerMP subject, CardLook look) {
         CardRule rule = CardRules.builtin(key);
         if (rule == null || blocked(rule, subject)) { return; }
-        sets(rule, subject);
-        CardSend.dress(look, rule, subject);
-        CardSend.send(look, subject);
-        runs(rule, subject);
+        present(rule, subject, look, Collections.emptyMap());
     }
 
     public static void show(CardRule rule, EntityPlayerMP subject) { show(rule, subject, Collections.emptyMap()); }
 
-    public static void show(CardRule rule, EntityPlayerMP subject, Map<String, String> args) {
-        CardLook look = CardLook.plain();
+    public static void show(CardRule rule, EntityPlayerMP subject, Map<String, String> args) { present(rule, subject, CardLook.plain(), args); }
+
+    private static void present(CardRule rule, EntityPlayerMP subject, CardLook look, Map<String, String> args) {
         sets(rule, subject);
         CardSend.dress(look, rule, subject, args);
         CardSend.send(look, subject);
@@ -64,7 +63,7 @@ public final class CardFire {
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }
         if (CardRule.ONCE_PER_WORLD.equals(rule.repeat) && CardStorage.firedInWorld(subject.world, key)) { return true; }
         if (CardRule.ONCE_PER_SESSION.equals(rule.repeat) && SESSION.getOrDefault(subject.getUniqueID(), Collections.emptySet()).contains(key)) { return true; }
-        if (rule.cooldown > 0 && CardStorage.firedFor(subject, key) && now - CardStorage.lastFor(subject, key) < (long) rule.cooldown * TICKS_PER_SECOND) { return true; }
+        if (rule.cooldown > 0 && CardStorage.firedFor(subject, key) && now - CardStorage.lastFor(subject, key) < (long) rule.cooldown * MathUtil.TICKS_PER_SECOND) { return true; }
         if (CardRule.ONCE_PER_WORLD.equals(rule.repeat)) { CardStorage.stampWorld(subject.world, key, now); }
         if (CardRule.ONCE_PER_SESSION.equals(rule.repeat)) { SESSION.computeIfAbsent(subject.getUniqueID(), k -> new HashSet<>()).add(key); }
         if (rule.cooldown > 0 || CardRule.ONCE_PER_PLAYER.equals(rule.repeat)) { CardStorage.stampFor(subject, key, now); }
@@ -84,6 +83,4 @@ public final class CardFire {
         CardScan.startClock(player);
         CardSend.release(player);
     }
-
-    static void forget(UUID player) { SESSION.remove(player); }
 }

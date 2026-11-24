@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.common.items.derived;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.DerivedDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -68,10 +70,10 @@ final class DerivedOrder {
     private static void reused(JsonObject set, List<ResourceLocation> into) {
         for (Map.Entry<String, JsonElement> entry : set.entrySet()) {
             JsonElement value = entry.getValue();
-            if (value.isJsonObject() && value.getAsJsonObject().has("set") && value.getAsJsonObject().get("set").isJsonObject()) { reused(value.getAsJsonObject().getAsJsonObject("set"), into); }
-            else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() && value.getAsString().indexOf(':') > 0) {
-                try { into.add(new ResourceLocation(value.getAsString())); }
-                catch (RuntimeException notAName) { ContentLog.LOGGER.debug("{} is not an item name", value); }
+            if (value.isJsonObject()) { reused(Json.object(value.getAsJsonObject(), ObjectPatch.SET), into); }
+            else if (Json.isString(value) && value.getAsString().indexOf(':') > 0) {
+                ResourceLocation reused = IdNames.location(value.getAsString());
+                if (reused != null) { into.add(reused); }
             }
         }
     }

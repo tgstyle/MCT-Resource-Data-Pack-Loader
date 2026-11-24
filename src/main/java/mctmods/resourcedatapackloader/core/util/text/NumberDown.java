@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.core.util.text;
 
 import mctmods.resourcedatapackloader.core.util.ILineNote;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 import mctmods.resourcedatapackloader.core.util.json.NumberSlots;
 
@@ -15,12 +16,15 @@ import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
 public final class NumberDown {
+    private static final String FROM_INT = "from_int";
+    private static final String FROM_FLOAT = "from_float";
+    private static final String LEFT = "left";
+    private static final String RIGHT = "right";
     private static final String INPUT = "input";
     private static final String INPUTS = "inputs";
-    private static final String VALUE = "value";
+    public static final String VALUE = "value";
     private static final String FALLBACK = "fallback";
     private static final Set<String> KEPT = new HashSet<>(Arrays.asList("constant", "storage", "score", "enchantment_level", "environment_attribute"));
-    private static final int DEPTH = 8;
 
     private NumberDown() {}
 
@@ -29,8 +33,8 @@ public final class NumberDown {
     private static JsonArray listed(JsonArray values, boolean whole, ILineNote note, int depth) { return JsonTree.map(values, item -> number(item, whole, note, depth)); }
 
     private static JsonElement number(JsonElement value, boolean whole, ILineNote note, int depth) {
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-            JsonElement carried = depth < DEPTH ? note.carried(whole ? "context_int_provider" : "context_float_provider", value.getAsString()) : null;
+        if (Json.isString(value)) {
+            JsonElement carried = note.carried(whole ? "context_int_provider" : "context_float_provider", value.getAsString(), depth);
             if (carried != null) { return number(carried, whole, note, depth + 1); }
             note.accept("names the number provider " + value.getAsString() + ", which the pack does not carry and 26.2 has no registry for, so it is dropped to 0");
             return new JsonPrimitive(0);
@@ -40,13 +44,13 @@ public final class NumberDown {
         String type = NumberSlots.type(out);
         if (KEPT.contains(type) || type.isEmpty() || type.contains(":")) { return fallback(out, note); }
         switch (type) {
-            case "from_int":
-            case "from_float": {
+            case FROM_INT:
+            case FROM_FLOAT: {
                 JsonElement input = out.get(INPUT);
                 if (input == null) { break; }
                 boolean rounded = input.isJsonObject() && "round".equals(NumberSlots.type(input.getAsJsonObject())) && input.getAsJsonObject().has(INPUT);
-                if ("from_float".equals(type) && !rounded) { note.accept("truncates a number to a whole one, which 26.2 rounds instead"); }
-                return number(rounded ? input.getAsJsonObject().get(INPUT) : input, "from_int".equals(type), note, depth);
+                if (FROM_FLOAT.equals(type) && !rounded) { note.accept("truncates a number to a whole one, which 26.2 rounds instead"); }
+                return number(rounded ? input.getAsJsonObject().get(INPUT) : input, FROM_INT.equals(type), note, depth);
             }
             case "uniform": {
                 for (String key : new String[] {"min", "max"}) {
@@ -77,10 +81,10 @@ public final class NumberDown {
     }
 
     @Nullable private static JsonObject scored(JsonObject product) {
-        for (String[] side : new String[][] {{"left", "right"}, {"right", "left"}}) {
+        for (String[] side : new String[][] {{LEFT, RIGHT}, {RIGHT, LEFT}}) {
             JsonElement input = product.get(side[0]);
             JsonElement scale = product.get(side[1]);
-            if (input == null || scale == null || !input.isJsonObject() || !"from_int".equals(NumberSlots.type(input.getAsJsonObject()))) { continue; }
+            if (input == null || scale == null || !input.isJsonObject() || !FROM_INT.equals(NumberSlots.type(input.getAsJsonObject()))) { continue; }
             JsonElement score = input.getAsJsonObject().get(INPUT);
             Double factor = folded(scale);
             if (factor == null || score == null || !score.isJsonObject() || !"score".equals(NumberSlots.type(score.getAsJsonObject()))) { continue; }
@@ -107,9 +111,9 @@ public final class NumberDown {
             Double input = folded(held.get(INPUT));
             return input == null ? null : unary(type, input);
         }
-        if (held.has("left") && held.has("right")) {
-            Double left = folded(held.get("left"));
-            Double right = folded(held.get("right"));
+        if (held.has(LEFT) && held.has(RIGHT)) {
+            Double left = folded(held.get(LEFT));
+            Double right = folded(held.get(RIGHT));
             return left == null || right == null ? null : binary(type, left, right);
         }
         if (!JsonUtils.isJsonArray(held, INPUTS) || held.getAsJsonArray(INPUTS).size() == 0) { return null; }
@@ -141,11 +145,11 @@ public final class NumberDown {
             case "floor": return Math.floor(input);
             case "round": return (double) Math.round(input);
             case "truncate":
-            case "from_float": return (double) (long) input;
+            case FROM_FLOAT: return (double) (long) input;
             case "sqrt": return Math.sqrt(input);
             case "sin": return Math.sin(input);
             case "cos": return Math.cos(input);
-            case "from_int": return input;
+            case FROM_INT: return input;
             default: return null;
         }
     }

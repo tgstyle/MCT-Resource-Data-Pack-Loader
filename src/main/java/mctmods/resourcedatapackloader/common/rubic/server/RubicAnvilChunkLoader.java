@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.rubic.server;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.io.File;
@@ -51,7 +50,7 @@ public class RubicAnvilChunkLoader extends AnvilChunkLoader {
 
     @Override public void saveChunk(@Nonnull World worldIn, @Nonnull Chunk chunkIn) {
         getCubeIO().saveColumn(chunkIn);
-        for (ICube cube : ((IColumn) chunkIn).getLoadedCubes()) { getCubeIO().saveCube((Cube) cube); }
+        for (Cube cube : ((IColumn) chunkIn).loadedCubes()) { getCubeIO().saveCube(cube); }
     }
 
     @Override protected void addChunkToPending(@Nonnull ChunkPos pos, @Nonnull NBTTagCompound compound) { throw new UnsupportedOperationException(); }

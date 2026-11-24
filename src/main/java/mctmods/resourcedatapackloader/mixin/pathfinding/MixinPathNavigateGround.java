@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.pathfinding;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IMinMaxHeight;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,8 +23,8 @@ import org.spongepowered.asm.mixin.Overwrite;
      * @reason Clamp the air and solid scans to the world height bounds and loaded blocks so pathing terminates on cube worlds, keeping vanilla's check-first climbs so a floor lying exactly at the lowest height still counts as ground.
      */
     @Nullable @Overwrite public Path getPathToPos(@Nonnull BlockPos posIn) {
-        int floor = ((IMinMaxHeight) world).rdpl$getMinHeight();
-        int ceiling = ((IMinMaxHeight) world).rdpl$getMaxHeight();
+        int floor = GenHeights.floor(world, 0);
+        int ceiling = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT);
         if (world.getBlockState(posIn).getMaterial() == Material.AIR) {
             BlockPos pos = posIn.down();
             while (pos.getY() > floor && world.isBlockLoaded(pos) && world.getBlockState(pos).getMaterial() == Material.AIR) { pos = pos.down(); }

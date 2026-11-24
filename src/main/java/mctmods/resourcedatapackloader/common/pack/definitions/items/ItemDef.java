@@ -144,7 +144,9 @@ public final class ItemDef {
         return new ItemDef(registryName, creativeTab, requires, bauble, wornEffects, wornAttributes, weapon, weight, derived);
     }
 
-    public boolean worn() { return !bauble.isEmpty() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }
+    public boolean hasWornEffects() { return !wornEffects.isEmpty() || !wornAttributes.isEmpty(); }
+
+    public boolean worn() { return !bauble.isEmpty() && hasWornEffects(); }
 
     @Nullable public ItemVariant at(int meta) { return byMeta.get(meta); }
 

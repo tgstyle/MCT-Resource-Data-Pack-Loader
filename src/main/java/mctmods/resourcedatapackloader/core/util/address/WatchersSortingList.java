@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.util.address;
 
+import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -27,6 +28,8 @@ import net.minecraft.entity.player.EntityPlayer;
         for (int i = 0; i < buckets.length; i++) { buckets[i] = new ObjectArrayList<>(); }
         updatePlayerPositions();
     }
+
+    protected static int bucketCountFor(int axes) { return (int) (Rubic.MAX_RENDER_DISTANCE * Math.sqrt(axes)) + 1; }
 
     protected abstract int coordinatesPerPlayer();
 
@@ -82,18 +85,11 @@ import net.minecraft.entity.player.EntityPlayer;
                 i++;
                 continue;
             }
-            long oldElementNewData = 1 | ((long) newBucket << 1);
             bucketSizes[bucket]--;
-            if (i != list.size() - 1) {
-                T replacement = list.pop();
-                list.set(i, replacement);
-                long replacementElementData = replacement.getSorterStorage(intrusiveCollectionId) & 0x00000000FFFFFFFFL;
-                replacement.setSorterStorage(intrusiveCollectionId, replacementElementData | ((long) i << 32));
-            }
-            else { list.pop(); }
+            swapRemove(list, i);
             ObjectArrayList<T> newList = buckets[newBucket];
             bucketSizes[newBucket]++;
-            element.setSorterStorage(intrusiveCollectionId, oldElementNewData | ((long) newList.size() << 32));
+            element.setSorterStorage(intrusiveCollectionId, Longs.pack(newList.size(), newBucket << 1 | 1));
             newList.add(element);
         }
     }
@@ -152,14 +148,14 @@ import net.minecraft.entity.player.EntityPlayer;
         bucketSizes[bucket]--;
         int index = Longs.high(sorterStorage);
         ObjectArrayList<T> list = buckets[bucket];
-        if (index == list.size() - 1) {
-            list.pop();
-            return;
-        }
-        T replacementElement = list.pop();
-        list.set(index, replacementElement);
-        long replacementData = replacementElement.getSorterStorage(intrusiveCollectionId) & 0x00000000FFFFFFFFL;
-        replacementElement.setSorterStorage(intrusiveCollectionId, replacementData | ((long) index << 32));
+        swapRemove(list, index);
+    }
+
+    private void swapRemove(ObjectArrayList<T> list, int index) {
+        T last = list.pop();
+        if (index == list.size()) { return; }
+        list.set(index, last);
+        last.setSorterStorage(intrusiveCollectionId, Longs.pack(index, Longs.low(last.getSorterStorage(intrusiveCollectionId))));
     }
 
     public void add(T element) {
@@ -169,7 +165,7 @@ import net.minecraft.entity.player.EntityPlayer;
         bucketSizes[bucket]++;
         int indexInBucket = list.size();
         list.add(element);
-        element.setSorterStorage(intrusiveCollectionId, (long) indexInBucket << 32 | (long) bucket << 1 | 1L);
+        element.setSorterStorage(intrusiveCollectionId, Longs.pack(indexInBucket, bucket << 1 | 1));
     }
 
     public boolean contains(T element) { return element.getSorterStorage(intrusiveCollectionId) != 0; }

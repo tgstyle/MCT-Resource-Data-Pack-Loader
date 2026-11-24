@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer;
 
 import mctmods.resourcedatapackloader.core.network.FireworkBurstMessage;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
@@ -54,9 +55,9 @@ public class FireworkBurstParticle extends Particle {
         float v0 = particleTexture.getMinV();
         float v1 = particleTexture.getMaxV();
         float size = 0.1F * particleScale;
-        float px = (float) (prevPosX + (posX - prevPosX) * partialTicks - interpPosX);
-        float py = (float) (prevPosY + (posY - prevPosY) * partialTicks - interpPosY);
-        float pz = (float) (prevPosZ + (posZ - prevPosZ) * partialTicks - interpPosZ);
+        float px = (float) (MathUtil.lerp(partialTicks, prevPosX, posX) - interpPosX);
+        float py = (float) (MathUtil.lerp(partialTicks, prevPosY, posY) - interpPosY);
+        float pz = (float) (MathUtil.lerp(partialTicks, prevPosZ, posZ) - interpPosZ);
         int light = getBrightnessForRender(partialTicks);
         int lightU = light >> 16 & 65535;
         int lightV = light & 65535;

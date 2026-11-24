@@ -142,14 +142,15 @@ public final class ContentSeams {
         for (int y = floor + 1; y <= highest; y++) {
             int level = y;
             BlockPos found = ring(x, level, z, 0, RESCUE_REACH, (atX, atZ) -> {
-                IBlockState below = world.getBlockState(at.setPos(atX, level - 1, atZ));
-                if (below.getMaterial() == Material.AIR || below.getMaterial().isLiquid()) { return false; }
+                if (!ground(world.getBlockState(at.setPos(atX, level - 1, atZ)))) { return false; }
                 return world.isAirBlock(at.setPos(atX, level, atZ)) && world.isAirBlock(at.setPos(atX, level + 1, atZ));
             });
             if (found != null) { return found; }
         }
         return null;
     }
+
+    private static boolean ground(IBlockState under) { return under.getMaterial() != Material.AIR && !under.getMaterial().isLiquid(); }
 
     @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, ISpot spot) {
         for (int reach = least; reach <= most; reach++) {
@@ -274,8 +275,7 @@ public final class ContentSeams {
 
         private boolean grounded(World world, BlockPos.MutableBlockPos at, int blockX, int feet, int blockZ) {
             if (feet < floor + 1 || feet > ceiling - 1) { return false; }
-            Material under = world.getBlockState(at.setPos(blockX, feet - 1, blockZ)).getMaterial();
-            return under != Material.AIR && !under.isLiquid();
+            return ground(world.getBlockState(at.setPos(blockX, feet - 1, blockZ)));
         }
     }
 

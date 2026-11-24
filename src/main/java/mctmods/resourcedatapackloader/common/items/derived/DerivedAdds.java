@@ -47,7 +47,7 @@ public final class DerivedAdds {
         String named = getter ? target.substring(0, target.length() - 2) : target;
         int dot = named.lastIndexOf('.');
         if (dot <= 0 || dot == named.length() - 1) {
-            ContentLog.LOGGER.error("Derived item {} adds itself to {}, which is not written <Class>.<member>, leaving it out", each.owner, target);
+            DerivedLog.skip(each.owner, "adds itself to {}, which is not written <Class>.<member>", target);
             return;
         }
         Class<?> type = Class.forName(named.substring(0, dot));
@@ -70,17 +70,17 @@ public final class DerivedAdds {
             located = true;
         }
         if (!located) {
-            ContentLog.LOGGER.error("Derived item {} adds itself to {}, which is no static field or static getter without arguments, leaving it out", each.owner, target);
+            DerivedLog.skip(each.owner, "adds itself to {}, which is no static field or static getter without arguments", target);
             return;
         }
         if (!(found instanceof Collection)) {
-            ContentLog.LOGGER.error("Derived item {} adds itself to {}, which holds no collection, leaving it out", each.owner, target);
+            DerivedLog.skip(each.owner, "adds itself to {}, which holds no collection", target);
             return;
         }
         if (generic instanceof ParameterizedType) {
             Type element = ((ParameterizedType) generic).getActualTypeArguments()[0];
             if (element instanceof Class && !((Class<?>) element).isInstance(each.object)) {
-                ContentLog.LOGGER.error("Derived item {} adds itself to {}, which holds {}, not {}, leaving it out", each.owner, target, ((Class<?>) element).getName(), each.object.getClass().getName());
+                DerivedLog.skip(each.owner, "adds itself to {}, which holds {}, not {}", target, ((Class<?>) element).getName(), each.object.getClass().getName());
                 return;
             }
         }
@@ -88,14 +88,7 @@ public final class DerivedAdds {
         if (!into.contains(each.object)) { into.add(each.object); }
     }
 
-    @Nullable private static Field field(Class<?> type, String member) {
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
-            for (Field field : level.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers()) && MemberNames.readable(field.getName()).equals(member)) { return field; }
-            }
-        }
-        return null;
-    }
+    @Nullable private static Field field(Class<?> type, String member) { return MemberNames.find(type, member, field -> Modifier.isStatic(field.getModifiers())); }
 
     @Nullable private static Method method(Class<?> type, String member) {
         for (Method method : MemberNames.methods(type)) {

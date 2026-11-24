@@ -18,6 +18,8 @@ public final class ContainerDef {
     public final boolean ender;
     public final boolean enderAutomation;
 
+    public static ContainerDef plain(int rows) { return new ContainerDef(rows, 9, "", false, null, null, 0, 0, false); }
+
     public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, boolean keepContents) { this(rows, columns, lootTable, chestModel, chestTexture, guiTexture, guiWidth, guiHeight, keepContents, false, false); }
 
     public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, boolean keepContents, boolean ender, boolean enderAutomation) {

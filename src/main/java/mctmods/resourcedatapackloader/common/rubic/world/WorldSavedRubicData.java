@@ -28,8 +28,6 @@ public class WorldSavedRubicData extends WorldSavedData {
             this.minHeight = minHeight;
             this.maxHeight = maxHeight;
             isRubicWorld = true;
-            compatibilityGeneratorType = VanillaCompatibilityGeneratorProviderBase.DEFAULT;
-            storageFormat = StorageFormatProviderBase.DEFAULT;
         }
     }
 
@@ -37,11 +35,11 @@ public class WorldSavedRubicData extends WorldSavedData {
         minHeight = nbt.getInteger(MIN_HEIGHT) & ~0xF;
         maxHeight = nbt.getInteger(MAX_HEIGHT) & ~0xF;
         isRubicWorld = !nbt.hasKey(IS_RUBIC_WORLD) || nbt.getBoolean(IS_RUBIC_WORLD);
-        if (nbt.hasKey(GENERATOR_TYPE)) { compatibilityGeneratorType = new ResourceLocation(nbt.getString(GENERATOR_TYPE)); }
-        else { compatibilityGeneratorType = VanillaCompatibilityGeneratorProviderBase.DEFAULT; }
-        if (nbt.hasKey(STORAGE_FORMAT)) { storageFormat = new ResourceLocation(nbt.getString(STORAGE_FORMAT)); }
-        else { storageFormat = StorageFormatProviderBase.DEFAULT; }
+        compatibilityGeneratorType = readLocation(nbt, GENERATOR_TYPE, VanillaCompatibilityGeneratorProviderBase.DEFAULT);
+        storageFormat = readLocation(nbt, STORAGE_FORMAT, StorageFormatProviderBase.DEFAULT);
     }
+
+    private static ResourceLocation readLocation(NBTTagCompound nbt, String key, ResourceLocation fallback) { return nbt.hasKey(key) ? new ResourceLocation(nbt.getString(key)) : fallback; }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         compound.setInteger(MIN_HEIGHT, minHeight);

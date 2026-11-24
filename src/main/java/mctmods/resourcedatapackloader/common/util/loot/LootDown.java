@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util.loot;
 
 import mctmods.resourcedatapackloader.core.util.IdNames;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
 import com.google.gson.JsonArray;
@@ -32,7 +33,7 @@ public final class LootDown {
         if (!element.isJsonObject()) { return JsonTree.copy(element); }
         JsonObject out = new JsonObject();
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) { walked(out, entry.getKey(), entry.getValue(), note); }
-        if (out.size() == 2 && out.has("expected") && JsonUtils.isJsonPrimitive(out, "id") && out.get("id").getAsString().startsWith("#")) { out.addProperty("id", out.get("id").getAsString().substring(1)); }
+        if (out.size() == 2 && out.has("expected") && JsonUtils.isJsonPrimitive(out, "id") && IdNames.isTag(out.get("id").getAsString())) { out.addProperty("id", IdNames.tagPath(out.get("id").getAsString())); }
         if ("add".equals(type(out)) && out.has("inputs")) {
             out.addProperty(TYPE, MINECRAFT + "sum");
             out.add("summands", out.remove("inputs"));
@@ -93,7 +94,7 @@ public final class LootDown {
 
     private static JsonElement single(JsonElement value, String where, Consumer<String> note) {
         if (value.isJsonArray() && value.getAsJsonArray().size() == 1) { return JsonTree.copy(value.getAsJsonArray().get(0)); }
-        if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { return JsonTree.copy(value); }
+        if (value.isJsonPrimitive() && !IdNames.isTag(value.getAsString())) { return JsonTree.copy(value); }
         note.accept("names a set of ids in " + where + ", which 26.2 reads as one id, so only the first is kept");
         return value.isJsonArray() && value.getAsJsonArray().size() > 0 ? JsonTree.copy(value.getAsJsonArray().get(0)) : JsonTree.copy(value);
     }
@@ -201,17 +202,17 @@ public final class LootDown {
     }
 
     private static void destination(JsonObject out, JsonElement value, Consumer<String> note) {
-        if (value.isJsonPrimitive() && value.getAsString().startsWith("#")) { out.addProperty("destination", value.getAsString().substring(1)); }
+        if (value.isJsonPrimitive() && IdNames.isTag(value.getAsString())) { out.addProperty("destination", IdNames.tagPath(value.getAsString())); }
         else { note.accept("sends an explorer map to named structures, and 26.2 takes only a structure tag, so the map leads to treasure structures"); }
     }
 
     private static JsonObject reference(String kind, String id, Consumer<String> note) {
-        if (id.startsWith("#")) { note.accept("names a tag of " + (CONDITION.equals(kind) ? "predicates" : "item modifiers") + ", which 26.2 cannot, so it is read as the one id " + id.substring(1)); }
+        if (IdNames.isTag(id)) { note.accept("names a tag of " + (CONDITION.equals(kind) ? "predicates" : "item modifiers") + ", which 26.2 cannot, so it is read as the one id " + IdNames.tagPath(id)); }
         JsonObject out = new JsonObject();
         out.addProperty(kind, MINECRAFT + "reference");
-        out.addProperty("name", id.startsWith("#") ? id.substring(1) : id);
+        out.addProperty("name", IdNames.isTag(id) ? IdNames.tagPath(id) : id);
         return out;
     }
 
-    private static String type(JsonObject object) { return JsonUtils.isJsonPrimitive(object, TYPE) ? IdNames.bare(object.get(TYPE).getAsString()) : ""; }
+    private static String type(JsonObject object) { return IdNames.bare(Json.text(object, TYPE)); }
 }

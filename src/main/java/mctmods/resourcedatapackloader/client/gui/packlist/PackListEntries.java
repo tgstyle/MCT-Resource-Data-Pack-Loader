@@ -34,12 +34,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static int topSlot(List<ResourcePackListEntry> entries) { return !entries.isEmpty() && entries.get(0).isServerPack() ? 1 : 0; }
 
+    @Nullable private static GuiScreenResourcePacks packScreen(GuiScreenEvent event) { return event.getGui() instanceof GuiScreenResourcePacks ? (GuiScreenResourcePacks) event.getGui() : null; }
+
     static void awaitConfirm(PackListFoundEntry entry) { awaiting = entry; }
 
     public static final class Handler {
-        @SubscribeEvent public void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
-            if (!(event.getGui() instanceof GuiScreenResourcePacks)) { return; }
-            GuiScreenResourcePacks screen = (GuiScreenResourcePacks) event.getGui();
+        @SubscribeEvent public static void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
+            GuiScreenResourcePacks screen = packScreen(event);
+            if (screen == null) { return; }
             List<ResourcePackListEntry> entries = screen.selectedResourcePacks;
 
             entries.removeIf(resourcePackListEntry -> resourcePackListEntry instanceof PackListEntry);
@@ -56,29 +58,30 @@ import net.minecraftforge.fml.relauncher.SideOnly;
             seatPinned(entries);
         }
 
-        @SubscribeEvent public void onDone(GuiScreenEvent.ActionPerformedEvent.Pre event) {
-            if (!(event.getGui() instanceof GuiScreenResourcePacks) || event.getButton().id != DONE) { return; }
-            GuiScreenResourcePacks screen = (GuiScreenResourcePacks) event.getGui();
+        @SubscribeEvent public static void onDone(GuiScreenEvent.ActionPerformedEvent.Pre event) {
+            GuiScreenResourcePacks screen = packScreen(event);
+            if (screen == null || event.getButton().id != DONE) { return; }
             List<ResourcePackRepository.Entry> found = Minecraft.getMinecraft().getResourcePackRepository().getRepositoryEntries();
             for (int index = found.size() - 1; index >= 0; index--) {
                 ResourcePackRepository.Entry entry = found.get(index);
                 PackListRules.Rule rule = PackListRules.rule(entry.getResourcePackName());
-                if (rule != null && rule.hidden) { screen.selectedResourcePacks.add(Boolean.TRUE.equals(rule.top) ? topSlot(screen.selectedResourcePacks) : aboveDefault(screen.selectedResourcePacks), new PackListFoundEntry(screen, entry)); }
+                if (rule.hidden) { screen.selectedResourcePacks.add(Boolean.TRUE.equals(rule.top) ? topSlot(screen.selectedResourcePacks) : aboveDefault(screen.selectedResourcePacks), new PackListFoundEntry(screen, entry)); }
             }
             seatPinned(screen.selectedResourcePacks);
         }
 
-        @SubscribeEvent public void onDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
-            if (awaiting == null || !(event.getGui() instanceof GuiScreenResourcePacks)) { return; }
+        @SubscribeEvent public static void onDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
+            GuiScreenResourcePacks screen = packScreen(event);
+            if (awaiting == null || screen == null) { return; }
             PackListFoundEntry entry = awaiting;
             awaiting = null;
-            seat((GuiScreenResourcePacks) event.getGui(), entry, PackListRules.rule(entry.getResourcePackEntry().getResourcePackName()));
+            seat(screen, entry, PackListRules.rule(entry.getResourcePackEntry().getResourcePackName()));
         }
     }
 
-    static void seat(GuiScreenResourcePacks screen, ResourcePackListEntry entry, @Nullable PackListRules.Rule rule) {
+    static void seat(GuiScreenResourcePacks screen, ResourcePackListEntry entry, PackListRules.Rule rule) {
         List<ResourcePackListEntry> entries = screen.selectedResourcePacks;
-        if (rule != null && Boolean.FALSE.equals(rule.top) && entries.remove(entry)) { entries.add(aboveDefault(entries), entry); }
+        if (Boolean.FALSE.equals(rule.top) && entries.remove(entry)) { entries.add(aboveDefault(entries), entry); }
         seatPinned(entries);
     }
 
@@ -88,7 +91,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         for (ResourcePackListEntry entry : entries) {
             if (!(entry instanceof PackListFoundEntry)) { continue; }
             PackListRules.Rule rule = PackListRules.rule(((PackListFoundEntry) entry).getResourcePackEntry().getResourcePackName());
-            if (rule != null && rule.fixed) { (Boolean.FALSE.equals(rule.top) ? bottom : top).add(entry); }
+            if (rule.fixed) { (Boolean.FALSE.equals(rule.top) ? bottom : top).add(entry); }
         }
         entries.removeAll(top);
         entries.removeAll(bottom);
@@ -100,20 +103,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         PackListRules.Rule vanilla = PackListRules.rule(PackListRules.VANILLA);
         for (int index = entries.size() - 1; index >= 0; index--) {
             ResourcePackListEntry entry = entries.get(index);
-            if (entry instanceof ResourcePackListEntryDefault && !(entry instanceof PackListDefaultEntry) && vanilla != null) {
+            if (entry instanceof ResourcePackListEntryDefault && !(entry instanceof PackListDefaultEntry) && vanilla != PackListRules.NO_RULE) {
                 if (vanilla.hidden) { entries.remove(index); }
                 else { entries.set(index, new PackListDefaultEntry(screen, vanilla)); }
             }
             if (!(entry instanceof ResourcePackListEntryFound) || entry instanceof PackListFoundEntry) { continue; }
             ResourcePackRepository.Entry found = ((ResourcePackListEntryFound) entry).getResourcePackEntry();
             PackListRules.Rule rule = PackListRules.rule(found.getResourcePackName());
-            if (rule != null && rule.hidden) { entries.remove(index); }
+            if (rule.hidden) { entries.remove(index); }
             else { entries.set(index, new PackListFoundEntry(screen, found)); }
         }
     }
 
     private static boolean visible(RDPLResourcePack pack) {
         PackListRules.Rule rule = PackListRules.rule(pack.getPackName());
-        return rule == null || !rule.hidden;
+        return !rule.hidden;
     }
 }

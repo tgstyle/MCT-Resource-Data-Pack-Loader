@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.loot;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -12,7 +13,6 @@ import javax.annotation.Nonnull;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 import net.minecraft.world.storage.loot.functions.LootFunction;
@@ -50,7 +50,7 @@ public class KilledName extends LootFunction {
     }
 
     public static class Serializer extends LootFunction.Serializer<KilledName> {
-        public Serializer() { super(new ResourceLocation("rdpl", "killed_name"), KilledName.class); }
+        public Serializer() { super(ResourceDataPackLoader.rdpl("killed_name"), KilledName.class); }
 
         @Override public void serialize(@Nonnull JsonObject json, @Nonnull KilledName value, @Nonnull JsonSerializationContext context) {
             if (!value.format.isEmpty()) { json.addProperty("format", value.format); }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.CelestialDef;
 import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
 import mctmods.resourcedatapackloader.core.integration.galaxyspace.GsBodies;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
 import java.util.ArrayList;
@@ -16,8 +17,6 @@ import micdoodle8.mods.galacticraft.api.galaxies.Moon;
 import micdoodle8.mods.galacticraft.api.galaxies.Planet;
 import micdoodle8.mods.galacticraft.api.galaxies.SolarSystem;
 import micdoodle8.mods.galacticraft.api.galaxies.Star;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.relauncher.Side;
 
 public final class GcOverrides {
     private static final String STAR = "star.";
@@ -25,7 +24,7 @@ public final class GcOverrides {
     private GcOverrides() {}
 
     public static void apply(List<CelestialDef> overrides) {
-        boolean client = FMLCommonHandler.instance().getSide() == Side.CLIENT;
+        boolean client = SideUtils.isClient();
         boolean ringed = false;
         int changed = 0;
         for (CelestialDef def : overrides) {

@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_SUBCOMMANDS); }
         if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
         if (args.length >= 2 && FORWARDED.contains(args[0]) && server != null) {
-            ICommand target = server.getCommandManager().getCommands().get("rdplserver");
+            ICommand target = server.getCommandManager().getCommands().get(CommandShared.NAME);
             if (target != null) { return target.getTabCompletions(server, sender, args, targetPos); }
         }
         return Collections.emptyList();
@@ -142,13 +143,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static String firstNamespace(RDPLPack pack) {
         for (String namespace : pack.getNamespaces()) { return namespace; }
-        return "minecraft";
+        return IdNames.VANILLA;
     }
 
     private static void forward(String[] args) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
         if (player == null) { return; }
-        player.sendChatMessage("/rdplserver " + String.join(" ", args));
+        player.sendChatMessage("/" + CommandShared.NAME + " " + String.join(" ", args));
     }
 
     private void pixelmap(ICommandSender sender, String target) throws CommandException {

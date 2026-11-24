@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.syncdata;
 
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -42,10 +43,9 @@ public final class SyncData extends WorldSavedData {
     public static boolean valid(String name) { return VALID.matcher(name).matches(); }
 
     @Nullable public static SyncData get(World world) {
-        MapStorage storage = storage(world);
-        if (storage == null) { return null; }
-        loaded = SavedData.get(storage, SyncData.class, NAME, SyncData::new);
-        return loaded;
+        SyncData data = world.isRemote ? null : SavedData.overworld(world, SyncData.class, NAME, SyncData::new);
+        if (data != null) { loaded = data; }
+        return data;
     }
 
     @Nullable public static SyncData peek(World world) {
@@ -179,8 +179,12 @@ public final class SyncData extends WorldSavedData {
         load(tag.getCompoundTag(WORLD), world);
         NBTTagCompound held = tag.getCompoundTag(PLAYERS);
         for (String key : held.getKeySet()) {
-            try { load(held.getCompoundTag(key), players.computeIfAbsent(UUID.fromString(key), id -> new LinkedHashMap<>())); }
-            catch (IllegalArgumentException ex) { ContentLog.LOGGER.error("The synced data store holds the player key {}, which is not an id, skipping it", key); }
+            UUID id = Nbts.uuid(key);
+            if (id == null) {
+                ContentLog.LOGGER.error("The synced data store holds the player key {}, which is not an id, skipping it", key);
+                continue;
+            }
+            load(held.getCompoundTag(key), players.computeIfAbsent(id, made -> new LinkedHashMap<>()));
         }
     }
 

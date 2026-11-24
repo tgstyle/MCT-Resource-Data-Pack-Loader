@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.server.SpawnCubes;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.util.ticks.CubeSplitTickList;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.ticks.CubeSplitTickSet;
 import mctmods.resourcedatapackloader.core.util.address.XYZMap;
 import mctmods.resourcedatapackloader.core.util.address.XZMap;
@@ -36,7 +37,7 @@ public interface IRubicWorldInternal extends IRubicWorld {
         int floor = MathHelper.clamp(RubicWorldControl.terrainOffsetBlocks(), rdpl$getMinHeight(), rdpl$getMaxHeight());
         int ceiling = MathHelper.clamp(world.provider.getActualHeight(), floor, rdpl$getMaxHeight() - 1);
         Chunk chunk = world.getChunk(pos);
-        int top = Math.max(floor, Math.min(ceiling, chunk.getHeightValue(pos.getX() & 15, pos.getZ() & 15)));
+        int top = Math.max(floor, Math.min(ceiling, chunk.getHeightValue(Coords.blockToLocal(pos.getX()), Coords.blockToLocal(pos.getZ()))));
         return rdpl$scanDown(chunk, new BlockPos(pos.getX(), top, pos.getZ()), floor);
     }
 

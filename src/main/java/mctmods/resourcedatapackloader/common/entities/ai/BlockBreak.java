@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -9,7 +11,9 @@ final class BlockBreak {
 
     private BlockBreak() {}
 
-    static void look(EntityCreature mob, BlockPos pos) { mob.getLookHelper().setLookPosition(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F); }
+    static void look(EntityCreature mob, BlockPos pos) { Looking.at(mob, pos); }
+
+    static void clear(EntityCreature mob, BlockPos pos) { mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, -1); }
 
     static int step(EntityCreature mob, BlockPos pos, int total, int left) {
         look(mob, pos);

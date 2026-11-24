@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
@@ -50,7 +52,7 @@ public final class SwoopGoal extends EntityAIBase {
 
     @Override public void updateTask() {
         if (target == null) { return; }
-        mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         ticks++;
         if (circling) {
             angle += 0.08D;

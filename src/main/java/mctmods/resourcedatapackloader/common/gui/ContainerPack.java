@@ -23,6 +23,8 @@ public class ContainerPack extends Container {
 
     public interface IPlayerSlot { Slot create(InventoryPlayer player, int index, int x, int y); }
 
+    public interface IGridSlot { Slot create(int index, int x, int y); }
+
     public interface IMerge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
 
     public ContainerPack(InventoryPlayer player, TileEntityPackContainer tile) {
@@ -40,14 +42,9 @@ public class ContainerPack extends Container {
         this.rows = Math.max(1, rows);
         this.columns = Math.max(1, columns);
         int wide = width(this.columns);
-        int left = (wide - this.columns * SLOT) / 2 + 1;
-        for (int row = 0; row < this.rows; row++) {
-            for (int column = 0; column < this.columns; column++) {
-                addSlotToContainer(new Slot(held, column + row * this.columns, left + column * SLOT, HEADER + 1 + row * SLOT) {
-                    @Override public boolean isItemValid(@Nonnull ItemStack stack) { return storable(stack); }
-                });
-            }
-        }
+        for (Slot slot : gridSlots(wide, this.columns, this.rows * this.columns, false, (index, x, y) -> new Slot(held, index, x, y) {
+            @Override public boolean isItemValid(@Nonnull ItemStack stack) { return storable(stack); }
+        })) { addSlotToContainer(slot); }
         for (Slot slot : playerSlots(player, wide, height(this.rows), this::playerSlot)) { addSlotToContainer(slot); }
     }
 
@@ -60,6 +57,17 @@ public class ContainerPack extends Container {
             for (int column = 0; column < 9; column++) { slots.add(factory.create(player, column + row * 9 + 9, left + column * SLOT, tall - 83 + row * SLOT)); }
         }
         for (int hotbar = 0; hotbar < 9; hotbar++) { slots.add(factory.create(player, hotbar, left + hotbar * SLOT, tall - 25)); }
+        return slots;
+    }
+
+    public static List<Slot> gridSlots(int wide, int columns, int count, boolean centerLastRow, IGridSlot factory) {
+        List<Slot> slots = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            int row = index / columns;
+            int across = centerLastRow ? Math.min(columns, count - row * columns) : columns;
+            int left = (wide - across * SLOT) / 2 + 1;
+            slots.add(factory.create(index, left + index % columns * SLOT, HEADER + 1 + row * SLOT));
+        }
         return slots;
     }
 
@@ -94,8 +102,12 @@ public class ContainerPack extends Container {
         ItemStack moved = stack.copy();
         boolean done = index < mine ? merge.into(stack, mine, container.inventorySlots.size(), true) : store.test(stack);
         if (!done) { return ItemStack.EMPTY; }
-        if (stack.isEmpty()) { slot.putStack(ItemStack.EMPTY); }
-        else { slot.onSlotChanged(); }
+        settle(slot);
         return moved;
+    }
+
+    public static void settle(Slot slot) {
+        if (slot.getStack().isEmpty()) { slot.putStack(ItemStack.EMPTY); }
+        else { slot.onSlotChanged(); }
     }
 }

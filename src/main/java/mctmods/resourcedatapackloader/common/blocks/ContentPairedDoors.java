@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
@@ -31,8 +30,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentPairedDoors {
-    private static final String BLOCKS = "blocks";
-    private static final List<String> DOOR_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, "all", "unlessSneaking", "mobs"));
+    private static final List<String> DOOR_KEYS = Collections.unmodifiableList(Arrays.asList("requires", ContentParser.BLOCKS, "all", "unlessSneaking", "mobs"));
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final Map<BlockPos, EntityPlayer> ACTORS = new HashMap<>();
@@ -64,22 +62,18 @@ public final class ContentPairedDoors {
         return RULES.isEmpty();
     }
 
-    private static void reload() {
-        RULES.clear();
-        Json.eachObject(PackManager.PAIRED_DOORS, "paired door", ContentPairedDoors::read);
-        if (!RULES.isEmpty()) { Summary.info("content.paired_doors", "Loaded " + RULES.size() + " paired door rule(s)"); }
-    }
+    private static void reload() { PackGeneration.reload(RULES, PackManager.PAIRED_DOORS, "paired door", "content.paired_doors", "paired door rule(s)", ContentPairedDoors::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", DOOR_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         boolean all = Json.getBoolean(json, "all", false);
-        if (!json.has(BLOCKS) && !all) {
+        if (!json.has(ContentParser.BLOCKS) && !all) {
             ContentLog.LOGGER.error("Paired door {} needs blocks or all, ignoring it", key);
             return;
         }
         BlockGroup group = new BlockGroup();
-        for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, key, BLOCKS); }
+        for (BlockMatchDef match : ContentParser.matches(key, json, ContentParser.BLOCKS)) { group.add(match, key, ContentParser.BLOCKS); }
         if (group.isEmpty() && !all) {
             ContentLog.LOGGER.error("Paired door {} names no registered blocks, ignoring it", key);
             return;

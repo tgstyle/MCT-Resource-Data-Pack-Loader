@@ -35,12 +35,7 @@ public final class WaiverDef {
 
     public boolean covers(int kind) { return this.kinds[kind]; }
 
-    private boolean listed(Block block, World world, BlockPos pos) {
-        for (BlockMatch match : this.blocks) {
-            if (match.matches(block, world, pos)) { return true; }
-        }
-        return false;
-    }
+    private boolean listed(Block block, World world, BlockPos pos) { return BlockMatch.anyMatch(this.blocks, block, world, pos); }
 
     public boolean found(World world, BlockPos pos) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(pos);

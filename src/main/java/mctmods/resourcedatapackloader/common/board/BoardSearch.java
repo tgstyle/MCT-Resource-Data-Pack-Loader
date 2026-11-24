@@ -81,8 +81,8 @@ public final class BoardSearch {
             BoardPiece piece = rules.pieces.get(BoardState.kind(held));
             int value = piece.value * 100;
             if (piece.promotes.length > 0) {
-                int rank = square / rules.files;
-                value += (BoardState.side(held) == 0 ? rank : rules.ranks - 1 - rank) * 8;
+                int rank = rules.rank(square);
+                value += rules.advance(BoardState.side(held), rank) * 8;
             }
             total += BoardState.side(held) == side ? value : -value;
         }

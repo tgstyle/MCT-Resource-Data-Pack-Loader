@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 
 final class ContentParserSeasons {
@@ -22,29 +21,20 @@ final class ContentParserSeasons {
     private ContentParserSeasons() {}
 
     @Nullable static SeasonClockDef clock(JsonObject json) {
-        JsonElement asked = json.get("seasonClock");
+        JsonObject asked = Json.objectOrFlag(json, "seasonClock");
         if (asked == null) { return null; }
-        if (asked.isJsonObject()) {
-            JsonObject held = asked.getAsJsonObject();
-            Json.unknownKeys(held, "seasonClock", CLOCK_KEYS);
-            return new SeasonClockDef(dimension(held), Json.getBoolean(held, "message", true));
-        }
-        return asked.isJsonPrimitive() && asked.getAsJsonPrimitive().isBoolean() && asked.getAsBoolean() ? new SeasonClockDef(null, true) : null;
+        Json.unknownKeys(asked, "seasonClock", CLOCK_KEYS);
+        return new SeasonClockDef(Json.location(asked, "dimension"), Json.getBoolean(asked, "message", true));
     }
 
     @Nullable static SeasonSensorDef sensor(JsonObject json) {
-        if (!json.has("seasonSensor") || !json.get("seasonSensor").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "seasonSensor");
+        JsonObject held = Json.objectOrNull(json, "seasonSensor");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "seasonSensor", SENSOR_KEYS);
         Map<String, Integer> output = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.object(held, "output").entrySet()) {
             output.put(entry.getKey(), MathHelper.clamp(Json.asInt(entry.getValue(), "output." + entry.getKey(), 0), 1, 15));
         }
-        return new SeasonSensorDef(dimension(held), Collections.unmodifiableMap(output));
-    }
-
-    @Nullable private static ResourceLocation dimension(JsonObject json) {
-        String named = Json.getString(json, "dimension", "").trim();
-        return named.isEmpty() ? null : new ResourceLocation(named);
+        return new SeasonSensorDef(Json.location(held, "dimension"), Collections.unmodifiableMap(output));
     }
 }

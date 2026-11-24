@@ -1,11 +1,16 @@
 package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.cards.CardIds;
-import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
+import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
+import mctmods.resourcedatapackloader.common.util.Nbts;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
+import mctmods.resourcedatapackloader.common.util.entity.Worn;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
-import mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -30,6 +35,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -48,12 +54,13 @@ import net.minecraftforge.oredict.OreDictionary;
 
 public final class GateLoot {
     public static final GateLoot NONE = new GateLoot(false, Collections.emptyList(), true, "");
+    private static final String DROP_ON_LEAVE = "dropOnLeave";
     private static final String MARK = "rdplLoot";
     private static final String BLOCK_ENTITY = "BlockEntityTag";
     private static final int PICKUP_DELAY = 40;
-    private static final Map<UUID, BlockPos> POSITIONS = new HashMap<>();
-    private static final Map<UUID, List<ItemStack>> OPEN = new HashMap<>();
-    private static final Map<UUID, List<ItemStack>> OWN = new HashMap<>();
+    private static final Map<UUID, BlockPos> POSITIONS = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, List<ItemStack>> OPEN = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, List<ItemStack>> OWN = PlayerLogout.track(new HashMap<>());
     private static final List<String> LOOT_KEYS = Collections.unmodifiableList(Arrays.asList("keep", "enderChest", "message"));
 
     private final boolean enabled;
@@ -69,13 +76,10 @@ public final class GateLoot {
     }
 
     public static GateLoot parse(JsonObject json, ResourceLocation key, int dimension) {
-        if (!json.has("dropOnLeave")) { return NONE; }
-        JsonElement element = json.get("dropOnLeave");
-        if (!element.isJsonObject() && !Json.getBoolean(json, "dropOnLeave", false)) { return NONE; }
-        if (dimension == GateDef.NO_DIMENSION) {
-            ContentLog.LOGGER.error("Gate {} sets dropOnLeave without dimension, so nothing is marked", key);
-            return NONE;
-        }
+        if (!json.has(DROP_ON_LEAVE)) { return NONE; }
+        JsonElement element = json.get(DROP_ON_LEAVE);
+        if (!element.isJsonObject() && !Json.getBoolean(json, DROP_ON_LEAVE, false)) { return NONE; }
+        if (GateDef.dimensionMissing(dimension, key, "dropOnLeave", "nothing is marked")) { return NONE; }
         JsonObject options = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
         Json.unknownKeys(options, "dropOnLeave", LOOT_KEYS);
         List<ItemStack> keep = new ArrayList<>();
@@ -103,7 +107,7 @@ public final class GateLoot {
     }
 
     static void track(MinecraftServer server) {
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+        for (EntityPlayerMP player : Players.online(server)) {
             if (ContentGates.lootDimension(player.dimension) == null) {
                 OWN.remove(player.getUniqueID());
                 continue;
@@ -113,17 +117,13 @@ public final class GateLoot {
         }
     }
 
-    private static void snapshot(EntityPlayer player) {
-        List<ItemStack> own = new ArrayList<>();
-        for (ItemStack stack : held(player)) { own.add(stack.copy()); }
-        OWN.put(player.getUniqueID(), own);
+    private static List<ItemStack> copies(EntityPlayer player) {
+        List<ItemStack> copies = new ArrayList<>();
+        for (ItemStack stack : Stacks.held(player)) { copies.add(stack.copy()); }
+        return copies;
     }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        POSITIONS.remove(event.player.getUniqueID());
-        OPEN.remove(event.player.getUniqueID());
-        OWN.remove(event.player.getUniqueID());
-    }
+    private static void snapshot(EntityPlayer player) { OWN.put(player.getUniqueID(), copies(player)); }
 
     @SubscribeEvent public static void onPickup(EntityItemPickupEvent event) {
         GateDef def = ContentGates.lootDimension(event.getEntityPlayer().dimension);
@@ -149,9 +149,7 @@ public final class GateLoot {
     @SubscribeEvent public static void onOpen(PlayerContainerEvent.Open event) {
         EntityPlayer player = event.getEntityPlayer();
         if (player.world.isRemote || ContentGates.lootDimension(player.dimension) == null) { return; }
-        List<ItemStack> before = new ArrayList<>();
-        for (ItemStack stack : held(player)) { before.add(stack.copy()); }
-        OPEN.put(player.getUniqueID(), before);
+        OPEN.put(player.getUniqueID(), copies(player));
     }
 
     @SubscribeEvent public static void onClose(PlayerContainerEvent.Close event) {
@@ -167,7 +165,8 @@ public final class GateLoot {
         Entity entity = event.getEntity();
         GateDef def = ContentGates.lootDimension(entity.dimension);
         if (def == null) { return; }
-        if (entity instanceof EntityPlayerMP) { drop((EntityPlayerMP) entity, def, entity.world, entity.getPosition(), def.loot.enderChest); }
+        EntityPlayerMP player = Players.serverPlayer(entity);
+        if (player != null) { drop(player, def, entity.world, entity.getPosition(), def.loot.enderChest); }
         else if (carriesMarked(entity, def.getKey())) { event.setCanceled(true); }
     }
 
@@ -176,14 +175,15 @@ public final class GateLoot {
         BlockPos last = POSITIONS.get(event.player.getUniqueID());
         if (ContentGates.lootDimension(event.toDim) != null) { snapshot(event.player); }
         World from = DimensionManager.getWorld(event.fromDim);
-        if (def != null && last != null && from != null && event.player instanceof EntityPlayerMP) { drop((EntityPlayerMP) event.player, def, from, last, def.loot.enderChest); }
+        EntityPlayerMP player = Players.serverPlayer(event.player);
+        if (def != null && last != null && from != null && player != null) { drop(player, def, from, last, def.loot.enderChest); }
     }
 
     @SubscribeEvent public static void onDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof EntityPlayerMP)) { return; }
-        EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
+        EntityPlayerMP player = Players.serverPlayer(event.getEntity());
+        if (player == null) { return; }
         GateDef def = ContentGates.lootDimension(player.dimension);
-        if (def != null && player.world.getGameRules().getBoolean("keepInventory")) { drop(player, def, player.world, player.getPosition(), false); }
+        if (def != null && PlayerLoot.keepInventory(player.world)) { drop(player, def, player.world, player.getPosition(), false); }
     }
 
     private static void mark(GateDef def, ItemStack stack) {
@@ -206,15 +206,12 @@ public final class GateLoot {
         if (tag != null && tag.hasKey(BLOCK_ENTITY, Constants.NBT.TAG_COMPOUND)) {
             NBTTagList items = tag.getCompoundTag(BLOCK_ENTITY).getTagList("Items", Constants.NBT.TAG_COMPOUND);
             for (int index = 0; index < items.tagCount(); index++) {
-                if (key.equals(items.getCompoundTagAt(index).getCompoundTag("tag").getString(MARK))) { return true; }
+                if (key.equals(items.getCompoundTagAt(index).getCompoundTag(Nbts.STACK_TAG).getString(MARK))) { return true; }
             }
         }
         IItemHandler handler = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
         if (handler == null) { return false; }
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            if (marked(handler.getStackInSlot(slot), key)) { return true; }
-        }
-        return false;
+        return ItemHandlers.any(handler, held -> marked(held, key));
     }
 
     private static boolean carriesMarked(Entity entity, String key) {
@@ -232,22 +229,12 @@ public final class GateLoot {
         return all;
     }
 
-    private static List<ItemStack> held(EntityPlayer player) {
-        List<ItemStack> all = new ArrayList<>();
-        for (List<ItemStack> part : Arrays.asList(player.inventory.mainInventory, player.inventory.armorInventory, player.inventory.offHandInventory)) {
-            for (ItemStack stack : part) {
-                if (!stack.isEmpty()) { all.add(stack); }
-            }
-        }
-        return all;
-    }
-
     private static List<ItemStack> carried(EntityPlayer player, boolean enderChest) {
-        List<ItemStack> all = held(player);
+        List<ItemStack> all = Stacks.held(player);
         if (enderChest) { all.addAll(contents(player.getInventoryEnderChest())); }
         Entity vehicle = player.getRidingEntity();
         if (vehicle instanceof IInventory) { all.addAll(contents((IInventory) vehicle)); }
-        if (ContentContainerItem.baubled()) { all.addAll(BaublesPouch.wornStacks(player)); }
+        all.addAll(Worn.baubles(player));
         return all;
     }
 
@@ -260,7 +247,7 @@ public final class GateLoot {
     }
 
     private static void markTaken(EntityPlayer player, GateDef def, List<ItemStack> before) {
-        List<ItemStack> now = held(player);
+        List<ItemStack> now = Stacks.held(player);
         List<ItemStack> done = new ArrayList<>();
         List<ItemStack> split = new ArrayList<>();
         for (ItemStack kind : now) {
@@ -299,12 +286,11 @@ public final class GateLoot {
             }
             stack.setCount(0);
             count += dropped.getCount();
-            EntityItem item = new EntityItem(world, at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, dropped);
-            item.setPickupDelay(PICKUP_DELAY);
-            world.spawnEntity(item);
+            Vec3d feet = Walking.feet(at);
+            Stacks.dropAt(world, feet.x, feet.y, feet.z, dropped, PICKUP_DELAY);
         }
         if (count == 0) { return; }
         ContentLog.LOGGER.info("Gate {} dropped {} marked item(s) of {} on leaving dimension {}", key, count, player.getName(), def.dimension);
-        Says.bar(player, CardIds.GATE_LOOT_LEFT, TextFormatting.YELLOW, def.loot.message.replace("%dim%", def.name).replace("%count%", Integer.toString(count)));
+        Says.bar(player, CardIds.GATE_LOOT_LEFT, TextFormatting.YELLOW, Says.fill(def.loot.message, "%dim%", def.name, "%count%", Integer.toString(count)));
     }
 }

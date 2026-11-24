@@ -1,14 +1,13 @@
 package mctmods.resourcedatapackloader.client.util;
 
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionAmbience;
-import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.AmbienceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
 
-import java.util.function.IntUnaryOperator;
+import java.util.function.IntToDoubleFunction;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MusicTicker;
@@ -42,9 +41,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         float skyRed = sky * (sunBrightness * 0.65F + 0.35F);
         float blockGreen = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
         float blockBlue = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * scale + floor;
-        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * scale + floor;
-        colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * scale + floor;
+        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::redF) + blockLight * channel(look.lightBlockColor, Colors::redF)) * scale + floor;
+        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::greenF) + blockGreen * channel(look.lightBlockColor, Colors::greenF)) * scale + floor;
+        colors[2] = (sky * channel(look.lightSkyColor, Colors::blueF) + blockBlue * channel(look.lightBlockColor, Colors::blueF)) * scale + floor;
         EntityRenderer renderer = Minecraft.getMinecraft().entityRenderer;
         float boss = renderer.bossColorModifierPrev + (renderer.bossColorModifier - renderer.bossColorModifierPrev) * partialTicks;
         if (boss <= 0.0F) { return; }
@@ -69,7 +68,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (effect == null) { return own; }
         int duration = effect.getDuration();
         float strength = duration > NIGHT_VISION_FULL ? 1.0F : NIGHT_VISION_BASE + MathHelper.sin((duration - partialTicks) * (float) Math.PI * NIGHT_VISION_RATE) * NIGHT_VISION_SWING;
-        return own.add(ContentDimensionRules.color(look.nightVisionColor).subtract(own).scale(strength));
+        return own.add(Colors.vec(look.nightVisionColor).subtract(own).scale(strength));
     }
 
     @Nullable public static MusicTicker.MusicType existingMusic(World world, @Nullable MusicTicker.MusicType own) {
@@ -78,5 +77,5 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         return ambience == null || ambience.music == null ? own : ContentDimensionAmbience.music(ambience);
     }
 
-    private static float channel(int rgb, IntUnaryOperator pick) { return rgb == SkyLookDef.UNSET ? 1.0F : pick.applyAsInt(rgb) / 255.0F; }
+    private static float channel(int rgb, IntToDoubleFunction pick) { return rgb == SkyLookDef.UNSET ? 1.0F : (float) pick.applyAsDouble(rgb); }
 }

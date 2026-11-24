@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.command.custom;
 
 import java.math.BigDecimal;
+import javax.annotation.Nullable;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -41,6 +42,14 @@ final class CommandArg {
         if (INT.equals(type)) { return String.valueOf(CommandBase.parseInt(raw)); }
         if (NUMBER.equals(type)) { return BigDecimal.valueOf(CommandBase.parseDouble(raw)).toPlainString(); }
         return raw;
+    }
+
+    @Nullable Object typed(String value) {
+        try {
+            if (INT.equals(type)) { return value.isEmpty() ? null : Integer.valueOf(value); }
+            if (NUMBER.equals(type)) { return value.isEmpty() ? null : Double.valueOf(value); }
+        } catch (NumberFormatException e) { return null; }
+        return value;
     }
 
     private String absent(ICommandSender sender, String usage) throws CommandException {

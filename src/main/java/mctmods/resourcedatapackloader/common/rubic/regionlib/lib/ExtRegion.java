@@ -53,7 +53,7 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
     @Override public void writeValue(K key, ByteBuffer value) throws IOException {
         if (value == null && (!initialized || exists.isEmpty() || !exists.get(key.getId()))) { return; }
         if (!initialized) {
-            Utils.createDirectories(this.directory);
+            Files.createDirectories(this.directory);
             initialized = true;
         }
         String fileName = String.valueOf(key.getId());

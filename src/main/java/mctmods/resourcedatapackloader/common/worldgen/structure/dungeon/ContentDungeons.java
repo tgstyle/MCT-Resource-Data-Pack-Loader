@@ -56,7 +56,9 @@ public final class ContentDungeons {
         if (DEFS.isEmpty() || !(world instanceof WorldServer) || forDimension(world.provider.getDimension()).isEmpty()) { return; }
         int floor = GenHeights.floor(world, 0);
         int ceiling = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1;
-        StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + WINDOW_OFFSET, floor, chunkZ * 16 + WINDOW_OFFSET, chunkX * 16 + WINDOW_OFFSET + 15, ceiling, chunkZ * 16 + WINDOW_OFFSET + 15);
+        int baseX = chunkX * 16 + WINDOW_OFFSET;
+        int baseZ = chunkZ * 16 + WINDOW_OFFSET;
+        StructureBoundingBox window = new StructureBoundingBox(baseX, floor, baseZ, baseX + 15, ceiling, baseZ + 15);
         for (DungeonSites.Site site : DungeonSites.sitesTouching(world, window)) {
             DungeonWriter.write(world, site, window, floor, ceiling);
         }
@@ -92,11 +94,7 @@ public final class ContentDungeons {
         for (DungeonSites.Site site : DungeonSites.sitesNear(world, from, radius)) {
             if (name.equals(site.def.locateAs)) { named.add(site); }
         }
-        named.sort(Comparator.comparingLong(site -> {
-            long dx = site.originX - (long) from.getX();
-            long dz = site.originZ - (long) from.getZ();
-            return dx * dx + dz * dz;
-        }));
+        named.sort(Comparator.comparingLong(site -> site.distanceSq(from.getX(), from.getZ())));
         List<long[]> spots = new ArrayList<>();
         for (DungeonSites.Site site : named.subList(0, Math.min(named.size(), LOCATE_PLANS))) {
             PlanRecords.Entrance entrance = DungeonPlanner.get(world, site.def, site).entrance;

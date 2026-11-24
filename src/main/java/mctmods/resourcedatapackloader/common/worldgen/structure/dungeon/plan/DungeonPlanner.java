@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef.
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonSizeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RoomKindDef;
+import mctmods.resourcedatapackloader.common.util.BoundedLru;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeedStreams;
+import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonThemes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Level;
@@ -18,10 +20,8 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
@@ -30,7 +30,7 @@ public final class DungeonPlanner {
     private static final int RULE_STREAM = 1;
     private static final int VERTICAL = DungeonDef.ROLLS.indexOf("vertical");
     private static final int ENTRANCES = DungeonDef.ROLLS.indexOf("entrances");
-    private static final Lru CACHE = new Lru();
+    private static final BoundedLru<String, DungeonPlan> CACHE = new BoundedLru<>(CACHED);
 
     private DungeonPlanner() {}
 
@@ -82,11 +82,11 @@ public final class DungeonPlanner {
         return built;
     }
 
-    private static long siteSeedOf(World world, DungeonDef def, DungeonSites.Site site) { return MathUtil.mix(world.getSeed() ^ def.key.hashCode(), site.originX, 3, site.originZ); }
+    private static long siteSeedOf(World world, DungeonDef def, DungeonSites.Site site) { return SeedStreams.keyed(world.getSeed(), def.key, site.originX, 3, site.originZ); }
 
     private static int entranceDegree(DungeonDef def, int[] rolls, long siteSeed) {
         Degree extra = def.entrance.extra;
-        return extra != null && extra.valid() ? draw(extra, SeedStreams.random(siteSeed, "entranceExtra", 1)) : rolls[ENTRANCES];
+        return extra != null && extra.valid() ? WeightedPicks.index(extra.weights, SeedStreams.random(siteSeed, "entranceExtra", 1)) : rolls[ENTRANCES];
     }
 
     private static List<DungeonPlan.Room> roomsOf(Level.Builder level) {
@@ -104,7 +104,7 @@ public final class DungeonPlanner {
 
     private static List<int[]> slabs(DungeonDef def, DungeonSizeDef size, long siteSeed, int top, int bottom) {
         int fewest = size.levels[0];
-        int wanted = fewest + SeedStreams.random(siteSeed, "levels", 0).nextInt(Math.max(fewest, size.levels[1]) - fewest + 1);
+        int wanted = MathUtil.randomIn(SeedStreams.random(siteSeed, "levels", 0), fewest, Math.max(fewest, size.levels[1]));
         int lowHeight = def.levelHeight[0];
         int heightSpan = Math.max(lowHeight, def.levelHeight[1]) - lowHeight + 1;
         List<int[]> slabs = new ArrayList<>();
@@ -120,32 +120,15 @@ public final class DungeonPlanner {
     }
 
     private static void applyRolls(int[] into, Map<String, Degree> source, long siteSeed, int stream) {
-        for (int i = 0; i < into.length; i++) {
-            Degree degree = source.get(DungeonDef.ROLLS.get(i));
-            if (degree != null && degree.valid()) { into[i] = draw(degree, SeedStreams.random(siteSeed, "rolls", stream + i)); }
-        }
-    }
-
-    private static int draw(Degree degree, Random random) {
-        int total = 0;
-        for (int weight : degree.weights) {
-            total += Math.max(0, weight);
-        }
-        int roll = random.nextInt(total);
-        for (int i = 0; i < degree.weights.length; i++) {
-            roll -= Math.max(0, degree.weights[i]);
-            if (roll < 0) { return i; }
-        }
-        return 0;
+        Degree.apply(into, source, siteSeed, "rolls", stream);
     }
 
     private static Step stepAt(DungeonDef def, String themeId, int[] rolls, long siteSeed, double depth) {
-        Step step = new Step(themeId, def.roomKinds, rolls.clone());
+        Step step = new Step(themeId, def.kindsAt(depth), rolls.clone());
         for (int r = 0; r < def.levelRules.size(); r++) {
             LevelRule rule = def.levelRules.get(r);
             if (rule.fromDepth > depth) { continue; }
             if (rule.theme != null) { step.themeId = rule.theme.toString(); }
-            if (rule.roomKinds != null) { step.kinds = rule.roomKinds; }
             if (rule.rolls != null) { applyRolls(step.rolls, rule.rolls, siteSeed, RULE_STREAM * DungeonDef.ROLLS.size() * (r + 1)); }
         }
         step.vertical = step.rolls[VERTICAL];
@@ -154,7 +137,7 @@ public final class DungeonPlanner {
 
     private static final class Step {
         private String themeId;
-        private List<RoomKindDef> kinds;
+        private final List<RoomKindDef> kinds;
         private final int[] rolls;
         private int vertical;
 
@@ -163,13 +146,5 @@ public final class DungeonPlanner {
             this.kinds = kinds;
             this.rolls = rolls;
         }
-    }
-
-    private static final class Lru extends LinkedHashMap<String, DungeonPlan> {
-        private static final long serialVersionUID = 1L;
-
-        private Lru() { super(CACHED, 0.75f, true); }
-
-        @Override protected boolean removeEldestEntry(Map.Entry<String, DungeonPlan> eldest) { return size() > CACHED; }
     }
 }

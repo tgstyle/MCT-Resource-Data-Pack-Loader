@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.shield;
 
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.ArrayList;
@@ -64,8 +66,8 @@ public final class ShieldIndex {
 
     private void gather(int x, int z, int reachChunks) {
         gathered.clear();
-        int chunkX = x >> 4;
-        int chunkZ = z >> 4;
+        int chunkX = Coords.blockToCube(x);
+        int chunkZ = Coords.blockToCube(z);
         int side = reachChunks * 2 + 1;
         if (cells.size() < side * side) {
             for (Long2ObjectMap.Entry<Cell> entry : cells.long2ObjectEntrySet()) {

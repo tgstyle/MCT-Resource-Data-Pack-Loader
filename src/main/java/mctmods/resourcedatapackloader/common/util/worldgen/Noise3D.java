@@ -47,6 +47,28 @@ public final class Noise3D {
         return MathUtil.lerp(w, MathUtil.lerp(v, x1, x2), MathUtil.lerp(v, x3, x4));
     }
 
+    public double noise(double x, double y, double z) {
+        int ix = (int) Math.floor(x) & 255;
+        int iy = (int) Math.floor(y) & 255;
+        int iz = (int) Math.floor(z) & 255;
+        double dx = x - Math.floor(x);
+        double dy = y - Math.floor(y);
+        double dz = z - Math.floor(z);
+        double u = fade(dx);
+        double v = fade(dy);
+        double w = fade(dz);
+        int a = permutation[ix] + iy;
+        int aa = permutation[a] + iz;
+        int ab = permutation[a + 1] + iz;
+        int b = permutation[ix + 1] + iy;
+        int ba = permutation[b] + iz;
+        int bb = permutation[b + 1] + iz;
+        return MathUtil.lerp(w, MathUtil.lerp(v, MathUtil.lerp(u, grad(permutation[aa], dx, dy, dz), grad(permutation[ba], dx - 1, dy, dz)),
+                        MathUtil.lerp(u, grad(permutation[ab], dx, dy - 1, dz), grad(permutation[bb], dx - 1, dy - 1, dz))),
+                MathUtil.lerp(v, MathUtil.lerp(u, grad(permutation[aa + 1], dx, dy, dz - 1), grad(permutation[ba + 1], dx - 1, dy, dz - 1)),
+                        MathUtil.lerp(u, grad(permutation[ab + 1], dx, dy - 1, dz - 1), grad(permutation[bb + 1], dx - 1, dy - 1, dz - 1))));
+    }
+
     public float octaves(float x, float y, float z, int count, float persistence) {
         float value = 0.0F;
         float amplitude = 1.0F;
@@ -62,6 +84,15 @@ public final class Noise3D {
     }
 
     private static float fade(float t) { return t * t * t * (t * (t * 6.0F - 15.0F) + 10.0F); }
+
+    private static double fade(double t) { return t * t * t * (t * (t * 6.0D - 15.0D) + 10.0D); }
+
+    private static double grad(int hash, double x, double y, double z) {
+        int h = hash & 15;
+        double u = h < 8 ? x : y;
+        double v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+        return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+    }
 
     private static float grad(int hash, float x, float y, float z) {
         int h = hash & 15;

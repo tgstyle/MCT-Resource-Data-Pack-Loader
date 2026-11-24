@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.entities;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.inventory.EntityEquipmentSlot;
 
 public final class MobSwitchDef {
     public static final MobSwitchDef NONE = new MobSwitchDef("", "", Collections.emptyList(), 1.0F, 1.0F, 1.0F, Collections.emptyMap());
@@ -12,9 +13,9 @@ public final class MobSwitchDef {
     public final float health;
     public final float damage;
     public final float speed;
-    public final Map<String, Gear> equipment;
+    public final Map<EntityEquipmentSlot, Gear> equipment;
 
-    public MobSwitchDef(String owner, String name, List<String> entities, float health, float damage, float speed, Map<String, Gear> equipment) {
+    public MobSwitchDef(String owner, String name, List<String> entities, float health, float damage, float speed, Map<EntityEquipmentSlot, Gear> equipment) {
         this.owner = owner;
         this.name = name;
         this.entities = Collections.unmodifiableList(entities);

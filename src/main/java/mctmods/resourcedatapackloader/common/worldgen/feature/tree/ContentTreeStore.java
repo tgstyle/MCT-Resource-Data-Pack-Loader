@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldSettings;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.ArrayList;
@@ -34,9 +35,8 @@ public final class ContentTreeStore {
     }
 
     public static void put(WorldServer world, TreeEntry entry) {
-        if (world.isRemote) { return; }
         int dimension = world.provider.getDimension();
-        Map<Long, TreeEntry> entries = CHUNKS.computeIfAbsent(dimension, k -> new HashMap<>()).computeIfAbsent(chunkOf(entry.pos), k -> new LinkedHashMap<>());
+        Map<Long, TreeEntry> entries = chunks(dimension).computeIfAbsent(chunkOf(entry.pos), k -> new LinkedHashMap<>());
         TreeEntry old = entries.put(entry.pos, entry);
         if (old != null) { unindex(dimension, old); }
         index(dimension, entry);
@@ -59,26 +59,23 @@ public final class ContentTreeStore {
     }
 
     public static TreeEntry ownerOf(WorldServer world, long position) {
-        if (world.isRemote) { return null; }
         Map<Long, TreeEntry> owners = OWNED.get(world.provider.getDimension());
         return owners == null ? null : owners.get(position);
     }
 
     public static void addOwned(WorldServer world, TreeEntry entry, int packed) {
-        if (world.isRemote) { return; }
         entry.owned.add(packed);
         ownedIndex(world.provider.getDimension()).put(worldPos(entry, packed), entry);
     }
 
     public static void removeOwned(WorldServer world, TreeEntry entry, int packed) {
-        if (world.isRemote) { return; }
         entry.owned.remove(packed);
         ownedIndex(world.provider.getDimension()).remove(worldPos(entry, packed), entry);
     }
 
     public static void dirty(WorldServer world, TreeEntry entry) {
         BlockPos start = BlockPos.fromLong(entry.pos);
-        world.getChunk(start.getX() >> 4, start.getZ() >> 4).markDirty();
+        world.getChunk(start).markDirty();
     }
 
     @SubscribeEvent public static void onChunkLoad(ChunkDataEvent.Load event) {
@@ -92,7 +89,7 @@ public final class ContentTreeStore {
             entries.put(entry.pos, entry);
             index(dimension, entry);
         }
-        if (!entries.isEmpty()) { CHUNKS.computeIfAbsent(dimension, k -> new HashMap<>()).put(chunkKey(pos.x, pos.z), entries); }
+        if (!entries.isEmpty()) { chunks(dimension).put(chunkKey(pos.x, pos.z), entries); }
     }
 
     @SubscribeEvent public static void onChunkSave(ChunkDataEvent.Save event) {
@@ -131,16 +128,20 @@ public final class ContentTreeStore {
         int dimension = event.getWorld().provider.getDimension();
         CHUNKS.remove(dimension);
         OWNED.remove(dimension);
+        ContentTreeClock.forget(dimension);
     }
 
     private static Map<Long, TreeEntry> chunkMap(WorldServer world, long key) {
-        if (world.isRemote) { return null; }
         Map<Long, Map<Long, TreeEntry>> chunks = CHUNKS.get(world.provider.getDimension());
         return chunks == null ? null : chunks.get(key);
     }
 
     private static void release(int dimension, Map<Long, Map<Long, TreeEntry>> chunks, long key) {
         for (TreeEntry entry : chunks.remove(key).values()) { unindex(dimension, entry); }
+    }
+
+    private static Map<Long, Map<Long, TreeEntry>> chunks(int dimension) {
+        return CHUNKS.computeIfAbsent(dimension, k -> new HashMap<>());
     }
 
     private static Map<Long, TreeEntry> ownedIndex(int dimension) {
@@ -158,12 +159,12 @@ public final class ContentTreeStore {
     }
 
     private static long worldPos(TreeEntry entry, int packed) {
-        return BlockPos.fromLong(entry.pos).add(TreeEntry.unpackX(packed), TreeEntry.unpackY(packed), TreeEntry.unpackZ(packed)).toLong();
+        return TreeEntry.at(BlockPos.fromLong(entry.pos), packed).toLong();
     }
 
     private static long chunkOf(long pos) {
         BlockPos start = BlockPos.fromLong(pos);
-        return chunkKey(start.getX() >> 4, start.getZ() >> 4);
+        return chunkKey(Coords.blockToCube(start.getX()), Coords.blockToCube(start.getZ()));
     }
 
     private static long chunkKey(int x, int z) {

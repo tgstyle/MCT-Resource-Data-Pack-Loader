@@ -273,7 +273,7 @@ public final class BeardRoadsPaving {
             boolean wet = false;
             int deckAt = Integer.MIN_VALUE;
             if (graded.deck[i] != Integer.MIN_VALUE) {
-                for (int y = graded.deck[i]; y >= graded.deck[i] - 8 && y >= 1; y--) {
+                for (int y = graded.deck[i]; y >= graded.deck[i] - VERGE_WET && y >= 1; y--) {
                     IBlockState stood = world.getBlockState(at.setPos(x, y, z));
                     if (stood.getBlock() == Blocks.AIR) { continue; }
                     if (stood.getMaterial().isLiquid()) {
@@ -302,7 +302,7 @@ public final class BeardRoadsPaving {
 
         private Footing gradedFooting(int i, int across, int x, int z, BlockPos top) {
             boolean wet = world.getBlockState(top).getMaterial().isLiquid();
-            for (int y = profile[i] - 1; !wet && y >= profile[i] - 8; y--) {
+            for (int y = profile[i] - 1; !wet && y >= profile[i] - VERGE_WET; y--) {
                 IBlockState stood = world.getBlockState(at.setPos(x, y, z));
                 if (stood.getMaterial().isLiquid()) { wet = true; }
                 else if (stood.getMaterial().isSolid()) { break; }
@@ -381,11 +381,10 @@ public final class BeardRoadsPaving {
             for (int y = target + 1; y <= clearTo; y++) {
                 at.setPos(x, y, z);
                 IBlockState above = world.getBlockState(at);
-                Block up = above.getBlock();
-                if (up == Blocks.AIR) { continue; }
+                if (above.getBlock() == Blocks.AIR) { continue; }
                 if (BeardKeep.holds(x, y, z) || BeardRails.railBlock(above)) { continue; }
                 if (above.getMaterial().isLiquid()) { break; }
-                if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
+                if (BeardBlocks.clearableAbove(above)) {
                     BeardBlocks.note(world, at, "Paving the road");
                     world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                     cut++;
@@ -421,7 +420,7 @@ public final class BeardRoadsPaving {
                     if (footing.getMaterial().isSolid() && !footing.getMaterial().isLiquid()) {
                         at.setPos(x, target, z);
                         IBlockState turf = BeardBlocks.fillGround(world, x, z);
-                        world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, BlockFlags.UPDATE_CLIENTS);
+                        world.setBlockState(at, BeardBlocks.grassed(turf, true), BlockFlags.UPDATE_CLIENTS);
                         filled++;
                     }
                 }

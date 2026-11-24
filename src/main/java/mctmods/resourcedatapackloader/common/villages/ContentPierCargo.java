@@ -37,8 +37,8 @@ public final class ContentPierCargo {
         if (CHOICES.stale()) { load(); }
         if (CHOICES.isEmpty()) { return false; }
         Random random = SeededRandom.at(world, x, y, z);
-        WeightedPicks.Pick chosen = CHOICES.pick(random);
-        if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return false; }
+        WeightedPicks.Pick chosen = CHOICES.pickFilled(random);
+        if (chosen == null) { return false; }
         IBlockState state = ContentStates.parse(chosen.name, NAME);
         if (state == null) { return false; }
         int high = heightOf(chosen);
@@ -73,10 +73,6 @@ public final class ContentPierCargo {
 
     private static void load() {
         CHOICES.load(ContentControl.list(ContentControl.VILLAGES, NAME, Config.worldgen.villagePathPierCargo));
-        for (String name : CHOICES.names()) {
-            if (WeightedPicks.EMPTY.equals(name) || ContentStates.parse(name, NAME) != null) { continue; }
-            ContentLog.LOGGER.error("{} names {}, which is no block here, so its share of the pier is left bare", NAME, name);
-        }
-        if (!CHOICES.isEmpty()) { ContentLog.LOGGER.info("Piers carry {} kind(s) of cargo", CHOICES.size()); }
+        CHOICES.report(NAME, name -> ContentStates.parse(name, NAME) != null, "{} names {}, which is no block here, so its share of the pier is left bare", "Piers carry {} kind(s) of cargo");
     }
 }

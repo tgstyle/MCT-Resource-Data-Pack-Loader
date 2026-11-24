@@ -23,10 +23,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextFormatting;
 
 final class GameCommand {
-    private static final String NAME = "rdplserver";
+    private static final String DECK = "deck";
+    private static final String BOARD = "board";
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = Arrays.asList(ContentDice.COIN, "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
+    private static final List<String> ROLLS = Arrays.asList(ContentDice.COIN, "die", "dice", "advantage", "disadvantage", "pick", DECK, "teamroll", "tiebreak", "last", "pass", BOARD);
     private static final List<String> DECK_ACTIONS = Arrays.asList("draw", "shuffle", "left");
     private static final List<String> PICKS = Arrays.asList("player", "team");
     private static final List<String> OPTIONS = Arrays.asList("store", "audience");
@@ -34,42 +35,36 @@ final class GameCommand {
     private static final Map<String, Integer> LEVELS = new LinkedHashMap<>();
     static {
         for (String roll : ROLLS) { LEVELS.put(roll, 0); }
-        LEVELS.remove("deck");
-        for (String action : DECK_ACTIONS) { LEVELS.put("deck " + action, 0); }
-        LEVELS.put("deck shuffle", 2);
+        LEVELS.remove(DECK);
+        for (String action : DECK_ACTIONS) { LEVELS.put(DECK + " " + action, 0); }
+        LEVELS.put(DECK + " shuffle", 2);
         LEVELS.put("tiebreak", 2);
-        LEVELS.remove("board");
-        for (String action : BoardCommand.ACTIONS) { LEVELS.put("board " + action, 0); }
-        LEVELS.put("board start", 2);
-        LEVELS.put("board end", 2);
-        LEVELS.put("board ai", 2);
+        LEVELS.remove(BOARD);
+        for (String action : BoardCommand.ACTIONS) { LEVELS.put(BOARD + " " + action, 0); }
+        LEVELS.put(BOARD + " start", 2);
+        LEVELS.put(BOARD + " end", 2);
+        LEVELS.put(BOARD + " ai", 2);
     }
 
     private GameCommand() {}
 
     private static int level(String sub) { return ServerCommands.listedLevel("gameLevels", Config.commands.gameLevels, sub, LEVELS.getOrDefault(sub, 0)); }
 
-    static int lowest() { return lowest(LEVELS.keySet()); }
+    static int lowest() { return ServerCommands.lowest(LEVELS.keySet(), GameCommand::level); }
 
-    private static int lowest(Iterable<String> subs) {
-        int lowest = ServerCommands.OPERATOR;
-        for (String sub : subs) { lowest = Math.min(lowest, level(sub)); }
-        return lowest;
-    }
-
-    private static String sub(String[] args) { return args.length > 2 && ("deck".equals(args[1]) || "board".equals(args[1])) ? args[1] + " " + args[2] : args[1]; }
+    private static String sub(String[] args) { return args.length > 2 && (DECK.equals(args[1]) || BOARD.equals(args[1])) ? args[1] + " " + args[2] : args[1]; }
 
     private static CommandException refused(ICommandSender sender, String key, Object... pairs) { return new CommandException(ContentDice.words(viewer(sender), key, pairs)); }
 
     static void run(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length < 2 || !ROLLS.contains(args[1])) { throw refused(sender, "usage"); }
-        if (!sender.canUseCommand(level(sub(args)), NAME)) { throw refused(sender, "notallowed"); }
+        if (!sender.canUseCommand(level(sub(args)), CommandShared.NAME)) { throw refused(sender, "notallowed"); }
         if ("pass".equals(args[1])) {
             String refusal = ContentTurns.pass(server, sender);
             if (refusal != null) { throw refused(sender, refusal); }
             return;
         }
-        if ("board".equals(args[1])) {
+        if (BOARD.equals(args[1])) {
             BoardCommand.run(server, sender, args);
             return;
         }
@@ -111,7 +106,7 @@ final class GameCommand {
             case "advantage": return ContentDice.edge(random, first == null ? DEFAULT_ROLL : first, true);
             case "disadvantage": return ContentDice.edge(random, first == null ? DEFAULT_ROLL : first, false);
             case "pick": return pick(server, plain);
-            case "deck": return deck(server, plain);
+            case DECK: return deck(server, plain);
             case "teamroll": return ContentDice.teamroll(server, sender, first == null ? DEFAULT_ROLL : first);
             default: return ContentDice.tiebreak(server, first);
         }
@@ -149,11 +144,11 @@ final class GameCommand {
         if (args.length == 2) {
             List<String> open = new ArrayList<>();
             for (String roll : ROLLS) {
-                if (sender.canUseCommand(lowestOf(roll), NAME)) { open.add(roll); }
+                if (sender.canUseCommand(lowestOf(roll), CommandShared.NAME)) { open.add(roll); }
             }
             return CommandBase.getListOfStringsMatchingLastWord(args, open);
         }
-        if ("board".equals(args[1])) { return BoardCommand.complete(server, args); }
+        if (BOARD.equals(args[1])) { return BoardCommand.complete(server, args); }
         String before = args[args.length - 2];
         if ("store".equals(before)) {
             List<String> names = new ArrayList<>();
@@ -169,20 +164,20 @@ final class GameCommand {
                     return CommandBase.getListOfStringsMatchingLastWord(args, dice);
                 case "dice": case "advantage": case "disadvantage": case "teamroll": return CommandBase.getListOfStringsMatchingLastWord(args, SAMPLE_ROLLS);
                 case "pick": return CommandBase.getListOfStringsMatchingLastWord(args, PICKS);
-                case "deck": return CommandBase.getListOfStringsMatchingLastWord(args, DECK_ACTIONS);
+                case DECK: return CommandBase.getListOfStringsMatchingLastWord(args, DECK_ACTIONS);
                 case "tiebreak": return CommandBase.getListOfStringsMatchingLastWord(args, new ArrayList<>(ContentScoring.all().keySet()));
                 default: break;
             }
         }
-        if (args.length == 4 && "deck".equals(args[1])) { return CommandBase.getListOfStringsMatchingLastWord(args, ContentDice.deckNames()); }
+        if (args.length == 4 && DECK.equals(args[1])) { return CommandBase.getListOfStringsMatchingLastWord(args, ContentDice.deckNames()); }
         if (args.length == 4 && "pick".equals(args[1]) && "team".equals(args[2])) { return CommandBase.getListOfStringsMatchingLastWord(args, new ArrayList<>(ContentTeams.board(server).getTeamNames())); }
         return CommandBase.getListOfStringsMatchingLastWord(args, OPTIONS);
     }
 
     private static int lowestOf(String roll) {
-        if (!"deck".equals(roll) && !"board".equals(roll)) { return level(roll); }
+        if (!DECK.equals(roll) && !BOARD.equals(roll)) { return level(roll); }
         List<String> subs = new ArrayList<>();
-        for (String action : "deck".equals(roll) ? DECK_ACTIONS : BoardCommand.ACTIONS) { subs.add(roll + " " + action); }
-        return lowest(subs);
+        for (String action : DECK.equals(roll) ? DECK_ACTIONS : BoardCommand.ACTIONS) { subs.add(roll + " " + action); }
+        return ServerCommands.lowest(subs, GameCommand::level);
     }
 }

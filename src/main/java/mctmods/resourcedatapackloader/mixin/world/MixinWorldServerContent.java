@@ -45,7 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (asked == null) { return; }
 
         self.getWorldInfo().setSpawn(asked);
-        Summary.info("terrain.spawn", "Spawning every new world at " + asked.getX() + ", " + asked.getY() + ", " + asked.getZ() + ", which is what a pack asks for");
+        Summary.packAsks("terrain.spawn", "Spawning every new world at " + asked.getX() + ", " + asked.getY() + ", " + asked.getZ());
     }
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldServer;setWorldTime(J)V")) private void rdpl$holdTimeWhileMaking(WorldServer world, long time) {
@@ -73,6 +73,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         WorldServer self = (WorldServer) (Object) this;
         self.getWorldInfo().setBorderSize(wanted);
         self.getWorldBorder().setTransition(wanted);
-        Summary.info("terrain.border", "Standing the world border " + wanted + " block(s) across in every new world, which is what a pack asks for");
+        Summary.packAsks("terrain.border", "Standing the world border " + wanted + " block(s) across in every new world");
     }
 }

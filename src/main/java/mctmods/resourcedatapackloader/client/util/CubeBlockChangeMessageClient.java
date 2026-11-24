@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -28,7 +29,7 @@ public final class CubeBlockChangeMessageClient {
         for (int i = 0; i < localAddresses.length; i++) {
             BlockPos pos = cube.localAddressToBlockPos(localAddresses[i]);
             worldClient.invalidateBlockReceiveRegion(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
-            worldClient.setBlockState(pos, blockStates[i], 3);
+            worldClient.setBlockState(pos, blockStates[i], BlockFlags.UPDATE_ALL);
         }
 
         ClientHeightMap index = (ClientHeightMap) cube.getColumn().getOpacityIndex();

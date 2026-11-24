@@ -5,10 +5,11 @@ import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
+import mctmods.resourcedatapackloader.common.util.world.PlayerNear;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 public final class CardEvents {
     private static final ResourceLocation CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
-    private static final Map<UUID, Map<String, Integer>> LEVELS = new HashMap<>();
+    private static final Map<UUID, Map<String, Integer>> LEVELS = PlayerLogout.track(new HashMap<>());
 
     private CardEvents() {}
 
@@ -59,7 +60,7 @@ public final class CardEvents {
         EntityPlayerMP player = (EntityPlayerMP) event.getSource().getTrueSource();
         for (CardRule rule : rules) {
             if (!fallen.equals(new ResourceLocation(rule.entity))) { continue; }
-            if (!rule.rank.isEmpty() && !rule.rank.equals(ContentRanks.rankOf(event.getEntity()))) { continue; }
+            if (!CardRule.wants(rule.rank, ContentRanks.rankOf(event.getEntity()))) { continue; }
             if (rule.count > 1 && CardStorage.tallyFor(player, rule.key) < rule.count) { continue; }
             if (rule.count > 1) { CardStorage.clearTallyFor(player, rule.key); }
             CardFire.fire(rule, player);
@@ -70,7 +71,7 @@ public final class CardEvents {
         if (what.isEmpty()) { return; }
         String named = ContentDice.notation(what);
         for (CardRule rule : CardRules.on(CardRule.ROLL)) {
-            if (!rule.roll.isEmpty() && !rule.roll.equals(named)) { continue; }
+            if (!CardRule.wants(rule.roll, named)) { continue; }
             if (rule.atLeast != null && total < rule.atLeast) { continue; }
             if (rule.atMost != null && total > rule.atMost) { continue; }
             CardFire.fire(rule, player);
@@ -85,7 +86,7 @@ public final class CardEvents {
 
     public static void raidEnded(EntityPlayerMP player, String raid, boolean won) {
         for (CardRule rule : CardRules.on(won ? CardRule.RAID_WON : CardRule.RAID_LOST)) {
-            if (rule.raid.isEmpty() || rule.raid.equals(raid)) { CardFire.fire(rule, player); }
+            if (CardRule.wants(rule.raid, raid)) { CardFire.fire(rule, player); }
         }
     }
 
@@ -99,9 +100,9 @@ public final class CardEvents {
 
     public static void portway(EntityPlayerMP player, String trigger, String block, String network, String reason) {
         for (CardRule rule : CardRules.on(trigger)) {
-            if (!rule.portway.isEmpty() && !rule.portway.equals(block)) { continue; }
-            if (!rule.network.isEmpty() && !rule.network.equals(network)) { continue; }
-            if (!rule.reason.isEmpty() && !rule.reason.equals(reason)) { continue; }
+            if (!CardRule.wants(rule.portway, block)) { continue; }
+            if (!CardRule.wants(rule.network, network)) { continue; }
+            if (!CardRule.wants(rule.reason, reason)) { continue; }
             CardFire.fire(rule, player);
         }
     }
@@ -112,7 +113,7 @@ public final class CardEvents {
         if (before == null ? level == 0 : before == level) { return; }
         if (before != null) {
             for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
-                if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
+                if (!CardRule.wants(rule.exposure, hazard)) { continue; }
                 if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
             }
         }
@@ -130,10 +131,7 @@ public final class CardEvents {
     public static void environmentChanged(MinecraftServer server, int dimension, List<String> entered) {
         List<CardRule> rules = CardRules.on(CardRule.ENVIRONMENT_CHANGE);
         if (rules.isEmpty()) { return; }
-        List<EntityPlayerMP> here = new ArrayList<>();
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            if (player.dimension == dimension) { here.add(player); }
-        }
+        List<EntityPlayerMP> here = PlayerNear.playersIn(server, dimension, player -> true);
         if (here.isEmpty()) { return; }
         for (CardRule rule : rules) {
             if (rule.environment.isEmpty() || entered.contains(rule.environment)) { CardScan.fireAll(rule, here); }
@@ -151,13 +149,6 @@ public final class CardEvents {
     @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) { if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.CRAFT), (EntityPlayerMP) event.player, event.crafting); } }
 
     @SubscribeEvent public static void onPickup(PlayerEvent.ItemPickupEvent event) { if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.PICKUP), (EntityPlayerMP) event.player, event.getStack()); } }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        CardFire.forget(event.player.getUniqueID());
-        CardScan.forget(event.player.getUniqueID());
-        CardSend.forget(event.player.getUniqueID());
-        LEVELS.remove(event.player.getUniqueID());
-    }
 
     private static void item(List<CardRule> rules, EntityPlayerMP player, ItemStack stack) {
         if (rules.isEmpty() || stack.isEmpty()) { return; }

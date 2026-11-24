@@ -6,6 +6,7 @@ import com.google.common.collect.MapMaker;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockEnchantmentTable;
 import net.minecraft.inventory.ContainerEnchantment;
 import net.minecraft.inventory.IInventory;
@@ -86,9 +87,13 @@ public final class TableLapis implements ICapabilitySerializable<NBTTagCompound>
     }
 
     @SubscribeEvent public static void onClick(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityEnchantmentTable && event.getWorld().getBlockState(event.getPos()).getBlock().getClass() != BlockEnchantmentTable.class) {
+        if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityEnchantmentTable && replacedTable(event.getWorld().getBlockState(event.getPos()).getBlock())) {
             broken(event.getWorld(), event.getPos());
         }
+    }
+
+    public static boolean replacedTable(Block block) {
+        return block.getClass() != BlockEnchantmentTable.class;
     }
 
     @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) { return false; }

@@ -14,6 +14,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -33,9 +34,13 @@ public final class TallPlants {
     @Nullable public static Block partBlock(Block base, int part) {
         ResourceLocation name = base.getRegistryName();
         if (name == null) { return null; }
-        Block block = Block.REGISTRY.getObject(new ResourceLocation(name.getNamespace(), name.getPath() + PART_SUFFIX + part));
+        Block block = Block.REGISTRY.getObject(new ResourceLocation(name.getNamespace(), partPath(name.getPath(), part)));
         return block == Blocks.AIR ? null : block;
     }
+
+    private static String partPath(String path, int part) { return path + PART_SUFFIX + part; }
+
+    private static String basePath(String path) { return path.substring(0, path.lastIndexOf(PART_SUFFIX)); }
 
     public static int partNumber(Block block) {
         ResourceLocation name = block.getRegistryName();
@@ -51,8 +56,7 @@ public final class TallPlants {
         int number = partNumber(part);
         ResourceLocation name = part.getRegistryName();
         if (number <= 0 || name == null) { return null; }
-        String path = name.getPath();
-        Block base = Block.REGISTRY.getObject(new ResourceLocation(name.getNamespace(), path.substring(0, path.lastIndexOf(PART_SUFFIX))));
+        Block base = Block.REGISTRY.getObject(new ResourceLocation(name.getNamespace(), basePath(name.getPath())));
         return tallOf(base) == null ? null : base;
     }
 
@@ -65,6 +69,12 @@ public final class TallPlants {
         BlockPos below = pos.down(number);
         if (expected == null || world.getBlockState(below).getBlock() != expected) { return null; }
         return below;
+    }
+
+    public static int run(World world, BlockPos pos, Block block, EnumFacing direction) {
+        int length = 1;
+        while (world.getBlockState(pos.offset(direction, length)).getBlock() == block) { length++; }
+        return length;
     }
 
     public static int regrowAge(TallDef tall, int part) { return tall.rise[part - 1] - 1; }

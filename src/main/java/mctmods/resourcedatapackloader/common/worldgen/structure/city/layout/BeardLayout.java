@@ -44,18 +44,18 @@ public final class BeardLayout {
         for (StructureComponent other : own) {
             if (!(other instanceof StructureVillagePieces.Well)) { continue; }
             StructureBoundingBox well = other.getBoundingBox();
-            if (backX >= well.minX && backX <= well.maxX && backZ >= well.minZ && backZ <= well.maxZ) { return true; }
+            if (BeardPlots.overColumn(well, backX, backZ)) { return true; }
         }
         return false;
     }
 
     public static boolean fromWell(List<StructureComponent> own, StructureBoundingBox box, EnumFacing facing) {
-        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
-        int back = alongX ? (facing.getXOffset() > 0 ? box.minX - 1 : box.maxX + 1) : (facing.getZOffset() > 0 ? box.minZ - 1 : box.maxZ + 1);
+        boolean alongX = Facings.alongX(facing);
+        int back = Facings.edge(box, facing.getOpposite(), 1);
         for (StructureComponent other : own) {
             if (!(other instanceof StructureVillagePieces.Well)) { continue; }
             StructureBoundingBox well = other.getBoundingBox();
-            if (alongX ? (back >= well.minX && back <= well.maxX && box.maxZ >= well.minZ && box.minZ <= well.maxZ) : (back >= well.minZ && back <= well.maxZ && box.maxX >= well.minX && box.minX <= well.maxX)) { return true; }
+            if ((alongX ? BeardPlots.spansMeet(back, back, well.minX, well.maxX) : BeardPlots.spansMeet(back, back, well.minZ, well.maxZ)) && BeardPlots.spansAcross(well, box, alongX, 0)) { return true; }
         }
         return false;
     }
@@ -71,8 +71,7 @@ public final class BeardLayout {
             StructureBoundingBox met = other.getBoundingBox();
             if (BeardPlots.roadAlongX(met) != alongX) { continue; }
             if (BeardRoads.roadNarrow(met, alongX)) { continue; }
-            boolean acrossed = alongX ? met.maxZ >= found.minZ - half && met.minZ <= found.maxZ + half : met.maxX >= found.minX - half && met.minX <= found.maxX + half;
-            if (!acrossed) { continue; }
+            if (!BeardPlots.spansAcross(found, met, alongX, half)) { continue; }
             int gap = alongX ? Math.max(met.minX - found.maxX, found.minX - met.maxX) : Math.max(met.minZ - found.maxZ, found.minZ - met.maxZ);
             if (gap < 2 || gap > CityGrowth.march() || gap >= nearest) { continue; }
             nearest = gap;
@@ -110,7 +109,7 @@ public final class BeardLayout {
     }
 
     public static boolean clearAhead(StructureVillagePieces.Start start, List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
-        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        boolean alongX = Facings.alongX(facing);
         StructureBoundingBox ahead = new StructureBoundingBox(wide);
         int reach = fromWell(own, wide, facing) ? ContentBeard.attachGap() * 2 : 0;
         if (alongX) {
@@ -129,7 +128,7 @@ public final class BeardLayout {
 
     public static boolean widensPast(List<StructureComponent> pieces, StructureBoundingBox wide, EnumFacing facing) {
         List<StructureBoundingBox> plazas = BeardPlots.plazaSquares(pieces);
-        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        boolean alongX = Facings.alongX(facing);
         for (StructureComponent other : pieces) {
             if (BeardRails.buriedUnder(other, wide)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
@@ -150,15 +149,14 @@ public final class BeardLayout {
     }
 
     public static boolean roadWithinReach(List<StructureComponent> pieces, StructureBoundingBox alley, EnumFacing facing) {
-        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        boolean alongX = Facings.alongX(facing);
         boolean onward = facing == EnumFacing.EAST || facing == EnumFacing.SOUTH;
-        int end = alongX ? (onward ? alley.maxX : alley.minX) : (onward ? alley.maxZ : alley.minZ);
+        int end = Facings.edge(alley, facing, 0);
         int reach = ContentBeard.attachGap();
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
-            boolean lined = alongX ? met.maxZ >= alley.minZ && met.minZ <= alley.maxZ : met.maxX >= alley.minX && met.minX <= alley.maxX;
-            if (!lined) { continue; }
+            if (!BeardPlots.spansAcross(alley, met, alongX, 0)) { continue; }
             int away = onward ? (alongX ? met.minX : met.minZ) - end : end - (alongX ? met.maxX : met.maxZ);
             if (away > 0 && away <= reach) { return true; }
         }
@@ -166,16 +164,12 @@ public final class BeardLayout {
     }
 
     public static boolean joinsRoads(List<StructureComponent> pieces, StructureBoundingBox alley, EnumFacing facing) {
-        int minX = alley.minX;
-        int maxX = alley.maxX;
-        int minZ = alley.minZ;
-        int maxZ = alley.maxZ;
-        switch (facing) {
-            case NORTH: minZ = maxZ = alley.minZ - 1; break;
-            case SOUTH: minZ = maxZ = alley.maxZ + 1; break;
-            case WEST: minX = maxX = alley.minX - 1; break;
-            default: minX = maxX = alley.maxX + 1;
-        }
+        boolean alongX = Facings.alongX(facing);
+        int past = Facings.edge(alley, facing, 1);
+        int minX = alongX ? past : alley.minX;
+        int maxX = alongX ? past : alley.maxX;
+        int minZ = alongX ? alley.minZ : past;
+        int maxZ = alongX ? alley.maxZ : past;
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return true; }
@@ -189,8 +183,7 @@ public final class BeardLayout {
         for (StructureBoundingBox well : BeardPlots.wellBoxes(components)) {
             if (!BeardPlots.nearWell(road, well, reach)) { continue; }
             boolean alongX = BeardPlots.longerAlongX(road);
-            boolean radial = alongX ? road.maxZ >= well.minZ && road.minZ <= well.maxZ : road.maxX >= well.minX && road.minX <= well.maxX;
-            if (!radial) { return true; }
+            if (!BeardPlots.spansAcross(well, road, alongX, 0)) { return true; }
         }
         return false;
     }
@@ -257,7 +250,7 @@ public final class BeardLayout {
         for (StructureComponent other : start.getComponents()) {
             if (other == self || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
-            if (road.minX - 4 > box.maxX || box.minX - 4 > road.maxX || road.minZ - 4 > box.maxZ || box.minZ - 4 > road.maxZ) { continue; }
+            if (!BeardPlots.nearWell(box, road, 4)) { continue; }
             if (road.minY > leaned) { leaned = road.minY; }
         }
         return leaned;
@@ -273,7 +266,7 @@ public final class BeardLayout {
             structureComponents.add(placed);
             return true;
         }
-        int alongX = facing.getAxis() == EnumFacing.Axis.X ? 0 : 1;
+        int alongX = Facings.alongX(facing) ? 0 : 1;
         StructureBoundingBox well = start.getBoundingBox();
         int wellward = (alongX == 1 ? (well.minX + well.maxX) / 2 - (box.minX + box.maxX) / 2 : (well.minZ + well.maxZ) / 2 - (box.minZ + box.maxZ) / 2) >= 0 ? 1 : -1;
         int reach = ContentBeard.plazaReach() + 1;

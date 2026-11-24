@@ -48,7 +48,7 @@ public final class FurnaceRecipes {
     private static void apply(ResourceLocation key, JsonObject json, int[] counts) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
         if (json.has("remove")) { for (JsonElement element : Json.getJsonArray(json, "remove")) { counts[0] += remove(key, element); } }
-        if (json.has("add")) { for (JsonElement element : Json.getJsonArray(json, "add")) { if (add(key, element)) { counts[1]++; } } }
+        if (json.has("add")) { for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "add"), "An addition in {} is not an object, skipping it", key)) { if (add(key, element)) { counts[1]++; } } }
     }
 
     private static int remove(ResourceLocation key, JsonElement element) {
@@ -82,12 +82,7 @@ public final class FurnaceRecipes {
         return removed;
     }
 
-    private static boolean add(ResourceLocation key, JsonElement element) {
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("An addition in {} is not an object, skipping it", key);
-            return false;
-        }
-        JsonObject json = element.getAsJsonObject();
+    private static boolean add(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "add", ADD_KEYS);
         String inputName = Json.getString(json, "input", "");
         String outputName = Json.getString(json, "output", "");

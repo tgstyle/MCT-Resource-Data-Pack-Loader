@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow protected int chunkZ;
     @Shadow protected Chunk[][] chunkArray;
 
-    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true) private void rubic$getBlockState(BlockPos pos, CallbackInfoReturnable<IBlockState> cir) {
+    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true) private void rdpl$getBlockState(BlockPos pos, CallbackInfoReturnable<IBlockState> cir) {
         IRubicWorld rubic = (IRubicWorld) this.world;
         if (!rubic.rdpl$isRubicWorld()) { return; }
         int y = pos.getY();

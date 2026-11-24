@@ -4,9 +4,12 @@ import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
 import mctmods.resourcedatapackloader.client.gui.hud.MarkText;
 import mctmods.resourcedatapackloader.client.renderer.Blends;
 import mctmods.resourcedatapackloader.client.util.Crisp;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.network.TalkMessage;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +45,6 @@ import org.lwjgl.opengl.GL11;
     private static final double REACH = 8.0D;
     private static final int HOVER = 0x40FFFFFF;
     private static final int HOVER_TEXT = 0xFFFF55;
-    private static final int TEXT = 0xFFFFFF;
     private static final int MOST_PAGES = 32;
     private static final int BUTTON = 12;
     private static final int COLUMN_MIN = PAD * 2 + 40;
@@ -186,11 +188,11 @@ import org.lwjgl.opengl.GL11;
     private int firstRowTop() { return contentTop() + headerHeight() + (lines.size() + chosen.size()) * CardOverlay.LINE + GAP; }
 
     private int rowAt(int mouseX, int mouseY) {
-        if (!live() || mouseX < left || mouseX >= rightEdge() || mouseY < top + PAD || mouseY >= top + panelHeight - PAD || buttonAt(mouseX, mouseY) != 0 || onTrack(mouseX, mouseY)) { return -1; }
+        if (!live() || !MathUtil.inside(mouseX, mouseY, left, top + PAD, rightEdge() - left, panelHeight - 2 * PAD) || buttonAt(mouseX, mouseY) != 0 || onTrack(mouseX, mouseY)) { return -1; }
         int at = firstRowTop();
         for (int i = 0; i < rows.size(); i++) {
             int next = at + rowHeight(rows.get(i));
-            if (mouseY >= at && mouseY < next) { return i; }
+            if (MathUtil.within(mouseY, at, next - at)) { return i; }
             at = next;
         }
         return -1;
@@ -210,12 +212,8 @@ import org.lwjgl.opengl.GL11;
         Blends.translucent();
         TalkMessage now = shown();
         if (now.panel) { CardOverlay.panel(left, top, panelWidth, panelHeight, now.background, 1.0F); }
-        if (!now.image.isEmpty()) {
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            mc.getTextureManager().bindTexture(new ResourceLocation(now.image));
-            Gui.drawModalRectWithCustomSizedTexture(left, top, 0.0F, 0.0F, panelWidth, panelHeight, panelWidth, panelHeight);
-        }
-        if (now.panel) { Gui.drawRect(left, top, left + STRIPE, top + panelHeight, CardOverlay.withAlpha(TEXT, 1.0F)); }
+        if (!now.image.isEmpty()) { Draw.blitTinted(new ResourceLocation(now.image), left, top, panelWidth, panelHeight, 1.0F); }
+        if (now.panel) { Gui.drawRect(left, top, left + STRIPE, top + panelHeight, Colors.withAlpha(Colors.WHITE_TEXT, 1.0F)); }
         int x = left + STRIPE + PAD;
         if (!now.icon.isEmpty()) {
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -234,16 +232,16 @@ import org.lwjgl.opengl.GL11;
         int y = contentTop();
         int titleY = y;
         for (List<MarkText.Piece> line : title) {
-            MarkText.draw(line, x + titleShift(), titleY, CardOverlay.withAlpha(tint(now.titleColor, TEXT), 1.0F));
+            MarkText.draw(line, x + titleShift(), titleY, Colors.withAlpha(tint(now.titleColor, Colors.WHITE_TEXT), 1.0F));
             titleY += CardOverlay.LINE;
         }
         y += headerHeight();
         for (List<MarkText.Piece> line : lines) {
-            MarkText.draw(line, x, y, CardOverlay.withAlpha(tint(now.textColor, CardOverlay.LINE_COLOR), 1.0F));
+            MarkText.draw(line, x, y, Colors.withAlpha(tint(now.textColor, CardOverlay.LINE_COLOR), 1.0F));
             y += CardOverlay.LINE;
         }
         for (List<MarkText.Piece> line : chosen) {
-            MarkText.draw(line, x, y, CardOverlay.withAlpha(tint(now.replyColor, TEXT), 1.0F));
+            MarkText.draw(line, x, y, Colors.withAlpha(tint(now.replyColor, Colors.WHITE_TEXT), 1.0F));
             y += CardOverlay.LINE;
         }
         drawReplies(x, fitX, fitY);
@@ -264,14 +262,14 @@ import org.lwjgl.opengl.GL11;
             if (i == hovered) { Gui.drawRect(left + STRIPE, y, rightEdge(), y + height, band()); }
             int lineY = y + ROW_PAD;
             for (List<MarkText.Piece> line : row) {
-                MarkText.draw(line, x, lineY, CardOverlay.withAlpha(i == hovered ? tint(talk.hoverColor, HOVER_TEXT) : tint(talk.replyColor, TEXT), 1.0F));
+                MarkText.draw(line, x, lineY, Colors.withAlpha(i == hovered ? tint(talk.hoverColor, HOVER_TEXT) : tint(talk.replyColor, Colors.WHITE_TEXT), 1.0F));
                 lineY += CardOverlay.LINE;
             }
             y += height;
         }
     }
 
-    private int band() { return talk.hoverBackground < 0 ? HOVER : (0x40 << 24) | talk.hoverBackground; }
+    private int band() { return talk.hoverBackground < 0 ? HOVER : Colors.withAlpha(talk.hoverBackground, 0x40); }
 
     private int buttonLeft(int button) {
         switch (button) {
@@ -293,7 +291,7 @@ import org.lwjgl.opengl.GL11;
 
     private int thumbTop() { return maxScroll() == 0 ? trackTop() : trackTop() + (trackHeight() - thumbHeight()) * scroll / maxScroll(); }
 
-    private boolean onTrack(int mouseX, int mouseY) { return column && mouseX >= buttonLeft(UP) && mouseX < buttonLeft(UP) + BUTTON && mouseY >= trackTop() && mouseY < trackTop() + trackHeight(); }
+    private boolean onTrack(int mouseX, int mouseY) { return column && MathUtil.inside(mouseX, mouseY, buttonLeft(UP), trackTop(), BUTTON, trackHeight()); }
 
     private void drag(int mouseY) {
         int room = trackHeight() - thumbHeight();
@@ -302,7 +300,7 @@ import org.lwjgl.opengl.GL11;
 
     private void clickTrack(int mouseY) {
         int thumb = thumbTop();
-        if (mouseY >= thumb && mouseY < thumb + thumbHeight()) {
+        if (MathUtil.within(mouseY, thumb, thumbHeight())) {
             dragging = true;
             dragOffset = mouseY - thumb;
         }
@@ -322,7 +320,7 @@ import org.lwjgl.opengl.GL11;
 
     private int buttonAt(int mouseX, int mouseY) {
         for (int button = PREV; button <= DOWN; button++) {
-            if (buttonShown(button) && mouseX >= buttonLeft(button) && mouseX < buttonLeft(button) + BUTTON && mouseY >= buttonTop(button) && mouseY < buttonTop(button) + BUTTON) { return button; }
+            if (buttonShown(button) && MathUtil.inside(mouseX, mouseY, buttonLeft(button), buttonTop(button), BUTTON, BUTTON)) { return button; }
         }
         return 0;
     }
@@ -340,9 +338,9 @@ import org.lwjgl.opengl.GL11;
             boolean enabled = buttonEnabled(button);
             int x = buttonLeft(button);
             int y = buttonTop(button);
-            if (now.panel) { Gui.drawRect(x, y, x + BUTTON, y + BUTTON, CardOverlay.withAlpha(now.background, 1.0F)); }
+            if (now.panel) { Gui.drawRect(x, y, x + BUTTON, y + BUTTON, Colors.withAlpha(now.background, 1.0F)); }
             Gui.drawRect(x, y, x + BUTTON, y + BUTTON, enabled && button == hovered ? band() : 0x30FFFFFF);
-            int color = CardOverlay.withAlpha(tint(now.replyColor, TEXT), enabled ? 1.0F : 0.4F);
+            int color = Colors.withAlpha(tint(now.replyColor, Colors.WHITE_TEXT), enabled ? 1.0F : 0.4F);
             if (button <= NEXT) {
                 String label = button == PREV ? "<" : ">";
                 GlStateManager.enableBlend();
@@ -380,7 +378,7 @@ import org.lwjgl.opengl.GL11;
         if (wheel == 0) { return; }
         int x = Mouse.getEventX() * width / mc.displayWidth;
         int y = height - Mouse.getEventY() * height / mc.displayHeight - 1;
-        if (x >= left && x < left + panelWidth && y >= top && y < top + panelHeight) { scrollBy(-Integer.signum(wheel) * CardOverlay.LINE); }
+        if (MathUtil.inside(x, y, left, top, panelWidth, panelHeight)) { scrollBy(-Integer.signum(wheel) * CardOverlay.LINE); }
     }
 
     @Override protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {

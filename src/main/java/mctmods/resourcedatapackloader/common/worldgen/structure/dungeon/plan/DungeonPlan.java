@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonThemes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Chest;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Entrance;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Feature;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.ChunkPos;
 
 public final class DungeonPlan {
@@ -73,13 +76,9 @@ public final class DungeonPlan {
                 spread(s.x - 1, s.z - 1, s.x + 3, s.z + 3, null, null, s, null, null);
             }
         }
-        if (entrance != null) {
-            List<Entrance> all = new ArrayList<>(entrance.extras);
-            all.add(0, entrance);
-            for (Entrance e : all) {
-                grow(box, e.x - PlanRecords.ENTRANCE_REACH, site.surfaceY - PlanRecords.ENTRANCE_DOWN, e.z - PlanRecords.ENTRANCE_REACH, e.x + PlanRecords.ENTRANCE_REACH, site.surfaceY + PlanRecords.ENTRANCE_UP, e.z + PlanRecords.ENTRANCE_REACH);
-                spread(e.x - PlanRecords.ENTRANCE_REACH, e.z - PlanRecords.ENTRANCE_REACH, e.x + PlanRecords.ENTRANCE_REACH, e.z + PlanRecords.ENTRANCE_REACH, null, null, null, null, e);
-            }
+        for (Entrance e : entrances()) {
+            grow(box, e.x - PlanRecords.ENTRANCE_REACH, site.surfaceY - PlanRecords.ENTRANCE_DOWN, e.z - PlanRecords.ENTRANCE_REACH, e.x + PlanRecords.ENTRANCE_REACH, site.surfaceY + PlanRecords.ENTRANCE_UP, e.z + PlanRecords.ENTRANCE_REACH);
+            spread(e.x - PlanRecords.ENTRANCE_REACH, e.z - PlanRecords.ENTRANCE_REACH, e.x + PlanRecords.ENTRANCE_REACH, e.z + PlanRecords.ENTRANCE_REACH, null, null, null, null, e);
         }
         for (Spawner s : spawners) {
             grow(box, s.x, s.y, s.z, s.x, s.y, s.z);
@@ -104,6 +103,14 @@ public final class DungeonPlan {
         box[3] = Math.max(box[3], x1);
         box[4] = Math.max(box[4], y1);
         box[5] = Math.max(box[5], z1);
+    }
+
+    public List<Entrance> entrances() {
+        List<Entrance> all = new ArrayList<>();
+        if (entrance == null) { return all; }
+        all.add(entrance);
+        all.addAll(entrance.extras);
+        return all;
     }
 
     private Bucket bucketFor(int chunkX, int chunkZ) { return buckets.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), k -> new Bucket()); }
@@ -134,7 +141,7 @@ public final class DungeonPlan {
 
     public int roll(int index) { return rolls[index]; }
 
-    public int roll(String name) { return rolls[DungeonDef.ROLLS.indexOf(name)]; }
+    public int roll(String name) { return rolls[DungeonDef.rollIndex(name)]; }
 
     public int roomCount() {
         int n = 0;
@@ -269,9 +276,11 @@ public final class DungeonPlan {
             this.exitRoom = b.exitRoom;
         }
 
+        @Nullable public DungeonThemeDef theme() { return themeId == null ? null : ContentDungeonThemes.byName(themeId); }
+
         public int roll(int index) { return rolls[index]; }
 
-        public int roll(String name) { return rolls[DungeonDef.ROLLS.indexOf(name)]; }
+        public int roll(String name) { return rolls[DungeonDef.rollIndex(name)]; }
 
         public static final class Builder {
             private final int[] rolls = new int[DungeonDef.ROLLS.size()];
@@ -405,6 +414,13 @@ public final class DungeonPlan {
             this.features = Collections.unmodifiableList(new ArrayList<>(features));
         }
 
+        public EnumFacing away(int x, int z) {
+            if (x == x0) { return EnumFacing.EAST; }
+            if (x == x1) { return EnumFacing.WEST; }
+            if (z == z0) { return EnumFacing.SOUTH; }
+            return EnumFacing.NORTH;
+        }
+
         public Room withFeatures(List<Feature> added) {
             List<Feature> all = new ArrayList<>(features);
             all.addAll(added);
@@ -439,6 +455,10 @@ public final class DungeonPlan {
             int along = Math.abs(x - x0) + Math.abs(z - z0);
             int span = Math.abs(floorYEnd - floorYStart);
             return floorYStart + Integer.signum(floorYEnd - floorYStart) * Math.min(along, span);
+        }
+
+        public int floorClamped(int x, int z) {
+            return floorAt(Math.max(Math.min(x0, x1), Math.min(Math.max(x0, x1), x)), Math.max(Math.min(z0, z1), Math.min(Math.max(z0, z1), z)));
         }
     }
 
@@ -479,6 +499,20 @@ public final class DungeonPlan {
             this.floorYA = floorYA;
             this.floorYB = floorYB;
             this.segments = Collections.unmodifiableList(new ArrayList<>(segments));
+        }
+
+        public static int low(int width) { return -((width - 1) / 2); }
+
+        public static int high(int width) { return width / 2; }
+
+        public int[] footprint(Segment s) {
+            int lo = low(width);
+            int hi = high(width);
+            int minX = Math.min(s.x0, s.x1);
+            int maxX = Math.max(s.x0, s.x1);
+            int minZ = Math.min(s.z0, s.z1);
+            int maxZ = Math.max(s.z0, s.z1);
+            return new int[] {minX != maxX ? minX : minX + lo, minZ != maxZ ? minZ : minZ + lo, minX != maxX ? maxX : maxX + hi, minZ != maxZ ? maxZ : maxZ + hi};
         }
     }
 

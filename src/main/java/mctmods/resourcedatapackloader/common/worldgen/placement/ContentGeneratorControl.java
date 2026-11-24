@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.placement;
 
+import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
@@ -8,6 +9,7 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.Blocked;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.text.Listing;
 
@@ -53,7 +55,7 @@ public final class ContentGeneratorControl {
 
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.GENERATORS)) { return false; }
-        return ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators)
+        return blockAll()
                 || ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators).length > 0
                 || ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes).length > 0;
     }
@@ -88,7 +90,7 @@ public final class ContentGeneratorControl {
         KINDS.clear();
         BLOCKED.clear();
         REPORTED.clear();
-        if (ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators)) { Summary.info("generators", "Blocking third party world generation except from " + whitelist); }
+        if (blockAll()) { Summary.info("generators", "Blocking third party world generation except from " + whitelist); }
         else if (!named.isEmpty()) { Summary.info("generators", "Blocking world generation from " + named); }
         if (!kinds.isEmpty()) { Summary.info("generators.types", (typesAreBlacklist() ? "Blocking these world generator types outright: " : "Allowing only these world generator types to generate: ") + kinds); }
     }
@@ -112,7 +114,7 @@ public final class ContentGeneratorControl {
             count(owner, generator, kind);
             return true;
         }
-        if (!BLOCKING.get(() -> ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators)) || whitelist.contains(owner)) { return false; }
+        if (!BLOCKING.get(ContentGeneratorControl::blockAll) || whitelist.contains(owner)) { return false; }
         count(owner, generator, kind);
         return true;
     }
@@ -126,6 +128,8 @@ public final class ContentGeneratorControl {
     }
 
     public static Map<String, Integer> blocked() { return BLOCKED.map(); }
+
+    private static boolean blockAll() { return ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators); }
 
     private static boolean typesAreBlacklist() { return ContentControl.flag(ContentControl.GENERATORS, "generatorTypesAreBlacklist", Config.worldgen.generatorTypesAreBlacklist); }
 
@@ -158,13 +162,13 @@ public final class ContentGeneratorControl {
 
     private static boolean outOfScope(World world) {
         if (dimensions.isEmpty()) { return false; }
-        return Listing.allows(dimensions.contains(world.provider.getDimension()), ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist));
+        return Listing.blocks(dimensions.contains(world.provider.getDimension()), ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist));
     }
 
     private static void count(String owner, IWorldGenerator generator, String kind) {
         BLOCKED.count(owner + " " + kind);
         if (!ContentControl.flag(ContentControl.GENERATORS, "logBlockedGenerators", Config.worldgen.logBlockedGenerators)) { return; }
-        if (REPORTED.add(owner + "/" + generator.getClass().getName())) { ContentLog.LOGGER.info("Blocking {} world generator {} from {}. Use /rdplserver generators to see running totals", kind, generator.getClass().getSimpleName(), owner); }
+        if (REPORTED.add(owner + "/" + generator.getClass().getName())) { ContentLog.LOGGER.info("Blocking {} world generator {} from {}. Use /{} generators to see running totals", kind, generator.getClass().getSimpleName(), owner, CommandShared.NAME); }
     }
 
     public static String owner(IWorldGenerator generator) { return owner(generator.getClass()); }
@@ -178,7 +182,7 @@ public final class ContentGeneratorControl {
     }
 
     private static String resolve(Class<?> type) {
-        if (type.getName().startsWith("net.minecraft.")) { return "minecraft"; }
+        if (type.getName().startsWith("net.minecraft.")) { return IdNames.VANILLA; }
         CodeSource source = type.getProtectionDomain() == null ? null : type.getProtectionDomain().getCodeSource();
         if (source == null || source.getLocation() == null) { return UNKNOWN; }
         String location = source.getLocation().getPath();

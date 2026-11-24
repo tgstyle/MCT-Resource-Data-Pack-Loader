@@ -269,6 +269,8 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     @Override public void setBucketEntryData(long[] data) { bucketDataEntry = data; }
 
     public enum SendToPlayersResult {
-        ALREADY_DONE, CUBE_SENT, WAITING
+        ALREADY_DONE, CUBE_SENT, WAITING;
+
+        public boolean isDone() { return this != WAITING; }
     }
 }

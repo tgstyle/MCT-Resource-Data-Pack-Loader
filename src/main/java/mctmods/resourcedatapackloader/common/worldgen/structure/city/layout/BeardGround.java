@@ -23,6 +23,10 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 
 public final class BeardGround {
+    private static final int FILL_DEPTH = 5;
+    private static final int CUT_HEIGHT = 6;
+    private static final int CUT_REACH = 6;
+
     private BeardGround() {}
 
     private static boolean roadBed(World world, StructureStart start, BlockPos at, int x, int z) {
@@ -55,7 +59,7 @@ public final class BeardGround {
                 }
                 for (int y = roof + 1; y <= box.maxY + 4; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     if (!BeardBlocks.terrainBlock(world.getBlockState(at).getBlock())) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     BeardBlocks.note(world, at, "Opening over a piece");
@@ -109,7 +113,7 @@ public final class BeardGround {
                 if (x >= lowX && x <= highX && z >= lowZ && z <= highZ) { continue; }
                 for (int y = box.minY; y <= box.minY + 2; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at) || BeardPlots.underRoad(start, piece, x, z)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at) || BeardPlots.underRoad(start, piece, x, z)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     Material material = held.getMaterial();
                     if (material == Material.PLANTS || material == Material.VINE || material == Material.SNOW || BeardBlocks.overhang(held)) { ringed += BeardBlocks.clearAt(world, at); }
@@ -140,24 +144,24 @@ public final class BeardGround {
                 if (BeardPlots.underAnother(start, piece, x, z)) { continue; }
                 if (BeardPlots.besideRoad(start, piece, x, z)) { continue; }
                 at.setPos(x, bank, z);
-                if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                 if (world.getBlockState(at).getMaterial().isLiquid()) { continue; }
                 if (world.getBlockState(at).getMaterial().isSolid()) {
-                    if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { continue; }
+                    if (BeardPlots.overColumn(box, x, z)) { continue; }
                     if (fillsOnly) { continue; }
-                    if (!BeardPlots.nearRoad(start, piece, x, z, 6)) { continue; }
-                    int shaved = BeardBlocks.cutBank(world, at, x, z, bank + 1, bank + 6);
+                    if (!BeardPlots.nearRoad(start, piece, x, z, CUT_REACH)) { continue; }
+                    int shaved = BeardBlocks.cutBank(world, at, x, z, bank + 1, bank + CUT_HEIGHT);
                     cut += shaved;
                     shorn[(x - box.minX + 2) * deepDepth + (z - box.minZ + 2)] = shaved;
                     at.setPos(x, bank - 1, z);
                     if (!world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
-                        int propped = BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - 5, piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2);
+                        int propped = BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - FILL_DEPTH, piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2);
                         banked += propped;
                         deep[(x - box.minX + 2) * deepDepth + (z - box.minZ + 2)] = propped;
                     }
                     continue;
                 }
-                int filled = BeardBlocks.fillBank(world, at, bores, x, z, bank, bank - 5, piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2);
+                int filled = BeardBlocks.fillBank(world, at, bores, x, z, bank, bank - FILL_DEPTH, piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2);
                 banked += filled;
                 deep[(x - box.minX + 2) * deepDepth + (z - box.minZ + 2)] = filled;
             }
@@ -175,16 +179,16 @@ public final class BeardGround {
                     if (shorn[index] >= 2) {
                         if (yarded) { continue; }
                         at.setPos(x, bank + 1, z);
-                        if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                        if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                         if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
-                        tapered += BeardBlocks.cutBank(world, at, x, z, bank + 2, bank + 6);
+                        tapered += BeardBlocks.cutBank(world, at, x, z, bank + 2, bank + CUT_HEIGHT);
                         continue;
                     }
                     if (deep[index] < 2) { continue; }
                     at.setPos(x, bank - 1, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
-                    tapered += BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - 5, false);
+                    tapered += BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - FILL_DEPTH, false);
                 }
             }
         }
@@ -193,11 +197,11 @@ public final class BeardGround {
             for (int z = box.minZ - 4; z <= box.maxZ + 4; z++) {
                 if (BeardPlots.underAnother(start, piece, x, z)) { continue; }
                 at.setPos(x, bank, z);
-                if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                 if (!world.getBlockState(at).getMaterial().isSolid() || !BeardBlocks.terrainBlock(world.getBlockState(at).getBlock())) { continue; }
                 at.setPos(x, bank - 1, z);
                 if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
-                propped += BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - 5, false);
+                propped += BeardBlocks.fillBank(world, at, bores, x, z, bank - 1, bank - FILL_DEPTH, false);
             }
         }
         if (propped > 0) { ContentLog.LOGGER.debug("Propped {} block(s) of earth under ground that {} at {}, {} left hovering at its bank of y {}", propped, piece.getClass().getSimpleName(), box.minX, box.minZ, bank); }

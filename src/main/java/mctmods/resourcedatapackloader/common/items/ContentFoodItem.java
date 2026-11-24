@@ -32,29 +32,17 @@ import net.minecraft.world.World;
 
     @Nullable private ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
-    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); } }
+    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { ItemVariants.subItems(this, def, tab, list); }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 
-    @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? EnumRarity.COMMON : value.rarity;
-    }
+    @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) { return ItemVariants.rarity(variant(stack)); }
 
-    @Override public int getItemStackLimit(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? 64 : value.maxSize;
-    }
+    @Override public int getItemStackLimit(@Nonnull ItemStack stack) { return ItemVariants.stackLimit(variant(stack)); }
 
-    @Override public int getHealAmount(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? 0 : value.healAmount;
-    }
+    @Override public int getHealAmount(@Nonnull ItemStack stack) { return ItemVariants.heal(variant(stack)); }
 
-    @Override public float getSaturationModifier(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? 0.0F : value.saturation;
-    }
+    @Override public float getSaturationModifier(@Nonnull ItemStack stack) { return ItemVariants.saturation(variant(stack)); }
 
     @Override public int getMetadata(int damage) { return damage; }
 
@@ -62,7 +50,7 @@ import net.minecraft.world.World;
 
     @Override protected void onFoodEaten(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityPlayer player) {
         if (world.isRemote) { return; }
-        if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
+        ItemVariants.cooldown(player, this, def.cooldown);
         ItemVariants.applyPotion(variant(stack), player);
     }
 }

@@ -2,10 +2,14 @@ package mctmods.resourcedatapackloader.common.blocks;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import com.google.common.base.Optional;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -42,11 +46,11 @@ public final class ContentStates {
             return null;
         }
         ResourceLocation location = new ResourceLocation(name);
-        if (!ForgeRegistries.BLOCKS.containsKey(location)) {
+        Block found = Registries.find(ForgeRegistries.BLOCKS, location);
+        if (found == null) {
             ContentLog.LOGGER.error("Unknown block {} in {}, the entry is skipped", location, context);
-            return null;
         }
-        return ForgeRegistries.BLOCKS.getValue(location);
+        return found;
     }
 
     public static final class Spec {
@@ -58,6 +62,17 @@ public final class ContentStates {
         }
     }
 
+    @Nullable public static NBTTagCompound parseTag(String written, @Nullable Set<String> once, String key, String message, Object... args) {
+        try { return JsonToNBT.getTagFromJson(written); }
+        catch (NBTException bad) {
+            Object[] all = Arrays.copyOf(args, args.length + 1);
+            all[args.length] = bad.getMessage();
+            if (once == null) { ContentLog.LOGGER.error(message, all); }
+            else { ContentLog.LOGGER.errorOnce(once, key, message, all); }
+            return null;
+        }
+    }
+
     @Nullable public static Spec spec(String name, Object context) {
         if (name.isEmpty()) { return null; }
         String named = name;
@@ -65,8 +80,7 @@ public final class ContentStates {
         int brace = named.indexOf('{');
         if (brace >= 0 && named.trim().endsWith("}")) {
             String written = named.substring(brace).trim();
-            try { tag = JsonToNBT.getTagFromJson(written); }
-            catch (NBTException ex) { ContentLog.LOGGER.error("Block data {} in {} is not readable NBT, it is ignored: {}", written, context, ex.getMessage()); }
+            tag = parseTag(written, null, written, "Block data {} in {} is not readable NBT, it is ignored: {}", written, context);
             named = named.substring(0, brace).trim();
         }
         IBlockState state = parse(named, context);
@@ -80,14 +94,13 @@ public final class ContentStates {
         if (held == null) { return; }
         NBTTagCompound data = held.writeToNBT(new NBTTagCompound());
         data.merge(tag);
-        data.setInteger("x", pos.getX());
-        data.setInteger("y", pos.getY());
-        data.setInteger("z", pos.getZ());
-        held.readFromNBT(data);
+        held.readFromNBT(TileData.at(data, pos));
         held.markDirty();
     }
 
     @Nullable public static IBlockState parse(String name, Object context) { return PARSED.computeIfAbsent(name, key -> Optional.fromNullable(lookUp(key, context))).orNull(); }
+
+    @Nullable public static IBlockState optional(@Nullable String name, Object context) { return name == null || name.isEmpty() ? null : parse(name, context); }
 
     public static void forget() { PARSED.clear(); }
 

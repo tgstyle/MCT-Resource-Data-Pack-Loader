@@ -19,6 +19,8 @@ import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.init.Biomes;
@@ -41,9 +43,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public final class ContentDimensionRules {
+    private static final float STILL_SUN = 0.25F;
     private static final String FLAT_DEFAULT = "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1";
-    private static final ResourceLocation SUN = new ResourceLocation("textures/environment/sun.png");
-    private static final ResourceLocation MOON = new ResourceLocation("textures/environment/moon_phases.png");
     private static final Map<World, ContentWeatherCycle> CYCLES = new WeakHashMap<>();
 
     private ContentDimensionRules() {}
@@ -62,7 +63,7 @@ public final class ContentDimensionRules {
     public static BiomeProvider biomes(World world, DimensionDef def) {
         if (DimensionDef.INHERIT.equals(def.biomeSource)) { return new BiomeProvider(world.getWorldInfo()); }
         if (DimensionDef.LIST.equals(def.biomeSource)) { return ContentListBiomes.provider(world.getWorldInfo(), def.biomeList); }
-        Biome single =ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
+        Biome single = ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
         return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
     }
 
@@ -90,9 +91,76 @@ public final class ContentDimensionRules {
         return angle + (eased - angle) / 3.0F;
     }
 
-    static boolean daytime(int fixedTime) {
+    static float angle(World world, @Nullable DimensionDef def, long worldTime, float partialTicks, float own) {
+        if (def == null) { return own; }
+        long length = ContentRuleSwitch.dayLength(world, def);
+        if (length == DimensionTraitsDef.VANILLA_DAY) { return own; }
+        if (length == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
+        return celestialAngle(length, worldTime, partialTicks);
+    }
+
+    static boolean daytime(World world, @Nullable DimensionDef def, boolean own) {
+        if (def == null) { return own; }
+        if (ContentRuleSwitch.dayLength(world, def) == DimensionTraitsDef.NO_DAY) { return true; }
+        return def.fixedTime >= 0 ? daytime(def.fixedTime) : own;
+    }
+
+    public static boolean daytime(int fixedTime) {
         long time = fixedTime % DimensionTraitsDef.VANILLA_DAY;
         return time < 12300L || time > 23850L;
+    }
+
+    static long worldTime(@Nullable DimensionDef def, long own) { return def != null && def.fixedTime >= 0 ? def.fixedTime : own; }
+
+    static IChunkGenerator generator(World world, @Nullable DimensionDef def, boolean owned, Supplier<IChunkGenerator> own) { return def != null && (owned || def.gives("terrain.type")) ? generator(world, def) : own.get(); }
+
+    static boolean bedsExplode(@Nullable DimensionDef def) { return def != null && !def.beds; }
+
+    static boolean lightning(@Nullable DimensionDef def) { return def == null || def.traits.precipitation && def.traits.lightning; }
+
+    static boolean precipitation(@Nullable DimensionDef def) { return def == null || def.traits.precipitation; }
+
+    static int respawnDimension(@Nullable DimensionDef def, int own) { return def != null && def.hasRespawnDimension() ? def.respawnDimension : own; }
+
+    private static <T> T given(@Nullable DimensionDef def, boolean owned, String key, Function<DimensionDef, T> value, T own) { return def != null && (owned || def.gives(key)) ? value.apply(def) : own; }
+
+    private static <T> T given(@Nullable DimensionDef def, Predicate<DimensionDef> set, Function<DimensionDef, T> value, T own) { return def != null && set.test(def) ? value.apply(def) : own; }
+
+    static double movementFactor(@Nullable DimensionDef def, boolean owned, double own) { return given(def, owned, "sky.movementFactor", held -> held.movementFactor, own); }
+
+    static int groundLevel(@Nullable DimensionDef def, boolean owned, int own) { return given(def, owned, "sky.groundLevel", held -> held.groundLevel, own); }
+
+    static boolean respawns(@Nullable DimensionDef def, boolean owned, boolean own) { return given(def, owned, "sky.respawn", held -> held.respawn, own); }
+
+    static boolean surface(@Nullable DimensionDef def, boolean owned, boolean own) { return given(def, owned, "sky.surfaceWorld", held -> held.surfaceWorld, own); }
+
+    @SideOnly(Side.CLIENT) static boolean showsFog(@Nullable DimensionDef def, boolean owned, boolean own) { return given(def, owned, "sky.showFog", held -> held.showFog, own); }
+
+    @SideOnly(Side.CLIENT) static float starBrightness(@Nullable DimensionDef def, float own) { return given(def, held -> held.starBrightness >= 0.0F, held -> held.starBrightness, own); }
+
+    @SideOnly(Side.CLIENT) @Nullable static float[] sunrise(@Nullable DimensionDef def, @Nullable float[] own) { return def != null && !def.sunriseColors ? null : own; }
+
+    @SideOnly(Side.CLIENT) static Vec3d skyColor(World world, @Nullable DimensionDef def, float partialTicks, Vec3d own) { return given(def, held -> held.skyColor >= 0, held -> skyColor(world, held.skyColor, partialTicks), own); }
+
+    @SideOnly(Side.CLIENT) static Vec3d cloudColor(@Nullable DimensionDef def, Vec3d own) {
+        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
+        if (layer != null && layer.color >= 0) { return Colors.vec(layer.color); }
+        return given(def, held -> held.cloudColor >= 0, held -> Colors.vec(held.cloudColor), own);
+    }
+
+    @SideOnly(Side.CLIENT) static float cloudHeight(@Nullable DimensionDef def, boolean owned, float own) {
+        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
+        if (layer != null) { return layer.height; }
+        return ContentDimensionRules.<Float>given(def, owned, "sky.cloudHeight", held -> (float) held.cloudHeight, own);
+    }
+
+    @SideOnly(Side.CLIENT) static Vec3d fogColor(World world, @Nullable DimensionDef def, float celestialAngle, Vec3d own) {
+        if (def != null && def.look != null && def.look.sampleFog) { return ContentWindowLook.fogColor(world, ContentFogSampler.color(own), celestialAngle); }
+        return ContentWindowLook.fogColor(world, def != null && def.fogColor >= 0 ? fogColor(def.fogColor, celestialAngle) : own, celestialAngle);
+    }
+
+    @SideOnly(Side.CLIENT) static void lightmap(@Nullable DimensionDef def, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
+        if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, def.darkness != null, partialTicks, sunBrightness, skyLight, blockLight, colors); }
     }
 
     static void weather(World world, DimensionDef def, ContentWeatherCycle cycle, Runnable own) {
@@ -117,10 +185,8 @@ public final class ContentDimensionRules {
         }
     }
 
-    public static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
-
     @SideOnly(Side.CLIENT) static Vec3d skyColor(World world, int rgb, float partialTicks) {
-        Vec3d sky = color(rgb).scale(daylight(world.getCelestialAngle(partialTicks)));
+        Vec3d sky = Colors.vec(rgb).scale(daylight(world.getCelestialAngle(partialTicks)));
         sky = overcast(sky, world.getRainStrength(partialTicks), 0.6D);
         sky = overcast(sky, world.getThunderStrength(partialTicks), 0.2D);
         if (world.getLastLightningBolt() <= 0) { return sky; }
@@ -137,21 +203,15 @@ public final class ContentDimensionRules {
 
     @SideOnly(Side.CLIENT) public static Vec3d fogColor(int rgb, float celestialAngle) {
         float light = daylight(celestialAngle);
-        Vec3d fog = color(rgb);
+        Vec3d fog = Colors.vec(rgb);
         return new Vec3d(fog.x * (light * 0.94F + 0.06F), fog.y * (light * 0.94F + 0.06F), fog.z * (light * 0.91F + 0.09F));
     }
 
     private static float daylight(float celestialAngle) { return MathHelper.clamp(MathHelper.cos(celestialAngle * (float) Math.PI * 2.0F) * 2.0F + 0.5F, 0.0F, 1.0F); }
 
-    public static IChunkGenerator existingGenerator(World world, Supplier<IChunkGenerator> own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.gives("terrain.type") ? generator(world, def) : own.get();
-    }
+    public static IChunkGenerator existingGenerator(World world, Supplier<IChunkGenerator> own) { return generator(world, ContentDimensions.overlay(world), false, own); }
 
-    public static long existingWorldTime(World world, long own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.fixedTime >= 0 ? def.fixedTime : own;
-    }
+    public static long existingWorldTime(World world, long own) { return worldTime(ContentDimensions.overlay(world), own); }
 
     public static boolean existingDaytime(World world, boolean own) {
         DimensionDef def = ContentDimensions.overlay(world);
@@ -189,69 +249,32 @@ public final class ContentDimensionRules {
 
     public static boolean freezesAnywhere(World world, BlockPos pos) { return ContentEnvironments.rules(world, pos).snow.freeze == SnowRuleDef.ANY; }
 
-    public static boolean existingLightning(World world, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return own && (def == null || def.traits.precipitation && def.traits.lightning);
-    }
+    public static boolean existingLightning(World world, boolean own) { return own && lightning(ContentDimensions.overlay(world)); }
 
-    public static boolean existingPrecipitation(World world, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return own && (def == null || def.traits.precipitation);
-    }
+    public static boolean existingPrecipitation(World world, boolean own) { return own && precipitation(ContentDimensions.overlay(world)); }
 
-    public static boolean existingRespawn(WorldProvider provider, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(provider.getDimension());
-        return def != null && def.gives("sky.respawn") ? def.respawn : own;
-    }
+    public static boolean existingRespawn(WorldProvider provider, boolean own) { return respawns(ContentDimensions.overlay(provider.getDimension()), false, own); }
 
-    public static int existingRespawnDimension(WorldProvider provider, int own) {
-        DimensionDef def = ContentDimensions.overlay(provider.getDimension());
-        return def != null && def.respawnDimension != Integer.MIN_VALUE ? def.respawnDimension : own;
-    }
+    public static int existingRespawnDimension(WorldProvider provider, int own) { return respawnDimension(ContentDimensions.overlay(provider.getDimension()), own); }
 
-    public static double existingMovementFactor(WorldProvider provider, double own) {
-        DimensionDef def = ContentDimensions.overlay(provider.getDimension());
-        return def != null && def.gives("sky.movementFactor") ? def.movementFactor : own;
-    }
+    public static double existingMovementFactor(WorldProvider provider, double own) { return movementFactor(ContentDimensions.overlay(provider.getDimension()), false, own); }
 
-    public static int existingGroundLevel(World world, int own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.gives("sky.groundLevel") ? def.groundLevel : own;
-    }
+    public static int existingGroundLevel(World world, int own) { return groundLevel(ContentDimensions.overlay(world), false, own); }
 
-    public static boolean existingSurface(WorldProvider provider, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(provider.getDimension());
-        return def != null && def.gives("sky.surfaceWorld") ? def.surfaceWorld : own;
-    }
+    public static boolean existingSurface(WorldProvider provider, boolean own) { return surface(ContentDimensions.overlay(provider.getDimension()), false, own); }
 
-    public static boolean existingBedsExplode(WorldProvider provider) {
-        DimensionDef def = ContentDimensions.overlay(provider.getDimension());
-        return def != null && !def.beds;
-    }
+    public static boolean existingBedsExplode(WorldProvider provider) { return bedsExplode(ContentDimensions.overlay(provider.getDimension())); }
 
-    @SideOnly(Side.CLIENT) public static Vec3d existingSkyColor(World world, float partialTicks, Vec3d own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.skyColor >= 0 ? skyColor(world, def.skyColor, partialTicks) : own;
-    }
+    @SideOnly(Side.CLIENT) public static Vec3d existingSkyColor(World world, float partialTicks, Vec3d own) { return skyColor(world, ContentDimensions.overlay(world), partialTicks, own); }
 
-    @SideOnly(Side.CLIENT) public static Vec3d existingCloudColor(World world, Vec3d own) {
-        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
-        if (layer != null && layer.color >= 0) { return color(layer.color); }
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.cloudColor >= 0 ? color(def.cloudColor) : own;
-    }
+    @SideOnly(Side.CLIENT) public static Vec3d existingCloudColor(World world, Vec3d own) { return cloudColor(ContentDimensions.overlay(world), own); }
 
     @SideOnly(Side.CLIENT) public static Vec3d existingFogColor(World world, float celestialAngle, Vec3d own) {
         DimensionDef def = ContentDimensions.overlay(world);
-        if (def == null) { return own; }
-        if (def.look != null && def.look.sampleFog) { return ContentWindowLook.fogColor(world, ContentFogSampler.color(own), celestialAngle); }
-        return ContentWindowLook.fogColor(world, def.fogColor >= 0 ? fogColor(def.fogColor, celestialAngle) : own, celestialAngle);
+        return def == null ? own : fogColor(world, def, celestialAngle, own);
     }
 
-    @SideOnly(Side.CLIENT) public static float existingStarBrightness(World world, float own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.starBrightness >= 0.0F ? def.starBrightness : own;
-    }
+    @SideOnly(Side.CLIENT) public static float existingStarBrightness(World world, float own) { return starBrightness(ContentDimensions.overlay(world), own); }
 
     @SideOnly(Side.CLIENT) public static float existingFogLight(World world, float own) {
         DimensionDef def = ContentDimensions.overlay(world);
@@ -259,15 +282,9 @@ public final class ContentDimensionRules {
         return def.fogColor >= 0 ? 1.0F : own + (1.0F - own) * ContentWindowLook.colorFog(world);
     }
 
-    @SideOnly(Side.CLIENT) @Nullable public static float[] existingSunrise(World world, @Nullable float[] own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && !def.sunriseColors ? null : own;
-    }
+    @SideOnly(Side.CLIENT) @Nullable public static float[] existingSunrise(World world, @Nullable float[] own) { return sunrise(ContentDimensions.overlay(world), own); }
 
-    @SideOnly(Side.CLIENT) public static boolean existingShowsFog(World world, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.gives("sky.showFog") ? def.showFog : own;
-    }
+    @SideOnly(Side.CLIENT) public static boolean existingShowsFog(World world, boolean own) { return showsFog(ContentDimensions.overlay(world), false, own); }
 
     @SideOnly(Side.CLIENT) public static float existingCloudHeight(World world, float own) {
         SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
@@ -277,16 +294,13 @@ public final class ContentDimensionRules {
         return def.gives("sky.cloudHeight") ? def.cloudHeight : own;
     }
 
-    @SideOnly(Side.CLIENT) public static void existingLightmap(World world, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, def.darkness != null, partialTicks, sunBrightness, skyLight, blockLight, colors); }
-    }
+    @SideOnly(Side.CLIENT) public static void existingLightmap(World world, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) { lightmap(ContentDimensions.overlay(world), partialTicks, sunBrightness, skyLight, blockLight, colors); }
 
     @SideOnly(Side.CLIENT) public static ResourceLocation skyTexture(World world, ResourceLocation asked) {
         DimensionDef def = ContentDimensions.of(world);
         if (def == null) { return asked; }
-        if (SUN.equals(asked) && def.traits.sky != null) { return def.traits.sky.sunTexture; }
-        if (MOON.equals(asked) && def.traits.moon != null) { return def.traits.moon.texture; }
+        if (DimensionTraitsDef.VANILLA_SUN_TEXTURE.equals(asked) && def.traits.sky != null) { return def.traits.sky.sunTexture; }
+        if (DimensionTraitsDef.VANILLA_MOON_TEXTURE.equals(asked) && def.traits.moon != null) { return def.traits.moon.texture; }
         return asked;
     }
 }

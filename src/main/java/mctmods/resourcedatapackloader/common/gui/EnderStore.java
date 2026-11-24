@@ -12,7 +12,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 
 public final class EnderStore extends WorldSavedData {
@@ -25,8 +24,7 @@ public final class EnderStore extends WorldSavedData {
     public EnderStore(String name) { super(name); }
 
     @Nullable static EnderStore get(World world) {
-        MapStorage storage = world.getMapStorage();
-        return storage == null ? null : SavedData.get(storage, EnderStore.class, NAME, EnderStore::new);
+        return SavedData.of(world.getMapStorage(), EnderStore.class, NAME, EnderStore::new);
     }
 
     NonNullList<ItemStack> items(UUID owner) {

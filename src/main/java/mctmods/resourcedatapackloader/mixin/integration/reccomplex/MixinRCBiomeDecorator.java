@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.integration.reccomplex;
 
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 
 import ivorius.reccomplex.world.gen.feature.decoration.RCBiomeDecorator;
@@ -14,10 +15,10 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 
 @SuppressWarnings("unused") @Mixin(value = RCBiomeDecorator.class, remap = false) public abstract class MixinRCBiomeDecorator {
     @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;)Lnet/minecraftforge/fml/common/eventhandler/Event$Result;", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$leaveDecorationAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, CallbackInfoReturnable<Event.Result> cir) {
-        if (ContentStructures.blocks(worldIn, "reccomplex")) { cir.setReturnValue(Event.Result.DEFAULT); }
+        if (ContentStructures.blocks(worldIn, ContentStructurePlacement.RECCOMPLEX)) { cir.setReturnValue(Event.Result.DEFAULT); }
     }
 
     @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;I)I", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$leaveDecorationAmountAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, int amount, CallbackInfoReturnable<Integer> cir) {
-        if (ContentStructures.blocks(worldIn, "reccomplex")) { cir.setReturnValue(amount); }
+        if (ContentStructures.blocks(worldIn, ContentStructurePlacement.RECCOMPLEX)) { cir.setReturnValue(amount); }
     }
 }

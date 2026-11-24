@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.FileMoves;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -35,7 +36,7 @@ final class PackVersions {
 
     private static boolean current(Path stamp) {
         if (!Files.isRegularFile(stamp)) { return true; }
-        try { return new String(Files.readAllBytes(stamp), StandardCharsets.UTF_8).trim().equals(modVersion()); }
+        try { return Json.readText(stamp).trim().equals(modVersion()); }
         catch (IOException unreadable) { return true; }
     }
 

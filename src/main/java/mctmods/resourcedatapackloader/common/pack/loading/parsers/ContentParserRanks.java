@@ -50,7 +50,7 @@ public final class ContentParserRanks {
         if (json.has("picksUpLoot") && picksUpLoot == null) { return null; }
         if (weight == null || health == null || damage == null || loot == null || dropChance == null) { return null; }
         if (label == null || digItem == null || digs == null || breaksDoors == null || steals == null) { return null; }
-        if (json.has("equipment") && !json.get("equipment").isJsonObject()) {
+        if (json.has("equipment") && Json.objectOrNull(json, "equipment") == null) {
             ContentLog.LOGGER.error("{} gives equipment as {}, which is not an object of slot and item, ignoring the rank", owner, json.get("equipment"));
             return null;
         }
@@ -98,26 +98,22 @@ public final class ContentParserRanks {
     }
 
     @Nullable private static JsonObject section(String owner, JsonObject json, String key) {
-        JsonElement value = json.get(key);
-        if (value.isJsonObject()) { return value.getAsJsonObject(); }
-        ContentLog.LOGGER.error("{} gives {} as {}, which is not an object, ignoring the rank", owner, key, value);
-        return null;
+        JsonObject held = Json.objectOrNull(json, key);
+        if (held == null) { ContentLog.LOGGER.error("{} gives {} as {}, which is not an object, ignoring the rank", owner, key, json.get(key)); }
+        return held;
     }
 
     private static boolean stray(String owner, JsonObject json, List<String> keys) {
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-            if (!keys.contains(entry.getKey())) {
-                ContentLog.LOGGER.error("{} gives {}, which is not a rank key, ignoring the rank", owner, entry.getKey());
-                return true;
-            }
-        }
-        return false;
+        List<String> unknown = Json.unknownKeys(json, keys);
+        if (unknown.isEmpty()) { return false; }
+        ContentLog.LOGGER.error("{} gives {}, which is not a rank key, ignoring the rank", owner, unknown.get(0));
+        return true;
     }
 
     @Nullable private static String text(String owner, JsonObject json, String key) {
         if (!json.has(key)) { return ""; }
         JsonElement value = json.get(key);
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { return value.getAsString(); }
+        if (Json.isString(value)) { return value.getAsString(); }
         ContentLog.LOGGER.error("{} gives {} as {}, which is not text, ignoring the rank", owner, key, value);
         return null;
     }

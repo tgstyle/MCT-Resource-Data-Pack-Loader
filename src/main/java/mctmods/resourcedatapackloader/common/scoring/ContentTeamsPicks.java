@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.scoring;
 
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -73,7 +74,7 @@ public final class ContentTeamsPicks {
             LEFT.remove(def.name);
         }
         List<Entity> pool = new ArrayList<>();
-        if (def.picksFrom.contains("players")) { pool.addAll(server.getPlayerList().getPlayers()); }
+        if (def.picksFrom.contains(TeamDef.PICKS_PLAYERS)) { pool.addAll(server.getPlayerList().getPlayers()); }
         ContentTeams.eachNonPlayer(server, (each, one) -> {
             ResourceLocation id = EntityList.getKey(one);
             if (id != null && def.picksFrom.contains(id.toString())) { pool.add(one); }
@@ -143,11 +144,9 @@ public final class ContentTeamsPicks {
 
     private static boolean alive(MinecraftServer server, String member) {
         if (ContentTeams.entityMember(member)) {
-            try {
-                Entity held = server.getEntityFromUuid(UUID.fromString(member));
-                return held != null && !held.isDead;
-            }
-            catch (IllegalArgumentException notAnId) { return false; }
+            UUID id = Nbts.uuid(member);
+            Entity held = id == null ? null : server.getEntityFromUuid(id);
+            return held != null && !held.isDead;
         }
         return server.getPlayerList().getPlayerByUsername(member) != null;
     }

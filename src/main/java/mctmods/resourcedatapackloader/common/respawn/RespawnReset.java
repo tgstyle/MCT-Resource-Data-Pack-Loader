@@ -4,7 +4,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDe
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
+import mctmods.resourcedatapackloader.common.util.world.TemplateBlocks;
 import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write.DungeonWriter;
@@ -24,7 +26,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityLockableLoot;
 import net.minecraft.tileentity.TileEntityMobSpawner;
@@ -37,7 +38,6 @@ import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.common.util.Constants;
 
 public final class RespawnReset {
     private static final Set<String> MISSING = new HashSet<>();
@@ -112,11 +112,7 @@ public final class RespawnReset {
             BlockPos at = BlockPos.fromLong(row.getKey());
             TileEntity tile = world.getTileEntity(at);
             if (!(tile instanceof TileEntityMobSpawner)) { continue; }
-            NBTTagCompound saved = row.getValue().copy();
-            saved.setInteger("x", at.getX());
-            saved.setInteger("y", at.getY());
-            saved.setInteger("z", at.getZ());
-            tile.readFromNBT(saved);
+            tile.readFromNBT(TileData.at(row.getValue(), at));
             tile.markDirty();
             IBlockState state = world.getBlockState(at);
             world.notifyBlockUpdate(at, state, state, 3);
@@ -127,11 +123,11 @@ public final class RespawnReset {
         if (instance.tpl.isEmpty()) { return; }
         Template template = template(world, instance);
         if (template == null) { return; }
-        NBTTagList entities = template.writeToNBT(new NBTTagCompound()).getTagList("entities", Constants.NBT.TAG_COMPOUND);
-        if (entities.tagCount() == 0) { return; }
+        List<NBTTagCompound> entities = TemplateBlocks.entities(template);
+        if (entities.isEmpty()) { return; }
         Set<ResourceLocation> kinds = new HashSet<>();
-        for (int i = 0; i < entities.tagCount(); i++) { kinds.add(new ResourceLocation(entities.getCompoundTagAt(i).getCompoundTag("nbt").getString("id"))); }
-        int cap = mobCap > 0 ? mobCap : entities.tagCount();
+        for (NBTTagCompound entity : entities) { kinds.add(new ResourceLocation(entity.getString("id"))); }
+        int cap = mobCap > 0 ? mobCap : entities.size();
         AxisAlignedBB around = instance.bounds().grow(MOB_REACH);
         Set<UUID> before = new HashSet<>();
         int count = 0;

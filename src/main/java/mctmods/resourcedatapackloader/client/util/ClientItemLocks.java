@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 import mctmods.resourcedatapackloader.core.network.UnlocksMessage;
@@ -17,13 +18,14 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT) public final class ClientItemLocks {
+@Mod.EventBusSubscriber(value = Side.CLIENT, modid = ResourceDataPackLoader.MOD_ID) @SideOnly(Side.CLIENT) public final class ClientItemLocks {
     private static Set<String> open = Collections.emptySet();
     private static boolean known;
     @Nullable private static Runnable listing;
@@ -42,7 +44,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     public static void listing(Runnable apply) { listing = apply; }
 
-    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { Minecraft.getMinecraft().addScheduledTask(ClientItemLocks::reset); }
+    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { ClientResets.onDisconnect(ClientItemLocks::reset); }
 
     private static void reset() {
         if (!known) { return; }

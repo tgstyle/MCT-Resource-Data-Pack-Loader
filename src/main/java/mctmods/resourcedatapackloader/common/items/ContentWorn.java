@@ -1,10 +1,13 @@
 package mctmods.resourcedatapackloader.common.items;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AttributeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.Registered;
 import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 import mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -33,7 +36,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentWorn {
-    private static final ResourceLocation KEY = new ResourceLocation("rdpl", "worn");
+    private static final ResourceLocation KEY = ResourceDataPackLoader.rdpl("worn");
     private static final int POLL = 20;
     private static final int LENGTH = 40;
     private static Map<Item, Worn> worn;
@@ -73,16 +76,16 @@ public final class ContentWorn {
             MinecraftForge.EVENT_BUS.register(ContentWorn.class);
             return;
         }
-        for (Map.Entry<ResourceLocation, Item> entry : ContentRegistry.registeredItems()) {
-            ItemDef def = ContentRegistry.itemDef(entry.getKey());
-            if (def != null && (!def.wornEffects.isEmpty() || !def.wornAttributes.isEmpty())) { ContentLog.LOGGER.info("Baubles is not installed, so the worn effects and attributes on {} are ignored", entry.getKey()); }
+        for (Registered<Item, ItemDef> entry : ContentRegistry.definedItems()) {
+            ItemDef def = entry.def;
+            if (def.hasWornEffects()) { ContentLog.LOGGER.info("Baubles is not installed, so the worn effects and attributes on {} are ignored", entry.getKey()); }
         }
     }
 
     @SubscribeEvent public static void onAttach(AttachCapabilitiesEvent<ItemStack> event) {
         Item item = event.getObject().getItem();
-        if (!(item instanceof IContentItem) || item.getRegistryName() == null) { return; }
-        ItemDef def = ContentRegistry.itemDef(item.getRegistryName());
+        if (!(item instanceof IContentItem)) { return; }
+        ItemDef def = ContentRegistry.itemDef(item);
         if (def == null || def.bauble.isEmpty()) { return; }
         ICapabilityProvider provider = BaublesPouch.provider(def.bauble);
         if (provider != null) { event.addCapability(KEY, provider); }
@@ -116,17 +119,16 @@ public final class ContentWorn {
     private static void refresh(EntityPlayer player, Effect effect) {
         PotionEffect active = player.getActivePotionEffect(effect.potion);
         if (active != null && active.getDuration() > POLL) { return; }
-        player.addPotionEffect(new PotionEffect(effect.potion, LENGTH, effect.def.amplifier, effect.def.ambient, effect.def.showParticles));
+        player.addPotionEffect(PotionEffects.build(effect.potion, effect.def, LENGTH, effect.def.showParticles));
     }
 
     private static void build() {
         worn = new HashMap<>();
         everything = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, Item> entry : ContentRegistry.registeredItems()) {
-            ItemDef def = ContentRegistry.itemDef(entry.getKey());
-            if (def == null) { continue; }
+        for (Registered<Item, ItemDef> entry : ContentRegistry.definedItems()) {
+            ItemDef def = entry.def;
             if (!def.worn()) {
-                if (!def.wornEffects.isEmpty() || !def.wornAttributes.isEmpty()) { ContentLog.LOGGER.info("{} has worn effects or attributes but no bauble slot, so they are ignored", entry.getKey()); }
+                if (def.hasWornEffects()) { ContentLog.LOGGER.info("{} has worn effects or attributes but no bauble slot, so they are ignored", entry.getKey()); }
                 continue;
             }
             Worn held = new Worn();

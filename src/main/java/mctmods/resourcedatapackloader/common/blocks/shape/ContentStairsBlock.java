@@ -22,12 +22,7 @@ public class ContentStairsBlock extends BlockStairs implements IContentBlock {
     protected ContentStairsBlock(BlockDef def, IBlockState model) {
         super(model);
         this.def = def;
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + def.at(0).name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyNamed(this, def);
     }
 
     private static IBlockState model(BlockDef def) {

@@ -40,6 +40,13 @@ public final class BoardGame {
 
     public boolean running() { return winner == RUNNING; }
 
+    public boolean in(int id) { return dimension.equals(Integer.toString(id)); }
+
+    @Nullable public Integer dimensionId() {
+        try { return Integer.parseInt(dimension); }
+        catch (NumberFormatException notDimension) { return null; }
+    }
+
     public boolean computer(int side) { return owners[side].isEmpty() && (levels[side] > 0 || !owners[1 - side].isEmpty()); }
 
     public int level(int side, BoardRules rules) { return levels[side] > 0 ? levels[side] : rules.ai; }

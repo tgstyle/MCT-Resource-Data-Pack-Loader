@@ -74,7 +74,7 @@ public final class ContentBoneMealFlowers {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", SPREAD_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         BlockGroup on = new BlockGroup();
         List<BlockMatchDef> targets = json.has(ON) ? ContentParser.matches(key, json, ON) : Collections.singletonList(GRASS);
         for (BlockMatchDef match : targets) { on.add(match, key, ON); }

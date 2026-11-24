@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +20,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.OreDictionary;
 
 final class SwapEntry {
+    public static final String KEY = "swaps";
     static final List<String> FILE_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "swaps", "remainder", "transfer", "recipes", "template", "edit", "scriptFile", "script"));
     private static final List<String> SWAP_KEYS = Collections.unmodifiableList(Arrays.asList("from", "to", "output", "recipes", "types", "paths"));
     private static final List<String> FROM_KEYS = Collections.unmodifiableList(Arrays.asList("names", "namespaces", "oreDict"));
@@ -58,29 +58,27 @@ final class SwapEntry {
     ItemStack result(int count) { return new ItemStack(to.getItem(), count, to.getMetadata()); }
 
     private static void readFile(ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
-        if (!json.has("swaps") && (json.has("remainder") || json.has("transfer"))) { return; }
-        if (!json.has("swaps")) {
-            boolean template = json.has("template");
-            boolean edit = json.has("edit");
-            boolean scriptFile = json.has("scriptFile");
-            boolean script = json.has("script");
-            if (template) { ContentLog.LOGGER.error("Recipe swap file {} has a template, which 1.12.2 does not read, ignoring it", key); }
-            if (edit) { ContentLog.LOGGER.error("Recipe swap file {} has an edit, which 1.12.2 does not read, ignoring it", key); }
-            if (scriptFile) { ContentLog.LOGGER.error("Recipe swap file {} has a scriptFile, which 1.12.2 does not read, ignoring it", key); }
-            if (script) { ContentLog.LOGGER.error("Recipe swap file {} has a script, which 1.12.2 does not read, ignoring it", key); }
-            if (!template && !edit && !scriptFile && !script) { ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key); }
+        if (!ContentRegistry.available(json, key)) { return; }
+        if (!json.has(KEY) && (json.has(RecipeRemainders.KEY) || json.has(RecipeTransfer.KEY))) { return; }
+        if (!json.has(KEY)) {
+            if (!unsupported("Recipe swap file", key, json, "a template", "an edit", "a scriptFile", "a script")) { ContentLog.LOGGER.error("Recipe swap file {} has no swaps array, ignoring it", key); }
             return;
         }
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "swaps")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A swap in {} is not an object, skipping it", key);
-                continue;
-            }
-            SwapEntry entry = read(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, KEY), "A swap in {} is not an object, skipping it", key)) {
+            SwapEntry entry = read(key, element);
             if (entry != null) { ALL.add(entry); }
         }
+    }
+
+    private static boolean unsupported(String subject, ResourceLocation key, JsonObject json, String... members) {
+        boolean found = false;
+        for (String member : members) {
+            if (!json.has(member.substring(member.lastIndexOf(' ') + 1))) { continue; }
+            ContentLog.LOGGER.error("{} {} has {}, which 1.12.2 does not read, ignoring it", subject, key, member);
+            found = true;
+        }
+        return found;
     }
 
     @Nullable private static SwapEntry read(ResourceLocation key, JsonObject json) {
@@ -90,11 +88,11 @@ final class SwapEntry {
         }
         Json.unknownKeys(json, "swaps", SWAP_KEYS);
         Json.unknownKeys(json.getAsJsonObject("from"), "from", FROM_KEYS);
-        if (json.has("types")) { ContentLog.LOGGER.error("A swap in {} has types, which 1.12.2 does not read, ignoring it", key); }
-        if (json.has("paths")) { ContentLog.LOGGER.error("A swap in {} has paths, which 1.12.2 does not read, ignoring it", key); }
+        unsupported("A swap in", key, json, "types", "paths");
         String target = Json.getString(json, "to", "");
-        if (target.startsWith("#")) {
-            ContentLog.LOGGER.error("A swap in {} swaps to the tag {}, which 1.12.2 does not do, skipping it", key, target.substring(1));
+        String tag = ItemSelection.oreName(target);
+        if (tag != null) {
+            ContentLog.LOGGER.error("A swap in {} swaps to the tag {}, which 1.12.2 does not do, skipping it", key, tag);
             return null;
         }
         ItemStack to = ContentStacks.parse(key, target, 1);

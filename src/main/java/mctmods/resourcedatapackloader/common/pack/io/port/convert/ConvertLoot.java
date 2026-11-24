@@ -16,6 +16,7 @@ import java.util.Set;
 import net.minecraft.util.JsonUtils;
 
 public final class ConvertLoot {
+    private static final Set<String> LOOT_ENTRIES = Convert.set("item", "loot_table", "empty");
     private static final Set<String> LOOT_FUNCTIONS = Convert.set("set_count", "set_data", "set_damage", "set_nbt", "enchant_randomly", "enchant_with_levels", "looting_enchant", "furnace_smelt", "set_attributes", "exploration_map");
     private static final Set<String> LOOT_CONDITIONS = Convert.set("random_chance", "random_chance_with_looting", "entity_properties", "entity_scores", "killed_by_player");
     private static final Map<String, String> OPERATIONS = new HashMap<>();
@@ -29,7 +30,7 @@ public final class ConvertLoot {
     private ConvertLoot() {}
 
     public static String loot(JsonObject json, String from, Ported pack) {
-        if (JsonUtils.isJsonPrimitive(json, "target")) { json.addProperty("target", Ids.lootTable(json.get("target").getAsString())); }
+        Json.rewriteText(json, "target", Ids::lootTable);
         removalIds(json, from, pack);
         json.remove("type");
         json.remove("random_sequence");
@@ -44,10 +45,7 @@ public final class ConvertLoot {
             numberAt(pool, "rolls", from, pack);
             numberAt(pool, "bonus_rolls", from, pack);
             if (pool.has("conditions")) { pool.add("conditions", lootConditions(pool.getAsJsonArray("conditions"), from, pack)); }
-            if (pool.has("functions")) {
-                pack.note("'" + from + "' gives a pool functions, which 1.12.2 reads only on entries, so they are left out");
-                pool.remove("functions");
-            }
+            pack.dropMember(pool, "functions", Ported.where(from) + " gives a pool functions, which 1.12.2 reads only on entries, so they are left out");
             JsonArray entries = new JsonArray();
             if (pool.has("entries")) { flattenEntries(pool.getAsJsonArray("entries"), entries, from, pack); }
             Set<String> names = new HashSet<>();
@@ -64,20 +62,14 @@ public final class ConvertLoot {
     private static void removalIds(JsonObject json, String from, Ported pack) {
         if (JsonUtils.isJsonArray(json, "items")) {
             JsonArray items = new JsonArray();
-            for (JsonElement element : json.getAsJsonArray("items")) { items.add(element.isJsonPrimitive() ? new JsonPrimitive(itemId(element.getAsString(), from, pack)) : element); }
+            for (JsonElement element : json.getAsJsonArray("items")) { items.add(element.isJsonPrimitive() ? new JsonPrimitive(Convert.itemId(element.getAsString(), pack, Ported.where(from))) : element); }
             json.add("items", items);
         }
         if (!JsonUtils.isJsonArray(json, "entries")) { return; }
         for (JsonElement element : json.getAsJsonArray("entries")) {
-            if (!element.isJsonObject() || !JsonUtils.isJsonPrimitive(element.getAsJsonObject(), "entry")) { continue; }
-            JsonObject held = element.getAsJsonObject();
-            held.addProperty("entry", itemId(held.get("entry").getAsString(), from, pack));
+            if (!element.isJsonObject()) { continue; }
+            Json.rewriteText(element.getAsJsonObject(), "entry", held -> Convert.itemId(held, pack, Ported.where(from)));
         }
-    }
-
-    private static String itemId(String id, String from, Ported pack) {
-        Convert.Ref ref = Convert.item(id, pack, "'" + from + "'");
-        return ref == null ? id : ref.id;
     }
 
     private static void flattenEntries(JsonArray entries, JsonArray out, String from, Ported pack) {
@@ -87,20 +79,17 @@ public final class ConvertLoot {
             String type = Json.text(entry, "type");
             String bare = IdNames.bare(type);
             if ("alternatives".equals(bare) || "group".equals(bare) || "sequence".equals(bare)) {
-                pack.note("'" + from + "' has a " + bare + " entry, which 1.12.2 does not have, so its children are listed in the pool on their own");
+                pack.note(Ported.where(from) + " has a " + bare + " entry, which 1.12.2 does not have, so its children are listed in the pool on their own");
                 if (entry.has("children")) { flattenEntries(entry.getAsJsonArray("children"), out, from, pack); }
                 continue;
             }
-            if (!"item".equals(bare) && !"loot_table".equals(bare) && !"empty".equals(bare)) {
-                pack.note("'" + from + "' has a " + type + " entry, which has no twin on 1.12.2, so it is left out");
-                continue;
-            }
+            if (unknown(bare, LOOT_ENTRIES, "has a " + type + " entry", "", from, pack)) { continue; }
             entry.addProperty("type", bare);
-            if (entry.has("value") && !entry.has("name")) { entry.add("name", entry.remove("value")); }
+            Json.moveKey(entry, "value", "name");
             JsonArray functions = entry.has("functions") ? lootFunctions(entry.getAsJsonArray("functions"), from, pack) : new JsonArray();
             if ("loot_table".equals(bare) && entry.has("name")) { entry.addProperty("name", Ids.lootTable(entry.get("name").getAsString())); }
             if ("item".equals(bare) && entry.has("name")) {
-                Convert.Ref ref = Convert.item(entry.get("name").getAsString(), pack, "'" + from + "'");
+                Convert.Ref ref = Convert.item(entry.get("name").getAsString(), pack, Ported.where(from));
                 if (ref != null) {
                     entry.addProperty("name", ref.id);
                     if (ref.meta > 0) {
@@ -111,8 +100,7 @@ public final class ConvertLoot {
                     }
                 }
             }
-            if (functions.size() > 0) { entry.add("functions", functions); }
-            else { entry.remove("functions"); }
+            Json.putOrRemove(entry, "functions", functions);
             if (entry.has("conditions")) {
                 JsonArray conditions = lootConditions(entry.getAsJsonArray("conditions"), from, pack);
                 if (conditions.size() > 0) { entry.add("conditions", conditions); }
@@ -130,10 +118,7 @@ public final class ConvertLoot {
             String name = Json.text(function, "function");
             String bare = IdNames.bare(name);
             if ("enchanted_count_increase".equals(bare)) { bare = "looting_enchant"; }
-            if (!LOOT_FUNCTIONS.contains(bare)) {
-                pack.note("'" + from + "' uses the loot function " + name + ", which has no twin on 1.12.2, so it is left out");
-                continue;
-            }
+            if (unknown(bare, LOOT_FUNCTIONS, "uses the loot function " + name, "", from, pack)) { continue; }
             function.addProperty("function", bare);
             numberAt(function, "count", from, pack);
             numberAt(function, "damage", from, pack);
@@ -146,7 +131,7 @@ public final class ConvertLoot {
                     if (held.has("attribute")) { held.addProperty("attribute", Ids.attribute(held.get("attribute").getAsString())); }
                     String operation = Json.text(held, "operation");
                     if (OPERATIONS.containsKey(operation)) { held.addProperty("operation", OPERATIONS.get(operation)); }
-                    if (held.has("id") && !held.has("name")) { held.add("name", held.remove("id")); }
+                    Json.moveKey(held, "id", "name");
                     numberAt(held, "amount", from, pack);
                 }
             }
@@ -170,22 +155,25 @@ public final class ConvertLoot {
                 out.add(inverse);
                 continue;
             }
-            if (!LOOT_CONDITIONS.contains(bare)) {
-                pack.note("'" + from + "' uses the loot condition " + name + ", which has no twin on 1.12.2, so it is left out and what it guarded is no longer guarded");
-                continue;
-            }
+            if (unknown(bare, LOOT_CONDITIONS, "uses the loot condition " + name, " and what it guarded is no longer guarded", from, pack)) { continue; }
             condition.addProperty("condition", bare);
             if ("entity_properties".equals(bare) && condition.has("predicate") && condition.get("predicate").isJsonObject()) {
                 JsonObject predicate = condition.remove("predicate").getAsJsonObject();
                 JsonObject properties = new JsonObject();
-                JsonObject flags = predicate.has("flags") && predicate.get("flags").isJsonObject() ? predicate.getAsJsonObject("flags") : new JsonObject();
+                JsonObject flags = Json.object(predicate, "flags");
                 if (flags.has("is_on_fire")) { properties.add("on_fire", flags.get("is_on_fire")); }
-                if (predicate.size() > (flags.size() > 0 ? 1 : 0) || flags.size() > (flags.has("is_on_fire") ? 1 : 0)) { pack.note("'" + from + "' asks an entity_properties condition for more than being on fire, which is all 1.12.2 can ask, so the rest is left out"); }
+                if (predicate.size() > (flags.size() > 0 ? 1 : 0) || flags.size() > (flags.has("is_on_fire") ? 1 : 0)) { pack.note(Ported.where(from) + " asks an entity_properties condition for more than being on fire, which is all 1.12.2 can ask, so the rest is left out"); }
                 condition.add("properties", properties);
             }
             out.add(condition);
         }
         return out;
+    }
+
+    private static boolean unknown(String bare, Set<String> names, String what, String tail, String from, Ported pack) {
+        if (names.contains(bare)) { return false; }
+        pack.note(Ported.where(from) + " " + what + ", which has no twin on 1.12.2, so it is left out" + tail);
+        return true;
     }
 
     private static void numberAt(JsonObject holder, String key, String from, Ported pack) {
@@ -202,11 +190,11 @@ public final class ConvertLoot {
             range.addProperty("min", 0);
             range.add("max", JsonUtils.isJsonPrimitive(provider, "n") ? provider.get("n") : new JsonPrimitive(1));
             holder.add(key, range);
-            pack.note("'" + from + "' rolls a binomial " + key + ", and 1.12.2 rolls only uniform ranges, so it becomes " + range);
+            pack.note(Ported.where(from) + " rolls a binomial " + key + ", and 1.12.2 rolls only uniform ranges, so it becomes " + range);
             return;
         }
         if (!bare.isEmpty() && !"uniform".equals(bare)) {
-            pack.note("'" + from + "' gives " + key + " as a " + type + " number, which has no twin on 1.12.2");
+            pack.note(Ported.where(from) + " gives " + key + " as a " + type + " number, which has no twin on 1.12.2");
             return;
         }
         provider.remove("type");

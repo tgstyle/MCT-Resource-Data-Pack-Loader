@@ -2,12 +2,14 @@ package mctmods.resourcedatapackloader.common.villages;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsGrade;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
@@ -41,21 +43,29 @@ public final class CityGrid {
 
     public static boolean on() { return ContentBeard.wanted() && ContentControl.number(ContentControl.VILLAGES, "villageCitySpacing", Config.worldgen.villageCitySpacing) == 1; }
 
-    public static int district() { return Math.max(DISTRICT_LEAST, (2 * ContentVillages.largestPlot() + 2 * ContentBeard.plazaReach() + 2 * BeardRoads.pathFullWidth() + 15) / 16 * 16); }
+    public static int spacing() { return 2 * ContentVillages.largestPlot() + 2 * ContentBeard.plazaReach() + 2 * BeardRoads.pathFullWidth(); }
 
-    public static int range() { return Math.max(8, (district() >> 4) / 2 + 2); }
+    public static int district() { return Math.max(DISTRICT_LEAST, (spacing() + 15) / 16 * 16); }
+
+    private static int chunks() { return district() >> 4; }
+
+    private static int startChunk(int chunks) { return chunks / 2; }
+
+    private static int edgeInset() { return BeardRoads.pathFullWidth() + 8; }
+
+    public static int range() { return Math.max(8, startChunk(chunks()) + 2); }
 
     public static boolean startsAt(int chunkX, int chunkZ) {
-        int chunks = district() >> 4;
-        return Math.floorMod(chunkX, chunks) == chunks / 2 && Math.floorMod(chunkZ, chunks) == chunks / 2;
+        int chunks = chunks();
+        return Math.floorMod(chunkX, chunks) == startChunk(chunks) && Math.floorMod(chunkZ, chunks) == startChunk(chunks);
     }
 
     public static long startIn(int cellX, int cellZ) {
-        int chunks = district() >> 4;
-        return Longs.pack(cellX * chunks + chunks / 2, cellZ * chunks + chunks / 2);
+        int chunks = chunks();
+        return Longs.pack(cellX * chunks + startChunk(chunks), cellZ * chunks + startChunk(chunks));
     }
 
-    public static int cellOf(int chunk) { return Math.floorDiv(chunk, district() >> 4); }
+    public static int cellOf(int chunk) { return Math.floorDiv(chunk, chunks()); }
 
     @Nullable public static BlockPos nearest(World world, BlockPos from, boolean findUnexplored) {
         int cellX = cellOf(from.getX() >> 4);
@@ -83,12 +93,13 @@ public final class CityGrid {
         int size = district();
         int minX = Math.floorDiv(well.minX, size) * size;
         int minZ = Math.floorDiv(well.minZ, size) * size;
-        return new StructureBoundingBox(minX, 0, minZ, minX + size - 1, 255, minZ + size - 1);
+        return new StructureBoundingBox(minX, 0, minZ, minX + size - 1, GenHeights.WORLD_TOP, minZ + size - 1);
     }
 
     private static boolean inside(StructureBoundingBox bounds, StructureBoundingBox box) { return box.minX >= bounds.minX && box.maxX <= bounds.maxX && box.minZ >= bounds.minZ && box.maxZ <= bounds.maxZ; }
 
     public static boolean clipped(StructureVillagePieces.Start start, List<StructureComponent> pieces, StructureComponent placed) {
+        if (placed == null || start == null || !alone) { return false; }
         StructureBoundingBox bounds = bounds(start.getBoundingBox());
         StructureBoundingBox box = placed.getBoundingBox();
         if (kept(bounds, placed)) { return false; }
@@ -103,19 +114,19 @@ public final class CityGrid {
         StructureBoundingBox box = piece.getBoundingBox();
         if (!(piece instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(piece)) { return inside(bounds, box); }
         boolean alongX = BeardPlots.roadAlongX(piece);
-        if (alongX ? box.minZ < bounds.minZ || box.maxZ > bounds.maxZ : box.minX < bounds.minX || box.maxX > bounds.maxX) { return false; }
-        int inset = BeardRoads.pathFullWidth() + 8;
-        int least = (alongX ? bounds.minX : bounds.minZ) + inset;
-        int most = (alongX ? bounds.maxX : bounds.maxZ) - inset;
-        if ((alongX ? box.minX : box.minZ) >= least && (alongX ? box.maxX : box.maxZ) <= most) { return true; }
+        if (BeardPlots.acrossLeast(box, alongX) < BeardPlots.acrossLeast(bounds, alongX) || BeardPlots.acrossMost(box, alongX) > BeardPlots.acrossMost(bounds, alongX)) { return false; }
+        int inset = edgeInset();
+        int least = BeardPlots.least(bounds, alongX) + inset;
+        int most = BeardPlots.most(bounds, alongX) - inset;
+        if (BeardPlots.least(box, alongX) >= least && BeardPlots.most(box, alongX) <= most) { return true; }
         if (tooShort(box, alongX, least, most)) { return false; }
         ContentLog.LOGGER.debug("A side street of the district at {}, {} would reach the district's edge, where only the well's cross meets the next district, so it stops {} block(s) short as {}", bounds.minX, bounds.minZ, inset, box);
         return true;
     }
 
     private static boolean tooShort(StructureBoundingBox road, boolean alongX, int least, int most) {
-        int low = Math.max(alongX ? road.minX : road.minZ, least);
-        int high = Math.min(alongX ? road.maxX : road.maxZ, most);
+        int low = Math.max(BeardPlots.least(road, alongX), least);
+        int high = Math.min(BeardPlots.most(road, alongX), most);
         if (high - low + 1 < SHORTEST) { return true; }
         if (alongX) {
             road.minX = low;
@@ -130,8 +141,8 @@ public final class CityGrid {
 
     public static void avenues(StructureStart held, World world, Random rand) {
         List<StructureComponent> pieces = held.getComponents();
-        if (pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return; }
-        StructureVillagePieces.Start start = (StructureVillagePieces.Start) pieces.get(0);
+        StructureVillagePieces.Start start = CityGrowth.startOf(pieces);
+        if (start == null) { return; }
         StructureBoundingBox well = start.getBoundingBox();
         StructureBoundingBox bounds = bounds(well);
         int laid = 0;
@@ -151,11 +162,11 @@ public final class CityGrid {
     private static int avenue(StructureVillagePieces.Start start, List<StructureComponent> pieces, Random rand, StructureBoundingBox well, StructureBoundingBox bounds, EnumFacing facing, boolean seated) {
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int step = alongX ? facing.getXOffset() : facing.getZOffset();
-        int row = alongX ? well.minZ + 2 : well.minX + 2;
+        int row = BeardPlots.acrossLeast(well, alongX) + 2;
         int half = ContentBeard.streetHalf();
-        int reach = step > 0 ? (alongX ? well.maxX : well.maxZ) + 1 : (alongX ? well.minX : well.minZ) - 1;
-        int inset = seated ? 0 : BeardRoads.pathFullWidth() + 8;
-        int edge = (step > 0 ? (alongX ? bounds.maxX : bounds.maxZ) : (alongX ? bounds.minX : bounds.minZ)) - step * inset;
+        int reach = step > 0 ? BeardPlots.most(well, alongX) + 1 : BeardPlots.least(well, alongX) - 1;
+        int inset = seated ? 0 : edgeInset();
+        int edge = (step > 0 ? BeardPlots.most(bounds, alongX) : BeardPlots.least(bounds, alongX)) - step * inset;
         if (!seated) { ContentLog.LOGGER.debug("The avenue {} of the district at {}, {} meets a district left empty, so it stops {} block(s) short of the edge and ends there as a dead end", facing, bounds.minX, bounds.minZ, inset); }
         int walked = walked(pieces, line(alongX, Math.min(reach, edge), Math.max(reach, edge), row, half, well), facing);
         boolean through = walked >= (edge - reach) * step + 1;
@@ -170,9 +181,9 @@ public final class CityGrid {
             for (StructureComponent piece : pieces) {
                 if (!(piece instanceof StructureVillagePieces.Path) || BeardPlots.roadAlongX(piece) != alongX) { continue; }
                 StructureBoundingBox road = piece.getBoundingBox();
-                if ((alongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2) != row) { continue; }
-                int near = step > 0 ? (alongX ? road.minX : road.minZ) : (alongX ? road.maxX : road.maxZ);
-                int far = step > 0 ? (alongX ? road.maxX : road.maxZ) : (alongX ? road.minX : road.minZ);
+                if (StructureBoxes.across(road, alongX) != row) { continue; }
+                int near = step > 0 ? BeardPlots.least(road, alongX) : BeardPlots.most(road, alongX);
+                int far = step > 0 ? BeardPlots.most(road, alongX) : BeardPlots.least(road, alongX);
                 if ((near - reach) * step > 0 || (far - reach) * step < 0) { continue; }
                 reach = far + step;
                 last = piece;
@@ -209,7 +220,7 @@ public final class CityGrid {
         BeardRoads.clearLayout(street);
     }
 
-    private static StructureBoundingBox line(boolean alongX, int low, int high, int row, int half, StructureBoundingBox well) { return alongX ? new StructureBoundingBox(low, well.minY, row - half, high, well.maxY, row + half) : new StructureBoundingBox(row - half, well.minY, low, row + half, well.maxY, high); }
+    private static StructureBoundingBox line(boolean alongX, int low, int high, int row, int half, StructureBoundingBox well) { return ContentBeard.span(alongX, low, high, row - half, row + half, well.minY, well.maxY); }
 
     private static int walked(List<StructureComponent> pieces, StructureBoundingBox line, EnumFacing facing) { return ContentBeard.layingOf(pieces, () -> BeardRoadsGrade.roadReach(line, facing)); }
 
@@ -235,7 +246,7 @@ public final class CityGrid {
 
     public static boolean atEdge(List<StructureComponent> own, boolean alongX, int end, int dir) {
         StructureBoundingBox bounds = bounds(own.get(0).getBoundingBox());
-        return end == (dir > 0 ? (alongX ? bounds.maxX : bounds.maxZ) : (alongX ? bounds.minX : bounds.minZ));
+        return end == (dir > 0 ? BeardPlots.most(bounds, alongX) : BeardPlots.least(bounds, alongX));
     }
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {

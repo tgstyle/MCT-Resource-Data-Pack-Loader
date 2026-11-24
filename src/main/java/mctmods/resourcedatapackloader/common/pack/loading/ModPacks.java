@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +51,7 @@ public final class ModPacks {
         for (Found entry : found) {
             JsonObject settings = settingsFor(control, entry.modId);
             if (!settings.get(ENABLED).getAsBoolean()) {
-                ContentLog.LOGGER.info("Mod pack '{}' is turned off in {}/{}", entry.modId, "config", CONTROL_FILE);
+                ContentLog.LOGGER.info("Mod pack '{}' is turned off in {}/{}", entry.modId, PackManager.CONFIG, CONTROL_FILE);
                 continue;
             }
             RDPLPack pack = open(entry, settings.get(PRIORITY).getAsInt());
@@ -78,11 +77,7 @@ public final class ModPacks {
     }
 
     private static boolean carriesPack(ZipFile zip) {
-        Enumeration<? extends ZipEntry> entries = zip.entries();
-        while (entries.hasMoreElements()) {
-            if (entries.nextElement().getName().startsWith(ASSETS_PREFIX)) { return true; }
-        }
-        return false;
+        return ModJars.anyEntry(zip, entry -> entry.getName().startsWith(ASSETS_PREFIX));
     }
 
     private static Set<String> declaredModIds(ZipFile zip) {
@@ -137,7 +132,7 @@ public final class ModPacks {
     }
 
     private static JsonObject readControl(Path packRoot) {
-        Path file = packRoot.resolve("config").resolve(CONTROL_FILE);
+        Path file = PackManager.config(packRoot, CONTROL_FILE);
         if (!Files.isRegularFile(file)) { return new JsonObject(); }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             JsonElement parsed = new JsonParser().parse(reader);
@@ -150,10 +145,10 @@ public final class ModPacks {
     }
 
     private static void writeControl(Path packRoot, JsonObject control) {
-        Path file = packRoot.resolve("config").resolve(CONTROL_FILE);
+        Path file = PackManager.config(packRoot, CONTROL_FILE);
         String text = Json.PRETTY.toJson(control) + System.lineSeparator();
         try {
-            if (Files.isRegularFile(file) && text.equals(new String(Files.readAllBytes(file), StandardCharsets.UTF_8))) { return; }
+            if (Files.isRegularFile(file) && text.equals(Json.readText(file))) { return; }
             Files.createDirectories(file.getParent());
             Files.write(file, text.getBytes(StandardCharsets.UTF_8));
             ContentLog.LOGGER.info("Wrote {}, where each mod that ships a '{}' folder can be turned off or given a priority", file, IN_JAR);

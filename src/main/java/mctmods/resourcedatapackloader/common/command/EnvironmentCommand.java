@@ -23,11 +23,17 @@ final class EnvironmentCommand {
 
     private EnvironmentCommand() {}
 
+    private static List<DimensionDef> withEnvironments() {
+        List<DimensionDef> found = new ArrayList<>();
+        for (DimensionDef def : ContentDimensions.available().values()) {
+            if (!ContentEnvironments.names(def).isEmpty()) { found.add(def); }
+        }
+        return found;
+    }
+
     private static List<String> dimensions() {
         List<String> found = new ArrayList<>();
-        for (DimensionDef def : ContentDimensions.available().values()) {
-            if (!ContentEnvironments.names(def).isEmpty()) { found.add(String.valueOf(def.id)); }
-        }
+        for (DimensionDef def : withEnvironments()) { found.add(String.valueOf(def.id)); }
         return found;
     }
 
@@ -57,13 +63,11 @@ final class EnvironmentCommand {
     }
 
     private static void list(ICommandSender sender) {
-        boolean any = false;
-        for (DimensionDef def : ContentDimensions.available().values()) {
+        List<DimensionDef> found = withEnvironments();
+        for (DimensionDef def : found) {
             Set<String> names = ContentEnvironments.names(def);
-            if (names.isEmpty()) { continue; }
-            any = true;
             CommandShared.send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.environments", def.id, String.join(" + ", ContentEnvironments.active(def.id)), String.join(", ", names)));
         }
-        if (!any) { CommandShared.send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.noenvironments")); }
+        if (found.isEmpty()) { CommandShared.send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.noenvironments")); }
     }
 }

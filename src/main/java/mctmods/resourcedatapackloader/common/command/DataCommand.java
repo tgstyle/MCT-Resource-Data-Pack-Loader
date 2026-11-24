@@ -22,9 +22,8 @@ import net.minecraft.world.World;
 
 final class DataCommand {
     private static final String WORLD = "world";
-    private static final String ASKING = "The command /rdplserver";
+    private static final String ASKING = "The command /" + CommandShared.NAME;
     private static final List<String> ACTIONS = Arrays.asList("set", "add", "remove", "get", "list");
-    private static final List<String> TYPES = Arrays.asList("text", "number", "bool");
 
     private DataCommand() {}
 
@@ -59,7 +58,7 @@ final class DataCommand {
             return CommandBase.getListOfStringsMatchingLastWord(args, names);
         }
         if (args.length == 5 && "set".equals(args[1])) {
-            return CommandBase.getListOfStringsMatchingLastWord(args, SyncDataRules.declared(args[3]) == null ? TYPES : Arrays.asList("true", "false"));
+            return CommandBase.getListOfStringsMatchingLastWord(args, SyncDataRules.declared(args[3]) == null ? SyncValue.KIND_NAMES : Arrays.asList("true", "false"));
         }
         return Collections.emptyList();
     }
@@ -73,9 +72,10 @@ final class DataCommand {
     @Nullable private static SyncValue own(ICommandSender sender, @Nullable EntityPlayer target, String name) {
         SyncData data = SyncData.peek(sender.getEntityWorld());
         if (data == null) { return null; }
-        Map<String, SyncValue> values = target == null ? data.worldValues() : data.playerValues(target.getUniqueID());
-        return values.get(name);
+        return values(data, target).get(name);
     }
+
+    private static Map<String, SyncValue> values(SyncData data, @Nullable EntityPlayer target) { return target == null ? data.worldValues() : data.playerValues(target.getUniqueID()); }
 
     private static void get(ICommandSender sender, @Nullable EntityPlayer target, String name) {
         SyncValue value = target == null ? own(sender, null, name) : SyncData.read(target, name);
@@ -101,13 +101,14 @@ final class DataCommand {
 
     private static void set(ICommandSender sender, @Nullable EntityPlayer target, String name, String[] args, String usage) throws CommandException {
         SyncDataRules.Declaration declared = SyncDataRules.declared(name);
-        boolean typed = TYPES.contains(args[4]) && args.length >= 6 && (declared == null || SyncValue.kindName(declared.kind).equals(args[4]));
+        boolean typed = SyncValue.KIND_NAMES.contains(args[4]) && args.length >= 6 && (declared == null || SyncValue.kindName(declared.kind).equals(args[4]));
         if (declared == null && !typed) { throw new WrongUsageException(usage); }
         String type = typed ? args[4] : SyncValue.kindName(declared.kind);
         String text = String.join(" ", Arrays.copyOfRange(args, typed ? 5 : 4, args.length));
         SyncValue value;
-        if ("number".equals(type)) { value = SyncValue.number(CommandBase.parseDouble(text)); }
-        else if ("bool".equals(type)) { value = SyncValue.bool(CommandBase.parseBoolean(text)); }
+        int kind = SyncValue.kindOf(type);
+        if (kind == SyncValue.NUMBER) { value = SyncValue.number(CommandBase.parseDouble(text)); }
+        else if (kind == SyncValue.BOOL) { value = SyncValue.bool(CommandBase.parseBoolean(text)); }
         else { value = SyncValue.text(text); }
         store(sender, target, name, value);
     }
@@ -121,7 +122,7 @@ final class DataCommand {
 
     private static void list(ICommandSender sender, @Nullable EntityPlayer target) {
         SyncData data = SyncData.peek(sender.getEntityWorld());
-        Map<String, SyncValue> values = data == null ? Collections.emptyMap() : target == null ? data.worldValues() : data.playerValues(target.getUniqueID());
+        Map<String, SyncValue> values = data == null ? Collections.emptyMap() : values(data, target);
         if (values.isEmpty()) {
             CommandShared.send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.datanone", label(target)));
             return;

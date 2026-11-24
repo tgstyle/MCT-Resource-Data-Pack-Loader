@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import net.minecraft.enchantment.Enchantment;
@@ -107,14 +108,14 @@ public final class ContentMobExperience {
         scores(mob, level, data.getInteger(TOTAL));
     }
 
-    private static int cap(int level) {
-        if (level >= 30) { return 112 + (level - 30) * 9; }
-        return level >= 15 ? 37 + (level - 15) * 5 : 7 + level * 2;
-    }
-
     private static int roundAverage(float value) {
         double floor = Math.floor(value);
         return (int) floor + (Math.random() < value - floor ? 1 : 0);
+    }
+
+    private static int cap(int level) {
+        if (level >= 30) { return 112 + (level - 30) * 9; }
+        return level >= 15 ? 37 + (level - 15) * 5 : 7 + level * 2;
     }
 
     private static void scores(EntityLiving mob, int level, int total) {
@@ -134,7 +135,7 @@ public final class ContentMobExperience {
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onDeath(LivingDeathEvent event) {
         EntityLivingBase died = event.getEntityLiving();
         if (event.isCanceled() || died.world.isRemote || !(died instanceof EntityLiving) || !ContentEntities.collectsExperience(died)) { return; }
-        int dropped = died.world.getGameRules().getBoolean("keepInventory") ? 0 : Math.min(level(died) * 7, 100);
+        int dropped = PlayerLoot.keepInventory(died.world) ? 0 : Math.min(level(died) * 7, 100);
         NBTTagCompound data = died.getEntityData();
         data.removeTag(LEVEL);
         data.removeTag(PROGRESS);

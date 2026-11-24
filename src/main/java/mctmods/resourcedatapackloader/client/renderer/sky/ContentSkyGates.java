@@ -30,13 +30,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     public static void receive(List<String> gates) {
         Set<String> open = new HashSet<>(gates);
         if (open.equals(OPEN)) { return; }
-        OPEN = open;
-        HIDDEN.clear();
-        SkyOccluder.invalidate();
+        open(open);
     }
 
-    public static void clear() {
-        OPEN = Collections.emptySet();
+    public static void clear() { open(Collections.emptySet()); }
+
+    private static void open(Set<String> gates) {
+        OPEN = gates;
         HIDDEN.clear();
         SkyOccluder.invalidate();
     }
@@ -45,12 +45,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     public static boolean hides(String gate) {
         if (gate.isEmpty()) { return false; }
-        Boolean hidden = HIDDEN.get(gate);
-        if (hidden == null) {
-            hidden = locked(gate);
-            HIDDEN.put(gate, hidden);
-        }
-        return hidden;
+        return HIDDEN.computeIfAbsent(gate, ContentSkyGates::locked);
     }
 
     private static boolean locked(String gate) {

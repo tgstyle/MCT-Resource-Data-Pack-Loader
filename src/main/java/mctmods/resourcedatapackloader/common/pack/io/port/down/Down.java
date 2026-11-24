@@ -1,9 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
-import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import mctmods.resourcedatapackloader.core.util.IdNames;
-import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -36,21 +34,21 @@ final class Down {
 
     private Down() {}
 
-    static void data(JsonObject json, Port.Kind kind, String file, Consumer<String> note) {
+    static void data(JsonObject json, Port.Kind kind, Consumer<String> note) {
         switch (kind) {
             case RECIPE:
-                DownRecipes.recipe(json, file, note);
+                DownRecipes.recipe(json, note);
                 break;
             case LOOT:
-                DownLoot.loot(json, file, note);
+                DownLoot.loot(json, note);
                 break;
             case ADVANCEMENT:
-                DownLoot.advancement(json, file, note);
+                DownLoot.advancement(json, note);
                 break;
             case MODEL:
                 DownAssets.model(json);
                 break;
-            default: JsonTree.replace(json, DownFixes.names(json).getAsJsonObject());
+            default: DownFixes.rename(json);
         }
     }
 
@@ -115,10 +113,10 @@ final class Down {
             if (at >= 0 && at < end) { end = at; }
         }
         String id = arg.substring(0, end);
-        if (id.isEmpty() || id.startsWith("#") || id.startsWith("@")) { return arg; }
+        if (id.isEmpty() || IdNames.isTag(id) || id.startsWith("@")) { return arg; }
         String renamed = DownFixes.name(id);
         if (renamed.equals(id)) { return arg; }
-        return (id.indexOf(':') < 0 ? renamed.substring(MINECRAFT.length()) : renamed) + arg.substring(end);
+        return (id.indexOf(':') < 0 ? IdNames.bare(renamed) : renamed) + arg.substring(end);
     }
 
     private static String gamerule(String line) {

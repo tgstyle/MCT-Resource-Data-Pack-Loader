@@ -12,6 +12,7 @@ import net.minecraft.world.World;
 public final class BeardGrade {
     public static final int CAP = 2;
     public static final int TUNNEL_LEAST = 12;
+    private static final int SPAN_MOST = 12;
     private static final int DECK_LEAST = 4;
     public static final int TUNNEL_REACH = 98;
 
@@ -24,7 +25,7 @@ public final class BeardGrade {
         for (int i = 0; i < profile.length; i++) {
             int count = 0;
             for (int at = acrossLeast; at <= acrossMost; at++) {
-                int sampled = BeardSurface.surfaceAt(world, alongX ? rowLeast + i : at, alongX ? at : rowLeast + i);
+                int sampled = BeardSurface.surfaceAlong(world, alongX, rowLeast + i, at);
                 if (sampled < world.getSeaLevel() - 1) { continue; }
                 across[count++] = sampled;
             }
@@ -48,7 +49,7 @@ public final class BeardGrade {
             int[] taken = new int[3];
             int count = 0;
             for (int across = center - 1; across <= center + 1; across++) {
-                int found = BeardSurface.surfaceAt(world, alongX ? grid : across, alongX ? across : grid);
+                int found = BeardSurface.surfaceAlong(world, alongX, grid, across);
                 if (found < world.getSeaLevel() - 1) { continue; }
                 taken[count++] = found;
             }
@@ -69,7 +70,7 @@ public final class BeardGrade {
             if (profile[i] != Integer.MIN_VALUE) { continue; }
             int gapEnd = i;
             while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
-            if (i > 0 && gapEnd < rows && gapEnd - i <= 12) {
+            if (i > 0 && gapEnd < rows && gapEnd - i <= SPAN_MOST) {
                 int fromY = profile[i - 1];
                 int toY = profile[gapEnd];
                 for (int held = i; held < gapEnd; held++) {
@@ -216,7 +217,7 @@ public final class BeardGrade {
             if (!bridged[i] || profile[i] == Integer.MIN_VALUE) { continue; }
             int standing = 0;
             for (int at = acrossLeast; at <= acrossMost; at++) {
-                int top = BeardSurface.surfaceAt(world, alongX ? rowLeast + i : at, alongX ? at : rowLeast + i);
+                int top = BeardSurface.surfaceAlong(world, alongX, rowLeast + i, at);
                 if (top >= profile[i] - 1 || (top == profile[i] - 2 && profile[i] - 1 < world.getSeaLevel())) { standing++; }
             }
             landed[i] = standing * 2 > width;
@@ -391,7 +392,7 @@ public final class BeardGrade {
                 boolean sunken = k <= end && Math.min(leftMax[k - i], rightMax[k - i]) > profile[k];
                 if (sunken && low < 0) { low = k; }
                 if (!sunken && low >= 0) {
-                    if (k - low <= 12) {
+                    if (k - low <= SPAN_MOST) {
                         for (int fillAt = low; fillAt < k; fillAt++) {
                             int fill = Math.min(leftMax[fillAt - i], rightMax[fillAt - i]);
                             if (!held[fillAt] && fill > profile[fillAt]) { profile[fillAt] = fill; }
@@ -407,7 +408,7 @@ public final class BeardGrade {
                 boolean raised = k <= end && Math.max(leftFloor[k - i], rightFloor[k - i]) < profile[k];
                 if (raised && high < 0) { high = k; }
                 if (!raised && high >= 0) {
-                    if (k - high <= 12) {
+                    if (k - high <= SPAN_MOST) {
                         for (int cutAt = high; cutAt < k; cutAt++) {
                             int cut = Math.max(leftFloor[cutAt - i], rightFloor[cutAt - i]);
                             if (!held[cutAt] && cut < profile[cutAt]) { profile[cutAt] = cut; }

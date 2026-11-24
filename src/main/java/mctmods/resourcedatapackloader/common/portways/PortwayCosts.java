@@ -4,14 +4,13 @@ import mctmods.resourcedatapackloader.common.cards.CardFire;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.CostPart;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayCost;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 
 public final class PortwayCosts {
     private static final String READY = "ready";
@@ -49,11 +48,6 @@ public final class PortwayCosts {
 
     public static boolean exempt(EntityPlayer player) { return player.isCreative() || player.isSpectator(); }
 
-    @Nullable private static Item item(CostPart part) {
-        Item found = part.id.isEmpty() ? null : Item.REGISTRY.getObject(new ResourceLocation(part.id));
-        return found == null || found == Items.AIR ? null : found;
-    }
-
     private static int carried(EntityPlayer player, Item item) {
         int total = 0;
         for (ItemStack held : player.inventory.mainInventory) {
@@ -87,7 +81,7 @@ public final class PortwayCosts {
         if (seconds > 0) { return new Refusal("cooldown", Lang.tr(player, Portways.counted("rdpl.portway.cooldown", seconds), seconds)); }
         int xp = costOf(cost.xp, distance, cross);
         if (xp > 0 && (cost.xp.points ? points(player) : player.experienceLevel) < xp) { return new Refusal("cost", Lang.tr(player, Portways.counted(cost.xp.points ? "rdpl.portway.cost.xp.points" : "rdpl.portway.cost.xp", xp), xp)); }
-        Item item = item(cost.item);
+        Item item = Registries.item(cost.item.id);
         int count = costOf(cost.item, distance, cross);
         if (item != null && count > 0 && carried(player, item) < count) { return new Refusal("cost", Lang.tr(player, "rdpl.portway.cost.item", count, new ItemStack(item).getDisplayName())); }
         return null;
@@ -98,7 +92,7 @@ public final class PortwayCosts {
         int xp = costOf(cost.xp, distance, cross);
         if (xp > 0 && cost.xp.points) { takePoints(player, xp); }
         else if (xp > 0) { player.addExperienceLevel(-xp); }
-        Item item = item(cost.item);
+        Item item = Registries.item(cost.item.id);
         int count = costOf(cost.item, distance, cross);
         int owed = count;
         for (ItemStack held : player.inventory.mainInventory) {

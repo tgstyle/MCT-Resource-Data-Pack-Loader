@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -20,6 +22,8 @@ import net.minecraft.util.ResourceLocation;
 
 public final class HeartReward {
     public enum Trigger { ADVANCEMENT, DIET, FOODS, CONDITION, DEATH }
+
+    private enum DeathBy { ANY, PLAYER, MOB, WORLD }
 
     public static final String DEFAULT_MESSAGE = "rdpl.hearts.gained";
     public static final String LOST_MESSAGE = "rdpl.hearts.lost";
@@ -32,13 +36,13 @@ public final class HeartReward {
     private static final List<String> LOSS_REPEATS = Arrays.asList(ONCE, ALWAYS, WHILE_MET);
     private static final List<String> REWARD_KEYS = Collections.unmodifiableList(Arrays.asList("id", "advancement", "diet", "dietCount", "foods", "count", "team", "objective", "scoreAtLeast", "dietAtLeast",
             "death", "deathBy", "invert", "repeat", "clearOnDeath", "clearFoodsOnDeath", "times", "hearts", "message", "requires"));
-    private static final List<String> DEATH_BY = Arrays.asList("any", "player", "mob", "world");
+    private static final List<String> DEATH_BY = Arrays.stream(DeathBy.values()).map(by -> by.name().toLowerCase(Locale.ROOT)).collect(Collectors.toList());
     public final boolean loss;
     public final boolean invert;
     public final boolean whileMet;
     public final boolean clearOnDeath;
     public final boolean clearFoodsOnDeath;
-    public final String deathBy;
+    private final DeathBy deathBy;
     public final String key;
     public final String eatenKey;
     public final Trigger trigger;
@@ -57,7 +61,7 @@ public final class HeartReward {
     private HeartReward(String file, String id, Trigger trigger, JsonObject json, ResourceLocation owner, boolean loss) {
         this.loss = loss;
         this.key = (loss ? LOST : "") + file + "/" + id;
-        this.deathBy = trigger == Trigger.DEATH ? Json.choice(json, "deathBy", DEATH_BY.get(0), key, DEATH_BY) : DEATH_BY.get(0);
+        this.deathBy = trigger == Trigger.DEATH ? DeathBy.valueOf(Json.choice(json, "deathBy", DEATH_BY.get(0), key, DEATH_BY).toUpperCase(Locale.ROOT)) : DeathBy.ANY;
         this.invert = loss && json.has("invert") && Json.getBoolean(json, "invert");
         if (invert && trigger != Trigger.CONDITION) { throw new IllegalArgumentException("invert needs a team, score or diet condition"); }
         if (invert && json.has("dietAtLeast") && !ContentDiet.loaded()) { throw new IllegalArgumentException("invert on dietAtLeast needs a diet file"); }
@@ -117,9 +121,9 @@ public final class HeartReward {
         Entity killer = source.getTrueSource();
         boolean nobody = killer == null || killer == died;
         switch (deathBy) {
-            case "player": return !nobody && killer instanceof EntityPlayer;
-            case "mob": return !nobody && !(killer instanceof EntityPlayer);
-            case "world": return nobody;
+            case PLAYER: return !nobody && killer instanceof EntityPlayer;
+            case MOB: return !nobody && !(killer instanceof EntityPlayer);
+            case WORLD: return nobody;
             default: return true;
         }
     }
@@ -141,11 +145,7 @@ public final class HeartReward {
 
     private static List<ItemMatch> foodMatches(ResourceLocation owner, List<String> names) {
         List<ItemMatch> matches = new ArrayList<>();
-        for (String name : names) {
-            ItemMatch match = ItemMatch.parse(owner, name);
-            if (match == null) { throw new IllegalArgumentException("foods entry '" + name + "' matches nothing"); }
-            matches.add(match);
-        }
+        for (String name : names) { matches.add(ItemMatch.parseOrThrow(owner, name, "foods entry")); }
         return Collections.unmodifiableList(matches);
     }
 

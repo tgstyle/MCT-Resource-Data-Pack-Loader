@@ -17,9 +17,8 @@ public final class ClaimGuard {
     public static int coversChunk(World world, int chunkX, int chunkZ) {
         if (world.isRemote || !ClaimSettings.any()) { return 0; }
         ClaimIndex index = ClaimIndex.obtain(world);
-        if (index == null) { return 0; }
         int owner = index.ownerAt(chunkX, chunkZ);
-        return owner != 0 && ClaimSettings.yieldsToForeign() && (ClaimSettings.ftbPolicy() == ClaimSettings.FtbPolicy.EXCLUSIVE || ForeignClaimsHolder.get().isClaimed(world, chunkX, chunkZ)) ? 0 : owner;
+        return owner != 0 && ClaimSettings.yieldsAt(world, chunkX, chunkZ) ? 0 : owner;
     }
 
     public static boolean passes(EntityPlayer player, World world, BlockPos pos) {
@@ -36,8 +35,7 @@ public final class ClaimGuard {
 
     private static boolean claimless(World world) {
         if (world.isRemote) { return true; }
-        ClaimIndex index = ClaimIndex.obtain(world);
-        return index == null || index.isEmpty();
+        return ClaimIndex.obtain(world).isEmpty();
     }
 
     public static boolean fluidMayFlow(World world, BlockPos from, BlockPos to) { return ClaimSettings.fluidsOpen() || claimless(world) || sameOwnerAcross(world, from, to); }

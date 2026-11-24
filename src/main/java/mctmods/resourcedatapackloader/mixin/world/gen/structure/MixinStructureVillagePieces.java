@@ -95,19 +95,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$plotInDistrict(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
-        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, structureComponents, placed)) { rdpl$refuse(cir); }
+        if (CityGrid.clipped(start, structureComponents, placed)) { rdpl$refuse(cir); }
     }
 
     @Inject(method = "generateAndAddRoadPiece", at = @At("RETURN"), cancellable = true) private static void rdpl$roadInDistrict(StructureVillagePieces.Start start, List<StructureComponent> p_176069_1_, Random rand, int p_176069_3_, int p_176069_4_, int p_176069_5_, EnumFacing facing, int p_176069_7_, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
-        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, p_176069_1_, placed)) { cir.setReturnValue(null); }
+        if (CityGrid.clipped(start, p_176069_1_, placed)) { cir.setReturnValue(null); }
     }
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN")) private static void rdpl$endBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         ContentBeard.layingBuilding(false);
         ContentBeard.laying(null);
         StructureComponent placed = cir.getReturnValue();
-        if (placed instanceof IVillageBlock && start instanceof IVillageBlock) { ((IVillageBlock) placed).rdpl$block(((IVillageBlock) start).rdpl$block()); }
+        if (placed instanceof IVillageBlock) { ((IVillageBlock) placed).rdpl$inherit(start); }
     }
 
     @Unique private static void rdpl$refuse(CallbackInfoReturnable<StructureComponent> cir) {

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionD
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +17,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
@@ -68,7 +68,7 @@ public final class ContentCaveAmbience {
     private static boolean chance(Random random, float perTick) { return random.nextFloat() < 1.0F - (float) Math.pow(1.0F - perTick, EVERY); }
 
     private static void sound(EntityPlayerMP player, String name, String owner, float pitch) {
-        SoundEvent sound = SOUNDS.computeIfAbsent(name, found -> ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(found)));
+        SoundEvent sound = SOUNDS.computeIfAbsent(name, found -> Registries.find(ForgeRegistries.SOUND_EVENTS, found));
         if (sound == null) {
             ContentLog.LOGGER.errorOnce(TOLD, owner + " sound", "{} names the ambient sound {}, which nothing registers, so it stays quiet", owner, name);
             return;

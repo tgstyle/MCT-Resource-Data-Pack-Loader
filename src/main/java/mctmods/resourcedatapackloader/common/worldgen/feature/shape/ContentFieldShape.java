@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.ChunkOrigin;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
@@ -25,11 +26,11 @@ public final class ContentFieldShape extends ContentChunkShape {
         this.salt = registryName.toString().hashCode();
     }
 
-    private static float hash01(long seed, int x, int y, int z) { return (MathUtil.scramble(seed ^ MathUtil.GOLDEN_GAMMA, x, y, z) >>> 40) / (float) (1 << 24); }
+    private static float hash01(long seed, int x, int y, int z) { return MathUtil.unitFloat(MathUtil.scramble(seed ^ MathUtil.GOLDEN_GAMMA, x, y, z)); }
 
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
-        int baseX = chunkX * 16 + OFFSET;
-        int baseZ = chunkZ * 16 + OFFSET;
+        int baseX = ChunkOrigin.base(chunkX);
+        int baseZ = ChunkOrigin.base(chunkZ);
         int lowest = lowest(world);
         int highest = highest(world);
         if (highest < lowest) { return; }

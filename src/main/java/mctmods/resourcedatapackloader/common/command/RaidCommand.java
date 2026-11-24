@@ -41,7 +41,7 @@ final class RaidCommand {
         RaidTarget.Kind kind = args.length >= 3 ? forced(args[2]) : null;
         if (args.length == 4 && kind == null || args.length == 3 && kind == RaidTarget.Kind.PLAYER) { throw new WrongUsageException(usage); }
         String named = args.length == 4 ? args[3] : args.length == 3 && kind == null ? args[2] : null;
-        EntityPlayerMP player = named == null ? CommandShared.goer(sender) : CommandBase.getPlayer(server, sender, named);
+        EntityPlayerMP player = CommandShared.target(server, sender, named);
         WorldServer world = player.getServerWorld();
         if (kind != null && RaidStorage.get(world).ownerRaid(RaidOwner.of(player)) != null) { throw new CommandException(Lang.tr(sender, "rdpl.command.raidownerbusy", def.registryName.toString(), player.getName())); }
         RaidTarget target = kind == null ? RaidTargets.resolve(world, player, def) : RaidTargets.resolve(world, player, def, kind);

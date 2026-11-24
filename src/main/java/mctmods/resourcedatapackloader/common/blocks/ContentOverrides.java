@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -93,19 +94,19 @@ public final class ContentOverrides {
         if (json == null) { return null; }
         Json.unknownKeys(json, "the top level", OVERRIDE_KEYS);
         OverrideDef def = new OverrideDef(target, source,
-                floatOrNull(json, "hardness"),
-                floatOrNull(json, "resistance"),
-                floatOrNull(json, "slipperiness"),
-                intOrNull(json, "light"),
-                intOrNull(json, "lightOpacity"),
-                stringOrNull(json, "soundType"),
-                stringOrNull(json, "harvestTool"),
+                Json.floatOrNull(json, "hardness"),
+                Json.floatOrNull(json, "resistance"),
+                Json.floatOrNull(json, "slipperiness"),
+                Json.intOrNull(json, "light"),
+                Json.intOrNull(json, "lightOpacity"),
+                Json.stringOrNull(json, "soundType"),
+                Json.stringOrNull(json, "harvestTool"),
                 Json.getInt(json, "harvestToolLevel", 0),
-                intOrNull(json, "flammability"),
+                Json.intOrNull(json, "flammability"),
                 Json.getInt(json, "fireSpread", 5),
-                intOrNull(json, "maxStackSize"),
-                intOrNull(json, "maxDamage"),
-                stringOrNull(json, "containerItem"),
+                Json.intOrNull(json, "maxStackSize"),
+                Json.intOrNull(json, "maxDamage"),
+                Json.stringOrNull(json, "containerItem"),
                 json.has("effects") ? effects(source, json) : null,
                 json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
                 Json.strings(json, "requires"),
@@ -129,19 +130,18 @@ public final class ContentOverrides {
     }
 
     private static boolean applyBlock(OverrideDef def) {
-        if (!ForgeRegistries.BLOCKS.containsKey(def.target)) { return false; }
-        Block block = ForgeRegistries.BLOCKS.getValue(def.target);
+        Block block = Registries.find(ForgeRegistries.BLOCKS, def.target);
         if (block == null) { return false; }
-        if (!BLOCKS.containsKey(block)) { BLOCKS.put(block, BlockSnapshot.of(block)); }
+        BLOCKS.computeIfAbsent(block, BlockSnapshot::of);
         if (def.hardness != null) { block.setHardness(def.hardness); }
         if (def.resistance != null) { block.setResistance(def.resistance); }
         if (def.slipperiness != null) { block.setDefaultSlipperiness(def.slipperiness); }
-        if (def.light != null) { block.setLightLevel(MathHelper.clamp(def.light, 0, 15) / 15.0F); }
+        if (def.light != null) { block.setLightLevel(ContentSetup.lightLevel(def.light)); }
         if (def.lightOpacity != null) { block.setLightOpacity(MathHelper.clamp(def.lightOpacity, 0, 255)); }
         if (def.soundType != null) { block.blockSoundType = ContentTypes.soundType(def.soundType, block.blockSoundType, def.source.toString()); }
         if (def.harvestTool != null) { block.setHarvestLevel(def.harvestTool, def.harvestToolLevel); }
         if (def.flammability != null) {
-            if (!FIRE.containsKey(block)) { FIRE.put(block, FireSnapshot.of(block)); }
+            FIRE.computeIfAbsent(block, FireSnapshot::of);
             fire().setFireInfo(block, def.fireSpread, def.flammability);
         }
         return true;
@@ -150,10 +150,9 @@ public final class ContentOverrides {
     private static BlockFire fire() { return Objects.requireNonNull(Blocks.FIRE); }
 
     private static boolean applyItem(OverrideDef def) {
-        if (!ForgeRegistries.ITEMS.containsKey(def.target)) { return false; }
-        Item item = ForgeRegistries.ITEMS.getValue(def.target);
+        Item item = Registries.find(ForgeRegistries.ITEMS, def.target);
         if (item == null) { return false; }
-        if (!ITEMS.containsKey(item)) { ITEMS.put(item, ItemSnapshot.of(item)); }
+        ITEMS.computeIfAbsent(item, ItemSnapshot::of);
         if (def.maxStackSize != null) { item.setMaxStackSize(MathHelper.clamp(def.maxStackSize, 1, 64)); }
         if (def.maxDamage != null) { item.setMaxDamage(Math.max(0, def.maxDamage)); }
         if (def.containerItem != null) {
@@ -168,8 +167,8 @@ public final class ContentOverrides {
 
     private static void applyFood(OverrideDef def, OverrideDef.FoodDef food, Item item) {
         if (item instanceof ItemFood) {
-            if (!FOODS.containsKey(item)) { FOODS.put(item, FoodSnapshot.of((ItemFood) item)); }
             ItemFood eaten = (ItemFood) item;
+            FOODS.computeIfAbsent(item, key -> FoodSnapshot.of(eaten));
             eaten.healAmount = food.heal;
             eaten.saturationModifier = food.saturation;
             eaten.alwaysEdible = food.alwaysEdible;
@@ -181,19 +180,19 @@ public final class ContentOverrides {
 
     private static boolean applyPotionType(OverrideDef def) {
         List<PotionEffectDef> effects = def.effects;
-        if (effects == null || !ForgeRegistries.POTION_TYPES.containsKey(def.target)) { return false; }
-        PotionType type = ForgeRegistries.POTION_TYPES.getValue(def.target);
+        if (effects == null) { return false; }
+        PotionType type = Registries.find(ForgeRegistries.POTION_TYPES, def.target);
         if (type == null) { return false; }
         List<PotionEffect> resolved = new ArrayList<>(effects.size());
         for (PotionEffectDef effect : effects) {
-            Potion potion = ForgeRegistries.POTIONS.getValue(new ResourceLocation(effect.potion));
+            Potion potion = Registries.find(ForgeRegistries.POTIONS, effect.potion);
             if (potion == null) {
                 ContentLog.LOGGER.error("Override {} names effect {}, which does not exist, skipping that effect", def.source, effect.potion);
                 continue;
             }
             resolved.add(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles));
         }
-        if (!TYPES.containsKey(type)) { TYPES.put(type, ImmutableList.copyOf(type.effects)); }
+        TYPES.computeIfAbsent(type, key -> ImmutableList.copyOf(key.effects));
         type.effects = ImmutableList.copyOf(resolved);
         return true;
     }
@@ -231,14 +230,8 @@ public final class ContentOverrides {
 
     private static List<PotionEffectDef> readEffects(ResourceLocation source, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
-        return Collections.unmodifiableList(ContentParser.effects(source, Json.getJsonArray(json, "effects"), 3600, true));
+        return Collections.unmodifiableList(ContentParser.effects(source, Json.getJsonArray(json, "effects"), ContentParser.DEFAULT_EFFECT_TICKS, true));
     }
-
-    @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? Json.getFloat(json, key) : null; }
-
-    @Nullable private static Integer intOrNull(JsonObject json, String key) { return json.has(key) ? Json.getInt(json, key) : null; }
-
-    @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? Json.getString(json, key) : null; }
 
     private static final class BlockSnapshot {
         private final float hardness;

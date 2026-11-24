@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
-import java.util.HashMap;
+import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+
 import java.util.Map;
 import javax.annotation.Nullable;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -44,22 +46,14 @@ public final class ScriptEventHandlers {
         if (!ScriptEvents.has(BLOCK_PLACE) || event.getWorld().isRemote) { return; }
         Entity placer = event.getEntity();
         EntityPlayer player = placer instanceof EntityPlayer ? (EntityPlayer) placer : null;
-        Map<String, Object> bindings = bind((WorldServer) event.getWorld(), player);
-        bindings.put("pos", event.getPos());
-        bindings.put("state", event.getPlacedBlock());
-        bindings.put("entity", placer);
         ItemStack stack = event instanceof BlockEvent.PlaceEvent && player != null ? player.getHeldItem(((BlockEvent.PlaceEvent) event).getHand()) : held(placer);
-        if (ScriptEvents.fire(BLOCK_PLACE, event.getWorld(), event.getPos(), event.getPlacedBlock(), placer, stack, bindings)) { event.setCanceled(true); }
+        if (fireWith(BLOCK_PLACE, event.getWorld(), event.getPos(), event.getPlacedBlock(), placer, stack, player, ScriptEvents.POS, event.getPos(), ScriptEvents.STATE, event.getPlacedBlock(), ScriptEvents.ENTITY, placer)) { event.setCanceled(true); }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onBreak(BlockEvent.BreakEvent event) {
-        if (!ScriptEvents.has(BLOCK_BREAK) || event.getWorld().isRemote) { return; }
+        if (!ScriptEvents.has(BLOCK_BREAK) || ContentCarry.probing() || event.getWorld().isRemote) { return; }
         EntityPlayer player = event.getPlayer();
-        Map<String, Object> bindings = bind((WorldServer) event.getWorld(), player);
-        bindings.put("pos", event.getPos());
-        bindings.put("state", event.getState());
-        bindings.put("player", player);
-        if (ScriptEvents.fire(BLOCK_BREAK, event.getWorld(), event.getPos(), event.getState(), player, held(player), bindings)) { event.setCanceled(true); }
+        if (fireWith(BLOCK_BREAK, event.getWorld(), event.getPos(), event.getState(), player, held(player), player, ScriptEvents.POS, event.getPos(), ScriptEvents.STATE, event.getState(), ScriptEvents.PLAYER, player)) { event.setCanceled(true); }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onHurt(LivingAttackEvent event) {
@@ -69,12 +63,7 @@ public final class ScriptEventHandlers {
         if (victim.isEntityInvulnerable(source) || victim.getHealth() <= 0.0F || source.isFireDamage() && victim.isPotionActive(MobEffects.FIRE_RESISTANCE)) { return; }
         Entity attacker = event.getSource().getTrueSource();
         EntityPlayer player = attacker instanceof EntityPlayer ? (EntityPlayer) attacker : null;
-        Map<String, Object> bindings = bind((WorldServer) victim.world, player);
-        bindings.put("entity", victim);
-        bindings.put("attacker", attacker);
-        bindings.put("damageType", event.getSource().getDamageType());
-        bindings.put("amount", event.getAmount());
-        if (ScriptEvents.fire(ENTITY_HURT, victim.world, victim.getPosition(), null, victim, held(attacker), bindings)) { event.setCanceled(true); }
+        if (fireWith(ENTITY_HURT, victim.world, victim.getPosition(), null, victim, held(attacker), player, ScriptEvents.ENTITY, victim, ScriptEvents.ATTACKER, attacker, ScriptEvents.DAMAGE_TYPE, event.getSource().getDamageType(), "amount", event.getAmount())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onSpawn(EntityJoinWorldEvent event) {
@@ -82,26 +71,19 @@ public final class ScriptEventHandlers {
         if (!(entity instanceof EntityLiving) || event.getWorld().isRemote || entity.getEntityData().getBoolean(SPAWNED)) { return; }
         entity.getEntityData().setBoolean(SPAWNED, true);
         if (!ScriptEvents.has(ENTITY_SPAWN)) { return; }
-        Map<String, Object> bindings = bind((WorldServer) event.getWorld(), null);
-        bindings.put("entity", entity);
-        if (ScriptEvents.fire(ENTITY_SPAWN, event.getWorld(), entity.getPosition(), null, entity, ItemStack.EMPTY, bindings)) { event.setCanceled(true); }
+        if (fireWith(ENTITY_SPAWN, event.getWorld(), entity.getPosition(), null, entity, ItemStack.EMPTY, null, ScriptEvents.ENTITY, entity)) { event.setCanceled(true); }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         EntityPlayer player = event.player;
         if (!ScriptEvents.has(PLAYER_LOGIN) || player.world.isRemote) { return; }
-        Map<String, Object> bindings = bind((WorldServer) player.world, player);
-        bindings.put("player", player);
-        ScriptEvents.fire(PLAYER_LOGIN, player.world, player.getPosition(), null, player, held(player), bindings);
+        fireWith(PLAYER_LOGIN, player.world, player.getPosition(), null, player, held(player), player, ScriptEvents.PLAYER, player);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         EntityPlayer player = event.player;
         if (!ScriptEvents.has(PLAYER_TICK) || event.phase != TickEvent.Phase.END || player.world.isRemote || ScriptEvents.idle(PLAYER_TICK, player.world.getTotalWorldTime())) { return; }
-        Map<String, Object> bindings = bind((WorldServer) player.world, player);
-        bindings.put("player", player);
-        bindings.put("pos", player.getPosition());
-        ScriptEvents.fire(PLAYER_TICK, player.world, player.getPosition(), null, player, held(player), bindings);
+        fireWith(PLAYER_TICK, player.world, player.getPosition(), null, player, held(player), player, ScriptEvents.PLAYER, player, ScriptEvents.POS, player.getPosition());
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -109,19 +91,13 @@ public final class ScriptEventHandlers {
         WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0);
         long time = world.getTotalWorldTime();
         if (ScriptEvents.idle(SERVER_TICK, time)) { return; }
-        Map<String, Object> bindings = bind(world, null);
-        bindings.put("tick", time);
-        ScriptEvents.fire(SERVER_TICK, world, BlockPos.ORIGIN, null, null, ItemStack.EMPTY, bindings);
+        fireWith(SERVER_TICK, world, BlockPos.ORIGIN, null, null, ItemStack.EMPTY, null, "tick", time);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         EntityPlayer player = event.player;
         if (!ScriptEvents.has(DIMENSION_CHANGE) || player.world.isRemote) { return; }
-        Map<String, Object> bindings = bind((WorldServer) player.world, player);
-        bindings.put("player", player);
-        bindings.put("from", event.fromDim);
-        bindings.put("to", event.toDim);
-        ScriptEvents.fire(DIMENSION_CHANGE, player.world, player.getPosition(), null, player, held(player), bindings);
+        fireWith(DIMENSION_CHANGE, player.world, player.getPosition(), null, player, held(player), player, ScriptEvents.PLAYER, player, ScriptEvents.FROM, event.fromDim, ScriptEvents.TO, event.toDim);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onDrops(LivingDropsEvent event) {
@@ -129,37 +105,26 @@ public final class ScriptEventHandlers {
         if (!ScriptEvents.has(LOOT_DROP) || victim.world.isRemote) { return; }
         Entity attacker = event.getSource().getTrueSource();
         EntityPlayer player = attacker instanceof EntityPlayer ? (EntityPlayer) attacker : null;
-        Map<String, Object> bindings = bind((WorldServer) victim.world, player);
-        bindings.put("entity", victim);
-        bindings.put("attacker", attacker);
-        bindings.put("damageType", event.getSource().getDamageType());
-        bindings.put("drops", new ScriptDrops(event.getDrops(), victim));
-        ScriptEvents.fire(LOOT_DROP, victim.world, victim.getPosition(), null, victim, held(attacker), bindings);
+        fireWith(LOOT_DROP, victim.world, victim.getPosition(), null, victim, held(attacker), player, ScriptEvents.ENTITY, victim, ScriptEvents.ATTACKER, attacker, ScriptEvents.DAMAGE_TYPE, event.getSource().getDamageType(), ScriptEvents.DROPS, new ScriptDrops(event.getDrops(), victim));
     }
 
     @SubscribeEvent(priority = EventPriority.LOW) public static void onTravel(EntityTravelToDimensionEvent event) {
         Entity entity = event.getEntity();
         if (!ScriptEvents.has(ENTITY_TRAVEL) || entity.world.isRemote) { return; }
         EntityPlayer player = entity instanceof EntityPlayer ? (EntityPlayer) entity : null;
-        Map<String, Object> bindings = bind((WorldServer) entity.world, player);
-        bindings.put("entity", entity);
-        bindings.put("from", entity.world.provider.getDimension());
-        bindings.put("to", event.getDimension());
-        if (ScriptEvents.fire(ENTITY_TRAVEL, entity.world, entity.getPosition(), null, entity, held(entity), bindings)) { event.setCanceled(true); }
+        if (fireWith(ENTITY_TRAVEL, entity.world, entity.getPosition(), null, entity, held(entity), player, ScriptEvents.ENTITY, entity, ScriptEvents.FROM, entity.world.provider.getDimension(), ScriptEvents.TO, event.getDimension())) { event.setCanceled(true); }
     }
 
     public static void despawn(EntityLiving entity) {
         World world = entity.world;
         if (entity.isDead || world.isRemote || !ScriptEvents.has(ENTITY_DESPAWN)) { return; }
-        Map<String, Object> bindings = bind((WorldServer) world, null);
-        bindings.put("entity", entity);
-        ScriptEvents.fire(ENTITY_DESPAWN, world, entity.getPosition(), null, entity, ItemStack.EMPTY, bindings);
+        fireWith(ENTITY_DESPAWN, world, entity.getPosition(), null, entity, ItemStack.EMPTY, null, ScriptEvents.ENTITY, entity);
     }
 
-    private static Map<String, Object> bind(WorldServer world, @Nullable EntityPlayer player) {
-        Map<String, Object> bindings = new HashMap<>();
-        bindings.put("rdpl", new RdplApi(world, player));
-        return bindings;
+    private static boolean fireWith(String kind, World world, BlockPos pos, @Nullable IBlockState state, @Nullable Entity entity, ItemStack item, @Nullable EntityPlayer player, Object... extra) {
+        Map<String, Object> bindings = ScriptEvents.bind((WorldServer) world, player);
+        for (int i = 0; i < extra.length; i += 2) { bindings.put((String) extra[i], extra[i + 1]); }
+        return ScriptEvents.fire(kind, world, pos, state, entity, item, bindings);
     }
 
     private static ItemStack held(@Nullable Entity entity) { return entity instanceof EntityLivingBase ? ((EntityLivingBase) entity).getHeldItemMainhand() : ItemStack.EMPTY; }

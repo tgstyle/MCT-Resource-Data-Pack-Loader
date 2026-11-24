@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.core.network.HeartColorsMessage;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.Random;
 import net.minecraft.client.Minecraft;
@@ -25,6 +27,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.opengl.GL11;
 
 @SideOnly(Side.CLIENT) public final class HeartsHud {
     private static final ResourceLocation FULL = ResourceDataPackLoader.id("textures/gui/hearts/full.png");
@@ -137,15 +140,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int[] palette = colors;
         int rgb = palette[Math.min(layer - 1, palette.length - 1)];
         mc.getTextureManager().bindTexture(hardcore ? full ? HARDCORE_FULL : HARDCORE_HALF : full ? FULL : HALF);
-        GlStateManager.color((rgb >> 16 & 0xFF) / 255.0F, (rgb >> 8 & 0xFF) / 255.0F, (rgb & 0xFF) / 255.0F, 1.0F);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(7, DefaultVertexFormats.POSITION_TEX);
+        GlStateManager.color(Colors.redF(rgb), Colors.greenF(rgb), Colors.blueF(rgb), 1.0F);
+        BufferBuilder buffer = Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         buffer.pos(x, y + 9, DEPTH).tex(0.0D, 1.0D).endVertex();
         buffer.pos(x + 9, y + 9, DEPTH).tex(1.0D, 1.0D).endVertex();
         buffer.pos(x + 9, y, DEPTH).tex(1.0D, 0.0D).endVertex();
         buffer.pos(x, y, DEPTH).tex(0.0D, 0.0D).endVertex();
-        tessellator.draw();
+        Tessellator.getInstance().draw();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         mc.getTextureManager().bindTexture(Gui.ICONS);
     }

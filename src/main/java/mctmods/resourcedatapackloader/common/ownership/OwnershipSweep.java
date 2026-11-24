@@ -29,9 +29,6 @@ public final class OwnershipSweep {
     private static final int SAVE_EVERY = 256;
     private static final int CHUNK_SLOTS = 1024;
     private static final int CUBE_SLOTS = 4096;
-    private static final String CHUNK_PREFIX = "r.";
-    private static final String CHUNK_SUFFIX = ".mca";
-    private static final String CUBE_FOLDER = "region3d";
     private static State state;
 
     private OwnershipSweep() {}
@@ -154,12 +151,30 @@ public final class OwnershipSweep {
         return state;
     }
 
-    @Nullable public static int[] progress(MinecraftServer server) {
-        State held = current(server);
-        return held == null ? null : new int[] {held.dimension, held.done, held.total, held.index + 1, held.dimensions.length, held.all ? 1 : 0};
+    public static final class Progress {
+        public final int dimension;
+        public final int done;
+        public final int total;
+        public final int index;
+        public final int dimensions;
+        public final boolean all;
+
+        private Progress(State held) {
+            this.dimension = held.dimension;
+            this.done = held.done;
+            this.total = held.total;
+            this.index = held.index + 1;
+            this.dimensions = held.dimensions.length;
+            this.all = held.all;
+        }
     }
 
-    @Nullable public static int[] start(MinecraftServer server, boolean all, int dimension) {
+    @Nullable public static Progress progress(MinecraftServer server) {
+        State held = current(server);
+        return held == null ? null : new Progress(held);
+    }
+
+    @Nullable public static Progress start(MinecraftServer server, boolean all, int dimension) {
         OwnerTable table = OwnerTable.get(server);
         if (table == null) { return null; }
         State begun = new State(table, all ? allDimensions() : new int[] {dimension}, all);
@@ -254,13 +269,13 @@ public final class OwnershipSweep {
     }
 
     private static int[] regionsOf(WorldServer world, boolean cube) {
-        File folder = cube ? RubicWorldControl.storagePath(world).resolve(CUBE_FOLDER).toFile() : ContentPregenDimensions.regionFolder(world);
+        File folder = cube ? RubicWorldControl.storagePath(world).resolve(RegionNames.CUBE_FOLDER).toFile() : ContentPregenDimensions.regionFolder(world);
         String[] names = folder == null ? null : folder.list();
         if (names == null) { return new int[0]; }
         Arrays.sort(names);
         List<Integer> found = new ArrayList<>();
         for (String name : names) {
-            int[] parsed = cube ? parse(name, "", RegionNames.CUBES, 3) : parse(name, CHUNK_PREFIX, CHUNK_SUFFIX, 2);
+            int[] parsed = cube ? parse(name, "", RegionNames.CUBES, 3) : parse(name, RegionNames.CHUNK_PREFIX, RegionNames.CHUNKS, 2);
             if (parsed == null) { continue; }
             for (int value : parsed) { found.add(value); }
         }

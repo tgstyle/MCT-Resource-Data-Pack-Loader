@@ -76,7 +76,7 @@ public final class ContentDisabled {
         JsonObject json = Json.object(key, contents, "disabled file");
         if (json == null) { return; }
         Json.unknownKeys(json, "the top level", KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         (Json.getBoolean(json, "hideOnly", false) ? HIDDEN : SELECTION).read(json, key);
         UNTAGGED.readNames(Json.strings(json, "untag"), key);
         HIDDEN_CATEGORIES.addAll(Json.strings(json, "hideCategories"));

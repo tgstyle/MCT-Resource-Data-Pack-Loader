@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.common.rubic.regionlib.impl.save.SaveSecti
 import mctmods.resourcedatapackloader.common.rubic.regionlib.lib.ExtRegion;
 import mctmods.resourcedatapackloader.common.rubic.regionlib.lib.provider.SimpleRegionProvider;
 import mctmods.resourcedatapackloader.common.rubic.regionlib.util.ICorruptedDataException;
-import mctmods.resourcedatapackloader.common.rubic.regionlib.util.Utils;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.region.CachedRegionProvider;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.region.ShadowPagingRegion;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicStorage;
@@ -47,11 +46,11 @@ public class RegionCubeStorage implements IRubicStorage {
     public RegionCubeStorage(Path world, Path path) throws IOException { this.save = saveForPath(Objects.requireNonNull(world, "world"), Objects.requireNonNull(path, "path")); }
 
     private static SaveCubeColumns saveForPath(Path world, Path path) throws IOException {
-        Utils.createDirectories(path);
-        Path part2d = path.resolve("region2d");
-        Utils.createDirectories(part2d);
-        Path part3d = path.resolve("region3d");
-        Utils.createDirectories(part3d);
+        Files.createDirectories(path);
+        Path part2d = path.resolve(RegionNames.COLUMN_FOLDER);
+        Files.createDirectories(part2d);
+        Path part3d = path.resolve(RegionNames.CUBE_FOLDER);
+        Files.createDirectories(part3d);
         OldRegionNames.rename(world, path, part2d, part3d);
         return new SaveCubeColumns(new SaveSection2D(providers(EntryLocation2D.Provider::new, part2d)), new SaveSection3D(providers(EntryLocation3D.Provider::new, part3d)));
     }
@@ -73,7 +72,7 @@ public class RegionCubeStorage implements IRubicStorage {
     @Override public NBTTagCompound readColumn(@Nonnull ChunkPos pos) throws IOException {
         try { return parsed(this.save.load(new EntryLocation2D(pos.x, pos.z), true).orElse(null), "Column", pos); }
         catch (ICorruptedDataException corrupt) {
-            regenerating("Column", pos, corrupt);
+            regenerating("Column", pos, corrupt.toString());
             return null;
         }
     }
@@ -81,7 +80,7 @@ public class RegionCubeStorage implements IRubicStorage {
     @Override public NBTTagCompound readCube(@Nonnull CubePos pos) throws IOException {
         try { return parsed(this.save.load(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()), true).orElse(null), "Cube", pos); }
         catch (ICorruptedDataException corrupt) {
-            regenerating("Cube", pos, corrupt);
+            regenerating("Cube", pos, corrupt.toString());
             return null;
         }
     }
@@ -90,12 +89,12 @@ public class RegionCubeStorage implements IRubicStorage {
         if (data == null) { return null; }
         try { return CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.array(), data.arrayOffset() + data.position(), data.remaining())); }
         catch (IOException | RuntimeException corrupt) {
-            regenerating(what, pos, corrupt);
+            regenerating(what, pos, corrupt.toString());
             return null;
         }
     }
 
-    private static void regenerating(String what, Object pos, Exception corrupt) { ContentLog.LOGGER.error("{} is corrupted! The saved data of {} could not be read ({}). {} will be regenerated.", what, pos, corrupt.toString(), what); }
+    private static void regenerating(String what, Object pos, String reason) { ContentLog.LOGGER.error("{} is corrupted! The saved data of {} could not be read ({}). {} will be regenerated.", what, pos, reason, what); }
 
     @Override public void writeBatch(@Nonnull NBTBatch batch) throws IOException {
         Map<EntryLocation2D, ByteBuf> compressedColumns = Collections.emptyMap();

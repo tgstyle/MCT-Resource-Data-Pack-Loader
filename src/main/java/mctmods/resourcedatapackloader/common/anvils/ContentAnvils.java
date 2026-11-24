@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.anvils;
 
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
+import mctmods.resourcedatapackloader.common.enchantments.ContentEnchanting;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.AnvilDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -53,38 +54,45 @@ import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 public final class ContentAnvils {
     private static final Map<ItemStack, AnvilDef> OFFERED = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final String CATEGORY = "anvils";
     private static final String TOO_EXPENSIVE = "tooExpensive";
     private static final int TOLD_EVERY = 40;
     private static final float BREAK_CHANCE = 0.12F;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
-    private static final Map<AnvilDef, ItemStack> ITEMS = new IdentityHashMap<>();
-    private static final Map<AnvilDef, ItemStack> WITH = new IdentityHashMap<>();
-    private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
-    private static final Map<AnvilDef, Map<Enchantment, Integer>> ENCHANTMENTS = new IdentityHashMap<>();
+    private static final Map<AnvilDef, Resolved> RESOLVED = new IdentityHashMap<>();
     private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
     private static final List<String> ANVIL_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "match", "repairWith", "repairPerUnit", "repairCost", "combineCost", "bookCost", "penalty", "repair", "combine", TOO_EXPENSIVE, "item", "with", "result", "levels", "enchantments", "grants", "locks"));
     private static final List<String> STACK_KEYS = Collections.unmodifiableList(Arrays.asList("item", "count"));
 
     private ContentAnvils() {}
 
+    private static final class Resolved {
+        private final ItemStack item;
+        private final ItemStack with;
+        @Nullable private final ItemStack result;
+        private final Map<Enchantment, Integer> enchantments;
+
+        private Resolved(ItemStack item, ItemStack with, @Nullable ItemStack result, Map<Enchantment, Integer> enchantments) {
+            this.item = item;
+            this.with = with;
+            this.result = result;
+            this.enchantments = enchantments;
+        }
+    }
+
     public static boolean load() {
         DEFS.clear();
-        ITEMS.clear();
-        WITH.clear();
-        RESULTS.clear();
-        ENCHANTMENTS.clear();
+        RESOLVED.clear();
         AnvilCosts.resetAnvil();
         AnvilRules.reset();
         if (!Config.data.anvils) { return false; }
-        Json.eachFile(PackManager.ANVILS, "anvil file", (key, contents) -> {
-            JsonObject json = Json.object(key, contents, "anvil work");
-            if (json != null) { Json.unknownKeys(json, "the top level", ANVIL_KEYS); }
-            if (json == null || !ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.eachObject(PackManager.ANVILS, "anvil file", "anvil work", (key, json) -> {
+            Json.unknownKeys(json, "the top level", ANVIL_KEYS);
+            if (!ContentRegistry.available(json, key)) { return; }
             if (AnvilRules.names(json)) {
                 AnvilRules.read(key, json);
                 return;
@@ -95,14 +103,14 @@ public final class ContentAnvils {
             ItemStack stack = ContentStacks.parse(key, def.item, 1);
             ItemStack with = ContentStacks.parse(key, def.with, 1);
             if (stack.isEmpty() || with.isEmpty()) { return; }
+            ItemStack result = null;
             if (!def.result.isEmpty()) {
-                ItemStack result = ContentStacks.parse(key, def.result, def.resultCount);
+                result = ContentStacks.parse(key, def.result, def.resultCount);
                 if (result.isEmpty()) { return; }
-                RESULTS.put(def, result);
             }
             Map<Enchantment, Integer> found = new LinkedHashMap<>();
             for (Map.Entry<String, Integer> entry : def.enchantments.entrySet()) {
-                Enchantment enchantment = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(entry.getKey()));
+                Enchantment enchantment = ContentEnchanting.enchantment(entry.getKey());
                 if (enchantment == null) {
                     ContentLog.LOGGER.error("Anvil work {} names the enchantment {}, which nothing registers, skipping it", key, entry.getKey());
                     continue;
@@ -110,13 +118,11 @@ public final class ContentAnvils {
                 found.put(enchantment, entry.getValue());
             }
             DEFS.add(def);
-            ITEMS.put(def, stack);
-            WITH.put(def, with);
-            ENCHANTMENTS.put(def, found);
+            RESOLVED.put(def, new Resolved(stack, with, result, found));
         });
-        if (!DEFS.isEmpty()) { Summary.info("anvils", "Loaded " + DEFS.size() + " piece(s) of anvil work"); }
-        if (AnvilRules.count() > 0) { Summary.info("anvils", "Loaded " + AnvilRules.count() + " anvil rule(s)"); }
-        if (AnvilCosts.servedCap() != AnvilCosts.VANILLA_CAP) { Summary.info("anvils", "Anvil work costing " + AnvilCosts.servedCap() + " level(s) or more is too expensive"); }
+        Summary.loaded(CATEGORY, DEFS.size(), "piece(s) of anvil work");
+        Summary.loaded(CATEGORY, AnvilRules.count(), "anvil rule(s)");
+        if (AnvilCosts.servedCap() != AnvilCosts.VANILLA_CAP) { Summary.info(CATEGORY, "Anvil work costing " + AnvilCosts.servedCap() + " level(s) or more is too expensive"); }
         return !DEFS.isEmpty() || AnvilRules.count() > 0;
     }
 
@@ -152,41 +158,46 @@ public final class ContentAnvils {
                 enchantments.put(entry.getKey(), Math.max(1, Json.asInt(entry.getValue(), entry.getKey(), 1)));
             }
         }
-        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), itemOf(json, "result"), countOf(json, "result"), Math.max(1, Json.getInt(json, "levels", 1)), enchantments, Json.getString(json, "grants", "").trim(), Json.getBoolean(json, "locks", false));
+        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), itemOf(json, "result"), countOf(json, "result"), Json.atLeast(json, "levels", 1, 1), enchantments, Json.getString(json, "grants", "").trim(), Json.getBoolean(json, "locks", false));
     }
 
+    @Nullable private static JsonObject spec(JsonObject json, String name) { return json.has(name) && json.get(name).isJsonObject() ? Json.getJsonObject(json, name) : null; }
+
     private static String itemOf(JsonObject json, String name) {
-        if (json.has(name) && json.get(name).isJsonObject()) {
-            Json.unknownKeys(json.getAsJsonObject(name), name, STACK_KEYS);
-            return Json.getString(Json.getJsonObject(json, name), "item", "").trim();
+        JsonObject spec = spec(json, name);
+        if (spec != null) {
+            Json.unknownKeys(spec, name, STACK_KEYS);
+            return Json.getString(spec, "item", "").trim();
         }
         return Json.getString(json, name, "").trim();
     }
 
     private static int countOf(JsonObject json, String name) {
-        if (!json.has(name) || !json.get(name).isJsonObject()) { return 1; }
-        return Math.max(1, Json.getInt(Json.getJsonObject(json, name), "count", 1));
+        JsonObject spec = spec(json, name);
+        return spec == null ? 1 : Json.atLeast(spec, "count", 1, 1);
     }
 
     @Nullable private static AnvilDef holding(ItemStack held) {
         if (held.isEmpty()) { return null; }
         for (AnvilDef def : DEFS) {
-            ItemStack wanted = ITEMS.get(def);
+            ItemStack wanted = RESOLVED.get(def).item;
             if (ContentStacks.matches(held, wanted.getItem(), wanted.getMetadata())) { return def; }
         }
         return null;
     }
 
     private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) {
-        ItemStack wanted = ITEMS.get(def);
-        ItemStack with = WITH.get(def);
+        Resolved resolved = RESOLVED.get(def);
+        ItemStack wanted = resolved.item;
+        ItemStack with = resolved.with;
         return ContentStacks.matches(left, wanted.getItem(), wanted.getMetadata()) && left.getCount() >= def.itemCount && ContentStacks.matches(right, with.getItem(), with.getMetadata()) && right.getCount() >= def.withCount;
     }
 
     private static ItemStack worked(AnvilDef def, ItemStack left) {
         ItemStack output = left.copy();
         output.setCount(def.itemCount);
-        ItemStack result = RESULTS.get(def);
+        Resolved resolved = RESOLVED.get(def);
+        ItemStack result = resolved.result;
         if (result != null) {
             output = result.copy();
             NBTTagCompound carried = left.getTagCompound();
@@ -194,7 +205,7 @@ public final class ContentAnvils {
         }
         Map<Enchantment, Integer> held = EnchantmentHelper.getEnchantments(output);
         boolean rises = false;
-        for (Map.Entry<Enchantment, Integer> entry : ENCHANTMENTS.get(def).entrySet()) {
+        for (Map.Entry<Enchantment, Integer> entry : resolved.enchantments.entrySet()) {
             Integer already = held.get(entry.getKey());
             if (already != null && already >= entry.getValue()) { continue; }
             held.put(entry.getKey(), entry.getValue());
@@ -217,14 +228,12 @@ public final class ContentAnvils {
         if (def == null || !pairs(def, event.getLeft(), event.getRight())) { return false; }
         ItemStack output = worked(def, event.getLeft());
         if (output.isEmpty()) {
-            if (!ENCHANTMENTS.get(def).isEmpty() || def.grants.isEmpty()) { return false; }
+            if (!RESOLVED.get(def).enchantments.isEmpty() || def.grants.isEmpty()) { return false; }
             output = event.getLeft().copy();
             output.setCount(def.itemCount);
         }
         OFFERED.put(output, def);
-        event.setOutput(output);
-        event.setCost(def.levels);
-        event.setMaterialCost(def.withCount);
+        AnvilRules.offer(event, output, def.levels, def.withCount);
         return true;
     }
 
@@ -259,7 +268,7 @@ public final class ContentAnvils {
 
     private static boolean paysNothing(ItemStack stack) {
         for (AnvilDef def : DEFS) {
-            ItemStack with = WITH.get(def);
+            ItemStack with = RESOLVED.get(def).with;
             if (ContentStacks.matches(stack, with.getItem(), with.getMetadata())) { return false; }
         }
         return true;
@@ -340,7 +349,7 @@ public final class ContentAnvils {
 
     private static String title(EntityPlayerMP player, String name) {
         MinecraftServer server = player.getServer();
-        Advancement advancement = server == null ? null : server.getAdvancementManager().getAdvancement(new ResourceLocation(name));
+        Advancement advancement = server == null ? null : Advancements.find(server, name);
         return advancement == null || advancement.getDisplay() == null ? name : advancement.getDisplay().getTitle().getUnformattedText();
     }
 }

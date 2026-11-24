@@ -161,7 +161,7 @@ public final class BeardSewers {
         IBlockState air = Blocks.AIR.getDefaultState();
         for (int y = floor + 2; y <= floor + 1 + height; y++) {
             boolean hung = !edge && wall != null && kit.vineChance > 0 && kit.vine.getBlock() != Blocks.AIR
-                    && SeededRandom.at(world, x, y, z).nextInt(100) < kit.vineChance;
+                    && SeededRandom.rolls(world, x, y, z, kit.vineChance);
             if (hung) { if (!BeardKeep.holds(x, y, z)) { world.setBlockState(at.setPos(x, y, z), clinging(kit.vine, wall), BlockFlags.UPDATE_CLIENTS); } }
             else { put(world, at.setPos(x, y, z), edge ? kit.lining : air, kit); }
         }
@@ -175,7 +175,7 @@ public final class BeardSewers {
     private static void put(World world, BlockPos.MutableBlockPos at, IBlockState laid, Kit kit) {
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return; }
         boolean mossy = kit.mossChance > 0 && kit.moss.first().getBlock() != Blocks.AIR && laid == kit.lining
-                && SeededRandom.at(world, at.getX(), at.getY(), at.getZ()).nextInt(100) < kit.mossChance;
+                && SeededRandom.rolls(world, at.getX(), at.getY(), at.getZ(), kit.mossChance);
         world.setBlockState(at, mossy ? kit.moss.pick(world, at.getX(), at.getY(), at.getZ()) : laid, BlockFlags.UPDATE_CLIENTS);
     }
 
@@ -331,7 +331,7 @@ public final class BeardSewers {
                 }
                 boolean edge = (ring == LOOP - half || ring == LOOP + half) && !insideRadial(radials, x, z, half);
                 boolean channel = ring == LOOP;
-                boolean lamp = channel && kit.light.getBlock() != Blocks.AIR && Math.floorMod(x + z, run) == 0;
+                boolean lamp = channel && BeardStations.lampAt(kit.light, run, x + z);
                 column(world, at, kit, x, z, floor, height, edge, channel, lamp, null);
                 dug++;
             }
@@ -459,7 +459,7 @@ public final class BeardSewers {
                 cramped++;
                 continue;
             }
-            boolean lightRow = kit.light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
+            boolean lightRow = BeardStations.lampAt(kit.light, lightRun, row);
             for (int across = center - half; across <= center + half; across++) {
                 int x = alongX ? row : across;
                 int z = alongX ? across : row;

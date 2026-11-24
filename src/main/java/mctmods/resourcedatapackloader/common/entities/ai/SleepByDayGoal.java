@@ -66,7 +66,7 @@ public final class SleepByDayGoal extends EntityAIBase {
     @Override public void updateTask() {
         BlockPos place = shade;
         if (settled || place == null) { return; }
-        if (mob.getDistanceSq(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D) <= 2.25D) {
+        if (Walking.feetDistanceSq(mob, place) <= 2.25D) {
             settled = true;
             mob.setSneaking(true);
             mob.getNavigator().clearPath();

@@ -1,21 +1,31 @@
 package mctmods.resourcedatapackloader.client.renderer;
 
+import mctmods.resourcedatapackloader.client.util.CameraPos;
+
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.math.Vec3d;
 
-@SideOnly(Side.CLIENT) public final class CubeChunkBorder {
+public final class CubeChunkBorder {
+    private static final int SIZE = 16;
+    private static final float YELLOW_RED = 1.0F;
+    private static final float YELLOW_GREEN = 1.0F;
+    private static final float YELLOW_BLUE = 0.0F;
+    private static final float BLUE_RED = 0.25F;
+    private static final float BLUE_GREEN = 0.25F;
+    private static final float BLUE_BLUE = 1.0F;
+
     private CubeChunkBorder() {}
 
     public static void render(EntityPlayer player, Tessellator tessellator, float partialTicks) {
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        double playerX = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
-        double playerY = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
-        double playerZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
+        Vec3d at = CameraPos.viewAt(player, partialTicks);
+        double playerX = at.x;
+        double playerY = at.y;
+        double playerZ = at.z;
         double yOffset = (Math.round(playerY / 16)) * 16 - 128;
         double minY = (0.0D - playerY) + yOffset;
         double maxY = (256.0D - playerY) + yOffset;
@@ -28,22 +38,22 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         for (int i = -16; i <= 32; i += 16) {
             for (int j = -16; j <= 32; j += 16) { column(bufferbuilder, chunkX + (double) i, minY, maxY, chunkZ + (double) j, 1.0F, 0.0F, 0.0F, 0.5F); }
         }
-        for (int k = 2; k < 16; k += 2) {
-            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ, 1.0F, 1.0F, 0.0F, 1.0F);
-            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ + 16.0D, 1.0F, 1.0F, 0.0F, 1.0F);
+        for (int k = 2; k < SIZE; k += 2) {
+            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ, YELLOW_RED, YELLOW_GREEN, YELLOW_BLUE, 1.0F);
+            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ + SIZE, YELLOW_RED, YELLOW_GREEN, YELLOW_BLUE, 1.0F);
         }
-        for (int l = 2; l < 16; l += 2) {
-            column(bufferbuilder, chunkX, minY, maxY, chunkZ + (double) l, 1.0F, 1.0F, 0.0F, 1.0F);
-            column(bufferbuilder, chunkX + 16.0D, minY, maxY, chunkZ + (double) l, 1.0F, 1.0F, 0.0F, 1.0F);
+        for (int l = 2; l < SIZE; l += 2) {
+            column(bufferbuilder, chunkX, minY, maxY, chunkZ + (double) l, YELLOW_RED, YELLOW_GREEN, YELLOW_BLUE, 1.0F);
+            column(bufferbuilder, chunkX + SIZE, minY, maxY, chunkZ + (double) l, YELLOW_RED, YELLOW_GREEN, YELLOW_BLUE, 1.0F);
         }
-        for (int i1 = (int) yOffset; i1 <= 256 + (int) yOffset; i1 += 2) { ring(bufferbuilder, chunkX, (double) i1 - playerY, chunkZ, 1.0F, 1.0F, 0.0F); }
+        for (int i1 = (int) yOffset; i1 <= 256 + (int) yOffset; i1 += 2) { ring(bufferbuilder, chunkX, (double) i1 - playerY, chunkZ, YELLOW_RED, YELLOW_GREEN, YELLOW_BLUE); }
         tessellator.draw();
         GlStateManager.glLineWidth(2.0F);
         bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
-        for (int j1 = 0; j1 <= 16; j1 += 16) {
-            for (int l1 = 0; l1 <= 16; l1 += 16) { column(bufferbuilder, chunkX + (double) j1, minY, maxY, chunkZ + (double) l1, 0.25F, 0.25F, 1.0F, 1.0F); }
+        for (int j1 = 0; j1 <= SIZE; j1 += SIZE) {
+            for (int l1 = 0; l1 <= SIZE; l1 += SIZE) { column(bufferbuilder, chunkX + (double) j1, minY, maxY, chunkZ + (double) l1, BLUE_RED, BLUE_GREEN, BLUE_BLUE, 1.0F); }
         }
-        for (int k1 = (int) yOffset; k1 <= 256 + (int) yOffset; k1 += 16) { ring(bufferbuilder, chunkX, (double) k1 - playerY, chunkZ, 0.25F, 0.25F, 1.0F); }
+        for (int k1 = (int) yOffset; k1 <= 256 + (int) yOffset; k1 += SIZE) { ring(bufferbuilder, chunkX, (double) k1 - playerY, chunkZ, BLUE_RED, BLUE_GREEN, BLUE_BLUE); }
         tessellator.draw();
         GlStateManager.glLineWidth(1.0F);
         GlStateManager.enableBlend();
@@ -62,9 +72,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static void ring(BufferBuilder buffer, double chunkX, double y, double chunkZ, float red, float green, float blue) {
         vertex(buffer, chunkX, y, chunkZ, red, green, blue, 0.0F);
         vertex(buffer, chunkX, y, chunkZ, red, green, blue, 1.0F);
-        vertex(buffer, chunkX, y, chunkZ + 16.0D, red, green, blue, 1.0F);
-        vertex(buffer, chunkX + 16.0D, y, chunkZ + 16.0D, red, green, blue, 1.0F);
-        vertex(buffer, chunkX + 16.0D, y, chunkZ, red, green, blue, 1.0F);
+        vertex(buffer, chunkX, y, chunkZ + SIZE, red, green, blue, 1.0F);
+        vertex(buffer, chunkX + SIZE, y, chunkZ + SIZE, red, green, blue, 1.0F);
+        vertex(buffer, chunkX + SIZE, y, chunkZ, red, green, blue, 1.0F);
         vertex(buffer, chunkX, y, chunkZ, red, green, blue, 1.0F);
         vertex(buffer, chunkX, y, chunkZ, red, green, blue, 0.0F);
     }

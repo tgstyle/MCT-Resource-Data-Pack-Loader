@@ -8,22 +8,14 @@ import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
 
 public class WorldGenUtils {
+    private static final int BEDROCK_LEVELS = 5;
+
     public static IBlockState getRandomBedrockReplacement(World world, Random rand, IBlockState state, int blockY,
-            int bedrockLevels, boolean topBedrock, boolean bottomBedrock) {
-        if (bottomBedrock) {
-            int heightAboveBottom = blockY - ((IMinMaxHeight) world).rdpl$getMinHeight();
-            if (heightAboveBottom < bedrockLevels) {
-                int bedrockChance = Math.max(1, heightAboveBottom + 1);
-                if (rand.nextInt(bedrockChance) == 0) { return Blocks.BEDROCK.getDefaultState(); }
-            }
-        }
-        if (topBedrock) {
-            int heightBelowTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - blockY - 1;
-            if (heightBelowTop < bedrockLevels) {
-                int bedrockChance = Math.max(1, heightBelowTop + 1);
-                if (rand.nextInt(bedrockChance) == 0) { return Blocks.BEDROCK.getDefaultState(); }
-            }
-        }
+            boolean topBedrock, boolean bottomBedrock) {
+        if (bottomBedrock && rollsBedrock(rand, blockY - ((IMinMaxHeight) world).rdpl$getMinHeight())) { return Blocks.BEDROCK.getDefaultState(); }
+        if (topBedrock && rollsBedrock(rand, ((IMinMaxHeight) world).rdpl$getMaxHeight() - blockY - 1)) { return Blocks.BEDROCK.getDefaultState(); }
         return state;
     }
+
+    private static boolean rollsBedrock(Random rand, int distance) { return distance < BEDROCK_LEVELS && rand.nextInt(Math.max(1, distance + 1)) == 0; }
 }

@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
+import net.minecraft.entity.Entity;
 
 public final class ContentLog {
     public static final ContentLog LOGGER = new ContentLog();
@@ -50,10 +51,18 @@ public final class ContentLog {
 
     public void error(String message, Object... args) { write(ERROR, message, args); }
 
+    public void errorOnce(String message, Object... args) { if (told.add(message + Arrays.toString(args))) { error(message, args); } }
+
     public <T> void errorOnce(Set<T> seen, T key, String message, Object... args) {
         boolean first;
         synchronized (this) { first = seen.add(key); }
         if (first) { error(message, args); }
+    }
+
+    public <T> void warnOnce(Set<T> seen, T key, String message, Object... args) {
+        boolean first;
+        synchronized (this) { first = seen.add(key); }
+        if (first) { warn(message, args); }
     }
 
     public void debug(String message, Object... args) { write(DEBUG, message, args); }
@@ -75,6 +84,8 @@ public final class ContentLog {
         if (thrown != null) { thrown.printStackTrace(out); }
         out.flush();
     }
+
+    public static String at(Entity entity) { return (int) entity.posX + ", " + (int) entity.posY + ", " + (int) entity.posZ; }
 
     @Nullable private static Throwable thrownOf(Object[] args) { return args.length > 0 && args[args.length - 1] instanceof Throwable ? (Throwable) args[args.length - 1] : null; }
 

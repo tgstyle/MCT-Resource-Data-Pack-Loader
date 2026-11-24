@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,15 +66,14 @@ public final class ScriptModEvents {
         try {
             Entity entity = event instanceof EntityEvent ? ((EntityEvent) event).getEntity() : null;
             EntityPlayer player = entity instanceof EntityPlayer ? (EntityPlayer) entity : null;
-            Map<String, Object> bindings = new HashMap<>();
-            bindings.put("rdpl", new RdplApi((WorldServer) world, player));
+            Map<String, Object> bindings = ScriptEvents.bind((WorldServer) world, player);
             bindings.put("event", event);
-            bindings.put("player", player);
+            bindings.put(ScriptEvents.PLAYER, player);
             long time = world.getTotalWorldTime();
             boolean cancelled = false;
             for (ScriptEventDef entry : entries) {
-                if (entry.every != 1 && time % entry.every != 0) { continue; }
-                if ("cancel".equals(ScriptEngine.run(entry.script, bindings, true))) { cancelled = true; }
+                if (!entry.due(time)) { continue; }
+                if (ScriptEngine.CANCEL.equals(ScriptEngine.run(entry.script, bindings, true))) { cancelled = true; }
             }
             if (cancelled && event.isCancelable()) { event.setCanceled(true); }
         } finally { RUNNING.remove(event.getClass()); }

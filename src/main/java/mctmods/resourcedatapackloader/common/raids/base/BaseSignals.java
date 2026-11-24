@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.raids.base;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimOwners;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidDef;
-import mctmods.resourcedatapackloader.common.raids.RaidTarget;
 
 import java.util.Collection;
 import javax.annotation.Nullable;
@@ -18,7 +17,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
@@ -40,14 +38,14 @@ public final class BaseSignals {
         armed = false;
         creative = false;
         for (RaidDef def : defs) {
-            if (!def.target().contains(RaidTarget.Kind.BASE) && !def.target().contains(RaidTarget.Kind.PLAYER)) { continue; }
+            if (!def.guarded()) { continue; }
             armed = true;
             creative |= def.base() != null && def.base().creative;
         }
     }
 
     public static void sample(EntityPlayer player) {
-        if (!armed || player.ticksExisted % SAMPLE_EVERY != 0 || !(player.world instanceof WorldServer) || player.isSpectator() || player.isCreative() && !creative) { return; }
+        if (!armed || player.ticksExisted % SAMPLE_EVERY != 0 || player.isCreative() && !creative) { return; }
         BaseLedger.get(player.world).ticks(player, new BlockPos(player), SAMPLE_EVERY);
     }
 

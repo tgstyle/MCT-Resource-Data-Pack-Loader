@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.network.WeightMessage;
@@ -12,6 +13,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
@@ -19,7 +21,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT) public final class ClientWeights {
+@Mod.EventBusSubscriber(value = Side.CLIENT, modid = ResourceDataPackLoader.MOD_ID) @SideOnly(Side.CLIENT) public final class ClientWeights {
     private static final int PLAIN = 0xFFFFFF;
     private static boolean known;
     private static boolean exempt;
@@ -73,7 +75,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         return ContentWeights.settings().tiers.get(tier);
     }
 
-    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { Minecraft.getMinecraft().addScheduledTask(ClientWeights::reset); }
+    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { ClientResets.onDisconnect(ClientWeights::reset); }
 
     @SubscribeEvent public static void onTick(TickEvent.ClientTickEvent event) {
         WeightDef.Tier now = event.phase == TickEvent.Phase.END ? current() : null;

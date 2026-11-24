@@ -104,7 +104,6 @@ public final class NumberSlots {
     }
 
     public static String type(JsonObject object) {
-        String type = JsonUtils.isJsonPrimitive(object, TYPE) ? object.get(TYPE).getAsString() : "";
-        return IdNames.bare(type);
+        return IdNames.bare(Json.text(object, TYPE));
     }
 }

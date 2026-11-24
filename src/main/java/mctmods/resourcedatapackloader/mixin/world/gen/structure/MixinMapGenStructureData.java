@@ -84,7 +84,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (batch == null) { return null; }
         try {
             NBTTagCompound entries = CompressedStreamTools.readCompressed(new ByteArrayInputStream(rdpl$packed.get(batch)));
-            String key = "[" + chunkX + "," + chunkZ + "]";
+            String key = MapGenStructureData.formatChunkCoords(chunkX, chunkZ);
             return entries.hasKey(key, Constants.NBT.TAG_COMPOUND) ? entries.getCompoundTag(key) : null;
         }
         catch (IOException impossible) { throw new RuntimeException("Unpacking a structure start that was packed away failed", impossible); }

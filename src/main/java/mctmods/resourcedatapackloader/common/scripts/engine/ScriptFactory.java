@@ -5,7 +5,8 @@ import mctmods.resourcedatapackloader.core.rhino.ContextFactory;
 import mctmods.resourcedatapackloader.core.rhino.WrapFactory;
 
 public class ScriptFactory extends ContextFactory {
-    private static final long TIME_LIMIT_NANOS = 50_000_000L;
+    static final long TIME_LIMIT_MS = 50L;
+    private static final long TIME_LIMIT_NANOS = TIME_LIMIT_MS * 1_000_000L;
     private static final int OBSERVER_THRESHOLD = 10000;
     private static final int MAX_STACK_DEPTH = 200;
     private static final WrapFactory WRAP_FACTORY = new ScriptWrapFactory();

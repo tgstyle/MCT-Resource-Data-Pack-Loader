@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.pregen;
 
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+
 import net.minecraft.util.math.ChunkPos;
 
 public final class ContentChunkOrder {
@@ -59,10 +61,10 @@ public final class ContentChunkOrder {
         this.highZ = centerChunkZ + radiusChunks;
         long side = 2L * radiusChunks + 1L;
         this.total = side * side;
-        this.regionX = centerChunkX >> 5;
-        this.regionZ = centerChunkZ >> 5;
-        int lowRegion = Math.max(this.regionX - (lowX >> 5), (highX >> 5) - this.regionX);
-        int lowRegionZ = Math.max(this.regionZ - (lowZ >> 5), (highZ >> 5) - this.regionZ);
+        this.regionX = Coords.chunkToRegion(centerChunkX);
+        this.regionZ = Coords.chunkToRegion(centerChunkZ);
+        int lowRegion = Math.max(this.regionX - Coords.chunkToRegion(lowX), Coords.chunkToRegion(highX) - this.regionX);
+        int lowRegionZ = Math.max(this.regionZ - Coords.chunkToRegion(lowZ), Coords.chunkToRegion(highZ) - this.regionZ);
         this.reach = Math.max(lowRegion, lowRegionZ);
         open();
     }
@@ -133,10 +135,10 @@ public final class ContentChunkOrder {
     }
 
     private void open() {
-        baseX = Math.max(regionX << 5, lowX);
-        baseZ = Math.max(regionZ << 5, lowZ);
-        int topX = Math.min((regionX << 5) + 31, highX);
-        int topZ = Math.min((regionZ << 5) + 31, highZ);
+        baseX = Math.max(Coords.regionToMinChunk(regionX), lowX);
+        baseZ = Math.max(Coords.regionToMinChunk(regionZ), lowZ);
+        int topX = Math.min(Coords.regionToMinChunk(regionX) + 31, highX);
+        int topZ = Math.min(Coords.regionToMinChunk(regionZ) + 31, highZ);
         spanX = topX - baseX + 1;
         spanZ = topZ - baseZ + 1;
         if (spanX <= 0 || spanZ <= 0) {

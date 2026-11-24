@@ -21,7 +21,7 @@ import net.minecraftforge.event.world.ChunkEvent;
 public class CubeProviderClient extends ChunkProviderClient implements ICubeProviderInternal {
     @Nonnull private final IRubicWorldInternal.IClient world;
     @Nonnull private final Cube blankCube;
-    @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(0.7f, 8000);
+    @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(8000);
 
     public CubeProviderClient(@Nonnull IRubicWorldInternal.IClient world) {
         super((World) world);

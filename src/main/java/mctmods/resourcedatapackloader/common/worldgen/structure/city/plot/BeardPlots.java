@@ -50,6 +50,24 @@ public final class BeardPlots {
         }
     }
 
+    public static int least(StructureBoundingBox box, boolean alongX) { return alongX ? box.minX : box.minZ; }
+
+    public static int most(StructureBoundingBox box, boolean alongX) { return alongX ? box.maxX : box.maxZ; }
+
+    public static int end(StructureBoundingBox box, boolean alongX, boolean outward) { return outward ? most(box, alongX) : least(box, alongX); }
+
+    public static int acrossLeast(StructureBoundingBox box, boolean alongX) { return alongX ? box.minZ : box.minX; }
+
+    public static int acrossMost(StructureBoundingBox box, boolean alongX) { return alongX ? box.maxZ : box.maxX; }
+
+    public static int center(StructureBoundingBox box, boolean alongX) { return (least(box, alongX) + most(box, alongX)) / 2; }
+
+    public static int acrossCenter(StructureBoundingBox box, boolean alongX) { return (acrossLeast(box, alongX) + acrossMost(box, alongX)) / 2; }
+
+    private interface Hit {
+        boolean test(int cx, int cz, StructureComponent piece);
+    }
+
     private static final class Index {
         private final int resized = resizes;
         private final int count;
@@ -111,6 +129,17 @@ public final class BeardPlots {
             return cells[cx * deep + cz];
         }
 
+        private boolean any(int minX, int minZ, int maxX, int maxZ, Hit hit) {
+            for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
+                for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
+                    for (StructureComponent other : at(cx << 4, cz << 4)) {
+                        if (hit.test(cx, cz, other)) { return true; }
+                    }
+                }
+            }
+            return false;
+        }
+
         private boolean stale(List<StructureComponent> components) { return resized != resizes || count != components.size() || last != (components.isEmpty() ? null : components.get(components.size() - 1)); }
     }
 
@@ -132,15 +161,7 @@ public final class BeardPlots {
             layout = held;
             layingOut = placed;
         }
-        for (int cx = box.minX >> 4; cx <= box.maxX >> 4; cx++) {
-            for (int cz = box.minZ >> 4; cz <= box.maxZ >> 4; cz++) {
-                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
-                    if (BeardRails.buriedUnder(other, box)) { continue; }
-                    if (other.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { return true; }
-                }
-            }
-        }
-        return false;
+        return held.any(box.minX, box.minZ, box.maxX, box.maxZ, (cx, cz, other) -> !BeardRails.buriedUnder(other, box) && other.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ));
     }
 
     public static boolean roadAlongX(StructureComponent piece) {
@@ -168,16 +189,21 @@ public final class BeardPlots {
 
     public static boolean nearWell(StructureBoundingBox box, StructureBoundingBox well, int reach) { return !(box.minX > well.maxX + reach || box.maxX < well.minX - reach || box.minZ > well.maxZ + reach || box.maxZ < well.minZ - reach); }
 
+    public static boolean overColumn(StructureBoundingBox box, int x, int z) { return x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ; }
+
+    public static boolean spansMeet(int lo, int hi, int otherLo, int otherHi) { return hi >= otherLo && lo <= otherHi; }
+
+    public static boolean spansAcross(StructureBoundingBox a, StructureBoundingBox b, boolean alongX, int margin) { return alongX ? spansMeet(b.minZ, b.maxZ, a.minZ - margin, a.maxZ + margin) : spansMeet(b.minX, b.maxX, a.minX - margin, a.maxX + margin); }
+
     public static boolean waystone(StructureComponent piece) { return piece.getClass().getName().toLowerCase(Locale.ROOT).contains("waystone"); }
+
+    public static boolean blocked(StructureStart start, StructureComponent piece, StructureBoundingBox box, BlockPos at) { return !box.isVecInside(at) || insideAnother(start, piece, at); }
 
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
         for (StructureComponent other : around(start, at.getX(), at.getZ())) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            if (other instanceof RailPiece && ((RailPiece) other).subway()) {
-                box = ((RailPiece) other).station();
-                if (box == null) { continue; }
-            }
+            StructureBoundingBox box = footprint(other);
+            if (box == null) { continue; }
             if (box.isVecInside(at)) { return true; }
             if (other instanceof StructureVillagePieces.Well && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
         }
@@ -207,37 +233,24 @@ public final class BeardPlots {
     public static boolean besideRoad(StructureStart start, StructureComponent piece, int x, int z) { return nearRoad(start, piece, x, z, 1); }
 
     public static boolean nearRoad(StructureStart start, StructureComponent piece, int x, int z, int reach) {
-        Index held = index(start);
-        for (int cx = (x - reach) >> 4; cx <= (x + reach) >> 4; cx++) {
-            for (int cz = (z - reach) >> 4; cz <= (z + reach) >> 4; cz++) {
-                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
-                    if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-                    StructureBoundingBox box = other.getBoundingBox();
-                    if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
-                }
-            }
-        }
-        return false;
+        return index(start).any(x - reach, z - reach, x + reach, z + reach, (cx, cz, other) -> {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { return false; }
+            StructureBoundingBox box = other.getBoundingBox();
+            return x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach;
+        });
     }
 
     public static boolean vergeSpot(StructureStart start, int x, int z, int step) {
-        Index held = index(start);
-        for (int cx = (x - 1) >> 4; cx <= (x + 1) >> 4; cx++) {
-            for (int cz = (z - 1) >> 4; cz <= (z + 1) >> 4; cz++) {
-                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
-                    if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-                    StructureBoundingBox box = other.getBoundingBox();
-                    boolean alongX = roadAlongX(box);
-                    int row = alongX ? x : z;
-                    int across = alongX ? z : x;
-                    if (row < (alongX ? box.minX : box.minZ) || row > (alongX ? box.maxX : box.maxZ) || Math.floorMod(row, step) != 0) { continue; }
-                    if (across != (alongX ? box.minZ : box.minX) - 1 && across != (alongX ? box.maxZ : box.maxX) + 1) { continue; }
-                    if (BeardRoadsTunnels.tunnelAt(BeardRoads.layoutOf(other), row)) { continue; }
-                    return true;
-                }
-            }
-        }
-        return false;
+        return index(start).any(x - 1, z - 1, x + 1, z + 1, (cx, cz, other) -> {
+            if (!(other instanceof StructureVillagePieces.Path)) { return false; }
+            StructureBoundingBox box = other.getBoundingBox();
+            boolean alongX = roadAlongX(box);
+            int row = alongX ? x : z;
+            int across = alongX ? z : x;
+            if (row < (alongX ? box.minX : box.minZ) || row > (alongX ? box.maxX : box.maxZ) || Math.floorMod(row, step) != 0) { return false; }
+            if (across != (alongX ? box.minZ : box.minX) - 1 && across != (alongX ? box.maxZ : box.maxX) + 1) { return false; }
+            return !BeardRoadsTunnels.tunnelAt(BeardRoads.layoutOf(other), row);
+        });
     }
 
     public interface ISpots {
@@ -245,31 +258,26 @@ public final class BeardPlots {
     }
 
     public static boolean vergeSpotsNear(StructureStart start, int x, int z, int reach, int step, ISpots spots) {
-        Index held = index(start);
         int firstX = x - reach - 1;
         int firstZ = z - reach - 1;
-        for (int cx = firstX >> 4; cx <= (x + reach + 1) >> 4; cx++) {
-            for (int cz = firstZ >> 4; cz <= (z + reach + 1) >> 4; cz++) {
-                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
-                    if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-                    StructureBoundingBox box = other.getBoundingBox();
-                    if (cx != Math.max(box.minX, firstX) >> 4 || cz != Math.max(box.minZ, firstZ) >> 4) { continue; }
-                    boolean alongX = roadAlongX(box);
-                    int along = alongX ? x : z;
-                    int across = alongX ? z : x;
-                    int near = (alongX ? box.minZ : box.minX) - 1;
-                    int far = (alongX ? box.maxZ : box.maxX) + 1;
-                    BeardRoads.Grade grade = BeardRoads.layoutOf(other);
-                    int last = Math.min(alongX ? box.maxX : box.maxZ, along + reach);
-                    for (int row = Math.max(alongX ? box.minX : box.minZ, along - reach); row <= last; row++) {
-                        if (Math.floorMod(row, step) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
-                        if (Math.abs(near - across) <= reach && spots.accept(alongX ? row : near, alongX ? near : row)) { return true; }
-                        if (Math.abs(far - across) <= reach && spots.accept(alongX ? row : far, alongX ? far : row)) { return true; }
-                    }
-                }
+        return index(start).any(firstX, firstZ, x + reach + 1, z + reach + 1, (cx, cz, other) -> {
+            if (!(other instanceof StructureVillagePieces.Path)) { return false; }
+            StructureBoundingBox box = other.getBoundingBox();
+            if (cx != Math.max(box.minX, firstX) >> 4 || cz != Math.max(box.minZ, firstZ) >> 4) { return false; }
+            boolean alongX = roadAlongX(box);
+            int along = alongX ? x : z;
+            int across = alongX ? z : x;
+            int near = (alongX ? box.minZ : box.minX) - 1;
+            int far = (alongX ? box.maxZ : box.maxX) + 1;
+            BeardRoads.Grade grade = BeardRoads.layoutOf(other);
+            int last = Math.min(alongX ? box.maxX : box.maxZ, along + reach);
+            for (int row = Math.max(alongX ? box.minX : box.minZ, along - reach); row <= last; row++) {
+                if (Math.floorMod(row, step) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
+                if (Math.abs(near - across) <= reach && spots.accept(alongX ? row : near, alongX ? near : row)) { return true; }
+                if (Math.abs(far - across) <= reach && spots.accept(alongX ? row : far, alongX ? far : row)) { return true; }
             }
-        }
-        return false;
+            return false;
+        });
     }
 
     public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) { return hit(start, piece, x, z, ROADS); }
@@ -341,10 +349,11 @@ public final class BeardPlots {
         return false;
     }
 
-    private static int roadOffset(StructureBoundingBox box, boolean alongX, int x, int z) {
-        int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-        return Math.abs((alongX ? z : x) - center);
-    }
+    public static int roadOffset(StructureBoundingBox box, boolean alongX, int x, int z) { return Math.abs((alongX ? z : x) - roadCenter(box, alongX)); }
+
+    public static int roadCenter(StructureBoundingBox box, boolean alongX) { return alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2; }
+
+    public static int alongMid(StructureBoundingBox box, boolean alongX) { return roadCenter(box, !alongX); }
 
     public static int roadSpan(StructureBoundingBox box, boolean alongX) { return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1; }
 

@@ -19,8 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow private World world;
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int chunkX, int chunkZ, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(world, chunkX, chunkZ);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(world)) { cir.setReturnValue(ContentVoidWorld.emptyChunk(world, chunkX, chunkZ)); }
     }
 
     @Inject(method = "replaceBlocksForBiome", at = @At("RETURN"), remap = false) private void rdpl$packStone(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomes); }

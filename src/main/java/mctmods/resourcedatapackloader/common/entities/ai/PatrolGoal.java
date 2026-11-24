@@ -39,16 +39,7 @@ public final class PatrolGoal extends EntityAIBase {
     @Nullable private EntityCreature leaderNear() {
         AxisAlignedBB around = mob.getEntityBoundingBox().grow(MUSTER, 8.0D, MUSTER);
         List<? extends EntityCreature> others = mob.world.getEntitiesWithinAABB(mob.getClass(), around, other -> other != mob && other.isEntityAlive() && leads(other));
-        @Nullable EntityCreature best = null;
-        double nearest = Double.MAX_VALUE;
-        for (EntityCreature other : others) {
-            double away = mob.getDistanceSq(other);
-            if (away < nearest) {
-                nearest = away;
-                best = other;
-            }
-        }
-        return best;
+        return Walking.nearest(others, mob::getDistanceSq, Double.MAX_VALUE);
     }
 
     @Override public boolean shouldExecute() {

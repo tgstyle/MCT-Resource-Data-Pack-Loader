@@ -37,7 +37,6 @@ public final class BeardStations {
     static final int RUN = 7;
     static final int WIDE = 5;
     private static final int SLIDE = 48;
-    static final int WORLDGEN_FLAGS = 2;
     private static final Set<String> MISSING = new HashSet<>();
     private static boolean toldUnnamed = false;
 
@@ -75,23 +74,24 @@ public final class BeardStations {
 
     public static boolean stationAt(RailPiece rail, int row) {
         if (!on() || rail.trunk() != null) { return false; }
-        int half = length() / 2;
+        return stationNear(rail, row, length() / 2) != null;
+    }
+
+    static boolean lampAt(IBlockState lamp, int run, int step) { return lamp.getBlock() != Blocks.AIR && Math.floorMod(step, run) == 0; }
+
+    @Nullable private static StructureBoundingBox stationNear(RailPiece rail, int row, int reach) {
         for (StructureBoundingBox box : rail.stations()) {
-            if (Math.abs(row - heartOf(rail, box)) <= half) { return true; }
+            if (Math.abs(row - heartOf(rail, box)) <= reach) { return box; }
         }
-        return false;
+        return null;
     }
 
     public static int heartOf(RailPiece rail, StructureBoundingBox box) { return rail.alongX() ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2; }
 
     public static int heldLevel(RailPiece rail, BeardRoads.Grade grade, int row) {
         if (!on()) { return Integer.MIN_VALUE; }
-        int half = length() / 2;
-        for (StructureBoundingBox box : rail.stations()) {
-            int heart = heartOf(rail, box);
-            if (Math.abs(row - heart) <= half) { return grade.at(heart); }
-        }
-        return Integer.MIN_VALUE;
+        StructureBoundingBox box = stationNear(rail, row, length() / 2);
+        return box == null ? Integer.MIN_VALUE : grade.at(heartOf(rail, box));
     }
 
     public static int open(World world, StructureBoundingBox clip, boolean alongX, int row, int center, int level, int bedHalf, BeardRoads.Palette linings, IBlockState light, int lightRun, BlockPos.MutableBlockPos at) {
@@ -113,7 +113,7 @@ public final class BeardStations {
             }
             if (added) { world.setBlockState(at.setPos(x, level + 1, z), platforms.pick(world, x, level + 1, z), BlockFlags.UPDATE_CLIENTS); }
             for (int y = level + (added ? 2 : BeardRails.CLEAR + 1); y <= roof - 1; y++) { world.setBlockState(at.setPos(x, y, z), air, BlockFlags.UPDATE_CLIENTS); }
-            boolean lamp = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0
+            boolean lamp = lampAt(light, lightRun, row)
                     && (across == center || Math.abs(across - center) == bedHalf + platformWidth());
             world.setBlockState(at.setPos(x, roof, z), lamp ? light : linings.pick(world, x, roof, z), BlockFlags.UPDATE_CLIENTS);
             laid++;
@@ -133,7 +133,7 @@ public final class BeardStations {
             int z = alongX ? across : row;
             for (int y = from; y <= roof; y++) {
                 if (!clip.isVecInside(at.setPos(x, y, z))) { continue; }
-                world.setBlockState(at, linings.pick(world, x, y, z), WORLDGEN_FLAGS);
+                world.setBlockState(at, linings.pick(world, x, y, z), BlockFlags.UPDATE_CLIENTS);
                 BeardKeep.holdSpot(x, y, z);
                 laid++;
             }
@@ -181,11 +181,7 @@ public final class BeardStations {
     }
 
     private static boolean crowded(RailPiece rail, int row) {
-        int least = length() + RUN;
-        for (StructureBoundingBox box : rail.stations()) {
-            if (Math.abs(row - heartOf(rail, box)) < least) { return true; }
-        }
-        return false;
+        return stationNear(rail, row, length() + RUN - 1) != null;
     }
 
     private static void claimAt(StructureStart start, RailPiece rail, boolean alongX, int center, int wellRow, int least, int most) {
@@ -316,7 +312,7 @@ public final class BeardStations {
             if (!clip.isVecInside(at.setPos(x, y, z))) { continue; }
             if (world.getBlockState(at).getMaterial().isSolid()) { continue; }
             if (!world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid()) { continue; }
-            world.setBlockState(at.setPos(x, y, z), put, WORLDGEN_FLAGS);
+            world.setBlockState(at.setPos(x, y, z), put, BlockFlags.UPDATE_CLIENTS);
             BeardKeep.holdSpot(x, y, z);
             laid++;
         }

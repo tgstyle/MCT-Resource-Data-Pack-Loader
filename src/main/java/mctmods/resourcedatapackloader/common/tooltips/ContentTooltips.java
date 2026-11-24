@@ -82,12 +82,7 @@ public final class ContentTooltips {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "items", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An items entry in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "items", new JsonArray()), "An items entry in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "items", ITEM_KEYS);
             List<String> lines = Json.strings(entry, "lines");
             if (lines.isEmpty()) {
@@ -98,12 +93,7 @@ public final class ContentTooltips {
             Rule rule = stack.isEmpty() ? null : rule(key, entry, "items", lines);
             if (rule != null) { ITEMS.add(new Entry(stack, rule)); }
         }
-        for (JsonElement element : Json.getJsonArray(json, "enchantments", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An enchantments entry in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "enchantments", new JsonArray()), "An enchantments entry in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "enchantments", ENCHANTMENT_KEYS);
             List<String> lines = Json.strings(entry, "lines");
             String name = Json.getString(entry, "enchantment", "");

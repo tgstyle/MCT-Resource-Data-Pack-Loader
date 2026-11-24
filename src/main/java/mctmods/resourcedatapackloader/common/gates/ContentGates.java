@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserW
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.syncdata.DataReader;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
@@ -134,7 +135,7 @@ public final class ContentGates {
         if (turnedAway(player, def)) { return; }
         GateStorage.unlock(player, def);
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
-        String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
+        String message = Says.fill(def.unlockedMessage, "%dim%", def.name, "%player%", player.getName());
         String team = GateStorage.teamFor(player, def);
         if (def.global() || !team.isEmpty()) { broadcast(player, message, team); }
         else { Says.line(player, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
@@ -151,7 +152,7 @@ public final class ContentGates {
         String needed = def.consume.isEmpty() ? def.craft : def.consume;
         if (needed.isEmpty()) { needed = def.hold; }
         String shown = needed.isEmpty() && def.worn.present() ? def.worn.describe() : describe(needed);
-        String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", shown);
+        String message = Says.fill(def.blockedMessage, "%dim%", def.name, "%item%", shown);
         Says.bar(player, CardIds.GATE_BLOCKED, TextFormatting.RED, message);
     }
 
@@ -169,7 +170,7 @@ public final class ContentGates {
     private static void broadcast(EntityPlayer player, String message, String team) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) {
+        for (EntityPlayerMP online : Players.online(server)) {
             if (team.isEmpty() || team.equals(Standing.teamOf(online))) { Says.line(online, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
         }
     }

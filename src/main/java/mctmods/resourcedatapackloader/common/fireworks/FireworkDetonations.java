@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.fireworks;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.FireworkDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -15,7 +16,9 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 @Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public final class FireworkDetonations {
@@ -30,10 +33,10 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
         EntityFireworkRocket rocket = (EntityFireworkRocket) event.getEntity();
         NBTTagCompound saved = rocket.writeToNBT(new NBTTagCompound());
         NBTTagCompound stack = saved.getCompoundTag("FireworksItem");
-        if (!stack.hasKey("tag", 10)) {
+        if (!stack.hasKey(Nbts.STACK_TAG, Constants.NBT.TAG_COMPOUND)) {
             return;
         }
-        String source = stack.getCompoundTag("tag").getString(FireworkRockets.TAG_SOURCE);
+        String source = stack.getCompoundTag(Nbts.STACK_TAG).getString(FireworkRockets.TAG_SOURCE);
         if (!source.isEmpty()) {
             LIVE.put(rocket, source);
         }
@@ -41,7 +44,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
     @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
         World world = event.world;
-        if (event.phase != TickEvent.Phase.END || world.isRemote || LIVE.isEmpty()) {
+        if (!SideUtils.serverEnd(event) || LIVE.isEmpty()) {
             return;
         }
         for (Map.Entry<EntityFireworkRocket, String> entry : new ArrayList<>(LIVE.entrySet())) {

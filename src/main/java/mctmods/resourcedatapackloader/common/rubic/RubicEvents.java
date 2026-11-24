@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldSettings;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.network.world.RubicWorldDataMessage;
@@ -40,8 +41,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 public class RubicEvents {
     @SubscribeEvent public void onWorldAttachCapabilities(AttachCapabilitiesEvent<World> evt) {
-        if (evt.getObject().isRemote || !(evt.getObject() instanceof WorldServer)) { return; }
-        WorldServer world = (WorldServer) evt.getObject();
+        WorldServer world = RubicWorldControl.serverWorld(evt.getObject());
+        if (world == null) { return; }
 
         WorldSavedRubicData savedData =
                 (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
@@ -87,11 +88,11 @@ public class RubicEvents {
 
     @SubscribeEvent public void onWorldServerTick(TickEvent.WorldTickEvent evt) {
         WorldServer world = (WorldServer) evt.world;
-        if (evt.phase == TickEvent.Phase.END && ((IRubicWorld) world).rdpl$isRubicWorld() && evt.side == Side.SERVER) { ((IRubicWorldInternal) world).rdpl$tickRubicWorld(); }
+        if (evt.phase == TickEvent.Phase.END && GenHeights.rubic(world) && evt.side == Side.SERVER) { ((IRubicWorldInternal) world).rdpl$tickRubicWorld(); }
     }
 
     @SubscribeEvent public void onPlayerJoinWorld(EntityJoinWorldEvent evt) {
-        if (evt.getEntity() instanceof EntityPlayerMP && ((IRubicWorld) evt.getWorld()).rdpl$isRubicWorld()) { RDPLNetwork.sendTo(new RubicWorldDataMessage((WorldServer) evt.getWorld()), (EntityPlayerMP) evt.getEntity()); }
+        if (evt.getEntity() instanceof EntityPlayerMP && GenHeights.rubic(evt.getWorld())) { RDPLNetwork.sendTo(new RubicWorldDataMessage((WorldServer) evt.getWorld()), (EntityPlayerMP) evt.getEntity()); }
     }
 
     @SubscribeEvent public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) { checkClientSupport(event.player); }
@@ -101,7 +102,7 @@ public class RubicEvents {
     private static void checkClientSupport(EntityPlayer playerIn) {
         if (!(playerIn instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) playerIn;
-        if (!((IRubicWorld) player.world).rdpl$isRubicWorld()) { return; }
+        if (!GenHeights.rubic(player.world)) { return; }
         NetHandlerPlayServer connection = player.connection;
         if (connection == null || connection.netManager == null) { return; }
         NetworkDispatcher dispatcher = connection.netManager.channel().attr(NetworkDispatcher.FML_DISPATCHER).get();
@@ -129,7 +130,7 @@ public class RubicEvents {
     }
 
     @SubscribeEvent public void onWorldUnload(WorldEvent.Unload event) {
-        if (event.getWorld().isRemote || !((IRubicWorld) event.getWorld()).rdpl$isRubicWorld()) { return; }
+        if (event.getWorld().isRemote || !GenHeights.rubic(event.getWorld())) { return; }
         IRubicWorld world = (IRubicWorld) event.getWorld();
         ICubeIO io = ((ICubeProviderInternal.IServer) world.rdpl$getCubeCache()).getCubeIO();
         try {

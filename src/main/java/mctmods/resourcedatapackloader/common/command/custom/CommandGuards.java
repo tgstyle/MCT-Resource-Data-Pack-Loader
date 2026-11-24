@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.command.custom;
 
 import mctmods.resourcedatapackloader.common.cards.CardWhen;
+import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.CardParser;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -29,7 +30,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class CommandGuards {
-    private static final Set<String> OWN = new HashSet<>(Arrays.asList("rdpl", "rdplserver"));
+    private static final Set<String> OWN = new HashSet<>(Arrays.asList("rdpl", CommandShared.NAME));
     private static final String DENIED = "commands.generic.permission";
     private static final List<String> GUARD_KEYS = Collections.unmodifiableList(Arrays.asList("guard", "when", "unless", "message"));
     private static final List<Guard> GUARDS = new ArrayList<>();
@@ -39,12 +40,12 @@ public final class CommandGuards {
     public static void load() {
         GUARDS.clear();
         Json.eachObject(PackManager.COMMAND_GUARDS, "command guard file", CommandGuards::read);
-        if (!GUARDS.isEmpty()) { Summary.info("commandguards", "Loaded " + GUARDS.size() + " command guard(s)"); }
+        Summary.loaded("commandguards", GUARDS.size(), "command guard(s)");
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", GUARD_KEYS);
-        String name = Json.getString(json, "guard", "").trim().toLowerCase(Locale.ROOT);
+        String name = Json.getLowerString(json, "guard", "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Command guard file {} names no command in guard, ignoring it", key);
             return;

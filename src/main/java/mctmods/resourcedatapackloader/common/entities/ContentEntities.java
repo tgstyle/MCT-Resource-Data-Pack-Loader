@@ -17,8 +17,12 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserE
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.scripts.ScriptEventHandlers;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+import mctmods.resourcedatapackloader.common.util.ServerTicks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -67,6 +71,7 @@ import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentEntities {
+    public static final int THROW = 5;
     static final Map<ResourceLocation, EntityVariantDef> DEFS = new LinkedHashMap<>();
     public static final Map<Class<?>, EntityVariantDef> BY_CLASS = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
@@ -77,9 +82,7 @@ public final class ContentEntities {
     private static long struckAt;
     private static boolean struckEffects;
     private static boolean struckFire;
-    private static final Map<Integer, Long> WAS_AT = new HashMap<>();
-    private static final Map<Integer, Float> FACED = new HashMap<>();
-    private static final Map<Integer, Float> HEALTHS = new HashMap<>();
+    private static final Map<Integer, Look> LOOKS = new HashMap<>();
     private static final Map<String, Integer> FELL_TO = new LinkedHashMap<>();
     private static final int ENGAGE_EVERY = 100;
     private static int engageWatch;
@@ -99,7 +102,7 @@ public final class ContentEntities {
             }
             DEFS.put(key, def);
         });
-        if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
+        Summary.loaded("entities", DEFS.size(), "entity variant(s) from packs");
         return !DEFS.isEmpty();
     }
 
@@ -108,24 +111,24 @@ public final class ContentEntities {
     public static Collection<EntityVariantDef> variants() { return DEFS.values(); }
 
     @Nullable public static ResourceLocation texture(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null || def.texture.isEmpty()) { return null; }
         return TEXTURES.computeIfAbsent(def.texture, ResourceLocation::new);
     }
 
     public static float baseBabyChance(Entity entity, float chance) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null || def.keepsBaseBaby ? chance : 0.0F;
     }
 
     @Nullable public static ResourceLocation lootTable(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null || def.lootTable.isEmpty()) { return null; }
         return NAMES.computeIfAbsent(def.lootTable, ResourceLocation::new);
     }
 
     @Nullable public static SoundEvent soundEvent(Entity entity, int which) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null) { return null; }
         String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : which == 2 ? def.deathSound : which == 3 ? def.targetSound : which == 4 ? def.explodeSound : def.throwSound;
         if (name.isEmpty()) { return null; }
@@ -144,12 +147,12 @@ public final class ContentEntities {
 
     public static int attackInterval(EntityLivingBase attacker) {
         IAttributeInstance speed = attacker.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_SPEED.getName());
-        if (speed == null || speed.getAttributeValue() <= 0.0D) { return 20; }
-        return Math.max(1, (int) Math.round(20.0D / speed.getAttributeValue()));
+        if (speed == null || speed.getAttributeValue() <= 0.0D) { return MathUtil.TICKS_PER_SECOND; }
+        return Math.max(1, (int) Math.round((double) MathUtil.TICKS_PER_SECOND / speed.getAttributeValue()));
     }
 
     public static boolean immune(Entity entity, String damageType) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null || def.immuneTo.isEmpty()) { return false; }
         for (String wanted : def.immuneTo) {
             if (wanted.equalsIgnoreCase(damageType)) { return true; }
@@ -158,40 +161,42 @@ public final class ContentEntities {
     }
 
     public static float scale(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null) { return 1.0F; }
-        return entity.isSprinting() ? def.angryScale : def.scale;
+        return scale(entity, def);
     }
 
+    private static float scale(Entity entity, EntityVariantDef def) { return entity.isSprinting() ? def.angryScale : def.scale; }
+
     public static int threatLeast(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? 0 : def.threatLeast;
     }
 
     public static int threatHostile(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? 0 : def.threatHostile;
     }
 
     public static SpawnGateDef spawnGate(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? SpawnGateDef.NONE : def.gate;
     }
 
     public static boolean leashable(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.leashable;
     }
 
     public static boolean steerable(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.steerable;
     }
 
     @SubscribeEvent public static void onBars(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null || server.getTickCounter() % 20 != 0) { return; }
+        MinecraftServer server = ServerTicks.every(20);
+        if (server == null) { return; }
         long now = server.getEntityWorld().getTotalWorldTime();
         ContentEntityBars.sweep(now);
         ContentEntityPhases.sweep(server);
@@ -215,18 +220,16 @@ public final class ContentEntities {
         for (WorldServer world : server.worlds) {
             if (world == null) { continue; }
             for (Entity entity : world.loadedEntityList) {
-                if (!(entity instanceof EntityLiving) || !BY_CLASS.containsKey(entity.getClass())) { continue; }
+                if (!(entity instanceof EntityLiving) || variantOf(entity) == null) { continue; }
                 EntityLiving mob = (EntityLiving) entity;
                 mobs++;
                 seen.add(mob.getEntityId());
                 here.add(mob);
-                Float hp = HEALTHS.put(mob.getEntityId(), mob.getHealth());
-                if (hp != null && hp > mob.getHealth()) { hurt++; }
                 long at = mob.getPosition().toLong();
-                Long was = WAS_AT.put(mob.getEntityId(), at);
-                Float faced = FACED.put(mob.getEntityId(), mob.rotationYaw);
-                if (was != null && was != at) { walked++; }
-                if (was != null && was == at && faced != null && Math.abs(MathHelper.wrapDegrees(mob.rotationYaw - faced)) >= 90.0F) { spun++; }
+                Look before = LOOKS.put(mob.getEntityId(), new Look(at, mob.rotationYaw, mob.getHealth()));
+                if (before != null && before.health > mob.getHealth()) { hurt++; }
+                if (before != null && before.at != at) { walked++; }
+                if (before != null && before.at == at && Math.abs(MathHelper.wrapDegrees(mob.rotationYaw - before.yaw)) >= 90.0F) { spun++; }
                 EntityLivingBase aim = mob.getAttackTarget();
                 if (aim == null) { continue; }
                 aimed++;
@@ -237,12 +240,9 @@ public final class ContentEntities {
             }
         }
         int gone = 0;
-        for (Iterator<Integer> held = WAS_AT.keySet().iterator(); held.hasNext();) {
-            Integer id = held.next();
-            if (seen.contains(id)) { continue; }
+        for (Iterator<Integer> held = LOOKS.keySet().iterator(); held.hasNext();) {
+            if (seen.contains(held.next())) { continue; }
             held.remove();
-            FACED.remove(id);
-            HEALTHS.remove(id);
             gone++;
         }
         int thickest = 0;
@@ -295,24 +295,24 @@ public final class ContentEntities {
     }
 
     @SubscribeEvent public static void onDeathWatch(LivingDeathEvent event) {
-        if (!ContentLog.LOGGER.debugEnabled() || BY_CLASS.get(event.getEntityLiving().getClass()) == null) { return; }
+        if (!ContentLog.LOGGER.debugEnabled() || variantOf(event.getEntityLiving()) == null) { return; }
         FELL_TO.merge(event.getSource().damageType, 1, Integer::sum);
     }
 
     @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         EntityLivingBase living = event.getEntityLiving();
         if (!(living instanceof EntityLiving)) { return; }
-        EntityVariantDef def = BY_CLASS.get(living.getClass());
+        EntityVariantDef def = variantOf(living);
         if (def == null) { return; }
         if (!def.phases.isEmpty() && !living.world.isRemote) { ContentEntityPhases.tick((EntityLiving) living, def); }
-        if (def.bossBar != null && !living.world.isRemote) { ContentEntityBars.tick(living, def); }
+        if (def.combat.bossBar != null && !living.world.isRemote) { ContentEntityBars.tick(living, def); }
         if (def.collectsExperience && !living.world.isRemote && living.isEntityAlive()) {
             ContentMobExperience.collect((EntityLiving) living);
             ContentAnvils.gather((EntityLiving) living);
         }
         if (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0 && def.targetSound.isEmpty()) { return; }
         if (living.world.isRemote) {
-            if (def.scale != 1.0F || def.scale != def.angryScale) { ContentEntityApply.resize(living, living.isSprinting() ? def.angryScale : def.scale); }
+            if (def.scale != 1.0F || def.scale != def.angryScale) { ContentEntityApply.resize(living, scale(living, def)); }
             return;
         }
         if (def.despawnTicks > 0 && timeIsUp(living, def)) {
@@ -326,14 +326,15 @@ public final class ContentEntities {
         boolean angry = stillRoused((EntityLiving) living);
         if (angry && !living.isSprinting()) { cry(living); }
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
-        ContentEntityApply.resize(living, angry ? def.angryScale : def.scale);
+        ContentEntityApply.resize(living, scale(living, def));
     }
 
     private static void cry(EntityLivingBase living) {
         SoundEvent cry = soundEvent(living, 3);
-        if (cry == null) { return; }
-        float carries = (float) Math.max(1.0D, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue() / 16.0D);
-        float varies = BY_CLASS.get(living.getClass()).targetVaries;
+        EntityVariantDef def = variantOf(living);
+        if (cry == null || def == null) { return; }
+        float carries = (float) Math.max(1.0D, ContentAttributes.followRange(living) / 16.0D);
+        float varies = def.targetVaries;
         float pitch = varies <= 0.0F ? 1.0F : (float) Math.pow(2.0D, (living.getRNG().nextFloat() * 2.0F - 1.0F) * varies / 12.0D);
         living.world.playSound(null, living.posX, living.posY, living.posZ, cry, living.getSoundCategory(), carries, pitch);
     }
@@ -360,64 +361,64 @@ public final class ContentEntities {
     }
 
     public static boolean collectsExperience(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.collectsExperience;
     }
 
     public static boolean bright(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.bright;
     }
 
     public static float jumpMultiplier(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? 1.0F : def.jumpMultiplier;
     }
 
     public static float fallDamage(Entity entity, float original) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null) { return original; }
         return def.swoops ? 0.0F : original * def.fallDamage;
     }
 
     public static float sound(Entity entity, float original, boolean pitch) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null) { return original; }
         return original * (pitch ? def.soundPitch : def.soundVolume);
     }
 
     public static float waterSlowdown(Entity entity, float original) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? original : def.waterSlowdown;
     }
 
     public static int experience(Entity entity, int original) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null || def.experience < 0 ? original : def.experience;
     }
 
     public static int maxFallHeight(Entity entity, int original) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null || def.maxFallHeight < 0 ? original : def.maxFallHeight;
     }
 
     public static boolean breathesUnderwater(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && (def.breathesUnderwater || def.swims || def.amphibious);
     }
 
     public static boolean sinks(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.breathesUnderwater && !def.swims;
     }
 
     public static boolean despawns(Entity entity, boolean original) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? original : def.despawns && original;
     }
 
     @Nullable public static EnumCreatureAttribute creatureAttribute(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null || def.creatureAttribute.isEmpty()) { return null; }
         EnumCreatureAttribute value = Enums.byName(EnumCreatureAttribute.class, def.creatureAttribute);
         if (value != null) { return value; }
@@ -426,24 +427,22 @@ public final class ContentEntities {
     }
 
     public static boolean fireproof(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.fireproof;
     }
 
     public static boolean hidesArmor(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.hideArmor;
     }
 
     public static boolean hidesHeld(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.hideHeld;
     }
 
-    public static float channel(int tint, int shift) { return (tint >> shift & 255) / 255.0F; }
-
     public static int tint(Entity entity, String part) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         if (def == null || def.tint == 0 || !def.tintParts.contains(part)) { return 0; }
         return def.tint;
     }
@@ -451,7 +450,7 @@ public final class ContentEntities {
     @SubscribeEvent public static void onStruck(LivingAttackEvent event) {
         Entity by = event.getSource().getTrueSource();
         if (by == null || event.getEntityLiving().world.isRemote) { return; }
-        EntityVariantDef def = BY_CLASS.get(by.getClass());
+        EntityVariantDef def = variantOf(by);
         if (def == null || (def.hitEffects && def.hitFire)) { return; }
         struck = event.getEntityLiving();
         struckAt = struck.world.getTotalWorldTime();
@@ -466,7 +465,7 @@ public final class ContentEntities {
         EntityArrow arrow = (EntityArrow) event.getEntity();
         Entity shooter = arrow.shootingEntity;
         if (!(shooter instanceof EntityLivingBase)) { return; }
-        EntityVariantDef def = BY_CLASS.get(shooter.getClass());
+        EntityVariantDef def = variantOf(shooter);
         if (def == null || !ContentEntityBehavior.declaresAttackDamage(def)) { return; }
         IAttributeInstance damage = ((EntityLivingBase) shooter).getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
         if (damage == null) { return; }
@@ -474,33 +473,33 @@ public final class ContentEntities {
     }
 
     public static double attackReachSqr(EntityLivingBase attacker, EntityLivingBase target, double vanilla) {
-        EntityVariantDef def = BY_CLASS.get(attacker.getClass());
+        EntityVariantDef def = variantOf(attacker);
         if (def == null || def.attackReach <= 0.0F) { return vanilla; }
         return (double) def.attackReach * def.attackReach + target.width;
     }
 
     public static float knockback(@Nullable Entity by, float strength) {
-        EntityVariantDef def = by == null ? null : BY_CLASS.get(by.getClass());
+        EntityVariantDef def = by == null ? null : variantOf(by);
         return def == null || def.knockback < 0.0F ? strength : def.knockback;
     }
 
     public static boolean lyingAsleep(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.sleepsByDay && entity.isSneaking();
     }
 
     public static boolean walks(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def != null && def.walks;
     }
 
     @Nullable public static Boolean climbs(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null ? null : def.climbs;
     }
 
     public static boolean teleports(Entity entity) {
-        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        EntityVariantDef def = variantOf(entity);
         return def == null || def.teleports;
     }
 
@@ -510,7 +509,7 @@ public final class ContentEntities {
             event.setResult(Event.Result.DENY);
             return;
         }
-        EntityVariantDef def = BY_CLASS.get(living.getClass());
+        EntityVariantDef def = variantOf(living);
         if (def == null || def.ignoresEffects.isEmpty()) { return; }
         ResourceLocation potion = event.getPotionEffect().getPotion().getRegistryName();
         String id = potion == null ? "" : potion.toString();
@@ -524,12 +523,12 @@ public final class ContentEntities {
     }
 
     @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
-        EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
+        EntityVariantDef def = variantOf(event.getEntity());
         if (def == null) { return; }
         if (!event.getWorld().isRemote && swapped(event, def)) { return; }
         ContentEntityApply.remember(event.getEntity(), def);
         if (event.getWorld().isRemote) {
-            ContentEntityApply.resize(event.getEntity(), event.getEntity().isSprinting() ? def.angryScale : def.scale);
+            ContentEntityApply.resize(event.getEntity(), scale(event.getEntity(), def));
             return;
         }
         ContentEntityApply.apply(event.getEntity(), def);
@@ -579,7 +578,7 @@ public final class ContentEntities {
 
     @Nullable public static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
         ResourceLocation location = new ResourceLocation(name);
-        if ("minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
+        if (IdNames.VANILLA.equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
         EntityEntry entry = Registries.find(ForgeRegistries.ENTITIES, location);
         if (entry == null || !EntityLivingBase.class.isAssignableFrom(entry.getEntityClass())) {
             ContentLog.LOGGER.error("Entity variant {} wants to attack '{}', which is not a living entity that is registered", def.registryName, name);
@@ -589,4 +588,16 @@ public final class ContentEntities {
     }
 
     private static boolean missing(EntityVariantDef def) { return !ContentRegistry.available(def.requires, def.registryName); }
+
+    private static final class Look {
+        final long at;
+        final float yaw;
+        final float health;
+
+        Look(long at, float yaw, float health) {
+            this.at = at;
+            this.yaw = yaw;
+            this.health = health;
+        }
+    }
 }

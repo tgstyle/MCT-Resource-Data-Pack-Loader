@@ -17,21 +17,18 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public final class ContentClaims {
     private ContentClaims() {}
 
-    public static boolean enabled() { return ClaimSettings.any(); }
-
     @SubscribeEvent public static void onChunkLoad(ChunkEvent.Load event) {
         World world = event.getWorld();
-        if (!enabled() || world.isRemote || GenHeights.rubic(world)) { return; }
+        if (!ClaimSettings.any() || world.isRemote || GenHeights.rubic(world)) { return; }
         ClaimIndex index = ClaimIndex.obtain(world);
-        if (index == null) { return; }
         ClaimDissolve.onLoad(world, event.getChunk().x, event.getChunk().z);
         for (ClaimIndex.Anchor anchor : index.anchorList()) {
-            if (Coords.blockToCube(anchor.x) == event.getChunk().x && Coords.blockToCube(anchor.z) == event.getChunk().z) { verify(index, anchor, event.getChunk().getBlockState(new BlockPos(anchor.x, anchor.y, anchor.z))); }
+            if (Coords.blockToCube(anchor.x) == event.getChunk().x && Coords.blockToCube(anchor.z) == event.getChunk().z) { verify(index, anchor, event.getChunk().getBlockState(anchor.pos())); }
         }
     }
 
     @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !enabled()) { return; }
+        if (event.phase != TickEvent.Phase.END || !ClaimSettings.any()) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
         ClaimDissolve.drain();
@@ -41,9 +38,8 @@ public final class ContentClaims {
 
     private static void sweep(World world) {
         ClaimIndex index = ClaimIndex.obtain(world);
-        if (index == null) { return; }
         for (ClaimIndex.Anchor anchor : index.anchorList()) {
-            BlockPos pos = new BlockPos(anchor.x, anchor.y, anchor.z);
+            BlockPos pos = anchor.pos();
             if (world.isBlockLoaded(pos)) { verify(index, anchor, world.getBlockState(pos)); }
         }
     }

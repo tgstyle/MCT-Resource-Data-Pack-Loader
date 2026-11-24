@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.common.sounds;
 
-import mctmods.resourcedatapackloader.common.pack.loading.ContentOwners;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
 import java.util.LinkedHashSet;
@@ -24,7 +24,7 @@ public final class ContentSounds {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.registersToClients() || !Config.content.sounds) { return; }
+        if (!Config.loads(Config.content.sounds)) { return; }
         PackManager.get().forEach(PackManager.SOUNDS, PackManager.JSON, (namespace, path, contents) ->
                 NAMES.add(new ResourceLocation(namespace, path)));
     }
@@ -37,10 +37,10 @@ public final class ContentSounds {
                 ContentLog.LOGGER.warn("A sound named {} is already registered, skipping the pack entry", name);
                 continue;
             }
-            ContentOwners.as(name.getNamespace(), () -> {
+            Registries.register(event.getRegistry(), name.getNamespace(), () -> {
                 SoundEvent sound = new SoundEvent(name);
                 sound.setRegistryName(name);
-                event.getRegistry().register(sound);
+                return sound;
             });
             count++;
         }

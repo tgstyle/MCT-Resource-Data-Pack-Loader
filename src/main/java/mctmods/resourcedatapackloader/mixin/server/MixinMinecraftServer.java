@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.rubic.server.SpawnCubes;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
@@ -27,8 +28,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Shadow public WorldServer[] worlds;
 
-    @Inject(method = "getBuildLimit", at = @At("HEAD"), cancellable = true) private void rubic$buildLimit(CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "getBuildLimit", at = @At("HEAD"), cancellable = true) private void rdpl$buildLimit(CallbackInfoReturnable<Integer> cir) {
         if (this.worlds == null || this.worlds.length == 0 || this.worlds[0] == null) { return; }
-        if (((IRubicWorld) this.worlds[0]).rdpl$isRubicWorld()) { cir.setReturnValue(Rubic.MAX_SUPPORTED_BLOCK_Y); }
+        if (GenHeights.rubic(this.worlds[0])) { cir.setReturnValue(Rubic.MAX_SUPPORTED_BLOCK_Y); }
     }
 }

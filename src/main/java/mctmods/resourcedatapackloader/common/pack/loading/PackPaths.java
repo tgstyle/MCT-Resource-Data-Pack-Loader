@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.loading;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.FileMoves;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,9 +32,7 @@ public final class PackPaths {
     }
 
     private static void addNamespaces(Path folder, Map<String, List<Path>> out) throws IOException {
-        List<Path> dirs = new ArrayList<>();
-        try (Stream<Path> stream = Files.list(folder)) { stream.sorted().filter(Files::isDirectory).forEach(dirs::add); }
-        for (Path dir : dirs) {
+        for (Path dir : FileMoves.children(folder, Files::isDirectory)) {
             String name = name(dir);
             if (grouped(name)) { addNamespaces(dir, out); }
             else { out.computeIfAbsent(name, k -> new ArrayList<>()).add(dir); }

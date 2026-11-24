@@ -7,11 +7,11 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import static mctmods.resourcedatapackloader.core.util.json.Json.strings;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,21 +19,23 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentEnchantments {
-    private static final List<String> RARITIES = Collections.unmodifiableList(Arrays.asList("common", "uncommon", "rare", "very_rare"));
-    private static final List<String> SLOTS = Collections.unmodifiableList(Arrays.asList("mainhand", "offhand", "head", "chest", "legs", "feet"));
+    private static final int MOST = 255;
+    private static final double DEFAULT_DURATION = 100.0D;
+    private static final List<String> SLOTS = Collections.unmodifiableList(Stream.of(EntityEquipmentSlot.MAINHAND, EntityEquipmentSlot.OFFHAND, EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET).map(EntityEquipmentSlot::getName).collect(Collectors.toList()));
     private static final List<String> ARMOR_SLOTS = Collections.unmodifiableList(Arrays.asList("head", "chest", "legs", "feet"));
-    private static final List<String> CATEGORIES = Collections.unmodifiableList(Arrays.asList("armor", "armor_head", "armor_chest", "armor_legs", "armor_feet", "weapon", "digger", "fishing_rod", "breakable", "bow", "wearable"));
     private static final List<String> EFFECT_TYPES = Collections.unmodifiableList(Arrays.asList("protection", "damage", "apply_effect"));
-    private static final List<String> PROTECTIONS = Collections.unmodifiableList(Arrays.asList("all", "fire", "fall", "explosion", "projectile"));
-    private static final List<String> MOBS = Collections.unmodifiableList(Arrays.asList("any", "undead", "arthropod", "illager"));
     private static final List<String> TRIGGERS = Collections.unmodifiableList(Arrays.asList("attack", "hurt"));
     private static final List<String> ENCHANTMENT_KEYS = Collections.unmodifiableList(Arrays.asList("name", "category", "items", "slots", "maxLevel", "minCost", "maxCost", "rarity", "treasure", "effects", "requires"));
     private static final List<String> EFFECT_KEYS = Collections.unmodifiableList(Arrays.asList("type", "amount", "from", "mob", "on", "potion", "duration", "amplifier"));
@@ -46,21 +48,19 @@ public final class ContentEnchantments {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (!Config.registersToClients() || !Config.content.enchantments) { return false; }
-        Json.eachFile(PackManager.ENCHANTMENTS, "enchantment file", (key, contents) -> {
-            if (!ContentOwners.reserved(key)) { read(key, contents); }
+        if (!Config.loads(Config.content.enchantments)) { return false; }
+        Json.eachObject(PackManager.ENCHANTMENTS, "enchantment file", (key, json) -> {
+            if (!ContentOwners.reserved(key)) { read(key, json); }
         });
-        if (!ENCHANTMENTS.isEmpty()) { Summary.info("enchantments", "Loaded " + ENCHANTMENTS.size() + " enchantment(s) from packs"); }
+        Summary.loaded("enchantments", ENCHANTMENTS.size(), "enchantment(s) from packs");
         return wanted();
     }
 
     public static boolean wanted() { return !ENCHANTMENTS.isEmpty(); }
 
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "enchantment file");
-        if (json == null) { return; }
+    private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", ENCHANTMENT_KEYS);
-        String category = Json.choice(json, "category", "", key, CATEGORIES);
+        String category = Json.choice(json, "category", "", key, ContentEnchantment.CATEGORIES.keySet());
         List<String> items = strings(json, "items");
         if (category.isEmpty() && items.isEmpty()) {
             ContentLog.LOGGER.error("Enchantment {} has no usable category and no items, so it can go on nothing. Skipping it", key);
@@ -76,30 +76,26 @@ public final class ContentEnchantments {
                 ContentLog.LOGGER.error("Enchantment {} has no usable slot, skipping it", key);
                 return;
             }
-            slots.add("mainhand");
+            slots.add(EntityEquipmentSlot.MAINHAND.getName());
         }
         int maxLevel = Json.getInt(json, "maxLevel", 1);
-        if (maxLevel < 1 || maxLevel > 255) {
+        if (maxLevel < 1 || maxLevel > MOST) {
             ContentLog.LOGGER.error("Enchantment {} sets maxLevel to {}, which is outside 1 to 255, so it is clamped", key, maxLevel);
-            maxLevel = Math.max(1, Math.min(255, maxLevel));
+            maxLevel = MathHelper.clamp(maxLevel, 1, MOST);
         }
         double[] min = linear(json, "minCost", 11, 10);
         double[] max = linear(json, "maxCost", (int) min[0] + 5, (int) min[1]);
         List<EnchantmentEffectDef> effects = new ArrayList<>();
         if (json.has("effects")) {
-            for (JsonElement element : Json.getJsonArray(json, "effects")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                    continue;
-                }
-                EnchantmentEffectDef effect = readEffect(key, element.getAsJsonObject(), slots);
+            for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "effects"), "An effect in {} is not an object, skipping it", key)) {
+                EnchantmentEffectDef effect = readEffect(key, element, slots);
                 if (effect != null) { effects.add(effect); }
             }
         }
         ENCHANTMENTS.put(key, new EnchantmentDef(key,
                 Json.getString(json, "name", "enchantment." + key.getNamespace() + "." + key.getPath()),
                 maxLevel,
-                Json.choice(json, "rarity", "common", key, RARITIES),
+                Json.choice(json, "rarity", "common", key, ContentEnchantment.RARITIES.keySet()),
                 Collections.unmodifiableList(slots),
                 category,
                 items,
@@ -119,7 +115,7 @@ public final class ContentEnchantments {
         double[] amount = linear(entry, "amount", 0, 0);
         List<String> from = new ArrayList<>();
         String potion = "";
-        double[] duration = {100, 0};
+        double[] duration = {DEFAULT_DURATION, 0};
         if (type.equals("protection")) {
             for (String slot : slots) {
                 if (!ARMOR_SLOTS.contains(slot)) {
@@ -128,8 +124,8 @@ public final class ContentEnchantments {
                 }
             }
             for (String kind : strings(entry, "from")) {
-                if (PROTECTIONS.contains(kind)) { from.add(kind); }
-                else { ContentLog.LOGGER.error("A protection effect in {} names '{}', which is not one of {}, skipping that entry", key, kind, PROTECTIONS); }
+                if (ContentEnchantment.PROTECTIONS.containsKey(kind)) { from.add(kind); }
+                else { ContentLog.LOGGER.error("A protection effect in {} names '{}', which is not one of {}, skipping that entry", key, kind, ContentEnchantment.PROTECTIONS.keySet()); }
             }
             if (from.isEmpty()) { from.add("all"); }
             amount = new double[]{(int) amount[0], (int) amount[1]};
@@ -140,13 +136,13 @@ public final class ContentEnchantments {
                 ContentLog.LOGGER.error("An apply_effect in {} names no potion, skipping it", key);
                 return null;
             }
-            duration = linear(entry, "duration", 100, 0);
+            duration = linear(entry, "duration", DEFAULT_DURATION, 0);
         }
         return new EnchantmentEffectDef(type, Collections.unmodifiableList(from),
-                Json.choice(entry, "mob", "any", key, MOBS),
+                Json.choice(entry, "mob", "any", key, ContentEnchantment.MOBS.keySet()),
                 Json.choice(entry, "on", "attack", key, TRIGGERS),
                 potion, amount[0], amount[1], duration[0], duration[1],
-                Math.max(0, Math.min(255, Json.getInt(entry, "amplifier", 0))));
+                MathHelper.clamp(Json.getInt(entry, "amplifier", 0), 0, MOST));
     }
 
     private static double[] linear(JsonObject json, String member, double base, double perLevel) {
@@ -171,7 +167,7 @@ public final class ContentEnchantments {
                 }
                 usable.add(effect);
             }
-            ContentOwners.as(def.registryName.getNamespace(), () -> event.getRegistry().register(new ContentEnchantment(def, usable)));
+            Registries.register(event.getRegistry(), def.registryName.getNamespace(), () -> new ContentEnchantment(def, usable));
             count++;
         }
         if (count > 0) { Summary.info("content_enchantments", "Registered " + count + " enchantment(s) from packs"); }

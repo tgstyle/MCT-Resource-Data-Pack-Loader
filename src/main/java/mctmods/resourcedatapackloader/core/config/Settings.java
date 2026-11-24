@@ -30,13 +30,26 @@ public final class Settings {
         int split = entry.lastIndexOf('=');
         if (split < 0) { return new Weighted(entry.trim(), fallback, false); }
         String name = entry.substring(0, split).trim();
-        try { return new Weighted(name, Integer.parseInt(entry.substring(split + 1).trim()), false); }
-        catch (NumberFormatException held) { return new Weighted(name, fallback, true); }
+        Integer weight = integer(entry.substring(split + 1));
+        return weight == null ? new Weighted(name, fallback, true) : new Weighted(name, weight, false);
+    }
+
+    @Nullable public static Integer whole(String text, String failure, Object... details) {
+        try { return Integer.parseInt(text); }
+        catch (NumberFormatException wrong) {
+            ContentLog.LOGGER.error(failure, details);
+            return null;
+        }
+    }
+
+    @Nullable public static Integer integer(String text) {
+        try { return Integer.parseInt(text.trim()); }
+        catch (NumberFormatException notNumber) { return null; }
     }
 
     @Nullable public static Integer clamped(String text, int least, int most) {
-        try { return MathHelper.clamp(Integer.parseInt(text.trim()), least, most); }
-        catch (NumberFormatException notNumber) { return null; }
+        Integer value = integer(text);
+        return value == null ? null : MathHelper.clamp(value, least, most);
     }
 
     @Nullable public static String[] split(String entry) {
@@ -64,18 +77,21 @@ public final class Settings {
                 bare.add(line);
                 continue;
             }
-            try {
-                if (Integer.parseInt(sides[0]) == dimension) { scoped.add(sides[1]); }
-            }
-            catch (NumberFormatException wrong) {
-                ContentLog.LOGGER.error("{} entry '{}' does not begin with a whole dimension number, ignoring it", setting, line);
-            }
+            Integer scope = whole(sides[0], "{} entry '{}' does not begin with a whole dimension number, ignoring it", setting, line);
+            if (scope != null && scope == dimension) { scoped.add(sides[1]); }
         }
         if (!scoped.isEmpty()) { return scoped; }
         return bareApplies ? bare : Collections.emptyList();
     }
 
     public static String lower(String value) { return value.trim().toLowerCase(Locale.ROOT); }
+
+    public static boolean containsIgnoreCase(String[] names, String value) {
+        for (String name : names) {
+            if (name.equalsIgnoreCase(value)) { return true; }
+        }
+        return false;
+    }
 
     public static Set<String> lower(String[] values) {
         Set<String> set = new LinkedHashSet<>();

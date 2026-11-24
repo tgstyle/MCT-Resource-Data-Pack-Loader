@@ -5,10 +5,14 @@ import mctmods.resourcedatapackloader.common.environment.ContentLightArea;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.WorldgenHangWatchdog;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSaves;
+import mctmods.resourcedatapackloader.common.util.world.SpawnScreen;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Heap;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import java.util.ArrayDeque;
@@ -16,6 +20,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.LongConsumer;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
@@ -29,7 +34,6 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.storage.MapStorage;
 import net.minecraftforge.common.DimensionManager;
@@ -100,9 +104,9 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         this.highX = centreX + radius + 1;
         this.highZ = centreZ + radius + 1;
         this.order = new ContentChunkOrder(centreX, centreZ, radius + 1);
-        this.keep = Math.max(64, ContentControl.number(ContentControl.CHUNKS, "pregenKeepLoaded", Config.chunks.pregenKeepLoaded));
-        this.backlog = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenPauseAbove", Config.chunks.pregenPauseAbove));
-        this.slice = MathHelper.clamp(ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound), 1, 1000);
+        this.keep = Math.max(64, ContentControl.number(ContentControl.CHUNKS, ContentControl.PREGEN_KEEP_LOADED, Config.chunks.pregenKeepLoaded));
+        this.backlog = Math.max(0, ContentControl.number(ContentControl.CHUNKS, ContentControl.PREGEN_PAUSE_ABOVE, Config.chunks.pregenPauseAbove));
+        this.slice = MathHelper.clamp(ContentControl.number(ContentControl.CHUNKS, ContentControl.PREGEN_MILLIS_PER_ROUND, Config.chunks.pregenMillisPerRound), 1, 1000);
         this.started = System.currentTimeMillis();
     }
 
@@ -172,11 +176,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         finally { dressingIn = null; }
         int relit = 0;
         Set<Long> around = new LinkedHashSet<>();
-        for (long key : DRESS_LATER) {
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) { around.add(ChunkPos.asLong(Longs.low(key) + dx, Longs.high(key) + dz)); }
-            }
-        }
+        for (long key : DRESS_LATER) { eachAround(Longs.low(key), Longs.high(key), true, around::add); }
         for (long key : around) {
             if (ContentDressLight.relit(provider.getLoadedChunk(Longs.low(key), Longs.high(key)))) { relit++; }
         }
@@ -271,7 +271,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             round = tick;
             roundSpent = 0L;
         }
-        if (roundSpent >= slice * 1000000L) { return false; }
+        if (roundSpent >= slice * MathUtil.NANOS_PER_MS) { return false; }
         long began = System.nanoTime();
         ChunkPos next = order.next();
         done++;
@@ -307,10 +307,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if ((done & 255L) == 0L && rubic) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
         if ((done & 255L) == 0L) {
             Runtime memory = Runtime.getRuntime();
-            long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
+            long used = Heap.heapUsed() >> 20;
             if (rubic) { ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20); }
             else {
-                int pending = provider.chunkLoader instanceof AnvilChunkLoader ? ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount() : -1;
+                int pending = ChunkSaves.pending(provider);
                 ContentLog.LOGGER.debug("Pregen telemetry: chunks={}/{} loadedChunks={} pendingChunkSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), pending, used, memory.maxMemory() >> 20);
             }
         }
@@ -342,8 +342,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private boolean behind(ChunkProviderServer provider) {
         if (backlog <= 0) { return false; }
         if (RubicWorldControl.rubicWorld(provider)) { return RubicWorldControl.pendingSaves(provider) > backlog; }
-        if (!(provider.chunkLoader instanceof AnvilChunkLoader)) { return false; }
-        return ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount() > backlog;
+        return ChunkSaves.pending(provider) > backlog;
     }
 
     private void retain(ChunkProviderServer provider, long key) {
@@ -356,14 +355,18 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private void fetchRing(ChunkProviderServer provider, int middleX, int middleZ) {
+        eachAround(middleX, middleZ, false, key -> {
+            if (held.contains(key)) { return; }
+            if (already(provider, Longs.low(key), Longs.high(key), false) == null) { return; }
+            retain(provider, key);
+        });
+    }
+
+    private static void eachAround(int x, int z, boolean centre, LongConsumer body) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                if (dx == 0 && dz == 0) { continue; }
-                int x = middleX + dx;
-                int z = middleZ + dz;
-                if (held.contains(ChunkPos.asLong(x, z))) { continue; }
-                if (already(provider, x, z, false) == null) { continue; }
-                retain(provider, ChunkPos.asLong(x, z));
+                if (!centre && dx == 0 && dz == 0) { continue; }
+                body.accept(ChunkPos.asLong(x + dx, z + dz));
             }
         }
     }
@@ -381,14 +384,12 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private void brighten(ChunkProviderServer provider, int madeX, int madeZ) {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                int x = madeX + dx;
-                int z = madeZ + dz;
-                if (!held.contains(ChunkPos.asLong(x, z)) || ringGap(x, z)) { continue; }
-                if (ContentDressLight.relit(provider.getLoadedChunk(x, z))) { brightened++; }
-            }
-        }
+        eachAround(madeX, madeZ, true, key -> {
+            int x = Longs.low(key);
+            int z = Longs.high(key);
+            if (!held.contains(key) || ringGap(x, z)) { return; }
+            if (ContentDressLight.relit(provider.getLoadedChunk(x, z))) { brightened++; }
+        });
     }
 
     private boolean ringGap(int x, int z) {
@@ -419,9 +420,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (server == null) { return; }
         long total = order.total();
         int percent = total <= 0L ? 0 : (int) Math.min(100L, done * 100L / total);
-        server.currentTask = "Preparing spawn area";
-        server.percentDone = percent;
-        server.setUserMessage("menu.generatingTerrain");
+        SpawnScreen.tell(server, percent);
     }
 
     private void checkpoint(WorldServer world) {
@@ -437,7 +436,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             world.getPerWorldStorage().saveAllData();
         }
         catch (Exception oops) { ContentLog.LOGGER.error("The safeguard save of the world records failed, so a crash from here would lose progress made since the last one that worked", oops); }
-        long spent = (System.nanoTime() - writing) / 1000000L;
+        long spent = (System.nanoTime() - writing) / MathUtil.NANOS_PER_MS;
         checkpointCost = spent;
         ContentLog.LOGGER.debug("Safeguard save of the world records took {} ms at {} column(s)", spent, done);
         if (spent > 500L) { ContentLog.LOGGER.info("The safeguard save of the world records took {} ms and grows with the land already made; this is the checkpoint cost, not generation", spent); }
@@ -454,12 +453,12 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     @SuppressWarnings({"ConstantConditions", "ConstantValue"}) private static void keepPristine() {
-        if (!ContentControl.flag(ContentControl.CHUNKS, "pregenBackup", Config.chunks.pregenBackup)) { return; }
+        if (!ContentControl.flag(ContentControl.CHUNKS, ContentControl.PREGEN_BACKUP, Config.chunks.pregenBackup)) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
         WorldServer world = server.getWorld(0);
         if (world == null || ContentPristine.already(server)) { return; }
-        String said = ContentPregenProgress.says("pregenBackupSays", Config.chunks.pregenBackupSays).trim();
+        String said = ContentPregenProgress.says(ContentControl.PREGEN_BACKUP_SAYS, Config.chunks.pregenBackupSays).trim();
         try { server.saveAllWorlds(true); }
         catch (RuntimeException notSaved) { ContentLog.LOGGER.warn("The worlds could not be flushed before the pristine copy, copying what is on disk", notSaved); }
         long copyStart = System.currentTimeMillis();
@@ -521,7 +520,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         else { ContentPregenDimensions.chaining = false; }
         if (running == null) {
             BlockFalling.fallInstantly = false;
-            String ending = stopping ? ContentPregenProgress.defaulted("pregenStoppedSays", Config.chunks.pregenStoppedSays, ContentPregenProgress.SHIPPED.pregenStoppedSays, "rdpl.pregen.stopped", null) : ContentPregenProgress.defaulted("pregenFinishedSays", Config.chunks.pregenFinishedSays, ContentPregenProgress.SHIPPED.pregenFinishedSays, "rdpl.pregen.done", null);
+            String ending = stopping ? ContentPregenProgress.defaulted(ContentControl.PREGEN_STOPPED_SAYS, Config.chunks.pregenStoppedSays, ContentPregenProgress.SHIPPED.pregenStoppedSays, "rdpl.pregen.stopped", null) : ContentPregenProgress.defaulted(ContentControl.PREGEN_FINISHED_SAYS, Config.chunks.pregenFinishedSays, ContentPregenProgress.SHIPPED.pregenFinishedSays, "rdpl.pregen.done", null);
             if (!ending.isEmpty() && chainBegun != 0L) {
                 long took = (System.currentTimeMillis() - chainBegun) / 1000L;
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);

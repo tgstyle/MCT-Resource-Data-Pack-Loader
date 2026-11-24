@@ -4,8 +4,8 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
-import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +29,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentBoards {
     private static final Map<String, BoardRules> RULES = new LinkedHashMap<>();
-    private static final int SECOND = 20;
+    private static final int SECOND = MathUtil.TICKS_PER_SECOND;
     private static final ExecutorService THINKER = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "RDPL board AI");
         thread.setDaemon(true);
@@ -42,9 +42,7 @@ public final class ContentBoards {
 
     public static void load() {
         RULES.clear();
-        Json.eachFile(PackManager.GAMES, "game file", (key, contents) -> {
-            JsonObject json = Json.object(key, contents, "game file");
-            if (json == null) { return; }
+        Json.eachObject(PackManager.GAMES, "game file", (key, json) -> {
             String name = key.getPath();
             if (RULES.containsKey(name)) {
                 ContentLog.LOGGER.error("Game file {} names the game '{}', which another pack already named, so the later one is left out", key, name);
@@ -65,7 +63,7 @@ public final class ContentBoards {
 
     @Nullable public static BoardRules rules(String game) { return RULES.get(game); }
 
-    @Nullable public static BoardGame board(MinecraftServer server, String name) {
+    @Nullable public static BoardGame board(@Nullable MinecraftServer server, String name) {
         ContentBoardData data = ContentBoardData.get(server);
         return data == null ? null : data.boards.get(name);
     }
@@ -78,8 +76,8 @@ public final class ContentBoards {
     public static boolean piece(Entity entity) { return ContentBoardPieces.boardOf(entity) != null; }
 
     @Nullable static World world(MinecraftServer server, BoardGame game) {
-        try { return server.getWorld(Integer.parseInt(game.dimension)); }
-        catch (NumberFormatException notDimension) { return null; }
+        Integer id = game.dimensionId();
+        return id == null ? null : server.getWorld(id);
     }
 
     static void dirty(MinecraftServer server) {
@@ -90,7 +88,7 @@ public final class ContentBoards {
     public static void rebuild(MinecraftServer server) {
         ContentBoardData data = ContentBoardData.get(server);
         if (data == null) { return; }
-        Random random = server.getWorld(0).rand;
+        Random random = ContentDice.random(server);
         for (BoardGame game : data.boards.values()) {
             BoardRules rules = RULES.get(game.game);
             World world = world(server, game);
@@ -115,7 +113,7 @@ public final class ContentBoards {
     @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        ContentBoardData data = server == null ? null : ContentBoardData.get(server);
+        ContentBoardData data = ContentBoardData.get(server);
         if (data == null) { return; }
         ContentBoardPlay.expire(server);
         boolean second = ++beat % SECOND == 0;
@@ -141,7 +139,7 @@ public final class ContentBoards {
     private static void think(MinecraftServer server, BoardGame game, BoardState state, int level) {
         BoardState snapshot = state.copy();
         int version = game.version;
-        long seed = server.getWorld(0).rand.nextLong();
+        long seed = ContentDice.random(server).nextLong();
         game.thinking = true;
         THINKER.execute(() -> {
             int move = BoardSearch.best(snapshot, level, new Random(seed));
@@ -154,7 +152,7 @@ public final class ContentBoards {
         String board = ContentBoardPieces.boardOf(entity);
         if (board == null || event.getWorld().isRemote) { return; }
         MinecraftServer server = event.getWorld().getMinecraftServer();
-        ContentBoardData data = server == null ? null : ContentBoardData.get(server);
+        ContentBoardData data = ContentBoardData.get(server);
         if (data != null && ContentBoardPieces.stale(entity, data.boards.get(board))) { event.setCanceled(true); }
     }
 
@@ -173,12 +171,12 @@ public final class ContentBoards {
     @SubscribeEvent public static void onSquare(PlayerInteractEvent.RightClickBlock event) {
         if (event.getWorld().isRemote || event.getHand() != EnumHand.MAIN_HAND || !(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
         MinecraftServer server = event.getWorld().getMinecraftServer();
-        ContentBoardData data = server == null ? null : ContentBoardData.get(server);
+        ContentBoardData data = ContentBoardData.get(server);
         if (data == null) { return; }
-        String dimension = Integer.toString(event.getWorld().provider.getDimension());
+        int dimension = event.getWorld().provider.getDimension();
         for (BoardGame game : data.boards.values()) {
             BoardRules rules = RULES.get(game.game);
-            if (rules == null || !game.dimension.equals(dimension)) { continue; }
+            if (rules == null || !game.in(dimension)) { continue; }
             int square = ContentBoardPieces.square(game, rules, event.getPos());
             if (square >= 0 && ContentBoardPlay.clickSquare((EntityPlayerMP) event.getEntityPlayer(), game, square)) {
                 event.setCanceled(true);
@@ -187,8 +185,5 @@ public final class ContentBoards {
         }
     }
 
-    @Nullable private static BoardGame found(World world, String board) {
-        MinecraftServer server = world.getMinecraftServer();
-        return server == null ? null : board(server, board);
-    }
+    @Nullable private static BoardGame found(World world, String board) { return board(world.getMinecraftServer(), board); }
 }

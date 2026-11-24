@@ -6,9 +6,12 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThem
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserDungeons;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorldgen;
+import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPopulation;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Fallbacks;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -33,7 +36,7 @@ public class ContentDungeonThemes {
     private static final Map<String, DungeonThemeDef> THEMES = new LinkedHashMap<>();
     private static final Set<String> WARNED = new HashSet<>();
     private static final List<String> FAMILIES = Arrays.asList("walls", "floors", "ceilings", "pillars", "fencing", "liquid", "cave", "air", "support", "stairs", "slabs", "decay");
-    private static final List<String> TIERS = Arrays.asList("common", "hard", "brute", "elite", "boss");
+    private static final List<String> TIERS = DungeonPopulation.TIERS;
     private static final List<String> DECORATOR_TYPES = Arrays.asList("wallLine", "floorPatch", "scatter", "pillarsRow", "bannerLine", "torchLine", "fill");
     private static final List<String> SURFACES = Arrays.asList("floor", "ceiling", "wall");
     private static final List<String> THEME_KEYS = Collections.unmodifiableList(Arrays.asList("name", "weight", "dimensions", "dimensionsAreBlacklist", "biomes", "biomeTypes", "notBiomes", "notBiomeTypes", "minY", "maxY", "blocks", "mobs", "spawnGroups", "loot", "lootLevels", "lootBonus", "decorators", "rolls", "difficulty", "decay", "append"));
@@ -67,7 +70,7 @@ public class ContentDungeonThemes {
         for (PickDef pick : themes) {
             DungeonThemeDef theme = byName(pick.name);
             if (theme == null) {
-                errorOnce("missing:" + pick.name, "Dungeon theme '{}' is named but no pack defines it, leaving it out", pick.name);
+                ContentLog.LOGGER.errorOnce(WARNED, "missing:" + pick.name, "Dungeon theme '{}' is named but no pack defines it, leaving it out", pick.name);
                 continue;
             }
             if (!theme.allowsDimension(dimension) || !fitsY(theme, lowestY, highestY)) { continue; }
@@ -104,21 +107,11 @@ public class ContentDungeonThemes {
         return share;
     }
 
-    private static List<String> members(JsonObject object) {
-        List<String> names = new ArrayList<>();
-        for (Map.Entry<String, JsonElement> held : object.entrySet()) { names.add(held.getKey()); }
-        return names;
-    }
-
-    private static void errorOnce(String id, String message, Object... arguments) {
-        if (WARNED.add(id)) { ContentLog.LOGGER.error(message, arguments); }
-    }
-
     private static void apply(DungeonThemeDef append) {
         for (ResourceLocation target : append.append) {
             DungeonThemeDef base = THEMES.get(target.toString());
             if (base == null) {
-                errorOnce("target:" + append.key + ">" + target, "Dungeon theme append {} names theme {}, which no pack defines, skipping it", append.key, target);
+                ContentLog.LOGGER.errorOnce(WARNED, "target:" + append.key + ">" + target, "Dungeon theme append {} names theme {}, which no pack defines, skipping it", append.key, target);
                 continue;
             }
             DungeonThemeDef merged = merged(base, append);
@@ -139,23 +132,21 @@ public class ContentDungeonThemes {
     }
 
     private static DungeonThemeDef merged(DungeonThemeDef base, DungeonThemeDef add) {
-        return new DungeonThemeDef(base.key, base.name, replaced(add.weight, base.weight), base.dimensions, base.dimensionsAreBlacklist,
+        return new DungeonThemeDef(base.key, base.name, Fallbacks.orDefault(add.weight, base.weight), base.dimensions, base.dimensionsAreBlacklist,
                 joined(base.biomes, add.biomes, removed(add, "biomes"), pick -> pick.name),
                 joined(base.biomeTypes, add.biomeTypes, removed(add, "biomeTypes"), pick -> pick.name),
                 joined(base.notBiomes, add.notBiomes, removed(add, "notBiomes"), pick -> pick.name),
                 joined(base.notBiomeTypes, add.notBiomeTypes, removed(add, "notBiomeTypes"), pick -> pick.name),
-                replaced(add.minY, base.minY), replaced(add.maxY, base.maxY),
+                Fallbacks.orDefault(add.minY, base.minY), Fallbacks.orDefault(add.maxY, base.maxY),
                 sections("blocks", base.blocks, add.blocks, add, block -> block.block.toString()),
                 sections("mobs", base.mobs, add.mobs, add, mob -> mob.id),
                 joined(base.spawnGroups, add.spawnGroups, removed(add, "spawnGroups"), group -> Settings.lower(group.name)),
                 sections("loot", base.loot, add.loot, add, entry -> entry.table.toString()),
                 decorators(base.decorators, add),
-                replaced(add.rolls, base.rolls), replaced(add.difficulty, base.difficulty), replaced(add.decay, base.decay),
-                replaced(add.lootLevels, base.lootLevels), replaced(add.lootBonus, base.lootBonus),
+                Fallbacks.orDefault(add.rolls, base.rolls), Fallbacks.orDefault(add.difficulty, base.difficulty), Fallbacks.orDefault(add.decay, base.decay),
+                Fallbacks.orDefault(add.lootLevels, base.lootLevels), Fallbacks.orDefault(add.lootBonus, base.lootBonus),
                 Collections.emptyList(), Collections.emptyMap());
     }
-
-    private static <T> T replaced(@Nullable T written, T kept) { return written == null ? kept : written; }
 
     private static Set<String> removed(DungeonThemeDef from, String... keys) {
         Set<String> names = new HashSet<>();
@@ -265,7 +256,7 @@ public class ContentDungeonThemes {
             JsonObject object = Json.object(json, "blocks");
             Map<String, List<BlockWeightDef>> blocks = new LinkedHashMap<>();
             Json.unknownKeys(object, "blocks", FAMILIES);
-            for (String family : members(object)) {
+            for (String family : JsonTree.keys(object)) {
                 if (FAMILIES.contains(family)) { blocks.put(family, ContentParserWorldgen.weights(object, family)); }
             }
             return Collections.unmodifiableMap(blocks);
@@ -275,7 +266,7 @@ public class ContentDungeonThemes {
             JsonObject object = Json.object(json, "mobs");
             Map<String, List<DungeonThemeDef.Mob>> mobs = new LinkedHashMap<>();
             Json.unknownKeys(object, "mobs", TIERS);
-            for (String tier : members(object)) {
+            for (String tier : JsonTree.keys(object)) {
                 if (TIERS.contains(tier)) { mobs.put(tier, mobList(object, tier)); }
             }
             return Collections.unmodifiableMap(mobs);
@@ -340,7 +331,7 @@ public class ContentDungeonThemes {
         private Map<String, List<DungeonThemeDef.LootEntry>> loot() {
             JsonObject object = Json.object(json, "loot");
             Map<String, List<DungeonThemeDef.LootEntry>> loot = new LinkedHashMap<>();
-            for (String set : members(object)) {
+            for (String set : JsonTree.keys(object)) {
                 List<DungeonThemeDef.LootEntry> entries = new ArrayList<>();
                 for (JsonElement element : Json.getJsonArray(object, set, new JsonArray())) {
                     DungeonThemeDef.LootEntry entry = element.isJsonObject() ? lootEntry(set, element.getAsJsonObject()) : null;
@@ -397,7 +388,7 @@ public class ContentDungeonThemes {
                 String member = held.getKey();
                 if (!DECORATOR_NUMBERS.contains(member)) { continue; }
                 if (held.getValue().isJsonPrimitive() && held.getValue().getAsJsonPrimitive().isNumber()) { numbers.put(member, held.getValue().getAsInt()); }
-                else if (WARNED.add("key:decorators." + member)) { ContentLog.LOGGER.warn("Dungeon theme {} decorator '{}' has key '{}' that is not a number, ignoring it (shown once)", key, name, member); }
+                else { ContentLog.LOGGER.warnOnce(WARNED, "key:decorators." + member, "Dungeon theme {} decorator '{}' has key '{}' that is not a number, ignoring it (shown once)", key, name, member); }
             }
             String loot = Json.text(object, "loot", "");
             if ("fill".equals(type) && loot.isEmpty()) {

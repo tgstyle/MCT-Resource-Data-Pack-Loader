@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.rail;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.TemplateBlocks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardBlocks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardKeep;
@@ -17,9 +19,6 @@ import java.util.function.IntFunction;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -28,7 +27,6 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.common.util.Constants;
 
 final class BeardStationShaft {
     private static final int HEADROOM = 2;
@@ -80,7 +78,7 @@ final class BeardStationShaft {
                 if (world.getBlockState(at.setPos(x, surface, z)).getMaterial().isSolid()) { continue; }
                 int filled = deck ? 0 : BeardBlocks.fillBank(world, at, x, z, surface, surface - APPROACH_FILL, false);
                 if (filled == 0) {
-                    world.setBlockState(at.setPos(x, surface, z), linings.pick(world, x, surface, z), BeardStations.WORLDGEN_FLAGS);
+                    world.setBlockState(at.setPos(x, surface, z), linings.pick(world, x, surface, z), BlockFlags.UPDATE_CLIENTS);
                     filled = 1;
                 }
                 graded += filled;
@@ -111,7 +109,7 @@ final class BeardStationShaft {
                 BlockPos spot = Template.transformedBlockPos(how, new BlockPos(x, 0, z)).add(origin);
                 if (!clip.isVecInside(at.setPos(spot.getX(), surface + 1, spot.getZ()))) { continue; }
                 if (world.getBlockState(at).getMaterial().isSolid()) { continue; }
-                world.setBlockState(at, rails.pick(world, spot.getX(), surface + 1, spot.getZ()), BeardStations.WORLDGEN_FLAGS);
+                world.setBlockState(at, rails.pick(world, spot.getX(), surface + 1, spot.getZ()), BlockFlags.UPDATE_CLIENTS);
                 BeardKeep.holdSpot(spot.getX(), surface + 1, spot.getZ());
                 laid++;
             }
@@ -122,17 +120,12 @@ final class BeardStationShaft {
     private static boolean[][] topOpening(Template held) {
         BlockPos size = held.getSize();
         boolean[][] open = new boolean[size.getX()][size.getZ()];
-        NBTTagCompound saved = held.writeToNBT(new NBTTagCompound());
-        NBTTagList palette = saved.getTagList("palette", Constants.NBT.TAG_COMPOUND);
-        NBTTagList blocks = saved.getTagList("blocks", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < blocks.tagCount(); i++) {
-            NBTTagCompound block = blocks.getCompoundTagAt(i);
-            NBTTagList pos = block.getTagList("pos", Constants.NBT.TAG_INT);
-            if (pos.getIntAt(1) != size.getY() - 1) { continue; }
-            int x = pos.getIntAt(0);
-            int z = pos.getIntAt(2);
+        for (TemplateBlocks.Entry block : TemplateBlocks.blocks(held)) {
+            if (block.pos.getY() != size.getY() - 1) { continue; }
+            int x = block.pos.getX();
+            int z = block.pos.getZ();
             if (x < 0 || z < 0 || x >= size.getX() || z >= size.getZ()) { continue; }
-            open[x][z] = !NBTUtil.readBlockState(palette.getCompoundTagAt(block.getInteger("state"))).getMaterial().isSolid();
+            open[x][z] = !block.state().getMaterial().isSolid();
         }
         return open;
     }
@@ -180,7 +173,7 @@ final class BeardStationShaft {
                 for (int y = level; y <= surface; y++) { BeardKeep.holdSpot(spot.getX(), y, spot.getZ()); }
                 for (int y = level; y < base; y++) {
                     if (!clip.isVecInside(at.setPos(spot.getX(), y, spot.getZ()))) { continue; }
-                    world.setBlockState(at, lining, BeardStations.WORLDGEN_FLAGS);
+                    world.setBlockState(at, lining, BlockFlags.UPDATE_CLIENTS);
                 }
             }
         }
@@ -293,7 +286,7 @@ final class BeardStationShaft {
         step.setRotation(how.getRotation());
         step.setMirror(how.getMirror());
         step.setBoundingBox(only);
-        held.addBlocksToWorld(world, new BlockPos(leastX, at, leastZ), dressed(lining), step, BeardStations.WORLDGEN_FLAGS);
+        held.addBlocksToWorld(world, new BlockPos(leastX, at, leastZ), dressed(lining), step, BlockFlags.UPDATE_CLIENTS);
     }
 
     private static ITemplateProcessor dressed(final IBlockState lining) {
@@ -347,13 +340,13 @@ final class BeardStationShaft {
         for (int[] spot : dug) {
             int x = alongX ? spot[0] : spot[1];
             int z = alongX ? spot[1] : spot[0];
-            boolean litHere = corridorLamp(lamp, run, spot[0], spot[1]);
+            boolean litHere = BeardStations.lampAt(lamp, run, spot[0] + spot[1]);
             for (int y = spot[2] - 1; y <= spot[3] + HEADROOM + 1; y++) {
                 if (!clip.isVecInside(at.setPos(x, y, z))) { continue; }
                 BeardKeep.holdSpot(x, y, z);
                 boolean roof = y > spot[2] + HEADROOM;
                 boolean shell = y == spot[2] - 1 || roof;
-                world.setBlockState(at, roof && litHere ? lamp : shell ? linings.pick(world, x, y, z) : air, BeardStations.WORLDGEN_FLAGS);
+                world.setBlockState(at, roof && litHere ? lamp : shell ? linings.pick(world, x, y, z) : air, BlockFlags.UPDATE_CLIENTS);
                 laid++;
             }
         }
@@ -368,7 +361,7 @@ final class BeardStationShaft {
                 for (int y = spot[2] - 1; y <= spot[3] + HEADROOM + 1; y++) {
                     if (!clip.isVecInside(at.setPos(x, y, z))) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
-                    world.setBlockState(at, linings.pick(world, x, y, z), BeardStations.WORLDGEN_FLAGS);
+                    world.setBlockState(at, linings.pick(world, x, y, z), BlockFlags.UPDATE_CLIENTS);
                     laid++;
                 }
             }
@@ -376,8 +369,6 @@ final class BeardStationShaft {
         if (extra > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The station corridor turns back along the line for {} block(s) to fall {} onto the platform, {} straight across would not have been enough", extra, drop, straight); }
         return laid;
     }
-
-    private static boolean corridorLamp(IBlockState lamp, int run, int row, int across) { return lamp.getBlock() != Blocks.AIR && Math.floorMod(row + across, run) == 0; }
 
     private static int dividerLamps(World world, StructureBoundingBox clip, int length, IntFunction<BlockPos> divider, int base, int top, BlockPos.MutableBlockPos at) {
         IBlockState lamp = stationLight();
@@ -388,7 +379,7 @@ final class BeardStationShaft {
             BlockPos mid = divider.apply(along);
             for (int y = base + 2; y < top; y += run) {
                 if (!clip.isVecInside(at.setPos(mid.getX(), y, mid.getZ()))) { continue; }
-                world.setBlockState(at, lamp, BeardStations.WORLDGEN_FLAGS);
+                world.setBlockState(at, lamp, BlockFlags.UPDATE_CLIENTS);
                 BeardKeep.holdSpot(mid.getX(), y, mid.getZ());
                 lit++;
             }

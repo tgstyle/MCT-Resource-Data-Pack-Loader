@@ -49,12 +49,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     protected ContentLeavesBlock(BlockDef def, PropertyVariant property) {
         this.def = def;
         this.variant = property;
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName.toString());
-        ContentSetup.harvest(this, def);
+        ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
         leavesFancy = !def.opaque;
         setDefaultState(this.blockState.getBaseState()
                 .withProperty(property, def.at(0).name)

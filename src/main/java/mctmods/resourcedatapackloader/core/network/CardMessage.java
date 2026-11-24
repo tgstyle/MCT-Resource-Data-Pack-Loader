@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
+
 import io.netty.buffer.ByteBuf;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
@@ -36,9 +38,7 @@ public class CardMessage implements IMessage {
 
     @Override public void fromBytes(ByteBuf buf) {
         title = ByteBufUtils.readUTF8String(buf);
-        int count = buf.readByte();
-        lines = new ArrayList<>();
-        for (int i = 0; i < count; i++) { lines.add(ByteBufUtils.readUTF8String(buf)); }
+        lines = PacketUtils.readLines(buf);
         icon = ByteBufUtils.readItemStack(buf);
         image = ByteBufUtils.readUTF8String(buf);
         background = buf.readInt();
@@ -51,8 +51,7 @@ public class CardMessage implements IMessage {
 
     @Override public void toBytes(ByteBuf buf) {
         ByteBufUtils.writeUTF8String(buf, title);
-        buf.writeByte(Math.min(lines.size(), 16));
-        for (int i = 0; i < Math.min(lines.size(), 16); i++) { ByteBufUtils.writeUTF8String(buf, lines.get(i)); }
+        PacketUtils.writeLines(buf, lines);
         ByteBufUtils.writeItemStack(buf, icon);
         ByteBufUtils.writeUTF8String(buf, image);
         buf.writeInt(background);

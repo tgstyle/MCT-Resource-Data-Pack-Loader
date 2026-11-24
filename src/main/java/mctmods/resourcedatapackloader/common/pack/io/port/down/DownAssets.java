@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
-import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
@@ -18,7 +19,6 @@ import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
 final class DownAssets {
-    private static final String ITEM_MODELS = "models/item/";
     private static final String ITEMS = "items/";
     private static final String MCMETA = ".mcmeta";
     private static final String TYPE = "type";
@@ -46,9 +46,10 @@ final class DownAssets {
     }
 
     static void model(JsonObject json) {
-        if (!json.has("textures") || !json.get("textures").isJsonObject()) { return; }
+        JsonObject textures = Json.objectOrNull(json, "textures");
+        if (textures == null) { return; }
         boolean translucent = false;
-        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("textures").entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
             if (!entry.getValue().isJsonObject() || !entry.getValue().getAsJsonObject().has("sprite")) { continue; }
             JsonObject sprite = entry.getValue().getAsJsonObject();
             translucent |= sprite.has("force_translucent") && sprite.get("force_translucent").getAsBoolean();
@@ -60,14 +61,14 @@ final class DownAssets {
     @Nullable static String modelPath(String path) {
         if (!path.startsWith(ITEMS) || !path.endsWith(PackManager.JSON_SUFFIX)) { return null; }
         String rest = path.substring(ITEMS.length());
-        return rest.length() == PackManager.JSON_SUFFIX.length() || rest.indexOf('/') >= 0 ? null : ITEM_MODELS + rest;
+        return rest.length() == PackManager.JSON_SUFFIX.length() || rest.indexOf('/') >= 0 ? null : Ported.ITEM_MODELS + rest;
     }
 
-    private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - PackManager.JSON_SUFFIX.length()); }
+    private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(Ported.ITEM_MODELS.length(), modelPath.length() - PackManager.JSON_SUFFIX.length()); }
 
-    @Nullable static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
+    @Nullable static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, Consumer<String> note) {
         String self = selfModel(namespace, modelPath);
-        List<Case> cases = cases(definition, self, file, note);
+        List<Case> cases = cases(definition, self, note);
         if (cases.isEmpty() || cases.get(0).model.equals(self)) { return null; }
         JsonObject model = new JsonObject();
         model.addProperty("parent", cases.get(0).model);
@@ -75,10 +76,10 @@ final class DownAssets {
         return model;
     }
 
-    static void attach(JsonObject model, String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
+    static void attach(JsonObject model, String namespace, String modelPath, @Nullable JsonObject definition, Consumer<String> note) {
         if (model.has("overrides")) { return; }
         String self = selfModel(namespace, modelPath);
-        overrides(model, cases(definition, self, file, note));
+        overrides(model, cases(definition, self, note));
     }
 
     private static void overrides(JsonObject model, List<Case> cases) {
@@ -93,51 +94,51 @@ final class DownAssets {
         if (overrides.size() > 0) { model.add("overrides", overrides); }
     }
 
-    private static List<Case> cases(@Nullable JsonObject definition, String self, String file, Consumer<String> note) {
+    private static List<Case> cases(@Nullable JsonObject definition, String self, Consumer<String> note) {
         List<Case> out = new ArrayList<>();
-        if (definition != null && definition.has(MODEL)) { collect(definition.get(MODEL), new JsonObject(), self, out, file, note); }
+        if (definition != null && definition.has(MODEL)) { collect(definition.get(MODEL), new JsonObject(), self, out, note); }
         return out;
     }
 
-    private static void collect(JsonElement node, JsonObject predicate, String self, List<Case> out, String file, Consumer<String> note) {
+    private static void collect(JsonElement node, JsonObject predicate, String self, List<Case> out, Consumer<String> note) {
         if (node == null || !node.isJsonObject()) { return; }
         JsonObject held = node.getAsJsonObject();
-        String type = namespaced(Json.text(held, TYPE));
-        String property = namespaced(Json.text(held, PROPERTY));
+        String type = Json.id(held, TYPE);
+        String property = Json.id(held, PROPERTY);
         switch (type) {
             case "minecraft:model":
                 out.add(new Case(predicate, Json.text(held, MODEL)));
                 break;
             case "minecraft:condition": {
                 String named = "minecraft:using_item".equals(property) ? using(self) : CONDITIONS.get(property);
-                collect(held.get("on_false"), predicate, self, out, file, note);
-                if (named == null) { lost(file, property, note); }
-                else { collect(held.get("on_true"), with(predicate, named, 1.0F), self, out, file, note); }
+                collect(held.get("on_false"), predicate, self, out, note);
+                if (named == null) { lost(property, note); }
+                else { collect(held.get("on_true"), with(predicate, named, 1.0F), self, out, note); }
                 break;
             }
             case "minecraft:range_dispatch":
-                range(held, property, predicate, self, out, file, note);
+                range(held, property, predicate, self, out, note);
                 break;
             case "minecraft:select":
-                if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, file, note); }
+                if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, note); }
                 if (!"minecraft:main_hand".equals(property) || !JsonUtils.isJsonArray(held, "cases")) {
-                    lost(file, property, note);
+                    lost(property, note);
                     return;
                 }
                 for (JsonElement one : held.getAsJsonArray("cases")) {
-                    if (one.isJsonObject() && "left".equals(Json.text(one.getAsJsonObject(), "when"))) { collect(one.getAsJsonObject().get(MODEL), with(predicate, "lefthanded", 1.0F), self, out, file, note); }
+                    if (one.isJsonObject() && "left".equals(Json.text(one.getAsJsonObject(), "when"))) { collect(one.getAsJsonObject().get(MODEL), with(predicate, "lefthanded", 1.0F), self, out, note); }
                 }
                 break;
-            default: lost(file, type, note);
+            default: lost(type, note);
         }
     }
 
-    private static void range(JsonObject held, String property, JsonObject predicate, String self, List<Case> out, String file, Consumer<String> note) {
-        if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, file, note); }
+    private static void range(JsonObject held, String property, JsonObject predicate, String self, List<Case> out, Consumer<String> note) {
+        if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, note); }
         String named = RANGES.get(property);
         boolean normalized = !held.has("normalize") || held.get("normalize").getAsBoolean();
         if (named == null || "damage".equals(named) && !normalized || !JsonUtils.isJsonArray(held, "entries")) {
-            lost(file, property, note);
+            lost(property, note);
             return;
         }
         float scale = held.has("scale") ? held.get("scale").getAsFloat() : 1.0F;
@@ -149,7 +150,7 @@ final class DownAssets {
         for (JsonObject entry : entries) {
             float threshold = entry.get("threshold").getAsFloat();
             float value = "pull".equals(named) ? threshold / (20.0F * scale) : threshold / scale;
-            collect(entry.get(MODEL), with(predicate, named, value), self, out, file, note);
+            collect(entry.get(MODEL), with(predicate, named, value), self, out, note);
         }
     }
 
@@ -165,7 +166,7 @@ final class DownAssets {
         return out;
     }
 
-    private static void lost(String file, String what, Consumer<String> note) { note.accept("'" + file + "' switches its model on '" + what + "', which item model overrides have no twin for, so that switch is left out"); }
+    private static void lost(String what, Consumer<String> note) { note.accept("switches its model on '" + what + "', which item model overrides have no twin for, so that switch is left out"); }
 
     @Nullable static String moved(String path) {
         boolean meta = path.endsWith(MCMETA);
@@ -174,9 +175,9 @@ final class DownAssets {
         Matcher armor = ARMOR.matcher(image);
         Matcher trim = TRIM.matcher(image);
         Matcher horse = HORSE.matcher(image);
-        if (armor.matches()) { out = "textures/models/armor/" + armor.group(2) + ("humanoid".equals(armor.group(1)) ? "_layer_1" : "_layer_2") + (armor.group(3) == null ? "" : armor.group(3)) + ".png"; }
-        else if (trim.matches()) { out = "textures/trims/models/armor/" + trim.group(2) + ("humanoid".equals(trim.group(1)) ? "" : "_leggings") + ".png"; }
-        else if (horse.matches()) { out = "textures/entity/horse/armor/horse_armor_" + horse.group(1) + ".png"; }
+        if (armor.matches()) { out = "textures/models/armor/" + armor.group(2) + ("humanoid".equals(armor.group(1)) ? "_layer_1" : "_layer_2") + (armor.group(3) == null ? "" : armor.group(3)) + IdNames.PNG; }
+        else if (trim.matches()) { out = "textures/trims/models/armor/" + trim.group(2) + ("humanoid".equals(trim.group(1)) ? "" : "_leggings") + IdNames.PNG; }
+        else if (horse.matches()) { out = "textures/entity/horse/armor/horse_armor_" + horse.group(1) + IdNames.PNG; }
         return out == null ? null : meta ? out + MCMETA : out;
     }
 }

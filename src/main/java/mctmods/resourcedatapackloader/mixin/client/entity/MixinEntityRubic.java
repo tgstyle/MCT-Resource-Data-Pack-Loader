@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.client.entity;
 
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
@@ -28,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
         return GenHeights.floor(world, 0);
     }
 
-    @ModifyConstant(method = "preparePlayerToSpawn", constant = @Constant(doubleValue = 256)) private double rdpl$getMaxHeight(double _256) { return GenHeights.ceiling(world, 256); }
+    @ModifyConstant(method = "preparePlayerToSpawn", constant = @Constant(doubleValue = 256)) private double rdpl$getMaxHeight(double _256) { return GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT); }
 
     @ModifyArg(method = "getBrightnessForRender", index = 1, at = @At(target = "Lnet/minecraft/util/math/BlockPos$MutableBlockPos;<init>(III)V", value = "INVOKE")) public int rdpl$getModifiedYPos_getBrightnessForRender(int y) { return MathHelper.floor(this.posY + this.getEyeHeight()); }
 }

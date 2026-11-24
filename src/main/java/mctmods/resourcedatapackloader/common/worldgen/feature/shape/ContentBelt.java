@@ -1,41 +1,29 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
+import mctmods.resourcedatapackloader.common.util.worldgen.ChunkOrigin;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 
-import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-public final class ContentBelt implements IContentShape {
-    private static final int OFFSET = 8;
-    private final ContentPlacer placer;
+public final class ContentBelt extends ContentChunkShape {
     private final int radius;
     private final int rarity;
     private final boolean perChunk;
-    private final int minHeight;
-    private final int maxHeight;
     private final long seedXor;
 
     public ContentBelt(ContentPlacer placer, ShapeDef shape, int minHeight, int maxHeight, ResourceLocation name) {
-        this.placer = placer;
+        super(placer, minHeight, maxHeight);
         this.radius = Math.max(1, shape.radius.most);
         this.rarity = shape.rarity > 0 ? shape.rarity : 400;
         this.perChunk = shape.perChunk;
-        this.minHeight = minHeight;
-        this.maxHeight = maxHeight;
         this.seedXor = name.toString().hashCode();
     }
-
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
-
-    @Override public boolean generate(World world, Random random, BlockPos origin) { return false; }
 
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
         int reach = (int) Math.ceil(radius / 16.0);
@@ -61,12 +49,12 @@ public final class ContentBelt implements IContentShape {
     private BlockPos source(Random random, int chunkX, int chunkZ) {
         int span = Math.abs(maxHeight - minHeight);
         if (span <= 0) { return null; }
-        return new BlockPos(chunkX * 16 + random.nextInt(16) + OFFSET, minHeight + random.nextInt(span), chunkZ * 16 + random.nextInt(16) + OFFSET);
+        return new BlockPos(ChunkOrigin.base(chunkX) + random.nextInt(16), minHeight + random.nextInt(span), ChunkOrigin.base(chunkZ) + random.nextInt(16));
     }
 
     private boolean withinReach(BlockPos source, int chunkX, int chunkZ) {
-        int nearX = MathHelper.clamp(source.getX(), chunkX * 16 + OFFSET, chunkX * 16 + OFFSET + 15);
-        int nearZ = MathHelper.clamp(source.getZ(), chunkZ * 16 + OFFSET, chunkZ * 16 + OFFSET + 15);
+        int nearX = MathHelper.clamp(source.getX(), ChunkOrigin.base(chunkX), ChunkOrigin.base(chunkX) + 15);
+        int nearZ = MathHelper.clamp(source.getZ(), ChunkOrigin.base(chunkZ), ChunkOrigin.base(chunkZ) + 15);
         int offX = source.getX() - nearX;
         int offZ = source.getZ() - nearZ;
         return offX * offX + offZ * offZ < radius * radius;
@@ -74,10 +62,10 @@ public final class ContentBelt implements IContentShape {
 
     private void fill(World world, Random random, int chunkX, int chunkZ, BlockPos source) {
         int span = radius * radius;
-        int lowest = Math.max(ContentPlacer.floorY(world), Math.max(minHeight - radius, source.getY() - radius));
-        int highest = Math.min(ContentPlacer.ceilingY(world) - 1, Math.min(maxHeight + radius, source.getY() + radius));
-        int baseX = chunkX * 16 + OFFSET;
-        int baseZ = chunkZ * 16 + OFFSET;
+        int lowest = lowest(world, Math.max(minHeight - radius, source.getY() - radius));
+        int highest = highest(world, Math.min(maxHeight + radius, source.getY() + radius));
+        int baseX = ChunkOrigin.base(chunkX);
+        int baseZ = ChunkOrigin.base(chunkZ);
         for (int x = baseX; x < baseX + 16; x++) {
             int offX = x - source.getX();
             int alongX = offX * offX;

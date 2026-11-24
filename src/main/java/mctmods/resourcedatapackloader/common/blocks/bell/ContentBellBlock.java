@@ -5,7 +5,9 @@ import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.TileEntityPackBell;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BellDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.BlockSupport;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +32,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.Mirror;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -76,13 +77,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         super(def.material, def.mapColor);
         this.def = def;
         this.bell = def.bell == null ? BellDef.PLAIN : def.bell;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyNamed(this, def);
         setDefaultState(blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(ATTACHMENT, Attachment.FLOOR));
     }
 
@@ -150,7 +145,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static void play(World world, BlockPos pos, String name, float volume) {
         if (name.isEmpty()) { return; }
-        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(name));
+        SoundEvent sound = Registries.find(ForgeRegistries.SOUND_EVENTS, name);
         if (sound != null) { world.playSound(null, pos, sound, SoundCategory.BLOCKS, volume, 1.0F); }
     }
 
@@ -158,11 +153,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (world.isRemote) { return; }
         IBlockState shaped = reshaped(world, pos, state, fromPos);
         if (shaped == null) {
-            dropBlockAsItem(world, pos, state, 0);
-            world.setBlockToAir(pos);
+            BlockSupport.dropUnless(this, world, pos, state, false);
             return;
         }
-        if (shaped != state) { world.setBlockState(pos, shaped, 3); }
+        if (shaped != state) { world.setBlockState(pos, shaped, BlockFlags.UPDATE_ALL); }
         TileEntity tile = world.getTileEntity(pos);
         if (!(tile instanceof TileEntityPackBell)) { return; }
         TileEntityPackBell held = (TileEntityPackBell) tile;

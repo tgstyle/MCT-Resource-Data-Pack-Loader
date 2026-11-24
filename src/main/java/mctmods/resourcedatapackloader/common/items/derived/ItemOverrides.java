@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.MemberNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,7 +21,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 public final class ItemOverrides {
@@ -39,7 +39,7 @@ public final class ItemOverrides {
             }
             String problem = refusal(method, base);
             if (problem != null) {
-                ContentLog.LOGGER.error("Derived item {} returns a constant for {}, which {}, leaving it out", key, entry.getKey(), problem);
+                DerivedLog.skip(key, "returns a constant for {}, which {}", entry.getKey(), problem);
                 continue;
             }
             Object constant = constant(method, entry.getKey(), entry.getValue(), key, source);
@@ -48,7 +48,14 @@ public final class ItemOverrides {
         return planned;
     }
 
-    public static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
+    @Nullable public static Class<?> makeStored(Class<?> base, ResourceLocation key, List<ItemClassMaker.Override> planned) {
+        Class<?> made = ItemClassMaker.make(base, key, planned);
+        if (made == null) { return null; }
+        store(key, planned);
+        return made;
+    }
+
+    private static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
         Object[] values = new Object[planned.size()];
         for (ItemClassMaker.Override each : planned) { values[each.slot] = each.constant; }
         DerivedConstants.put(key.toString(), values);
@@ -58,10 +65,7 @@ public final class ItemOverrides {
         if (FMLCommonHandler.instance().getSide() != Side.SERVER) { return false; }
         int paren = key.indexOf('(');
         String name = paren < 0 ? key : key.substring(0, paren);
-        for (Method method : MemberNames.methods(base)) {
-            if (MemberNames.readable(method.getName()).equals(name)) { return false; }
-        }
-        return true;
+        return !MemberNames.hasMethod(base, name);
     }
 
     @Nullable private static String refusal(Method method, Class<?> base) {
@@ -83,7 +87,7 @@ public final class ItemOverrides {
 
     @Nullable @SuppressWarnings({"unchecked", "rawtypes"}) private static Object constant(Method method, String name, JsonElement json, ResourceLocation key, @Nullable Object source) {
         Class<?> type = method.getReturnType();
-        boolean text = json.isJsonPrimitive() && json.getAsJsonPrimitive().isString();
+        boolean text = Json.isString(json);
         if (json.isJsonObject()) { return object(method, name, json.getAsJsonObject(), key, source); }
         if (type == ItemStack.class && text) {
             String stack = json.getAsString();
@@ -94,7 +98,7 @@ public final class ItemOverrides {
         }
         if (IForgeRegistryEntry.class.isAssignableFrom(type) && text) {
             String entry = json.getAsString();
-            return new DerivedConstants.Lazy(entry, () -> entry(type, entry));
+            return new DerivedConstants.Lazy(entry, () -> ValueCoercer.entryOf(type, entry));
         }
         if (type.isEnum() && text) {
             Object found = Enums.byName((Class) type, json.getAsString());
@@ -108,18 +112,18 @@ public final class ItemOverrides {
 
     @Nullable private static Object object(Method method, String name, JsonObject spec, ResourceLocation key, @Nullable Object source) {
         if (method.getParameterCount() != 0) {
-            ContentLog.LOGGER.error("Derived item {} returns an object for {}, which takes arguments, and only methods without arguments can, leaving it out", key, name);
+            DerivedLog.skip(key, "returns an object for {}, which takes arguments, and only methods without arguments can", name);
             return null;
         }
         if (source == null) {
-            ContentLog.LOGGER.error("Derived item {} returns an object for {}, which has no object to copy, leaving it out", key, name);
+            DerivedLog.skip(key, "returns an object for {}, which has no object to copy", name);
             return null;
         }
         try {
             method.setAccessible(true);
             Object current = method.invoke(source);
             if (current == null) {
-                ContentLog.LOGGER.error("Derived item {} returns an object for {}, which returns nothing to copy, leaving it out", key, name);
+                DerivedLog.skip(key, "returns an object for {}, which returns nothing to copy", name);
                 return null;
             }
             return ObjectPatch.nested(current, spec, key, "returns." + name);
@@ -130,15 +134,7 @@ public final class ItemOverrides {
         }
     }
 
-    @Nullable private static Object entry(Class<?> type, String name) {
-        IForgeRegistry<?> registry = ValueCoercer.registry(type);
-        if (registry == null) { return null; }
-        ResourceLocation location = new ResourceLocation(name);
-        Object found = registry.containsKey(location) ? registry.getValue(location) : null;
-        return type.isInstance(found) ? found : null;
-    }
-
     private static void mismatch(ResourceLocation key, String name, JsonElement json, @Nullable String problem) {
-        ContentLog.LOGGER.error("Derived item {} returns {} for {}, which is {}, leaving it out", key, json, name, problem);
+        DerivedLog.skip(key, "returns {} for {}, which is {}", json, name, problem);
     }
 }

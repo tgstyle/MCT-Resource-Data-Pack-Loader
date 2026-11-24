@@ -7,8 +7,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -25,19 +23,19 @@ public class Utils {
         return new RegionEntryLocation(current, requestedSize);
     }
 
-    public static void createDirectories(Path dir) throws IOException {
-        if (Files.isDirectory(dir)) { return; }
-        createDirectories(dir.getParent());
-        Files.createDirectory(dir);
-    }
-
-    public static void readFully(FileChannel src, ByteBuffer data, long position) throws IOException {
+    public static long fill(FileChannel src, ByteBuffer data, long position) throws IOException {
         long at = position;
         while (data.hasRemaining()) {
             int read = src.read(data, at);
-            if (read < 0) { throw new ICorruptedDataException("Expected " + data.remaining() + " more byte(s) at " + at + " but the file ends there"); }
+            if (read < 0) { break; }
             at += read;
         }
+        return at;
+    }
+
+    public static void readFully(FileChannel src, ByteBuffer data, long position) throws IOException {
+        long at = fill(src, data, position);
+        if (data.hasRemaining()) { throw new ICorruptedDataException("Expected " + data.remaining() + " more byte(s) at " + at + " but the file ends there"); }
     }
 
     public static void writeFully(ByteChannel dst, ByteBuffer data) throws IOException { while (data.hasRemaining()) { dst.write(data); } }

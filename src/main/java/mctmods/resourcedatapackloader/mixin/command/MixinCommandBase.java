@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.command;
 
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
+import mctmods.resourcedatapackloader.common.rubic.world.CommandHeights;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 
 import java.lang.ref.WeakReference;
@@ -9,7 +10,6 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandLocate;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,19 +29,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "parseBlockPos", at = @At(value = "HEAD")) private static void rdpl$parseBlockPosPre(ICommandSender sender, String[] args, int startIndex, boolean centerBlock, CallbackInfoReturnable<?> cbi) {
-        World world = sender.getEntityWorld();
-        rdpl$commandWorld = new WeakReference<>(world instanceof IRubicWorld ? (IRubicWorld) world : null);
+        rdpl$commandWorld = CommandHeights.of(sender.getEntityWorld());
     }
 
     @ModifyArg(method = "parseBlockPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1), index = 2) private static int rdpl$getMinY(int original) {
-        IRubicWorld world = rdpl$commandWorld.get();
-        if (world == null) { return original; }
-        return world.rdpl$getMinHeight();
+        return CommandHeights.minY(rdpl$commandWorld, original);
     }
 
     @ModifyArg(method = "parseBlockPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1), index = 3) private static int rdpl$getMaxY(int original) {
-        IRubicWorld world = rdpl$commandWorld.get();
-        if (world == null) { return original; }
-        return world.rdpl$getMaxHeight();
+        return CommandHeights.maxY(rdpl$commandWorld, original);
     }
 }

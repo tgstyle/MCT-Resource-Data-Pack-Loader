@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.rubic.server.chunkio;
 
 import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.rubic.RubicWorldControl;
+import mctmods.resourcedatapackloader.common.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.common.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.common.rubic.world.storage.StorageFormatProviderBase;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase;
@@ -14,9 +15,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +38,8 @@ public final class CubicChunksWorld {
             + "Convert to a rubic world \"Yes\"\n"
             + "To return to the menu \"No\"";
     private static final String THEIR_DATA = "cubicChunksData.dat";
+    private static final String THEIR_FLAG = "isCubicChunks";
+    private static final String DATA_TAG = "data";
     private static final String OUR_DATA = Rubic.DATA_ID + ".dat";
 
     private CubicChunksWorld() {}
@@ -65,11 +68,11 @@ public final class CubicChunksWorld {
         Files.walkFileTree(world, new SimpleFileVisitor<Path>() {
             @Override @Nonnull public FileVisitResult preVisitDirectory(@Nonnull Path folder, @Nonnull BasicFileAttributes attributes) throws IOException {
                 String name = folder.getFileName().toString();
-                if (name.equals("region2d")) {
+                if (name.equals(RegionNames.COLUMN_FOLDER)) {
                     OldRegionNames.columns(folder, moves);
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                if (name.equals("region3d")) {
+                if (name.equals(RegionNames.CUBE_FOLDER)) {
                     OldRegionNames.cubes(folder, moves);
                     return FileVisitResult.SKIP_SUBTREE;
                 }
@@ -89,7 +92,7 @@ public final class CubicChunksWorld {
             NBTTagCompound root = OldRegionNames.read(file);
             NBTTagCompound data = root.getCompoundTag("Data");
             if (!OldRegionNames.cubicChunksMarked(data)) { continue; }
-            data.removeTag("isCubicWorld");
+            data.removeTag(OldRegionNames.CUBIC_WORLD);
             data.setBoolean(WorldSavedRubicData.IS_RUBIC_WORLD, true);
             levels.put(file, root);
         }
@@ -105,11 +108,11 @@ public final class CubicChunksWorld {
 
     private static NBTTagCompound rubicData(Path world, Path file) throws IOException {
         NBTTagCompound root = OldRegionNames.read(file);
-        if (!root.hasKey("data", Constants.NBT.TAG_COMPOUND)) { throw new IOException(world.relativize(file) + " cannot be read: no data compound"); }
-        NBTTagCompound data = root.getCompoundTag("data");
-        if (data.hasKey("isCubicChunks")) {
-            NBTBase flag = data.getTag("isCubicChunks");
-            data.removeTag("isCubicChunks");
+        if (!root.hasKey(DATA_TAG, Constants.NBT.TAG_COMPOUND)) { throw new IOException(world.relativize(file) + " cannot be read: no data compound"); }
+        NBTTagCompound data = root.getCompoundTag(DATA_TAG);
+        if (data.hasKey(THEIR_FLAG)) {
+            NBTBase flag = data.getTag(THEIR_FLAG);
+            data.removeTag(THEIR_FLAG);
             data.setTag(WorldSavedRubicData.IS_RUBIC_WORLD, flag);
         }
         rename(world, file, data, WorldSavedRubicData.STORAGE_FORMAT, "cubicchunks:anvil3d", StorageFormatProviderBase.DEFAULT.toString());

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.pack.loading;
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,6 +30,9 @@ import org.apache.commons.io.IOUtils;
 
 public final class RDPLPack {
     public static final String ASSETS = "assets";
+
+    static String id(String namespace, String path) { return namespace + ":" + path; }
+
     private final String name;
     private final int priority;
     private final boolean overriding;
@@ -160,7 +164,7 @@ public final class RDPLPack {
     @SuppressWarnings("resource") public InputStream open(String namespace, String path) throws IOException {
         if (ported != null) {
             InputStream converted = ported.open(namespace, path);
-            if (converted == null) { throw new FileNotFoundException(namespace + ":" + path); }
+            if (converted == null) { throw new FileNotFoundException(id(namespace, path)); }
             return converted;
         }
         Path located = locate(namespace, path);
@@ -168,7 +172,7 @@ public final class RDPLPack {
         if (zip == null) { return Files.newInputStream(located); }
         String inside = located.toString();
         ZipEntry entry = zip.getEntry(inside.startsWith("/") ? inside.substring(1) : inside);
-        if (entry == null) { throw new FileNotFoundException(namespace + ":" + path); }
+        if (entry == null) { throw new FileNotFoundException(id(namespace, path)); }
         return zip.getInputStream(entry);
     }
 
@@ -210,7 +214,7 @@ public final class RDPLPack {
 
     @Nullable public String readPackFile(String fileName) throws IOException {
         Path file = packFile(fileName);
-        return file == null ? null : new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        return file == null ? null : Json.readText(file);
     }
 
     @Nullable public InputStream openPackFile(String fileName) throws IOException {
@@ -227,7 +231,7 @@ public final class RDPLPack {
                 if (!path.startsWith(prefix) || !path.endsWith(suffix)) { continue; }
                 String id = path.substring(prefix.length(), path.length() - suffix.length());
                 try { consumer.accept(namespace, id, read(namespace, path)); }
-                catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}:{}", name, namespace, path, ex); }
+                catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}", name, id(namespace, path), ex); }
             }
         }
     }
@@ -240,7 +244,7 @@ public final class RDPLPack {
         List<String> names = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : index.entrySet()) {
             for (String path : entry.getValue()) {
-                if (path.startsWith(prefix) && path.endsWith(suffix)) { names.add(entry.getKey() + ":" + path.substring(prefix.length(), path.length() - suffix.length())); }
+                if (path.startsWith(prefix) && path.endsWith(suffix)) { names.add(id(entry.getKey(), path.substring(prefix.length(), path.length() - suffix.length()))); }
             }
         }
         Collections.sort(names);

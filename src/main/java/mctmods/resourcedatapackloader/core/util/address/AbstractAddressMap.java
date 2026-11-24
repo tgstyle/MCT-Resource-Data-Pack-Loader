@@ -16,5 +16,7 @@ abstract class AbstractAddressMap {
         this.tableLength = tCapacity;
     }
 
-    final int getNextIndex(int index) { return (index + 1) & this.mask; }
+    static int next(int index, int mask) { return (index + 1) & mask; }
+
+    final int getNextIndex(int index) { return next(index, this.mask); }
 }

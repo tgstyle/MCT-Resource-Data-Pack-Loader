@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.util.worldgen;
 import mctmods.resourcedatapackloader.core.util.Registries;
 
 import javax.annotation.Nullable;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
@@ -12,8 +11,7 @@ public final class Biomes {
 
     @Nullable public static Biome byName(String name) {
         if (name == null || name.trim().isEmpty()) { return null; }
-        ResourceLocation key = new ResourceLocation(name.trim());
-        return Registries.find(ForgeRegistries.BIOMES, key);
+        return Registries.find(ForgeRegistries.BIOMES, name.trim());
     }
 
     @Nullable public static Biome byName(String name, String namespace) {

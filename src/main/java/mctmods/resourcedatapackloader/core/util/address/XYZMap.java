@@ -14,6 +14,10 @@ public class XYZMap<T extends IXYZAddressable> extends AbstractAddressMap implem
     @Nonnull private int[] pointers;
     private final Thread debugStartThreadRef = Thread.currentThread();
 
+    public static final float DEFAULT_LOAD_FACTOR = 0.7f;
+
+    public XYZMap(int capacity) { this(DEFAULT_LOAD_FACTOR, capacity); }
+
     public XYZMap(float loadFactor, int capacity) {
         super(loadFactor, capacity);
         this.bucketsByPointer = new IXYZAddressable[this.tableLength];
@@ -84,7 +88,7 @@ public class XYZMap<T extends IXYZAddressable> extends AbstractAddressMap implem
         int index = hash(x, y, z) & slots;
         for (IXYZAddressable bucket = buckets[index]; bucket != null; bucket = buckets[index]) {
             if (bucket.getX() == x && bucket.getY() == y && bucket.getZ() == z) { return (T) bucket; }
-            index = ++index & slots;
+            index = next(index, slots);
         }
         return null;
     }
@@ -106,8 +110,7 @@ public class XYZMap<T extends IXYZAddressable> extends AbstractAddressMap implem
         bucketsByPointer = newBucketsByPointer;
         bucketsByHash = newBucketsByHash;
         pointers = newPointers;
-        mask=newMask;
-        loadThreshold = (int) (newLength * this.loadFactor) - 2;
+        refreshFields();
     }
 
     private void collapseBucket(final int holePointerIndex, final int holeIndex) {

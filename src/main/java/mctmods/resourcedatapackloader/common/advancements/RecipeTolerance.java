@@ -22,18 +22,19 @@ public final class RecipeTolerance {
 
     private RecipeTolerance() {}
 
-    public static boolean disabled() { return !Config.recipes.tolerateMissingInAdvancements; }
+    private static boolean disabled() { return !Config.recipes.tolerateMissingInAdvancements; }
 
     public static void removedOnPurpose(Collection<ResourceLocation> names) { ON_PURPOSE.addAll(names); }
 
     public static IRecipe resolve(ResourceLocation name) {
         IRecipe recipe = CraftingManager.getRecipe(name);
-        if (recipe != null) { return recipe; }
+        if (recipe != null || disabled()) { return recipe; }
         report(name);
         return new MissingRecipe(name);
     }
 
     public static ResourceLocation[] existing(ResourceLocation[] names) {
+        if (disabled()) { return names; }
         List<ResourceLocation> kept = new ArrayList<>(names.length);
         for (ResourceLocation name : names) {
             if (CraftingManager.getRecipe(name) != null) { kept.add(name); }

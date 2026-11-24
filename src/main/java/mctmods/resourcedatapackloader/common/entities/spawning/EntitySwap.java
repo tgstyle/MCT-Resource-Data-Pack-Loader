@@ -1,10 +1,9 @@
 package mctmods.resourcedatapackloader.common.entities.spawning;
 
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
+
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public final class EntitySwap {
@@ -17,11 +16,10 @@ public final class EntitySwap {
     public static boolean spawn(World world, Entity was, ResourceLocation wanted, boolean needsRoom) {
         SWAPPING.set(Boolean.TRUE);
         try {
-            Entity becomes = EntityList.createEntityByIDFromName(wanted, world);
+            Entity becomes = Spawns.placed(world, wanted, was.posX, was.posY, was.posZ, was.rotationYaw, was.rotationPitch, false);
             if (becomes == null) { return false; }
-            becomes.setLocationAndAngles(was.posX, was.posY, was.posZ, was.rotationYaw, was.rotationPitch);
             if (needsRoom && !world.getCollisionBoxes(becomes, becomes.getEntityBoundingBox()).isEmpty()) { return false; }
-            if (becomes instanceof EntityLiving) { ((EntityLiving) becomes).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(becomes)), null); }
+            Spawns.initialise(world, becomes);
             world.spawnEntity(becomes);
             return true;
         }

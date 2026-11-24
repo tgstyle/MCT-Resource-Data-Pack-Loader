@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.renderer.Blends;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.core.network.BossBackgroundMessage;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
 
@@ -7,8 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -37,11 +37,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (background == null) { return; }
         int width = background.width > 0 ? background.width : BAR_WIDTH;
         int height = background.height > 0 ? background.height : event.getIncrement();
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(background.texture));
-        Gui.drawModalRectWithCustomSizedTexture(event.getX() + background.x, event.getY() - Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT + background.y, 0.0F, 0.0F, width, height, width, height);
+        Blends.on();
+        Draw.blitTinted(new ResourceLocation(background.texture), event.getX() + background.x, event.getY() - Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT + background.y, width, height, 1.0F);
     }
 
     public static class Handler extends AbstractClientMessageHandler<BossBackgroundMessage> {

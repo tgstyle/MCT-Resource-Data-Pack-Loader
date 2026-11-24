@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardR
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,6 +44,8 @@ public final class ContentBeardLamps {
 
     private ContentBeardLamps() {}
 
+    private static int nextGap(Random rand) { return LAMP_GAP + rand.nextInt(6); }
+
     public static void lampPosts(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         if (CityGrowth.bulbWide(piece)) {
             bulbLamps(start, piece, world, box, clip, at);
@@ -55,7 +58,7 @@ public final class ContentBeardLamps {
         Random rand = new Random(world.getSeed() ^ ((long) box.minX << 32) ^ box.minZ);
         List<Integer> along = new ArrayList<>();
         along.add(from);
-        for (int step = from + LAMP_GAP + rand.nextInt(6); step < to - 1; step += LAMP_GAP + rand.nextInt(6)) { along.add(step); }
+        for (int step = from + nextGap(rand); step < to - 1; step += nextGap(rand)) { along.add(step); }
         along.add(to);
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
@@ -120,7 +123,7 @@ public final class ContentBeardLamps {
         int spots = Math.max(1, (int) Math.round(2.0D * Math.PI * ring));
         Random rand = new Random(world.getSeed() ^ ((long) box.minX << 32) ^ box.minZ);
         int raised = 0;
-        for (int step = 0; step + 4 < spots; step += 7 + rand.nextInt(6)) {
+        for (int step = 0; step + 4 < spots; step += nextGap(rand)) {
             double angle = 2.0D * Math.PI * step / spots;
             int x = Integer.MIN_VALUE;
             int z = Integer.MIN_VALUE;
@@ -147,22 +150,22 @@ public final class ContentBeardLamps {
         for (int step = 0; step < high; step++) {
             at.setPos(x, y + step, z);
             ContentStates.place(world, at.toImmutable(), post.state, post.tag);
-            cells.add(BeardKeep.packed(x, y + step, z));
+            cells.add(Longs.packPos(x, y + step, z));
         }
         ContentStates.Spec head = BeardRoads.pathSpec("villagePathLampTopBlock", Config.worldgen.villagePathLampTopBlock);
         if (head != null && head.state.getBlock() != Blocks.AIR) {
             at.setPos(x, y + high, z);
             ContentStates.place(world, at.toImmutable(), head.state, head.tag);
-            cells.add(BeardKeep.packed(x, y + high, z));
+            cells.add(Longs.packPos(x, y + high, z));
         }
         ContentStates.Spec side = BeardRoads.pathSpec("villagePathLampSideBlock", Config.worldgen.villagePathLampSideBlock);
         if (side != null && side.state.getBlock() != Blocks.AIR) {
             for (EnumFacing facing : EnumFacing.HORIZONTALS) {
                 at.setPos(x + facing.getXOffset(), y + high, z + facing.getZOffset());
-                if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                 if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
                 ContentStates.place(world, at.toImmutable(), ContentBeard.faced(side.state, facing), side.tag);
-                cells.add(BeardKeep.packed(at.getX(), at.getY(), at.getZ()));
+                cells.add(Longs.packPos(at.getX(), at.getY(), at.getZ()));
             }
         }
         BeardKeep.holdLamp(cells);
@@ -228,7 +231,7 @@ public final class ContentBeardLamps {
 
     private static boolean raise(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z, StructureBoundingBox box, int roadTop) {
         at.setPos(x, box.minY, z);
-        if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
+        if (BeardPlots.blocked(start, piece, clip, at)) { return false; }
         int bed = Integer.MIN_VALUE;
         for (int y = box.minY + 6; y >= box.minY - 3; y--) {
             at.setPos(x, y, z);
@@ -263,7 +266,7 @@ public final class ContentBeardLamps {
         int top = bed + ContentBeard.lampHeight() + 1;
         for (int y = bed + 1; y <= top; y++) {
             at.setPos(x, y, z);
-            if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
+            if (BeardPlots.blocked(start, piece, clip, at)) { return false; }
             if (BeardKeep.holds(x, y, z)) { return false; }
             if (!world.getBlockState(at).getMaterial().isReplaceable()) { return false; }
         }

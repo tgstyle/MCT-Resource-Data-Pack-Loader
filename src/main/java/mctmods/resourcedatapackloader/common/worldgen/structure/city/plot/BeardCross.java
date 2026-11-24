@@ -23,8 +23,8 @@ public final class BeardCross {
     private BeardCross(StructureBoundingBox box, boolean alongX, int full, int lines, int walk) {
         this.box = box;
         this.alongX = alongX;
-        this.width = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
-        this.center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+        this.width = BeardPlots.roadSpan(box, alongX);
+        this.center = BeardPlots.roadCenter(box, alongX);
         this.oversize = this.width > full;
         this.alley = this.width < full;
         if (this.alley) {
@@ -46,7 +46,7 @@ public final class BeardCross {
 
     public boolean covers(int x, int z) { return x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ; }
 
-    public int offset(int x, int z) { return Math.abs((alongX ? z : x) - center); }
+    public int offset(int x, int z) { return BeardPlots.roadOffset(box, alongX, x, z); }
 
     public int role(int x, int z) {
         if (oversize || !covers(x, z)) { return NONE; }

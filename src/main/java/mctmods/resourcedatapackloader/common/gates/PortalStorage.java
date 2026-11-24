@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
+import mctmods.resourcedatapackloader.common.util.Nbts;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 
 import java.util.LinkedHashMap;
@@ -36,8 +38,7 @@ public final class PortalStorage extends WorldSavedData {
     @Nullable public static UUID owner(World world, BlockPos pos) {
         String stored = get(world).positions.get(pos.toLong());
         if (stored == null || stored.isEmpty()) { return null; }
-        try { return UUID.fromString(stored); }
-        catch (IllegalArgumentException broken) { return null; }
+        return Nbts.uuid(stored);
     }
 
     public static void remove(World world, BlockPos pos) {
@@ -80,7 +81,7 @@ public final class PortalStorage extends WorldSavedData {
         NBTTagList list = compound.getTagList(TAG, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound entry = list.getCompoundTagAt(i);
-            BlockPos at = new BlockPos(entry.getInteger("x"), entry.getInteger("y"), entry.getInteger("z"));
+            BlockPos at = Coords.readPos(entry);
             positions.put(at.toLong(), entry.getString("owner"));
         }
     }
@@ -90,9 +91,7 @@ public final class PortalStorage extends WorldSavedData {
         for (Map.Entry<Long, String> stored : positions.entrySet()) {
             BlockPos at = BlockPos.fromLong(stored.getKey());
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setInteger("x", at.getX());
-            entry.setInteger("y", at.getY());
-            entry.setInteger("z", at.getZ());
+            Coords.writePos(entry, at);
             entry.setString("owner", stored.getValue());
             list.appendTag(entry);
         }

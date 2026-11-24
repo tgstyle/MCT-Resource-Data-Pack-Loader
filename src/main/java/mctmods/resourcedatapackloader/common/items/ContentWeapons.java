@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 
 import java.util.ArrayList;
@@ -32,15 +33,14 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 @Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public final class ContentWeapons {
     private static final float FULL_STRENGTH = 0.9F;
     private static final float SWEEP_KNOCKBACK = 0.4F;
     private static final double VERTICAL_SLACK = 1.0D;
-    private static final Map<UUID, Progress> COMBOS = new HashMap<>();
-    private static final Map<UUID, Blow> BLOWS = new HashMap<>();
+    private static final Map<UUID, Progress> COMBOS = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, Blow> BLOWS = PlayerLogout.track(new HashMap<>());
     private static final Map<EntityLivingBase, WeaponDef.Finisher> FINISHES = new LinkedHashMap<>();
     private static boolean sweeping;
 
@@ -48,8 +48,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
     @Nullable public static WeaponDef weapon(ItemStack stack) {
         if (stack.isEmpty()) { return null; }
-        ResourceLocation key = stack.getItem().getRegistryName();
-        ItemDef def = key == null ? null : ContentRegistry.itemDef(key);
+        ItemDef def = ContentRegistry.itemDef(stack.getItem());
         return def == null ? null : def.weapon;
     }
 
@@ -111,10 +110,12 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
         if (event.phase != TickEvent.Phase.END || FINISHES.isEmpty()) { return; }
         List<Map.Entry<EntityLivingBase, WeaponDef.Finisher>> queued = new ArrayList<>(FINISHES.entrySet());
         FINISHES.clear();
+        sweeping(() -> { for (Map.Entry<EntityLivingBase, WeaponDef.Finisher> each : queued) { finish(each.getKey(), each.getValue()); } });
+    }
+
+    private static void sweeping(Runnable work) {
         sweeping = true;
-        try {
-            for (Map.Entry<EntityLivingBase, WeaponDef.Finisher> each : queued) { finish(each.getKey(), each.getValue()); }
-        }
+        try { work.run(); }
         finally { sweeping = false; }
     }
 
@@ -131,22 +132,17 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
         target.velocityChanged = true;
     }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        COMBOS.remove(event.player.getUniqueID());
-        BLOWS.remove(event.player.getUniqueID());
-    }
+    private static float yaw(EntityPlayer player) { return player.rotationYaw * 0.017453292F; }
 
     private static void strike(EntityPlayer player, EntityLivingBase target, WeaponDef weapon, WeaponDef.Sweep sweep, float damage) {
-        sweeping = true;
-        try {
-            float yaw = player.rotationYaw * 0.017453292F;
+        sweeping(() -> {
+            float yaw = yaw(player);
             for (EntityLivingBase victim : gather(player, target, weapon, sweep)) {
                 if (damage <= 0.0F) { break; }
                 victim.knockBack(player, SWEEP_KNOCKBACK, MathHelper.sin(yaw), -MathHelper.cos(yaw));
                 victim.attackEntityFrom(DamageSource.causePlayerDamage(player), damage);
             }
-        }
-        finally { sweeping = false; }
+        });
         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, player.getSoundCategory(), 1.0F, 1.0F);
         player.spawnSweepParticles();
     }
@@ -186,7 +182,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
         double toZ = (box.minZ + box.maxZ) / 2.0D - player.posZ;
         double length = Math.sqrt(toX * toX + toZ * toZ);
         if (length < 1.0E-6D) { return true; }
-        float yaw = player.rotationYaw * 0.017453292F;
+        float yaw = yaw(player);
         double facing = (toX * -MathHelper.sin(yaw) + toZ * MathHelper.cos(yaw)) / length;
         return facing >= Math.cos(Math.toRadians(sweep.angle / 2.0D));
     }

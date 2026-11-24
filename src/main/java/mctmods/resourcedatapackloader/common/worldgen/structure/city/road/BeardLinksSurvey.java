@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.city.road;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.common.util.worldgen.WorldMemo;
 import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
@@ -9,6 +10,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardGrade;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardSite;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardSurface;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRails;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRailsGrade;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardLinks.Trunk;
@@ -18,12 +20,9 @@ import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -31,9 +30,9 @@ import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 
 final class BeardLinksSurvey {
-    private static final Map<World, Map<Long, Node>> NODES = new WeakHashMap<>();
-    private static final Map<World, Map<List<Integer>, Link>> LINKS = new WeakHashMap<>();
-    private static final Map<World, Map<Trunk, int[][]>> TRUNKS = new WeakHashMap<>();
+    private static final WorldMemo<Long, Node> NODES = new WorldMemo<>();
+    private static final WorldMemo<List<Integer>, Link> LINKS = new WorldMemo<>();
+    private static final WorldMemo<Trunk, int[][]> TRUNKS = new WorldMemo<>();
 
     private BeardLinksSurvey() {}
 
@@ -61,7 +60,7 @@ final class BeardLinksSurvey {
             this.sub = sub;
             this.alongX = alongX;
             this.center = center;
-            this.wellAlong = alongX ? (well.minX + well.maxX) / 2 : (well.minZ + well.maxZ) / 2;
+            this.wellAlong = BeardPlots.alongMid(well, alongX);
         }
 
         boolean is(StructureBoundingBox box) { return well.minX == box.minX && well.minZ == box.minZ; }
@@ -90,12 +89,7 @@ final class BeardLinksSurvey {
     }
 
     @Nullable static Node node(World world, int grid, int cellX, int cellZ) {
-        Map<Long, Node> held = NODES.computeIfAbsent(world, key -> new HashMap<>());
-        long key = Longs.pack(cellX, cellZ);
-        if (held.containsKey(key)) { return held.get(key); }
-        Node made = made(world, grid, cellX, cellZ);
-        held.put(key, made);
-        return made;
+        return NODES.get(world, Longs.pack(cellX, cellZ), () -> made(world, grid, cellX, cellZ));
     }
 
     @Nullable private static Node made(World world, int grid, int cellX, int cellZ) {
@@ -111,7 +105,7 @@ final class BeardLinksSurvey {
         if (low != null && low[0] == rolled[0] && crowds(world, grid, lowX, lowZ, alongX, low[1], rolled[1])) {
             int[] lower = rolled(world, grid, lowX - (alongX ? 1 : 0), lowZ - (alongX ? 0 : 1));
             boolean lowMoves = lower != null && lower[0] == low[0] && crowds(world, grid, lowX - (alongX ? 1 : 0), lowZ - (alongX ? 0 : 1), alongX, lower[1], low[1]);
-            int wellAcross = alongX ? (well.minZ + well.maxZ) / 2 : (well.minX + well.maxX) / 2;
+            int wellAcross = BeardPlots.roadCenter(well, alongX);
             if (!lowMoves && low[1] - wellAcross >= BeardRails.clear(BeardLinks.carriedUnderground()) && BeardRails.clearsWell(well, alongX, low[1], BeardLinks.carriedUnderground())) {
                 ContentLog.LOGGER.debug("The first line of the village at {}, {} moves from {} to {} to meet its neighbor's line head on and cross the seam straight", well.minX, well.minZ, center, low[1]);
                 center = low[1];
@@ -140,8 +134,8 @@ final class BeardLinksSurvey {
     private static boolean buried(int grid, int lowX, int lowZ, boolean alongX, StructureBoundingBox low, StructureBoundingBox high) {
         if (!BeardLinks.carriedUnderground()) { return false; }
         int seam = (alongX ? lowX + 1 : lowZ + 1) * grid * 16;
-        int lowAlong = alongX ? (low.minX + low.maxX) / 2 : (low.minZ + low.maxZ) / 2;
-        int highAlong = alongX ? (high.minX + high.maxX) / 2 : (high.minZ + high.maxZ) / 2;
+        int lowAlong = BeardPlots.alongMid(low, alongX);
+        int highAlong = BeardPlots.alongMid(high, alongX);
         return Math.min(seam - lowAlong, highAlong - seam) < climbRoom() + BeardRails.width(true);
     }
 
@@ -150,7 +144,7 @@ final class BeardLinksSurvey {
         if (pins != null) {
             long[] found = null;
             for (long[] pin : pins) {
-                if (Math.floorDiv((int) pin[0] >> 4, grid) != cellX || Math.floorDiv((int) pin[1] >> 4, grid) != cellZ) { continue; }
+                if (BeardSite.wellCell((int) pin[0] - 2, grid) != cellX || BeardSite.wellCell((int) pin[1] - 2, grid) != cellZ) { continue; }
                 if (found != null) {
                     ContentLog.LOGGER.debug("Village cell {}, {} holds more than one pinned village, so none of them is linked by rail", cellX, cellZ);
                     return null;
@@ -158,25 +152,18 @@ final class BeardLinksSurvey {
                 found = pin;
             }
             if (found == null) { return null; }
-            int x = (int) found[0] - 2;
-            int z = (int) found[1] - 2;
-            return new StructureBoundingBox(x, 64, z, x + 5, 78, z + 5);
+            return BeardSite.wellBox((int) found[0] - 2, (int) found[1] - 2);
         }
         long site = BeardSite.siteFor(world, ContentSites.of(world, grid), cellX, cellZ, grid);
         if (site == ContentBeard.NO_SITE) { return null; }
         int chunkX = Longs.high(site);
         int chunkZ = Longs.low(site);
         if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || BeardSite.mansionCandidateNear(world, chunkX, chunkZ)) { return null; }
-        return new StructureBoundingBox((chunkX << 4) + 2, 64, (chunkZ << 4) + 2, (chunkX << 4) + 7, 78, (chunkZ << 4) + 7);
+        return BeardSite.wellBox((chunkX << 4) + 2, (chunkZ << 4) + 2);
     }
 
     @Nullable private static Link candidate(World world, int grid, int lowX, int lowZ, boolean alongX) {
-        Map<List<Integer>, Link> held = LINKS.computeIfAbsent(world, key -> new HashMap<>());
-        List<Integer> key = Arrays.asList(lowX, lowZ, alongX ? 1 : 0);
-        if (held.containsKey(key)) { return held.get(key); }
-        Link made = weighed(world, grid, lowX, lowZ, alongX);
-        held.put(key, made);
-        return made;
+        return LINKS.get(world, Arrays.asList(lowX, lowZ, alongX ? 1 : 0), () -> weighed(world, grid, lowX, lowZ, alongX));
     }
 
     private static int spurRoom(boolean sub) { return Math.max(BeardRails.clear(sub), ContentBeard.plazaReach() + BeardRoads.pathFullWidth()); }
@@ -191,8 +178,8 @@ final class BeardLinksSurvey {
         String named = "The railway link between the villages of cells " + lowX + ", " + lowZ + " and " + (lowX + (alongX ? 1 : 0)) + ", " + (lowZ + (alongX ? 0 : 1));
         int apart = ContentStructurePlacement.separation(ContentStructurePlacement.VILLAGES, 0);
         if (apart > 0) {
-            int dx = ((low.well.minX + 2) >> 4) - ((high.well.minX + 2) >> 4);
-            int dz = ((low.well.minZ + 2) >> 4) - ((high.well.minZ + 2) >> 4);
+            int dx = BeardSite.wellChunk(low.well.minX) - BeardSite.wellChunk(high.well.minX);
+            int dz = BeardSite.wellChunk(low.well.minZ) - BeardSite.wellChunk(high.well.minZ);
             if (dx * dx + dz * dz < apart * apart) { return refused(named, "the two villages stand closer than structureSeparation allows, so only one of them founds"); }
         }
         boolean sub = low.sub;
@@ -335,11 +322,7 @@ final class BeardLinksSurvey {
     }
 
     @Nullable static int[][] trunkProfile(World world, Trunk trunk) {
-        Map<Trunk, int[][]> held = TRUNKS.computeIfAbsent(world, key -> new HashMap<>());
-        if (held.containsKey(trunk)) { return held.get(trunk); }
-        int[][] made = graded(world, trunk);
-        held.put(trunk, made);
-        return made;
+        return TRUNKS.get(world, trunk, () -> graded(world, trunk));
     }
 
     @Nullable private static int[][] graded(World world, Trunk trunk) {

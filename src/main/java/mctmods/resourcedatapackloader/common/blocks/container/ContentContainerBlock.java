@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,7 +33,7 @@ import net.minecraftforge.common.util.FakePlayer;
 
 @SuppressWarnings("deprecation") public class ContentContainerBlock extends ContentBlock {
     public static final int MAX_VARIANTS = BlockDef.MAX_META;
-    private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0, false);
+    private static final ContainerDef PLAIN = ContainerDef.plain(3);
     private final ContainerDef container;
 
     public static ContentContainerBlock create(BlockDef def) { return BlockVariants.construct(def, ContentContainerBlock::new); }
@@ -60,7 +62,13 @@ import net.minecraftforge.common.util.FakePlayer;
         return tile;
     }
 
-    public void reshape(TileEntityPackContainer tile, IBlockState state) { tile.shape(held(), getTranslationKey() + "." + getDef().at(getMetaFromState(state)).name + ".name"); }
+    public void reshape(TileEntityPackContainer tile, IBlockState state) { tile.shape(held(), Lang.nameKey(getTranslationKey() + "." + getDef().at(getMetaFromState(state)).name)); }
+
+    public static void reshape(TileEntity into, IBlockState as, boolean unloot) {
+        if (!(into instanceof TileEntityPackContainer) || !(as.getBlock() instanceof ContentContainerBlock)) { return; }
+        ((ContentContainerBlock) as.getBlock()).reshape((TileEntityPackContainer) into, as);
+        if (unloot) { ((TileEntityPackContainer) into).unloot(); }
+    }
 
     @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (world.isRemote) { return true; }
@@ -80,7 +88,7 @@ import net.minecraftforge.common.util.FakePlayer;
         ((TileEntityPackContainer) tile).face(placer.getHorizontalFacing().getOpposite());
         if (stack.hasDisplayName()) { ((TileEntityPackContainer) tile).setCustomName(stack.getDisplayName()); }
         tile.markDirty();
-        world.notifyBlockUpdate(pos, state, state, 3);
+        world.notifyBlockUpdate(pos, state, state, BlockFlags.UPDATE_ALL);
     }
 
     @Override public void onBlockHarvested(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) {

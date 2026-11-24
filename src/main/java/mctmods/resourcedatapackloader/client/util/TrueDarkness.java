@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.util;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
@@ -72,8 +73,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (dark == null || keepsColor(dark)) { return; }
         float lift = DarknessDef.BLOCK.equals(dark.mode) ? GRAY_LIFT : 0.0F;
         for (int entry = ROW; entry < lightmap.length; entry++) {
-            int level = (int) (Math.min(1.0F, (lightmap[entry] >> 16 & 0xFF) / 255.0F + lift) * 255.0F + 0.5F);
-            lightmap[entry] = 0xFF000000 | level << 16 | level << 8 | level;
+            int level = (int) (Math.min(1.0F, Colors.red(lightmap[entry]) / 255.0F + lift) * 255.0F + 0.5F);
+            lightmap[entry] = 0xFF000000 | Colors.rgb(level, level, level);
         }
     }
 

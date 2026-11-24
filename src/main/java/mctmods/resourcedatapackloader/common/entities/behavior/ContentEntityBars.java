@@ -46,7 +46,7 @@ public final class ContentEntityBars {
         }
         held.seen = now;
         if (!fresh && now % EVERY != 0L) { return; }
-        BossBars.progress(held.bar, living.getHealth() / living.getMaxHealth());
+        BossBars.progress(held.bar, MobStats.health(living));
         BossBars.sync(held.bar, BossBars.near((WorldServer) living.world, living.posX, living.posY, living.posZ, def.trackingRange));
     }
 

@@ -25,7 +25,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.translation.LanguageMap;
 
 public final class Lang {
+    private static final String FALLBACK_LOCALE = "en_us";
+    private static final String LANG_SUFFIX = ".lang";
     private static final String HOME = "assets/resourcedatapackloader/lang/";
+    private static final String FALLBACK_FILE = FALLBACK_LOCALE + LANG_SUFFIX;
     private static final Map<String, Map<String, String>> TABLES = new HashMap<>();
 
     private Lang() {}
@@ -34,7 +37,7 @@ public final class Lang {
         try {
             URL source = Lang.class.getResource("/" + HOME);
             if (source != null && "file".equals(source.getProtocol())) {
-                File[] found = new File(source.toURI()).listFiles((folder, name) -> name.endsWith(".lang"));
+                File[] found = new File(source.toURI()).listFiles((folder, name) -> name.endsWith(LANG_SUFFIX));
                 if (found != null) {
                     for (File file : found) { table(file.getName(), Files.newInputStream(file.toPath())); }
                 }
@@ -45,32 +48,34 @@ public final class Lang {
                     reached.setUseCaches(false);
                     try (JarFile jar = ((JarURLConnection) reached).getJarFile()) {
                         for (JarEntry entry : Collections.list(jar.entries())) {
-                            if (entry.getName().startsWith(HOME) && entry.getName().endsWith(".lang")) { table(entry.getName().substring(HOME.length()), jar.getInputStream(entry)); }
+                            if (entry.getName().startsWith(HOME) && entry.getName().endsWith(LANG_SUFFIX)) { table(entry.getName().substring(HOME.length()), jar.getInputStream(entry)); }
                         }
                     }
                 }
             }
         }
         catch (Exception ex) { ContentLog.LOGGER.error("Could not look through the jar for language files", ex); }
-        if (!TABLES.containsKey("en_us")) {
-            InputStream fallback = Lang.class.getResourceAsStream("/" + HOME + "en_us.lang");
-            if (fallback != null) { table("en_us.lang", fallback); }
+        if (!TABLES.containsKey(FALLBACK_LOCALE)) {
+            InputStream fallback = Lang.class.getResourceAsStream("/" + HOME + FALLBACK_FILE);
+            if (fallback != null) { table(FALLBACK_FILE, fallback); }
         }
-        Map<String, String> english = TABLES.get("en_us");
+        Map<String, String> english = TABLES.get(FALLBACK_LOCALE);
         if (english == null) {
             ContentLog.LOGGER.error("The language files are missing from the jar, so players will see raw language keys");
             return;
         }
-        try (InputStream vanillaSide = Lang.class.getResourceAsStream("/" + HOME + "en_us.lang")) {
+        try (InputStream vanillaSide = Lang.class.getResourceAsStream("/" + HOME + FALLBACK_FILE)) {
             if (vanillaSide != null) { LanguageMap.inject(vanillaSide); }
         }
-        catch (IOException failed) { ContentLog.LOGGER.error("Could not read the shipped en_us.lang", failed); }
+        catch (IOException failed) { ContentLog.LOGGER.error("Could not read the shipped " + FALLBACK_FILE, failed); }
         ContentLog.LOGGER.info("Speaking {} language(s) to players", TABLES.size());
     }
 
+    public static String nameKey(String translationKey) { return translationKey + ".name"; }
+
     @SuppressWarnings("deprecation") public static String vanilla(String key) { return net.minecraft.util.text.translation.I18n.translateToLocal(key); }
 
-    public static String tr(String key, Object... args) { return line(TABLES.get("en_us"), key, args); }
+    public static String tr(String key, Object... args) { return line(TABLES.get(FALLBACK_LOCALE), key, args); }
 
     public static String tr(ICommandSender sender, String key, Object... args) {
         if (sender instanceof EntityPlayer) { return tr((EntityPlayer) sender, key, args); }
@@ -81,12 +86,12 @@ public final class Lang {
         if (!(player instanceof EntityPlayerMP)) { return tr(key, args); }
         String locale = ((EntityPlayerMP) player).language;
         Map<String, String> table = locale == null ? null : TABLES.get(locale.toLowerCase(Locale.ROOT));
-        if (table == null || !table.containsKey(key)) { table = TABLES.get("en_us"); }
+        if (table == null || !table.containsKey(key)) { table = TABLES.get(FALLBACK_LOCALE); }
         return line(table, key, args);
     }
 
     private static void table(String fileName, InputStream entries) {
-        String locale = fileName.substring(0, fileName.length() - ".lang".length()).toLowerCase(Locale.ROOT);
+        String locale = fileName.substring(0, fileName.length() - LANG_SUFFIX.length()).toLowerCase(Locale.ROOT);
         Map<String, String> lines = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(entries, StandardCharsets.UTF_8))) {
             String line;

@@ -31,6 +31,7 @@ public final class BeardSurface {
     private static final Map<World, Integer> FLATS = new WeakHashMap<>();
     private static final Map<World, Long2IntOpenHashMap> TOPS = new WeakHashMap<>();
     private static final int NO_TOP = Integer.MIN_VALUE;
+    private static final int NOISE_CELLS = 33;
     private static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
     private static WeakReference<World> lastWorld = new WeakReference<>(null);
     private static Long2IntOpenHashMap lastTops = null;
@@ -39,9 +40,9 @@ public final class BeardSurface {
 
     private static final class Scratch {
         private final double[] depth = new double[1];
-        private final double[] main = new double[33];
-        private final double[] lower = new double[33];
-        private final double[] upper = new double[33];
+        private final double[] main = new double[NOISE_CELLS];
+        private final double[] lower = new double[NOISE_CELLS];
+        private final double[] upper = new double[NOISE_CELLS];
         private final Biome[] window = new Biome[25];
     }
 
@@ -84,6 +85,8 @@ public final class BeardSurface {
         topsFor(world).put(topsKey(blockX, blockZ), made);
         return made;
     }
+    public static int surfaceAlong(World world, boolean alongX, int along, int across) { return surfaceAt(world, alongX ? along : across, alongX ? across : along); }
+
     public static int surfaceAt(World world, ChunkGeneratorOverworld sampled, Biome[] region, int originX, int originZ, int size, int blockX, int blockZ) {
         int known = knownTop(world, blockX, blockZ);
         if (known != NO_TOP) { return known; }
@@ -142,9 +145,9 @@ public final class BeardSurface {
         double[] depth = generator.depthNoise.generateNoiseOctaves(scratch.depth, nx, nz, 1, 1, settings.depthNoiseScaleX, settings.depthNoiseScaleZ, settings.depthNoiseScaleExponent);
         float coordinate = settings.coordinateScale;
         float height = settings.heightScale;
-        double[] main = generator.mainPerlinNoise.generateNoiseOctaves(scratch.main, nx, 0, nz, 1, 33, 1, coordinate / settings.mainNoiseScaleX, height / settings.mainNoiseScaleY, coordinate / settings.mainNoiseScaleZ);
-        double[] lower = generator.minLimitPerlinNoise.generateNoiseOctaves(scratch.lower, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
-        double[] upper = generator.maxLimitPerlinNoise.generateNoiseOctaves(scratch.upper, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
+        double[] main = generator.mainPerlinNoise.generateNoiseOctaves(scratch.main, nx, 0, nz, 1, NOISE_CELLS, 1, coordinate / settings.mainNoiseScaleX, height / settings.mainNoiseScaleY, coordinate / settings.mainNoiseScaleZ);
+        double[] lower = generator.minLimitPerlinNoise.generateNoiseOctaves(scratch.lower, nx, 0, nz, 1, NOISE_CELLS, 1, coordinate, height, coordinate);
+        double[] upper = generator.maxLimitPerlinNoise.generateNoiseOctaves(scratch.upper, nx, 0, nz, 1, NOISE_CELLS, 1, coordinate, height, coordinate);
         float[] weights = generator.biomeWeights;
         Biome middle = biomes[12];
         boolean amplified = generator.terrainType == WorldType.AMPLIFIED;
@@ -175,7 +178,7 @@ public final class BeardSurface {
         offset = offset * settings.baseSize / 8.0;
         double middleHeight = settings.baseSize + offset * 4.0;
         double over = 0.0;
-        for (int cell = 32; cell >= 0; cell--) {
+        for (int cell = NOISE_CELLS - 1; cell >= 0; cell--) {
             double falloff = (cell - middleHeight) * settings.stretchY * 128.0 / 256.0 / variation;
             if (falloff < 0.0) { falloff *= 4.0; }
             double least = lower[cell] / settings.lowerLimitScale;

@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.raids.ActiveRaid;
 import mctmods.resourcedatapackloader.common.raids.RaidDefenders;
-import mctmods.resourcedatapackloader.common.raids.RaidStorage;
 
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -11,8 +10,6 @@ import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAITarget;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.world.WorldServer;
 
 public final class RaidTargetGoal extends EntityAITarget {
     private static final int LOOK_CHANCE = 10;
@@ -24,8 +21,8 @@ public final class RaidTargetGoal extends EntityAITarget {
     }
 
     @Override public boolean shouldExecute() {
-        if (taskOwner.getRNG().nextInt(LOOK_CHANCE) != 0 || !taskOwner.getEntityData().hasKey(ActiveRaid.RAIDER)) { return false; }
-        ActiveRaid raid = RaidStorage.get((WorldServer) taskOwner.world).raidOf(NBTUtil.getPosFromTag(taskOwner.getEntityData().getCompoundTag(ActiveRaid.RAIDER)));
+        if (taskOwner.getRNG().nextInt(LOOK_CHANCE) != 0) { return false; }
+        ActiveRaid raid = ActiveRaid.of(taskOwner);
         if (raid == null) { return false; }
         BaseDef base = raid.def().base();
         boolean all = base != null && base.hostileToAll;

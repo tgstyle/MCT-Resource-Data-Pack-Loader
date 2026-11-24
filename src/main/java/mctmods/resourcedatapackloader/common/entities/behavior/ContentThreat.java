@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+import mctmods.resourcedatapackloader.common.util.ServerTicks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -33,9 +35,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -44,7 +44,7 @@ public final class ContentThreat {
     private static final int SAMPLE = 100;
     private static final double REACH = 128.0D * 128.0D;
     private static final ResourceLocation KEY = ResourceDataPackLoader.id("threatitems");
-    private static final Map<UUID, Integer> BANDS = new HashMap<>();
+    private static final Map<UUID, Integer> BANDS = PlayerLogout.track(new HashMap<>());
     private static final Map<World, List<Carrier>> CARRIERS = new HashMap<>();
     private static final Map<World, Integer> OTHERS = new HashMap<>();
     private static final List<Entry> ENTRIES = new ArrayList<>();
@@ -109,8 +109,9 @@ public final class ContentThreat {
                 ContentLog.LOGGER.error("threatSays entry '{}' needs the form band=message, skipping it", entry);
                 continue;
             }
-            try { SAYS.put(Integer.parseInt(parts[0]), parts[1]); }
-            catch (NumberFormatException ex) { ContentLog.LOGGER.error("threatSays entry '{}' names band '{}', which is not a number, skipping it", entry, parts[0]); }
+            Integer band = Settings.integer(parts[0]);
+            if (band == null) { ContentLog.LOGGER.error("threatSays entry '{}' names band '{}', which is not a number, skipping it", entry, parts[0]); }
+            else { SAYS.put(band, parts[1]); }
         }
         scratch = new int[ENTRIES.size()];
         boolean live = levels.length > 0 && !ENTRIES.isEmpty();
@@ -129,16 +130,14 @@ public final class ContentThreat {
             ContentLog.LOGGER.error("threatItems entry '{}' needs a level and a count after the =, skipping it", entry);
             return;
         }
-        int level;
-        int count;
-        try {
-            level = Integer.parseInt(parts[0].trim());
-            count = Integer.parseInt(parts[1].trim());
-        }
-        catch (NumberFormatException ex) {
+        Integer parsedLevel = Settings.integer(parts[0]);
+        Integer parsedCount = Settings.integer(parts[1]);
+        if (parsedLevel == null || parsedCount == null) {
             ContentLog.LOGGER.error("threatItems entry '{}' has a level or count that is not a number, skipping it", entry);
             return;
         }
+        int level = parsedLevel;
+        int count = parsedCount;
         if (level <= 0 || count <= 0) {
             ContentLog.LOGGER.error("threatItems entry '{}' needs a level and a count above 0, skipping it", entry);
             return;
@@ -159,12 +158,10 @@ public final class ContentThreat {
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null || server.getTickCounter() % SAMPLE != 0 || disabled()) { return; }
+        MinecraftServer server = ServerTicks.every(SAMPLE);
+        if (server == null || disabled()) { return; }
         for (WorldServer world : server.worlds) { sample(world); }
     }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { BANDS.remove(event.player.getUniqueID()); }
 
     @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
         CARRIERS.remove(event.getWorld());

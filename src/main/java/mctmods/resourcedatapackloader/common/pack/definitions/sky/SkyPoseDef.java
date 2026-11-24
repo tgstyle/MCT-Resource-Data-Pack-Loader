@@ -16,7 +16,13 @@ public final class SkyPoseDef {
 
     public boolean spins() { return spin != 0.0F; }
 
-    public float degrees(double ticks) { return (float) ((roll + spin * ticks / 20.0D) % 360.0D); }
+    public float u(float edge) { return flipU ? 1.0F - edge : edge; }
 
-    public static float spun(float spin, double ticks) { return (float) ((spin * ticks / 20.0D) % 360.0D); }
+    public float v(float edge) { return flipV ? 1.0F - edge : edge; }
+
+    public float degrees(double ticks) { return (float) ((roll + turn(spin, ticks)) % 360.0D); }
+
+    public static float spun(float spin, double ticks) { return (float) (turn(spin, ticks) % 360.0D); }
+
+    private static double turn(float spin, double ticks) { return spin * ticks / 20.0D; }
 }

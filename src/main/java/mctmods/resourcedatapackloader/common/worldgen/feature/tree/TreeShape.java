@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
+import mctmods.resourcedatapackloader.common.util.plant.LeafDecay;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,12 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 
 public final class TreeShape {
     private static final int MIN_STEPS = 4;
@@ -55,8 +57,8 @@ public final class TreeShape {
         if (base == null) { return; }
         findRoots();
         measure();
-        this.steps = steps > 0 ? steps : Math.max(MIN_STEPS, Math.min(MAX_STEPS, height + radius));
-        if (cap != null) { cap = persistent(cap); }
+        this.steps = steps > 0 ? steps : MathHelper.clamp(height + radius, MIN_STEPS, MAX_STEPS);
+        if (cap != null) { cap = LeafDecay.persistent(cap); }
     }
 
     static boolean isLog(BlockPos pos, IBlockState state) { return state.getBlock() instanceof BlockLog || state.getBlock().isWood(new TreeBlockAccess(pos, state), pos); }
@@ -163,7 +165,6 @@ public final class TreeShape {
         }
     }
 
-    public static IBlockState persistent(IBlockState state) { return state.getPropertyKeys().contains(BlockLeaves.DECAYABLE) ? state.withProperty(BlockLeaves.DECAYABLE, false) : state; }
 
     public boolean noTrunk() { return base == null; }
 
@@ -230,7 +231,7 @@ public final class TreeShape {
             front = next;
         }
         for (BlockPos pos : seen) {
-            if (candidates.contains(pos)) { out.put(pos, persistent(states.get(pos))); }
+            if (candidates.contains(pos)) { out.put(pos, LeafDecay.persistent(states.get(pos))); }
         }
         for (Map.Entry<BlockPos, IBlockState> entry : crown.entrySet()) { out.putIfAbsent(entry.getKey(), entry.getValue()); }
         return out;

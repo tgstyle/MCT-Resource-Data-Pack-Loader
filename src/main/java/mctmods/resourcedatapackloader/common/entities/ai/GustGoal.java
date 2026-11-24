@@ -1,8 +1,9 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
@@ -10,31 +11,16 @@ import net.minecraft.world.WorldServer;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public final class GustGoal extends EntityAIBase {
+public final class GustGoal extends RestingEngageGoal {
     private static final int WIND = 20;
-    private static final int REST = 60;
     private static final double SPREAD = 3.0D;
-    private final EntityCreature mob;
     private final float power;
     @Nullable private EntityLivingBase target;
     private int winding;
-    private int resting;
 
     public GustGoal(EntityCreature mob, float power) {
-        this.mob = mob;
+        super(mob, 16.0D, 144.0D, 60, false);
         this.power = power;
-        setMutexBits(3);
-    }
-
-    @Override public boolean shouldExecute() {
-        if (resting > 0) {
-            resting--;
-            return false;
-        }
-        EntityLivingBase found = mob.getAttackTarget();
-        if (found == null || !found.isEntityAlive()) { return false; }
-        double away = mob.getDistanceSq(found);
-        return away > 16.0D && away < 144.0D && mob.getEntitySenses().canSee(found);
     }
 
     @Override public boolean shouldContinueExecuting() { return target != null && target.isEntityAlive() && winding < WIND; }
@@ -47,12 +33,12 @@ public final class GustGoal extends EntityAIBase {
 
     @Override public void resetTask() {
         target = null;
-        resting = REST;
+        super.resetTask();
     }
 
     @Override public void updateTask() {
         if (target == null) { return; }
-        mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         winding++;
         if (winding < WIND) { return; }
         if (mob.world instanceof WorldServer) { ((WorldServer) mob.world).spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, target.posX, target.posY + target.height * 0.5D, target.posZ, 12, 0.6D, 0.4D, 0.6D, 0.0D); }

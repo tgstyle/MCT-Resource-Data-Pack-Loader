@@ -10,15 +10,18 @@ import mctmods.resourcedatapackloader.common.raids.base.RaidOwner;
 import mctmods.resourcedatapackloader.common.rules.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
 import mctmods.resourcedatapackloader.common.util.loot.Rewards;
 import mctmods.resourcedatapackloader.common.util.messages.BossBars;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -45,8 +48,9 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ActiveRaid {
-    public static final String RAIDER = "rdplRaid";
+    private static final String RAIDER = "rdplRaid";
     public static final String DOOR = "rdplRaidDoor";
+    static final String DEF_KEY = "Raid";
     static final int SUPERVISE = 20;
     private static final int VILLAGE_SEARCH = 32;
     private static final int QUIET_BEFORE_VICTORY = 40;
@@ -86,7 +90,7 @@ public final class ActiveRaid {
     private ActiveRaid(RaidDef def, RaidTarget target, int waves, int points) {
         this.def = def;
         this.kind = target.kind();
-        this.base = guarded(kind) ? def.base() : null;
+        this.base = baseFor(def, kind);
         this.targetId = target.targetUuid();
         this.waves = waves;
         this.points = points;
@@ -98,13 +102,29 @@ public final class ActiveRaid {
         this.bar = def.bossBar == null ? BossBars.create(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10) : BossBars.create(def.bossBar, new TextComponentString(def.name));
     }
 
-    public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) { start(world, def, new RaidTarget(free ? RaidTarget.Kind.FREE : RaidTarget.Kind.VILLAGE, center, VILLAGE_SEARCH, 0, null, free, 0)); }
+    public static boolean isRaider(Entity entity) { return entity.getEntityData().hasKey(RAIDER); }
+
+    public static void tagRaider(Entity entity, BlockPos center) { entity.getEntityData().setTag(RAIDER, NBTUtil.createPosTag(center)); }
+
+    public static void untagRaider(Entity entity) { entity.getEntityData().removeTag(RAIDER); }
+
+    @Nullable public static BlockPos home(Entity entity) {
+        NBTTagCompound data = entity.getEntityData();
+        return data.hasKey(RAIDER) ? NBTUtil.getPosFromTag(data.getCompoundTag(RAIDER)) : null;
+    }
+
+    @Nullable public static ActiveRaid of(Entity entity) {
+        BlockPos home = entity.world instanceof WorldServer ? home(entity) : null;
+        return home == null ? null : RaidStorage.get((WorldServer) entity.world).raidOf(home);
+    }
+
+    public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) { start(world, def, new RaidTarget(free ? RaidTarget.Kind.FREE : RaidTarget.Kind.VILLAGE, center, VILLAGE_SEARCH, 0, null, 0)); }
 
     public static void start(WorldServer world, RaidDef def, RaidTarget target) {
         BlockPos center = target.center();
         RaidSwitchDef change = ContentRaidSwitch.at(world, center);
         int scaled = change.waves(def.waves.size());
-        BaseDef base = guarded(target.kind()) ? def.base() : null;
+        BaseDef base = baseFor(def, target.kind());
         if (base != null && base.fullScore > 0) { scaled = Math.max(1, (int) Math.round(scaled * Math.min(1.0D, target.score() / base.fullScore))); }
         ActiveRaid raid = new ActiveRaid(def, target, scaled, change.points(def.points));
         RaidStorage.get(world).add(raid);
@@ -112,7 +132,7 @@ public final class ActiveRaid {
         ContentLog.LOGGER.info("Raid {} begins {} {}, {}, {} with {} wave(s) for {} point(s)", def.registryName, raid.kind == RaidTarget.Kind.FREE ? "with no village at" : "on " + raid.site() + " at", center.getX(), center.getY(), center.getZ(), raid.waves, raid.points);
     }
 
-    private static boolean guarded(RaidTarget.Kind kind) { return kind == RaidTarget.Kind.BASE || kind == RaidTarget.Kind.PLAYER; }
+    @Nullable private static BaseDef baseFor(RaidDef def, RaidTarget.Kind kind) { return kind.guarded() ? def.base() : null; }
 
     private String site() { return kind == RaidTarget.Kind.BASE ? "the base" : kind == RaidTarget.Kind.PLAYER ? "the player" : "the village"; }
 
@@ -165,9 +185,13 @@ public final class ActiveRaid {
         if (player == null || player.getDistanceSq(center) <= FOLLOW_STEP * FOLLOW_STEP) { return; }
         center = new BlockPos(player);
         bells = null;
+        forRaiders(world, entity -> tagRaider(entity, center));
+    }
+
+    private void forRaiders(WorldServer world, Consumer<Entity> action) {
         for (UUID id : raiders) {
             Entity entity = world.getEntityFromUuid(id);
-            if (entity != null) { entity.getEntityData().setTag(RAIDER, NBTUtil.createPosTag(center)); }
+            if (entity != null) { action.accept(entity); }
         }
     }
 
@@ -181,11 +205,7 @@ public final class ActiveRaid {
     }
 
     private void release(WorldServer world) {
-        for (UUID id : raiders) {
-            Entity entity = world.getEntityFromUuid(id);
-            if (entity == null) { continue; }
-            entity.getEntityData().removeTag(RAIDER);
-        }
+        forRaiders(world, ActiveRaid::untagRaider);
         raiders.clear();
         if (base != null) { BaseLedger.get(world).markRaided(world.getMinecraftServer(), owner, world.getTotalWorldTime()); }
     }
@@ -229,7 +249,7 @@ public final class ActiveRaid {
             if (cooldown > 0) {
                 cooldown--;
                 bar.setName(new TextComponentString(def.title));
-                bar.setPercent(MathHelper.clamp((def.waveDelay - cooldown) / (float) def.waveDelay, 0.0F, 1.0F));
+                BossBars.progress(bar, (def.waveDelay - cooldown) / (float) def.waveDelay);
                 if (cooldown % 20 == 0) { players(world); }
                 return;
             }
@@ -242,7 +262,7 @@ public final class ActiveRaid {
             players(world);
             float health = 0.0F;
             for (EntityLivingBase one : alive) { health += one.getHealth(); }
-            bar.setPercent(waveHealth <= 0.0F ? 0.0F : MathHelper.clamp(health / waveHealth, 0.0F, 1.0F));
+            BossBars.progress(bar, waveHealth <= 0.0F ? 0.0F : health / waveHealth);
             bar.setName(new TextComponentString(!alive.isEmpty() && alive.size() <= 2 ? def.title + " - Raiders Remaining: " + alive.size() : def.title));
         }
         if (wave >= waves && alive.isEmpty() && ++quiet >= QUIET_BEFORE_VICTORY) { end(world, Status.VICTORY); }
@@ -256,7 +276,7 @@ public final class ActiveRaid {
             if (entity == null) { return paused < 0; }
             if (!(entity instanceof EntityLivingBase) || !entity.isEntityAlive()) { return true; }
             if (entity.getDistanceSq(center) > stray) {
-                entity.getEntityData().removeTag(RAIDER);
+                untagRaider(entity);
                 return true;
             }
             found.add((EntityLivingBase) entity);
@@ -285,12 +305,9 @@ public final class ActiveRaid {
                     break;
                 }
                 entity.setLocationAndAngles(at.getX() + 0.5D + world.rand.nextInt(3) - 1, at.getY(), at.getZ() + 0.5D + world.rand.nextInt(3) - 1, world.rand.nextFloat() * 360.0F, 0.0F);
-                if (entity instanceof EntityLiving) {
-                    EntityLiving living = (EntityLiving) entity;
-                    living.onInitialSpawn(world.getDifficultyForLocation(at), null);
-                    living.enablePersistence();
-                }
-                entity.getEntityData().setTag(RAIDER, NBTUtil.createPosTag(center));
+                Spawns.initialise(world, entity, at);
+                if (entity instanceof EntityLiving) { ((EntityLiving) entity).enablePersistence(); }
+                tagRaider(entity, center);
                 world.spawnEntity(entity);
                 raiders.add(entity.getUniqueID());
                 if (entity instanceof EntityLivingBase) { waveHealth += ((EntityLivingBase) entity).getMaxHealth(); }
@@ -351,7 +368,7 @@ public final class ActiveRaid {
 
     private void horn(WorldServer world, BlockPos at) {
         if (def.sound.isEmpty()) { return; }
-        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(def.sound));
+        SoundEvent sound = Registries.find(ForgeRegistries.SOUND_EVENTS, def.sound);
         if (sound == null) {
             ContentLog.LOGGER.error("Raid {} names the sound {}, which nothing registers, so the waves come quietly", def.registryName, def.sound);
             return;
@@ -406,7 +423,7 @@ public final class ActiveRaid {
 
     private void players(WorldServer world) { BossBars.sync(bar, inReach(world)); }
 
-    private List<EntityPlayerMP> inReach(WorldServer world) { return BossBars.near(world, center.getX() + 0.5D, center.getY() + 0.5D, center.getZ() + 0.5D, reach()); }
+    private List<EntityPlayerMP> inReach(WorldServer world) { return BossBars.near(world, center, reach()); }
 
     private void stop(WorldServer world, @Nullable String why) {
         if (why != null) { ContentLog.LOGGER.info("Raid {} on {} at {}, {}, {} stops: {}", def.registryName, site(), center.getX(), center.getY(), center.getZ(), why); }
@@ -417,7 +434,7 @@ public final class ActiveRaid {
 
     NBTTagCompound write() {
         NBTTagCompound tag = new NBTTagCompound();
-        tag.setString("Raid", def.registryName.toString());
+        tag.setString(DEF_KEY, def.registryName.toString());
         tag.setTag("Center", NBTUtil.createPosTag(center));
         tag.setInteger("Waves", waves);
         tag.setInteger("Points", points);
@@ -443,12 +460,12 @@ public final class ActiveRaid {
 
     @Nullable static ActiveRaid read(NBTTagCompound tag, @Nullable RaidDef def) {
         if (def == null) {
-            ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
+            ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString(DEF_KEY));
             return null;
         }
         RaidTarget.Kind kind = tag.hasKey("Kind") ? RaidTarget.Kind.parse(tag.getString("Kind")) : tag.getBoolean("Free") ? RaidTarget.Kind.FREE : RaidTarget.Kind.VILLAGE;
         UUID target = tag.hasKey("Target") ? UUID.fromString(tag.getString("Target")) : null;
-        RaidTarget saved = new RaidTarget(kind, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")), tag.hasKey("Radius") ? tag.getInteger("Radius") : VILLAGE_SEARCH, tag.getInteger("Owner"), target, kind == RaidTarget.Kind.FREE, tag.getInteger("Score"));
+        RaidTarget saved = new RaidTarget(kind, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")), tag.hasKey("Radius") ? tag.getInteger("Radius") : VILLAGE_SEARCH, tag.getInteger("Owner"), target, tag.getInteger("Score"));
         ActiveRaid raid = new ActiveRaid(def, saved, tag.hasKey("Waves") ? tag.getInteger("Waves") : def.waves.size(), tag.hasKey("Points") ? tag.getInteger("Points") : def.points);
         raid.wave = tag.getInteger("Wave");
         raid.cooldown = tag.getInteger("Cooldown");

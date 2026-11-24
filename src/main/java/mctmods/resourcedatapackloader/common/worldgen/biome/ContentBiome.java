@@ -23,6 +23,25 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ContentBiome extends Biome {
+    private static final String TREES = "trees";
+    private static final String FLOWERS = "flowers";
+    private static final String GRASS = "grass";
+    private static final String DEADBUSH = "deadbush";
+    private static final String MUSHROOMS = "mushrooms";
+    private static final String BIGMUSHROOMS = "bigmushrooms";
+    private static final String REEDS = "reeds";
+    private static final String CACTI = "cacti";
+    private static final String SAND = "sand";
+    private static final String GRAVEL = "gravel";
+    private static final String CLAY = "clay";
+    private static final String WATERLILY = "waterlily";
+    private static final String FALLS = "falls";
+    private static final String EXTRATREECHANCE = "extratreechance";
+    private static final String PUMPKINS = "pumpkins";
+    private static final String DESERTWELLS = "desertwells";
+    private static final String ICE = "ice";
+    private static final String FOSSILS = "fossils";
+    private static final String ROCKS = "rocks";
     private static final Map<DecorateBiomeEvent.Decorate.EventType, String> SUPPRESSED = suppressed();
     @Nullable private final IBlockState stoneState;
     private final BiomeDef def;
@@ -110,21 +129,21 @@ public class ContentBiome extends Biome {
 
     private static boolean apply(BiomeDecorator decorator, String key, int value) {
         switch (key.toLowerCase(Locale.ROOT)) {
-            case "trees": decorator.treesPerChunk = value; return true;
-            case "flowers": decorator.flowersPerChunk = value; return true;
-            case "grass": decorator.grassPerChunk = value; return true;
-            case "deadbush": decorator.deadBushPerChunk = value; return true;
-            case "mushrooms": decorator.mushroomsPerChunk = value; return true;
-            case "bigmushrooms": decorator.bigMushroomsPerChunk = value; return true;
-            case "reeds": decorator.reedsPerChunk = value; return true;
-            case "cacti": decorator.cactiPerChunk = value; return true;
-            case "sand": decorator.sandPatchesPerChunk = value; return true;
-            case "gravel": decorator.gravelPatchesPerChunk = value; return true;
-            case "clay": decorator.clayPerChunk = value; return true;
-            case "waterlily": decorator.waterlilyPerChunk = value; return true;
-            case "falls": decorator.generateFalls = value > 0; return true;
-            case "extratreechance": decorator.extraTreeChance = MathHelper.clamp(value, 0, 100) / 100.0F; return true;
-            case "pumpkins": case "desertwells": case "ice": case "fossils": case "rocks": return true;
+            case TREES: decorator.treesPerChunk = value; return true;
+            case FLOWERS: decorator.flowersPerChunk = value; return true;
+            case GRASS: decorator.grassPerChunk = value; return true;
+            case DEADBUSH: decorator.deadBushPerChunk = value; return true;
+            case MUSHROOMS: decorator.mushroomsPerChunk = value; return true;
+            case BIGMUSHROOMS: decorator.bigMushroomsPerChunk = value; return true;
+            case REEDS: decorator.reedsPerChunk = value; return true;
+            case CACTI: decorator.cactiPerChunk = value; return true;
+            case SAND: decorator.sandPatchesPerChunk = value; return true;
+            case GRAVEL: decorator.gravelPatchesPerChunk = value; return true;
+            case CLAY: decorator.clayPerChunk = value; return true;
+            case WATERLILY: decorator.waterlilyPerChunk = value; return true;
+            case FALLS: decorator.generateFalls = value > 0; return true;
+            case EXTRATREECHANCE: decorator.extraTreeChance = MathHelper.clamp(value, 0, 100) / 100.0F; return true;
+            case PUMPKINS: case DESERTWELLS: case ICE: case FOSSILS: case ROCKS: return true;
             default: return false;
         }
     }
@@ -142,25 +161,25 @@ public class ContentBiome extends Biome {
 
     private static Map<DecorateBiomeEvent.Decorate.EventType, String> suppressed() {
         Map<DecorateBiomeEvent.Decorate.EventType, String> map = new EnumMap<>(DecorateBiomeEvent.Decorate.EventType.class);
-        map.put(DecorateBiomeEvent.Decorate.EventType.TREE, "trees");
-        map.put(DecorateBiomeEvent.Decorate.EventType.FLOWERS, "flowers");
-        map.put(DecorateBiomeEvent.Decorate.EventType.GRASS, "grass");
-        map.put(DecorateBiomeEvent.Decorate.EventType.DEAD_BUSH, "deadbush");
-        map.put(DecorateBiomeEvent.Decorate.EventType.SHROOM, "mushrooms");
-        map.put(DecorateBiomeEvent.Decorate.EventType.BIG_SHROOM, "bigmushrooms");
-        map.put(DecorateBiomeEvent.Decorate.EventType.REED, "reeds");
-        map.put(DecorateBiomeEvent.Decorate.EventType.CACTUS, "cacti");
-        map.put(DecorateBiomeEvent.Decorate.EventType.SAND, "sand");
-        map.put(DecorateBiomeEvent.Decorate.EventType.SAND_PASS2, "gravel");
-        map.put(DecorateBiomeEvent.Decorate.EventType.CLAY, "clay");
-        map.put(DecorateBiomeEvent.Decorate.EventType.LILYPAD, "waterlily");
-        map.put(DecorateBiomeEvent.Decorate.EventType.LAKE_WATER, "falls");
-        map.put(DecorateBiomeEvent.Decorate.EventType.LAKE_LAVA, "falls");
-        map.put(DecorateBiomeEvent.Decorate.EventType.PUMPKIN, "pumpkins");
-        map.put(DecorateBiomeEvent.Decorate.EventType.DESERT_WELL, "desertwells");
-        map.put(DecorateBiomeEvent.Decorate.EventType.ICE, "ice");
-        map.put(DecorateBiomeEvent.Decorate.EventType.FOSSIL, "fossils");
-        map.put(DecorateBiomeEvent.Decorate.EventType.ROCK, "rocks");
+        map.put(DecorateBiomeEvent.Decorate.EventType.TREE, TREES);
+        map.put(DecorateBiomeEvent.Decorate.EventType.FLOWERS, FLOWERS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.GRASS, GRASS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.DEAD_BUSH, DEADBUSH);
+        map.put(DecorateBiomeEvent.Decorate.EventType.SHROOM, MUSHROOMS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.BIG_SHROOM, BIGMUSHROOMS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.REED, REEDS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.CACTUS, CACTI);
+        map.put(DecorateBiomeEvent.Decorate.EventType.SAND, SAND);
+        map.put(DecorateBiomeEvent.Decorate.EventType.SAND_PASS2, GRAVEL);
+        map.put(DecorateBiomeEvent.Decorate.EventType.CLAY, CLAY);
+        map.put(DecorateBiomeEvent.Decorate.EventType.LILYPAD, WATERLILY);
+        map.put(DecorateBiomeEvent.Decorate.EventType.LAKE_WATER, FALLS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.LAKE_LAVA, FALLS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.PUMPKIN, PUMPKINS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.DESERT_WELL, DESERTWELLS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.ICE, ICE);
+        map.put(DecorateBiomeEvent.Decorate.EventType.FOSSIL, FOSSILS);
+        map.put(DecorateBiomeEvent.Decorate.EventType.ROCK, ROCKS);
         return map;
     }
 

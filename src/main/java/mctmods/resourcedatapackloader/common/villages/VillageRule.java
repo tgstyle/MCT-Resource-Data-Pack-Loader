@@ -33,7 +33,7 @@ public final class VillageRule {
         if (differs(laid, from)) { return null; }
         if (at != null && differs(world.getBlockState(pos), at)) { return null; }
         if (under != null && differs(world.getBlockState(pos.down()), under)) { return null; }
-        if (chance < ALWAYS && SeededRandom.at(world, pos.getX(), pos.getY(), pos.getZ()).nextInt(ALWAYS) >= chance) { return null; }
+        if (chance < ALWAYS && !SeededRandom.rolls(world, pos.getX(), pos.getY(), pos.getZ(), chance)) { return null; }
         return to;
     }
 

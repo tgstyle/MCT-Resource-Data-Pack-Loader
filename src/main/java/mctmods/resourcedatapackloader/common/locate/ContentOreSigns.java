@@ -29,8 +29,8 @@ public final class ContentOreSigns {
         for (int i = 0; i < count; i++) {
             int x = MathHelper.clamp(origin.getX() + random.nextInt(2 * reach + 1) - reach, lowX, highX);
             int z = MathHelper.clamp(origin.getZ() + random.nextInt(2 * reach + 1) - reach, lowZ, highZ);
-            WeightedPicks.Pick chosen = def.indicators.pick(random);
-            if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { continue; }
+            WeightedPicks.Pick chosen = def.indicators.pickFilled(random);
+            if (chosen == null) { continue; }
             IBlockState state = ContentStates.parse(chosen.name, "indicators");
             if (state == null) {
                 ContentLog.LOGGER.error("Worldgen entry {} names {} as an indicator, which is not a registered block, so none is left", def.registryName, chosen.name);

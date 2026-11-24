@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeSt
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeEntry;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeShape;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
+import mctmods.resourcedatapackloader.core.util.text.Placeholders;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,16 +52,16 @@ final class TreeCommand {
             return;
         }
         TreeShape shape = entry.phase == 0 ? null : ContentTreeGrowth.shape(world, entry);
-        String height = shape == null ? "-" : String.valueOf(shape.height());
-        String radius = shape == null ? "-" : String.valueOf(shape.radius());
-        String loose = shape == null ? "-" : String.valueOf(shape.looseLogs(ContentTreeGrowth.current(world, entry)));
+        String height = Placeholders.orDash(shape == null ? null : shape.height());
+        String radius = Placeholders.orDash(shape == null ? null : shape.radius());
+        String loose = Placeholders.orDash(shape == null ? null : shape.looseLogs(ContentTreeGrowth.current(world, entry)));
         String kind = TreePickDef.Kind.values()[entry.kind].name().toLowerCase(Locale.ROOT);
         CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.tree", entry.rule, origin.getX(), origin.getY(), origin.getZ(), kind, entry.source, entry.pick, entry.turn, entry.mirror, entry.step, entry.steps, height, radius, loose));
         TreeGrowthDef growth = ContentTreeRules.byId(entry.rule);
         String mode = growth == null ? "-" : growth.timed() ? "time" : "chance";
-        String ticks = growth == null ? "-" : String.valueOf(growth.stepTicks);
+        String ticks = Placeholders.orDash(growth == null ? null : growth.stepTicks);
         String reason = ContentTreeClock.reason(world, entry.pos);
-        CommandShared.send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.treeclock", entry.phase, mode, entry.progress, ticks, world.getTotalWorldTime() - entry.started, reason == null ? "-" : reason));
+        CommandShared.send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.treeclock", entry.phase, mode, entry.progress, ticks, world.getTotalWorldTime() - entry.started, Placeholders.orDash(reason)));
         CommandShared.send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.treeowned", entry.owned.size(), entry.gone.size()));
     }
 

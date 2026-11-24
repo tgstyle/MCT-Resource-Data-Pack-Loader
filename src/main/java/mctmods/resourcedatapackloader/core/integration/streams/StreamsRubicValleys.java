@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core.integration.streams;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.ReflectionUtil;
 
 import farseek.util.ImplicitConversions$;
 import java.lang.reflect.Field;
@@ -42,7 +43,7 @@ public final class StreamsRubicValleys {
     }
 
     static final class Handler {
-        private static final Field GENERATING = generatingFlag();
+        private static final Field GENERATING = ReflectionUtil.fieldOrNull(RiverGenerator.class.getSuperclass(), "generating");
         private static final Map<World, Set<Long>> CARVED = new WeakHashMap<>();
 
         void carve(WorldServer world, int xChunk, int zChunk) {
@@ -69,15 +70,6 @@ public final class StreamsRubicValleys {
         private static boolean touches(RiverStructure river, int x, int z) {
             StructureBoundingBox box = ImplicitConversions$.MODULE$.boundedBoundingBox(river);
             return box.intersectsWith(x << 4, z << 4, (x << 4) + 15, (z << 4) + 15);
-        }
-
-        private static Field generatingFlag() {
-            try {
-                Field field = RiverGenerator.class.getSuperclass().getDeclaredField("generating");
-                field.setAccessible(true);
-                return field;
-            }
-            catch (NoSuchFieldException missing) { return null; }
         }
 
         private static boolean hold(RiverGenerator rivers) {

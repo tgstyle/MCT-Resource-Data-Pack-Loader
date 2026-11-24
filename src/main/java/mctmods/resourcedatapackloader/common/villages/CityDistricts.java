@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.villages;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.world.Facings;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardSite;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardJoins;
@@ -13,7 +14,9 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardR
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.*;
@@ -27,36 +30,37 @@ public final class CityDistricts {
     private static final int RELIEF = 6;
     private static final int JOIN = 4;
     private static final int TIE_REACH = 112;
-    static int settledCrowded;
-    static int settledUngrounded;
-    static int settledTaken;
-    static int settledNeighbored;
+    private static int settledCrowded;
+    private static int settledUngrounded;
+    private static int settledTaken;
+    private static int settledNeighbored;
 
     private CityDistricts() {}
 
-    private static int spacing() { return 2 * ContentVillages.largestPlot() + 2 * ContentBeard.plazaReach() + 2 * BeardRoads.pathFullWidth(); }
+    static void drainSettled(int attempts, boolean report) {
+        if (report && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("District growth drained after {} attempt(s): {} sites too near a well, {} on unreadable ground, {} on built ground, {} beside another village", attempts, settledCrowded, settledUngrounded, settledTaken, settledNeighbored); }
+        settledCrowded = settledUngrounded = settledTaken = settledNeighbored = 0;
+    }
 
     static long site(List<StructureComponent> components, Set<Long> tried) {
         StructureBoundingBox first = components.get(0).getBoundingBox();
-        int cx = (first.minX + first.maxX) / 2;
-        int cz = (first.minZ + first.maxZ) / 2;
+        int cx = StructureBoxes.centerX(first);
+        int cz = StructureBoxes.centerZ(first);
         long best = Long.MIN_VALUE;
         long bestAway = Long.MAX_VALUE;
         int reach = CityGrowth.march();
-        int spacing = spacing();
+        int spacing = CityGrid.spacing();
         for (StructureComponent piece : components) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(road);
-            int line = alongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
+            int line = StructureBoxes.across(road, alongX);
             for (int sign = -1; sign <= 1; sign += 2) {
                 int edge = alongX ? (sign < 0 ? road.minX : road.maxX) : (sign < 0 ? road.minZ : road.maxZ);
                 for (int away = ContentBeard.plazaReach() + 4; away <= Math.max(48, spacing + 16); away += 8) {
                     int siteX = alongX ? edge + sign * away : line;
                     int siteZ = alongX ? line : edge + sign * away;
-                    long dx = siteX - cx;
-                    long dz = siteZ - cz;
-                    long far = dx * dx + dz * dz;
+                    long far = MathUtil.dist2(siteX, siteZ, cx, cz);
                     if (far > (long) reach * reach || far >= bestAway) { continue; }
                     long packed = Longs.pack(siteX, siteZ);
                     if (tried.contains(packed) || crowdedAt(components, siteX, siteZ, spacing)) { continue; }
@@ -70,7 +74,7 @@ public final class CityDistricts {
         for (int dx = -reach; dx <= reach; dx += step) {
             for (int dz = -reach; dz <= reach; dz += step) {
                 if (dx == 0 && dz == 0) { continue; }
-                long away = (long) dx * dx + (long) dz * dz;
+                long away = MathUtil.dist2(dx, dz, 0, 0);
                 if (away > (long) reach * reach || away >= bestAway) { continue; }
                 long packed = Longs.pack(cx + dx, cz + dz);
                 if (tried.contains(packed) || crowdedAt(components, cx + dx, cz + dz, spacing)) { continue; }
@@ -83,18 +87,18 @@ public final class CityDistricts {
 
     static boolean settle(World world, Random rand, List<StructureComponent> components, int cx, int cz, int sizeFor) {
         int reach = ContentBeard.plazaReach();
-        if (crowdedAt(components, cx, cz, spacing())) {
+        if (crowdedAt(components, cx, cz, CityGrid.spacing())) {
             settledCrowded++;
             return false;
         }
-        int wellX = cx - 2;
-        int wellZ = cz - 2;
+        int wellX = cx - CityLayout.WELL / 2 + 1;
+        int wellZ = cz - CityLayout.WELL / 2 + 1;
         if (ungrounded(world, wellX, wellZ, reach)) {
             settledUngrounded++;
             return false;
         }
-        StructureBoundingBox square = new StructureBoundingBox(wellX - reach, 0, wellZ - reach, wellX + 5 + reach, 255, wellZ + 5 + reach);
-        if (BeardRails.boreUnder(components, new StructureBoundingBox(wellX, 0, wellZ, wellX + 5, 255, wellZ + 5))) {
+        StructureBoundingBox square = new StructureBoundingBox(wellX - reach, 0, wellZ - reach, wellX + CityLayout.WELL - 1 + reach, GenHeights.WORLD_TOP, wellZ + CityLayout.WELL - 1 + reach);
+        if (BeardRails.boreUnder(components, new StructureBoundingBox(wellX, 0, wellZ, wellX + CityLayout.WELL - 1, GenHeights.WORLD_TOP, wellZ + CityLayout.WELL - 1))) {
             settledTaken++;
             return false;
         }
@@ -113,10 +117,7 @@ public final class CityDistricts {
         ContentVillages.sizeBlock(world, district);
         int mark = components.size();
         components.add(district);
-        CityGrowth.laying(false, () -> {
-            district.buildComponent(district, components, rand);
-            CityGrowth.drain(district, components, rand);
-        });
+        CityGrowth.laying(false, () -> CityGrowth.buildAndDrain(district, district, components, rand));
         int streets = 0;
         for (int i = mark; i < components.size(); i++) { if (components.get(i) instanceof StructureVillagePieces.Path) { streets++; } }
         if (streets == 0) {
@@ -133,8 +134,7 @@ public final class CityDistricts {
                 CityGrowth.laying(false, () -> {
                     for (StructureComponent piece : components.subList(mark, before).toArray(new StructureComponent[0])) {
                         if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
-                        piece.buildComponent(district, components, rand);
-                        CityGrowth.drain(district, components, rand);
+                        CityGrowth.buildAndDrain(district, piece, components, rand);
                     }
                 });
             }
@@ -177,29 +177,23 @@ public final class CityDistricts {
             if (!(street instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(street)) { continue; }
             StructureBoundingBox box = street.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(street);
-            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
-            int acrossLo = alongX ? box.minZ : box.minX;
-            int acrossHi = alongX ? box.maxZ : box.maxX;
-            int center = (acrossLo + acrossHi) / 2;
+            if (BeardRoads.roadNarrow(street)) { continue; }
+            int center = MathUtil.mid(BeardPlots.acrossLeast(box, alongX), BeardPlots.acrossMost(box, alongX));
             for (int dir = -1; dir <= 1; dir += 2) {
-                int end = dir > 0 ? (alongX ? box.maxX : box.maxZ) : (alongX ? box.minX : box.minZ);
+                int end = dir > 0 ? BeardPlots.most(box, alongX) : BeardPlots.least(box, alongX);
                 for (int j = 0; j < mark; j++) {
                     StructureComponent other = components.get(j);
                     if (!(other instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(other)) { continue; }
                     StructureBoundingBox met = other.getBoundingBox();
                     boolean otherAlongX = BeardPlots.roadAlongX(other);
-                    if (BeardRoads.roadNarrow(met, otherAlongX)) { continue; }
+                    if (BeardRoads.roadNarrow(other)) { continue; }
+                    int metAcrossLo = BeardPlots.acrossLeast(met, alongX);
+                    int metAcrossHi = BeardPlots.acrossMost(met, alongX);
                     if (otherAlongX != alongX) {
-                        int metAlongLo = alongX ? met.minZ : met.minX;
-                        int metAlongHi = alongX ? met.maxZ : met.maxX;
-                        if (center < metAlongLo || center > metAlongHi) { continue; }
+                        if (center < metAcrossLo || center > metAcrossHi) { continue; }
                     }
-                    else {
-                        int metAcrossLo = alongX ? met.minZ : met.minX;
-                        int metAcrossHi = alongX ? met.maxZ : met.maxX;
-                        if ((metAcrossLo + metAcrossHi) / 2 != center) { continue; }
-                    }
-                    int near = dir > 0 ? (alongX ? met.minX : met.minZ) : (alongX ? met.maxX : met.maxZ);
+                    else if (MathUtil.mid(metAcrossLo, metAcrossHi) != center) { continue; }
+                    int near = dir > 0 ? BeardPlots.least(met, alongX) : BeardPlots.most(met, alongX);
                     if ((near - end) * dir <= 1) { continue; }
                     int from = dir > 0 ? end + 1 : near + 1;
                     int to = dir > 0 ? near - 1 : end - 1;
@@ -209,7 +203,7 @@ public final class CityDistricts {
                         refused[0]++;
                         continue;
                     }
-                    StructureBoundingBox tie = alongX ? new StructureBoundingBox(from, box.minY, acrossLo, to, box.maxY, acrossHi) : new StructureBoundingBox(acrossLo, box.minY, from, acrossHi, box.maxY, to);
+                    StructureBoundingBox tie = ContentBeard.strip(box, alongX, from, to);
                     if (standsOn(components, tie) || ContentBeard.taken(components, tie)) {
                         refused[1]++;
                         continue;
@@ -323,9 +317,7 @@ public final class CityDistricts {
 
     private static boolean crowdedAt(List<StructureComponent> components, int cx, int cz, int spacing) {
         for (StructureBoundingBox well : BeardPlots.wellBoxes(components)) {
-            long dx = (well.minX + well.maxX) / 2 - cx;
-            long dz = (well.minZ + well.maxZ) / 2 - cz;
-            if (dx * dx + dz * dz < (long) spacing * spacing) { return true; }
+            if (MathUtil.dist2(StructureBoxes.centerX(well), StructureBoxes.centerZ(well), cx, cz) < (long) spacing * spacing) { return true; }
         }
         return false;
     }
@@ -335,7 +327,7 @@ public final class CityDistricts {
         int sea = world.getSeaLevel();
         int lowest = Integer.MAX_VALUE;
         int highest = Integer.MIN_VALUE;
-        int[] marks = {-reach, 2, 5 + reach};
+        int[] marks = {-reach, CityLayout.WELL / 2 - 1, CityLayout.WELL - 1 + reach};
         for (int dx : marks) {
             for (int dz : marks) {
                 int found = BeardSurface.surfaceAt(world, wellX + dx, wellZ + dz);

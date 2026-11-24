@@ -1,10 +1,14 @@
 package mctmods.resourcedatapackloader.common.entities.orders;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.Lists;
+import mctmods.resourcedatapackloader.common.util.Nbts;
+import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.world.TileScan;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
@@ -47,6 +51,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentOrders {
@@ -60,7 +65,8 @@ public final class ContentOrders {
     private static final int CHECK = 20;
     private static final Map<String, OrderDef> DEFS = new LinkedHashMap<>();
     private static final Map<Integer, Map<BlockPos, Pending>> PENDING = new HashMap<>();
-    private static String stockName = "Stock";
+    private static final String DEFAULT_STOCK_NAME = "Stock";
+    private static String stockName = DEFAULT_STOCK_NAME;
     private static String hire = "";
     private static int spawnCap = 1;
     private static boolean anyGrouped;
@@ -72,19 +78,17 @@ public final class ContentOrders {
         DEFS.clear();
         OrderItems.forget();
         anyGrouped = false;
-        stockName = "Stock";
+        stockName = DEFAULT_STOCK_NAME;
         hire = "";
         spawnCap = 1;
         hireStack = ItemStack.EMPTY;
-        Json.eachFile(PackManager.ORDERS, "order file", ContentOrders::read);
-        if (!hire.isEmpty()) { hireStack = ContentStacks.parse(new ResourceLocation("rdpl", PackManager.ORDERS), hire, 1); }
-        if (!DEFS.isEmpty()) { Summary.info("orders", "Loaded " + DEFS.size() + " work order(s)"); }
+        Json.eachObject(PackManager.ORDERS, "order file", ContentOrders::read);
+        if (!hire.isEmpty()) { hireStack = ContentStacks.parse(ResourceDataPackLoader.rdpl(PackManager.ORDERS), hire, 1); }
+        Summary.loaded("orders", DEFS.size(), "work order(s)");
         return !DEFS.isEmpty();
     }
 
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "order file");
-        if (json == null) { return; }
+    private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
         if (json.has("stockName")) { stockName = Json.getString(json, "stockName").trim(); }
         if (json.has("hire")) { hire = Json.getString(json, "hire").trim(); }
@@ -126,9 +130,9 @@ public final class ContentOrders {
             byTier = new int[tiers.size()];
             for (int t = 0; t < tiers.size(); t++) { byTier[t] = Math.max(1, Json.asInt(tiers.get(t), "tiers", 1)); }
         }
-        return new OrderDef(name, job, blocks, Math.max(1, Json.getInt(json, "area", 16)), byTier, "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
-                Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
-                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim(),
+        return new OrderDef(name, job, blocks, Json.atLeast(json, "area", 16, 1), byTier, "self".equalsIgnoreCase(deliver), Json.atLeast(json, "limit", 64, 1),
+                Json.atLeast(json, "standing", 0, 0), Json.atLeast(json, "workers", 1, 1), Json.getInt(json, "priority", 0), takers,
+                Json.getString(json, "sign", "").trim(), Json.atLeast(json, "speed", 1.0F, 0.01F), Json.getString(json, "tool", "").trim(),
                 Json.getString(json, "wins", "").trim(), Json.getInt(json, "points", 0), Json.getString(json, "loot", "").trim());
     }
 
@@ -137,37 +141,41 @@ public final class ContentOrders {
     static int spawnCap() { return spawnCap; }
 
     static boolean grouped(String taker) {
-        String lower = taker.toLowerCase(Locale.ROOT);
-        return lower.startsWith(TEAM) || lower.startsWith(TAG);
+        return prefixed(taker, TEAM) || prefixed(taker, TAG);
     }
+
+    private static boolean prefixed(String taker, String prefix) { return taker.toLowerCase(Locale.ROOT).startsWith(prefix); }
+
+    private static boolean takesVariant(String taker, EntityVariantDef variant) { return taker.equalsIgnoreCase(variant.registryName.toString()); }
+
+    static boolean onTeam(@Nullable Team side, String name) { return side != null && side.getName().equals(name); }
 
     public static boolean wants(EntityVariantDef variant) {
         if (DEFS.isEmpty()) { return false; }
         if (anyGrouped) { return true; }
         for (OrderDef def : DEFS.values()) {
             for (String taker : def.takers) {
-                if (taker.equalsIgnoreCase(variant.registryName.toString())) { return true; }
+                if (takesVariant(taker, variant)) { return true; }
             }
         }
         return false;
     }
 
     private static boolean takes(OrderDef def, EntityLiving mob) {
-        EntityVariantDef variant = ContentEntities.BY_CLASS.get(mob.getClass());
+        EntityVariantDef variant = ContentEntities.variantOf(mob);
         Team side = mob.getTeam();
         for (String taker : def.takers) {
-            String lower = taker.toLowerCase(Locale.ROOT);
-            if (lower.startsWith(TEAM)) {
+            if (prefixed(taker, TEAM)) {
                 if (side != null && side.getName().equalsIgnoreCase(taker.substring(TEAM.length()))) { return true; }
                 continue;
             }
-            if (lower.startsWith(TAG)) {
+            if (prefixed(taker, TAG)) {
                 for (String tag : mob.getTags()) {
                     if (tag.equalsIgnoreCase(taker.substring(TAG.length()))) { return true; }
                 }
                 continue;
             }
-            if (variant != null && taker.equalsIgnoreCase(variant.registryName.toString())) { return true; }
+            if (variant != null && takesVariant(taker, variant)) { return true; }
         }
         return false;
     }
@@ -175,7 +183,7 @@ public final class ContentOrders {
     static boolean serves(EntityLiving mob, WorkOrder order) {
         if (!takes(order.def, mob)) { return false; }
         Team side = mob.getTeam();
-        if (!order.team.isEmpty()) { return side != null && side.getName().equals(order.team); }
+        if (!order.team.isEmpty()) { return onTeam(side, order.team); }
         UUID boss = boss(mob);
         if (boss != null) { return boss.equals(order.owner); }
         return side == null;
@@ -184,8 +192,7 @@ public final class ContentOrders {
     @Nullable static UUID boss(EntityLiving mob) {
         String kept = mob.getEntityData().getString(BOSS);
         if (kept.isEmpty()) { return null; }
-        try { return UUID.fromString(kept); }
-        catch (IllegalArgumentException ex) { return null; }
+        return Nbts.uuid(kept);
     }
 
     static void bind(EntityLiving mob, UUID player) {
@@ -200,7 +207,7 @@ public final class ContentOrders {
     static boolean isChest(@Nullable TileEntity tile) { return tile instanceof TileEntityLockableLoot && OrderItems.handler(tile.getWorld(), tile.getPos()) != null; }
 
     @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.world.isRemote) { return; }
+        if (!SideUtils.serverEnd(event)) { return; }
         OrderBoard.of(event.world).tick(event.world);
         if (event.world.getTotalWorldTime() % CHECK == 0) { signs(event.world); }
     }
@@ -211,18 +218,12 @@ public final class ContentOrders {
         EntityPlayer player = (EntityPlayer) event.getEntity();
         BlockPos pos = event.getPos();
         if (event.getPlacedBlock().getBlock() == Blocks.STANDING_SIGN || event.getPlacedBlock().getBlock() == Blocks.WALL_SIGN) {
-            PENDING.computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>()).put(pos.toImmutable(), new Pending(player.getUniqueID(), world.getTotalWorldTime() + SIGN_WAIT));
+            plotSign(world, pos, player.getUniqueID());
             return;
         }
         TileEntity tile = world.getTileEntity(pos);
         if (stockName.isEmpty() || !isChest(tile) || !((TileEntityLockableLoot) tile).hasCustomName() || !stockName.equalsIgnoreCase(((TileEntityLockableLoot) tile).getName().trim())) { return; }
-        OrderDef haul = null;
-        for (OrderDef def : DEFS.values()) {
-            if (def.job == OrderDef.Job.HAUL) {
-                haul = def;
-                break;
-            }
-        }
+        OrderDef haul = Lists.first(DEFS.values(), def -> def.job == OrderDef.Job.HAUL);
         if (haul == null) {
             ContentLog.LOGGER.error("{} placed a chest named {} at {}, {}, {}, but no pack has a haul order, so nothing keeps it stocked", player.getName(), stockName, pos.getX(), pos.getY(), pos.getZ());
             return;
@@ -232,9 +233,9 @@ public final class ContentOrders {
 
     @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) { if (!event.getWorld().isRemote && !mctmods.resourcedatapackloader.common.carry.ContentCarry.probing()) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); } }
 
-    public static void plotSign(World world, BlockPos pos) {
+    public static void plotSign(World world, BlockPos pos, @Nullable UUID owner) {
         if (DEFS.isEmpty()) { return; }
-        PENDING.computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>()).put(pos.toImmutable(), new Pending(null, world.getTotalWorldTime() + SIGN_WAIT));
+        PENDING.computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>()).put(pos.toImmutable(), new Pending(owner, world.getTotalWorldTime() + SIGN_WAIT));
     }
 
     @SubscribeEvent public static void onChunkLoad(ChunkEvent.Load event) { plotSigns(event.getWorld(), event.getChunk().getTileEntityMap().values()); }
@@ -242,7 +243,7 @@ public final class ContentOrders {
     public static void plotSigns(World world, Collection<TileEntity> tiles) {
         if (world.isRemote) { return; }
         for (TileEntity tile : new ArrayList<>(tiles)) {
-            if (tile instanceof TileEntitySign && tile.getTileData().getBoolean(PLOT_MARK)) { plotSign(world, tile.getPos()); }
+            if (tile instanceof TileEntitySign && tile.getTileData().getBoolean(PLOT_MARK)) { plotSign(world, tile.getPos(), null); }
         }
     }
 
@@ -293,12 +294,7 @@ public final class ContentOrders {
         clearMark(sign);
     }
 
-    @Nullable private static OrderDef bySign(String word) {
-        for (OrderDef def : DEFS.values()) {
-            if (!def.sign.isEmpty() && def.sign.equalsIgnoreCase(word)) { return def; }
-        }
-        return null;
-    }
+    @Nullable private static OrderDef bySign(String word) { return Lists.first(DEFS.values(), def -> !def.sign.isEmpty() && def.sign.equalsIgnoreCase(word)); }
 
     @Nullable private static BlockPos beside(World world, BlockPos sign) {
         List<BlockPos> near = new ArrayList<>();
@@ -317,7 +313,7 @@ public final class ContentOrders {
         EntityPlayer player = event.getEntityPlayer();
         EntityCreature mob = (EntityCreature) event.getTarget();
         ItemStack held = player.getHeldItemMainhand();
-        EntityVariantDef variant = ContentEntities.BY_CLASS.get(mob.getClass());
+        EntityVariantDef variant = ContentEntities.variantOf(mob);
         if (player.isSneaking() || held.isEmpty() || variant == null || !wants(variant)) { return; }
         boolean done = hired(player, mob, held) || handedTool(player, mob, held);
         if (!done) { return; }
@@ -335,24 +331,22 @@ public final class ContentOrders {
 
     private static void enlist(EntityPlayer player, EntityLiving mob) {
         ScorePlayerTeam side = teamOf(player);
-        if (side != null) { mob.world.getScoreboard().addPlayerToTeam(mob.getCachedUniqueIdString(), side.getName()); }
-        else { bind(mob, player.getUniqueID()); }
+        enlist(mob, side == null ? "" : side.getName(), player.getUniqueID());
     }
 
-    @Nullable static ScorePlayerTeam teamOf(EntityPlayer player) { return player.world.getScoreboard().getPlayersTeam(player.getName()); }
+    static void enlist(EntityLiving mob, String team, @Nullable UUID owner) {
+        if (!team.isEmpty() && mob.world.getScoreboard().getTeamNames().contains(team)) { mob.world.getScoreboard().addPlayerToTeam(mob.getCachedUniqueIdString(), team); }
+        else if (owner != null) { bind(mob, owner); }
+    }
+
+    @Nullable static ScorePlayerTeam teamOf(EntityPlayer player) { return Standing.team(player); }
 
     private static boolean handedTool(EntityPlayer player, EntityLiving mob, ItemStack held) {
-        OrderDef def = null;
-        for (OrderDef one : DEFS.values()) {
-            if (OrderItems.isKind(held, one.tool) && takes(one, mob)) {
-                def = one;
-                break;
-            }
-        }
+        OrderDef def = Lists.first(DEFS.values(), one -> OrderItems.isKind(held, one.tool) && takes(one, mob));
         if (def == null) { return false; }
         Team side = mob.getTeam();
         ScorePlayerTeam theirs = teamOf(player);
-        if (side != null && (theirs == null || !side.getName().equals(theirs.getName()))) { return false; }
+        if (side != null && (theirs == null || !onTeam(side, theirs.getName()))) { return false; }
         UUID boss = boss(mob);
         if (side == null && boss != null && !boss.equals(player.getUniqueID())) { return false; }
         BlockPos chest = nearestChest(mob.world, new BlockPos(mob), def.widest());
@@ -360,7 +354,7 @@ public final class ContentOrders {
         if (free(mob)) { enlist(player, mob); }
         ItemStack old = mob.getHeldItemMainhand();
         mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, held.copy());
-        mob.setDropChance(EntityEquipmentSlot.MAINHAND, 2.0F);
+        OrderItems.keepHeld(mob, EntityEquipmentSlot.MAINHAND);
         if (!player.capabilities.isCreativeMode) { player.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY); }
         if (!old.isEmpty() && !player.addItemStackToInventory(old)) { player.dropItem(old, false); }
         OrderBoard board = OrderBoard.of(mob.world);

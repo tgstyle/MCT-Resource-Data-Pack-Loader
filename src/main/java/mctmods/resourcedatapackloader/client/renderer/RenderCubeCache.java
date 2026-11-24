@@ -56,21 +56,24 @@ public class RenderCubeCache extends ChunkCache {
         return skyLight << 20 | blockLight << 4;
     }
 
-    @Override @Nullable public TileEntity getTileEntity(BlockPos pos) {
-        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
-        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
-        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (!inRange(arrayX, arrayY, arrayZ)) { return null; }
-        return this.tileEntities[arrayX][arrayY][arrayZ].get(pos);
+    @Override @Nullable public TileEntity getTileEntity(@Nonnull BlockPos pos) {
+        int[] index = indexOf(pos);
+        if (index == null) { return null; }
+        return this.tileEntities[index[0]][index[1]][index[2]].get(pos);
     }
 
     private boolean inRange(int arrayX, int arrayY, int arrayZ) { return arrayX >= 0 && arrayX < this.cubeArrays.length && arrayY >= 0 && arrayY < this.cubeArrays[arrayX].length && arrayZ >= 0 && arrayZ < this.cubeArrays[arrayX][arrayY].length; }
 
-    @Nullable private ExtendedBlockStorage storageAt(BlockPos pos) {
+    @Nullable private int[] indexOf(BlockPos pos) {
         int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
         int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
         int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        return inRange(arrayX, arrayY, arrayZ) ? this.cubeArrays[arrayX][arrayY][arrayZ] : null;
+        return inRange(arrayX, arrayY, arrayZ) ? new int[] {arrayX, arrayY, arrayZ} : null;
+    }
+
+    @Nullable private ExtendedBlockStorage storageAt(BlockPos pos) {
+        int[] index = indexOf(pos);
+        return index == null ? null : this.cubeArrays[index[0]][index[1]][index[2]];
     }
 
     @Override @Nonnull public IBlockState getBlockState(@Nonnull BlockPos pos) {
@@ -92,8 +95,7 @@ public class RenderCubeCache extends ChunkCache {
             }
             return max;
         }
-        ExtendedBlockStorage cube = storageAt(pos);
-        return cube == null ? type.defaultLightValue : getRawLight(cube, type, pos);
+        return getLightFor(type, pos);
     }
 
     @Override public int getLightFor(@Nonnull EnumSkyBlock type, @Nonnull BlockPos pos) {

@@ -10,7 +10,9 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
+import mctmods.resourcedatapackloader.common.util.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.WorldEvents;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentField;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
@@ -44,7 +46,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -73,6 +74,7 @@ public final class ContentHardness {
     private static final List<String> BECOMES_KEYS = Collections.unmodifiableList(Arrays.asList("advancement", "block"));
     private static final List<String> FIELD_KEYS = Collections.unmodifiableList(Arrays.asList("type", "spread", "chances", "cell", "seeds", "reach", "arms", "armReach"));
     private static final List<String> RANGE_KEYS = Collections.unmodifiableList(Arrays.asList("min", "max"));
+    public static final String SWAP_PREFIX = "swap:";
     private static final Map<ResourceLocation, HardnessDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, List<HardnessDef>> WHOLE = new IdentityHashMap<>();
     private static final Map<IBlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
@@ -95,7 +97,7 @@ public final class ContentHardness {
             HardnessDef def = read(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
-        if (!DEFS.isEmpty()) { Summary.info("hardness", "Loaded " + DEFS.size() + " hardness group(s)"); }
+        Summary.loaded("hardness", DEFS.size(), "hardness group(s)");
         return !DEFS.isEmpty();
     }
 
@@ -148,11 +150,10 @@ public final class ContentHardness {
 
     @Nullable public static HardnessDef groupFor(@Nullable IBlockState state, @Nullable EntityLivingBase who) {
         if (state == null || idle()) { return null; }
-        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return null; }
-        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return null; }
+        if (denied(state)) { return null; }
         HardnessDef open = null;
         List<HardnessDef> whole = WHOLE.get(state.getBlock());
-        List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
+        List<HardnessDef> exact = exactFor(state);
         for (int side = 0; side < 2; side++) {
             List<HardnessDef> defs = side == 0 ? whole : exact;
             if (defs == null) { continue; }
@@ -219,6 +220,8 @@ public final class ContentHardness {
         return id != null && def.entities.contains(id.toString());
     }
 
+    public static boolean mayBreak(@Nullable EntityLivingBase who, World world, BlockPos pos, ItemStack held, Block block) { return held.canDestroy(block) || mayBreak(who, world.getBlockState(pos), held); }
+
     public static boolean digBarred(EntityLivingBase mob, @Nullable IBlockState state, ItemStack held) {
         HardnessDef def = groupFor(state, mob);
         if (def == null || !def.adventure || mob.world.getWorldInfo().getGameType() != GameType.ADVENTURE) { return false; }
@@ -230,22 +233,16 @@ public final class ContentHardness {
     public static List<ItemStack> harvest(EntityLivingBase digger, BlockPos pos, int fortune) {
         World world = digger.world;
         IBlockState state = world.getBlockState(pos);
-        List<ItemStack> kept = new ArrayList<>();
-        if (state.getBlock().isAir(state, world, pos)) { return kept; }
+        if (state.getBlock().isAir(state, world, pos)) { return new ArrayList<>(); }
         int earned = mctmods.resourcedatapackloader.common.entities.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, fortune) : 0;
-        NonNullList<ItemStack> drops = NonNullList.create();
-        state.getBlock().getDrops(drops, world, pos, state, fortune);
-        float chance = ForgeEventFactory.fireBlockHarvesting(drops, world, pos, state, fortune, 1.0F, false, null);
-        for (ItemStack drop : drops) {
-            if (!drop.isEmpty() && world.rand.nextFloat() <= chance) { kept.add(drop); }
-        }
-        world.playEvent(2001, pos, Block.getStateId(state));
+        List<ItemStack> kept = BlockDrops.roll(world, pos, state, fortune, null);
+        WorldEvents.breakEffect(world, null, pos, state);
         if (breaksAway(state, null)) { world.setBlockToAir(pos); }
         if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         return kept;
     }
 
-    public static String swapToken(HardnessDef def) { return "swap:" + def.registryName; }
+    public static String swapToken(HardnessDef def) { return SWAP_PREFIX + def.registryName; }
 
     private static String swapKey(HardnessDef def) { return "hardness:" + def.registryName; }
 
@@ -260,13 +257,16 @@ public final class ContentHardness {
     }
 
     private static boolean outsideGroup(HardnessDef def, IBlockState state) {
-        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return true; }
-        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return true; }
+        if (denied(state)) { return true; }
         List<HardnessDef> whole = WHOLE.get(state.getBlock());
         if (whole != null && whole.contains(def)) { return false; }
-        List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
+        List<HardnessDef> exact = exactFor(state);
         return exact == null || !exact.contains(def);
     }
+
+    private static boolean denied(IBlockState state) { return !DENIED.isEmpty() && DENIED.containsKey(state.getBlock()) || !DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state); }
+
+    @Nullable private static List<HardnessDef> exactFor(IBlockState state) { return EXACT.isEmpty() ? null : EXACT.get(state); }
 
     public static int swap(World world, int chunkX, int chunkZ, HardnessDef def) {
         IBlockState target = BECOMES.get(def);
@@ -357,7 +357,7 @@ public final class ContentHardness {
             state.getBlock().harvestBlock(world, player, pos, state, world.getTileEntity(pos), before);
             if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         }
-        world.playEvent(player, 2001, pos, Block.getStateId(state));
+        WorldEvents.breakEffect(world, player, pos, state);
     }
 
     @SubscribeEvent public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {

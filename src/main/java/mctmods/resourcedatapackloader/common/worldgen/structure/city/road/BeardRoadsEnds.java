@@ -20,7 +20,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -31,6 +30,8 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 
 public final class BeardRoadsEnds {
+    private static final String SIDEWALK = "sidewalk";
+    private static final String BARRIER = "barrier";
     private BeardRoadsEnds() {}
 
     public static final class Bulb {
@@ -173,7 +174,7 @@ public final class BeardRoadsEnds {
                     if (above.getBlock() == Blocks.AIR) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     if (above.getMaterial().isLiquid()) { break; }
-                    if (BeardBlocks.terrainBlock(above.getBlock()) || above.getBlock() == Blocks.GRASS_PATH || above.getBlock() == Blocks.SANDSTONE || above.getBlock() == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
+                    if (BeardBlocks.clearableAbove(above)) {
                         world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                         continue;
                     }
@@ -257,8 +258,8 @@ public final class BeardRoadsEnds {
         IBlockState rail = BeardRoads.bridgeBarrierBlock(Blocks.AIR.getDefaultState());
         List<String> usable = new ArrayList<>(wanted.length);
         for (String asked : wanted) {
-            if ("sidewalk".equals(asked) && walk.getBlock() != Blocks.AIR && !BeardRoads.roadNarrow(piece.getBoundingBox(), alongX)) { usable.add(asked); }
-            else if ("barrier".equals(asked) && rail.getBlock() != Blocks.AIR) { usable.add(asked); }
+            if (SIDEWALK.equals(asked) && walk.getBlock() != Blocks.AIR && !BeardRoads.roadNarrow(piece.getBoundingBox(), alongX)) { usable.add(asked); }
+            else if (BARRIER.equals(asked) && rail.getBlock() != Blocks.AIR) { usable.add(asked); }
         }
         if (usable.isEmpty()) { return null; }
         StructureBoundingBox box = piece.getBoundingBox();
@@ -285,7 +286,7 @@ public final class BeardRoadsEnds {
         int z = alongX ? across : row;
         String style = usable.get(Math.floorMod(SeededRandom.at(world, alongX ? row : acrossLeast, alongX ? acrossLeast : row).nextInt(Integer.MAX_VALUE), usable.size()));
         if (across == acrossLeast && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The end row {} of the road at {}, {} closes as {}", row, box.minX, box.minZ, style); }
-        if ("sidewalk".equals(style)) {
+        if (SIDEWALK.equals(style)) {
             at.setPos(x, level, z);
             world.setBlockState(at, walk, BlockFlags.UPDATE_CLIENTS);
             BeardKeep.holdSpot(x, level, z);

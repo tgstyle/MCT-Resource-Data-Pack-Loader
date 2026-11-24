@@ -14,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentSeasonSnow {
@@ -24,7 +25,7 @@ public final class ContentSeasonSnow {
 
     @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
         World world = event.world;
-        if (event.phase != TickEvent.Phase.END || world.isRemote || world.playerEntities.isEmpty()) { return; }
+        if (!SideUtils.serverEnd(event) || world.playerEntities.isEmpty()) { return; }
         int reach = reach(world);
         for (EntityPlayer player : world.playerEntities) {
             if (player.isSpectator()) { continue; }

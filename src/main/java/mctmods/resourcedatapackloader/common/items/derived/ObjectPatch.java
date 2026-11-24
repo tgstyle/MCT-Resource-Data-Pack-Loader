@@ -1,8 +1,8 @@
 package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.MemberNames;
-import mctmods.resourcedatapackloader.core.util.Unsafes;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.common.primitives.Primitives;
@@ -23,7 +23,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 public final class ObjectPatch {
-    private static final List<String> SPEC_KEYS = Collections.unmodifiableList(Arrays.asList("set", "returns", "addTo"));
+    static final String SET = "set";
+    static final String RETURNS = "returns";
+    static final String ADD_TO = "addTo";
+    private static final List<String> SPEC_KEYS = Collections.unmodifiableList(Arrays.asList(SET, RETURNS, ADD_TO));
     private static final JsonObject NONE = new JsonObject();
 
     private ObjectPatch() {}
@@ -43,11 +46,11 @@ public final class ObjectPatch {
             Json.unknownKeys(spec, path, SPEC_KEYS);
             return null;
         });
-        JsonObject returns = member(spec, "returns", owner, path);
+        JsonObject returns = member(spec, RETURNS, owner, path);
         Object made = copy(source, owner, path, returns);
         if (made == null) { return null; }
-        String addTo = Json.getString(spec, "addTo", "").trim();
-        apply(made, member(spec, "set", owner, path), addTo.isEmpty() ? null : addTo, owner, path);
+        String addTo = Json.getString(spec, ADD_TO, "").trim();
+        apply(made, member(spec, SET, owner, path), addTo.isEmpty() ? null : addTo, owner, path);
         DerivedObjects.put(owner, path, made);
         return made;
     }
@@ -61,7 +64,7 @@ public final class ObjectPatch {
             if (field == null) { return; }
             Object value = field.get(holder);
             if (value == null) {
-                ContentLog.LOGGER.error("Derived item {} sets below {}, which holds nothing, leaving it out", owner, walked);
+                DerivedLog.skip(owner, "sets below {}, which holds nothing", walked);
                 return;
             }
             if (!owned.contains(value)) {
@@ -84,7 +87,7 @@ public final class ObjectPatch {
         Field field = MemberNames.field(holder.getClass(), name);
         if (field == null) { return null; }
         if (Modifier.isStatic(field.getModifiers())) {
-            ContentLog.LOGGER.error("Derived item {} sets {}, but static fields are shared by every item, not written, leaving it out", owner, path);
+            DerivedLog.skip(owner, "sets {}, but static fields are shared by every item, not written", path);
             return null;
         }
         field.setAccessible(true);
@@ -96,7 +99,7 @@ public final class ObjectPatch {
         if (json.isJsonObject()) {
             Object current = field.get(holder);
             if (current == null) {
-                ContentLog.LOGGER.error("Derived item {} sets {} to an object, but it holds nothing to copy, leaving it out", owner, path);
+                DerivedLog.skip(owner, "sets {} to an object, but it holds nothing to copy", path);
                 return DerivedConstants.MISSING;
             }
             Object made = nested(current, json.getAsJsonObject(), owner, path);
@@ -112,7 +115,7 @@ public final class ObjectPatch {
     }
 
     private static boolean reuses(Class<?> type, JsonElement json) {
-        if (!json.isJsonPrimitive() || !json.getAsJsonPrimitive().isString() || json.getAsString().indexOf(':') < 0) { return false; }
+        if (!Json.isString(json) || json.getAsString().indexOf(':') < 0) { return false; }
         return !Primitives.unwrap(type).isPrimitive() && type != String.class && type != ResourceLocation.class && type != ItemStack.class && !type.isArray() && !Collection.class.isAssignableFrom(type) && !IForgeRegistryEntry.class.isAssignableFrom(type);
     }
 
@@ -121,7 +124,7 @@ public final class ObjectPatch {
         try { found = DerivedObjects.get(new ResourceLocation(text), path); }
         catch (RuntimeException notAName) { ContentLog.LOGGER.debug("{} is not an item name", text); }
         if (found == null || !type.isInstance(found)) {
-            ContentLog.LOGGER.error("Derived item {} sets {} to the object of {}, which is no derived item that built a {} there, leaving it out", owner, path, text, type.getSimpleName());
+            DerivedLog.skip(owner, "sets {} to the object of {}, which is no derived item that built a {} there", path, text, type.getSimpleName());
             return DerivedConstants.MISSING;
         }
         return found;
@@ -130,27 +133,24 @@ public final class ObjectPatch {
     @Nullable private static Object copy(Object value, ResourceLocation owner, String path, JsonObject returns) {
         Class<?> type = value.getClass();
         if (type.isArray() || value instanceof Collection || value instanceof Map) {
-            ContentLog.LOGGER.error("Derived item {} reaches {} through an array or collection, but paths do not go through arrays, leaving it out", owner, path);
+            DerivedLog.skip(owner, "reaches {} through an array or collection, but paths do not go through arrays", path);
             return null;
         }
         if (returns.size() == 0 && MaterialCopies.isMaterial(value)) { return MaterialCopies.copy(value, owner, path); }
         if (value instanceof Enum || type.getName().startsWith("java.")) {
-            ContentLog.LOGGER.error("Derived item {} changes {}, a {}, which cannot be copied, leaving it out", owner, path, type.getName());
+            DerivedLog.skip(owner, "changes {}, a {}, which cannot be copied", path, type.getName());
             return null;
         }
         if (returns.size() != 0) {
-            ResourceLocation key = new ResourceLocation(owner.getNamespace(), owner.getPath() + "_" + path.replaceAll("[^A-Za-z0-9_]", "_"));
+            ResourceLocation key = new ResourceLocation(owner.getNamespace(), owner.getPath() + "_" + IdNames.javaSafe(path));
             List<ItemClassMaker.Override> overrides = ItemOverrides.plan(type, key, returns, value);
             if (!overrides.isEmpty()) {
-                Class<?> made = ItemClassMaker.make(type, key, overrides);
+                Class<?> made = ItemOverrides.makeStored(type, key, overrides);
                 if (made == null) { return null; }
-                ItemOverrides.store(key, overrides);
                 type = made;
             }
         }
-        Object copy = Unsafes.allocate(type);
-        FieldCopy.all(value, copy);
-        return copy;
+        return FieldCopy.copy(value, type);
     }
 
     private static JsonObject member(JsonObject spec, String name, ResourceLocation owner, String path) {

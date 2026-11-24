@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world.gen.structure;
 
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.villages.CityGrowth;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.villages.RailPiece;
@@ -76,12 +77,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (roadAlongX == (box.maxX - box.minX >= box.maxZ - box.minZ)) { return false; }
         StructureBoundingBox ew = roadAlongX ? road : box;
         StructureBoundingBox ns = roadAlongX ? box : road;
-        int ewCenter = (ew.minZ + ew.maxZ) / 2;
-        int nsCenter = (ns.minX + ns.maxX) / 2;
+        int ewCenter = StructureBoxes.centerZ(ew);
+        int nsCenter = StructureBoxes.centerX(ns);
         return (ewCenter >= ns.minZ && ewCenter <= ns.maxZ) || (nsCenter >= ew.minX && nsCenter <= ew.maxX);
     }
 
-    @Unique private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) { return held.maxX >= box.minX - gap && held.minX <= box.maxX + gap && held.maxZ >= box.minZ - gap && held.minZ <= box.maxZ + gap; }
+    @Unique private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) { return held.intersectsWith(box.minX - gap, box.minZ - gap, box.maxX + gap, box.maxZ + gap); }
 
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z")) private boolean rdpl$ruledBlocks(World world, BlockPos pos, IBlockState newState, int flags) {
         if (rdpl$plotPiece()) {

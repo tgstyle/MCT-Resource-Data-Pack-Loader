@@ -2,8 +2,12 @@ package mctmods.resourcedatapackloader.common.enchantments;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.EnchantmentDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.EnchantmentEffectDef;
+import mctmods.resourcedatapackloader.common.util.TableMath;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.enchantment.Enchantment;
@@ -20,6 +24,37 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 
 public class ContentEnchantment extends Enchantment {
+    static final Map<String, Rarity> RARITIES = new LinkedHashMap<>();
+    static final Map<String, EnumEnchantmentType> CATEGORIES = new LinkedHashMap<>();
+    static final Map<String, Predicate<DamageSource>> PROTECTIONS = new LinkedHashMap<>();
+    static final Map<String, EnumCreatureAttribute> MOBS = new LinkedHashMap<>();
+    static {
+        RARITIES.put("common", Rarity.COMMON);
+        RARITIES.put("uncommon", Rarity.UNCOMMON);
+        RARITIES.put("rare", Rarity.RARE);
+        RARITIES.put("very_rare", Rarity.VERY_RARE);
+        CATEGORIES.put("armor", EnumEnchantmentType.ARMOR);
+        CATEGORIES.put("armor_head", EnumEnchantmentType.ARMOR_HEAD);
+        CATEGORIES.put("armor_chest", EnumEnchantmentType.ARMOR_CHEST);
+        CATEGORIES.put("armor_legs", EnumEnchantmentType.ARMOR_LEGS);
+        CATEGORIES.put("armor_feet", EnumEnchantmentType.ARMOR_FEET);
+        CATEGORIES.put("weapon", EnumEnchantmentType.WEAPON);
+        CATEGORIES.put("digger", EnumEnchantmentType.DIGGER);
+        CATEGORIES.put("fishing_rod", EnumEnchantmentType.FISHING_ROD);
+        CATEGORIES.put("breakable", EnumEnchantmentType.BREAKABLE);
+        CATEGORIES.put("bow", EnumEnchantmentType.BOW);
+        CATEGORIES.put("wearable", EnumEnchantmentType.WEARABLE);
+        PROTECTIONS.put("all", source -> true);
+        PROTECTIONS.put("fire", DamageSource::isFireDamage);
+        PROTECTIONS.put("fall", source -> source == DamageSource.FALL);
+        PROTECTIONS.put("explosion", DamageSource::isExplosion);
+        PROTECTIONS.put("projectile", DamageSource::isProjectile);
+        MOBS.put("any", null);
+        MOBS.put("undead", EnumCreatureAttribute.UNDEAD);
+        MOBS.put("arthropod", EnumCreatureAttribute.ARTHROPOD);
+        MOBS.put("illager", EnumCreatureAttribute.ILLAGER);
+    }
+
     private final EnchantmentDef def;
     private final List<EnchantmentEffectDef> effects;
     @Nullable private final EnumEnchantmentType category;
@@ -32,30 +67,9 @@ public class ContentEnchantment extends Enchantment {
         setRegistryName(def.registryName);
     }
 
-    private static Rarity rarity(String name) {
-        switch (name) {
-            case "uncommon": return Rarity.UNCOMMON;
-            case "rare": return Rarity.RARE;
-            case "very_rare": return Rarity.VERY_RARE;
-            default: return Rarity.COMMON;
-        }
-    }
+    private static Rarity rarity(String name) { return RARITIES.getOrDefault(name, Rarity.COMMON); }
 
-    private static EnumEnchantmentType type(String name) {
-        switch (name) {
-            case "armor": return EnumEnchantmentType.ARMOR;
-            case "armor_head": return EnumEnchantmentType.ARMOR_HEAD;
-            case "armor_chest": return EnumEnchantmentType.ARMOR_CHEST;
-            case "armor_legs": return EnumEnchantmentType.ARMOR_LEGS;
-            case "armor_feet": return EnumEnchantmentType.ARMOR_FEET;
-            case "weapon": return EnumEnchantmentType.WEAPON;
-            case "digger": return EnumEnchantmentType.DIGGER;
-            case "fishing_rod": return EnumEnchantmentType.FISHING_ROD;
-            case "bow": return EnumEnchantmentType.BOW;
-            case "wearable": return EnumEnchantmentType.WEARABLE;
-            default: return EnumEnchantmentType.BREAKABLE;
-        }
-    }
+    private static EnumEnchantmentType type(String name) { return CATEGORIES.getOrDefault(name, EnumEnchantmentType.BREAKABLE); }
 
     private static EntityEquipmentSlot[] slots(List<String> names) {
         EntityEquipmentSlot[] slots = new EntityEquipmentSlot[names.size()];
@@ -74,9 +88,9 @@ public class ContentEnchantment extends Enchantment {
 
     @Override public int getMaxLevel() { return def.maxLevel; }
 
-    @Override public int getMinEnchantability(int level) { return def.minBase + def.minPerLevel * (level - 1); }
+    @Override public int getMinEnchantability(int level) { return (int) TableMath.perLevel(def.minBase, def.minPerLevel, level); }
 
-    @Override public int getMaxEnchantability(int level) { return def.maxBase + def.maxPerLevel * (level - 1); }
+    @Override public int getMaxEnchantability(int level) { return (int) TableMath.perLevel(def.maxBase, def.maxPerLevel, level); }
 
     @Override public boolean isTreasureEnchantment() { return def.treasure; }
 
@@ -88,42 +102,32 @@ public class ContentEnchantment extends Enchantment {
 
     @Override public int calcModifierDamage(int level, @Nonnull DamageSource source) {
         if (source.canHarmInCreative()) { return 0; }
-        int total = 0;
+        return (int) sum("protection", effect -> protects(effect, source), level);
+    }
+
+    private float sum(String type, Predicate<EnchantmentEffectDef> applies, int level) {
+        float total = 0.0F;
         for (EnchantmentEffectDef effect : effects) {
-            if (effect.type.equals("protection") && protects(effect, source)) { total += (int) effect.amount(level); }
+            if (effect.type.equals(type) && applies.test(effect)) { total += (float) effect.amount(level); }
         }
         return total;
     }
 
     private static boolean protects(EnchantmentEffectDef effect, DamageSource source) {
         for (String kind : effect.from) {
-            switch (kind) {
-                case "all": return true;
-                case "fire": if (source.isFireDamage()) { return true; } break;
-                case "fall": if (source == DamageSource.FALL) { return true; } break;
-                case "explosion": if (source.isExplosion()) { return true; } break;
-                case "projectile": if (source.isProjectile()) { return true; } break;
-                default: break;
-            }
+            Predicate<DamageSource> covers = PROTECTIONS.get(kind);
+            if (covers != null && covers.test(source)) { return true; }
         }
         return false;
     }
 
     @Override public float calcDamageByCreature(int level, @Nonnull EnumCreatureAttribute creature) {
-        float total = 0.0F;
-        for (EnchantmentEffectDef effect : effects) {
-            if (effect.type.equals("damage") && hits(effect.mob, creature)) { total += (float) effect.amount(level); }
-        }
-        return total;
+        return sum("damage", effect -> hits(effect.mob, creature), level);
     }
 
     private static boolean hits(String mob, EnumCreatureAttribute creature) {
-        switch (mob) {
-            case "undead": return creature == EnumCreatureAttribute.UNDEAD;
-            case "arthropod": return creature == EnumCreatureAttribute.ARTHROPOD;
-            case "illager": return creature == EnumCreatureAttribute.ILLAGER;
-            default: return true;
-        }
+        EnumCreatureAttribute wanted = MOBS.get(mob);
+        return wanted == null || creature == wanted;
     }
 
     @Override public void onEntityDamaged(@Nonnull EntityLivingBase user, @Nonnull Entity target, int level) { apply("attack", user, target, level); }

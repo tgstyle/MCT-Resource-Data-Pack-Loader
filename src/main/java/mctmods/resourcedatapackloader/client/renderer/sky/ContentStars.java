@@ -3,15 +3,14 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -19,7 +18,7 @@ import org.lwjgl.opengl.GL11;
 
 @SideOnly(Side.CLIENT) public final class ContentStars {
     public static final ContentStars VANILLA = new ContentStars(1500, 0.15F, new SkyOccluder[0]);
-    private static final double RADIUS = 100.0D;
+    private static final double RADIUS = SkyOccluder.RADIUS;
     private static final int GROUPS = 8;
     private static final float[] SPEED = {2.1F, 3.3F, 1.7F, 2.9F, 3.7F, 1.3F, 2.5F, 3.1F};
     private static final float PHASE = 2.4F;
@@ -27,8 +26,8 @@ import org.lwjgl.opengl.GL11;
     private final float size;
     private final SkyOccluder[] occluders;
     private final boolean dynamic;
-    private int lists = -1;
-    private int movingLists = -1;
+    private final DisplayLists lists = new DisplayLists(GROUPS);
+    private final DisplayLists movingLists = new DisplayLists(GROUPS);
     private int built;
     private int step = Integer.MIN_VALUE;
     private double[][] stars;
@@ -49,7 +48,7 @@ import org.lwjgl.opengl.GL11;
     }
 
     public void draw(World world, float brightness, float partialTicks, float turn) {
-        if (lists < 0 || built != SkyOccluder.current()) {
+        if (lists.empty() || built != SkyOccluder.current()) {
             release();
             build();
         }
@@ -58,26 +57,22 @@ import org.lwjgl.opengl.GL11;
         SkyLookDef look = ContentFogSampler.look(world);
         int color = look == null || look.starColor == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor;
         float twinkle = look == null ? 0.0F : look.starTwinkle;
-        float red = Colors.red(color) / 255.0F;
-        float green = Colors.green(color) / 255.0F;
-        float blue = Colors.blue(color) / 255.0F;
+        float red = Colors.redF(color);
+        float green = Colors.greenF(color);
+        float blue = Colors.blueF(color);
         float time = (world.getTotalWorldTime() % DimensionTraitsDef.VANILLA_DAY + partialTicks) / 20.0F;
         for (int group = 0; group < GROUPS; ++group) {
-            float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * MathHelper.sin(time * SPEED[group] + group * PHASE)));
+            float shown = brightness * (1.0F - twinkle * MathUtil.wave(time * SPEED[group] + group * PHASE, 0.5F, 0.5F));
             GlStateManager.color(red * shown, green * shown, blue * shown, shown);
-            GlStateManager.callList(lists + group);
-            if (dynamic) { GlStateManager.callList(movingLists + group); }
+            GlStateManager.callList(lists.base() + group);
+            if (dynamic) { GlStateManager.callList(movingLists.base() + group); }
         }
     }
 
     void release() {
-        if (lists < 0) { return; }
-        GLAllocation.deleteDisplayLists(lists, GROUPS);
-        lists = -1;
-        if (movingLists >= 0) {
-            GLAllocation.deleteDisplayLists(movingLists, GROUPS);
-            movingLists = -1;
-        }
+        if (lists.empty()) { return; }
+        lists.release();
+        movingLists.release();
         step = Integer.MIN_VALUE;
     }
 
@@ -86,7 +81,7 @@ import org.lwjgl.opengl.GL11;
         for (SkyOccluder body : occluders) {
             if (body.fixed()) { body.turn(now / 1000.0F); }
         }
-        compile(movingLists, true);
+        compile(movingLists.base(), true);
     }
 
     private void build() {
@@ -101,9 +96,8 @@ import org.lwjgl.opengl.GL11;
             stars[star] = quad;
             moving[star] = sweeps(quad);
         }
-        lists = GLAllocation.generateDisplayLists(GROUPS);
-        compile(lists, false);
-        if (dynamic) { movingLists = GLAllocation.generateDisplayLists(GROUPS); }
+        compile(lists.generate(), false);
+        if (dynamic) { movingLists.generate(); }
     }
 
     private void compile(int base, boolean sweeping) {

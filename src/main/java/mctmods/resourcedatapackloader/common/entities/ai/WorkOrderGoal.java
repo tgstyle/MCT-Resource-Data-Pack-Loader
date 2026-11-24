@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -42,7 +41,7 @@ public final class WorkOrderGoal extends EntityAIBase {
     }
 
     @Override public boolean shouldExecute() {
-        if (mob.world.isRemote || (mob.ticksExisted + mob.getEntityId()) % LOOK != 0) { return false; }
+        if ((mob.ticksExisted + mob.getEntityId()) % LOOK != 0) { return false; }
         order = OrderBoard.claim(mob);
         return order != null;
     }
@@ -54,13 +53,13 @@ public final class WorkOrderGoal extends EntityAIBase {
         target = null;
         total = 0;
         walked = 0;
-        mob.setDropChance(EntityEquipmentSlot.MAINHAND, 2.0F);
-        mob.setDropChance(EntityEquipmentSlot.OFFHAND, 2.0F);
+        OrderItems.keepHeld(mob, EntityEquipmentSlot.MAINHAND);
+        OrderItems.keepHeld(mob, EntityEquipmentSlot.OFFHAND);
         stage = order != null && !order.def.deliversToSelf && OrderItems.carriesAny(mob) ? Stage.DELIVER : Stage.WORK;
     }
 
     @Override public void resetTask() {
-        if (target != null && total > 0) { mob.world.sendBlockBreakProgress(mob.getEntityId(), target, -1); }
+        if (target != null && total > 0) { BlockBreak.clear(mob, target); }
         if (target != null && order != null && stage == Stage.WORK) { order.giveBack(target); }
         OrderBoard.release(mob, order);
         order = null;
@@ -103,7 +102,7 @@ public final class WorkOrderGoal extends EntityAIBase {
         if (total == 0 && blocked(held, pos, state)) { return; }
         left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
-        mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, -1);
+        BlockBreak.clear(mob, pos);
         harvest(held, pos, state);
     }
 
@@ -229,7 +228,7 @@ public final class WorkOrderGoal extends EntityAIBase {
         stop();
     }
 
-    private boolean far(BlockPos pos) { return mob.getDistanceSq(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) > REACH_SQ; }
+    private boolean far(BlockPos pos) { return mob.getDistanceSqToCenter(pos) > REACH_SQ; }
 
     private void walk(BlockPos pos) {
         if (++walked > GIVE_UP) {
@@ -242,11 +241,10 @@ public final class WorkOrderGoal extends EntityAIBase {
         BlockPos to = approach(pos);
         double pace = Walking.pace(mob);
         if (Walking.toBlock(mob, to, pace)) { return; }
-        Vec3d aim = new Vec3d(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D);
+        Vec3d aim = Walking.feet(to);
         double floor = Math.min(mob.posY, to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {
-            Vec3d toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 10, 7, aim);
-            if (toward != null && toward.y >= floor && mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, pace)) { return; }
+            if (Walking.toward(mob, aim, 10, 7, pace, spot -> spot.y >= floor)) { return; }
         }
     }
 

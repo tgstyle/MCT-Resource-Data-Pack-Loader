@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
+import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -28,8 +29,9 @@ public final class Standing {
     }
 
     public static Standing parse(JsonObject json) {
-        Integer least = json.has("scoreAtLeast") ? Json.getInt(json, "scoreAtLeast") : null;
-        int diet = json.has("dietAtLeast") ? Math.max(1, Json.getInt(json, "dietAtLeast")) : 0;
+        Integer least = Json.intOrNull(json, "scoreAtLeast");
+        Integer atLeast = Json.intOrNull(json, "dietAtLeast");
+        int diet = atLeast == null ? 0 : Math.max(1, atLeast);
         if (diet > 0 && !ContentDiet.loaded()) { ContentLog.LOGGER.error("A dietAtLeast condition is set, but no diet file is loaded, so it is never met"); }
         return new Standing(Json.getString(json, "team", "").trim(), Json.getString(json, "objective", "").trim(), least, diet, diet > 0 && ContentDiet.lifetime(json, "A dietAtLeast condition"));
     }
@@ -57,9 +59,11 @@ public final class Standing {
     public boolean earnedBy(EntityPlayer player) { return any() && met(player); }
 
     public static String teamOf(EntityPlayer player) {
-        ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
+        ScorePlayerTeam held = team(player);
         return held == null ? "" : held.getName();
     }
+
+    @Nullable public static ScorePlayerTeam team(EntityPlayer player) { return ContentTeams.teamOf(player.world, player.getName()); }
 
     @Nullable public static Integer score(EntityPlayer player, String objective) {
         Scoreboard board = player.world.getScoreboard();

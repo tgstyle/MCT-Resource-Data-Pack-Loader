@@ -9,6 +9,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -22,7 +23,7 @@ public final class ContentCompassNeedle implements IItemPropertyGetter {
         boolean held = holder != null;
         Entity entity = held ? holder : stack.getItemFrame();
         if (entity == null) { return 0.0F; }
-        World where = world == null ? entity.world : world;
+        World where = Objects.requireNonNull(ItemVariants.where(stack, world, holder));
         NBTTagCompound target = stack.getSubCompound(ContentCompass.TAG);
         double turn;
         if (target != null && target.getInteger(ContentCompass.DIMENSION) == where.provider.getDimension()) {

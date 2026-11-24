@@ -7,15 +7,22 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
 public final class TreeEntry {
+    public static final byte PHASE_SAPLING = 0;
+    public static final byte PHASE_GROWING = 1;
     public static final byte PHASE_FELLED = 2;
     public static final byte KIND_STRUCTURE = 0;
+    public static final int ORIGIN = pack(0, 0, 0);
 
     public final long pos;
     public final String rule;
@@ -69,7 +76,19 @@ public final class TreeEntry {
         this.blockEntities = blockEntities;
     }
 
+    public static TreeEntry fresh(long pos, String rule, byte phase, int pick, byte kind, String source, byte turn, byte mirror, long seed, int steps, long now, Map<Integer, IBlockState> saplings, int hash, List<IBlockState> palette, int[] blocks, int[] states, int[] under, Map<Integer, NBTTagCompound> blockEntities) {
+        return new TreeEntry(pos, rule, phase, new int[0], pick, kind, source, turn, mirror, seed, 0, steps, now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), hash, palette, blocks, states, under, blockEntities);
+    }
+
     public static int pack(int dx, int dy, int dz) { return (dx + 24) | ((dz + 24) << 6) | ((dy + 16) << 12); }
+
+    public static int pack(BlockPos rel) { return pack(rel.getX(), rel.getY(), rel.getZ()); }
+
+    public static BlockPos unpack(int packed) { return new BlockPos(unpackX(packed), unpackY(packed), unpackZ(packed)); }
+
+    public static BlockPos at(BlockPos start, int packed) { return start.add(unpackX(packed), unpackY(packed), unpackZ(packed)); }
+
+    @Nullable public IBlockState originSapling() { return saplings.get(ORIGIN); }
 
     public static int unpackX(int packed) { return (packed & 63) - 24; }
 
@@ -113,14 +132,27 @@ public final class TreeEntry {
         return tag;
     }
 
-    private static Map<Integer, IBlockState> readSaplings(NBTTagList list) {
-        Map<Integer, IBlockState> saplings = new LinkedHashMap<>();
+    private static <V> Map<Integer, V> readKeyed(NBTTagList list, String key, String value, Function<NBTTagCompound, V> decode) {
+        Map<Integer, V> keyed = new LinkedHashMap<>();
         for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound sapling = list.getCompoundTagAt(i);
-            saplings.put(sapling.getInteger("P"), NBTUtil.readBlockState(sapling.getCompoundTag("S")));
+            NBTTagCompound entry = list.getCompoundTagAt(i);
+            keyed.put(entry.getInteger(key), decode.apply(entry.getCompoundTag(value)));
         }
-        return saplings;
+        return keyed;
     }
+
+    private static <V> NBTTagList writeKeyed(Map<Integer, V> map, String key, String value, Function<V, NBTBase> encode) {
+        NBTTagList list = new NBTTagList();
+        for (Map.Entry<Integer, V> entry : map.entrySet()) {
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setInteger(key, entry.getKey());
+            tag.setTag(value, encode.apply(entry.getValue()));
+            list.appendTag(tag);
+        }
+        return list;
+    }
+
+    private static Map<Integer, IBlockState> readSaplings(NBTTagList list) { return readKeyed(list, "P", "S", NBTUtil::readBlockState); }
 
     private static List<IBlockState> readPalette(NBTTagList list) {
         List<IBlockState> palette = new ArrayList<>();
@@ -128,25 +160,9 @@ public final class TreeEntry {
         return palette;
     }
 
-    private static Map<Integer, NBTTagCompound> readBlockEntities(NBTTagList list) {
-        Map<Integer, NBTTagCompound> blockEntities = new LinkedHashMap<>();
-        for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound entry = list.getCompoundTagAt(i);
-            blockEntities.put(entry.getInteger("I"), entry.getCompoundTag("Data"));
-        }
-        return blockEntities;
-    }
+    private static Map<Integer, NBTTagCompound> readBlockEntities(NBTTagList list) { return readKeyed(list, "I", "Data", data -> data); }
 
-    private NBTTagList writeSaplings() {
-        NBTTagList list = new NBTTagList();
-        for (Map.Entry<Integer, IBlockState> sapling : saplings.entrySet()) {
-            NBTTagCompound tag = new NBTTagCompound();
-            tag.setInteger("P", sapling.getKey());
-            tag.setTag("S", NBTUtil.writeBlockState(new NBTTagCompound(), sapling.getValue()));
-            list.appendTag(tag);
-        }
-        return list;
-    }
+    private NBTTagList writeSaplings() { return writeKeyed(saplings, "P", "S", state -> NBTUtil.writeBlockState(new NBTTagCompound(), state)); }
 
     private NBTTagList writePalette() {
         NBTTagList list = new NBTTagList();
@@ -154,16 +170,7 @@ public final class TreeEntry {
         return list;
     }
 
-    private NBTTagList writeBlockEntities() {
-        NBTTagList list = new NBTTagList();
-        for (Map.Entry<Integer, NBTTagCompound> entry : blockEntities.entrySet()) {
-            NBTTagCompound tag = new NBTTagCompound();
-            tag.setInteger("I", entry.getKey());
-            tag.setTag("Data", entry.getValue());
-            list.appendTag(tag);
-        }
-        return list;
-    }
+    private NBTTagList writeBlockEntities() { return writeKeyed(blockEntities, "I", "Data", data -> data); }
 
     private static int[] sorted(IntSet set) {
         int[] array = set.toIntArray();

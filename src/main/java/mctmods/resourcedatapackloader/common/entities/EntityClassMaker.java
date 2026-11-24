@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.entities;
 
 import mctmods.resourcedatapackloader.core.integration.galacticraft.IPackRocket;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Field;
@@ -45,7 +46,7 @@ public final class EntityClassMaker {
         }
         String check = ignoresSpawnRules ? spawnCheck(base) : null;
         if (ignoresSpawnRules && check == null) { ContentLog.LOGGER.error("Entity variant {} sets ignoresSpawnRules but {} has no reachable spawn check, so the rules still apply", key, base.getName()); }
-        String name = PACKAGE + key.replaceAll("[^A-Za-z0-9_]", "_");
+        String name = PACKAGE + IdNames.javaSafe(key);
         ClassLoader loader = EntityClassMaker.class.getClassLoader();
         try { return loaded(loader.loadClass(name)); }
         catch (ClassNotFoundException expected) { ContentLog.LOGGER.debug("Making a class for entity variant {}", key); }
@@ -63,9 +64,7 @@ public final class EntityClassMaker {
 
     @Nullable private static String named(Class<?> base, String[] candidates) {
         for (String candidate : candidates) {
-            try { return base.getMethod(candidate).getName(); }
-            catch (NoSuchMethodException ignored) {
-            }
+            if (has(base, candidate)) { return candidate; }
         }
         return null;
     }
@@ -81,12 +80,12 @@ public final class EntityClassMaker {
     private static byte[] write(String name, Class<?> base, @Nullable String check, boolean monster, boolean rocket, boolean storage) {
         String self = name.replace('.', '/');
         String parent = Type.getInternalName(base);
-        String world = Type.getInternalName(World.class);
+        String constructor = "(" + Type.getDescriptor(World.class) + ")V";
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, self, null, parent, rocket ? new String[] { Type.getInternalName(IPackRocket.class) } : monster ? new String[] { Type.getInternalName(IMob.class) } : null);
-        MethodVisitor made = open(writer, "<init>", "(L" + world + ";)V");
+        MethodVisitor made = open(writer, "<init>", constructor);
         load(made, 0, 1);
-        made.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", "(L" + world + ";)V", false);
+        made.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", constructor, false);
         close(made, Opcodes.RETURN, 2, 2);
         if (check != null) {
             MethodVisitor spawn = open(writer, check, "()Z");
@@ -99,7 +98,7 @@ public final class EntityClassMaker {
         if (dies != null) {
             MethodVisitor dead = open(writer, dies, "()V");
             load(dead, 0);
-            dead.visitMethodInsn(Opcodes.INVOKESTATIC, STORAGE, "dying", "(L" + Type.getInternalName(Entity.class) + ";)V", false);
+            dead.visitMethodInsn(Opcodes.INVOKESTATIC, STORAGE, "dying", "(" + Type.getDescriptor(Entity.class) + ")V", false);
             load(dead, 0);
             dead.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, dies, "()V", false);
             close(dead, Opcodes.RETURN, 1, 1);
@@ -123,10 +122,10 @@ public final class EntityClassMaker {
     }
 
     private static void storage(ClassWriter writer, String parent) {
-        String entity = "L" + Type.getInternalName(Entity.class) + ";";
-        String asked = "L" + Type.getInternalName(Capability.class) + ";L" + Type.getInternalName(EnumFacing.class) + ";";
-        String capability = "L" + Type.getInternalName(Capability.class) + ";";
-        String object = "L" + Type.getInternalName(Object.class) + ";";
+        String entity = Type.getDescriptor(Entity.class);
+        String capability = Type.getDescriptor(Capability.class);
+        String asked = capability + Type.getDescriptor(EnumFacing.class);
+        String object = Type.getDescriptor(Object.class);
         MethodVisitor gets = open(writer, "getCapability", "(" + asked + ")" + object);
         load(gets, 0, 1, 0, 1, 2);
         gets.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "getCapability", "(" + asked + ")" + object, false);
@@ -179,10 +178,10 @@ public final class EntityClassMaker {
     }
 
     private static void rocket(ClassWriter writer, Class<?> base, String parent) {
-        String entity = "L" + Type.getInternalName(Entity.class) + ";";
-        String stack = "L" + Type.getInternalName(ItemStack.class) + ";";
-        String player = "L" + Type.getInternalName(EntityPlayerMP.class) + ";";
-        String list = "L" + Type.getInternalName(List.class) + ";";
+        String entity = Type.getDescriptor(Entity.class);
+        String stack = Type.getDescriptor(ItemStack.class);
+        String player = Type.getDescriptor(EntityPlayerMP.class);
+        String list = Type.getDescriptor(List.class);
         for (String[] capped : new String[][] { { "getRocketTier", "tier" }, { "getFuelTankCapacity", "fuelTank" } }) {
             if (!has(base, capped[0])) { continue; }
             MethodVisitor size = open(writer, capped[0], "()I");
@@ -205,7 +204,7 @@ public final class EntityClassMaker {
         load(drops, 0, 1);
         drops.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "dropped", "(" + entity + list + ")" + list, false);
         close(drops, Opcodes.ARETURN, 2, 2);
-        MethodVisitor picked = open(writer, "getPickedResult", "(L" + Type.getInternalName(RayTraceResult.class) + ";)" + stack);
+        MethodVisitor picked = open(writer, "getPickedResult", "(" + Type.getDescriptor(RayTraceResult.class) + ")" + stack);
         load(picked, 0);
         picked.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "picked", "(" + entity + ")" + stack, false);
         close(picked, Opcodes.ARETURN, 1, 2);
@@ -217,7 +216,7 @@ public final class EntityClassMaker {
             flown.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "teleported", "(" + entity + player + ")V", false);
             close(flown, Opcodes.RETURN, 2, 2);
         }
-        setter(writer, base, "packCargo", "stacks", "L" + Type.getInternalName(NonNullList.class) + ";");
+        setter(writer, base, "packCargo", "stacks", Type.getDescriptor(NonNullList.class));
         setter(writer, base, "packType", "rocketType", ROCKET_TYPE);
     }
 }

@@ -38,7 +38,9 @@ public final class ContentTradeGate {
 
     public static void summarize() { if (active()) { Summary.info("content_trade_gate", "Gated " + GATED.size() + " villager trade(s) by player condition"); } }
 
-    private static String key(String profession, ItemStack buy, ItemStack buySecondary, ItemStack sell) { return new ResourceLocation(profession) + "|" + id(buy) + "|" + id(buySecondary) + "|" + id(sell); }
+    private static String key(String profession, ItemStack buy, ItemStack buySecondary, ItemStack sell) { return key(new ResourceLocation(profession), buy, buySecondary, sell); }
+
+    private static String key(ResourceLocation profession, ItemStack buy, ItemStack buySecondary, ItemStack sell) { return profession + "|" + id(buy) + "|" + id(buySecondary) + "|" + id(sell); }
 
     private static String id(ItemStack stack) {
         if (stack.isEmpty()) { return ""; }
@@ -55,7 +57,7 @@ public final class ContentTradeGate {
         if (professionName == null) { return; }
         for (int i = list.size() - 1; i >= 0; i--) {
             MerchantRecipe recipe = list.get(i);
-            TradeDef def = GATED.get(professionName + "|" + id(recipe.getItemToBuy()) + "|" + id(recipe.getSecondItemToBuy()) + "|" + id(recipe.getItemToSell()));
+            TradeDef def = GATED.get(key(professionName, recipe.getItemToBuy(), recipe.getSecondItemToBuy(), recipe.getItemToSell()));
             if (def == null) { continue; }
             if (!passes(def, player)) { list.remove(i); }
             else if (def.scale != null) { list.set(i, scaled(recipe, def.scale, player)); }

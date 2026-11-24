@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer.entity;
 
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 
@@ -33,11 +34,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         int tint = ContentEntities.tint(entitylivingbaseIn, EntityVariantDef.BODY);
         rdpl$tint = tint;
         if (tint == 0) { return; }
-        GlStateManager.color(ContentEntities.channel(tint, 16), ContentEntities.channel(tint, 8), ContentEntities.channel(tint, 0), 1.0F);
+        Draw.tint(tint);
     }
 
     @Inject(method = "renderModel", at = @At("RETURN")) private void rdpl$untintBody(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, CallbackInfo ci) {
         if (rdpl$tint == 0) { return; }
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Draw.white();
     }
 }

@@ -2,10 +2,11 @@ package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.text.TextLines;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -29,20 +30,16 @@ public final class Functions {
     private Functions() {}
 
     public static void run(MinecraftServer server, String named, String asking) {
-        FunctionObject function = find(server, named, asking);
-        if (function != null) { server.getFunctionManager().execute(function, server); }
+        execute(server, named, asking, self -> self);
     }
 
-    public static void runAs(Entity player, String named, String asking) {
-        MinecraftServer server = player.getServer();
-        FunctionObject function = server == null ? null : find(server, named, asking);
-        if (function != null) { server.getFunctionManager().execute(function, new As(player, server)); }
-    }
+    public static void runAs(Entity player, String named, String asking) { execute(player.getServer(), named, asking, server -> new As(player, server)); }
 
-    public static void runAt(World world, BlockPos pos, String named, String asking) {
-        MinecraftServer server = world.getMinecraftServer();
+    public static void runAt(World world, BlockPos pos, String named, String asking) { execute(world.getMinecraftServer(), named, asking, server -> new At(world, pos, server)); }
+
+    private static void execute(@Nullable MinecraftServer server, String named, String asking, Function<MinecraftServer, ICommandSender> sender) {
         FunctionObject function = server == null ? null : find(server, named, asking);
-        if (function != null) { server.getFunctionManager().execute(function, new At(world, pos, server)); }
+        if (function != null) { server.getFunctionManager().execute(function, sender.apply(server)); }
     }
 
     public static void runWith(ICommandSender sender, String named, String asking, Map<String, String> values) {
@@ -54,8 +51,8 @@ public final class Functions {
             ContentLog.LOGGER.error("{} asks to run the function {}, which no pack provides, so nothing is run", asking, named);
             return;
         }
-        List<String> lines = new ArrayList<>();
-        for (String line : text.split("\r\n|\r|\n", -1)) { lines.add(fill(line.trim(), values)); }
+        List<String> lines = TextLines.lines(text);
+        lines.replaceAll(line -> fill(line.trim(), values));
         FunctionObject function;
         try { function = FunctionObject.create(server.getFunctionManager(), lines); }
         catch (IllegalArgumentException ex) {

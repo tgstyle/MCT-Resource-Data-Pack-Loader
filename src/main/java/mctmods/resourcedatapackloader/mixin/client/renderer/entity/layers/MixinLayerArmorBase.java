@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.client.renderer.entity.layers;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import net.minecraft.client.renderer.entity.layers.LayerArmorBase;
 import net.minecraft.entity.EntityLivingBase;
@@ -27,9 +28,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         int tint = ContentEntities.tint(entitylivingbaseIn, EntityVariantDef.ARMOR);
         if (tint == 0) { return; }
         rdpl$tint = tint;
-        colorR = ContentEntities.channel(tint, 16);
-        colorG = ContentEntities.channel(tint, 8);
-        colorB = ContentEntities.channel(tint, 0);
+        colorR = Colors.redF(tint);
+        colorG = Colors.greenF(tint);
+        colorB = Colors.blueF(tint);
     }
 
     @Inject(method = "doRenderLayer", at = @At("RETURN")) private void rdpl$untintArmor(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, CallbackInfo ci) {

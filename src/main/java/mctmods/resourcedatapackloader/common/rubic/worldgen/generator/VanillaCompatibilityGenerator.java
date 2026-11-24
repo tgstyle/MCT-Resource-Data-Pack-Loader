@@ -126,7 +126,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             hasTopBedrock = false;
             ContentLog.LOGGER.info("A world seam opens the ceiling of dimension {}, so its bedrock is not generated", world.provider.getDimension());
         }
-        deep = new DeepGeneration(world, offsetCubes << 4, extensionBlockBottom);
+        deep = new DeepGeneration(world, Coords.cubeToMinBlock(offsetCubes), extensionBlockBottom);
         isInit = true;
         deepPopulation = ContentWorldgen.deepestMinHeight() < 0;
         skyPopulation = ContentWorldgen.highestMaxHeight() >= worldHeightBlocks;
@@ -164,7 +164,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                             for (int x = 0; x < Cube.SIZE; x++) {
                                 IBlockState state = vanillaY < 0 ? extensionBlockBottom : fillBlockTop;
                                 int blockY = Coords.localToBlock(vanillaY, y);
-                                state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
+                                state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY,
                                         hasTopBedrock, hasBottomBedrock);
                                 primer.setBlockState(x, y, z, state);
                             }
@@ -206,7 +206,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                                     if (y < Cube.SIZE / 2) { state = extensionBlockBottom; }
                                     else { state = extensionBlockTop; }
                                 }
-                                state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
+                                state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY,
                                         hasTopBedrock, hasBottomBedrock);
                                 primer.setBlockState(x, y, z, state);
                             }
@@ -247,10 +247,10 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             for (int x = 0; x < Cube.SIZE; x++) {
                 IBlockState state = chunkPrimer.getBlockState(x, y, z);
                 if (state == bedrockState) {
-                    if (y < 64) { chunkPrimer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, extensionBlockBottom, y, 5, hasTopBedrock, hasBottomBedrock)); }
+                    if (y < 64) { chunkPrimer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, extensionBlockBottom, y, hasTopBedrock, hasBottomBedrock)); }
                     else {
                         chunkPrimer.setBlockState(x, y, z,
-                                WorldGenUtils.getRandomBedrockReplacement(world, rand, extensionBlockTop, y, 5, hasTopBedrock, hasBottomBedrock));
+                                WorldGenUtils.getRandomBedrockReplacement(world, rand, extensionBlockTop, y, hasTopBedrock, hasBottomBedrock));
                     }
                 }
             }
@@ -270,10 +270,10 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ()).setPopulated(true); }
             if (!ContentVoidWorld.appliesTo(world)) {
                 try {
-                    CompatHandler.beforePopulate(world);
+                    CompatHandler.fakeVanillaHeight(world);
                     vanilla.populate(cube.getX(), cube.getZ());
                 } finally {
-                    CompatHandler.afterPopulate(world);
+                    CompatHandler.restoreHeight(world);
                 }
             }
             applyModGenerators(cube.getX(), cube.getZ(), world, vanilla, world.getChunkProvider());
@@ -289,10 +289,10 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             if (GcPlanetWorldgen.blocks(world, generator)) { continue; }
             fmlRandom.setSeed(chunkSeed);
             try {
-                CompatHandler.beforeGenerate(world);
+                CompatHandler.fakeVanillaHeight(world);
                 generator.generate(fmlRandom, x, z, world, vanillaGen, provider);
             } finally {
-                CompatHandler.afterGenerate(world);
+                CompatHandler.restoreHeight(world);
             }
         }
     }

@@ -24,6 +24,10 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 public final class ContentMapFill {
     private static final Set<String> MISSING = new HashSet<>();
     private static final String PIG = "minecraft:pig";
+    public static final String SPAWN_DATA = "SpawnData";
+    public static final String SPAWN_POTENTIALS = "SpawnPotentials";
+    public static final String ENTITY = "Entity";
+    public static final String ID = "id";
 
     private ContentMapFill() {}
 
@@ -47,11 +51,11 @@ public final class ContentMapFill {
             named = PickDef.pick(usable, new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())), null);
         }
         if (named == null) { return info; }
-        NBTTagCompound copy = saved == null ? new NBTTagCompound() : saved.copy();
+        NBTTagCompound copy = copyOrNew(saved);
         NBTTagCompound spawnData = new NBTTagCompound();
-        spawnData.setString("id", new ResourceLocation(named).toString());
-        copy.setTag("SpawnData", spawnData);
-        copy.removeTag("SpawnPotentials");
+        spawnData.setString(ID, new ResourceLocation(named).toString());
+        copy.setTag(SPAWN_DATA, spawnData);
+        copy.removeTag(SPAWN_POTENTIALS);
         return new Template.BlockInfo(at, info.blockState, copy);
     }
 
@@ -59,23 +63,29 @@ public final class ContentMapFill {
         NBTTagCompound saved = info.tileentityData;
         ResourceLocation loot = override != null ? override : rules.loot;
         if (loot == null || !blankChest(saved)) { return info; }
-        NBTTagCompound copy = saved == null ? new NBTTagCompound() : saved.copy();
-        copy.setString("LootTable", loot.toString());
-        copy.setLong("LootTableSeed", new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())).nextLong());
-        return new Template.BlockInfo(at, info.blockState, copy);
+        return new Template.BlockInfo(at, info.blockState, lootTag(saved, loot, seed, at));
     }
+
+    public static NBTTagCompound lootTag(@Nullable NBTTagCompound saved, ResourceLocation table, long seed, BlockPos at) {
+        NBTTagCompound copy = copyOrNew(saved);
+        copy.setString("LootTable", table.toString());
+        copy.setLong("LootTableSeed", new Random(MathUtil.mix(seed, at.getX(), at.getY(), at.getZ())).nextLong());
+        return copy;
+    }
+
+    private static NBTTagCompound copyOrNew(@Nullable NBTTagCompound saved) { return saved == null ? new NBTTagCompound() : saved.copy(); }
 
     private static boolean blankSpawner(NBTTagCompound saved) {
         if (saved == null) { return true; }
-        if (saved.hasKey("SpawnData", 10) && keepsMob(saved.getCompoundTag("SpawnData"))) { return false; }
-        NBTTagList potentials = saved.getTagList("SpawnPotentials", 10);
+        if (saved.hasKey(SPAWN_DATA, 10) && keepsMob(saved.getCompoundTag(SPAWN_DATA))) { return false; }
+        NBTTagList potentials = saved.getTagList(SPAWN_POTENTIALS, 10);
         for (int at = 0; at < potentials.tagCount(); at++) {
-            if (keepsMob(potentials.getCompoundTagAt(at).getCompoundTag("Entity"))) { return false; }
+            if (keepsMob(potentials.getCompoundTagAt(at).getCompoundTag(ENTITY))) { return false; }
         }
         return true;
     }
 
-    private static boolean keepsMob(NBTTagCompound mob) { return mob.getSize() > 1 || mob.getSize() == 1 && !PIG.equals(mob.getString("id")); }
+    private static boolean keepsMob(NBTTagCompound mob) { return mob.getSize() > 1 || mob.getSize() == 1 && !PIG.equals(mob.getString(ID)); }
 
     private static boolean blankChest(NBTTagCompound saved) {
         if (saved == null) { return true; }

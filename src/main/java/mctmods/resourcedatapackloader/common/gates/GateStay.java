@@ -3,11 +3,14 @@ package mctmods.resourcedatapackloader.common.gates;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -24,7 +27,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.util.Constants;
 
 public final class GateStay {
     public static final GateStay NONE = new GateStay(0, "", Collections.emptyList(), "", true, "", "");
@@ -37,8 +39,6 @@ public final class GateStay {
     private static final String SECTION = "rdplGateStay";
     private static final String USED = "used";
     private static final String DAY_KEY = "day";
-    private static final int STEP = 20;
-    private static final int TICKS_PER_MINUTE = 1200;
     private static final int SECONDS_PER_MINUTE = 60;
 
     private final int minutes;
@@ -61,10 +61,7 @@ public final class GateStay {
 
     public static GateStay parse(JsonObject json, ResourceLocation key, int dimension) {
         if (!json.has("stayMinutes")) { return NONE; }
-        if (dimension == GateDef.NO_DIMENSION) {
-            ContentLog.LOGGER.error("Gate {} sets stayMinutes without dimension, so it has no time budget", key);
-            return NONE;
-        }
+        if (GateDef.dimensionMissing(dimension, key, "stayMinutes", "it has no time budget")) { return NONE; }
         int minutes = Json.getInt(json, "stayMinutes", 0);
         if (minutes <= 0) {
             ContentLog.LOGGER.error("Gate {} sets stayMinutes {}, which is not above 0, so it has no time budget", key, minutes);
@@ -87,7 +84,7 @@ public final class GateStay {
 
     public boolean active() { return minutes > 0; }
 
-    private int limit() { return minutes * TICKS_PER_MINUTE; }
+    private int limit() { return minutes * MathUtil.TICKS_PER_MINUTE; }
 
     static boolean spent(EntityPlayer player, GateDef def) {
         GateStay stay = def.stay;
@@ -97,20 +94,20 @@ public final class GateStay {
         return entry.getInteger(USED) >= stay.limit();
     }
 
-    static void refused(EntityPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, TextFormatting.RED, def.stay.expired.replace("%dim%", def.name)); }
+    static void refused(EntityPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, TextFormatting.RED, Says.fill(def.stay.expired, "%dim%", def.name)); }
 
-    static void tick(MinecraftServer server) {
+    static void tick(MinecraftServer server, int step) {
         List<GateDef> gates = ContentGates.staying();
         if (gates.isEmpty()) { return; }
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+        for (EntityPlayerMP player : Players.online(server)) {
             for (GateDef def : gates) {
-                if (player.dimension == def.dimension) { count(server, player, def); }
+                if (player.dimension == def.dimension) { count(server, player, def, step); }
                 else if (VISIT.equals(def.stay.reset)) { forget(player, def); }
             }
         }
     }
 
-    private static void count(MinecraftServer server, EntityPlayerMP player, GateDef def) {
+    private static void count(MinecraftServer server, EntityPlayerMP player, GateDef def, int step) {
         GateStay stay = def.stay;
         NBTTagCompound entry = entry(player, def);
         if (DAY.equals(stay.reset) && entry.getLong(DAY_KEY) != today()) {
@@ -120,23 +117,22 @@ public final class GateStay {
         int limit = stay.limit();
         int used = entry.getInteger(USED);
         if (used >= limit) { return; }
-        used = Math.min(limit, used + STEP);
+        used = Math.min(limit, used + step);
         entry.setInteger(USED, used);
         if (used >= limit) {
             expire(server, player, def);
             return;
         }
-        int seconds = (limit - used) / STEP;
+        int seconds = (limit - used) / MathUtil.TICKS_PER_SECOND;
         if (stay.warn.contains(seconds)) {
-            Says.bar(player, CardIds.GATE_STAY, TextFormatting.GOLD, stay.message.replace("%dim%", def.name).replace("%time%", String.format("%d:%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)));
+            Says.bar(player, CardIds.GATE_STAY, TextFormatting.GOLD, Says.fill(stay.message, "%dim%", def.name, "%time%", String.format("%d:%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)));
         }
     }
 
     private static void expire(MinecraftServer server, EntityPlayerMP player, GateDef def) {
         GateStay stay = def.stay;
         if (stay.exit) {
-            GateEvents.sendOut(server, player, 0);
-            if (player.dimension == def.dimension) { ContentLog.LOGGER.warn("Gate {} could not send {} out of dimension {}", def.getKey(), player.getName(), def.dimension); }
+            if (GateEvents.sendOut(server, player, 0, def.dimension)) { ContentLog.LOGGER.warn("Gate {} could not send {} out of dimension {}", def.getKey(), player.getName(), def.dimension); }
             else { ContentLog.LOGGER.info("Gate {} sent {} out of dimension {}, the {} minute budget is used", def.getKey(), player.getName(), def.dimension, stay.minutes); }
         }
         refused(player, def);
@@ -144,9 +140,7 @@ public final class GateStay {
     }
 
     private static NBTTagCompound entry(EntityPlayer player, GateDef def) {
-        NBTTagCompound section = PlayerPersisted.section(player, SECTION);
-        if (!section.hasKey(def.getKey(), Constants.NBT.TAG_COMPOUND)) { section.setTag(def.getKey(), new NBTTagCompound()); }
-        return section.getCompoundTag(def.getKey());
+        return Nbts.child(PlayerPersisted.section(player, SECTION), def.getKey());
     }
 
     private static void forget(EntityPlayer player, GateDef def) {

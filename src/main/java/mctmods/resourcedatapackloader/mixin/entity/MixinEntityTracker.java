@@ -55,7 +55,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     }
 
     public void tracker$setVertViewDistance(int viewDistance) {
-        this.rdpl$maxVertTrackingDistanceThreshold = (viewDistance - 1) * 16;
+        this.rdpl$maxVertTrackingDistanceThreshold = (viewDistance - 1) * ICube.SIZE;
         for (EntityTrackerEntry e : this.entries) { ((IRubicEntityTracker.IEntry) e).setMaxVertRange(this.rdpl$maxVertTrackingDistanceThreshold); }
     }
 }

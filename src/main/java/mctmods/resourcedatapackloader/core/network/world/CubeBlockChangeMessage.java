@@ -3,10 +3,8 @@ package mctmods.resourcedatapackloader.core.network.world;
 import mctmods.resourcedatapackloader.client.util.CubeBlockChangeMessageClient;
 import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
-import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.address.AddressTools;
 
 import gnu.trove.TShortCollection;
@@ -53,7 +51,7 @@ public class CubeBlockChangeMessage implements IMessage {
         while (it.hasNext()) {
             int v = it.next();
             heightAddresses[i] = v;
-            heightValues[i] = ((IColumnInternal) cube.getColumn()).getTopYWithStaging(AddressTools.getLocalX(v), AddressTools.getLocalZ(v));
+            heightValues[i] = WorldEncoder.topY(cube.getColumn(), v);
             i++;
         }
     }
@@ -87,18 +85,14 @@ public class CubeBlockChangeMessage implements IMessage {
         }
         out.writeShort(heightValues.length);
         for (int i = 0; i < heightValues.length; i++) {
-            out.writeByte(heightAddresses[i]);
-            ByteBufUtils.writeVarInt(out, heightValues[i], 5);
+            WorldEncoder.writeHeight(out, heightAddresses[i], heightValues[i]);
         }
     }
 
     public static class Handler extends AbstractClientMessageHandler<CubeBlockChangeMessage> {
         @Override public void handleClientMessage(World world, EntityPlayer player, CubeBlockChangeMessage packet, MessageContext ctx) {
-            CubeProviderClient cubeCache = cubeCache(world);
-            if (cubeCache == null) {
-                ContentLog.LOGGER.warn("Ignored a cube block change for a world the client no longer sees as rubic");
-                return;
-            }
+            CubeProviderClient cubeCache = cubeCache(world, "a cube block change");
+            if (cubeCache == null) { return; }
             CubeBlockChangeMessageClient.apply(world, cubeCache, packet.cubePos, packet.localAddresses, packet.blockStates, packet.heightAddresses, packet.heightValues);
         }
     }

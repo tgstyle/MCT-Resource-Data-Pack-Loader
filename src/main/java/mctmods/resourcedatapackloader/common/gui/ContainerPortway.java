@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.portways.PortwayOrder;
 import mctmods.resourcedatapackloader.common.portways.PortwayStop;
 import mctmods.resourcedatapackloader.common.portways.PortwayTravel;
 import mctmods.resourcedatapackloader.common.portways.Portways;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
@@ -39,6 +40,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
 public class ContainerPortway extends Container {
@@ -96,14 +98,11 @@ public class ContainerPortway extends Container {
         this.originDimension = world.provider.getDimension();
         this.icons = new InventoryBasic(title, true, SLOTS);
         int wide = ContainerPack.width(COLUMNS);
-        int left = (wide - COLUMNS * ContainerPack.SLOT) / 2 + 1;
-        for (int slot = 0; slot < SLOTS; slot++) {
-            addSlotToContainer(new Slot(icons, slot, left + slot % COLUMNS * ContainerPack.SLOT, ContainerPack.HEADER + 1 + slot / COLUMNS * ContainerPack.SLOT) {
-                @Override public boolean isItemValid(@Nonnull ItemStack stack) { return false; }
+        for (Slot slot : ContainerPack.gridSlots(wide, COLUMNS, SLOTS, false, (index, x, y) -> new Slot(icons, index, x, y) {
+            @Override public boolean isItemValid(@Nonnull ItemStack stack) { return false; }
 
-                @Override public boolean canTakeStack(@Nonnull EntityPlayer player) { return false; }
-            });
-        }
+            @Override public boolean canTakeStack(@Nonnull EntityPlayer player) { return false; }
+        })) { addSlotToContainer(slot); }
         for (Slot slot : ContainerPack.playerSlots(player, wide, ContainerPack.height(ROWS), Slot::new)) { addSlotToContainer(slot); }
         if (!world.isRemote && player.player instanceof EntityPlayerMP) { reload(); }
     }
@@ -138,7 +137,7 @@ public class ContainerPortway extends Container {
 
     private void refill(@Nullable PortwayDef opening) {
         for (int slot = 0; slot < SLOTS; slot++) { icons.setInventorySlotContents(slot, ItemStack.EMPTY); }
-        page = Math.max(0, Math.min(page, pages() - 1));
+        page = MathHelper.clamp(page, 0, pages() - 1);
         if (opening == null) { return; }
         PortwayMenu menu = opening.menu;
         ItemStack locked = PortwayFx.icon(menu.locked, PortwayMenu.PLAIN.locked);
@@ -162,9 +161,14 @@ public class ContainerPortway extends Container {
         return tile instanceof TileEntityPortway && ((TileEntityPortway) tile).mayToggle(viewer.player) ? (TileEntityPortway) tile : null;
     }
 
-    private static ItemStack scope(ItemStack icon, boolean global, String own) {
+    private static NBTTagCompound navTag(ItemStack icon, String kind) {
         NBTTagCompound tag = icon.getOrCreateSubCompound(NAV);
-        tag.setString(KIND, "scope");
+        tag.setString(KIND, kind);
+        return tag;
+    }
+
+    private static ItemStack scope(ItemStack icon, boolean global, String own) {
+        NBTTagCompound tag = navTag(icon, "scope");
         tag.setBoolean(GLOBAL, global);
         tag.setString(OWN, own);
         return icon;
@@ -185,16 +189,14 @@ public class ContainerPortway extends Container {
     }
 
     private ItemStack nav(ItemStack icon, String kind) {
-        NBTTagCompound tag = icon.getOrCreateSubCompound(NAV);
-        tag.setString(KIND, kind);
+        NBTTagCompound tag = navTag(icon, kind);
         tag.setInteger(PAGE, page + 1);
         tag.setInteger(PAGES, pages());
         return icon;
     }
 
     private ItemStack sorter(ItemStack icon) {
-        NBTTagCompound tag = icon.getOrCreateSubCompound(NAV);
-        tag.setString(KIND, "sort");
+        NBTTagCompound tag = navTag(icon, "sort");
         tag.setString(ORDER, order);
         return icon;
     }
@@ -205,9 +207,7 @@ public class ContainerPortway extends Container {
         ItemStack shown = barred ? locked.copy() : new ItemStack(Block.REGISTRY.getObject(new ResourceLocation(stop.block)));
         NBTTagCompound tag = shown.getOrCreateSubCompound(TAG);
         tag.setInteger(DIMENSION, stop.dimension);
-        tag.setInteger("x", stop.pos.getX());
-        tag.setInteger("y", stop.pos.getY());
-        tag.setInteger("z", stop.pos.getZ());
+        Coords.writePos(tag, stop.pos);
         tag.setString(NAME, label);
         tag.setBoolean(LOCKED, barred);
         boolean here = stop.dimension == originDimension && stop.pos.equals(origin);

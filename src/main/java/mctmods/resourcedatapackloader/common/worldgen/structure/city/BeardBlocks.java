@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.block.BlockHorizontal;
@@ -40,6 +41,12 @@ public final class BeardBlocks {
     private BeardBlocks() {}
 
     public static boolean terrainBlock(Block held) { return held == Blocks.STONE || held == Blocks.DIRT || held == Blocks.GRASS || held == Blocks.GRAVEL || held == Blocks.SAND || held == Blocks.CLAY || held == Blocks.SNOW_LAYER || held == Blocks.SNOW || held == Blocks.ICE || held == Blocks.PACKED_ICE || held instanceof BlockOre || held instanceof BlockRedstoneOre || packGround().contains(held); }
+
+    public static boolean clearableAbove(IBlockState above) {
+        Block held = above.getBlock();
+        Material material = above.getMaterial();
+        return terrainBlock(held) || held == Blocks.GRASS_PATH || held == Blocks.SANDSTONE || held == Blocks.MYCELIUM || material == Material.WOOD || material == Material.LEAVES || !material.isSolid();
+    }
 
     private static Set<Block> packGround() {
         if (packGround == null) { packGround = packBlocks(true); }
@@ -85,21 +92,23 @@ public final class BeardBlocks {
 
     public static IBlockState overWater(World world, int x, int y, int z) {
         IBlockState wet = BeardRoads.pathPalette("villagePathVergeWaterBlock", Config.worldgen.villagePathVergeWaterBlock, Blocks.PLANKS.getDefaultState()).pick(world, x, y, z);
-        return wet.getBlock() == Blocks.AIR ? Blocks.PLANKS.getDefaultState() : wet;
+        return orIfAir(wet, Blocks.PLANKS::getDefaultState);
     }
 
-    public static IBlockState footing(World world, int x, int y, int z) {
-        IBlockState asked = vergeBlock(world, x, y, z);
-        return asked.getBlock() == Blocks.AIR ? Blocks.DIRT.getDefaultState() : asked;
-    }
+    public static IBlockState footing(World world, int x, int y, int z) { return orIfAir(vergeBlock(world, x, y, z), Blocks.DIRT::getDefaultState); }
+
+    private static IBlockState orIfAir(IBlockState asked, Supplier<IBlockState> fallback) { return asked.getBlock() == Blocks.AIR ? fallback.get() : asked; }
 
     public static IBlockState fillAt(World world, int x, int y, int top, int z, boolean overWater) {
         if (overWater) { return overWater(world, x, y, z); }
-        IBlockState asked = vergeBlock(world, x, y, z);
-        if (asked.getBlock() != Blocks.AIR) { return asked; }
-        IBlockState laid = fillGround(world, x, z);
-        return laid.getBlock() == Blocks.DIRT && y == top ? Blocks.GRASS.getDefaultState() : laid;
+        return orIfAir(vergeBlock(world, x, y, z), () -> grassed(fillGround(world, x, z), y == top));
     }
+
+    public static IBlockState laidAs(IBlockState ground, boolean exposed) {
+        return !exposed && ground.getBlock() == Blocks.GRASS ? Blocks.DIRT.getDefaultState() : grassed(ground, exposed);
+    }
+
+    public static IBlockState grassed(IBlockState laid, boolean open) { return open && laid.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : laid; }
 
     public static IBlockState fillGround(World world, int x, int z) {
         Biome biome = world.getBiome(AT.setPos(x, 64, z));
@@ -184,7 +193,9 @@ public final class BeardBlocks {
     public static int cutBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) {
         int cut = clearAbove(world, at, x, z, from, roof, "Cutting a ring");
         at.setPos(x, from - 1, z);
-        if (world.getBlockState(at).getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { world.setBlockState(at, Blocks.GRASS.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
+        IBlockState bank = world.getBlockState(at);
+        IBlockState turf = grassed(bank, !world.getBlockState(at.up()).getMaterial().isSolid());
+        if (turf != bank) { world.setBlockState(at, turf, BlockFlags.UPDATE_CLIENTS); }
         return cut;
     }
 
@@ -335,8 +346,7 @@ public final class BeardBlocks {
             at.setPos(x, y, z);
             IBlockState laid = fillGround(world, x, z);
             if (field && laid.getBlock() == Blocks.SAND && !sandBiome(world, x, z)) { laid = Blocks.DIRT.getDefaultState(); }
-            if (laid.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { laid = Blocks.GRASS.getDefaultState(); }
-            world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
+            world.setBlockState(at, grassed(laid, !world.getBlockState(at.up()).getMaterial().isSolid()), BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;

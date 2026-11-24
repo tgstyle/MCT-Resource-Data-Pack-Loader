@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
 import java.util.Random;
@@ -33,12 +34,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     public ContentVineBlock(BlockDef def, GrowthDef growth) {
         this.def = def;
         this.growth = growth;
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + def.at(0).name);
-        if (def.soundType != null) { setSoundType(def.soundType); }
         setTickRandomly(growth.maxHeight > 1 || growth.spread > 0);
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyPlantNamed(this, def);
     }
 
     @Override public BlockDef getDef() { return def; }
@@ -57,9 +54,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (growth.maxHeight <= 1) { return; }
         BlockPos below = pos.down();
         if (!world.isAirBlock(below)) { return; }
-        int hanging = 1;
-        while (world.getBlockState(pos.up(hanging)).getBlock() == this) { hanging++; }
-        if (hanging >= growth.maxHeight) { return; }
+        if (TallPlants.run(world, pos, this, EnumFacing.UP) >= growth.maxHeight) { return; }
         world.setBlockState(below, state, BlockFlags.UPDATE_CLIENTS);
     }
 

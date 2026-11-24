@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.util.world.SavedData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,34 +23,23 @@ public final class RaidStorage extends WorldSavedData {
 
     public static RaidStorage get(WorldServer world) { return SavedData.get(world.getPerWorldStorage(), RaidStorage.class, NAME, RaidStorage::new); }
 
-    @Nullable public ActiveRaid near(BlockPos center, int within) {
+    @Nullable private ActiveRaid first(Predicate<ActiveRaid> match) {
         for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.center().distanceSq(center) <= (double) within * within) { return raid; }
+            if (!raid.stopped() && match.test(raid)) { return raid; }
         }
         return null;
     }
+
+    @Nullable public ActiveRaid near(BlockPos center, int within) { return first(raid -> raid.center().distanceSq(center) <= (double) within * within); }
 
     @Nullable public ActiveRaid ownerRaid(int handle) {
         if (handle == 0) { return null; }
-        for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.owner() == handle) { return raid; }
-        }
-        return null;
+        return first(raid -> raid.owner() == handle);
     }
 
-    @Nullable public ActiveRaid raidOf(BlockPos center) {
-        for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.center().equals(center)) { return raid; }
-        }
-        return null;
-    }
+    @Nullable public ActiveRaid raidOf(BlockPos center) { return first(raid -> raid.center().equals(center)); }
 
-    boolean crowds(ActiveRaid raid, int within) {
-        for (ActiveRaid other : raids) {
-            if (other != raid && !other.stopped() && other.center().distanceSq(raid.center()) <= (double) within * within) { return true; }
-        }
-        return false;
-    }
+    boolean crowds(ActiveRaid raid, int within) { return first(other -> other != raid && other.center().distanceSq(raid.center()) <= (double) within * within) != null; }
 
     public boolean underway(BlockPos at) {
         for (ActiveRaid raid : raids) {
@@ -79,7 +69,7 @@ public final class RaidStorage extends WorldSavedData {
         NBTTagList list = tag.getTagList("Raids", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound one = list.getCompoundTagAt(i);
-            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(new ResourceLocation(one.getString("Raid"))));
+            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(new ResourceLocation(one.getString(ActiveRaid.DEF_KEY))));
             if (raid != null) { raids.add(raid); }
         }
     }

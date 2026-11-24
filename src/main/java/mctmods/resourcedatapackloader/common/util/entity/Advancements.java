@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.client.util.ClientAdvancements;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 
 import javax.annotation.Nullable;
 import net.minecraft.advancements.Advancement;
@@ -10,7 +11,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public final class Advancements {
     private Advancements() {}
@@ -25,7 +25,7 @@ public final class Advancements {
             Advancement advancement = find(server, name);
             return advancement != null && ((EntityPlayerMP) player).getAdvancements().getProgress(advancement).isDone();
         }
-        return FMLCommonHandler.instance().getSide().isClient() && ClientAdvancements.has(name);
+        return SideUtils.isClient() && ClientAdvancements.has(name);
     }
 
     public static void grant(EntityPlayerMP player, String name, String asking) {

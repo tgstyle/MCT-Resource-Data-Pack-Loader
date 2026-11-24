@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.generator.VanillaCompatibilityGenerator;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.interfaces.ICubeGenerator;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.IPackingStructureData;
 import mctmods.resourcedatapackloader.common.villages.CityGrid;
 import mctmods.resourcedatapackloader.common.villages.RailPiece;
@@ -52,16 +53,14 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.common.WorldWorkerManager;
 
-public final class ContentStructureSearch implements WorldWorkerManager.IWorker {
+public final class ContentStructureSearch extends LocateWorker {
     static final long SLICE_NANOS = 40_000_000L;
+    static final int SEA_LEVEL = 64;
     private static final int CHUNK_REACH = 512;
     private static final long BEEN_NEAR = 128L * 128L;
     private static final Map<String, Deque<BlockPos>> VISITED = new ConcurrentHashMap<>();
     private static ContentStructureSearch running;
     private static boolean reporting;
-    private final EntityPlayerMP player;
-    private final World world;
-    private final String name;
     private final MapGenStructure generator;
     private final boolean report;
     private final boolean cells;
@@ -70,21 +69,13 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private final int middleZ;
     private final boolean findUnexplored;
     private final boolean skipHere;
-    private final Consumer<BlockPos> delivery;
     private final List<BlockPos> been;
-    private int ring;
-    private int step;
+    private final RingWalk walk;
     private int foundOn = Integer.MAX_VALUE;
-    private BlockPos best;
-    private long bestAway = Long.MAX_VALUE;
-    private boolean over;
 
     private ContentStructureSearch(EntityPlayerMP player, String name, MapGenStructure generator, boolean cells, int spacing, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
+        super(player, name, delivery);
         this.been = skipHere ? been(player, name) : new ArrayList<>();
-        this.delivery = delivery;
-        this.player = player;
-        this.world = player.world;
-        this.name = name;
         this.generator = generator;
         this.cells = cells;
         this.spacing = spacing;
@@ -95,6 +86,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         this.report = reporting;
         this.middleX = cells ? Math.floorDiv(chunkX, spacing) : chunkX;
         this.middleZ = cells ? Math.floorDiv(chunkZ, spacing) : chunkZ;
+        this.walk = new RingWalk(middleX, middleZ);
     }
 
     public static boolean looking() { return running != null; }
@@ -109,7 +101,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     public static void pointDungeon(ICommandSender sender, String name) {
         BlockPos from = sender.getPosition();
-        point(sender, name, nearestPin(dungeonSpots(sender.getEntityWorld(), name, from), from.getX(), from.getZ(), 0, pin -> false));
+        point(sender, name, Coords.nearestPin(dungeonSpots(sender.getEntityWorld(), name, from), from.getX(), from.getZ(), 0, pin -> false));
     }
 
     private static List<long[]> dungeonSpots(World world, String name, BlockPos from) { return ContentDungeons.locateSpots(world, name, from, CHUNK_REACH * 16); }
@@ -132,7 +124,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         MapGenStructure generator = generatorFor(world, name);
         if (generator == null) {
             if (delivery != null) { delivery.accept(null); }
-            else { tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name)); }
+            else { nothing(player, name); }
             return;
         }
         generator = theRealOne(generator);
@@ -145,13 +137,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         tell(player, TextFormatting.GREEN, Lang.tr(player, reporting || delivery != null ? "rdpl.command.locatelooking" : "rdpl.command.gotolooking", name));
     }
 
-    @Override public boolean hasWork() { return !over; }
-
-    @Override public boolean doWork() {
-        if (player.hasDisconnected() || player.world != world) {
-            finish();
-            return false;
-        }
+    @Override protected boolean scan() {
         long began = System.nanoTime();
         long ending = began + SLICE_NANOS;
         boolean more = cells ? cellRings(ending) : chunkRings(ending);
@@ -162,28 +148,27 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     private boolean cellRings(long ending) {
         ContentSites known = ContentSites.of(world, spacing);
-        while (ring <= 100 && ring <= (foundOn == Integer.MAX_VALUE ? 100 : foundOn + 1)) {
-            while (step < onRing(ring)) {
-                long cell = ringSpot(step);
+        while (walk.ring() <= 100 && walk.ring() <= (foundOn == Integer.MAX_VALUE ? 100 : foundOn + 1)) {
+            while (walk.pending()) {
+                long cell = walk.peek();
                 int atX = Longs.high(cell);
                 int atZ = Longs.low(cell);
                 if (known.get(Longs.pack(atX, atZ)) == null && System.nanoTime() >= ending) { return true; }
-                step++;
+                walk.advance();
                 considerCell(known, atX, atZ);
             }
-            step = 0;
-            ring++;
+            walk.nextRing();
         }
         settle();
         return false;
     }
 
     private boolean chunkRings(long ending) {
-        while (ring <= CHUNK_REACH) {
-            while (step < onRing(ring)) {
+        while (walk.ring() <= CHUNK_REACH) {
+            while (walk.pending()) {
                 if (System.nanoTime() >= ending) { return true; }
-                long spot = ringSpot(step);
-                step++;
+                long spot = walk.peek();
+                walk.advance();
                 int atX = Longs.high(spot);
                 int atZ = Longs.low(spot);
                 if (skipHere && Math.abs(atX - middleX) <= 8 && Math.abs(atZ - middleZ) <= 8) { continue; }
@@ -196,12 +181,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 StructureStart would = generator.getStructureStart(atX, atZ);
                 if (!would.isSizeableStructure()) { continue; }
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A {} would stand on chunk {}, {} with {} piece(s) in it, {} of them not road, and the game counts that as worth keeping", name, atX, atZ, would.getComponents().size(), pieces(would)); }
-                best = new BlockPos(atX * 16 + 8, 64, atZ * 16 + 8);
+                best = new BlockPos(atX * 16 + 8, SEA_LEVEL, atZ * 16 + 8);
                 settle();
                 return false;
             }
-            step = 0;
-            ring++;
+            walk.nextRing();
         }
         settle();
         return false;
@@ -216,50 +200,24 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (beenNear(chunkX * 16 + 8, chunkZ * 16 + 8)) { return; }
         if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { return; }
         if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || ContentBeard.mansionCandidateNear(world, chunkX, chunkZ)) { return; }
-        long awayX = (chunkX * 16L + 8) - (long) player.posX;
-        long awayZ = (chunkZ * 16L + 8) - (long) player.posZ;
-        long away = awayX * awayX + awayZ * awayZ;
+        long away = Coords.chunkCentreAway(chunkX, chunkZ, (long) player.posX, (long) player.posZ);
         if (away >= bestAway) { return; }
         bestAway = away;
-        best = new BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8);
-        if (foundOn == Integer.MAX_VALUE) { foundOn = ring; }
+        best = new BlockPos(chunkX * 16 + 8, SEA_LEVEL, chunkZ * 16 + 8);
+        if (foundOn == Integer.MAX_VALUE) { foundOn = walk.ring(); }
     }
 
     private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, int beside, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
         List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
         long fromX = (long) player.posX;
         long fromZ = (long) player.posZ;
-        BlockPos best = nearestPin(pinned, fromX, fromZ, beside, pin -> findUnexplored && player.world.isChunkGeneratedAt((int) pin[0] >> 4, (int) pin[1] >> 4) || skipHere && (away(pin, fromX, fromZ) < BEEN_NEAR || beenNear(visited, (int) pin[0], (int) pin[1])));
+        BlockPos best = Coords.nearestPin(pinned, fromX, fromZ, beside, pin -> findUnexplored && player.world.isChunkGeneratedAt((int) pin[0] >> 4, (int) pin[1] >> 4) || skipHere && (Coords.awaySq(pin[0], pin[1], fromX, fromZ) < BEEN_NEAR || beenNear(visited, (int) pin[0], (int) pin[1])));
         if (delivery != null) { delivery.accept(best); }
         else if (reporting) { point(player, name, best); }
         else { arrive(player, name, best); }
     }
 
-    @Nullable private static BlockPos nearestPin(List<long[]> pinned, long fromX, long fromZ, int beside, Predicate<long[]> skip) {
-        BlockPos best = null;
-        long bestAway = Long.MAX_VALUE;
-        for (long[] pin : pinned) {
-            if (skip.test(pin)) { continue; }
-            long away = away(pin, fromX, fromZ);
-            if (away >= bestAway) { continue; }
-            bestAway = away;
-            best = new BlockPos((int) pin[0] + beside, 64, (int) pin[1] + beside);
-        }
-        return best;
-    }
-
-    private static long away(long[] pin, long fromX, long fromZ) {
-        long awayX = pin[0] - fromX;
-        long awayZ = pin[1] - fromZ;
-        return awayX * awayX + awayZ * awayZ;
-    }
-
-    private void settle() {
-        finish();
-        if (delivery != null) { delivery.accept(best); }
-        else if (report) { point(player, name, best); }
-        else { arrive(player, name, best); }
-    }
+    private void settle() { conclude(report); }
 
     private static int pieces(StructureStart start) {
         int standing = 0;
@@ -269,9 +227,9 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return standing;
     }
 
-    private static void point(ICommandSender sender, String name, @Nullable BlockPos best) {
+    static void point(ICommandSender sender, String name, @Nullable BlockPos best) {
         if (best == null) {
-            tell(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.command.gotonothing", name));
+            nothing(sender, name);
             return;
         }
         sender.sendMessage(new TextComponentTranslation("commands.locate.success", name, best.getX(), best.getZ()));
@@ -283,7 +241,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return;
         }
         if (best == null) {
-            tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name));
+            nothing(player, name);
             return;
         }
         BlockPos ground = landing(player.world, best);
@@ -320,15 +278,12 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     static boolean beenNear(List<BlockPos> been, int x, int z) {
         for (BlockPos at : been) {
-            long awayX = x - (long) at.getX();
-            long awayZ = z - (long) at.getZ();
-            if (awayX * awayX + awayZ * awayZ < BEEN_NEAR) { return true; }
+            if (Coords.awaySq(x, z, at.getX(), at.getZ()) < BEEN_NEAR) { return true; }
         }
         return false;
     }
 
-    private void finish() {
-        over = true;
+    @Override protected void release() {
         if (running == this) { running = null; }
     }
 
@@ -361,8 +316,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
         BlockPos.MutableBlockPos ground = new BlockPos.MutableBlockPos();
         for (int y = start; y > 0; y--) {
-            Material material = world.getBlockState(ground.setPos(x, y, z)).getMaterial();
-            if (!material.blocksMovement() && !material.isLiquid()) { continue; }
+            if (open(world, ground.setPos(x, y, z))) { continue; }
             if (open(world, ground.setPos(x, y + 1, z)) && open(world, ground.setPos(x, y + 2, z))) { return new BlockPos(x, y + 1, z); }
         }
         return null;
@@ -408,6 +362,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             }
         }
         return null;
+    }
+
+    public static boolean spareRoad(World world, BlockPos position, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, String message) {
+        if (world.isRemote || !ContentBeard.wanted()) { return false; }
+        StructureBoundingBox box = villageRoadIn(world, minX, minY, minZ, maxX, maxY, maxZ);
+        if (box == null) { return false; }
+        ContentLog.LOGGER.debug(message, position.getX(), position.getY(), position.getZ(), box.minX, box.minZ);
+        return true;
     }
 
     public static Collection<StructureStart> villageStarts(World world) {
@@ -490,20 +452,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return null;
     }
 
-    static int onRing(int around) { return around == 0 ? 1 : around * 8; }
-
-    private long ringSpot(int at) { return ringSpot(middleX, middleZ, ring, at); }
-
-    static long ringSpot(int middleX, int middleZ, int ring, int at) {
-        if (ring == 0) { return Longs.pack(middleX, middleZ); }
-        int side = ring * 2;
-        int leg = at / side;
-        int along = at % side;
-        if (leg == 0) { return Longs.pack(middleX - ring + along, middleZ - ring); }
-        if (leg == 1) { return Longs.pack(middleX + ring, middleZ - ring + along); }
-        if (leg == 2) { return Longs.pack(middleX + ring - along, middleZ + ring); }
-        return Longs.pack(middleX - ring, middleZ + ring - along);
-    }
+    private static void nothing(ICommandSender sender, String name) { tell(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.command.gotonothing", name)); }
 
     private static void tell(ICommandSender sender, TextFormatting color, String message) { sender.sendMessage(new TextComponentString(color + message)); }
 }

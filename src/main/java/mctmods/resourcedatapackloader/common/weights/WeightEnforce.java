@@ -29,15 +29,13 @@ public final class WeightEnforce {
 
     private WeightEnforce() {}
 
-    private static boolean refusesPickup(WeightDef settings) { return settings.hardLimit > 0.0D && (WeightDef.HARD_BOTH.equals(settings.hardLimitMode) || WeightDef.HARD_PICKUP.equals(settings.hardLimitMode)); }
-
-    private static boolean refusesTaking(WeightDef settings) { return settings.hardLimit > 0.0D && (WeightDef.HARD_BOTH.equals(settings.hardLimitMode) || WeightDef.HARD_TAKE.equals(settings.hardLimitMode)); }
+    private static boolean exempt(WeightDef settings, String mode) { return !(settings.hardLimit > 0.0D && (WeightDef.HARD_BOTH.equals(settings.hardLimitMode) || mode.equals(settings.hardLimitMode))); }
 
     @SubscribeEvent public static void onPickup(EntityItemPickupEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         if (player.world.isRemote || !ContentWeights.any()) { return; }
         WeightDef settings = ContentWeights.settings();
-        if (!refusesPickup(settings) || !PlayerWeights.counted(player, settings)) { return; }
+        if (exempt(settings, WeightDef.HARD_PICKUP) || !PlayerWeights.counted(player, settings)) { return; }
         PlayerWeights.Entry entry = PlayerWeights.current(player);
         if (entry.limit <= 0) { return; }
         EntityItem ground = event.getItem();
@@ -45,7 +43,7 @@ public final class WeightEnforce {
         ItemStack stack = ground.getItem();
         long unit = CarriedWeight.single(stack, settings);
         if (unit <= 0L) { return; }
-        long room = (long) (settings.hardLimit * entry.limit) - entry.total;
+        long room = entry.room(settings.hardLimit);
         if (unit * stack.getCount() <= room) { return; }
         event.setCanceled(true);
         int fit = (int) Math.min(stack.getCount(), Math.max(0L, room / unit));
@@ -89,7 +87,7 @@ public final class WeightEnforce {
     public static boolean refusesTake(Slot slot, EntityPlayer player) {
         if (clicked == null || !(player instanceof EntityPlayerMP) || player instanceof FakePlayer || slot.inventory == player.inventory || !ContentWeights.any()) { return false; }
         WeightDef settings = ContentWeights.settings();
-        if (!refusesTaking(settings) || !PlayerWeights.counted(player, settings)) { return false; }
+        if (exempt(settings, WeightDef.HARD_TAKE) || !PlayerWeights.counted(player, settings)) { return false; }
         ItemStack stack = slot.getStack();
         ItemStack cursor = player.inventory.getItemStack();
         ItemStack given = given(slot, cursor, player);
@@ -97,7 +95,7 @@ public final class WeightEnforce {
         if (gain <= 0.0D) { return false; }
         PlayerWeights.Entry entry = PlayerWeights.current(player);
         if (entry.limit <= 0) { return false; }
-        if (gain <= (long) (settings.hardLimit * entry.limit) - entry.total) {
+        if (gain <= entry.room(settings.hardLimit)) {
             PlayerWeights.mark(player);
             return false;
         }

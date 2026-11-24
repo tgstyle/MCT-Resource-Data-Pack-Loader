@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.core.integration.ftblib;
 
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+
 import com.feed_the_beast.ftblib.lib.data.ForgePlayer;
 import com.feed_the_beast.ftblib.lib.data.ForgeTeam;
 import com.feed_the_beast.ftblib.lib.data.Universe;
@@ -16,12 +18,13 @@ public final class FtbLibTeams {
         return player != null && player.hasTeam() && player.team.type.isPlayer ? player.team.getUIDCode() : "";
     }
 
+    public static boolean ignored(ForgeTeam team) { return OwnershipSettings.teamSource() != OwnershipSettings.TeamSource.FTB || !team.type.isPlayer; }
+
     private static ForgeTeam party(String key) { return Universe.get().getTeam((short) Integer.parseInt(key, 16)); }
 
-    public static boolean partyExists(String key) {
-        ForgeTeam team = party(key);
-        return team.type.isPlayer && team.isValid();
-    }
+    private static boolean isParty(ForgeTeam team) { return team.type.isPlayer && team.isValid(); }
+
+    public static boolean partyExists(String key) { return isParty(party(key)); }
 
     public static String partyLabel(String key) { return party(key).getTitle().getUnformattedText(); }
 
@@ -44,7 +47,7 @@ public final class FtbLibTeams {
         List<String> ids = new ArrayList<>();
         if (!Universe.loaded()) { return ids; }
         for (ForgeTeam team : Universe.get().getTeams()) {
-            if (team.type.isPlayer && team.isValid()) { ids.add(team.getId()); }
+            if (isParty(team)) { ids.add(team.getId()); }
         }
         return ids;
     }
@@ -52,7 +55,7 @@ public final class FtbLibTeams {
     public static String keyNamed(String name) {
         if (!Universe.loaded()) { return ""; }
         for (ForgeTeam team : Universe.get().getTeams()) {
-            if (team.type.isPlayer && team.isValid() && (team.getId().equalsIgnoreCase(name) || team.getUIDCode().equalsIgnoreCase(name) || team.getTitle().getUnformattedText().equals(name))) { return team.getUIDCode(); }
+            if (isParty(team) && (team.getId().equalsIgnoreCase(name) || team.getUIDCode().equalsIgnoreCase(name) || team.getTitle().getUnformattedText().equals(name))) { return team.getUIDCode(); }
         }
         return "";
     }

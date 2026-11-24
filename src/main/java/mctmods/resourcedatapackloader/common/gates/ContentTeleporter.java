@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
 import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.portals.PortalFit;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
@@ -26,6 +27,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.Constants;
@@ -34,6 +36,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentTeleporter implements ITeleporter {
     private static final int SEARCH_LOW = 4;
+    private static final int TOP_MARGIN = 4;
     private static final String PORTALS = "rdplPortals";
     private static final String ORIGINS = "rdplPortalOrigins";
     private final PortalDef def;
@@ -48,7 +51,7 @@ public final class ContentTeleporter implements ITeleporter {
 
     @Override public void placeEntity(World world, Entity entity, float rotationYaw) {
         int dimension = world.provider.getDimension();
-        BlockPos mapped = new BlockPos(entity.posX, entity.posY, entity.posZ);
+        BlockPos mapped = new BlockPos(entity);
         BlockPos linked = remembered(entity, dimension);
         if (linked != null && !(world.getBlockState(linked).getBlock() instanceof ContentPortalBlock)) {
             forget(entity, dimension);
@@ -76,7 +79,8 @@ public final class ContentTeleporter implements ITeleporter {
         PortalStorage.add(world, portalPos, entity.getUniqueID());
         remember(entity, dimension, portalPos);
         BlockPos step = stepOut(world, portalPos);
-        entity.setLocationAndAngles(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D, rotationYaw, entity.rotationPitch);
+        Vec3d feet = Walking.feet(step);
+        entity.setLocationAndAngles(feet.x, feet.y, feet.z, rotationYaw, entity.rotationPitch);
         entity.motionX = 0.0D;
         entity.motionY = 0.0D;
         entity.motionZ = 0.0D;
@@ -85,9 +89,8 @@ public final class ContentTeleporter implements ITeleporter {
     private BlockPos stepOut(World world, BlockPos portalPos) {
         IBlockState held = world.getBlockState(portalPos);
         if (!(held.getBlock() instanceof ContentPortalBlock)) { return portalPos.up(); }
-        int meta = held.getBlock().getMetaFromState(held);
-        if (meta == ContentPortals.FLAT || ((ContentPortalBlock) held.getBlock()).getDef().fullCube) { return portalPos.up(); }
-        EnumFacing[] sides = meta == ContentPortals.ALONG_X
+        if (standsOn(held)) { return portalPos.up(); }
+        EnumFacing[] sides = held.getBlock().getMetaFromState(held) == ContentPortals.ALONG_X
                 ? new EnumFacing[] { EnumFacing.NORTH, EnumFacing.SOUTH }
                 : new EnumFacing[] { EnumFacing.WEST, EnumFacing.EAST };
         for (EnumFacing side : sides) {
@@ -126,15 +129,25 @@ public final class ContentTeleporter implements ITeleporter {
     private BlockPos landing(World world, BlockPos from) {
         BlockPos ground = world.getTopSolidOrLiquidBlock(new BlockPos(from.getX(), 0, from.getZ()));
         if (ground.getY() > 0) {
-            while (ground.getY() < world.getHeight() - 4 && world.getBlockState(ground).getMaterial().isLiquid()) { ground = ground.up(); }
+            while (ground.getY() < top(world) && world.getBlockState(ground).getMaterial().isLiquid()) { ground = ground.up(); }
             return ground;
         }
         return new BlockPos(from.getX(), clamp(world, from.getY()), from.getZ());
     }
 
-    private static int clamp(World world, int y) { return MathHelper.clamp(y, SEARCH_LOW, world.getHeight() - 4); }
+    private static int top(World world) { return world.getHeight() - TOP_MARGIN; }
 
-    private static void hold(World world, BlockPos at) { world.getChunk(at); }
+    private static int clamp(World world, int y) { return MathHelper.clamp(y, SEARCH_LOW, top(world)); }
+
+    private static void hold(World world, BlockPos at) {
+        int cx = at.getX() >> 4;
+        int cz = at.getZ() >> 4;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                world.getChunk(cx + dx, cz + dz);
+            }
+        }
+    }
 
     private boolean unbuilt(World world, BlockPos landing, boolean adrift) {
         if (fit == null || fit.holes.isEmpty()) { return true; }
@@ -167,7 +180,11 @@ public final class ContentTeleporter implements ITeleporter {
     }
 
     private boolean standsOnTop() {
-        return portalState.getBlock().getMetaFromState(portalState) == ContentPortals.FLAT || ((ContentPortalBlock) portalState.getBlock()).getDef().fullCube;
+        return standsOn(portalState);
+    }
+
+    private static boolean standsOn(IBlockState state) {
+        return state.getBlock().getMetaFromState(state) == ContentPortals.FLAT || ((ContentPortalBlock) state.getBlock()).getDef().fullCube;
     }
 
     private List<BlockPos> frame(BlockPos landing) {

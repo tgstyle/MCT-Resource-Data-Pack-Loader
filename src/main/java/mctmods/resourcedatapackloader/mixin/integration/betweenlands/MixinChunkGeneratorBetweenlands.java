@@ -21,8 +21,7 @@ import thebetweenlands.common.world.gen.biome.BiomeWeights;
     @Shadow @Final private World worldObj;
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int chunkX, int chunkZ, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(worldObj, chunkX, chunkZ);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(worldObj)) { cir.setReturnValue(ContentVoidWorld.emptyChunk(worldObj, chunkX, chunkZ)); }
     }
 
     @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int x, int z, CallbackInfo ci) {

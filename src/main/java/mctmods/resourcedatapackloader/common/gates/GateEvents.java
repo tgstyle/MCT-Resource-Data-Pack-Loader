@@ -4,8 +4,11 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.dimension.Travel;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
 import mctmods.resourcedatapackloader.common.util.entity.SpawnPoints;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.core.integration.galacticraftcore.GcCamera;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -19,7 +22,6 @@ import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
@@ -27,13 +29,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -41,7 +43,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 public final class GateEvents {
     private static final long QUIET_MILLIS = 2000L;
-    private static final Map<UUID, Long> SPOKEN = new HashMap<>();
+    private static final Map<UUID, Long> SPOKEN = PlayerLogout.track(new HashMap<>());
     private static final int TURN_BACK_TICKS = 60;
     private static final int TIMED_EVERY = 20;
     private static int ticks;
@@ -49,13 +51,11 @@ public final class GateEvents {
 
     private GateEvents() {}
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SPOKEN.remove(event.player.getUniqueID()); }
-
     public static void serverStopped() { TURNING.clear(); }
 
     @SubscribeEvent public static void onArrive(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (!(event.player instanceof EntityPlayerMP)) { return; }
-        EntityPlayerMP player = (EntityPlayerMP) event.player;
+        EntityPlayerMP player = Players.serverPlayer(event.player);
+        if (player == null) { return; }
         for (GateDef def : ContentGates.forDimension(event.toDim)) {
             if (ContentGates.admits(player, def)) { continue; }
             ContentGates.refuse(player, def);
@@ -68,8 +68,8 @@ public final class GateEvents {
         if (event.phase != TickEvent.Phase.END) { return; }
         if (ContentGates.timed() && ++ticks % TIMED_EVERY == 0) { timed(); }
         if (TURNING.isEmpty()) { return; }
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+        MinecraftServer server = Players.server();
+        for (EntityPlayerMP player : Players.online(server)) {
             UUID id = player.getUniqueID();
             TurnBack back = TURNING.get(id);
             if (back == null) { continue; }
@@ -88,18 +88,17 @@ public final class GateEvents {
     }
 
     private static void timed() {
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        GateStay.tick(server);
+        MinecraftServer server = Players.server();
+        GateStay.tick(server, TIMED_EVERY);
         GateLoot.track(server);
     }
 
     private static void turnBack(MinecraftServer server, EntityPlayerMP player, TurnBack back) {
-        sendOut(server, player, back.from);
-        if (player.dimension == back.to) { ContentLog.LOGGER.warn("Gate {} could not send {} back from dimension {}", back.def.getKey(), player.getName(), back.to); }
+        if (sendOut(server, player, back.from, back.to)) { ContentLog.LOGGER.warn("Gate {} could not send {} back from dimension {}", back.def.getKey(), player.getName(), back.to); }
         else { ContentLog.LOGGER.info("Gate {} sent {} back to dimension {}, reached without passing the gate", back.def.getKey(), player.getName(), player.dimension); }
     }
 
-    static void sendOut(MinecraftServer server, EntityPlayerMP player, int fromDimension) {
+    static boolean sendOut(MinecraftServer server, EntityPlayerMP player, int fromDimension, int gated) {
         World from = worldOf(fromDimension);
         BlockPos spot = from == null ? null : landing(player, from, fromDimension);
         List<ItemStack> returned = new ArrayList<>();
@@ -113,14 +112,15 @@ public final class GateEvents {
         }
         if (ContentCelestial.present()) { returned.addAll(GcCamera.chestCargo(player)); }
         player.dismountRidingEntity();
-        boolean sent = spot != null && spot.getY() > 0 && Travel.to(player, fromDimension, spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, player.rotationYaw, player.rotationPitch);
+        boolean sent = spot != null && spot.getY() > 0 && Travel.to(player, fromDimension, spot, player.rotationYaw, player.rotationPitch);
         if (!sent) {
             World overworld = server.getWorld(0);
             BlockPos home = ground(overworld, overworld.getSpawnPoint());
-            Travel.to(player, 0, home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, player.rotationYaw, player.rotationPitch);
+            Travel.to(player, 0, home, player.rotationYaw, player.rotationPitch);
         }
         if (vehicle != null && ContentCelestial.present()) { GcCamera.restore(player, vehicle); }
         for (ItemStack stack : returned) { ItemHandlerHelper.giveItemToPlayer(player, stack); }
+        return player.dimension == gated;
     }
 
     @Nullable private static World worldOf(int dimension) { return DimensionManager.getWorld(dimension); }
@@ -146,8 +146,8 @@ public final class GateEvents {
     }
 
     @SubscribeEvent public static void onTravel(EntityTravelToDimensionEvent event) {
-        if (!(event.getEntity() instanceof EntityPlayerMP)) { return; }
-        EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
+        EntityPlayerMP player = Players.serverPlayer(event.getEntity());
+        if (player == null) { return; }
         List<GateDef> defs = ContentGates.forDimension(event.getDimension());
         for (GateDef def : defs) {
             if (ContentGates.admits(player, def)) { continue; }
@@ -160,11 +160,10 @@ public final class GateEvents {
     }
 
     @SubscribeEvent public static void onKill(LivingDeathEvent event) {
-        Entity slayer = event.getSource().getTrueSource();
-        if (!(slayer instanceof EntityPlayerMP)) { return; }
+        EntityPlayerMP player = Players.serverPlayer(event.getSource().getTrueSource());
+        if (player == null) { return; }
         ResourceLocation fallen = EntityList.getKey(event.getEntity());
         if (fallen == null) { return; }
-        EntityPlayerMP player = (EntityPlayerMP) slayer;
         for (GateDef def : ContentGates.all().values()) {
             if (def.killed.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!fallen.equals(new ResourceLocation(def.killed))) { continue; }
@@ -183,9 +182,7 @@ public final class GateEvents {
     private static void reward(EntityPlayerMP player, GateDef def) {
         ItemStack key = ContentStacks.parse(def.registryName, def.killedDrops, 1);
         if (key.isEmpty()) { return; }
-        EntityItem drop = new EntityItem(player.world, player.posX, player.posY, player.posZ, key);
-        drop.setDefaultPickupDelay();
-        player.world.spawnEntity(drop);
+        Stacks.dropAt(player.world, player.posX, player.posY, player.posZ, key, 10);
     }
 
     @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) {
@@ -232,7 +229,8 @@ public final class GateEvents {
 
     private static void retreat(EntityPlayerMP player) {
         BlockPos target = landing(player, player.world, player.dimension);
-        player.setPositionAndUpdate(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        Vec3d feet = Walking.feet(target);
+        player.setPositionAndUpdate(feet.x, feet.y, feet.z);
     }
 
     private static BlockPos landing(EntityPlayerMP player, World world, int dimension) {

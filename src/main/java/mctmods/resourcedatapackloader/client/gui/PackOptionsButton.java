@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.util.CenteredText;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
+import mctmods.resourcedatapackloader.common.util.messages.Says;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -9,6 +11,7 @@ import net.minecraft.client.gui.GuiCreateWorld;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiWorldSelection;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -33,11 +36,11 @@ public final class PackOptionsButton {
         if (Minecraft.getSystemTime() / FLASH_MILLIS % 2L != 0L) { return; }
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
         String message = I18n.format("rdpl.gui.packOptions.restartRequired");
-        font.drawStringWithShadow(message, (float) gui.width / 2 - font.getStringWidth(message) / 2.0F, y, 0xFF5555);
+        CenteredText.shadow(font, message, (float) gui.width / 2, y, Says.rgb(TextFormatting.RED));
     }
 
     public static final class Handler {
-        @SubscribeEvent public void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
+        @SubscribeEvent public static void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
             if (PackOptions.files().isEmpty()) { return; }
             if (event.getGui() instanceof GuiCreateWorld) {
                 int x = event.getGui().width - CORNER_WIDTH - CORNER_INSET;
@@ -62,13 +65,13 @@ public final class PackOptionsButton {
             event.getButtonList().add(corner);
         }
 
-        @SubscribeEvent public void onAction(GuiScreenEvent.ActionPerformedEvent.Post event) {
+        @SubscribeEvent public static void onAction(GuiScreenEvent.ActionPerformedEvent.Post event) {
             if (event.getButton().id != ID && event.getButton().id != SELECTION_ID) { return; }
             if (!(event.getGui() instanceof GuiCreateWorld) && !(event.getGui() instanceof GuiWorldSelection)) { return; }
             event.getGui().mc.displayGuiScreen(new GuiPackOptions(event.getGui()));
         }
 
-        @SubscribeEvent public void beforeDraw(GuiScreenEvent.DrawScreenEvent.Pre event) {
+        @SubscribeEvent public static void beforeDraw(GuiScreenEvent.DrawScreenEvent.Pre event) {
             if (event.getGui() instanceof GuiCreateWorld) {
                 if (create == null || PackOptions.applied()) { return; }
                 create.enabled = false;
@@ -81,7 +84,7 @@ public final class PackOptionsButton {
             if (pending && play != null) { play.enabled = false; }
         }
 
-        @SubscribeEvent public void afterDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
+        @SubscribeEvent public static void afterDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
             if (PackOptions.applied()) { return; }
             if (event.getGui() instanceof GuiCreateWorld) {
                 flash(event.getGui(), (moreOptionsY + 20 + event.getGui().height - 28) / 2 - Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT / 2);

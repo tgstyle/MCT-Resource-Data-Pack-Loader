@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.common.pregen;
 
+import mctmods.resourcedatapackloader.common.util.world.ChunkSaves;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Heap;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -11,8 +14,6 @@ import java.util.Map;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.chunk.storage.AnvilChunkLoader;
-import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -178,29 +179,31 @@ public final class ContentChunkWatch {
         int shown = 0;
         for (Map.Entry<String, Long> entry : order) {
             if (shown++ >= 5) { break; }
-            out.append(String.format(" %s %.1f ms", entry.getKey(), entry.getValue() / 1.0E6D));
+            out.append(String.format(" %s %.1f ms", entry.getKey(), entry.getValue() / (double) MathUtil.NANOS_PER_MS));
         }
         return out.toString();
     }
 
     private static void takeStock() {
-        long runs = 0L;
-        long spent = 0L;
-        Runtime memory = Runtime.getRuntime();
-        long held = memory.totalMemory() - memory.freeMemory();
-        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = bean.getCollectionCount();
-            long time = bean.getCollectionTime();
-            if (count > 0L) { runs += count; }
-            if (time > 0L) { spent += time; }
-            note(bean.getName(), count, time, held);
-        }
+        long held = Heap.heapUsed();
+        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) { note(bean.getName(), bean.getCollectionCount(), bean.getCollectionTime(), held); }
         if (collections == 0L && collectMillis == 0L) {
-            collections = runs;
-            collectMillis = spent;
+            long[] total = collected();
+            collections = total[0];
+            collectMillis = total[1];
         }
         if (lastHeap > 0L && held > lastHeap) { allocated += held - lastHeap; }
         lastHeap = held;
+    }
+
+    private static long[] collected() {
+        long runs = 0L;
+        long spent = 0L;
+        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (bean.getCollectionCount() > 0L) { runs += bean.getCollectionCount(); }
+            if (bean.getCollectionTime() > 0L) { spent += bean.getCollectionTime(); }
+        }
+        return new long[]{runs, spent};
     }
 
     private static void note(String sweeper, long count, long time, long held) {
@@ -230,13 +233,9 @@ public final class ContentChunkWatch {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || !watching()) { return; }
         takeStock();
-        int waiting = 0;
+        int waiting = ChunkSaves.pending(server);
         int held = 0;
-        for (WorldServer world : server.worlds) {
-            ChunkProviderServer provider = world.getChunkProvider();
-            held += provider.getLoadedChunkCount();
-            if (provider.chunkLoader instanceof AnvilChunkLoader) { waiting += ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount(); }
-        }
+        for (WorldServer world : server.worlds) { held += world.getChunkProvider().getLoadedChunkCount(); }
         if (waiting > mostWaiting) { mostWaiting = waiting; }
         if (held > mostHeld) { mostHeld = held; }
         if (server.getTickCounter() % SNAPSHOT != 0 || !seen) { return; }
@@ -252,32 +251,29 @@ public final class ContentChunkWatch {
                 made, read, readFromDisk, useful, opened, emptied, released, mostHeld, mostWaiting, mean));
         ContentLog.LOGGER.debug(String.format(
                 "In the same time it got %d chunk(s) ready to write in %.1f ms of the round's own time, then wrote %d of them away, %.1f a second, spending %.1f ms apart from the round, of which %.1f ms went into the files themselves and %.1f ms into packing them down",
-                readied, readyNanos / 1.0E6D, written, rate, writeNanos / 1.0E6D, fileNanos / 1.0E6D, (writeNanos - fileNanos) / 1.0E6D));
+                readied, readyNanos / (double) MathUtil.NANOS_PER_MS, written, rate, writeNanos / (double) MathUtil.NANOS_PER_MS, fileNanos / (double) MathUtil.NANOS_PER_MS, (writeNanos - fileNanos) / (double) MathUtil.NANOS_PER_MS));
         ContentLog.LOGGER.debug(String.format(
                 "It also lit %d chunk(s) in %.1f ms, of which %d were left dark for want of their neighbors %d were the same chunks being tried again and %d were held back until the dressing was on and %d chunk(s) were left undressed while only the light was being seen to, went back over %d chunk(s) in %.1f ms to finish the job, and spread light from %d place(s), %d about the sky and %d about lamps and fire, taking about %.1f ms in all of which about %.1f ms was the sky, timed one in every %d. %d more were not asked at all, the sky about them being settled already",
-                lit, litNanos / 1.0E6D, unlit, retried, deferred, heldOff, relit, relitNanos / 1.0E6D, spread, spreadSky, spread - spreadSky,
-                sampled == 0L ? 0.0D : spreadNanos / 1.0E6D * spread / sampled,
-                sampledSky == 0L ? 0.0D : skyNanos / 1.0E6D * spreadSky / sampledSky,
+                lit, litNanos / (double) MathUtil.NANOS_PER_MS, unlit, retried, deferred, heldOff, relit, relitNanos / (double) MathUtil.NANOS_PER_MS, spread, spreadSky, spread - spreadSky,
+                sampled == 0L ? 0.0D : spreadNanos / (double) MathUtil.NANOS_PER_MS * spread / sampled,
+                sampledSky == 0L ? 0.0D : skyNanos / (double) MathUtil.NANOS_PER_MS * spreadSky / sampledSky,
                 SAMPLE + 1L, settled));
         ContentLog.LOGGER.debug(String.format(
                 "It had to look a chunk up in earnest %d time(s), ask what a block was made of %d time(s), name a block %d time(s) while making the ground and %d time(s) for the writing, and spared Quark's stone generator %d reading(s) of the world for ground it was never going to reach",
                 chunkLookups, materialLookups, primerLookups, blockIdLookups, stoneSpared));
-        long runs = 0L;
-        long spent = 0L;
-        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            if (bean.getCollectionCount() > 0L) { runs += bean.getCollectionCount(); }
-            if (bean.getCollectionTime() > 0L) { spent += bean.getCollectionTime(); }
-        }
+        long[] total = collected();
+        long runs = total[0];
+        long spent = total[1];
         Runtime runtime = Runtime.getRuntime();
         ContentLog.LOGGER.debug(String.format(
                 "It threw away about %d MB of working scraps, which the tidying took %d ms across %d sweep(s), and it is holding %d MB of the %d MB it may have",
-                allocated >> 20, spent - collectMillis, runs - collections, (runtime.totalMemory() - runtime.freeMemory()) >> 20, runtime.maxMemory() >> 20));
+                allocated >> 20, spent - collectMillis, runs - collections, Heap.heapUsed() >> 20, runtime.maxMemory() >> 20));
         collections = runs;
         collectMillis = spent;
         allocated = 0L;
         ContentLog.LOGGER.debug(String.format(
                 "Making the ground took %.1f ms, dressing it as the game does took %.1f ms, and the mods that dress it took %.1f ms%s. %d chunk(s) were too warm anywhere in them for ice or snow, so were not walked for it",
-                terrainNanos / 1.0E6D, decorNanos / 1.0E6D, modNanos / 1.0E6D, worst(), warm));
+                terrainNanos / (double) MathUtil.NANOS_PER_MS, decorNanos / (double) MathUtil.NANOS_PER_MS, modNanos / (double) MathUtil.NANOS_PER_MS, worst(), warm));
         made = 0L;
         read = 0L;
         readFromDisk = 0L;

@@ -14,15 +14,35 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 public final class ScriptEvents {
     private static final Map<String, List<ScriptEventDef>> EVENTS = new HashMap<>();
 
+    public static final String RDPL = "rdpl";
+    public static final String SENDER = "sender";
+    static final String ENTITY = "entity";
+    static final String PLAYER = "player";
+    static final String POS = "pos";
+    static final String STATE = "state";
+    static final String FROM = "from";
+    static final String TO = "to";
+    static final String ATTACKER = "attacker";
+    static final String DAMAGE_TYPE = "damageType";
+    static final String DROPS = "drops";
+
     private ScriptEvents() {}
+
+    public static Map<String, Object> bind(WorldServer world, @Nullable EntityPlayer player) {
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put(RDPL, new RdplApi(world, player));
+        return bindings;
+    }
 
     public static void load() {
         EVENTS.clear();
@@ -31,7 +51,7 @@ public final class ScriptEvents {
         ScriptEngine.reload();
         int count = 0;
         for (List<ScriptEventDef> entries : EVENTS.values()) { count += entries.size(); }
-        if (count > 0) { Summary.info("scripts", "Loaded " + count + " script event(s)"); }
+        Summary.loaded("scripts", count, "script event(s)");
     }
 
     public static boolean has(String kind) { return EVENTS.containsKey(kind); }
@@ -40,7 +60,7 @@ public final class ScriptEvents {
         List<ScriptEventDef> entries = EVENTS.get(kind);
         if (entries == null) { return true; }
         for (ScriptEventDef entry : entries) {
-            if (entry.every == 1 || time % entry.every == 0) { return false; }
+            if (entry.due(time)) { return false; }
         }
         return true;
     }
@@ -52,9 +72,9 @@ public final class ScriptEvents {
         boolean cancelled = false;
         boolean disable = ScriptEventDef.disablesOnError(kind);
         for (ScriptEventDef entry : entries) {
-            if (entry.every != 1 && world.getTotalWorldTime() % entry.every != 0) { continue; }
+            if (!entry.due(world.getTotalWorldTime())) { continue; }
             if (!entry.filter.matches(world, pos, dimension, state, entity, item)) { continue; }
-            if ("cancel".equals(ScriptEngine.run(entry.script, bindings, disable))) { cancelled = true; }
+            if (ScriptEngine.CANCEL.equals(ScriptEngine.run(entry.script, bindings, disable))) { cancelled = true; }
         }
         return cancelled;
     }

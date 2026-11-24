@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
@@ -52,7 +53,7 @@ import org.lwjgl.opengl.GL12;
         Minecraft mc = Minecraft.getMinecraft();
         SkyLookDef look = ContentFogSampler.look(mc.world);
         float target = target(mc, look);
-        strength = look == null || look.heat == null ? 0.0F : strength + (target - strength) * EASE;
+        strength = look == null || look.heat == null ? 0.0F : MathUtil.lerp(EASE, strength, target);
         if (target <= 0.0F && strength < GONE) { strength = 0.0F; }
         if (strength <= 0.0F) {
             close();

@@ -42,10 +42,18 @@ public final class ContentWeatherCycle {
 
     public static void dry(World world) {
         if (world.isRemote) { return; }
+        stepRain(world, -RAIN_STEP);
+        stepThunder(world, -THUNDER_STEP, 1.0F);
+    }
+
+    private static void stepRain(World world, float delta) {
         world.prevRainingStrength = world.rainingStrength;
-        world.rainingStrength = Math.max(0.0F, world.rainingStrength - RAIN_STEP);
+        world.rainingStrength = MathHelper.clamp(world.rainingStrength + delta, 0.0F, 1.0F);
+    }
+
+    private static void stepThunder(World world, float delta, float top) {
         world.prevThunderingStrength = world.thunderingStrength;
-        world.thunderingStrength = Math.max(0.0F, world.thunderingStrength - THUNDER_STEP);
+        world.thunderingStrength = MathHelper.clamp(world.thunderingStrength + delta, 0.0F, top);
     }
 
     public static void force(World world, int kind) {
@@ -54,10 +62,8 @@ public final class ContentWeatherCycle {
             dry(world);
             return;
         }
-        world.prevRainingStrength = world.rainingStrength;
-        world.rainingStrength = MathHelper.clamp(world.rainingStrength + RAIN_STEP, 0.0F, 1.0F);
-        world.prevThunderingStrength = world.thunderingStrength;
-        world.thunderingStrength = MathHelper.clamp(world.thunderingStrength + (kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+        stepRain(world, RAIN_STEP);
+        stepThunder(world, kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP, 1.0F);
     }
 
     public static void hurry(World world, int steps) {
@@ -94,12 +100,8 @@ public final class ContentWeatherCycle {
             shift = random.nextInt(200) + 100;
         }
         boolean storming = raining && thundering;
-        float strength = world.rainingStrength;
-        world.prevRainingStrength = strength;
         float aim = storming ? 1.0F : raining ? target : 0.0F;
-        world.rainingStrength = MathHelper.clamp(strength + MathHelper.clamp(aim - strength, -STEP, STEP), 0.0F, 1.0F);
-        float thunder = world.thunderingStrength;
-        world.prevThunderingStrength = thunder;
-        world.thunderingStrength = MathHelper.clamp(thunder + (storming ? THUNDER_STEP : -THUNDER_STEP), 0.0F, cycle.thunderStrength);
+        stepRain(world, MathHelper.clamp(aim - world.rainingStrength, -STEP, STEP));
+        stepThunder(world, storming ? THUNDER_STEP : -THUNDER_STEP, cycle.thunderStrength);
     }
 }

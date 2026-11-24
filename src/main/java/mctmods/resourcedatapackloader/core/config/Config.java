@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.config;
 
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.MCTMixin;
 
@@ -11,6 +12,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
     @net.minecraftforge.common.config.Config.Comment("Loot, advancements, functions and registry names") public static Data data = new Data();
     @net.minecraftforge.common.config.Config.Comment("What generates in the world, and what is stopped from generating") public static Entities entities = new Entities();
     public static Worldgen worldgen = new Worldgen();
+    private static final String VANILLA_MOD = "minecraft";
     @net.minecraftforge.common.config.Config.Comment("Working around other mods") public static Compat compat = new Compat();
     @net.minecraftforge.common.config.Config.Comment("What the game shows while a world loads") public static Client client = new Client();
     @net.minecraftforge.common.config.Config.Comment("Small changes to how vanilla behaves") public static Tweaks tweaks = new Tweaks();
@@ -21,25 +23,27 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
 
     public static boolean registersToClients() { return content.load && !content.vanillaClients; }
 
+    public static boolean loads(boolean flag) { return registersToClients() && flag; }
+
     public static class Control {
-        @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]") public String ores = "default";
-        @net.minecraftforge.common.config.Config.Comment("Biome blocking, the biome whitelists and the world template [default|global|off]") public String biomes = "default";
-        @net.minecraftforge.common.config.Config.Comment("Blocking other mods' own world generators [default|global|off]") public String generators = "default";
-        @net.minecraftforge.common.config.Config.Comment("Caves, ravines, villages and the rest of the structure switches, where structures are placed, and which vanilla village pieces are used [default|global|off]") public String structures = "default";
-        @net.minecraftforge.common.config.Config.Comment("Mob caps and the hostile spawn rates [default|global|off]") public String spawning = "default";
-        @net.minecraftforge.common.config.Config.Comment("Flat bedrock and its biome and dimension lists [default|global|off]") public String bedrock = "default";
-        @net.minecraftforge.common.config.Config.Comment("Void world generation and its platform [default|global|off]") public String voidWorld = "default";
-        @net.minecraftforge.common.config.Config.Comment("Recipe and furnace blocking and their whitelists [default|global|off]") public String recipes = "default";
-        @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, set through generatorOptions [default|global|off]") public String terrain = "default";
-        @net.minecraftforge.common.config.Config.Comment("Replacing blocks in chunks that already exist [default|global|off]") public String replacements = "default";
-        @net.minecraftforge.common.config.Config.Comment("Village plots from packs [default|global|off]") public String villages = "default";
-        @net.minecraftforge.common.config.Config.Comment("Ticking entities less often far from every player [default|global|off]") public String entities = "default";
-        @net.minecraftforge.common.config.Config.Comment("How many chunks are held loaded around a world's spawn point [default|global|off]") public String chunks = "default";
-        @net.minecraftforge.common.config.Config.Comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]") public String blastPlaster = "default";
-        @net.minecraftforge.common.config.Config.Comment("Which blocks are owned and what happens to them when a team changes, from packs [default|global|off]") public String ownership = "default";
-        @net.minecraftforge.common.config.Config.Comment("Which claims settings the pack decides and which this file decides [default|global|off]") public String claims = "default";
-        @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that a pack is allowed to open up [default|global|off]") public String commands = "default";
-        @net.minecraftforge.common.config.Config.Comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view distance and the build height, and commands on a world opened to LAN [default|global|off]") public String server = "default";
+        @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]") public String ores = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Biome blocking, the biome whitelists and the world template [default|global|off]") public String biomes = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Blocking other mods' own world generators [default|global|off]") public String generators = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Caves, ravines, villages and the rest of the structure switches, where structures are placed, and which vanilla village pieces are used [default|global|off]") public String structures = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Mob caps and the hostile spawn rates [default|global|off]") public String spawning = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Flat bedrock and its biome and dimension lists [default|global|off]") public String bedrock = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Void world generation and its platform [default|global|off]") public String voidWorld = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Recipe and furnace blocking and their whitelists [default|global|off]") public String recipes = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, set through generatorOptions [default|global|off]") public String terrain = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Replacing blocks in chunks that already exist [default|global|off]") public String replacements = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Village plots from packs [default|global|off]") public String villages = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Ticking entities less often far from every player [default|global|off]") public String entities = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks are held loaded around a world's spawn point [default|global|off]") public String chunks = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]") public String blastPlaster = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Which blocks are owned and what happens to them when a team changes, from packs [default|global|off]") public String ownership = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Which claims settings the pack decides and which this file decides [default|global|off]") public String claims = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that a pack is allowed to open up [default|global|off]") public String commands = ContentControl.DEFAULT;
+        @net.minecraftforge.common.config.Config.Comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view distance and the build height, and commands on a world opened to LAN [default|global|off]") public String server = ContentControl.DEFAULT;
     }
 
     public static class Packs {
@@ -91,11 +95,11 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("True skips recipes that use an item which is not registered, instead of letting them fail. The count is logged once; false lets them fail [Default=true]") public boolean skipMissingItems = true;
         @net.minecraftforge.common.config.Config.Comment("True lets advancements load when they refer to a recipe that no longer exists. The advancement works but never unlocks that recipe; false does not let them load [Default=true]") public boolean tolerateMissingInAdvancements = true;
         @net.minecraftforge.common.config.Config.Comment("True removes every crafting recipe, keeping only the mods in recipeWhitelist. Include your pack's namespace to keep its own recipes; false leaves crafting recipes alone [Default=false]") public boolean blockRecipes = false;
-        @net.minecraftforge.common.config.Config.Comment("Mod ids whose crafting recipes survive while blockRecipes is true. Include your pack's namespace to keep its own recipes") public String[] recipeWhitelist = { "minecraft" };
+        @net.minecraftforge.common.config.Config.Comment("Mod ids whose crafting recipes survive while blockRecipes is true. Include your pack's namespace to keep its own recipes") public String[] recipeWhitelist = { VANILLA_MOD };
         @net.minecraftforge.common.config.Config.Comment("Mod ids whose crafting recipes are removed outright, whoever they belong to and whatever the whitelist says. One per line") public String[] blockedRecipeMods = {};
         @net.minecraftforge.common.config.Config.Comment("What the mod id is read from when blocking crafting recipes. 'recipe' uses the recipe's own name, 'output' uses the item it makes, 'both' blocks if either matches and spares if either is whitelisted [Default=recipe]") public String recipeMatch = "recipe";
         @net.minecraftforge.common.config.Config.Comment("True removes every furnace recipe, keeping only the mods in furnaceWhitelist. The mod is read from the item produced; false leaves furnace recipes alone [Default=false]") public boolean blockFurnaceRecipes = false;
-        @net.minecraftforge.common.config.Config.Comment("Mod ids whose furnace recipes survive while blockFurnaceRecipes is true. Include your pack's namespace to keep its own recipes. CraftTweaker and GroovyScript additions always survive") public String[] furnaceWhitelist = { "minecraft" };
+        @net.minecraftforge.common.config.Config.Comment("Mod ids whose furnace recipes survive while blockFurnaceRecipes is true. Include your pack's namespace to keep its own recipes. CraftTweaker and GroovyScript additions always survive") public String[] furnaceWhitelist = { VANILLA_MOD };
         @net.minecraftforge.common.config.Config.Comment("Mod ids whose furnace recipes are removed outright, whatever the whitelist says. One per line") public String[] blockedFurnaceMods = {};
         @net.minecraftforge.common.config.Config.Comment("True logs a per mod count of what was blocked, so you can see what to whitelist; false logs nothing [Default=true]") public boolean logBlockedRecipes = true;
     }
@@ -301,7 +305,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("True treats terrainWorldTypes as the world types to leave alone instead; false treats them as the world types the terrain settings are given to [Default=false]") public boolean terrainWorldTypesAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("True generates mod CoFH World files through this mod when CoFH World is missing; false generates none through this mod. Translating them into a pack is the supported way [Default=false]") public boolean readCofhWorldFiles = false;
         @net.minecraftforge.common.config.Config.Comment("True stops every other mod from generating anything through its own world generators, which is how mods add things Forge's ore and decoration events never see, such as Tinkers' slime islands. Only the mods in generatorWhitelist still generate; false blocks none. This mod's own pack generation is never blocked [Default=false]") public boolean blockWorldGenerators = false;
-        @net.minecraftforge.common.config.Config.Comment("Mod ids allowed to run their own world generators while blockWorldGenerators is true") public String[] generatorWhitelist = { "minecraft" };
+        @net.minecraftforge.common.config.Config.Comment("Mod ids allowed to run their own world generators while blockWorldGenerators is true") public String[] generatorWhitelist = { VANILLA_MOD };
         @net.minecraftforge.common.config.Config.Comment("Mod ids, or parts of a generator class name such as slimeisland, blocked outright whatever the whitelist says. One per line") public String[] blockedGenerators = {};
         @net.minecraftforge.common.config.Config.Comment("How far apart a structure is seeded, written as structure=chunks, one per line, such as temples=24. For mineshafts the number is one chunk in that many") public String[] structureSpacing = {};
         @net.minecraftforge.common.config.Config.Comment("The closest two of a structure may be, written as structure=chunks, one per line. Monuments, mansions, end cities and strongholds use it, and villages, for which it is the fewest chunks between one village and the next") public String[] structureSeparation = {};
@@ -464,7 +468,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("True, generator blocking skips these dimensions; false, it applies only to them [Default=false]") public boolean blockGeneratorDimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("True logs the first time each mod and generator is blocked, so you can see what to whitelist; false logs none [Default=true]") public boolean logBlockedGenerators = true;
         @net.minecraftforge.common.config.Config.Comment("True stops every mod, and Minecraft itself, from generating ores. Only the mods in oreWhitelist still generate; false blocks none. Reaches only ore generation that fires Forge's ore generation event [Default=false]") public boolean blockOres = false;
-        @net.minecraftforge.common.config.Config.Comment("Mod ids allowed to generate ores while blockOres is true. Ores a pack defines belong to that pack's namespace") public String[] oreWhitelist = { "minecraft" };
+        @net.minecraftforge.common.config.Config.Comment("Mod ids allowed to generate ores while blockOres is true. Ores a pack defines belong to that pack's namespace") public String[] oreWhitelist = { VANILLA_MOD };
         @net.minecraftforge.common.config.Config.Comment("Ore types this applies to, whoever generates them and whatever the whitelist says. One per line. Known types: COAL, IRON, GOLD, REDSTONE, DIAMOND, LAPIS, EMERALD, QUARTZ, DIRT, GRAVEL, DIORITE, GRANITE, ANDESITE, SILVERFISH, CUSTOM") public String[] oreTypes = {};
         @net.minecraftforge.common.config.Config.Comment("True, oreTypes are blocked; false, only oreTypes generate [Default=true]") public boolean oreTypesAreBlacklist = true;
         @net.minecraftforge.common.config.Config.Comment("Items that prospect for vein shaped worldgen entries when a sneaking player breaks a block with one, as item=entry|entry[,radius in chunks] or item=*[,radius], e.g. minecraft:compass=iron_vein|coal_seam or mypack:rod=*,12. The reading names the ore and a compass direction, up or down, never a position [Default=[]]") public String[] prospectItems = {};
@@ -476,7 +480,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("True treats blockOreDimensions as the dimensions to leave alone instead; false treats them as the dimensions ore blocking applies to [Default=false]") public boolean blockOreDimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("True logs the first time each mod and ore type is blocked, so you can see what to whitelist; false logs none [Default=true]") public boolean logBlockedOres = true;
         @net.minecraftforge.common.config.Config.Comment("True stops every biome from generating except the mods in biomeWhitelist; false blocks none. Blocked biomes become the void biome. Blocking every biome makes the overworld a void world [Default=false]") public boolean blockBiomes = false;
-        @net.minecraftforge.common.config.Config.Comment("Mod ids whose biomes still generate while blockBiomes is true. A pack biome uses the pack's namespace") public String[] biomeWhitelist = { "minecraft" };
+        @net.minecraftforge.common.config.Config.Comment("Mod ids whose biomes still generate while blockBiomes is true. A pack biome uses the pack's namespace") public String[] biomeWhitelist = { VANILLA_MOD };
         @net.minecraftforge.common.config.Config.Comment("Biomes this applies to, whoever owns them and whatever the whitelist says. Friendly name such as Birch Forest, or registry name such as minecraft:birch_forest. One per line") public String[] biomeNames = {};
         @net.minecraftforge.common.config.Config.Comment("True, biomeNames are blocked; false, only biomeNames generate [Default=true]") public boolean biomeNamesAreBlacklist = true;
         @net.minecraftforge.common.config.Config.Comment("Dimensions biome blocking applies to. Empty means every dimension [Default=0, the overworld]") public int[] blockBiomeDimensions = { 0 };

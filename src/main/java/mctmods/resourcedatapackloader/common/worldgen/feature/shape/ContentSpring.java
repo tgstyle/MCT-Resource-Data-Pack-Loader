@@ -1,22 +1,16 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 
-import java.util.List;
 import java.util.Random;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public final class ContentSpring implements IContentShape {
-    private final ContentPlacer placer;
-
-    public ContentSpring(ContentPlacer placer) { this.placer = placer; }
-
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
+public final class ContentSpring extends ContentPlacedShape {
+    public ContentSpring(ContentPlacer placer) { super(placer); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         int x = origin.getX();

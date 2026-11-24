@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,15 +45,11 @@ public final class FluidTouch {
         return material == Material.WATER ? FluidRegistry.WATER : material == Material.LAVA ? FluidRegistry.LAVA : null;
     }
 
-    @Nullable public static Fluid named(String name) {
-        ResourceLocation id = new ResourceLocation(name);
-        Fluid fluid;
-        if (ForgeRegistries.BLOCKS.containsKey(id)) {
-            Block block = ForgeRegistries.BLOCKS.getValue(id);
-            fluid = block == null ? null : fluidOf(block);
-        } else {
-            fluid = FluidRegistry.getFluid(id.getPath());
-        }
+    @Nullable public static Fluid named(String name) { return fluidNamed(new ResourceLocation(name)); }
+
+    @Nullable private static Fluid fluidNamed(ResourceLocation id) {
+        Block block = Registries.find(ForgeRegistries.BLOCKS, id);
+        Fluid fluid = block == null ? FluidRegistry.getFluid(id.getPath()) : fluidOf(block);
         return fluid == null || fluid.getBlock() == null ? null : fluid;
     }
 
@@ -78,7 +76,7 @@ public final class FluidTouch {
 
     private void add(String entry, Object owner) {
         if (entry.isEmpty()) { return; }
-        if (entry.startsWith("#")) {
+        if (IdNames.isTag(entry)) {
             addOre(entry, owner);
             return;
         }

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util;
 
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.util.List;
 import java.util.function.Function;
@@ -25,6 +26,12 @@ public final class ItemMatch {
         this.rank = rank;
     }
 
+    public static ItemMatch parseOrThrow(ResourceLocation key, String text, String what) {
+        ItemMatch match = parse(key, text);
+        if (match == null) { throw new IllegalArgumentException(what + " '" + text + "' matches nothing"); }
+        return match;
+    }
+
     @Nullable public static ItemMatch parse(ResourceLocation key, String text) {
         String held = text.trim();
         if (held.isEmpty()) {
@@ -32,8 +39,8 @@ public final class ItemMatch {
             return null;
         }
         if (ANY.equals(held)) { return new ItemMatch(ItemStack.EMPTY, "", ANY_RANK); }
-        if (held.startsWith("#")) {
-            String ore = held.substring(1).trim();
+        String ore = IdNames.tag(held);
+        if (ore != null) {
             if (ore.isEmpty()) {
                 ContentLog.LOGGER.error("{} names an empty ore name, ignoring it", key);
                 return null;

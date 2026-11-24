@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks.banner;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,7 +15,7 @@ import net.minecraft.util.text.translation.I18n;
 @SuppressWarnings("deprecation") final class BannerParts {
     private BannerParts() {}
 
-    @Nonnull static String name(Block block) { return I18n.translateToLocal(block.getTranslationKey() + ".name"); }
+    @Nonnull static String name(Block block) { return I18n.translateToLocal(Lang.nameKey(block.getTranslationKey())); }
 
     @Nonnull static Item dropped(Block block, @Nullable Item banner) { return banner == null ? Item.getItemFromBlock(block) : banner; }
 

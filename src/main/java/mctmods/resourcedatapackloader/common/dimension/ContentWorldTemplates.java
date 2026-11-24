@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.dimension;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -109,7 +110,7 @@ public final class ContentWorldTemplates {
             WorldTemplateDef chosen = null;
             List<ResourceLocation> fromPacks = new ArrayList<>();
             for (WorldTemplateDef def : usable) {
-                if ("rdpl".equals(def.registryName.getNamespace())) { continue; }
+                if (ResourceDataPackLoader.PACK_ID.equals(def.registryName.getNamespace())) { continue; }
                 fromPacks.add(def.registryName);
                 chosen = def;
             }
@@ -141,7 +142,7 @@ public final class ContentWorldTemplates {
         return list;
     }
 
-    private static WorldTemplateDef built(String path, String name, String fallback, Map<String, String> roles) { return new WorldTemplateDef(new ResourceLocation("rdpl", path), name, fallback, Collections.unmodifiableMap(roles), Collections.emptyMap(), null, Collections.emptyList(), Collections.emptyList()); }
+    private static WorldTemplateDef built(String path, String name, String fallback, Map<String, String> roles) { return new WorldTemplateDef(ResourceDataPackLoader.rdpl(path), name, fallback, Collections.unmodifiableMap(roles), Collections.emptyMap(), null, Collections.emptyList(), Collections.emptyList()); }
 
     private static Map<String, BiomeDictionary.Type> roles() {
         Map<String, BiomeDictionary.Type> map = new LinkedHashMap<>();

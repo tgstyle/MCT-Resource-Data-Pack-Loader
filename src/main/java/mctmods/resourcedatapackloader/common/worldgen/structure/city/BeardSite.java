@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city;
 
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.Facings;
 import mctmods.resourcedatapackloader.common.util.worldgen.GroundLevel;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
@@ -35,6 +36,9 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 public final class BeardSite {
     private static final int GRADE_PASSES = 4;
     private static final int RING = 4;
+    private static final int FRONT_MARGIN = 3;
+    private static final int WELL_BASE_Y = 64;
+    private static final int WELL_TOP_Y = 78;
 
     private BeardSite() {}
 
@@ -108,22 +112,7 @@ public final class BeardSite {
     }
     public static BlockPos nearestSite(World world, BlockPos from, int spacing, boolean findUnexplored, long budgetNanos) {
         List<long[]> pinned = ContentStructurePlacement.pins(ContentStructurePlacement.VILLAGES);
-        if (pinned != null) {
-            BlockPos best = null;
-            long bestAway = Long.MAX_VALUE;
-            for (long[] pin : pinned) {
-                int chunkX = (int) pin[0] >> 4;
-                int chunkZ = (int) pin[1] >> 4;
-                if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
-                long awayX = pin[0] - from.getX();
-                long awayZ = pin[1] - from.getZ();
-                long away = awayX * awayX + awayZ * awayZ;
-                if (away >= bestAway) { continue; }
-                bestAway = away;
-                best = new BlockPos((int) pin[0] + ContentBeard.BESIDE_WELL, 64, (int) pin[1] + ContentBeard.BESIDE_WELL);
-            }
-            return best;
-        }
+        if (pinned != null) { return Coords.nearestPin(pinned, from.getX(), from.getZ(), ContentBeard.BESIDE_WELL, pin -> findUnexplored && world.isChunkGeneratedAt((int) pin[0] >> 4, (int) pin[1] >> 4)); }
         ContentSites known = ContentSites.of(world, spacing);
         int grid = known.spacing();
         int cellX = Math.floorDiv(from.getX() >> 4, grid);
@@ -143,9 +132,7 @@ public final class BeardSite {
                     int chunkZ = Longs.low(chosen);
                     if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
                     if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || mansionCandidateNear(world, chunkX, chunkZ)) { continue; }
-                    long awayX = (chunkX * 16L + 8) - from.getX();
-                    long awayZ = (chunkZ * 16L + 8) - from.getZ();
-                    long away = awayX * awayX + awayZ * awayZ;
+                    long away = Coords.chunkCentreAway(chunkX, chunkZ, from.getX(), from.getZ());
                     if (away >= bestAway) { continue; }
                     bestAway = away;
                     best = new BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8);
@@ -259,11 +246,9 @@ public final class BeardSite {
         return Integer.MAX_VALUE;
     }
     public static void standOff(World world, StructureStart start) {
-        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        if (ContentBeard.idle(world)) { return; }
         List<StructureComponent> pieces = start.getComponents();
-        List<StructureComponent> held = ContentBeard.laid();
-        ContentBeard.laying(pieces);
-        try {
+        ContentBeard.layingWith(pieces, () -> {
             List<StructureComponent> around = ContentBeard.everyone(world, pieces);
             for (StructureComponent plot : pieces.toArray(new StructureComponent[0])) {
                 if (plot instanceof StructureVillagePieces.Road || plot instanceof StructureVillagePieces.Well || BeardRails.isRail(plot)) { continue; }
@@ -276,8 +261,7 @@ public final class BeardSite {
                 pieces.remove(plot);
                 ContentLog.LOGGER.debug("{} at {}, {}, {} to {}, {}, {} makes way for the hill around it: it would stand at y {}, {} block(s) under the ground of y {} around its clearing, deeper than the {} block(s) of apron it may dig", plot.getClass().getSimpleName(), box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, floor, hill - floor, hill, allow);
             }
-        }
-        finally { ContentBeard.laying(held); }
+        });
     }
 
     private static int groundAround(World world, List<StructureComponent> around, StructureBoundingBox box) {
@@ -355,19 +339,16 @@ public final class BeardSite {
 
     private static void layoutRoads(World world, StructureStart start) {
         List<StructureComponent> pieces = start.getComponents();
-        List<StructureComponent> held = ContentBeard.laid();
-        ContentBeard.laying(pieces);
-        try {
+        ContentBeard.layingWith(pieces, () -> {
             for (StructureComponent piece : pieces) { frontRoad(pieces, piece); }
             for (StructureComponent piece : pieces) { ContentBeardJoins.attach(start, piece); }
-        }
-        finally { ContentBeard.laying(held); }
+        });
         gradeRoads(world, start, "at layout time");
         BeardRoadsTunnels.forget(world);
     }
 
     public static void gradeRoads(World world, StructureStart start, String when) {
-        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        if (ContentBeard.idle(world)) { return; }
         List<StructureComponent> pieces = start.getComponents();
         List<StructureComponent> held = ContentBeard.laid();
         ContentBeard.laying(pieces);
@@ -398,7 +379,7 @@ public final class BeardSite {
     }
 
     public static void pullBackDecks(World world, StructureStart start) {
-        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        if (ContentBeard.idle(world)) { return; }
         List<StructureComponent> pieces = start.getComponents();
         if (pieces.isEmpty()) { return; }
         StructureBoundingBox well = pieces.get(0).getBoundingBox();
@@ -464,7 +445,7 @@ public final class BeardSite {
         for (StructureComponent other : pieces) {
             if (other == piece || other instanceof StructureVillagePieces.Path || BeardRails.isRail(other)) { continue; }
             StructureBoundingBox front = other.getBoundingBox();
-            if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
+            if ((alongX ? front.maxZ : front.maxX) < acrossLeast - FRONT_MARGIN || (alongX ? front.minZ : front.minX) > acrossMost + FRONT_MARGIN) { continue; }
             int least = alongX ? box.minX : box.minZ;
             int most = alongX ? box.maxX : box.maxZ;
             int otherLeast = alongX ? front.minX : front.minZ;
@@ -508,7 +489,7 @@ public final class BeardSite {
         for (StructureComponent other : pieces) {
             if (other == road) { continue; }
             StructureBoundingBox at = other.getBoundingBox();
-            if ((alongX ? at.maxZ : at.maxX) < acrossLeast - 3 || (alongX ? at.minZ : at.minX) > acrossMost + 3) { continue; }
+            if ((alongX ? at.maxZ : at.maxX) < acrossLeast - FRONT_MARGIN || (alongX ? at.minZ : at.minX) > acrossMost + FRONT_MARGIN) { continue; }
             int otherLeast = alongX ? at.minX : at.minZ;
             int otherMost = alongX ? at.maxX : at.maxZ;
             if (otherMost < least || otherLeast > most) { continue; }
@@ -519,6 +500,12 @@ public final class BeardSite {
     }
 
     public static int wellNominal(StructureBoundingBox well) { return well.maxY - 3; }
+
+    public static int wellChunk(int wellMin) { return (wellMin + 2) >> 4; }
+
+    public static int wellCell(int wellMin, int grid) { return Math.floorDiv(wellChunk(wellMin), grid); }
+
+    public static StructureBoundingBox wellBox(int originX, int originZ) { return new StructureBoundingBox(originX, WELL_BASE_Y, originZ, originX + 5, WELL_TOP_Y, originZ + 5); }
 
     public static int wellGround(World world, StructureBoundingBox well) {
         int[] found = footprint(world, well);

@@ -39,18 +39,18 @@ public final class ContentParserModPlanets {
         float[] zone = pair(key, json, "habitableZone");
         String owner = "Celestial body " + key + " GalaxySpace";
         String aura = Json.getString(json, "auraColor", "").trim();
-        return new GalaxySpaceDef(Math.max(0.0F, Json.getFloat(json, "pressure", 0.0F)),
+        return new GalaxySpaceDef(Json.atLeast(json, "pressure", 0.0F, 0.0F),
                 Json.getBoolean(json, "radiation", false),
                 Json.choice(json, "class", null, owner, CLASSES),
                 eccentricity[0], eccentricity[1], offset[0], offset[1],
                 Json.getBoolean(json, "freezeBlocks", true),
-                Math.max(0.0F, Json.getFloat(json, "thermalVariation", 0.0F)),
+                Json.atLeast(json, "thermalVariation", 0.0F, 0.0F),
                 Json.getFloat(json, "solarWind", -1.0F),
                 Json.choice(json, "weather", null, owner, WEATHER),
-                Math.max(0.0F, Json.getFloat(json, "weatherFrequency", 1.0F)),
+                Json.atLeast(json, "weatherFrequency", 1.0F, 0.0F),
                 Json.choice(json, "starType", null, owner, STAR_TYPES),
                 Json.choice(json, "starColor", null, owner, STAR_COLORS),
-                aura.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(aura, owner + " auraColor") & 0xFFFFFF,
+                aura.isEmpty() ? SkyLookDef.UNSET : ContentTypes.rgb(aura, owner + " auraColor"),
                 zone[0], zone[1]);
     }
 

@@ -58,21 +58,16 @@ public final class LootRemovals {
     }
 
     private static void reload() {
-        BY_TABLE.clear();
-        GENERATION.stale();
-        if (!Config.data.lootRemovals) { return; }
         int[] count = new int[1];
-        Json.eachObject(PackManager.LOOT_REMOVALS, "loot removal", (key, json) -> read(key, json, count));
-        if (count[0] > 0) { Summary.info("loot.removed", "Loaded " + count[0] + " loot removal(s) across " + BY_TABLE.size() + " table(s)"); }
+        GENERATION.load(Config.data.lootRemovals, BY_TABLE::clear, PackManager.LOOT_REMOVALS, "loot removal", (key, json) -> read(key, json, count), () -> {
+            if (count[0] > 0) { Summary.info("loot.removed", "Loaded " + count[0] + " loot removal(s) across " + BY_TABLE.size() + " table(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
         Json.unknownKeys(json, "the top level", REMOVAL_KEYS);
-        String target = Json.getString(json, TARGET, "");
-        if (target.isEmpty()) {
-            ContentLog.LOGGER.error("Loot removal {} has no target table, ignoring it", key);
-            return;
-        }
+        String target = Json.required(json, TARGET, key, "Loot removal {} has no target table, ignoring it");
+        if (target.isEmpty()) { return; }
         if (!json.has(CLEAR) && !json.has(ENTRIES) && !json.has(ITEMS)) {
             ContentLog.LOGGER.error("Loot removal {} has none of clear, entries or items, ignoring it", key);
             return;

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.rubic.regionlib.api.region.interfac
 import mctmods.resourcedatapackloader.common.rubic.regionlib.interfaces.ICheckedFunction;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Heap;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import net.minecraft.util.math.MathHelper;
 
 public final class RegionCache {
     private static final int LEAST_REGIONS = 64;
@@ -58,12 +60,7 @@ public final class RegionCache {
     public static synchronized void closeAll() throws IOException {
         List<IRegion<?>> going = new ArrayList<>(OPEN.values());
         OPEN.clear();
-        IOException failed = null;
-        for (IRegion<?> region : going) {
-            try { region.close(); }
-            catch (IOException ex) { failed = ex; }
-        }
-        if (failed != null) { throw failed; }
+        closeEach(going);
     }
 
     public static synchronized void closeWhere(Predicate<Object> keyMatches) throws IOException {
@@ -73,6 +70,15 @@ public final class RegionCache {
             if (!keyMatches.test(entry.getKey())) { continue; }
             it.remove();
             try { entry.getValue().close(); }
+            catch (IOException ex) { failed = ex; }
+        }
+        if (failed != null) { throw failed; }
+    }
+
+    private static void closeEach(List<IRegion<?>> going) throws IOException {
+        IOException failed = null;
+        for (IRegion<?> region : going) {
+            try { region.close(); }
             catch (IOException ex) { failed = ex; }
         }
         if (failed != null) { throw failed; }
@@ -96,7 +102,7 @@ public final class RegionCache {
         tunedAt = now;
         int ceiling = Math.min(Config.chunks.regionCacheLimit > 0 ? Config.chunks.regionCacheLimit : MOST_REGIONS, DESCRIPTOR_CEILING);
         Runtime runtime = Runtime.getRuntime();
-        float used = (runtime.totalMemory() - runtime.freeMemory()) / (float) runtime.maxMemory();
+        float used = Heap.heapUsed() / (float) runtime.maxMemory();
         int before = wanted;
         if (used > HEAP_TIGHT) { wanted = Math.max(LEAST_REGIONS, wanted - Math.max(STEP, wanted / 4)); }
         else if (used < HEAP_EASY && letGoThisWindow > 0L) { wanted = Math.min(ceiling, wanted + Math.max(STEP, wanted / 2)); }
@@ -114,7 +120,7 @@ public final class RegionCache {
                 String[] parts = line.split("\\s+");
                 for (String part : parts) {
                     if (!DIGITS.matcher(part).matches()) { continue; }
-                    int allowed = Math.max(LEAST_REGIONS, Math.min(MOST_REGIONS, Integer.parseInt(part) / DESCRIPTOR_SHARE));
+                    int allowed = MathHelper.clamp(Integer.parseInt(part) / DESCRIPTOR_SHARE, LEAST_REGIONS, MOST_REGIONS);
                     ContentLog.LOGGER.info("This machine allows {} open file(s) at once, so a rubic world holds no more than {} region file(s) open", part, allowed);
                     return allowed;
                 }

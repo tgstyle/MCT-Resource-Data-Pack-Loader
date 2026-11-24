@@ -93,8 +93,8 @@ public final class ContentFirstLight {
 
     private void fillSky(Chunk chunk) {
         ExtendedBlockStorage[] storages = chunk.getBlockStorageArray();
-        int worldX = chunk.x << 4;
-        int worldZ = chunk.z << 4;
+        int worldX = originX + 16;
+        int worldZ = originZ + 16;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int light = MAX;
@@ -118,8 +118,8 @@ public final class ContentFirstLight {
 
     private void fillBlock(Chunk chunk) {
         ExtendedBlockStorage[] storages = chunk.getBlockStorageArray();
-        int worldX = chunk.x << 4;
-        int worldZ = chunk.z << 4;
+        int worldX = originX + 16;
+        int worldZ = originZ + 16;
         for (int y = 0; y < ceiling; y++) {
             ExtendedBlockStorage storage = storages[y >> 4];
             if (storage == null) { continue; }
@@ -165,7 +165,7 @@ public final class ContentFirstLight {
                     int nx = lx + STEP_X[face];
                     int ny = y + STEP_Y[face];
                     int nz = lz + STEP_Z[face];
-                    if (nx < 0 || nx >= SPAN || nz < 0 || nz >= SPAN || ny < 0 || ny >= ceiling) { continue; }
+                    if (outside(nx, ny, nz, ceiling)) { continue; }
                     int next = level - opacityAt(nx, ny, nz);
                     if (next <= 0 || next <= lightAt(nx, ny, nz)) { continue; }
                     if (setLight(nx, ny, nz, next) && next >= 2) { push(next, nx, ny, nz); }
@@ -216,7 +216,7 @@ public final class ContentFirstLight {
                     int nx = lx + STEP_X[face];
                     int ny = y + STEP_Y[face];
                     int nz = lz + STEP_Z[face];
-                    if (nx < 0 || nx >= SPAN || nz < 0 || nz >= SPAN || ny < 0 || ny >= ceiling) { continue; }
+                    if (outside(nx, ny, nz, ceiling)) { continue; }
                     int theirs = lightAt(nx, ny, nz);
                     if (theirs == 0) { continue; }
                     if (theirs < level && setLight(nx, ny, nz, 0)) { darkPush(theirs, nx, ny, nz); }
@@ -227,10 +227,12 @@ public final class ContentFirstLight {
         }
     }
 
+    private static boolean outside(int nx, int ny, int nz, int top) { return nx < 0 || nx >= SPAN || nz < 0 || nz >= SPAN || ny < 0 || ny >= top; }
+
     private int wanted(int lx, int y, int lz) {
         int own = 0;
         if (sky) {
-            if (y >= ring[(lx >> 4) * 3 + (lz >> 4)].getHeightValue(lx & 15, lz & 15)) { return MAX; }
+            if (y >= ringAt(lx, lz).getHeightValue(lx & 15, lz & 15)) { return MAX; }
         }
         else { own = emissionAt(lx, y, lz); }
         int through = opacityAt(lx, y, lz);
@@ -239,7 +241,7 @@ public final class ContentFirstLight {
             int nx = lx + STEP_X[face];
             int ny = y + STEP_Y[face];
             int nz = lz + STEP_Z[face];
-            if (nx < 0 || nx >= SPAN || nz < 0 || nz >= SPAN || ny < 0 || ny >= 256) { continue; }
+            if (outside(nx, ny, nz, 256)) { continue; }
             int reaching = (ny >= ceiling ? (sky ? MAX : 0) : lightAt(nx, ny, nz)) - through;
             if (reaching > best) { best = reaching; }
         }
@@ -247,20 +249,20 @@ public final class ContentFirstLight {
     }
 
     private int emissionAt(int lx, int y, int lz) {
-        ExtendedBlockStorage storage = ring[(lx >> 4) * 3 + (lz >> 4)].getBlockStorageArray()[y >> 4];
+        ExtendedBlockStorage storage = ringAt(lx, lz).getBlockStorageArray()[y >> 4];
         if (storage == null) { return 0; }
         return GcRubicSunlight.lightValue(storage.get(lx & 15, y & 15, lz & 15), world, at.setPos(originX + lx, y, originZ + lz));
     }
 
     private int lightAt(int lx, int y, int lz) {
-        Chunk chunk = ring[(lx >> 4) * 3 + (lz >> 4)];
+        Chunk chunk = ringAt(lx, lz);
         ExtendedBlockStorage storage = chunk.getBlockStorageArray()[y >> 4];
         if (storage == null) { return sky && y >= chunk.getHeightValue(lx & 15, lz & 15) ? MAX : 0; }
         return sky ? storage.getSkyLight(lx & 15, y & 15, lz & 15) : storage.getBlockLight(lx & 15, y & 15, lz & 15);
     }
 
     private boolean setLight(int lx, int y, int lz, int light) {
-        int slot = (lx >> 4) * 3 + (lz >> 4);
+        int slot = slot(lx, lz);
         ExtendedBlockStorage storage = ring[slot].getBlockStorageArray()[y >> 4];
         if (storage == null) { return false; }
         if (sky) { storage.setSkyLight(lx & 15, y & 15, lz & 15, light); }
@@ -273,7 +275,7 @@ public final class ContentFirstLight {
         int key = key(lx, y, lz);
         int known = opacity[key];
         if (known != 0) { return known; }
-        ExtendedBlockStorage storage = ring[(lx >> 4) * 3 + (lz >> 4)].getBlockStorageArray()[y >> 4];
+        ExtendedBlockStorage storage = ringAt(lx, lz).getBlockStorageArray()[y >> 4];
         int raw = 1;
         if (storage != null) {
             IBlockState state = storage.get(lx & 15, y & 15, lz & 15);
@@ -282,6 +284,10 @@ public final class ContentFirstLight {
         opacity[key] = (byte) raw;
         return raw;
     }
+
+    private static int slot(int lx, int lz) { return (lx >> 4) * 3 + (lz >> 4); }
+
+    private Chunk ringAt(int lx, int lz) { return ring[slot(lx, lz)]; }
 
     private static int key(int lx, int y, int lz) { return lx << 14 | lz << 8 | y; }
 

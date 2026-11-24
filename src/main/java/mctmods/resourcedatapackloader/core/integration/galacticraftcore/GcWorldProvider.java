@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalacticraftDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalaxySpaceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
-import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserModPlanets;
 import mctmods.resourcedatapackloader.core.integration.extraplanets.EpPlanets;
 
 import java.util.Collections;
@@ -22,12 +21,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.fml.common.Loader;
 
 public class GcWorldProvider extends ContentWorldProvider implements IGalacticraftWorldProvider, ISolarLevel {
     private static final double VANILLA_GRAVITY = 0.08D;
     private static final double VANILLA_ARROW = 0.05D;
-    private static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
     @Nullable private WorldProvider asteroids;
 
     @Nullable private GalacticraftDef gc() { return def == null ? null : def.galacticraft; }
@@ -38,6 +35,8 @@ public class GcWorldProvider extends ContentWorldProvider implements IGalacticra
         super.init();
         if (world.isRemote && belt()) { GcBeltSky.apply(this); }
     }
+
+    public static WorldProvider beltOf(WorldProvider provider) { return provider instanceof GcWorldProvider ? ((GcWorldProvider) provider).asteroids() : provider; }
 
     public WorldProvider asteroids() {
         if (!belt()) { return this; }
@@ -122,7 +121,7 @@ public class GcWorldProvider extends ContentWorldProvider implements IGalacticra
     @Override public float getThermalLevelModifier() {
         GalacticraftDef gc = gc();
         if (gc == null) { return 0.0F; }
-        if (EXTRA_PLANETS && gc.extraPlanets != null && !Float.isNaN(gc.extraPlanets.temperatureDay)) { return EpPlanets.temperature(gc.extraPlanets, isDaytime(), gc.temperature); }
+        if (GcCelestial.EXTRA_PLANETS && gc.extraPlanets != null && !Float.isNaN(gc.extraPlanets.temperatureDay)) { return EpPlanets.temperature(gc.extraPlanets, isDaytime(), gc.temperature); }
         return gc.temperature;
     }
 

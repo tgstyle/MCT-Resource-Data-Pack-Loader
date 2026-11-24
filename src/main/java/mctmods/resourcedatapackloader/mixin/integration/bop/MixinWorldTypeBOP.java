@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = WorldTypeBOP.class, remap = false) public abstract class MixinWorldTypeBOP {
     @Inject(method = "onCustomizeButton", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$packShapesIt(Minecraft mc, GuiCreateWorld guiCreateWorld, CallbackInfo ci) {
-        String owner = ContentTerrain.owner("BIOMESOP");
+        String owner = ContentTerrain.owner(ContentTerrain.BOP);
         if (owner.isEmpty()) { return; }
 
         mc.displayGuiScreen(new GuiPackShapesWorld(guiCreateWorld, owner));

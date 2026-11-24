@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -25,7 +26,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final int BAR_OFFSET = 126;
     private static final int BAR_BOTTOM = 12;
     private static final int BACK = 0xB0000000;
-    private static final int OPAQUE = 0xFF000000;
     private static final int LABEL_GAP = 4;
 
     private WeightHud() {}
@@ -42,7 +42,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int bottom = top + BAR_HEIGHT;
         int filled = Math.round(ClientWeights.fill() * (BAR_WIDTH - 2));
         Gui.drawRect(left, top, left + BAR_WIDTH, bottom, BACK);
-        Gui.drawRect(left + 1, top + 1, left + 1 + filled, bottom - 1, OPAQUE | ClientWeights.color());
+        Gui.drawRect(left + 1, top + 1, left + 1 + filled, bottom - 1, Colors.withAlpha(ClientWeights.color(), 0xFF));
     }
 
     @SubscribeEvent public static void onScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
@@ -50,7 +50,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (!inventory(screen) || !ClientWeights.active() || !ContentWeights.settings().hudInventory) { return; }
         GuiContainer container = (GuiContainer) screen;
         String line = I18n.format("rdpl.weight.inventory", ClientWeights.format(ClientWeights.total()), ClientWeights.format(ClientWeights.limit()));
-        Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(line, container.getGuiLeft(), container.getGuiTop() + container.getYSize() + LABEL_GAP, OPAQUE | ClientWeights.color());
+        Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(line, container.getGuiLeft(), container.getGuiTop() + container.getYSize() + LABEL_GAP, Colors.withAlpha(ClientWeights.color(), 0xFF));
     }
 
     private static int barLeft(String anchor, int width) {

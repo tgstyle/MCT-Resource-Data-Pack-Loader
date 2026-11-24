@@ -2,13 +2,13 @@ package mctmods.resourcedatapackloader.client.util;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
-import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
@@ -20,11 +20,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final int CYRILLIC = 0x400;
     private static final int RUNES = 0x1600;
     private static final ResourceLocation ASCII = new ResourceLocation("textures/font/ascii.png");
-    private static final ResourceLocation RDPL = ResourceDataPackLoader.id("textures/font/rdpl.png");
+    private static final ResourceLocation RDPL = CardFont.sheet(new ResourceLocation(CardFont.RDPL));
     private static final String CIPHER = "textures/font/rdpl_runic";
     private static final String RDPL_PATH = "textures/font/rdpl";
     private static final List<String> VANILLA = Arrays.asList("Default", "FMLFileResourcePack:Minecraft Forge");
-    private static final String PNG = ".png";
+    private static final String PNG = IdNames.PNG;
 
     private GameFont() {}
 
@@ -60,7 +60,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         String path = sheet.getPath();
         if (resources == null || !path.endsWith(PNG)) { return null; }
         ResourceLocation where = new ResourceLocation(sheet.getNamespace(), path.substring(0, path.length() - PNG.length()) + suffix + PNG);
-        try (IResource resource = resources.getResource(where)) { return new Face(where, measure(TextureUtil.readBufferedImage(resource.getInputStream()))); }
+        try { return new Face(where, measure(ContentPixelImages.load(resources, where))); }
         catch (IOException | RuntimeException e) { return null; }
     }
 

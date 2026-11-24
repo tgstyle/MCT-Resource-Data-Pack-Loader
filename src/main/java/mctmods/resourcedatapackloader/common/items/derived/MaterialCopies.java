@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.MemberNames;
 
 import java.lang.reflect.Field;
@@ -15,7 +16,7 @@ final class MaterialCopies {
     private MaterialCopies() {}
 
     @Nullable static Object copy(Object value, ResourceLocation owner, String path) {
-        String name = (owner.getNamespace() + "_" + owner.getPath() + "_" + path).replaceAll("[^A-Za-z0-9_]", "_");
+        String name = IdNames.javaSafe(owner.getNamespace() + "_" + owner.getPath() + "_" + path);
         Object made = null;
         if (value instanceof Item.ToolMaterial) { made = tool((Item.ToolMaterial) value, name); }
         else if (value instanceof ItemArmor.ArmorMaterial) { made = armor((ItemArmor.ArmorMaterial) value, name); }
@@ -39,12 +40,8 @@ final class MaterialCopies {
     }
 
     private static Object read(Object from, String name) {
-        Field field = MemberNames.field(from.getClass(), name);
-        if (field == null) { throw new IllegalStateException(from.getClass().getName() + " has no field " + name); }
-        try {
-            field.setAccessible(true);
-            return field.get(from);
-        }
+        Field field = MemberNames.accessibleField(from.getClass(), name);
+        try { return field.get(from); }
         catch (ReflectiveOperationException e) { throw new IllegalStateException("Could not read " + name + " of " + from.getClass().getName() + ": " + e, e); }
     }
 }

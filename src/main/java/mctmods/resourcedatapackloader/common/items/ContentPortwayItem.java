@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.items;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
 import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
@@ -45,7 +44,7 @@ import net.minecraft.world.World;
         if (world.isRemote || !(player instanceof EntityPlayerMP)) { return new ActionResult<>(EnumActionResult.SUCCESS, held); }
         if (PortwayTravel.turnsBack(player, world, portway.settings, String.valueOf(getRegistryName()))) { return new ActionResult<>(EnumActionResult.FAIL, held); }
         if (!portway.bind) {
-            player.openGui(ResourceDataPackLoader.INSTANCE, hand == EnumHand.MAIN_HAND ? PackGuiHandler.PORTWAY_MAIN : PackGuiHandler.PORTWAY_OFF, world, 0, 0, 0);
+            PackGuiHandler.openHand(player, world, hand, PackGuiHandler.PORTWAY_MAIN, PackGuiHandler.PORTWAY_OFF);
             return new ActionResult<>(EnumActionResult.SUCCESS, held);
         }
         PortwayStop bound = PortwayBinding.read(held);

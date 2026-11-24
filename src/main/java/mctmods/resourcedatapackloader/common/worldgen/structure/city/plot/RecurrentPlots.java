@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.plot;
 
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -18,11 +19,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.StructureComponent;
 import org.apache.commons.lang3.tuple.Pair;
@@ -111,40 +114,40 @@ public final class RecurrentPlots {
     }
 
     public static int courseFor(String structureId) {
-        Integer known = COURSES.get(structureId);
-        if (known != null) { return known; }
-        int course = 0;
-        IvBlockCollection held = collection(structureId);
-        if (held != null) {
-            for (int y = 0; y < held.height; y++) {
-                boolean ground = false;
-                for (int x = 0; x < held.width && !ground; x++) {
-                    for (int z = 0; z < held.length; z++) {
-                        if (held.getBlockState(new BlockPos(x, y, z)).getBlock() != RCBlocks.genericSolid) { continue; }
-                        ground = true;
-                        break;
+        return COURSES.computeIfAbsent(structureId, id -> {
+            int course = 0;
+            IvBlockCollection held = collection(id);
+            if (held != null) {
+                for (int y = 0; y < held.height; y++) {
+                    boolean ground = false;
+                    for (int x = 0; x < held.width && !ground; x++) {
+                        for (int z = 0; z < held.length; z++) {
+                            if (held.getBlockState(new BlockPos(x, y, z)).getBlock() != RCBlocks.genericSolid) { continue; }
+                            ground = true;
+                            break;
+                        }
                     }
+                    if (ground) { course = y + 1; }
                 }
-                if (ground) { course = y + 1; }
             }
-        }
-        COURSES.put(structureId, course);
-        ContentLog.LOGGER.debug("The Recurrent Complex plot {} lays its own ground in its lowest {} course(s), so the ground under it is made up to there", structureId, course);
-        return course;
+            ContentLog.LOGGER.debug("The Recurrent Complex plot {} lays its own ground in its lowest {} course(s), so the ground under it is made up to there", id, course);
+            return course;
+        });
     }
+
+    private static String key(String structureId, String generationId) { return structureId + '\u0000' + generationId; }
 
     public static int seatFor(String structureId, String generationId) {
-        String named = structureId + '\u0000' + generationId;
-        Integer known = SEATS.get(named);
-        if (known != null) { return known; }
-        int stand = standLayer(structureId);
-        int seated = Math.max(-5, -stand);
-        SEATS.put(named, seated);
-        ContentLog.LOGGER.debug("The Recurrent Complex plot {} is walked on at its own layer {}, so it is seated {} below the plot's ground to put that layer level with the road", structureId, stand, -seated);
-        return seated;
+        String named = key(structureId, generationId);
+        return SEATS.computeIfAbsent(named, unused -> {
+            int stand = standLayer(structureId);
+            int seated = Math.max(-5, -stand);
+            ContentLog.LOGGER.debug("The Recurrent Complex plot {} is walked on at its own layer {}, so it is seated {} below the plot's ground to put that layer level with the road", structureId, stand, -seated);
+            return seated;
+        });
     }
 
-    private static boolean marker(IBlockState state) { return state.getBlock().getRegistryName() != null && "reccomplex".equals(state.getBlock().getRegistryName().getNamespace()); }
+    private static boolean marker(IBlockState state) { return state.getBlock().getRegistryName() != null && ContentStructurePlacement.RECCOMPLEX.equals(state.getBlock().getRegistryName().getNamespace()); }
 
     private static int standLayer(String structureId) {
         int courses = courseFor(structureId);
@@ -166,28 +169,28 @@ public final class RecurrentPlots {
     }
 
     public static int sink(StructureComponent piece) {
-        if (!(piece instanceof GenericVillagePiece)) { return 0; }
-        GenericVillagePiece plot = (GenericVillagePiece) piece;
-        String named = plot.structureID + '\u0000' + plot.generationID;
-        Integer known = SINKS.get(named);
-        if (known != null) { return known; }
-        Structure<?> structure = StructureRegistry.INSTANCE.get(plot.structureID);
-        GenerationType how = structure != null ? structure.generationType(plot.generationID) : null;
-        int sunk = how instanceof VanillaGeneration ? Math.max(0, Math.min(-((VanillaGeneration) how).spawnShift.getY(), ContentBeard.FOOTING_COURSE)) : 0;
-        SINKS.put(named, sunk);
-        return sunk;
+        GenericVillagePiece plot = plotOf(piece);
+        if (plot == null) { return 0; }
+        String named = key(plot.structureID, plot.generationID);
+        return SINKS.computeIfAbsent(named, unused -> {
+            Structure<?> structure = StructureRegistry.INSTANCE.get(plot.structureID);
+            GenerationType how = structure != null ? structure.generationType(plot.generationID) : null;
+            return how instanceof VanillaGeneration ? MathHelper.clamp(-((VanillaGeneration) how).spawnShift.getY(), 0, ContentBeard.FOOTING_COURSE) : 0;
+        });
     }
 
     public static int seat(StructureComponent piece) {
-        if (!(piece instanceof GenericVillagePiece)) { return -1; }
-        GenericVillagePiece plot = (GenericVillagePiece) piece;
+        GenericVillagePiece plot = plotOf(piece);
+        if (plot == null) { return -1; }
         return seatFor(plot.structureID, plot.generationID);
     }
 
     public static int groundCourse(StructureComponent piece) {
-        if (!(piece instanceof GenericVillagePiece)) { return 0; }
-        return courseFor(((GenericVillagePiece) piece).structureID);
+        GenericVillagePiece plot = plotOf(piece);
+        return plot == null ? 0 : courseFor(plot.structureID);
     }
+
+    @Nullable private static GenericVillagePiece plotOf(StructureComponent piece) { return piece instanceof GenericVillagePiece ? (GenericVillagePiece) piece : null; }
 
     private static IvBlockCollection collection(String structureId) {
         IvWorldData data = worldData(structureId);

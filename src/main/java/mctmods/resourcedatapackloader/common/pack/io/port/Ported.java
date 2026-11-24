@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.io.port;
 
+import mctmods.resourcedatapackloader.common.blocks.shape.ContentSlabBlock;
 import mctmods.resourcedatapackloader.common.pack.io.port.commands.Commands;
 import mctmods.resourcedatapackloader.common.pack.io.port.convert.Convert;
 import mctmods.resourcedatapackloader.common.pack.io.port.convert.ConvertAdvancements;
@@ -10,16 +11,15 @@ import mctmods.resourcedatapackloader.common.pack.io.port.down.Downed;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
-import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,13 +47,18 @@ import net.minecraft.util.JsonUtils;
 import org.apache.commons.io.IOUtils;
 
 public final class Ported {
+
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static final String BLOCKS = "blocks";
     static final String ITEMS = "items";
+    public static final String ITEM_MODELS = "models/item/";
     public static final int MODERN_FLAT_FLOOR = -64;
     private static final String CONVERTED = "converted";
+    private static final String SMELTING_FILE = "furnace/" + CONVERTED + "_smelting.json";
+    private static final String TAGS_FILE = "oredict/" + CONVERTED + "_tags.json";
+    private static final String TICK_RULES = "gamerules/" + CONVERTED + "_tick.json";
+    private static final String TICK_SOURCE = "data/minecraft/tags/functions/tick.json";
     private static final List<String> VANILLA_DIMENSIONS = Collections.unmodifiableList(Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"));
-    private static final Set<String> SINGLE_STATE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ladder", "torch", "cane", "crop", "sapling", "door", "banner", "trapdoor", "fence_gate", "stairs", "vine")));
     private static final int FIRST_DIMENSION = 1000;
     private static final int DIMENSION_SPAN = 9000;
     private final String name;
@@ -89,6 +94,10 @@ public final class Ported {
         this.down = Downed.of(root, places);
     }
 
+    static String itemModel(String file) { return ITEM_MODELS + file + PackManager.JSON_SUFFIX; }
+
+    static String nestedItemModel(String file, String variant) { return ITEM_MODELS + file + "/" + variant + PackManager.JSON_SUFFIX; }
+
     public static final class Own {
         final String namespace;
         public final String folder;
@@ -110,7 +119,11 @@ public final class Ported {
 
         public String id() { return namespace + ":" + file; }
 
-        boolean variantProperty() { return BLOCKS.equals(folder) && !SINGLE_STATE_TYPES.contains(type); }
+        public String slabId(Map<String, String> properties) {
+            return "slab".equals(type) && "double".equals(properties.get("type")) ? id() + ContentSlabBlock.DOUBLE_SUFFIX : id();
+        }
+
+        boolean variantProperty() { return BLOCKS.equals(folder) && !Blockstates.singleState(type); }
     }
 
     private static final class Source {
@@ -130,10 +143,10 @@ public final class Ported {
     public Map<String, Set<String>> build(Map<String, List<String>> assets, Map<String, List<String>> data) {
         for (String namespace : data.keySet()) { learn(namespace, data.get(namespace)); }
         for (String namespace : data.keySet()) {
-            if (!"minecraft".equals(namespace) && !"forge".equals(namespace) && !"c".equals(namespace)) { namespaces.add(namespace); }
+            if (!Ids.MINECRAFT.equals(namespace) && !"forge".equals(namespace) && !"c".equals(namespace)) { namespaces.add(namespace); }
         }
         for (String namespace : assets.keySet()) {
-            if (!"minecraft".equals(namespace)) { namespaces.add(namespace); }
+            if (!Ids.MINECRAFT.equals(namespace)) { namespaces.add(namespace); }
             for (String path : assets.get(namespace)) {
                 if (path.startsWith("textures/")) { textures.add(namespace + ":" + Port.texturePath(path)); }
             }
@@ -206,22 +219,22 @@ public final class Ported {
                 drop(from, mapped.why);
                 return;
             case BLOCKSTATE: {
-                String file = PackManager.stripJson(path, "blockstates/".length());
+                String file = PackManager.stripJson(path, PackManager.STATE_FOLDER.length());
                 Own held = ownBlocks.get(namespace + ":" + file);
                 if (held != null) {
-                    drop(from, "it is the modern blockstate of the variant '" + file + "', and 1.12.2 reads one blockstate per file, so " + held.namespace + ":blockstates/" + held.file + ".json is generated in its place");
+                    drop(from, "it is the modern blockstate of the variant '" + file + "', and 1.12.2 reads one blockstate per file, so " + held.namespace + ":" + PackManager.STATE_FOLDER + held.file + ".json is generated in its place");
                     return;
                 }
                 break;
             }
             case MODEL: {
-                if (path.startsWith("models/item/") && path.indexOf('/', "models/item/".length()) < 0) {
-                    String variant = PackManager.stripJson(path, "models/item/".length());
-                    Own held = ownItems.containsKey(namespace + ":" + variant) ? ownItems.get(namespace + ":" + variant) : ownBlocks.get(namespace + ":" + variant);
+                if (path.startsWith(ITEM_MODELS) && path.indexOf('/', ITEM_MODELS.length()) < 0) {
+                    String variant = PackManager.stripJson(path, ITEM_MODELS.length());
+                    Own held = ownItems.getOrDefault(namespace + ":" + variant, ownBlocks.get(namespace + ":" + variant));
                     if (held != null) {
-                        String nested = "models/item/" + held.file + "/" + variant + PackManager.JSON_SUFFIX;
+                        String nested = nestedItemModel(held.file, variant);
                         expose(namespace, nested, new Source(real, Port.Kind.MODEL, from, null));
-                        if (held.variants == 1) { expose(namespace, "models/item/" + held.file + PackManager.JSON_SUFFIX, new Source(real, Port.Kind.MODEL, from, null)); }
+                        if (held.variants == 1) { expose(namespace, itemModel(held.file), new Source(real, Port.Kind.MODEL, from, null)); }
                         movedLine(from, namespace, nested);
                         return;
                     }
@@ -247,19 +260,19 @@ public final class Ported {
         Ids.Legacy found = Ids.block(modern, Collections.emptyMap());
         if (found == null) { found = Ids.item(modern); }
         if (found == null || found.id.equals(modern)) { return path; }
-        note("'" + from + "' overrides " + modern + ", which 1.12.2 holds as " + found.id + ":" + found.meta + ", and an override changes every variant of " + found.id);
+        note(where(from) + " overrides " + modern + ", which 1.12.2 holds as " + found.id + ":" + found.meta + ", and an override changes every variant of " + found.id);
         return prefix + IdNames.path(found.id) + PackManager.JSON_SUFFIX;
     }
 
     private void recipe(String namespace, String path, Port.Mapped mapped, Path real, String from) {
         JsonObject json = down == null ? readJson(real) : down.json(real, from, this);
-        String type = json != null && JsonUtils.isJsonPrimitive(json, "type") ? Ids.namespaced(json.get("type").getAsString()) : "";
+        String type = Ids.type(json);
         if (json != null && ("minecraft:smelting".equals(type))) {
             JsonObject entry = ConvertRecipes.smelting(json, this);
             if (entry == null) { return; }
             furnace.put(namespace + ":" + path, entry);
             converted++;
-            note("'" + from + "' is a smelting recipe, which 1.12.2 reads from the furnace folder, so it became an entry of " + mainNamespace() + ":furnace/" + CONVERTED + "_smelting.json");
+            note(where(from) + " is a smelting recipe, which 1.12.2 reads from the furnace folder, so it became an entry of " + mainNamespace() + ":" + SMELTING_FILE);
             return;
         }
         if (json != null && ConvertRecipes.noTwinRecipe(type)) {
@@ -282,7 +295,7 @@ public final class Ported {
                 String folder = blocks ? BLOCKS : ITEMS;
                 String file = PackManager.stripJson(path, folder.length() + 1);
                 String type = JsonUtils.isJsonPrimitive(json, "type") ? json.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
-                JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
+                JsonObject variants = Json.object(json, "variants");
                 (blocks ? blockDefs : itemDefs).put(namespace + ":" + file, json);
                 int count = variants.size();
                 int meta = 0;
@@ -345,17 +358,17 @@ public final class Ported {
             if (JsonUtils.isJsonArray(json, "remove")) {
                 JsonArray removed = new JsonArray();
                 for (JsonElement value : json.getAsJsonArray("remove")) {
-                    if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { removed.add(Convert.itemString(value.getAsString(), this)); }
+                    if (value.isJsonPrimitive() && !IdNames.isTag(value.getAsString())) { removed.add(Convert.itemString(value.getAsString(), this)); }
                 }
                 if (removed.size() > 0) { out.add("-" + ore, removed); }
             }
             JsonArray added = new JsonArray();
             for (String value : values) { added.add(value); }
             if (added.size() > 0) { out.add(ore, added); }
-            note("The item tag " + tag.getKey() + " became the ore dictionary name '" + ore + "' in " + mainNamespace() + ":oredict/" + CONVERTED + "_tags.json");
+            note("The item tag " + tag.getKey() + " became the ore dictionary name '" + ore + "' in " + mainNamespace() + ":" + TAGS_FILE);
         }
         if (out.size() == 0) { return; }
-        made(mainNamespace(), "oredict/" + CONVERTED + "_tags.json", GSON.toJson(out), "data/*/tags/items");
+        made(mainNamespace(), TAGS_FILE, GSON.toJson(out), "data/*/tags/items");
         converted++;
     }
 
@@ -366,8 +379,8 @@ public final class Ported {
         for (JsonElement value : json.getAsJsonArray("values")) {
             String named = value.isJsonObject() && value.getAsJsonObject().has("id") ? value.getAsJsonObject().get("id").getAsString() : value.isJsonPrimitive() ? value.getAsString() : "";
             if (named.isEmpty()) { continue; }
-            if (named.startsWith("#")) {
-                String inner = Ids.namespaced(named.substring(1));
+            if (IdNames.isTag(named)) {
+                String inner = Ids.namespaced(IdNames.tagPath(named));
                 if (byId.containsKey(inner)) { expandTag(inner, byId, values, seen); }
                 else { note("The item tag " + id + " includes the tag " + inner + ", which this pack does not define, so its items are not carried into the ore dictionary"); }
                 continue;
@@ -389,16 +402,16 @@ public final class Ported {
         if (functions.size() > 1) {
             StringBuilder lines = new StringBuilder();
             for (String each : functions) { lines.append("function ").append(each).append('\n'); }
-            made(main, "functions/" + CONVERTED + "_tick.mcfunction", lines.toString(), "data/minecraft/tags/functions/tick.json");
+            made(main, "functions/" + CONVERTED + "_tick.mcfunction", lines.toString(), TICK_SOURCE);
             function = main + ":" + CONVERTED + "_tick";
         }
         JsonObject rules = new JsonObject();
         JsonObject overworld = new JsonObject();
         overworld.addProperty("gameLoopFunction", function);
         rules.add("0", overworld);
-        made(main, "gamerules/" + CONVERTED + "_tick.json", GSON.toJson(rules), "data/minecraft/tags/functions/tick.json");
+        made(main, TICK_RULES, GSON.toJson(rules), TICK_SOURCE);
         converted++;
-        note("The #minecraft:tick function tag became the overworld gameLoopFunction '" + function + "' in " + main + ":gamerules/" + CONVERTED + "_tick.json");
+        note("The #minecraft:tick function tag became the overworld gameLoopFunction '" + function + "' in " + main + ":" + TICK_RULES);
     }
 
     private void furnaceFile() {
@@ -407,7 +420,7 @@ public final class Ported {
         JsonArray add = new JsonArray();
         for (JsonObject entry : furnace.values()) { add.add(entry); }
         json.add("add", add);
-        made(mainNamespace(), "furnace/" + CONVERTED + "_smelting.json", GSON.toJson(json), "data/*/recipes");
+        made(mainNamespace(), SMELTING_FILE, GSON.toJson(json), "data/*/recipes");
     }
 
     void made(String namespace, String path, String contents, String from) { made(namespace, path, contents.getBytes(StandardCharsets.UTF_8), from); }
@@ -439,33 +452,50 @@ public final class Ported {
         note("could not carry '" + from + "': " + why);
     }
 
+    public void dropMember(JsonObject json, String key, String message) {
+        if (json.has(key)) {
+            json.remove(key);
+            note(message);
+        }
+    }
+
     public void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }
+
+    public static String where(String from) { return "'" + from + "'"; }
 
     public void noTwin(String id, String where) { if (missing.add(id)) { note(where + " names " + id + ", which has no twin on 1.12.2, so it is left as written"); } }
 
     public String mainNamespace() {
         for (String namespace : namespaces) {
-            if (!"minecraft".equals(namespace)) { return namespace; }
+            if (!Ids.MINECRAFT.equals(namespace)) { return namespace; }
         }
-        return "minecraft";
+        return Ids.MINECRAFT;
     }
 
-    public boolean ownsNamespace(String namespace) { return namespaces.contains(namespace) && !"minecraft".equals(namespace); }
+    public boolean ownsNamespace(String namespace) { return namespaces.contains(namespace) && !Ids.MINECRAFT.equals(namespace); }
 
-    @Nullable public Own ownBlock(String id) { return ownBlocks.getOrDefault(id, ownFiles.get(BLOCKS + ":" + id)); }
+    @Nullable public Own ownBlock(String id) { return own(ownBlocks, BLOCKS, id); }
+
+    @Nullable private Own own(Map<String, Own> map, String folder, String id) { return map.getOrDefault(id, ownFiles.get(folder + ":" + id)); }
 
     public boolean ownFluid(String id) { return ownFluids.contains(id); }
 
     @Nullable public Own ownItem(String id) {
-        Own held = ownItems.getOrDefault(id, ownFiles.get(ITEMS + ":" + id));
+        Own held = own(ownItems, ITEMS, id);
         return held != null ? held : ownBlock(id);
     }
 
     @Nullable public Integer dimensionNumber(String named) {
-        String id = Ids.namespaced(Settings.lower(named));
+        String id = Ids.lowerId(named);
         int vanilla = VANILLA_DIMENSIONS.indexOf(id);
         if (vanilla >= 0) { return vanilla == 0 ? 0 : vanilla == 1 ? -1 : 1; }
         return dimensionNumbers.get(id);
+    }
+
+    @Nullable public Integer dimensionOrNote(String named, String where) {
+        Integer number = dimensionNumber(named);
+        if (number == null && named.indexOf(':') >= 0) { noTwin(named, where); }
+        return number;
     }
 
     public int overworldShift() {
@@ -508,7 +538,7 @@ public final class Ported {
             String out;
             switch (source.kind) {
                 case STRUCTURE: return Structures.convert(raw, source.from, this);
-                case LANG: out = ConvertAssets.lang(text(raw), this); break;
+                case LANG: out = ConvertAssets.lang(object(raw), this); break;
                 case FUNCTION: out = Commands.function(text(raw), source.from, this); break;
                 case MODEL: out = ConvertAssets.model(object(raw), this); break;
                 case BLOCKSTATE: out = ConvertAssets.blockstate(object(raw)); break;
@@ -530,14 +560,21 @@ public final class Ported {
 
     private static String text(byte[] raw) { return new String(raw, StandardCharsets.UTF_8); }
 
-    private static JsonObject object(byte[] raw) { return new JsonParser().parse(text(raw)).getAsJsonObject(); }
+    private static JsonObject object(byte[] raw) { return Json.parse(text(raw)).getAsJsonObject(); }
+
+    @Nullable public static JsonElement parseBytes(byte[] raw) {
+        try { return Json.parse(text(raw)); }
+        catch (RuntimeException unreadable) { return null; }
+    }
+
+    @Nullable public static JsonElement readElement(Path file) {
+        try { return parseBytes(Files.readAllBytes(file)); }
+        catch (IOException unreadable) { return null; }
+    }
 
     @Nullable public static JsonObject readJson(Path file) {
-        try {
-            JsonElement held = new JsonParser().parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
-            return held.isJsonObject() ? held.getAsJsonObject() : null;
-        }
-        catch (IOException | RuntimeException unreadable) { return null; }
+        JsonElement held = readElement(file);
+        return held != null && held.isJsonObject() ? held.getAsJsonObject() : null;
     }
 
     public void report() {
@@ -564,8 +601,7 @@ public final class Ported {
                 }
             }
         }
-        JsonObject old = readJson(root.resolve(PackManager.PACK_META));
-        JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
+        JsonObject pack = Port.packMeta(root);
         JsonObject meta = new JsonObject();
         JsonObject kept = new JsonObject();
         kept.addProperty("pack_format", Port.LEGACY_FORMAT);

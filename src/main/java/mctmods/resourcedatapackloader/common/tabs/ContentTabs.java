@@ -25,12 +25,10 @@ public final class ContentTabs {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        Json.eachFile(PackManager.TABS, "creative tab", ContentTabs::read);
+        Json.eachObject(PackManager.TABS, "creative tab", ContentTabs::read);
     }
 
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "creative tab");
-        if (json == null) { return; }
+    private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", KEYS);
         String label = Json.getString(json, "label", key.getPath());
         String icon = Json.getString(json, "icon", "");

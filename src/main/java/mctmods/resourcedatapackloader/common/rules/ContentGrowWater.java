@@ -1,12 +1,14 @@
 package mctmods.resourcedatapackloader.common.rules;
 
-import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
+import mctmods.resourcedatapackloader.common.util.plant.Plants;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,9 +20,6 @@ import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockCrops;
-import net.minecraft.block.BlockSapling;
-import net.minecraft.block.BlockStem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.BonemealEvent;
@@ -32,24 +31,18 @@ public final class ContentGrowWater {
     private static final String PATH = "growth.water";
     private static final List<String> KEYS = Arrays.asList("within", "fluids", "kinds", "blocks", "except", "scale", "flowing", "height", "shape", "farmland", "rain", "bonemeal", "waiver", "breaks");
     private static final List<String> SHAPES = Arrays.asList("box", "diamond");
-    private static final String WATER = "minecraft:water";
+    public static final String WATER = "minecraft:water";
 
     private ContentGrowWater() {}
 
-    public static boolean sapling(Block block) { return block instanceof BlockSapling || block instanceof ContentSaplingBlock; }
-
-    public static int kindOf(Block block) { return sapling(block) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS; }
+    public static int kindOf(Block block) { return Plants.sapling(block) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS; }
 
     private static boolean flag(String owner, JsonObject json, String key, boolean fallback) {
-        JsonElement value = json.get(key);
-        if (value == null) { return fallback; }
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return value.getAsBoolean(); }
-        ContentLog.LOGGER.error("{} gives {}.{} as {}, which is not true or false, ignoring it", owner, PATH, key, value);
-        return fallback;
+        return json.has(key) ? Json.flag(owner, PATH + "." + key, json.get(key), fallback) : fallback;
     }
 
     private static int whole(String owner, JsonObject json, String key, int fallback, int low, int high) {
-        Float value = json.has(key) ? ContentGrowSwitch.within(owner, PATH + "." + key, json.get(key), true, low, high) : null;
+        Float value = json.has(key) ? Json.within(owner, PATH + "." + key, json.get(key), true, low, high) : null;
         return value == null ? fallback : value.intValue();
     }
 
@@ -57,7 +50,8 @@ public final class ContentGrowWater {
         List<String> found = new ArrayList<>();
         if (element.isJsonArray()) {
             for (JsonElement entry : element.getAsJsonArray()) {
-                if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString() && !entry.getAsString().startsWith("#")) { found.add(entry.getAsString().trim().toLowerCase(Locale.ROOT)); }
+                String name = Json.text(entry);
+                if (name != null && !IdNames.isTag(name)) { found.add(name.trim().toLowerCase(Locale.ROOT)); }
                 else { ContentLog.LOGGER.error("{} gives {}.fluids an entry {} that is not a fluid id, ignoring it", owner, PATH, entry); }
             }
         }
@@ -70,17 +64,14 @@ public final class ContentGrowWater {
     }
 
     private static boolean diamond(String owner, JsonElement element) {
-        int shape = element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() ? SHAPES.indexOf(element.getAsString()) : -1;
-        if (shape < 0) { ContentLog.LOGGER.error("{} gives {}.shape as {}, which is not one of {}, ignoring it", owner, PATH, element, SHAPES); }
+        int shape = SHAPES.indexOf(Json.text(element));
+        if (shape < 0) { Json.bad(owner, PATH + ".shape", element, "one of " + SHAPES); }
         return shape == 1;
     }
 
     @Nullable public static WaterDef parse(String owner, JsonElement element) {
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives {} that is not an object of within, fluids, kinds, blocks, except, scale, flowing, height, shape, farmland, rain, bonemeal, waiver and breaks keys, ignoring it", owner, PATH);
-            return null;
-        }
-        JsonObject json = element.getAsJsonObject();
+        JsonObject json = Json.object(owner, PATH, element, "an object of within, fluids, kinds, blocks, except, scale, flowing, height, shape, farmland, rain, bonemeal, waiver and breaks keys");
+        if (json == null) { return null; }
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (!KEYS.contains(entry.getKey())) { ContentLog.LOGGER.error("{} gives {}.{}, which is not a water key, ignoring it", owner, PATH, entry.getKey()); }
         }
@@ -89,7 +80,7 @@ public final class ContentGrowWater {
         if (json.has("blocks") && blocks.isEmpty()) { ContentLog.LOGGER.error("{} gives {}.blocks with no usable blocks, using the default plants", owner, PATH); }
         List<BlockMatch> except = new ArrayList<>();
         if (json.has("except")) { ContentGrowSwitch.blockList(owner, PATH + ".except", json.get("except"), except); }
-        Float scale = json.has("scale") ? ContentGrowSwitch.within(owner, PATH + ".scale", json.get("scale"), false, 0.0F, 1.0F) : null;
+        Float scale = json.has("scale") ? Json.within(owner, PATH + ".scale", json.get("scale"), false, 0.0F, 1.0F) : null;
         return new WaterDef(whole(owner, json, "within", WaterDef.DEFAULT_WITHIN, 1, WaterDef.MAX_WITHIN), whole(owner, json, "height", WaterDef.DEFAULT_HEIGHT, 0, WaterDef.MAX_HEIGHT), scale == null ? 0.0F : scale,
             json.has("fluids") ? fluids(owner, json.get("fluids")) : Collections.singletonList(WATER), json.has("kinds") ? ContentGrowSwitch.kindList(owner, PATH + ".kinds", json.get("kinds")) : WaiverDef.bothKinds(), blocks, except,
             flag(owner, json, "flowing", true), json.has("shape") && diamond(owner, json.get("shape")), flag(owner, json, "farmland", false), flag(owner, json, "rain", false), flag(owner, json, "bonemeal", false), flag(owner, json, "waiver", false), flag(owner, json, "breaks", false));
@@ -98,7 +89,7 @@ public final class ContentGrowWater {
     private static boolean covers(WaterDef water, Block block, int kind, World world, BlockPos pos) {
         if (!water.covers(kind) || water.excepted(block, world, pos)) { return false; }
         if (water.hasBlocks()) { return water.listed(block, world, pos); }
-        return kind == GrowSwitchDef.SAPLINGS ? sapling(block) : block instanceof BlockCrops || block instanceof BlockStem;
+        return kind == GrowSwitchDef.SAPLINGS ? Plants.sapling(block) : Plants.crop(block);
     }
 
     public static Status status(World world, BlockPos pos, Block block, int kind, GrowSwitchDef def) {

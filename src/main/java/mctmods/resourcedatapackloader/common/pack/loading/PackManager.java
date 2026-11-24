@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.IOUtils;
 
 public final class PackManager {
+    public static final String CONFIG = "config";
     public static final String ROOT_DIRECTORY = "rdploader";
     public static final String PACK_META = "pack.mcmeta";
     public static final String PACK_ICON = "pack.png";
@@ -140,6 +141,7 @@ public final class PackManager {
     public static final String OVERRIDES = "overrides";
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
+    public static final String STATE_FOLDER = "blockstates/";
     public static final String MCFUNCTION = "mcfunction";
     public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, FLUID_RULES, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, PACKLIST, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, DUNGEONS, DUNGEONTHEMES, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, SLEEPING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, SOULBOUND, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, COLUMNS, PAIRED_DOORS, LEAF_DECAY, FLOWER_SPREADS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_SWAPS, RECIPE_LOCKS, ITEM_LOCKS, SPAWN_LOCKS, SPAWN_SWAPS, HURT_RULES, ZONES, SCHEDULES, MOB_DROPS, WEIGHTS, LOOT_INJECTIONS, LOOT_REMOVALS, CARDS, DIALOGS, CELESTIAL, DISABLED, COMMANDS, COMMAND_GUARDS, SYNCDATA, "tree_growth")));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
@@ -159,6 +161,8 @@ public final class PackManager {
     private PackManager() {}
 
     public static PackManager get() { return INSTANCE; }
+
+    public static Path config(Path packRoot, String file) { return packRoot.resolve(CONFIG).resolve(file); }
 
     public boolean isEmpty() { return packs.isEmpty(); }
 
@@ -199,7 +203,7 @@ public final class PackManager {
                     case RDPLPack.ASSETS:
                     case Port.DATA:
                     case PackReadme.README:
-                    case "config": continue;
+                    case CONFIG: continue;
                 }
                 if (Files.isDirectory(entry)) {
                     if (!ContentPixelMaps.CACHE_DIRECTORY.equals(fileName)) { ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS); }
@@ -256,13 +260,13 @@ public final class PackManager {
     private void prepare(Path packRoot) {
         try {
             Files.createDirectories(packRoot.resolve(RDPLPack.ASSETS));
-            Files.createDirectories(packRoot.resolve("config"));
+            Files.createDirectories(packRoot.resolve(CONFIG));
             Path readme = packRoot.resolve(PackReadme.README);
             String text = PackReadme.readmeText();
             if (text == null) { ContentLog.LOGGER.error("The readme is missing from the jar, so {} is left as it is", readme); }
             else {
                 boolean missing = !Files.exists(readme);
-                if (missing || !text.equals(new String(Files.readAllBytes(readme), StandardCharsets.UTF_8))) {
+                if (missing || !text.equals(Json.readText(readme))) {
                     Files.write(readme, text.getBytes(StandardCharsets.UTF_8));
                     ContentLog.LOGGER.info("{} {}", missing ? "Wrote" : "Brought up to date", readme);
                 }
@@ -382,8 +386,20 @@ public final class PackManager {
     public boolean existsRaw(String namespace, String path, boolean overriding) {
         if (resolve(namespace, path, overriding) != null) { return true; }
         if (LangGates.active(namespace, path, overriding)) { return true; }
-        if (ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding)) { return true; }
+        return generatedExists(namespace, path, overriding);
+    }
+
+    private boolean generatedExists(String namespace, String path, boolean overriding) {
+        if (drawable(namespace, path, overriding)) { return true; }
         return servesCompressed(overriding) && CompressedAssets.has(namespace, path);
+    }
+
+    private static boolean drawable(String namespace, String path, boolean overriding) { return ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding); }
+
+    @Nullable private byte[] generated(String namespace, String path, boolean overriding) {
+        byte[] drawn = drawable(namespace, path, overriding) ? ContentPixelMaps.made(namespace, path, overriding) : null;
+        if (drawn == null && servesCompressed(overriding)) { drawn = CompressedAssets.open(namespace, path); }
+        return drawn;
     }
 
     @Nullable public InputStream openRaw(String namespace, String path) throws IOException {
@@ -400,8 +416,7 @@ public final class PackManager {
             if (entry == null) { return new ByteArrayInputStream(new byte[0]); }
         }
         if (entry != null) { return entry.pack.open(namespace, entry.actual); }
-        byte[] drawn = ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding) ? ContentPixelMaps.made(namespace, path, overriding) : null;
-        if (drawn == null && servesCompressed(overriding)) { drawn = CompressedAssets.open(namespace, path); }
+        byte[] drawn = generated(namespace, path, overriding);
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
 
@@ -476,12 +491,14 @@ public final class PackManager {
         return result;
     }
 
-    @Nullable public InputStream openPackFile(String name) {
+    @Nullable public InputStream openPackFile(String name) { return firstPackFile(name, pack -> pack.openPackFile(name), Files::newInputStream); }
+
+    @Nullable private <T> T firstPackFile(String name, PackRead<T> fromPack, PathRead<T> fromRoot) {
         for (int i = packs.size() - 1; i >= 0; i--) {
             RDPLPack pack = packs.get(i);
             try {
-                InputStream stream = pack.openPackFile(name);
-                if (stream != null) { return stream; }
+                T found = fromPack.read(pack);
+                if (found != null) { return found; }
             }
             catch (IOException ex) {
                 ContentLog.LOGGER.error("Pack '{}': could not read {}", pack.getName(), name, ex);
@@ -489,10 +506,14 @@ public final class PackManager {
         }
         Path file = rootFile(name);
         if (file == null) { return null; }
-        try { return Files.newInputStream(file); }
+        try { return fromRoot.read(file); }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read {}", file, ex); }
         return null;
     }
+
+    private interface PackRead<T> { T read(RDPLPack pack) throws IOException; }
+
+    private interface PathRead<T> { T read(Path file) throws IOException; }
 
     @Nullable private Path rootFile(String name) {
         Path base = root;
@@ -504,29 +525,17 @@ public final class PackManager {
     @Nullable public String packMeta() { return packMeta; }
 
     @Nullable private String resolvePackMeta() {
-        for (int i = packs.size() - 1; i >= 0; i--) {
-            RDPLPack pack = packs.get(i);
-            String contents;
-            try { contents = pack.readPackFile(PACK_META); }
-            catch (IOException ex) {
-                ContentLog.LOGGER.error("Pack '{}': could not read {}", pack.getName(), PACK_META, ex);
-                continue;
-            }
-            if (contents == null) { continue; }
-            if (validMeta(contents)) { return contents; }
+        return firstPackFile(PACK_META, pack -> {
+            String contents = pack.readPackFile(PACK_META);
+            if (contents == null || validMeta(contents)) { return contents; }
             ContentLog.LOGGER.warn("Pack '{}': {} is not valid JSON with a 'pack' section, so it is being ignored", pack.getName(), PACK_META);
-        }
-        Path file = rootFile(PACK_META);
-        if (file == null) { return null; }
-        String contents;
-        try { contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8); }
-        catch (IOException ex) {
-            ContentLog.LOGGER.error("Could not read {}", file, ex);
             return null;
-        }
-        if (validMeta(contents)) { return contents; }
-        ContentLog.LOGGER.warn("{} is not valid JSON with a 'pack' section, so it is being ignored", file);
-        return null;
+        }, file -> {
+            String contents = Json.readText(file);
+            if (validMeta(contents)) { return contents; }
+            ContentLog.LOGGER.warn("{} is not valid JSON with a 'pack' section, so it is being ignored", file);
+            return null;
+        });
     }
 
     private static boolean validMeta(String contents) {

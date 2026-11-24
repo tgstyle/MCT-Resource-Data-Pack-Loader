@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.entities.spawning;
 import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnGateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.util.Lists;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -29,19 +30,13 @@ public final class SpawnLocks {
 
     static List<SpawnGateDef> gates(Entity entity) {
         if (LOCKS.isEmpty()) { return Collections.emptyList(); }
-        List<SpawnGateDef> found = null;
-        for (Lock lock : LOCKS) {
-            if (!MobStats.targets(lock.entities, entity)) { continue; }
-            if (found == null) { found = new ArrayList<>(); }
-            found.add(lock.gate);
-        }
-        return found == null ? Collections.emptyList() : found;
+        return Lists.collect(LOCKS, lock -> MobStats.targets(lock.entities, entity), lock -> lock.gate);
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        List<String> entities = json.has("entities") ? MobStats.entities("Spawn lock file " + key, "entities", json.get("entities")) : null;
-        if (entities == null || entities.isEmpty()) {
+        List<String> entities = MobStats.required("Spawn lock file " + key, json, "entities", "entities");
+        if (entities == null) {
             ContentLog.LOGGER.error("Spawn lock file {} names no entities, ignoring it", key);
             return;
         }

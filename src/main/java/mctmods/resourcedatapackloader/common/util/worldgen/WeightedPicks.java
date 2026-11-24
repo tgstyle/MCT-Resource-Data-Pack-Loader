@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.common.util.worldgen;
 
-import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -9,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import javax.annotation.Nullable;
 
@@ -28,19 +27,12 @@ public final class WeightedPicks {
     private final List<String> names = new ArrayList<>();
     private final List<String> tails = new ArrayList<>();
     private final List<Integer> weights = new ArrayList<>();
-    @Nullable private WorldTemplateDef listedFrom;
-    private boolean listed;
-    private int total;
+    private final List<Integer> slots = new ArrayList<>();
+    private final TemplateMemo<Boolean> template = new TemplateMemo<>();
 
     public WeightedPicks(String setting) { this.setting = setting; }
 
-    public boolean stale() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (listed && active == listedFrom) { return false; }
-        listedFrom = active;
-        listed = true;
-        return true;
-    }
+    public boolean stale() { return template.stale(); }
 
     public boolean isEmpty() { return names.isEmpty(); }
 
@@ -52,7 +44,7 @@ public final class WeightedPicks {
         names.clear();
         tails.clear();
         weights.clear();
-        total = 0;
+        slots.clear();
         for (String entry : entries) {
             String[] parts = Settings.pair(entry, setting, "name=weight");
             if (parts == null) { continue; }
@@ -68,8 +60,16 @@ public final class WeightedPicks {
             names.add(parts[0]);
             tails.add(tail);
             weights.add(weight);
-            total += weight;
+            slots.add(slots.size());
         }
+    }
+
+    public void report(String label, Predicate<String> resolves, String badMessage, String countMessage) {
+        for (String name : names) {
+            if (EMPTY.equals(name) || resolves.test(name)) { continue; }
+            ContentLog.LOGGER.error(badMessage, label, name);
+        }
+        if (!names.isEmpty()) { ContentLog.LOGGER.info(countMessage, names.size()); }
     }
 
     @Nullable public static <T> T pick(Collection<T> choices, ToIntFunction<T> weight, Random random) {
@@ -84,23 +84,46 @@ public final class WeightedPicks {
         return null;
     }
 
-    @Nullable public Pick pick(Random random) {
-        if (total <= 0) { return null; }
+    public static <T> T pickOr(Collection<T> choices, ToIntFunction<T> weight, Random random, T fallback) {
+        T picked = pick(choices, weight, random);
+        return picked == null ? fallback : picked;
+    }
+
+    @Nullable public static <T> T raw(Collection<T> choices, ToIntFunction<T> weight, Random random, @Nullable T fallback) {
+        int total = 0;
+        for (T choice : choices) { total += weight.applyAsInt(choice); }
         int roll = random.nextInt(total);
-        for (int i = 0; i < names.size(); i++) {
-            roll -= weights.get(i);
-            if (roll < 0) { return new Pick(names.get(i), tails.get(i)); }
+        for (T choice : choices) {
+            roll -= weight.applyAsInt(choice);
+            if (roll < 0) { return choice; }
         }
-        return null;
+        return fallback;
+    }
+
+    public static int index(int[] weights, Random random) {
+        int total = 0;
+        for (int weight : weights) { total += Math.max(0, weight); }
+        int roll = random.nextInt(total);
+        for (int i = 0; i < weights.length; i++) {
+            roll -= Math.max(0, weights[i]);
+            if (roll < 0) { return i; }
+        }
+        return 0;
+    }
+
+    @Nullable public Pick pick(Random random) {
+        Integer at = pick(slots, weights::get, random);
+        return at == null ? null : new Pick(names.get(at), tails.get(at));
+    }
+
+    @Nullable public Pick pickFilled(Random random) {
+        Pick chosen = pick(random);
+        return chosen == null || EMPTY.equals(chosen.name) ? null : chosen;
     }
 
     private int weightOf(String said, String entry) {
-        int asked;
-        try { asked = Integer.parseInt(said); }
-        catch (NumberFormatException wrong) {
-            ContentLog.LOGGER.error("{} entry '{}' gives a weight of '{}', which is not a whole number, ignoring the entry", setting, entry, said);
-            return -1;
-        }
+        Integer asked = Settings.whole(said, "{} entry '{}' gives a weight of '{}', which is not a whole number, ignoring the entry", setting, entry, said);
+        if (asked == null) { return -1; }
         if (asked >= 1) { return asked; }
         ContentLog.LOGGER.error("{} entry '{}' asks for a weight of {}, which is below 1, ignoring the entry", setting, entry, asked);
         return -1;

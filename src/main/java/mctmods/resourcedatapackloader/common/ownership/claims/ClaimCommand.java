@@ -21,7 +21,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 
 public final class ClaimCommand {
-    private static final String COMMAND = "rdplserver";
     private static final String CLAIM = "claim";
     private static final String UNCLAIM = "unclaim";
     private static final String LIST = "claims";
@@ -47,7 +46,7 @@ public final class ClaimCommand {
     }
 
     public static List<String> complete(MinecraftServer server, ICommandSender sender, String[] args) {
-        boolean op = sender.canUseCommand(ClaimSettings.opLevel(), COMMAND);
+        boolean op = ClaimSettings.isOp(sender);
         String action = args[0];
         if (args.length == 2 && CLAIM.equals(action)) { return CommandBase.getListOfStringsMatchingLastWord(args, op ? Collections.singletonList(FOR) : Collections.emptyList()); }
         if (args.length == 2 && UNCLAIM.equals(action)) { return CommandBase.getListOfStringsMatchingLastWord(args, Collections.singletonList(ALL)); }
@@ -92,7 +91,7 @@ public final class ClaimCommand {
         int handle;
         if (args.length == 1) { handle = ClaimOwners.claimantOf(CommandBase.getCommandSenderAsPlayer(sender)); }
         else if (args.length == 2) {
-            if (!sender.canUseCommand(ClaimSettings.opLevel(), COMMAND)) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); }
+            if (!ClaimSettings.isOp(sender)) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); }
             handle = ownerNamed(server, sender, args[1]);
         }
         else { throw new WrongUsageException(usage); }

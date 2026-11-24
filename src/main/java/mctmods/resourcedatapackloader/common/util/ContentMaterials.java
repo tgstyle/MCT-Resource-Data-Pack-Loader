@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -42,7 +43,7 @@ public final class ContentMaterials {
         loaded = true;
         if (!Config.registersToClients()) { return; }
         Json.eachFile(PackManager.MATERIALS, "material file", ContentMaterials::read);
-        if (!DEFS.isEmpty()) { Summary.info("materials", "Loaded " + DEFS.size() + " material definition(s)"); }
+        Summary.loaded("materials", DEFS.size(), "material definition(s)");
     }
 
     private static void read(ResourceLocation key, String contents) {
@@ -85,8 +86,8 @@ public final class ContentMaterials {
     public static void resolveRepairItems() {
         for (MaterialDef def : DEFS.values()) {
             if (def.repairItem.isEmpty() || def.getTool() == null) { continue; }
-            if (def.repairItem.startsWith("#")) {
-                REPAIR_ORES.put(def.name, def.repairItem.substring(1));
+            if (IdNames.isTag(def.repairItem)) {
+                REPAIR_ORES.put(def.name, IdNames.tagPath(def.repairItem));
                 continue;
             }
             def.resolve(def.getTool(), def.getArmor(), ContentStacks.parse(def.registryName, def.repairItem, 1));
@@ -106,10 +107,7 @@ public final class ContentMaterials {
 
     @Nullable public static MaterialDef find(String name, Object context) {
         if (name == null || name.isEmpty()) { return null; }
-        MaterialDef def = DEFS.get(name);
-        if (def != null) { return def; }
-        ContentLog.LOGGER.error("Unknown material '{}' in {}, the item is skipped. Known materials are {}", name, context, DEFS.keySet());
-        return null;
+        return NamedRegistry.skipping(DEFS, "material", "materials", name, context);
     }
 
     private static SoundEvent sound(String name) {

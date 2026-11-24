@@ -31,22 +31,22 @@ public final class ContentParserPortways {
     private ContentParserPortways() {}
 
     @Nullable static PortwayDef portway(JsonObject json) {
-        if (!json.has("portway") || !json.get("portway").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "portway");
+        JsonObject held = Json.objectOrNull(json, "portway");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "portway", PORTWAY_KEYS);
         return settings(held, false);
     }
 
     @Nullable static PortwayItemDef item(JsonObject json) {
-        if (!json.has("portway") || !json.get("portway").isJsonObject()) { return null; }
-        JsonObject held = Json.getJsonObject(json, "portway");
+        JsonObject held = Json.objectOrNull(json, "portway");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "portway", ITEM_KEYS);
         return new PortwayItemDef(settings(held, true), Json.getBoolean(held, "consume", false), Json.getBoolean(held, "bind", false));
     }
 
     private static boolean toggleAsked(JsonObject held) {
         JsonElement element = held.get("global");
-        return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() && "toggle".equalsIgnoreCase(element.getAsString().trim());
+        return element != null && Json.isString(element) && "toggle".equalsIgnoreCase(element.getAsString().trim());
     }
 
     private static PortwayDef settings(JsonObject held, boolean item) {
@@ -139,12 +139,12 @@ public final class ContentParserPortways {
 
     private static PortwayCost cost(JsonObject json) {
         Json.unknownKeys(json, "portway.cost", COST_KEYS);
-        return new PortwayCost(part(Json.object(json, "xp"), "xp"), part(Json.object(json, "item"), "item"), part(Json.object(json, "health"), "health"), part(Json.object(json, "hunger"), "hunger"), Math.max(0, Json.getInt(json, "cooldown", 0)));
+        return new PortwayCost(part(Json.object(json, "xp"), "xp"), part(Json.object(json, "item"), "item"), part(Json.object(json, "health"), "health"), part(Json.object(json, "hunger"), "hunger"), Json.atLeast(json, "cooldown", 0, 0));
     }
 
     private static CostPart part(JsonObject json, String member) {
         Json.unknownKeys(json, "portway.cost." + member, PART_KEYS);
-        return new CostPart(Json.getString(json, "id", "").trim(), Math.max(0, Json.getInt(json, "amount", 0)), Math.max(0, Json.getInt(json, "perBlocks", 0)),
-                Math.max(0, Json.getInt(json, "dimension", 0)), Math.max(0, Json.getInt(json, "max", 0)), Json.getBoolean(json, "points", false));
+        return new CostPart(Json.getString(json, "id", "").trim(), Json.atLeast(json, "amount", 0, 0), Json.atLeast(json, "perBlocks", 0, 0),
+                Json.atLeast(json, "dimension", 0, 0), Json.atLeast(json, "max", 0, 0), Json.getBoolean(json, "points", false));
     }
 }

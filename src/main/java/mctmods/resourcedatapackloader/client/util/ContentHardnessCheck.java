@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.util;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.HardnessDef;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -100,7 +101,7 @@ public final class ContentHardnessCheck {
     private static void shipped(IBlockState state) {
         ResourceLocation name = state.getBlock().getRegistryName();
         if (name == null) { return; }
-        String path = "blockstates/" + name.getPath() + PackManager.JSON_SUFFIX;
+        String path = PackManager.STATE_FOLDER + name.getPath() + PackManager.JSON_SUFFIX;
         chain(new ResourceLocation(name.getNamespace(), path));
         boolean overriding = PackManager.get().existsRaw(name.getNamespace(), path, true);
         boolean normal = PackManager.get().existsRaw(name.getNamespace(), path, false);
@@ -144,7 +145,7 @@ public final class ContentHardnessCheck {
                 for (JsonElement one : held.getAsJsonArray()) {
                     if (!one.isJsonObject() || !one.getAsJsonObject().has("model")) { continue; }
                     ResourceLocation named = new ResourceLocation(one.getAsJsonObject().get("model").getAsString());
-                    String model = "models/block/" + named.getPath() + PackManager.JSON_SUFFIX;
+                    String model = CompressedAssets.MODEL_FOLDER + named.getPath() + PackManager.JSON_SUFFIX;
                     ContentLog.LOGGER.debug("    it points at {}:{}, which the pack ships at the overriding tier={} and the normal tier={}", named.getNamespace(), model,
                             PackManager.get().existsRaw(named.getNamespace(), model, true), PackManager.get().existsRaw(named.getNamespace(), model, false));
                 }

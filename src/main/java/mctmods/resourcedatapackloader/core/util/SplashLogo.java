@@ -1,12 +1,11 @@
 package mctmods.resourcedatapackloader.core.util;
 
+import mctmods.resourcedatapackloader.core.MCTMixin;
+
 import net.minecraftforge.fml.client.SplashProgress;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Field;
 
 public final class SplashLogo {
-    private static final Logger LOGGER = LogManager.getLogger("RDPL");
     private static final int BAR_WIDTH = 400;
     private static boolean read;
     private static int offset;
@@ -29,7 +28,7 @@ public final class SplashLogo {
         if (windowWidth != loggedWidth || windowHeight != loggedHeight) {
             loggedWidth = windowWidth;
             loggedHeight = windowHeight;
-            LOGGER.info("Loading screen logo {}x{} drawn at {}x{} in a {}x{} window", width, height, (int) (width * scale), (int) (height * scale), windowWidth, windowHeight);
+            MCTMixin.LOGGER.info("Loading screen logo {}x{} drawn at {}x{} in a {}x{} window", width, height, (int) (width * scale), (int) (height * scale), windowWidth, windowHeight);
         }
         return scale;
     }
@@ -40,7 +39,7 @@ public final class SplashLogo {
             offset = field("logoOffset").getInt(null);
             rotate = field("rotate").getBoolean(null);
         }
-        catch (ReflectiveOperationException | RuntimeException unreadable) { LOGGER.warn("Could not read the loading screen's logo settings, so the logo is fitted as if it had no offset and no spin", unreadable); }
+        catch (ReflectiveOperationException | RuntimeException unreadable) { MCTMixin.LOGGER.warn("Could not read the loading screen's logo settings, so the logo is fitted as if it had no offset and no spin", unreadable); }
     }
 
     private static Field field(String name) throws NoSuchFieldException {

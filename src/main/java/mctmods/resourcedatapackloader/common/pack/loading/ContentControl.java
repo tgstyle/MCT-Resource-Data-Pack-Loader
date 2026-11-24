@@ -14,6 +14,9 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.MathHelper;
 
@@ -29,7 +32,7 @@ public final class ContentControl {
     public static final String TERRAIN = "terrain";
     public static final String REPLACEMENTS = "replacements";
     public static final String VILLAGES = "villages";
-    private static final String LAYOUT = "villageLayout";
+    public static final String LAYOUT = "villageLayout";
     private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
     public static final String ENTITIES = "entities";
     public static final String CHUNKS = "chunks";
@@ -38,7 +41,34 @@ public final class ContentControl {
     public static final String CLAIMS = "claims";
     public static final String COMMANDS = "commands";
     public static final String SERVER = "server";
-    private static final String DEFAULT = "default";
+    public static final String DEFAULT = "default";
+    public static final String HURRY_WRITES_ABOVE = "hurryWritesAbove";
+    public static final String PREGEN_DIMENSIONS = "pregenDimensions";
+    public static final String PREGEN_ALL_DIMENSIONS = "pregenAllDimensions";
+    public static final String PREGEN_DIMENSIONS_WHEN_ENTERED = "pregenDimensionsWhenEntered";
+    public static final String PREGEN_TO_BORDER = "pregenToBorder";
+    public static final String PREGEN_BORDER_LIMIT = "pregenBorderLimit";
+    public static final String PREGEN_RESUME = "pregenResume";
+    public static final String PREGEN_ON_NEW_WORLD = "pregenOnNewWorld";
+    public static final String PREGEN_KEEP_LOADED = "pregenKeepLoaded";
+    public static final String PREGEN_PAUSE_ABOVE = "pregenPauseAbove";
+    public static final String PREGEN_MILLIS_PER_ROUND = "pregenMillisPerRound";
+    public static final String PREGEN_BACKUP = "pregenBackup";
+    public static final String PREGEN_BACKUP_SAYS = "pregenBackupSays";
+    public static final String PREGEN_SPECTATING_SAYS = "pregenSpectatingSays";
+    public static final String PREGEN_RELIGHT_SAYS = "pregenRelightSays";
+    public static final String PREGEN_RUNNING_SAYS = "pregenRunningSays";
+    public static final String PREGEN_STOPPED_SAYS = "pregenStoppedSays";
+    public static final String PREGEN_FINISHED_SAYS = "pregenFinishedSays";
+    public static final String PREGEN_LOGO = "pregenLogo";
+    public static final String WELCOME_SAYS = "welcomeSays";
+    public static final String RESET_SAYS = "resetSays";
+    public static final String RESET_RUNS = "resetRuns";
+    public static final String RESET_SENDS_TO = "resetSendsTo";
+    public static final String RESET_CLEARS_ENTITIES = "resetClearsEntities";
+    public static final String RESET_CLEARS_SCORES = "resetClearsScores";
+    public static final String RESET_CLEARS_INVENTORY = "resetClearsInventory";
+    public static final String RESET_CLEARS_EXPERIENCE = "resetClearsExperience";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
     private static final Set<String> WARNED = new LinkedHashSet<>();
@@ -53,10 +83,10 @@ public final class ContentControl {
             "flatBedrockBiomeTypes", "flatBedrockBiomes", "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions",
             "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof", "flatBedrockRetrogen", "retrogen", "adoptExistingChunks",
             "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
-            "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
+            "generatorWhitelist", HURRY_WRITES_ABOVE, "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
-            "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts",
+            PREGEN_ALL_DIMENSIONS, PREGEN_DIMENSIONS, PREGEN_DIMENSIONS_WHEN_ENTERED, PREGEN_KEEP_LOADED, PREGEN_MILLIS_PER_ROUND, PREGEN_ON_NEW_WORLD, PREGEN_PAUSE_ABOVE,
+            PREGEN_FINISHED_SAYS, PREGEN_RELIGHT_SAYS, PREGEN_RESUME, PREGEN_RUNNING_SAYS, PREGEN_SPECTATING_SAYS, PREGEN_LOGO, PREGEN_BACKUP, PREGEN_BACKUP_SAYS, RESET_SAYS, RESET_SENDS_TO, RESET_RUNS, RESET_CLEARS_ENTITIES, RESET_CLEARS_SCORES, RESET_CLEARS_INVENTORY, RESET_CLEARS_EXPERIENCE, PREGEN_STOPPED_SAYS, PREGEN_TO_BORDER, WELCOME_SAYS, "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
@@ -71,7 +101,7 @@ public final class ContentControl {
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailPowerRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth", "villageRailClimb", "villageRailTail", "villageRailLinks", "villageRailLinkLeast", "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation", "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock", "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villagePlotsLeast",
-            "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageCitySpacing", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
+            "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageCitySpacing", "villageBlockSizes", LAYOUT, "biomes", "voidPlatformBlock",
             "blocks", "who", "onJoinTeam", "onDissolve", "removeAs", "dissolvePerTick", "checkTicks", "teamSource", "onFtbTeamDeleted", "ftbPolicy",
             "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
             "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers", "ftbAllies", "ftbClaimsOnRdpl", "dissolveOnFtbLand", "fakePlayerBlocks", "forcedColumnCubeRange",
@@ -94,8 +124,12 @@ public final class ContentControl {
 
     public static void warnUnknown(String owner, JsonObject settings) {
         for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
-            if (!KNOWN.contains(entry.getKey())) { ContentLog.LOGGER.error("{} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", owner, entry.getKey()); }
+            if (!KNOWN.contains(entry.getKey())) { unknownSetting(owner, entry.getKey(), "", ". Check the spelling against the list of settings in HOWTO.md"); }
         }
+    }
+
+    public static void unknownSetting(String owner, String key, String on, String hint) {
+        ContentLog.LOGGER.error("{} sets '{}'{}, which is not a setting anything reads, so it does nothing{}", owner, key, on, hint);
     }
 
     @Nullable public static JsonObject roadKeys() { return ROAD_KEYS.get(); }
@@ -116,17 +150,19 @@ public final class ContentControl {
     public static boolean packDecides(String group) { return DEFAULT.equals(mode(group)); }
 
     public static boolean flag(String group, String key, boolean fallback) {
-        JsonElement value = setting(group, key);
-        if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive()) { return rejected(key, "true or false", fallback); }
-        return value.getAsBoolean();
+        return typed(setting(group, key), key, "true or false", fallback, JsonElement::isJsonPrimitive, JsonElement::getAsBoolean);
     }
 
     public static int number(String group, String key, int fallback) {
-        JsonElement value = setting(group, key);
+        return typed(setting(group, key), key, "a number", fallback, ContentControl::isNumber, JsonElement::getAsInt);
+    }
+
+    private static boolean isNumber(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber(); }
+
+    private static <T> T typed(@Nullable JsonElement value, String key, String wanted, T fallback, Predicate<JsonElement> shape, Function<JsonElement, T> read) {
         if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
-        return value.getAsInt();
+        if (!shape.test(value)) { return rejected(key, wanted, fallback); }
+        return read.apply(value);
     }
 
     public static int ranged(String group, String key, int configured, int least, int most) {
@@ -142,10 +178,7 @@ public final class ContentControl {
     }
 
     public static float decimal(String group, String key, float fallback) {
-        JsonElement value = setting(group, key);
-        if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
-        return value.getAsFloat();
+        return typed(setting(group, key), key, "a number", fallback, ContentControl::isNumber, JsonElement::getAsFloat);
     }
 
     private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
@@ -200,15 +233,11 @@ public final class ContentControl {
         JsonElement value = roadSetting(group, key);
         if (value == null) { value = biomeSetting(group, key, section); }
         if (value == null) { return text(group, key, fallback); }
-        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
-        return value.getAsString();
+        return typed(value, key, "a text value", fallback, JsonElement::isJsonPrimitive, JsonElement::getAsString);
     }
 
     public static String text(String group, String key, String fallback) {
-        JsonElement value = setting(group, key);
-        if (value == null) { return fallback; }
-        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
-        return value.getAsString();
+        return typed(setting(group, key), key, "a text value", fallback, JsonElement::isJsonPrimitive, JsonElement::getAsString);
     }
 
     public static String[] list(String group, String key, String[] fallback) {
@@ -248,6 +277,12 @@ public final class ContentControl {
             if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isNumber()) { return rejected(key, "a list of numbers", fallback); }
             found[i] = entry.getAsInt();
         }
+        return found;
+    }
+
+    public static Set<Integer> numberSet(String group, String key, int[] fallback) {
+        Set<Integer> found = new HashSet<>();
+        for (int number : numbers(group, key, fallback)) { found.add(number); }
         return found;
     }
 
@@ -297,27 +332,28 @@ public final class ContentControl {
 
     private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
 
-    private static String raw(String group) {
-        switch (group) {
-            case ORES: return Config.control.ores;
-            case BIOMES: return Config.control.biomes;
-            case GENERATORS: return Config.control.generators;
-            case STRUCTURES: return Config.control.structures;
-            case SPAWNING: return Config.control.spawning;
-            case BEDROCK: return Config.control.bedrock;
-            case VOID: return Config.control.voidWorld;
-            case RECIPES: return Config.control.recipes;
-            case TERRAIN: return Config.control.terrain;
-            case REPLACEMENTS: return Config.control.replacements;
-            case VILLAGES: return Config.control.villages;
-            case ENTITIES: return Config.control.entities;
-            case CHUNKS: return Config.control.chunks;
-            case BLAST_PLASTER: return Config.control.blastPlaster;
-            case OWNERSHIP: return Config.control.ownership;
-            case CLAIMS: return Config.control.claims;
-            case COMMANDS: return Config.control.commands;
-            case SERVER: return Config.control.server;
-            default: return DEFAULT;
-        }
+    private static final Map<String, Supplier<String>> GROUPS = new HashMap<>();
+
+    static {
+        GROUPS.put(ORES, () -> Config.control.ores);
+        GROUPS.put(BIOMES, () -> Config.control.biomes);
+        GROUPS.put(GENERATORS, () -> Config.control.generators);
+        GROUPS.put(STRUCTURES, () -> Config.control.structures);
+        GROUPS.put(SPAWNING, () -> Config.control.spawning);
+        GROUPS.put(BEDROCK, () -> Config.control.bedrock);
+        GROUPS.put(VOID, () -> Config.control.voidWorld);
+        GROUPS.put(RECIPES, () -> Config.control.recipes);
+        GROUPS.put(TERRAIN, () -> Config.control.terrain);
+        GROUPS.put(REPLACEMENTS, () -> Config.control.replacements);
+        GROUPS.put(VILLAGES, () -> Config.control.villages);
+        GROUPS.put(ENTITIES, () -> Config.control.entities);
+        GROUPS.put(CHUNKS, () -> Config.control.chunks);
+        GROUPS.put(BLAST_PLASTER, () -> Config.control.blastPlaster);
+        GROUPS.put(OWNERSHIP, () -> Config.control.ownership);
+        GROUPS.put(CLAIMS, () -> Config.control.claims);
+        GROUPS.put(COMMANDS, () -> Config.control.commands);
+        GROUPS.put(SERVER, () -> Config.control.server);
     }
+
+    private static String raw(String group) { return GROUPS.getOrDefault(group, () -> DEFAULT).get(); }
 }

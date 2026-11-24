@@ -7,10 +7,11 @@ import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.PlacedBlock;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -21,12 +22,13 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 
 public final class ContentContainerUpgrades {
+    static final String CANNOT_MOVE = "cannot_move";
+    private static final String UNAVAILABLE = "unavailable";
     private static boolean swapping;
 
     private ContentContainerUpgrades() {}
@@ -38,22 +40,28 @@ public final class ContentContainerUpgrades {
         ContainerUpgradeDef.Path path = pathFor(upgrade, state);
         if (path != null && path.contents != ContainerUpgradeDef.Contents.CONTAINER) { return ContentStorageSwap.use(upgrade, path, kit, player, hand, world, pos, side, state); }
         if (!(state.getBlock() instanceof ContentContainerBlock)) { return EnumActionResult.PASS; }
-        if (player.getCooldownTracker().hasCooldown(kit)) { return EnumActionResult.FAIL; }
-        if (world.isRemote) { return EnumActionResult.SUCCESS; }
-        if (!(player instanceof EntityPlayerMP)) { return EnumActionResult.PASS; }
+        EnumActionResult early = early(player, kit, world);
+        if (early != null) { return early; }
         TileEntity found = world.getTileEntity(pos);
         if (!(found instanceof TileEntityPackContainer)) { return EnumActionResult.PASS; }
         TileEntityPackContainer old = (TileEntityPackContainer) found;
         if (path == null) { return refuse(player, "no path for that container", "wrong"); }
         IBlockState target = ContentStates.parse(path.to, kit.getRegistryName());
-        if (target == null || !(target.getBlock() instanceof ContentContainerBlock) || target == state) { return refuse(player, "nothing to become", "unavailable"); }
-        if (((ContentContainerBlock) target.getBlock()).container().size() < old.getSizeInventory()) { return refuse(player, "target is smaller", "smaller"); }
-        if (old.watched()) { return refuse(player, "someone has it open", "in_use"); }
-        if (old.pendingLoot() && !upgrade.carryLoot) { return refuse(player, "loot not rolled", "loot"); }
-        if (!player.canPlayerEdit(pos, side, player.getHeldItem(hand)) || !ContentCarry.asks((EntityPlayerMP) player, pos)) { return denied(player, pos, "not allowed to change it"); }
-        if (!swap(state, target, world, pos, old)) { return refuse(player, "the swap failed", "unavailable"); }
+        if (target == null || !(target.getBlock() instanceof ContentContainerBlock) || target == state) { return unavailable(player); }
+        if (((ContentContainerBlock) target.getBlock()).container().size() < old.getSizeInventory()) { return smaller(player); }
+        if (old.watched()) { return open(player); }
+        if (old.pendingLoot() && !upgrade.carryLoot) { return unrolled(player); }
+        EnumActionResult barred = barred((EntityPlayerMP) player, hand, pos, side);
+        if (barred != null) { return barred; }
+        if (!swap(state, target, world, pos, old)) { return refuse(player, "the swap failed", UNAVAILABLE); }
         ContentLog.LOGGER.info("Container upgrade: {} upgraded the container at {} to {}", player.getName(), pos, target.getBlock().getRegistryName());
         return EnumActionResult.SUCCESS;
+    }
+
+    @Nullable static EnumActionResult early(EntityPlayer player, Item kit, World world) {
+        if (player.getCooldownTracker().hasCooldown(kit)) { return EnumActionResult.FAIL; }
+        if (world.isRemote) { return EnumActionResult.SUCCESS; }
+        return player instanceof EntityPlayerMP ? null : EnumActionResult.PASS;
     }
 
     public static void check(ItemDef def) {
@@ -62,25 +70,21 @@ public final class ContentContainerUpgrades {
             IBlockState from = ContentStates.parse(path.from, def.registryName);
             IBlockState to = ContentStates.parse(path.to, def.registryName);
             if (from == null || to == null) { continue; }
-            if (path.contents != ContainerUpgradeDef.Contents.CONTAINER) {
-                checkStorage(def, path, from, to);
-                continue;
-            }
-            if (!(from.getBlock() instanceof ContentContainerBlock)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which is not a container", def.registryName, path.from); }
-            else if (!(to.getBlock() instanceof ContentContainerBlock)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which is not a container", def.registryName, path.to); }
-            else if (path.from.equals(path.to)) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.registryName, path.from); }
-            else if (((ContentContainerBlock) to.getBlock()).container().size() < ((ContentContainerBlock) from.getBlock()).container().size()) { ContentLog.LOGGER.error("The container upgrade {} changes {} into {}, which holds fewer slots", def.registryName, path.from, path.to); }
+            if (path.contents != ContainerUpgradeDef.Contents.CONTAINER) { validate(def, path, from, to, held -> held.getBlock().hasTileEntity(held), "holds nothing", true); }
+            else { validate(def, path, from, to, held -> held.getBlock() instanceof ContentContainerBlock, "is not a container", false); }
         }
     }
 
-    private static void checkStorage(ItemDef def, ContainerUpgradeDef.Path path, IBlockState from, IBlockState to) {
-        if (!from.getBlock().hasTileEntity(from)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which holds nothing", def.registryName, path.from); }
-        else if (!to.getBlock().hasTileEntity(to)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which holds nothing", def.registryName, path.to); }
+    private static void validate(ItemDef def, ContainerUpgradeDef.Path path, IBlockState from, IBlockState to, Predicate<IBlockState> holds, String lacking, boolean storage) {
+        if (!holds.test(from)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which {}", def.registryName, path.from, lacking); }
+        else if (!holds.test(to)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which {}", def.registryName, path.to, lacking); }
         else if (path.from.equals(path.to)) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.registryName, path.from); }
-        else if (ContentCarry.twoBlock(from)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.registryName, path.from); }
-        else if (ContentCarry.twoBlock(to)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.registryName, path.to); }
-        else if (path.contents == ContainerUpgradeDef.Contents.SLOTS && !path.fit && from.getBlock() instanceof ContentContainerBlock && to.getBlock() instanceof ContentContainerBlock && ((ContentContainerBlock) to.getBlock()).container().size() < ((ContentContainerBlock) from.getBlock()).container().size()) { ContentLog.LOGGER.error("The container upgrade {} changes {} into {}, which holds fewer slots", def.registryName, path.from, path.to); }
+        else if (storage && ContentCarry.twoBlock(from)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.registryName, path.from); }
+        else if (storage && ContentCarry.twoBlock(to)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.registryName, path.to); }
+        else if ((!storage || path.contents == ContainerUpgradeDef.Contents.SLOTS && !path.fit) && shrinks(from, to)) { ContentLog.LOGGER.error("The container upgrade {} changes {} into {}, which holds fewer slots", def.registryName, path.from, path.to); }
     }
+
+    private static boolean shrinks(IBlockState from, IBlockState to) { return from.getBlock() instanceof ContentContainerBlock && to.getBlock() instanceof ContentContainerBlock && ((ContentContainerBlock) to.getBlock()).container().size() < ((ContentContainerBlock) from.getBlock()).container().size(); }
 
     @Nullable private static ContainerUpgradeDef.Path pathFor(ContainerUpgradeDef upgrade, IBlockState state) {
         for (ContainerUpgradeDef.Path path : upgrade.paths) {
@@ -102,9 +106,21 @@ public final class ContentContainerUpgrades {
         return EnumActionResult.FAIL;
     }
 
+    static EnumActionResult unavailable(EntityPlayer player) { return refuse(player, "nothing to become", UNAVAILABLE); }
+
+    static EnumActionResult smaller(EntityPlayer player) { return refuse(player, "target is smaller", "smaller"); }
+
+    static EnumActionResult open(EntityPlayer player) { return refuse(player, "someone has it open", "in_use"); }
+
+    static EnumActionResult unrolled(EntityPlayer player) { return refuse(player, "loot not rolled", "loot"); }
+
+    @Nullable static EnumActionResult barred(EntityPlayerMP player, EnumHand hand, BlockPos pos, EnumFacing side) {
+        return player.canPlayerEdit(pos, side, player.getHeldItem(hand)) && ContentCarry.asks(player, pos) ? null : denied(player, pos, "not allowed to change it");
+    }
+
     static EnumActionResult denied(EntityPlayer player, BlockPos pos, String why) {
         ContentLog.LOGGER.info("Container upgrade: {} was refused at {} ({})", player.getName(), pos, why);
-        player.sendStatusMessage(new TextComponentTranslation("rdpl.carry.denied"), true);
+        player.sendStatusMessage(new TextComponentTranslation(ContentCarry.DENIED), true);
         return EnumActionResult.FAIL;
     }
 
@@ -124,12 +140,8 @@ public final class ContentContainerUpgrades {
                 recover(world, pos, state, tag);
                 return false;
             }
-            ((ContentContainerBlock) target.getBlock()).reshape((TileEntityPackContainer) tile, target);
-            ((TileEntityPackContainer) tile).adopt(tag);
-            world.notifyBlockUpdate(pos, target, target, 3);
-            world.notifyNeighborsOfStateChange(pos, target.getBlock(), false);
-            SoundType sound = target.getBlock().getSoundType(target, world, pos, null);
-            world.playSound(null, pos, sound.getPlaceSound(), SoundCategory.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F, sound.getPitch() * 0.8F);
+            fill((TileEntityPackContainer) tile, target, tag);
+            PlacedBlock.announce(world, pos, target);
             return true;
         }
         catch (RuntimeException ex) {
@@ -144,11 +156,15 @@ public final class ContentContainerUpgrades {
             if (world.getBlockState(pos) != state) { place(world, pos, state); }
             TileEntity tile = world.getTileEntity(pos);
             if (!(tile instanceof TileEntityPackContainer)) { throw new IllegalStateException("no container block entity at " + pos); }
-            ((ContentContainerBlock) state.getBlock()).reshape((TileEntityPackContainer) tile, state);
-            ((TileEntityPackContainer) tile).adopt(tag);
+            fill((TileEntityPackContainer) tile, state, tag);
         }
         catch (RuntimeException ex) {
             ContentLog.LOGGER.error("The container at {} could not be put back, its saved data was {}", pos, tag, ex);
         }
+    }
+
+    private static void fill(TileEntityPackContainer tile, IBlockState state, NBTTagCompound tag) {
+        ContentContainerBlock.reshape(tile, state, false);
+        tile.adopt(tag);
     }
 }

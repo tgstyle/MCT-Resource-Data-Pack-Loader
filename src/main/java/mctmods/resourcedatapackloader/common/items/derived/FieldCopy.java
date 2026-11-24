@@ -1,10 +1,18 @@
 package mctmods.resourcedatapackloader.common.items.derived;
 
+import mctmods.resourcedatapackloader.core.util.Unsafes;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 public final class FieldCopy {
     private FieldCopy() {}
+
+    public static Object copy(Object from, Class<?> type) {
+        Object copy = Unsafes.allocate(type);
+        all(from, copy);
+        return copy;
+    }
 
     public static void all(Object from, Object to) {
         for (Class<?> level = from.getClass(); level != null && level != Object.class; level = level.getSuperclass()) {

@@ -26,7 +26,7 @@ public class ContentContainerUpgradeItem extends ContentItem {
         EnumActionResult result = ContentContainerUpgrades.use(upgrade, this, player, hand, world, pos, side);
         if (result != EnumActionResult.SUCCESS || world.isRemote) { return result; }
         if (upgrade.consume && !player.capabilities.isCreativeMode) { player.getHeldItem(hand).shrink(1); }
-        if (cooldown > 0) { player.getCooldownTracker().setCooldown(this, cooldown); }
+        ItemVariants.cooldown(player, this, cooldown);
         return result;
     }
 }

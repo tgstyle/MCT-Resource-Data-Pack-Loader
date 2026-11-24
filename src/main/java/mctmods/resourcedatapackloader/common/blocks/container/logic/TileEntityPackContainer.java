@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.blocks.container.logic;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.gui.ContainerPack;
 import mctmods.resourcedatapackloader.common.gui.EnderInventory;
@@ -27,6 +28,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
@@ -76,7 +78,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override @Nonnull protected NonNullList<ItemStack> getItems() { return items; }
 
-    @Override @Nonnull public String getGuiID() { return "resourcedatapackloader:container"; }
+    @Override @Nonnull public String getGuiID() { return ResourceDataPackLoader.MOD_ID + ":container"; }
 
     @Override public int getInventoryStackLimit() { return 64; }
 
@@ -166,7 +168,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
         readSize(tag);
         named = tag.getString(NAMED);
         facing = EnumFacing.byHorizontalIndex(tag.getInteger(FACING));
-        customName = tag.hasKey(CUSTOM_NAME, 8) ? tag.getString(CUSTOM_NAME) : null;
+        customName = tag.hasKey(CUSTOM_NAME, Constants.NBT.TAG_STRING) ? tag.getString(CUSTOM_NAME) : null;
     }
 
     private void writeShape(NBTTagCompound tag) {
@@ -296,7 +298,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override public boolean isUsableByPlayer(@Nonnull EntityPlayer player) {
         if (world == null || world.getTileEntity(pos) != this) { return false; }
-        return player.getDistanceSq((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;
+        return player.getDistanceSqToCenter(pos) <= 64.0D;
     }
 
     @Override public boolean shouldRefresh(@Nonnull net.minecraft.world.World world, @Nonnull BlockPos pos, @Nonnull IBlockState was, @Nonnull IBlockState is) { return was.getBlock() != is.getBlock(); }

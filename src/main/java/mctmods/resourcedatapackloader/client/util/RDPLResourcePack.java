@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -26,7 +27,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT) public final class RDPLResourcePack extends AbstractResourcePack {
     private static final String META = PackManager.PACK_META;
     private static final String ICON = PackManager.PACK_ICON;
-    public static final int PACK_FORMAT = 3;
+    public static final int PACK_FORMAT = Port.LEGACY_FORMAT;
     private static final String PREFIX = RDPLPack.ASSETS + "/";
     private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":" + PACK_FORMAT + ",\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());

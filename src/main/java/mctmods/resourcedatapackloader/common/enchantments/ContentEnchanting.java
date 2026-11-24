@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.util.TableMath;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.CompatHooks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.VanillaClients;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -25,7 +26,6 @@ import java.util.Random;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockEnchantmentTable;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentData;
 import net.minecraft.item.ItemStack;
@@ -75,9 +75,8 @@ public final class ContentEnchanting {
         keepLapis = false;
         AnvilCosts.resetTable();
         if (!Config.data.enchanting) { return; }
-        Json.eachFile(PackManager.ENCHANTING, "enchanting file", (key, contents) -> {
-            JsonObject json = Json.object(key, contents, "enchanting file");
-            if (json == null || !ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        Json.eachObject(PackManager.ENCHANTING, "enchanting file", (key, json) -> {
+            if (!ContentRegistry.available(json, key)) { return; }
             if (json.has(ENCHANTMENT)) { shape(key, json); }
             else if (json.has(MATCH)) { fit(key, json); }
             else { table(key, json); }
@@ -86,9 +85,9 @@ public final class ContentEnchanting {
         for (Fit fit : FITS) { opening |= Boolean.TRUE.equals(fit.enchantable); }
         AnvilCosts.serveOpening(opening);
         Block table = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("enchanting_table"));
-        if (keepLapis && table != null && table.getClass() != BlockEnchantmentTable.class && CompatHooks.present("quark", "Quark's Matrix Enchanting replaces the enchanting table and keeps its own lapis, so keepLapis is left out")) { keepLapis = false; }
+        if (keepLapis && table != null && TableLapis.replacedTable(table) && CompatHooks.present("quark", "Quark's Matrix Enchanting replaces the enchanting table and keeps its own lapis, so keepLapis is left out")) { keepLapis = false; }
         if (!SHAPES.isEmpty()) { Summary.info("enchanting", "Loaded table settings for " + SHAPES.size() + " enchantment(s)"); }
-        if (!FITS.isEmpty()) { Summary.info("enchanting", "Loaded " + FITS.size() + " enchanting table item rule(s)"); }
+        Summary.loaded("enchanting", FITS.size(), "enchanting table item rule(s)");
         if (AnvilCosts.levels().length > 0) { Summary.info("enchanting", "The enchanting table asks for levels " + Arrays.toString(AnvilCosts.levels())); }
         if (AnvilCosts.servedPaid().length > 0) { Summary.info("enchanting", "The enchanting table takes levels " + Arrays.toString(AnvilCosts.servedPaid())); }
         if (AnvilCosts.servedLapis().length > 0) { Summary.info("enchanting", "The enchanting table takes lapis " + Arrays.toString(AnvilCosts.servedLapis())); }
@@ -96,10 +95,12 @@ public final class ContentEnchanting {
         if (keepLapis) { Summary.info("enchanting", "Lapis placed in the enchanting table stays there when the screen closes"); }
     }
 
+    @Nullable public static Enchantment enchantment(String name) { return name.isEmpty() ? null : Registries.find(ForgeRegistries.ENCHANTMENTS, new ResourceLocation(name)); }
+
     private static void shape(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", SHAPE_KEYS);
         String named = Json.text(json, ENCHANTMENT, "");
-        Enchantment enchantment = named.isEmpty() ? null : ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(named));
+        Enchantment enchantment = enchantment(named);
         if (enchantment == null) {
             ContentLog.LOGGER.error("Enchanting file {} names the enchantment '{}', which nothing registers, ignoring it", key, named);
             return;
@@ -118,12 +119,12 @@ public final class ContentEnchanting {
         Json.unknownKeys(json, "the top level", FIT_KEYS);
         ItemMatch match = ItemMatch.parse(key, Json.text(json, MATCH, ""));
         if (match == null) { return; }
-        Boolean enchantable = json.has(ENCHANTABLE) ? Json.getBoolean(json, ENCHANTABLE, true) : null;
+        Boolean enchantable = Json.flagOrNull(json, ENCHANTABLE, true);
         Set<Enchantment> allowed = null;
         if (json.has(ENCHANTMENTS)) {
             allowed = new LinkedHashSet<>();
             for (String named : Json.strings(json, ENCHANTMENTS)) {
-                Enchantment enchantment = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(named));
+                Enchantment enchantment = enchantment(named);
                 if (enchantment == null) { ContentLog.LOGGER.error("Enchanting file {} lists the enchantment '{}', which nothing registers, skipping it", key, named); }
                 else { allowed.add(enchantment); }
             }
@@ -154,7 +155,8 @@ public final class ContentEnchanting {
     private static int whole(ResourceLocation key, JsonObject json, String name, int least) {
         if (!json.has(name)) { return -1; }
         JsonElement held = json.get(name);
-        if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber() && held.getAsDouble() == Math.rint(held.getAsDouble()) && held.getAsDouble() >= least && held.getAsDouble() <= AnvilCosts.HIGHEST) { return held.getAsInt(); }
+        Integer value = Json.whole(held, least, AnvilCosts.HIGHEST);
+        if (value != null) { return value; }
         ContentLog.LOGGER.error("Enchanting file {} gives {} the value {}, which is not a whole number from {} to {}, ignoring it", key, name, held, least, AnvilCosts.HIGHEST);
         return -1;
     }

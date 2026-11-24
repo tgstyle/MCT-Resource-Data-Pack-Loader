@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(TerrainGen.class) public class MixinTerrainGen {
     @Redirect(method = "decorate(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/util/math/ChunkPos;Lnet/minecraftforge/event/terraingen/DecorateBiomeEvent$Decorate$EventType;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = false) private static boolean rdpl$postWithFakeWorldHeight(EventBus bus, Event event) {
-        CompatHandler.postBiomeDecorateWithFakeWorldHeight(bus, (DecorateBiomeEvent.Decorate) event);
+        CompatHandler.postWithFakeWorldHeight(bus, ((DecorateBiomeEvent.Decorate) event).getWorld(), event);
         return false;
     }
 }

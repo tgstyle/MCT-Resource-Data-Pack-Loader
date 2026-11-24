@@ -21,7 +21,9 @@ import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.EarlyConfig;
+import mctmods.resourcedatapackloader.core.util.LazyFlag;
 import mctmods.resourcedatapackloader.core.util.ModJars;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import mctmods.resourcedatapackloader.core.util.SplashDark;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
@@ -31,11 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipFile;
-import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
@@ -80,7 +80,7 @@ import zone.rong.mixinbooter.IEarlyMixinLoader;
             if (ContentEnchantments.load()) { MinecraftForge.EVENT_BUS.register(ContentEnchantments.class); }
             if (ContentVillagers.load()) { MinecraftForge.EVENT_BUS.register(ContentVillagers.class); }
             if (ContentBiomes.load()) { MinecraftForge.EVENT_BUS.register(ContentBiomes.class); }
-            if (FMLCommonHandler.instance().getSide().isClient()) {
+            if (SideUtils.isClient()) {
                 MinecraftForge.EVENT_BUS.register(ContentModels.class);
                 MinecraftForge.EVENT_BUS.register(ContentSnowTint.class);
                 MinecraftForge.EVENT_BUS.register(ContentSeasonTint.class);
@@ -149,19 +149,16 @@ import zone.rong.mixinbooter.IEarlyMixinLoader;
         return true;
     }
 
-    public static boolean vintageFixPresent() { return Launch.classLoader.getResource("org/embeddedt/vintagefix/dynamicresources/ResourcePackHelper.class") != null; }
+    public static boolean vintageFixPresent() { return ModJars.present("org/embeddedt/vintagefix/dynamicresources/ResourcePackHelper.class"); }
 
-    private static Boolean cleanroomLoader;
-
-    private static boolean vanillaFml() {
-        if (cleanroomLoader == null) {
-            try {
-                Class.forName("top.outlands.foundation.boot.Foundation", false, MCTMixin.class.getClassLoader());
-                cleanroomLoader = Boolean.TRUE;
-                LOGGER.warn("Running under Cleanroom, which loads FML before mixins can reach it. Pack 'requires' entries will not stop the game from starting");
-            }
-            catch (ClassNotFoundException absent) { cleanroomLoader = Boolean.FALSE; }
+    private static final LazyFlag CLEANROOM_LOADER = new LazyFlag(() -> {
+        try {
+            Class.forName("top.outlands.foundation.boot.Foundation", false, MCTMixin.class.getClassLoader());
+            LOGGER.warn("Running under Cleanroom, which loads FML before mixins can reach it. Pack 'requires' entries will not stop the game from starting");
+            return true;
         }
-        return !cleanroomLoader;
-    }
+        catch (ClassNotFoundException absent) { return false; }
+    });
+
+    private static boolean vanillaFml() { return !CLEANROOM_LOADER.get(); }
 }

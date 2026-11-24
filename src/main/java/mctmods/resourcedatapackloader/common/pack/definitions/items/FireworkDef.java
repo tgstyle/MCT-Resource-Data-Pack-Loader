@@ -47,6 +47,8 @@ public final class FireworkDef {
         this.bursts = bursts;
     }
 
+    public boolean bursts() { return MODE_BURST.equals(mode); }
+
     public boolean onBlock() { return !ON_AIR.equals(on); }
 
     public boolean onAir() { return !ON_BLOCK.equals(on); }

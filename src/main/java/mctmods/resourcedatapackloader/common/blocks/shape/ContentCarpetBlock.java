@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.blocks.shape;
 import mctmods.resourcedatapackloader.common.blocks.BlockVariants;
 import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.util.world.BlockSupport;
 
 import javax.annotation.Nonnull;
 import net.minecraft.block.Block;
@@ -34,9 +35,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return super.canPlaceBlockAt(world, pos) && canStay(world, pos); }
 
     @Override public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos) {
-        if (canStay(world, pos)) { return; }
-        dropBlockAsItem(world, pos, state, 0);
-        world.setBlockToAir(pos);
+        BlockSupport.dropUnless(this, world, pos, state, canStay(world, pos));
     }
 
     @Override @SideOnly(Side.CLIENT) public boolean shouldSideBeRendered(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {

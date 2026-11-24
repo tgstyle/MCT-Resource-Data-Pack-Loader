@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.portways;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.common.util.world.WorldFx;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
@@ -15,13 +16,10 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class PortwayFx {
     private static final String PREFIX = "minecraft:";
@@ -32,10 +30,7 @@ public final class PortwayFx {
 
     private PortwayFx() {}
 
-    public static void play(World world, double x, double y, double z, String sound) {
-        SoundEvent event = sound.isEmpty() ? null : SoundEvent.REGISTRY.getObject(new ResourceLocation(sound));
-        if (event != null) { world.playSound(null, x, y, z, event, SoundCategory.BLOCKS, 1.0F, 1.0F); }
-    }
+    public static void play(World world, double x, double y, double z, String sound) { WorldFx.play(world, x, y, z, sound, SoundCategory.BLOCKS); }
 
     public static void particles(World world, double x, double y, double z, String name) {
         if (name.isEmpty() || !(world instanceof WorldServer)) { return; }
@@ -44,14 +39,14 @@ public final class PortwayFx {
             if (UNKNOWN.add(name)) { ContentLog.LOGGER.error("Particle '{}' is not a particle name, so it shows nothing", name); }
             return;
         }
-        ((WorldServer) world).spawnParticle(type, x, y, z, PARTICLES, SPREAD, SPREAD, SPREAD, 0.0D);
+        WorldFx.particles(world, x, y, z, type, PARTICLES, SPREAD, SPREAD);
     }
 
     public static ItemStack icon(String id, String fallback) {
-        Item item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(id));
+        Item item = Registries.itemNamed(id);
         if (item == null || item == Items.AIR) {
             if (MISSING.add(id)) { ContentLog.LOGGER.error("Portway menu icon '{}' is not an item, so {} is shown instead", id, fallback); }
-            item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(fallback));
+            item = Registries.itemNamed(fallback);
         }
         return item == null || item == Items.AIR ? new ItemStack(Items.PAPER) : new ItemStack(item);
     }

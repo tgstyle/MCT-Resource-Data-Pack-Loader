@@ -20,6 +20,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 public interface ICube extends IXYZAddressable, ICapabilityProvider {
     int SIZE = 16;
     double SIZE_D = 16.0D;
+    int VOLUME = SIZE * SIZE * SIZE;
 
     IBlockState getBlockState(BlockPos pos);
 

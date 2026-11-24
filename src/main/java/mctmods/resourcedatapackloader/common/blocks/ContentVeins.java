@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
@@ -35,10 +34,9 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class ContentVeins {
-    private static final String BLOCKS = "blocks";
     private static final String TOOLS = "tools";
     private static final float EXHAUSTION_PER_POINT = 4.0F;
-    private static final List<String> VEIN_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, TOOLS, "limit", "hunger", "advancement"));
+    private static final List<String> VEIN_KEYS = Collections.unmodifiableList(Arrays.asList("requires", ContentParser.BLOCKS, TOOLS, "limit", "hunger", "advancement"));
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean veining;
@@ -70,18 +68,13 @@ public final class ContentVeins {
         }
     }
 
-    private static void reload() {
-        RULES.clear();
-        GENERATION.stale();
-        Json.eachObject(PackManager.VEINS, "vein mining", ContentVeins::read);
-        if (!RULES.isEmpty()) { Summary.info("content.veins", "Loaded " + RULES.size() + " vein mining group(s)"); }
-    }
+    private static void reload() { PackGeneration.reload(RULES, PackManager.VEINS, "vein mining", "content.veins", "vein mining group(s)", ContentVeins::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", VEIN_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         BlockGroup group = new BlockGroup();
-        for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, key, BLOCKS); }
+        for (BlockMatchDef match : ContentParser.matches(key, json, ContentParser.BLOCKS)) { group.add(match, key, ContentParser.BLOCKS); }
         List<ItemStack> tools = new ArrayList<>();
         for (String name : Json.strings(json, TOOLS)) {
             ItemStack stack = ContentStacks.parse(key, name, 1);
@@ -105,9 +98,7 @@ public final class ContentVeins {
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBreak(BlockEvent.BreakEvent event) {
         if (veining || ContentColumns.clearing() || ContentCarry.probing() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
-        if (player.isCreative() || player.isSpectator()) { return; }
-        if (GENERATION.stale()) { reload(); }
-        if (RULES.isEmpty()) { return; }
+        if (player.isCreative() || player.isSpectator() || idle()) { return; }
         IBlockState state = event.getState();
         Rule rule = ruleFor(player, state, player.getHeldItemMainhand());
         if (rule == null) { return; }
@@ -130,6 +121,11 @@ public final class ContentVeins {
             veiner = null;
             veinPos = null;
         }
+    }
+
+    private static boolean idle() {
+        if (GENERATION.stale()) { reload(); }
+        return RULES.isEmpty();
     }
 
     public static boolean veining(EntityPlayer player) { return veining && player == veiner; }

@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVar
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnEntryDef;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
@@ -41,8 +39,16 @@ public final class ContentEntityTypes {
             if (base == null) { LATE.put(entry.getKey(), entry.getValue()); }
             else { register(registry, entry.getKey(), entry.getValue(), base); }
         }
-        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(ReturningThrow.class).id(ResourceDataPackLoader.id("returning_throw"), network++).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
-        if (pulling()) { registry.register(EntityEntryBuilder.create().entity(PullingHand.class).id(ResourceDataPackLoader.id("pulling_hand"), network++).name(ResourceDataPackLoader.MOD_ID + ".pulling_hand").tracker(64, 1, true).build()); }
+        if (throwsReturning()) { projectile(registry, ReturningThrow.class, "returning_throw"); }
+        if (pulling()) { projectile(registry, PullingHand.class, "pulling_hand"); }
+        summarize();
+    }
+
+    private static void projectile(IForgeRegistry<EntityEntry> registry, Class<? extends Entity> type, String path) {
+        registry.register(EntityEntryBuilder.create().entity(type).id(ResourceDataPackLoader.id(path), network++).name(ResourceDataPackLoader.MOD_ID + "." + path).tracker(64, 1, true).build());
+    }
+
+    private static void summarize() {
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
 
@@ -54,7 +60,7 @@ public final class ContentEntityTypes {
             else { register(ForgeRegistries.ENTITIES, entry.getKey(), entry.getValue(), base); }
         }
         LATE.clear();
-        if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
+        summarize();
     }
 
     private static void register(IForgeRegistry<EntityEntry> registry, ResourceLocation key, EntityVariantDef def, EntityEntry base) {
@@ -71,7 +77,7 @@ public final class ContentEntityTypes {
         ContentEntities.BY_CLASS.put(made$class, def);
         addSpawns(made$class, def);
         made++;
-        ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", key, def.attributes, def.equipment);
+        ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", key, def.combat.attributes, def.equipment);
     }
 
     private static boolean throwsReturning() {
@@ -93,7 +99,7 @@ public final class ContentEntityTypes {
         List<Biome> biomes = biomes(def);
         if (biomes.isEmpty()) { return; }
         for (SpawnEntryDef entry : def.spawns) {
-            EnumCreatureType creature = creatureType(entry.creatureType);
+            EnumCreatureType creature = SpawnEntryDef.creatureType(entry.creatureType);
             if (creature == null) {
                 ContentLog.LOGGER.error("Entity variant {} has spawn type '{}', which is not one of monster, creature, ambient or water", def.registryName, entry.creatureType);
                 continue;
@@ -135,6 +141,4 @@ public final class ContentEntityTypes {
         if (info == null) { return primary ? 0xFFFFFF : 0x808080; }
         return primary ? info.primaryColor : info.secondaryColor;
     }
-
-    @Nullable private static EnumCreatureType creatureType(String name) { return Enums.byName(EnumCreatureType.class, name); }
 }

@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.core.util.MemberNames;
-import mctmods.resourcedatapackloader.core.util.Unsafes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -18,8 +17,7 @@ public final class ItemCopier {
     private ItemCopier() {}
 
     public static Item copy(Item base, Class<?> type, ResourceLocation key) {
-        Item copy = (Item) Unsafes.allocate(type);
-        FieldCopy.all(base, copy);
+        Item copy = (Item) FieldCopy.copy(base, type);
         try {
             Constructor<?> made = Class.forName(DELEGATE).getDeclaredConstructor(Object.class, Class.class);
             made.setAccessible(true);
@@ -42,9 +40,7 @@ public final class ItemCopier {
 
     @SuppressWarnings("unchecked") private static RegistrySimple<ResourceLocation, IItemPropertyGetter> properties(Item base) throws ReflectiveOperationException {
         Object old = field("properties").get(base);
-        Field objects = MemberNames.field(RegistrySimple.class, "registryObjects");
-        if (objects == null) { throw new IllegalStateException("RegistrySimple has no field registryObjects"); }
-        objects.setAccessible(true);
+        Field objects = MemberNames.accessibleField(RegistrySimple.class, "registryObjects");
         RegistrySimple<ResourceLocation, IItemPropertyGetter> made = new RegistrySimple<>();
         for (Map.Entry<ResourceLocation, IItemPropertyGetter> entry : ((Map<ResourceLocation, IItemPropertyGetter>) objects.get(old)).entrySet()) { made.putObject(entry.getKey(), entry.getValue()); }
         return made;
@@ -52,10 +48,5 @@ public final class ItemCopier {
 
     private static void write(Item item, String name, Object value) throws ReflectiveOperationException { field(name).set(item, value); }
 
-    private static Field field(String name) {
-        Field found = MemberNames.field(Item.class, name);
-        if (found == null) { throw new IllegalStateException("Item has no field " + name); }
-        found.setAccessible(true);
-        return found;
-    }
+    private static Field field(String name) { return MemberNames.accessibleField(Item.class, name); }
 }

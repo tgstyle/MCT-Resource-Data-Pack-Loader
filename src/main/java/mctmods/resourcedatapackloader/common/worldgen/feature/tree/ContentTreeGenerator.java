@@ -71,7 +71,7 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
                     if (Math.abs(dx) == reach && Math.abs(dz) == reach && (random.nextInt(2) == 0 || depth == 0)) { continue; }
                     BlockPos at = new BlockPos(x, y, z);
                     IBlockState state = world.getBlockState(at);
-                    if (!state.getBlock().isAir(state, world, at) && !state.getBlock().isLeaves(state, world, at) && state.getMaterial() != Material.VINE) { continue; }
+                    if (!open(world, at, state)) { continue; }
                     setBlockAndNotifyAdequately(world, at, leaves);
                 }
             }
@@ -82,8 +82,10 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
         for (int y = 0; y < height; y++) {
             BlockPos at = position.up(y);
             IBlockState state = world.getBlockState(at);
-            if (!state.getBlock().isAir(state, world, at) && !state.getBlock().isLeaves(state, world, at) && state.getMaterial() != Material.VINE) { continue; }
+            if (!open(world, at, state)) { continue; }
             setBlockAndNotifyAdequately(world, at, log);
         }
     }
+
+    static boolean open(World world, BlockPos at, IBlockState state) { return state.getBlock().isAir(state, world, at) || state.getBlock().isLeaves(state, world, at) || state.getMaterial() == Material.VINE; }
 }

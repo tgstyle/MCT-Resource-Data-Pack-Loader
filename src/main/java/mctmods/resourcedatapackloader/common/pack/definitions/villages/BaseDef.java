@@ -10,6 +10,7 @@ public final class BaseDef {
     public static final double PLACED_WEIGHT = 0.05;
     public static final double MINUTES_WEIGHT = 0.5;
     public static final double CLAIM_WEIGHT = 10;
+    public static final int MINUTE_CAP = 60;
     public static final int DEFAULT_CELL_CAP = 20000;
     public static final int MIN_CELL_CAP = 100;
     public final String claims;

@@ -8,6 +8,7 @@ import java.util.Map;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.MathHelper;
 
 final class CardMeter {
     private static final int SCAN = 20;
@@ -30,7 +31,7 @@ final class CardMeter {
         int max = worn.getMaxDamage();
         boolean wears = worn.isItemStackDamageable();
         int left = wears ? max - worn.getItemDamage() : 0;
-        int percent = wears && max > 0 ? Math.max(0, Math.min(100, left * 100 / max)) : 100;
+        int percent = wears && max > 0 ? MathHelper.clamp(left * 100 / max, 0, 100) : 100;
         int full = Math.round(percent * GAUGE / 100.0F);
         StringBuilder bar = new StringBuilder();
         for (int cell = 0; cell < GAUGE; cell++) { bar.append(cell < full ? '|' : '.'); }

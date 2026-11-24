@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rubic;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyStone;
 import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
@@ -8,6 +9,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProvide
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldServer;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -15,7 +17,9 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Listing;
 
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
@@ -28,7 +32,7 @@ public final class RubicWorldControl {
     public static boolean wanted() {
         if (!ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false)) { return false; }
         if (Config.content.vanillaClients) {
-            if (!VANILLA_CLIENTS_WARNED.getAndSet(true)) { ContentLog.LOGGER.error("This pack asks for a rubic world, which vanilla clients cannot join. The world is made plain." + " Turn content.vanillaClients off, or remove rubicWorld from the pack."); }
+            ContentLog.LOGGER.errorOnce(TOLD, "vanillaClients", "This pack asks for a rubic world, which vanilla clients cannot join. The world is made plain." + " Turn content.vanillaClients off, or remove rubicWorld from the pack.");
             return false;
         }
         if (!RDPLMixinPlugin.cubicChunksPresent()) { return true; }
@@ -36,9 +40,11 @@ public final class RubicWorldControl {
         return false;
     }
 
-    private static final AtomicBoolean VANILLA_CLIENTS_WARNED = new AtomicBoolean();
+    private static final Set<String> TOLD = ConcurrentHashMap.newKeySet();
 
     public static void standDownIfWanted() { wanted(); }
+
+    @Nullable public static WorldServer serverWorld(World world) { return world instanceof WorldServer ? (WorldServer) world : null; }
 
     public static void standDownForVanillaClients() { stop("This is a rubic world,\nwhich vanilla clients cannot join.\n\nIt was not loaded and nothing was changed.\n\nTurn content.vanillaClients off,\nor use a different world."); }
 
@@ -76,37 +82,34 @@ public final class RubicWorldControl {
         int min = ContentControl.number(ContentControl.TERRAIN, "worldMinHeight", DEFAULT_MIN_HEIGHT);
         int max = ContentControl.number(ContentControl.TERRAIN, "worldMaxHeight", DEFAULT_MAX_HEIGHT);
         int limit = Config.worldgen.rubicHeightLimit;
-        if (min > -limit && max < limit && min < max && (min & 15) == 0 && (max & 15) == 0) { return new int[] {min, max}; }
+        if (min > -limit && max < limit && min < max && Coords.cubeAligned(min) && Coords.cubeAligned(max)) { return new int[] {min, max}; }
         if (min >= max) { refuse("worldMinHeight " + min + " is not below worldMaxHeight " + max); }
-        else if ((min & 15) != 0 || (max & 15) != 0) { refuse("worldMinHeight " + min + " and worldMaxHeight " + max + " must both be whole cubes, so multiples of 16"); }
+        else if (!Coords.cubeAligned(min) || !Coords.cubeAligned(max)) { refuse("worldMinHeight " + min + " and worldMaxHeight " + max + " must both be whole cubes, so multiples of 16"); }
         else { refuse("worldMinHeight " + min + " and worldMaxHeight " + max + " reach past the " + limit + " block(s) either way that rubicHeightLimit allows"); }
         return new int[] {DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT};
     }
 
     private static void refuse(String why) {
-        if (WARNED.compareAndSet(false, true)) { ContentLog.LOGGER.error("A pack asks for a rubic world whose {}, so the world is made from {} to {} instead", why, DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT); }
+        ContentLog.LOGGER.errorOnce(TOLD, "heights", "A pack asks for a rubic world whose {}, so the world is made from {} to {} instead", why, DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT);
     }
-
-    private static final AtomicBoolean WARNED = new AtomicBoolean();
 
     public static int terrainOffsetCubes() {
         int offset = ContentControl.number(ContentControl.TERRAIN, "terrainOffset", Config.worldgen.terrainOffset);
         if (offset == 0) { return 0; }
-        if (offset < 0 || (offset & 15) != 0) {
-            if (OFFSET_WARNED.compareAndSet(false, true)) { ContentLog.LOGGER.error("terrainOffset is {}, which is not a non-negative multiple of 16, so the terrain is not shifted", offset); }
+        if (offset < 0 || !Coords.cubeAligned(offset)) {
+            ContentLog.LOGGER.errorOnce(TOLD, "terrainOffset", "terrainOffset is {}, which is not a non-negative multiple of 16, so the terrain is not shifted", offset);
             return 0;
         }
-        return offset >> 4;
+        return Coords.blockToCube(offset);
     }
 
-    public static int terrainOffsetBlocks() { return terrainOffsetCubes() << 4; }
+    public static int terrainOffsetBlocks() { return Coords.cubeToMinBlock(terrainOffsetCubes()); }
 
-    private static final AtomicBoolean OFFSET_WARNED = new AtomicBoolean();
 
     public static int generatedCeiling(World world) {
         int actual = world.provider.getActualHeight();
         if (!GenHeights.rubic(world)) { return actual; }
-        if (ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone).trim().isEmpty()) { return actual; }
+        if (ContentControl.text(ContentControl.TERRAIN, SkyStone.STONE_KEY, Config.worldgen.skyStone).trim().isEmpty()) { return actual; }
         int top = ((IMinMaxHeight) world).rdpl$getMaxHeight();
         int[] band = ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights);
         if (band.length == 2 && band[0] < band[1]) { top = Math.min(top, band[1] + terrainOffsetBlocks() + 1); }
@@ -119,8 +122,8 @@ public final class RubicWorldControl {
         if (((IColumnInternal) column).pregenDone()) { return false; }
         IRubicWorld world = (IRubicWorld) provider.world;
         ICubeProviderServer cubes = (ICubeProviderServer) provider;
-        int lowest = world.rdpl$getMinHeight() >> 4;
-        int highest = (world.rdpl$getMaxHeight() >> 4) - 1;
+        int lowest = Coords.blockToCube(world.rdpl$getMinHeight());
+        int highest = Coords.topCubeY(world);
         boolean worked = false;
         boolean whole = true;
         for (int cubeY = highest; cubeY >= lowest; cubeY--) {

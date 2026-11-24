@@ -42,10 +42,8 @@ public final class RocketSlot extends Slot {
     }
 
     public static void settle(Slot from, ItemStack left) {
-        ItemStack held = from.getStack();
-        held.grow(left.getCount());
-        if (held.isEmpty()) { from.putStack(ItemStack.EMPTY); }
-        else { from.onSlotChanged(); }
+        from.getStack().grow(left.getCount());
+        ContainerPack.settle(from);
     }
 
     @Override public boolean isItemValid(@Nonnull ItemStack stack) { return RocketCargo.room(def, inventory, stack) > 0; }

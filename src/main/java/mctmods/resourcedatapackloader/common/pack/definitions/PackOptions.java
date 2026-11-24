@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.definitions;
 
+import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.pack.loading.ModPacks;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
@@ -28,6 +29,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 public final class PackOptions {
+    private static final String NOTE = "_note";
+    private static final String HIDE = "hide";
     private static final Map<String, Map<String, Boolean>> VALUES = new LinkedHashMap<>();
     private static final Map<String, Map<String, Boolean>> LOADED = new LinkedHashMap<>();
     private static final Set<String> GATING = new LinkedHashSet<>();
@@ -44,14 +47,14 @@ public final class PackOptions {
         LOADED.clear();
         HIDDEN.clear();
         ABOUT.clear();
-        Path home = packRoot.resolve("config");
+        Path home = packRoot.resolve(PackManager.CONFIG);
         HOME = home;
         for (RDPLPack pack : packs) {
             if (PackManager.ROOT_PACK.equals(pack.getName())) { continue; }
             JsonObject defaults = new JsonObject();
             Map<String, String> about = new LinkedHashMap<>();
             Set<String> shy = new HashSet<>();
-            for (String fileName : pack.packFiles("config", "json")) {
+            for (String fileName : pack.packFiles(PackManager.CONFIG, "json")) {
                 JsonObject read = booleansOf(pack, fileName, about, shy);
                 if (read == null) { continue; }
                 for (Map.Entry<String, JsonElement> entry : read.entrySet()) {
@@ -61,11 +64,11 @@ public final class PackOptions {
             }
             if (defaults.entrySet().isEmpty()) { continue; }
             String key = pack.getName();
-            if (defaults.has("hide") && defaults.get("hide").getAsBoolean()) {
-                defaults.remove("hide");
+            if (defaults.has(HIDE) && defaults.get(HIDE).getAsBoolean()) {
+                defaults.remove(HIDE);
                 for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) { shy.add(entry.getKey()); }
             }
-            defaults.remove("hide");
+            defaults.remove(HIDE);
             Map<String, Boolean> unseen = new HashMap<>();
             JsonObject shown = new JsonObject();
             for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) {
@@ -90,7 +93,7 @@ public final class PackOptions {
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) { LOADED.put(entry.getKey(), new LinkedHashMap<>(entry.getValue())); }
         if (!VALUES.isEmpty()) { ContentLog.LOGGER.info("Loaded {} pack option file(s) from {}", VALUES.size(), home); }
         List<String> stale = orphans();
-        if (!stale.isEmpty()) { ContentLog.LOGGER.info("{} option file(s) in {} belong to no installed pack, left alone: {}. Use /rdpl config prune, or /rdplserver config prune on a dedicated server, to remove them", stale.size(), home, String.join(", ", stale)); }
+        if (!stale.isEmpty()) { ContentLog.LOGGER.info("{} option file(s) in {} belong to no installed pack, left alone: {}. Use /rdpl config prune, or /{} config prune on a dedicated server, to remove them", stale.size(), home, CommandShared.NAME, String.join(", ", stale)); }
     }
 
     public static List<String> orphans() {
@@ -139,7 +142,7 @@ public final class PackOptions {
                     });
                     defaults.add(entry.getKey(), held.getAsJsonObject().get("default"));
                     if (held.getAsJsonObject().has("description")) { about.put(entry.getKey(), held.getAsJsonObject().get("description").getAsString()); }
-                    if (held.getAsJsonObject().has("hide") && held.getAsJsonObject().get("hide").getAsBoolean()) { shy.add(entry.getKey()); }
+                    if (held.getAsJsonObject().has(HIDE) && held.getAsJsonObject().get(HIDE).getAsBoolean()) { shy.add(entry.getKey()); }
                 }
                 else { ContentLog.LOGGER.warn("Pack '{}' option '{}' in {} is not true or false, or an object with a true/false 'default', so it is ignored", pack.getName(), entry.getKey(), fileName); }
             }
@@ -151,14 +154,16 @@ public final class PackOptions {
         }
     }
 
-    private static JsonObject merge(JsonObject defaults, Path held, String packName) throws IOException {
+    private static String note(String fileKey) { return "Options for " + fileKey + ". Changes apply on the next game start."; }
+
+    private static JsonObject merge(JsonObject defaults, Path held, String fileKey) throws IOException {
         JsonObject kept = new JsonObject();
         if (Files.isRegularFile(held)) {
-            try { kept = new JsonParser().parse(new String(Files.readAllBytes(held), StandardCharsets.UTF_8)).getAsJsonObject(); }
+            try { kept = new JsonParser().parse(Json.readText(held)).getAsJsonObject(); }
             catch (Exception ex) { ContentLog.LOGGER.error("{} is not valid JSON, so it is rewritten with the pack's defaults", held, ex); }
         }
         JsonObject merged = new JsonObject();
-        merged.addProperty("_note", "Options for " + packName + ". Changes apply on the next game start.");
+        merged.addProperty(NOTE, note(fileKey));
         boolean differs = false;
         for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) {
             JsonElement mine = kept.get(entry.getKey());
@@ -169,7 +174,7 @@ public final class PackOptions {
             }
         }
         for (Map.Entry<String, JsonElement> entry : kept.entrySet()) {
-            if (!"_note".equals(entry.getKey()) && !defaults.has(entry.getKey())) {
+            if (!NOTE.equals(entry.getKey()) && !defaults.has(entry.getKey())) {
                 ContentLog.LOGGER.debug("Option '{}' in {} is no longer defined by the pack, so it is dropped", entry.getKey(), held.getFileName());
                 differs = true;
             }
@@ -245,7 +250,7 @@ public final class PackOptions {
         held.clear();
         held.putAll(options);
         JsonObject out = new JsonObject();
-        out.addProperty("_note", "Options for " + fileKey + ". Changes apply on the next game start.");
+        out.addProperty(NOTE, note(fileKey));
         for (Map.Entry<String, Boolean> entry : options.entrySet()) { out.addProperty(entry.getKey(), entry.getValue()); }
         try { Files.write(HOME.resolve(fileKey + PackManager.JSON_SUFFIX), gsonPretty(out).getBytes(StandardCharsets.UTF_8)); }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not save {}", fileKey, ex); }

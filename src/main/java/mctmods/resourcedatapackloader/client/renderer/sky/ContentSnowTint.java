@@ -1,13 +1,12 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
-import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.BiomeDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,12 +43,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private ContentSnowTint() {}
 
     static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.available().values()) {
-            if (def.look != null && def.look.snowColor != SkyLookDef.UNSET) { return true; }
-        }
-        for (SkyLookDef look : ContentEnvironments.looks()) {
-            if (look.snowColor != SkyLookDef.UNSET) { return true; }
-        }
+        if (ContentEnvironments.anyLook(look -> look.snowColor != SkyLookDef.UNSET)) { return true; }
         for (BiomeDef def : ContentBiomes.defs()) {
             if (def.snowColor != ContentTypes.NO_COLOR) { return true; }
         }
@@ -83,11 +77,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int blue = 0;
         for (BlockPos.MutableBlockPos at : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
             int color = column.applyAsInt(world.getBiome(at));
-            red += color >> 16 & 255;
-            green += color >> 8 & 255;
-            blue += color & 255;
+            red += Colors.red(color);
+            green += Colors.green(color);
+            blue += Colors.blue(color);
         }
-        return (red / 9 & 255) << 16 | (green / 9 & 255) << 8 | blue / 9 & 255;
+        return Colors.rgb(red / 9, green / 9, blue / 9);
     }
 
     private static int column(Biome biome, int fallback) {

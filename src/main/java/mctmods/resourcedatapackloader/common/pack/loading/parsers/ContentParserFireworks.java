@@ -15,13 +15,13 @@ import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
 
 public final class ContentParserFireworks {
-    private static final List<String> MODES = Arrays.asList(FireworkDef.MODE_LAUNCH, FireworkDef.MODE_BURST);
-    private static final List<String> TARGETS = Arrays.asList(FireworkDef.ON_BLOCK, FireworkDef.ON_AIR, FireworkDef.ON_BOTH);
-    private static final List<String> PATTERNS = Arrays.asList(FireworkDef.PATTERN_SPHERE, FireworkDef.PATTERN_RING, FireworkDef.PATTERN_FOUNTAIN, FireworkDef.PATTERN_POINTS);
-    private static final List<String> SHAPES = Arrays.asList(FireworkDef.SHAPE_SMALL_BALL, FireworkDef.SHAPE_LARGE_BALL, FireworkDef.SHAPE_STAR, FireworkDef.SHAPE_CREEPER, FireworkDef.SHAPE_BURST);
     private static final List<String> FIREWORK_KEYS = Collections.unmodifiableList(Arrays.asList("replaceUse", "mode", "on", "flight", "consume", "dispense", "explosions", "burst"));
     private static final List<String> EXPLOSION_KEYS = Collections.unmodifiableList(Arrays.asList("shape", "colors", "fade", "trail", "twinkle"));
     private static final List<String> BURST_KEYS = Collections.unmodifiableList(Arrays.asList("particle", "count", "speed", "pattern", "sound", "delay", "spread", "points"));
+    private static final List<String> MODES = Collections.unmodifiableList(Arrays.asList(FireworkDef.MODE_LAUNCH, FireworkDef.MODE_BURST));
+    private static final List<String> TARGETS = Collections.unmodifiableList(Arrays.asList(FireworkDef.ON_BLOCK, FireworkDef.ON_AIR, FireworkDef.ON_BOTH));
+    private static final List<String> PATTERNS = Collections.unmodifiableList(Arrays.asList(FireworkDef.PATTERN_SPHERE, FireworkDef.PATTERN_RING, FireworkDef.PATTERN_FOUNTAIN, FireworkDef.PATTERN_POINTS));
+    private static final List<String> SHAPES = Collections.unmodifiableList(Arrays.asList(FireworkDef.SHAPE_SMALL_BALL, FireworkDef.SHAPE_LARGE_BALL, FireworkDef.SHAPE_STAR, FireworkDef.SHAPE_CREEPER, FireworkDef.SHAPE_BURST));
     private static final int[] WHITE = {0xFFFFFF};
 
     private ContentParserFireworks() {}
@@ -84,7 +84,7 @@ public final class ContentParserFireworks {
     private static int[] colors(JsonObject json, String member, String owner) {
         List<String> names = Json.names(json, member);
         int[] colors = new int[names.size()];
-        for (int index = 0; index < colors.length; index++) { colors[index] = ContentTypes.color(names.get(index), owner + " " + member) & 0xFFFFFF; }
+        for (int index = 0; index < colors.length; index++) { colors[index] = ContentTypes.rgb(names.get(index), owner + " " + member); }
         return colors;
     }
 
@@ -141,13 +141,12 @@ public final class ContentParserFireworks {
             ContentLog.LOGGER.error("{} uses pattern 'points' without a non-empty 'points' list, ignoring the burst", owner);
             return null;
         }
-        String sound = Json.getString(json, "sound", "").trim();
         return new FireworkDef.Burst(
                 new ResourceLocation(particle),
                 inRange(json, "count", FireworkDef.DEFAULT_COUNT, FireworkDef.MIN_COUNT, FireworkDef.MAX_COUNT, owner),
                 Json.getFloat(json, "speed", FireworkDef.DEFAULT_SPEED),
                 pattern,
-                sound.isEmpty() ? null : new ResourceLocation(sound),
+                Json.location(json, "sound"),
                 inRange(json, "delay", 0, 0, FireworkDef.MAX_DELAY, owner),
                 Json.ranged(json, "spread", 0.0F, 0.0F, 1.0F, owner),
                 Collections.unmodifiableList(points));

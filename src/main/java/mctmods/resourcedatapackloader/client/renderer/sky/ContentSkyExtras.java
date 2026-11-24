@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.renderer.Blends;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -17,7 +18,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 @SideOnly(Side.CLIENT) public final class ContentSkyExtras {
-    private static final float SIZE = 100.0F;
+    private static final float SIZE = (float) SkyOccluder.RADIUS;
     private static final float[][][] FACES = {
             {{-1, 1, 1}, {1, 1, 1}, {1, 1, -1}, {-1, 1, -1}},
             {{-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, {-1, -1, 1}},
@@ -72,10 +73,10 @@ import org.lwjgl.opengl.GL11;
     public static void overlay(World world, float partialTicks) {
         SkyLookDef look = ContentFogSampler.look(world);
         if (look == null || look.aurora == null && !look.rainbow) { return; }
-        float angle = world.getCelestialAngle(partialTicks);
+        float angle = world.getCelestialAngleRadians(partialTicks);
         float clear = 1.0F - world.getRainStrength(partialTicks);
         float glow = look.aurora == null ? 0.0F : night(angle) * clear;
-        float bow = look.rainbow ? rainbow(world, partialTicks) * MathHelper.clamp(MathHelper.cos(angle * (float) Math.PI * 2.0F) * 4.0F, 0.0F, 1.0F) : 0.0F;
+        float bow = look.rainbow ? rainbow(world, partialTicks) * MathHelper.clamp(MathHelper.cos(angle) * 4.0F, 0.0F, 1.0F) : 0.0F;
         if (glow <= 0.0F && bow <= 0.0F) { return; }
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -91,7 +92,7 @@ import org.lwjgl.opengl.GL11;
             aurora(buffer, tessellator, look.aurora, glow, world.getTotalWorldTime() + partialTicks);
             GlStateManager.popMatrix();
         }
-        if (bow > 0.0F) { bow(buffer, tessellator, angle * (float) Math.PI * 2.0F, bow); }
+        if (bow > 0.0F) { bow(buffer, tessellator, angle, bow); }
         GlStateManager.shadeModel(GL11.GL_FLAT);
         Blends.translucent();
         GlStateManager.disableBlend();
@@ -101,7 +102,7 @@ import org.lwjgl.opengl.GL11;
     }
 
     private static float night(float angle) {
-        float dark = MathHelper.clamp(1.0F - (MathHelper.cos(angle * (float) Math.PI * 2.0F) * 2.0F + 0.25F), 0.0F, 1.0F);
+        float dark = MathHelper.clamp(1.0F - (MathHelper.cos(angle) * 2.0F + 0.25F), 0.0F, 1.0F);
         return dark * dark;
     }
 
@@ -150,7 +151,7 @@ import org.lwjgl.opengl.GL11;
     }
 
     private static void sphere(BufferBuilder buffer, float u, float v) {
-        float around = u * (float) Math.PI * 2.0F;
+        float around = MathUtil.turn(u);
         float down = v * (float) Math.PI;
         float ring = MathHelper.sin(down) * SIZE;
         buffer.pos(MathHelper.sin(around) * ring, MathHelper.cos(down) * SIZE, -MathHelper.cos(around) * ring).tex(u, v).endVertex();
@@ -173,12 +174,12 @@ import org.lwjgl.opengl.GL11;
         float along = (float) step / AURORA_STEPS;
         float around = (float) Math.toRadians(-70.0F + 140.0F * along + 4.0F * MathHelper.sin(time * 0.05F + step * 0.35F + band * 2.0F));
         float base = 18.0F + band * 6.0F + 3.0F * MathHelper.sin(time * 0.03F + step * 0.2F + band);
-        float height = 18.0F + 10.0F * (0.5F + 0.5F * MathHelper.sin(time * 0.07F + step * 0.5F + band * 1.3F));
+        float height = 18.0F + 10.0F * MathUtil.wave(time * 0.07F + step * 0.5F + band * 1.3F, 0.5F, 0.5F);
         float up = (float) Math.toRadians(top ? base + height : base);
         float flat = MathHelper.cos(up) * SIZE;
         int color = top ? aurora.topColor : aurora.color;
-        float alpha = top ? 0.0F : strength * 0.8F * MathHelper.sin(along * (float) Math.PI) * (0.6F + 0.4F * MathHelper.sin(time * 0.11F + step * 0.9F + band * 0.7F));
-        buffer.pos(MathHelper.sin(around) * flat, MathHelper.sin(up) * SIZE, -MathHelper.cos(around) * flat).color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F, alpha).endVertex();
+        float alpha = top ? 0.0F : strength * 0.8F * MathHelper.sin(along * (float) Math.PI) * MathUtil.wave(time * 0.11F + step * 0.9F + band * 0.7F, 0.6F, 0.4F);
+        buffer.pos(MathHelper.sin(around) * flat, MathHelper.sin(up) * SIZE, -MathHelper.cos(around) * flat).color(Colors.redF(color), Colors.greenF(color), Colors.blueF(color), alpha).endVertex();
     }
 
     private static void bow(BufferBuilder buffer, Tessellator tessellator, float sunAngle, float strength) {
@@ -198,13 +199,13 @@ import org.lwjgl.opengl.GL11;
 
     private static void arc(BufferBuilder buffer, float[] away, float[] side, int ring, int step, float strength) {
         float radius = (float) Math.toRadians(BOW_RADII[ring]);
-        float turn = step * (float) Math.PI * 2.0F / BOW_STEPS;
+        float turn = MathUtil.turn(step / (float) BOW_STEPS);
         float out = MathHelper.sin(radius);
         float in = MathHelper.cos(radius);
         float across = MathHelper.cos(turn) * out;
         float along = MathHelper.sin(turn) * out;
         int color = BOW_COLORS[ring];
         float alpha = ring == 0 || ring == BOW_RADII.length - 1 ? 0.0F : strength * 0.35F;
-        buffer.pos((away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, across * SIZE).color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F, alpha).endVertex();
+        buffer.pos((away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, across * SIZE).color(Colors.redF(color), Colors.greenF(color), Colors.blueF(color), alpha).endVertex();
     }
 }

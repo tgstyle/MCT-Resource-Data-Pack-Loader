@@ -5,8 +5,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMa
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -29,20 +31,19 @@ public final class ContentLootSwitch {
 
     @Nullable public static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives loot that is not an object of loot table ids, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "loot", element, "an object of loot table ids");
+        if (json == null) { return null; }
         Map<ResourceLocation, ResourceLocation> swaps = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
-            if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            String target = Json.text(entry.getValue());
+            if (target == null) {
                 ContentLog.LOGGER.error("{} gives loot for '{}' that is not a loot table id, ignoring it", owner, entry.getKey());
                 continue;
             }
             ResourceLocation from = id(entry.getKey());
-            ResourceLocation to = id(entry.getValue().getAsString());
+            ResourceLocation to = id(target);
             if (from == null || to == null) {
-                ContentLog.LOGGER.error("{} gives loot '{}' to '{}', which is not a pair of loot table ids, ignoring it", owner, entry.getKey(), entry.getValue().getAsString());
+                ContentLog.LOGGER.error("{} gives loot '{}' to '{}', which is not a pair of loot table ids, ignoring it", owner, entry.getKey(), target);
                 continue;
             }
             if (from.equals(to)) {

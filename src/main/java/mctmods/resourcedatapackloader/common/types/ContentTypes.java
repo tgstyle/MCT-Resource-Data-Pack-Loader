@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.types;
 
+import mctmods.resourcedatapackloader.common.util.NamedRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -107,14 +107,8 @@ public final class ContentTypes {
         SOUND_TYPES.put("slime", SoundType.SLIME);
     }
 
-    public static double red(int color) { return Colors.red(color) / 255.0; }
-
-    public static double green(int color) { return Colors.green(color) / 255.0; }
-
-    public static double blue(int color) { return Colors.blue(color) / 255.0; }
-
     public static Material material(String name, String context) {
-        Material material = MATERIALS.get(key(name));
+        Material material = MATERIALS.get(NamedRegistry.key(name));
         if (material != null) { return material; }
         ContentLog.LOGGER.error("Unknown material '{}' in {}, using rock", name, context);
         return Material.ROCK;
@@ -122,7 +116,7 @@ public final class ContentTypes {
 
     public static MapColor mapColor(String name, MapColor fallback, String context) {
         if (name == null || name.isEmpty()) { return fallback; }
-        MapColor color = MAP_COLORS.get(key(name));
+        MapColor color = MAP_COLORS.get(NamedRegistry.key(name));
         if (color != null) { return color; }
         ContentLog.LOGGER.error("Unknown mapColor '{}' in {}, using the material default", name, context);
         return fallback;
@@ -130,7 +124,7 @@ public final class ContentTypes {
 
     public static SoundType soundType(String name, SoundType fallback, String context) {
         if (name == null || name.isEmpty()) { return fallback; }
-        SoundType sound = SOUND_TYPES.get(key(name));
+        SoundType sound = SOUND_TYPES.get(NamedRegistry.key(name));
         if (sound != null) { return sound; }
         ContentLog.LOGGER.error("Unknown soundType '{}' in {}, keeping the default", name, context);
         return fallback;
@@ -143,6 +137,12 @@ public final class ContentTypes {
         ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
         return 0xFFFFFFFF;
     }
+
+    public static int optionalColor(@Nullable String value, String context) {
+        return value == null || value.isEmpty() ? -1 : color(value, context);
+    }
+
+    public static int rgb(String value, String context) { return color(value, context) & 0xFFFFFF; }
 
     @Nullable public static Long hex(String value) {
         String digits = digits(value);
@@ -171,6 +171,4 @@ public final class ContentTypes {
             return EnumRarity.COMMON;
         }
     }
-
-    private static String key(String name) { return name == null ? "" : name.toLowerCase(Locale.ROOT); }
 }

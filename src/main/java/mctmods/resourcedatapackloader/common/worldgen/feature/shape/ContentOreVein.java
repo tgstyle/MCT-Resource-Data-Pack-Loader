@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.ChunkOrigin;
 import mctmods.resourcedatapackloader.common.util.worldgen.Noise3D;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
@@ -61,8 +62,8 @@ public final class ContentOreVein extends ContentChunkShape {
         int tries = shape.rarity > 0 && shape.perChunk ? shape.rarity : attempts.pick(roll);
         int band = highest - lowest + 1;
         for (int attempt = 0; attempt < tries; attempt++) {
-            int x = chunkX * 16 + OFFSET + roll.nextInt(16);
-            int z = chunkZ * 16 + OFFSET + roll.nextInt(16);
+            int x = ChunkOrigin.base(chunkX) + roll.nextInt(16);
+            int z = ChunkOrigin.base(chunkZ) + roll.nextInt(16);
             int y = lowest + roll.nextInt(band);
             found.add(new Vein(x, y, z));
         }
@@ -80,8 +81,8 @@ public final class ContentOreVein extends ContentChunkShape {
 
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
         resolve();
-        int baseX = chunkX * 16 + OFFSET;
-        int baseZ = chunkZ * 16 + OFFSET;
+        int baseX = ChunkOrigin.base(chunkX);
+        int baseZ = ChunkOrigin.base(chunkZ);
         int lowest = lowest(world);
         int highest = highest(world);
         if (highest < lowest) { return; }
@@ -115,7 +116,7 @@ public final class ContentOreVein extends ContentChunkShape {
                     float value = pattern(x, y, z) * bound;
                     if (value <= shape.threshold) { continue; }
                     if (placer.occupied(world, x, y, z)) { continue; }
-                    float tier = (value - shape.threshold) / (1.0F - shape.threshold);
+                    float tier = MathUtil.unlerp(value, shape.threshold, 1.0F);
                     IBlockState state = shape.richAt < 1.0F && tier >= shape.richAt && rich != null ? rich : tier >= shape.poorAt || poor == null ? placer.choose(random) : poor;
                     if (placer.placeExactly(world, state, x, y, z)) { placed++; }
                 }
@@ -126,9 +127,9 @@ public final class ContentOreVein extends ContentChunkShape {
 
     private static float boundary(float away) {
         if (away <= FULL) { return 1.0F; }
-        if (away <= WANING) { return 0.75F - 0.25F * (away - FULL) / (WANING - FULL); }
+        if (away <= WANING) { return 0.75F - 0.25F * MathUtil.unlerp(away, FULL, WANING); }
         if (away >= REACH) { return 0.0F; }
-        return 0.5F * (1.0F - (away - WANING) / (REACH - WANING));
+        return 0.5F * (1.0F - MathUtil.unlerp(away, WANING, REACH));
     }
 
     private float pattern(int x, int y, int z) {
@@ -180,11 +181,10 @@ public final class ContentOreVein extends ContentChunkShape {
     }
 
     private static float smooth(float from, float to, float at) {
-        float t = MathHelper.clamp((at - from) / (to - from), 0.0F, 1.0F);
-        return t * t * (3.0F - 2.0F * t);
+        return MathUtil.smoothstep(MathUtil.unlerp(at, from, to));
     }
 
-    private static float hash01(long seed, int x, int y, int z) { return (MathUtil.mix(seed, x, y, z) >>> 40) / (float) (1 << 24); }
+    private static float hash01(long seed, int x, int y, int z) { return MathUtil.unitFloat(MathUtil.mix(seed, x, y, z)); }
 
     private void resolve() {
         if (resolved) { return; }

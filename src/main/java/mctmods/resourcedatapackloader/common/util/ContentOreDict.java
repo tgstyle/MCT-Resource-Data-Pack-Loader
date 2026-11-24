@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
@@ -53,7 +54,7 @@ public final class ContentOreDict {
     private static void read(ResourceLocation key, String contents, int[] count) {
         JsonObject json = Json.object(key, contents, "ore dictionary file");
         if (json == null) { return; }
-        if (json.has("tag") && json.get("tag").isJsonPrimitive()) {
+        if (JsonUtils.isJsonPrimitive(json, "tag")) {
             Json.unknownKeys(json, "the top level", COPY_KEYS);
             copy(key, json);
             return;
@@ -72,10 +73,14 @@ public final class ContentOreDict {
             for (JsonElement element : entry.getValue().getAsJsonArray()) {
                 ItemStack stack = ContentStacks.parse(key, element.getAsString(), 1);
                 if (stack.isEmpty()) { continue; }
-                OreDictionary.registerOre(name, stack);
-                count[0]++;
+                count[0] += register(name, stack);
             }
         }
+    }
+
+    public static int register(String name, ItemStack stack) {
+        OreDictionary.registerOre(name, stack);
+        return 1;
     }
 
     private static void copy(ResourceLocation key, JsonObject json) {
@@ -84,7 +89,7 @@ public final class ContentOreDict {
             ContentLog.LOGGER.error("Ore dictionary copy in {} names tag '{}', which has no ore dictionary name on this version, ignoring it", key, json.get("tag").getAsString());
             return;
         }
-        String matches = json.has("matches") && json.get("matches").isJsonPrimitive() ? json.get("matches").getAsString() : "";
+        String matches = Json.text(json, "matches");
         if (matches.isEmpty()) {
             ContentLog.LOGGER.error("Ore dictionary copy in {} has no matches pattern, ignoring it", key);
             return;
@@ -98,7 +103,7 @@ public final class ContentOreDict {
             return;
         }
         String from = null;
-        if (json.has("from") && json.get("from").isJsonPrimitive()) {
+        if (JsonUtils.isJsonPrimitive(json, "from")) {
             String text = json.get("from").getAsString();
             from = oreOf(text);
             if (from == null) {

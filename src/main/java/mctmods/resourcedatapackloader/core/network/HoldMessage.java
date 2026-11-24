@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -15,7 +16,7 @@ public class HoldMessage implements IMessage {
 
     public HoldMessage(boolean held, String warning, boolean fog, boolean backdrop, String font) {
         this.held = held;
-        this.warning = warning == null ? "" : warning;
+        this.warning = Strings.nullToEmpty(warning);
         this.fog = fog;
         this.backdrop = backdrop;
         this.font = font;

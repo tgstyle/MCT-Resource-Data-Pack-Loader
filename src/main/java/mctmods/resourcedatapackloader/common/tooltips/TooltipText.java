@@ -14,6 +14,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.util.Constants;
 
 public final class TooltipText {
     private static final String NBT = "nbt";
@@ -21,11 +22,6 @@ public final class TooltipText {
     private static final String NBT_OPEN = "{nbt:";
     private static final String ITEM_OPEN = "{item:";
     private static final int MAX_DIGITS = 9;
-    private static final int BYTE = 1;
-    private static final int LONG = 4;
-    private static final int FLOAT = 5;
-    private static final int DOUBLE = 6;
-    private static final int STRING = 8;
     private final String[] literal;
     private final String[][] keys;
     private final int[][] index;
@@ -56,7 +52,7 @@ public final class TooltipText {
             boolean isNbt = start == nbt;
             String open = isData ? DataText.OPEN : isNbt ? NBT_OPEN : ITEM_OPEN;
             int begin = start + open.length();
-            int end = raw.indexOf('}', begin);
+            int end = DataText.close(raw, start, open);
             if (end < 0) { break; }
             String body = raw.substring(begin, end);
             if (isData ? DataText.name(body).isEmpty() : end == begin) {
@@ -134,13 +130,13 @@ public final class TooltipText {
     static String format(@Nullable NBTBase tag) {
         if (tag == null) { return ""; }
         int id = tag.getId();
-        if (id >= BYTE && id <= LONG) { return String.valueOf(((NBTPrimitive) tag).getLong()); }
-        if (id == FLOAT) {
+        if (id >= Constants.NBT.TAG_BYTE && id <= Constants.NBT.TAG_LONG) { return String.valueOf(((NBTPrimitive) tag).getLong()); }
+        if (id == Constants.NBT.TAG_FLOAT) {
             float value = ((NBTPrimitive) tag).getFloat();
             return value == (long) value ? String.valueOf((long) value) : String.valueOf(value);
         }
-        if (id == DOUBLE) { return number(((NBTPrimitive) tag).getDouble()); }
-        if (id == STRING) { return TextFormatting.getTextWithoutFormattingCodes(((NBTTagString) tag).getString()); }
+        if (id == Constants.NBT.TAG_DOUBLE) { return number(((NBTPrimitive) tag).getDouble()); }
+        if (id == Constants.NBT.TAG_STRING) { return TextFormatting.getTextWithoutFormattingCodes(((NBTTagString) tag).getString()); }
         return "";
     }
 

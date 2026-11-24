@@ -44,7 +44,7 @@ public final class CardRules {
             BY_TRIGGER.computeIfAbsent(rule.trigger, k -> new ArrayList<>()).add(rule);
             if (CardRule.SCANNED.contains(rule.trigger)) { SCANNED.add(rule); }
         }
-        if (!BY_KEY.isEmpty()) { Summary.info("cards", "Loaded " + BY_KEY.size() + " card rule(s)"); }
+        Summary.loaded("cards", BY_KEY.size(), "card rule(s)");
     }
 
     public static boolean unset(String key) { return !BY_KEY.containsKey(key); }
@@ -57,14 +57,7 @@ public final class CardRules {
 
     static boolean timed() { return BY_TRIGGER.containsKey(CardRule.TIME_OF_DAY) || BY_TRIGGER.containsKey(CardRule.DAY); }
 
-    @Nullable public static CardRule find(String asked) {
-        CardRule exact = BY_KEY.get(asked);
-        if (exact != null) { return exact; }
-        for (CardRule rule : BY_KEY.values()) {
-            if (IdNames.path(rule.key).equals(asked)) { return rule; }
-        }
-        return null;
-    }
+    @Nullable public static CardRule find(String asked) { return IdNames.byName(BY_KEY, asked); }
 
     public static List<String> keys() { return new ArrayList<>(BY_KEY.keySet()); }
 }

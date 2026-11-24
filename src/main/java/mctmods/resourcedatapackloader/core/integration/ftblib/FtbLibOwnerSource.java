@@ -13,7 +13,11 @@ import net.minecraft.server.MinecraftServer;
 public final class FtbLibOwnerSource implements OwnerSource {
     @Override public int teamOf(EntityPlayer player) {
         String key = FtbLibTeams.partyKeyOf(player.getUniqueID());
-        return key.isEmpty() ? 0 : OwnerTable.handleForSource(player.getServer(), OwnerRecord.SOURCE_FTB, key, FtbLibTeams.partyLabel(key));
+        return handleOf(player.getServer(), key);
+    }
+
+    private static int handleOf(@Nullable MinecraftServer server, String key) {
+        return key.isEmpty() ? 0 : OwnerTable.handleForSource(server, OwnerRecord.SOURCE_FTB, key, FtbLibTeams.partyLabel(key));
     }
 
     @Override public boolean allies(EntityPlayer player, int handle) {
@@ -27,8 +31,7 @@ public final class FtbLibOwnerSource implements OwnerSource {
     }
 
     @Override public int byName(@Nullable MinecraftServer server, String name) {
-        String key = FtbLibTeams.keyNamed(name);
-        return key.isEmpty() ? 0 : OwnerTable.handleForSource(server, OwnerRecord.SOURCE_FTB, key, FtbLibTeams.partyLabel(key));
+        return handleOf(server, FtbLibTeams.keyNamed(name));
     }
 
     @Override public Collection<String> names(@Nullable MinecraftServer server) { return FtbLibTeams.partyIds(); }

@@ -110,15 +110,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private ContentSlabBlock single() { return isDouble && other != null ? other : this; }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state) & VARIANT_MASK).light; }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).light; }
 
-    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state) & VARIANT_MASK).harvestLevel; }
+    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return ContentSetup.variantOf(def, variant, state).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state) & VARIANT_MASK).hardness; }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).hardness; }
 
     @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
         IBlockState state = world.getBlockState(pos);
-        return ContentSetup.resistanceOf(def, def.at(getMetaFromState(state) & VARIANT_MASK));
+        return ContentSetup.resistanceOf(def, ContentSetup.variantOf(def, variant, state));
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core.network.world;
 import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
@@ -18,13 +19,9 @@ public class UnloadCubeMessage implements IMessage {
 
     public UnloadCubeMessage(CubePos cubePos) { this.cubePos = cubePos; }
 
-    @Override public void fromBytes(ByteBuf in) { this.cubePos = new CubePos(in.readInt(), in.readInt(), in.readInt()); }
+    @Override public void fromBytes(ByteBuf in) { this.cubePos = PacketUtils.readFixedCubePos(in); }
 
-    @Override public void toBytes(ByteBuf out) {
-        out.writeInt(cubePos.getX());
-        out.writeInt(cubePos.getY());
-        out.writeInt(cubePos.getZ());
-    }
+    @Override public void toBytes(ByteBuf out) { PacketUtils.writeFixed(out, cubePos); }
 
     CubePos getCubePos() { return Preconditions.checkNotNull(cubePos); }
 

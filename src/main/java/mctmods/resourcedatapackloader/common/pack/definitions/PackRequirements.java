@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.definitions;
 
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -53,7 +54,7 @@ public final class PackRequirements {
             for (JsonElement each : element.getAsJsonArray()) {
                 if (!each.isJsonPrimitive()) { continue; }
                 String modid = Settings.lower(each.getAsString());
-                if (modid.isEmpty() || modid.startsWith("config:") || modid.startsWith("file:")) { continue; }
+                if (modid.isEmpty() || modid.startsWith(ContentRegistry.CONFIG_PREFIX) || modid.startsWith(ContentRegistry.FILE_PREFIX)) { continue; }
                 found.add(modid);
             }
         }

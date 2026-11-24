@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.io.port.convert;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -25,29 +26,27 @@ final class ConvertDefinitions {
         String[][] professions = {{"farmer", "farmer", "farmer"}, {"fisherman", "farmer", "fisherman"}, {"shepherd", "farmer", "shepherd"}, {"fletcher", "farmer", "fletcher"},
                 {"librarian", "librarian", "librarian"}, {"cartographer", "librarian", "cartographer"}, {"cleric", "priest", "cleric"}, {"armorer", "smith", "armor"},
                 {"weaponsmith", "smith", "weapon"}, {"toolsmith", "smith", "tool"}, {"butcher", "butcher", "butcher"}, {"leatherworker", "butcher", "leather"}, {"nitwit", "nitwit", "nitwit"}};
-        for (String[] profession : professions) { PROFESSIONS.put("minecraft:" + profession[0], new String[] {"minecraft:" + profession[1], profession[2]}); }
+        for (String[] profession : professions) { PROFESSIONS.put(IdNames.MINECRAFT + profession[0], new String[] {IdNames.MINECRAFT + profession[1], profession[2]}); }
     }
 
     private ConvertDefinitions() {}
 
     static void template(JsonObject json, Ported pack, String where) {
-        if (json.has("structures") && json.get("structures").isJsonObject()) {
-            JsonObject structures = json.getAsJsonObject("structures");
-            List<String> removed = new ArrayList<>();
-            for (Map.Entry<String, JsonElement> entry : new ArrayList<>(structures.entrySet())) {
-                if (!MODERN_STRUCTURES.contains(entry.getKey())) { continue; }
-                structures.remove(entry.getKey());
-                removed.add(entry.getKey());
-            }
-            if (!removed.isEmpty()) { pack.note(where + " sets the structures " + String.join(", ", removed) + ", which 1.12.2 never generated, so they are left out"); }
+        JsonObject structures = Json.object(json, "structures");
+        List<String> removed = new ArrayList<>();
+        for (Map.Entry<String, JsonElement> entry : new ArrayList<>(structures.entrySet())) {
+            if (!MODERN_STRUCTURES.contains(entry.getKey())) { continue; }
+            structures.remove(entry.getKey());
+            removed.add(entry.getKey());
         }
-        if (!json.has("settings") || !json.get("settings").isJsonObject()) { return; }
-        JsonObject settings = json.getAsJsonObject("settings");
+        if (!removed.isEmpty()) { pack.note(where + " sets the structures " + String.join(", ", removed) + ", which 1.12.2 never generated, so they are left out"); }
+        JsonObject settings = Json.object(json, "settings");
+        if (settings.size() == 0) { return; }
         int shift = Convert.flatShift(settings);
         movedPoint(settings, "worldSpawn", shift, pack, where);
         movedPoint(settings, "resetSendsTo", shift, pack, where);
         if (shift != 0 && settings.has("worldMinHeight")) { settings.remove("worldMinHeight"); }
-        if (shift != 0 && JsonUtils.isJsonPrimitive(settings, "generatorOptions")) { settings.addProperty("generatorOptions", superflat(settings.get("generatorOptions").getAsString(), pack, where)); }
+        if (shift != 0) { Json.rewriteText(settings, "generatorOptions", text -> superflat(text, pack, where)); }
     }
 
     private static String superflat(String text, Ported pack, String where) {
@@ -66,7 +65,7 @@ final class ConvertDefinitions {
     static void team(JsonObject json, Ported pack, String where) {
         int shift = pack.overworldShift();
         movedPoint(json, "spawn", shift, pack, where);
-        if (json.has("standIn") && json.get("standIn").isJsonObject()) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, where); }
+        movedPoint(Json.object(json, "standIn"), "at", shift, pack, where);
         if (shift == 0 || !JsonUtils.isJsonArray(json, "spawnBox") || json.getAsJsonArray("spawnBox").size() != 6) { return; }
         JsonArray box = json.getAsJsonArray("spawnBox");
         boolean changed = false;
@@ -106,10 +105,9 @@ final class ConvertDefinitions {
         Integer number = pack.dimensionNumber(id);
         if (number != null && !json.has("id")) { json.addProperty("id", number); }
         int shift = pack.dimensionShift(id);
-        JsonObject terrain = json.has("terrain") && json.get("terrain").isJsonObject() ? json.getAsJsonObject("terrain") : null;
-        if (shift != 0 && terrain != null) { terrain.remove("minHeight"); }
-        JsonObject sky = json.has("sky") && json.get("sky").isJsonObject() ? json.getAsJsonObject("sky") : null;
-        if (shift == 0 || sky == null || !JsonUtils.isJsonPrimitive(sky, "groundLevel") || !sky.getAsJsonPrimitive("groundLevel").isNumber()) { return; }
+        if (shift != 0) { Json.object(json, "terrain").remove("minHeight"); }
+        JsonObject sky = Json.object(json, "sky");
+        if (shift == 0 || !JsonUtils.isJsonPrimitive(sky, "groundLevel") || !sky.getAsJsonPrimitive("groundLevel").isNumber()) { return; }
         int written = sky.get("groundLevel").getAsInt();
         sky.addProperty("groundLevel", written + shift);
         flatNote("Dimension " + id + " gives groundLevel " + written, String.valueOf(written + shift), pack);
@@ -123,17 +121,15 @@ final class ConvertDefinitions {
             JsonArray names = holder.getAsJsonArray(field);
             Set<String> files = new LinkedHashSet<>();
             for (JsonElement named : names) {
-                Convert.Ref ref = Convert.item(named.getAsString(), pack, where);
-                files.add(ref == null ? named.getAsString() : ref.id);
+                files.add(Convert.itemId(named.getAsString(), pack, where));
             }
-            if (files.size() == 1 && names.size() > 1) { holder.addProperty(field, files.iterator().next() + ":*"); }
+            if (files.size() == 1 && names.size() > 1) { holder.addProperty(field, files.iterator().next() + Convert.WILDCARD); }
             else if (names.size() > 0) {
                 holder.add(field, names.get(0));
                 if (names.size() > 1) { pack.note(where + " lists several items as its " + key + ", and 1.12.2 reads one, so only " + names.get(0).getAsString() + " is kept"); }
             }
         }
-        if (!json.has("enchantments") || !json.get("enchantments").isJsonObject()) { return; }
-        JsonObject levels = json.getAsJsonObject("enchantments");
+        JsonObject levels = Json.object(json, "enchantments");
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(levels.entrySet())) {
             String mapped = Ids.enchantment(entry.getKey());
             if (mapped.equals(entry.getKey())) { continue; }
@@ -143,17 +139,14 @@ final class ConvertDefinitions {
     }
 
     static void loot(JsonObject json) {
-        String held = Json.text(json, "loot").trim();
-        if (!held.isEmpty()) { json.addProperty("loot", Ids.lootTable(held)); }
+        Json.rewriteText(json, "loot", held -> held.trim().isEmpty() ? "" : Ids.lootTable(held.trim()));
     }
 
     static void tooltips(JsonObject json) {
         if (!JsonUtils.isJsonArray(json, "enchantments")) { return; }
         for (JsonElement element : json.getAsJsonArray("enchantments")) {
             if (!element.isJsonObject()) { continue; }
-            JsonObject entry = element.getAsJsonObject();
-            String held = Json.text(entry, "enchantment").trim();
-            if (!held.isEmpty()) { entry.addProperty("enchantment", Ids.enchantment(held)); }
+            Json.rewriteText(element.getAsJsonObject(), "enchantment", held -> held.trim().isEmpty() ? "" : Ids.enchantment(held.trim()));
         }
     }
 
@@ -171,10 +164,9 @@ final class ConvertDefinitions {
 
     static void remap(JsonObject json, Ported pack, String where) {
         String registry = Json.text(json, "registry");
-        if ("minecraft:block".equals(registry) || "minecraft:item".equals(registry)) { json.addProperty("registry", registry + "s"); }
-        if (!json.has("mapping") || !json.get("mapping").isJsonObject()) { return; }
-        boolean blocks = registry.startsWith("minecraft:block");
-        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("mapping").entrySet()) {
+        if ((IdNames.MINECRAFT + "block").equals(registry) || (IdNames.MINECRAFT + "item").equals(registry)) { json.addProperty("registry", registry + "s"); }
+        boolean blocks = registry.startsWith(IdNames.MINECRAFT + "block");
+        for (Map.Entry<String, JsonElement> entry : Json.object(json, "mapping").entrySet()) {
             if (!entry.getValue().isJsonPrimitive()) { continue; }
             Convert.Ref ref = blocks ? Convert.block(entry.getValue().getAsString(), Collections.emptyMap(), pack, where) : Convert.item(entry.getValue().getAsString(), pack, where);
             if (ref != null) { entry.setValue(new JsonPrimitive(ref.id)); }
@@ -228,13 +220,11 @@ final class ConvertDefinitions {
     }
 
     static void environments(JsonObject json, Ported pack, String where) {
-        if (!json.has("environments") || !json.get("environments").isJsonObject()) { return; }
-        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("environments").entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : Json.object(json, "environments").entrySet()) {
             if (!entry.getValue().isJsonObject()) { continue; }
             JsonObject environment = entry.getValue().getAsJsonObject();
             trades(environment, pack, where);
-            if (!environment.has("loot") || !environment.get("loot").isJsonObject()) { continue; }
-            JsonObject loot = environment.getAsJsonObject("loot");
+            JsonObject loot = Json.object(environment, "loot");
             for (Map.Entry<String, JsonElement> table : new ArrayList<>(loot.entrySet())) {
                 loot.remove(table.getKey());
                 loot.add(Ids.lootTable(table.getKey()), table.getValue().isJsonPrimitive() ? new JsonPrimitive(Ids.lootTable(table.getValue().getAsString())) : table.getValue());

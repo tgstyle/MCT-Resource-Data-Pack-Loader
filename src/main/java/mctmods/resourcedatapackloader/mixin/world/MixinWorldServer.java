@@ -126,8 +126,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         }
         List<NextTickListEntry> found = null;
         int buckets = 0;
-        for (int x = structureBB.minX >> 4; x <= structureBB.maxX >> 4; x++) {
-            for (int z = structureBB.minZ >> 4; z <= structureBB.maxZ >> 4; z++) {
+        for (int x = Coords.blockToCube(structureBB.minX); x <= Coords.blockToCube(structureBB.maxX); x++) {
+            for (int z = Coords.blockToCube(structureBB.minZ); z <= Coords.blockToCube(structureBB.maxZ); z++) {
                 List<NextTickListEntry> here = rdpl$byChunk.get(ChunkPos.asLong(x, z));
                 if (here == null) { continue; }
                 buckets++;
@@ -151,7 +151,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Unique private void rdpl$gather(Iterable<NextTickListEntry> entries) {
         for (NextTickListEntry entry : entries) {
-            long key = ChunkPos.asLong(entry.position.getX() >> 4, entry.position.getZ() >> 4);
+            long key = ChunkPos.asLong(Coords.blockToCube(entry.position.getX()), Coords.blockToCube(entry.position.getZ()));
             List<NextTickListEntry> here = rdpl$byChunk.get(key);
             if (here == null) {
                 here = new ArrayList<>();
@@ -288,8 +288,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Unique private void rdpl$tickColumn(boolean raining, boolean thundering, Chunk chunk) {
-        int chunkBlockX = chunk.x * 16;
-        int chunkBlockZ = chunk.z * 16;
+        int chunkBlockX = cubeToMinBlock(chunk.x);
+        int chunkBlockZ = cubeToMinBlock(chunk.z);
         this.profiler.startSection("checkNextLight");
         chunk.enqueueRelightChecks();
         this.profiler.endStartSection("tickChunk");

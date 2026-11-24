@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentOreVein;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
@@ -84,7 +85,7 @@ public final class ContentProspect {
         if (stack.isEmpty() || idle()) { return null; }
         Entry entry = holding(stack);
         if (entry == null) { return null; }
-        boolean blacklist = ContentControl.flag(ContentControl.ORES, "prospectItemsAreBlacklist", Config.worldgen.prospectItemsAreBlacklist);
+        boolean blacklist = blacklist();
         List<String> labels = new ArrayList<>();
         for (String name : entry.names) {
             WorldgenDef def = ContentWorldgen.byName(name);
@@ -151,6 +152,8 @@ public final class ContentProspect {
 
     private static boolean drops() { return ContentControl.flag(ContentControl.ORES, "prospectDrops", Config.worldgen.prospectDrops); }
 
+    private static boolean blacklist() { return ContentControl.flag(ContentControl.ORES, "prospectItemsAreBlacklist", Config.worldgen.prospectItemsAreBlacklist); }
+
     @SubscribeEvent public static void onHarvest(BlockEvent.HarvestDropsEvent event) {
         EntityPlayer harvester = event.getHarvester();
         if (harvester == null || event.getWorld().isRemote || !harvester.isSneaking() || idle() || drops() || holding(harvester.getHeldItemMainhand()) == null) { return; }
@@ -159,7 +162,7 @@ public final class ContentProspect {
     }
 
     private static void read(EntityPlayerMP player, World world, BlockPos at, Entry entry) {
-        boolean blacklist = ContentControl.flag(ContentControl.ORES, "prospectItemsAreBlacklist", Config.worldgen.prospectItemsAreBlacklist);
+        boolean blacklist = blacklist();
         int chunkX = at.getX() >> 4;
         int chunkZ = at.getZ() >> 4;
         int said = 0;
@@ -185,7 +188,7 @@ public final class ContentProspect {
             String height = Lang.tr(player, dy > LEVEL ? "rdpl.prospect.above" : dy < -LEVEL ? "rdpl.prospect.below" : "rdpl.prospect.level");
             int dx = nearest.x - at.getX();
             int dz = nearest.z - at.getZ();
-            String line = dx * dx + dz * dz <= ContentOreVein.REACH * ContentOreVein.REACH
+            String line = Coords.awaySq(dx, dz, 0, 0) <= ContentOreVein.REACH * ContentOreVein.REACH
                     ? Lang.tr(player, "rdpl.prospect.here", ore, height)
                     : Lang.tr(player, "rdpl.prospect.hit", ore, Lang.tr(player, "rdpl.dir." + point(dx, dz)), height);
             Says.tell(player, CardIds.PROSPECT, TextFormatting.YELLOW, line);

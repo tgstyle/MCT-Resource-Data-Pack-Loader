@@ -7,8 +7,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidSwitc
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,15 +32,13 @@ public final class ContentRaidSwitch {
 
     @Nullable public static RaidSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives raids that is not an object of every, start, waves and points keys, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "raids", element, "an object of every, start, waves and points keys");
+        if (json == null) { return null; }
         int every = 0;
         List<ResourceLocation> start = new ArrayList<>();
         float waves = 1.0F;
         float points = 1.0F;
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             int kind = KEYS.indexOf(entry.getKey());
             if (kind < 0) {
                 ContentLog.LOGGER.error("{} gives raids.{}, which is not a raids key, ignoring it", owner, entry.getKey());
@@ -48,7 +48,7 @@ public final class ContentRaidSwitch {
                 start.addAll(ids(owner, entry.getValue()));
                 continue;
             }
-            Float value = ContentSpawnSwitch.number(owner, "raids." + entry.getKey(), entry.getValue(), kind == 0);
+            Float value = Json.number(owner, "raids." + entry.getKey(), entry.getValue(), kind == 0);
             if (value == null) { continue; }
             if (kind == 0) {
                 if (value < 1.0F) { ContentLog.LOGGER.error("{} gives raids.every as {}, which is not above zero, ignoring it", owner, entry.getValue()); }
@@ -86,7 +86,8 @@ public final class ContentRaidSwitch {
     }
 
     private static void id(String owner, JsonElement value, List<ResourceLocation> into) {
-        String name = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? value.getAsString().trim() : "";
+        String text = Json.text(value);
+        String name = text == null ? "" : text.trim();
         if (name.isEmpty()) { ContentLog.LOGGER.error("{} gives raids.start as {}, which is not a raid id or a list of them, ignoring it", owner, value); }
         else { into.add(new ResourceLocation(name)); }
     }
@@ -97,7 +98,7 @@ public final class ContentRaidSwitch {
         RaidSwitchDef def = at(world, new BlockPos(player));
         if (def.every <= 0) { return null; }
         NBTTagCompound clock = PlayerPersisted.section(player, CLOCK);
-        String dimension = String.valueOf(world.provider.getDimension());
+        String dimension = dimension(world);
         int now = Math.min(def.every, clock.getInteger(dimension) + elapsed);
         clock.setInteger(dimension, now);
         if (now < def.every) { return null; }
@@ -113,14 +114,16 @@ public final class ContentRaidSwitch {
         BaseDef base = def.base();
         if (base == null) { return true; }
         NBTTagCompound rolls = PlayerPersisted.section(player, ROLL);
-        String dimension = String.valueOf(world.provider.getDimension());
+        String dimension = dimension(world);
         long now = world.getTotalWorldTime();
         if (rolls.hasKey(dimension) && now - rolls.getLong(dimension) < base.rollEvery) { return false; }
         rolls.setLong(dimension, now);
         return world.rand.nextDouble() < base.chance;
     }
 
-    public static void reset(WorldServer world, EntityPlayer player) { PlayerPersisted.section(player, CLOCK).setInteger(String.valueOf(world.provider.getDimension()), 0); }
+    private static String dimension(WorldServer world) { return String.valueOf(world.provider.getDimension()); }
+
+    public static void reset(WorldServer world, EntityPlayer player) { PlayerPersisted.section(player, CLOCK).setInteger(dimension(world), 0); }
 
     public static void started(WorldServer world, BlockPos center, int reach) {
         double near = (double) reach * reach;

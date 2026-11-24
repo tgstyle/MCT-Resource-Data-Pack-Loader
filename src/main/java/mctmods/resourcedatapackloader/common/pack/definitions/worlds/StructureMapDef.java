@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
 import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
@@ -61,7 +62,7 @@ public final class StructureMapDef {
         return anchor + 1 - ground * cell - sink;
     }
 
-    public boolean allowsDimension(int dimension) { return dimensions.isEmpty() || dimensions.contains(dimension); }
+    public boolean allowsDimension(int dimension) { return BiomeFilter.allowsDimension(dimensions, false, dimension); }
 
     public static final class Layer {
         public final Map<Character, List<PickDef>> palette;

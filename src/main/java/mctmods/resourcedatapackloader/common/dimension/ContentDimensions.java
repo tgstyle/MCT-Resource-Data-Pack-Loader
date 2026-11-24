@@ -43,7 +43,7 @@ public final class ContentDimensions {
     public static void parse() {
         if (parsed) { return; }
         parsed = true;
-        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
+        if (!Config.loads(Config.content.dimensions)) { return; }
         Json.eachInheritedFile(PackManager.DIMENSIONS, "dimension definition", ContentInherits.DIMENSION_IDENTITY, (key, contents) -> {
             JsonObject json = Json.object(key, contents, "dimension");
             if (json == null) { return; }
@@ -58,7 +58,7 @@ public final class ContentDimensions {
         if (loaded) { return; }
         loaded = true;
         parse();
-        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
+        if (!Config.loads(Config.content.dimensions)) { return; }
         for (Map.Entry<ResourceLocation, DimensionDef> entry : DEFS.entrySet()) {
             DimensionDef def = entry.getValue();
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }

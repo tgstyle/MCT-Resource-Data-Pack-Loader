@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core;
 
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.core.util.EarlyConfig;
+import mctmods.resourcedatapackloader.core.util.LazyFlag;
 import mctmods.resourcedatapackloader.core.util.ModJars;
 import mctmods.resourcedatapackloader.core.util.WriteBoxWatch;
 
@@ -10,7 +11,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.zip.ZipFile;
 import net.minecraft.launchwrapper.Launch;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -73,14 +72,40 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "MixinWorldProvider", "MixinWorldServer", "MixinWorldSettings",
             "MixinChunkLightRubic", "MixinWorldLightRubic", "MixinChunkCacheLightRubic",
             "MixinBlockVec3", "MixinThreadFindSeal", "MixinTransformerHooksCamera"));
-    private static Boolean cubicChunks;
+    private static final LazyFlag CUBIC_CHUNKS = new LazyFlag(() -> {
+        boolean present = ModJars.present(CUBIC_CHUNKS_MARKER) || ModJars.hasEntry(CUBIC_CHUNKS_MARKER, "CubicChunks");
+        if (present) { MCTMixin.LOGGER.warn("CubicChunks is installed, so it makes the cubic worlds and this mod's rubic worlds stand down. The rest of this mod still runs"); }
+        return present;
+    });
     private static boolean rubicLoaded;
-    private static Boolean lightingReplaced;
-    private static Boolean sponge;
-    private static Boolean pathfindingReplaced;
-    private static Boolean paperSpawn;
-    private static Boolean optimizationsOff;
-    private static Boolean universalTweaks;
+    private static final LazyFlag LIGHTING_REPLACED = new LazyFlag(() -> {
+        boolean replaced = ModJars.present("dev/redstudio/alfheim/mixin/WorldMixin.class")
+                || ModJars.present("me/jellysquid/mods/phosphor/mod/PhosphorMod.class")
+                || ModJars.present("com/sumirelabs/pulsar/light/WorldLightManager.class")
+                || spongePresent() || cubicChunksPresent();
+        if (replaced) { MCTMixin.LOGGER.info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
+        return replaced;
+    });
+    private static final LazyFlag SPONGE = new LazyFlag(() -> ModJars.present("org/spongepowered/mod/SpongeMod.class"));
+    private static final LazyFlag PATHFINDING_REPLACED = new LazyFlag(() -> {
+        boolean replaced = ModJars.present("me/jellysquid/mods/lithium/common/ai/pathing/PathNodeCache.class")
+                || (ModJars.present("me/elephant1214/paperfixes/mixin/common/lithium/path_node_cache/WalkNodeProcessorMixin.class")
+                && settingOn());
+        if (replaced) { MCTMixin.LOGGER.info("Another mod already works out what the blocks under a path mean, so that half of the pathfinding fast path is standing down for it. What this mod remembers between lookups stays on"); }
+        return replaced;
+    });
+    private static final LazyFlag PAPER_SPAWN = new LazyFlag(() -> {
+        boolean rule = ModJars.present("me/elephant1214/paperfixes/mixin/common/world/spawn_chunk_gr/MinecraftServerMixin.class")
+                && cfgFlag("paperfixes.cfg", "B:spawnChunkGamerule=", true);
+        if (rule) { MCTMixin.LOGGER.info("PaperFixes already sets the spawn area size, so spawnChunkRadius reaches the world start another way: it decides when the pack sets it, and PaperFixes' spawnChunkRadius game rule decides otherwise"); }
+        return rule;
+    });
+    private static final LazyFlag OPTIMIZATIONS_OFF = new LazyFlag(() -> {
+        boolean off = optimizationsDisabled();
+        if (off) { MCTMixin.LOGGER.warn("disableOptimizations is set, so every pregen and generation optimization is standing down. Why would you do this?"); }
+        return off;
+    });
+    private static final LazyFlag UNIVERSAL_TWEAKS = new LazyFlag(() -> ModJars.present("mod/acgaming/universaltweaks/UniversalTweaks.class"));
 
     @Override public void onLoad(String mixinPackage) {
         if (rubicLoaded) { return; }
@@ -139,29 +164,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         return new Error(message);
     }
 
-    public static boolean cubicChunksPresent() {
-        if (cubicChunks == null) {
-            cubicChunks = Launch.classLoader.getResource(CUBIC_CHUNKS_MARKER) != null || inModJars();
-            if (cubicChunks) { MCTMixin.LOGGER.warn("CubicChunks is installed, so it makes the cubic worlds and this mod's rubic worlds stand down. The rest of this mod still runs"); }
-        }
-        return cubicChunks;
-    }
-
-    private static boolean inModJars() {
-        try {
-            for (File jar : ModJars.list()) {
-                try (ZipFile zip = new ZipFile(jar)) {
-                    if (zip.getEntry(CUBIC_CHUNKS_MARKER) != null) { return true; }
-                }
-                catch (Exception unreadable) { MCTMixin.LOGGER.debug("Could not open {} while looking for CubicChunks", jar.getName()); }
-            }
-            return false;
-        }
-        catch (Exception failed) {
-            MCTMixin.LOGGER.warn("Could not scan the mods folder for CubicChunks, assuming it is absent", failed);
-            return false;
-        }
-    }
+    public static boolean cubicChunksPresent() { return CUBIC_CHUNKS.get(); }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) private static void loadRubicGating() {
         boolean optifine;
@@ -205,56 +208,22 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (RUBIC_CONDITIONS.containsKey(simple)) { return RUBIC_CONDITIONS.getBoolean(simple); }
         Predicate<String> gate = GATES.get(simple);
         if (gate != null) { return gate.test(simple); }
-        if (PATHFINDING.contains(simple)) {
-            if (pathfindingReplaced == null) {
-                pathfindingReplaced = Launch.classLoader.getResource("me/jellysquid/mods/lithium/common/ai/pathing/PathNodeCache.class") != null
-                        || (Launch.classLoader.getResource("me/elephant1214/paperfixes/mixin/common/lithium/path_node_cache/WalkNodeProcessorMixin.class") != null
-                        && settingOn());
-                if (pathfindingReplaced) { MCTMixin.LOGGER.info("Another mod already works out what the blocks under a path mean, so that half of the pathfinding fast path is standing down for it. What this mod remembers between lookups stays on"); }
-            }
-            if (pathfindingReplaced) { return false; }
-        }
-        if (OPTIMIZATIONS.contains(simple)) {
-            if (optimizationsOff == null) {
-                optimizationsOff = optimizationsDisabled();
-                if (optimizationsOff) { MCTMixin.LOGGER.warn("disableOptimizations is set, so every pregen and generation optimization is standing down. Why would you do this?"); }
-            }
-            if (optimizationsOff) { return false; }
-        }
+        if (PATHFINDING.contains(simple) && PATHFINDING_REPLACED.get()) { return false; }
+        if (OPTIMIZATIONS.contains(simple) && OPTIMIZATIONS_OFF.get()) { return false; }
         if (!LIGHT.contains(simple)) { return true; }
-        if (lightingReplaced == null) {
-            lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
-                    || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
-                    || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null
-                    || spongePresent() || cubicChunksPresent();
-            if (lightingReplaced) { MCTMixin.LOGGER.info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
-        }
-        return !lightingReplaced;
+        return !LIGHTING_REPLACED.get();
     }
 
-    private static boolean spongePresent() {
-        if (sponge == null) { sponge = Launch.classLoader.getResource("org/spongepowered/mod/SpongeMod.class") != null; }
-        return sponge;
-    }
+    private static boolean spongePresent() { return SPONGE.get(); }
 
     private static boolean standDown(String simple, boolean taken) {
         if (taken) { MCTMixin.LOGGER.info("Universal Tweaks already covers this, so {} is left out", simple); }
         return !taken;
     }
 
-    private static boolean universalTweaksPresent() {
-        if (universalTweaks == null) { universalTweaks = Launch.classLoader.getResource("mod/acgaming/universaltweaks/UniversalTweaks.class") != null; }
-        return universalTweaks;
-    }
+    private static boolean universalTweaksPresent() { return UNIVERSAL_TWEAKS.get(); }
 
-    private static boolean paperSpawnRule() {
-        if (paperSpawn == null) {
-            paperSpawn = Launch.classLoader.getResource("me/elephant1214/paperfixes/mixin/common/world/spawn_chunk_gr/MinecraftServerMixin.class") != null
-                    && cfgFlag("paperfixes.cfg", "B:spawnChunkGamerule=", true);
-            if (paperSpawn) { MCTMixin.LOGGER.info("PaperFixes already sets the spawn area size, so spawnChunkRadius reaches the world start another way: it decides when the pack sets it, and PaperFixes' spawnChunkRadius game rule decides otherwise"); }
-        }
-        return paperSpawn;
-    }
+    private static boolean paperSpawnRule() { return PAPER_SPAWN.get(); }
 
     private static boolean settingOn() { return cfgFlag("paperfixes.cfg", "B:pathNodeCache=", true); }
 

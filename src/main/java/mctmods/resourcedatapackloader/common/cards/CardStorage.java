@@ -45,8 +45,7 @@ public final class CardStorage extends WorldSavedData {
     @Nullable private static CardStorage get(World world) {
         World overworld = DimensionManager.getWorld(0);
         MapStorage storage = overworld == null ? world.getMapStorage() : overworld.getMapStorage();
-        if (storage == null) { return null; }
-        return SavedData.get(storage, CardStorage.class, NAME, CardStorage::new);
+        return SavedData.of(storage, CardStorage.class, NAME, CardStorage::new);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) { fired = compound.getCompoundTag(TAG); }

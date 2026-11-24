@@ -3,14 +3,17 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 import mctmods.resourcedatapackloader.common.environment.ContentDressLight;
 import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.rubic.lighting.interfaces.ILightingManager;
+import mctmods.resourcedatapackloader.common.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.IONbtReader;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.RegionCubeStorage;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -23,6 +26,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -43,19 +48,24 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.util.Constants;
 
 public final class ClaimRestore {
+    private static final String LEVEL = "Level";
+    private static final String TILE_ENTITIES = "TileEntities";
+    private static final String SECTIONS = "Sections";
     private static String lastKey = "";
     @Nullable private static NBTTagCompound lastLevel;
 
     private ClaimRestore() {}
 
+    private static void unreadable(Object source, String kind, String coords, Exception cause) { ContentLog.LOGGER.warn("The pristine copy of {} could not be read at {} {}", source, kind, coords, cause); }
+
     public static boolean covers(WorldServer world, int chunkX, int chunkZ) {
         Path folder = folderOf(world);
         if (folder == null) { return false; }
         if (!GenHeights.rubic(world)) { return levelOf(folder, chunkX, chunkZ) != null; }
-        if (!Files.isDirectory(folder.resolve("region2d"))) { return false; }
+        if (!Files.isDirectory(folder.resolve(RegionNames.COLUMN_FOLDER))) { return false; }
         try (RegionCubeStorage storage = new RegionCubeStorage(holdingOf(world), folder)) { return storage.columnExists(new ChunkPos(chunkX, chunkZ)); }
         catch (IOException | RuntimeException unreadable) {
-            ContentLog.LOGGER.warn("The pristine copy of {} could not be read at column {}, {}", folder, chunkX, chunkZ, unreadable);
+            unreadable(folder, "column", chunkX + ", " + chunkZ, unreadable);
             return false;
         }
     }
@@ -111,18 +121,18 @@ public final class ClaimRestore {
     }
 
     @Nullable private static NBTTagCompound readLevel(Path folder, int chunkX, int chunkZ) {
-        File file = folder.resolve("region").resolve("r." + (chunkX >> 5) + "." + (chunkZ >> 5) + ".mca").toFile();
+        File file = RegionNames.chunkFolder(folder).resolve(RegionNames.chunkRegion(Coords.chunkToRegion(chunkX), Coords.chunkToRegion(chunkZ))).toFile();
         if (!file.isFile()) { return null; }
         RegionFile region = new RegionFile(file);
         try {
             if (!region.isChunkSaved(chunkX & 31, chunkZ & 31)) { return null; }
             DataInputStream stream = region.getChunkDataInputStream(chunkX & 31, chunkZ & 31);
             if (stream == null) { return null; }
-            try { return CompressedStreamTools.read(stream).getCompoundTag("Level"); }
+            try { return CompressedStreamTools.read(stream).getCompoundTag(LEVEL); }
             finally { stream.close(); }
         }
         catch (IOException | RuntimeException unreadable) {
-            ContentLog.LOGGER.warn("The pristine copy of {} could not be read at chunk {}, {}", file, chunkX, chunkZ, unreadable);
+            unreadable(file, "chunk", chunkX + ", " + chunkZ, unreadable);
             return null;
         }
         finally {
@@ -150,19 +160,23 @@ public final class ClaimRestore {
             storage.recalculateRefCounts();
         }
         chunk.getBlockStorageArray()[sectionY] = storage;
-        NBTTagList held = level.getTagList("TileEntities", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < held.tagCount(); i++) {
-            NBTTagCompound tag = held.getCompoundTagAt(i);
-            if (tag.getInteger("y") >> 4 != sectionY) { continue; }
-            TileEntity entity = TileEntity.create(world, tag);
-            if (entity != null) { chunk.addTileEntity(entity); }
-        }
+        restoreTiles(world, level, tag -> Coords.blockToCube(tag.getInteger("y")) == sectionY, chunk::addTileEntity);
         chunk.markDirty();
         return true;
     }
 
+    private static void restoreTiles(WorldServer world, NBTTagCompound level, Predicate<NBTTagCompound> keep, Consumer<TileEntity> add) {
+        NBTTagList held = level.getTagList(TILE_ENTITIES, Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < held.tagCount(); i++) {
+            NBTTagCompound tag = held.getCompoundTagAt(i);
+            if (!keep.test(tag)) { continue; }
+            TileEntity entity = TileEntity.create(world, tag);
+            if (entity != null) { add.accept(entity); }
+        }
+    }
+
     @Nullable private static NBTTagCompound sectionOf(NBTTagCompound level, int sectionY) {
-        NBTTagList sections = level.getTagList("Sections", Constants.NBT.TAG_COMPOUND);
+        NBTTagList sections = level.getTagList(SECTIONS, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < sections.tagCount(); i++) {
             NBTTagCompound section = sections.getCompoundTagAt(i);
             if (section.getByte("Y") == sectionY) { return section; }
@@ -177,10 +191,10 @@ public final class ClaimRestore {
         try (RegionCubeStorage storage = new RegionCubeStorage(holdingOf(world), folder)) {
             NBTTagCompound nbt = storage.cubeExists(new CubePos(cubeX, cubeY, cubeZ)) ? storage.readCube(new CubePos(cubeX, cubeY, cubeZ)) : null;
             if (nbt == null) { return false; }
-            level = nbt.getCompoundTag("Level");
+            level = nbt.getCompoundTag(LEVEL);
         }
         catch (IOException | RuntimeException unreadable) {
-            ContentLog.LOGGER.warn("The pristine copy of {} could not be read at cube {}, {}, {}", folder, cubeX, cubeY, cubeZ, unreadable);
+            unreadable(folder, "cube", cubeX + ", " + cubeY + ", " + cubeZ, unreadable);
             return false;
         }
         for (TileEntity old : new ArrayList<>(live.getTileEntityMap().values())) {
@@ -188,15 +202,11 @@ public final class ClaimRestore {
             world.markTileEntityForRemoval(old);
         }
         live.getTileEntityMap().clear();
-        NBTTagCompound saved = !level.hasKey("Sections") ? null : level.getTagList("Sections", Constants.NBT.TAG_COMPOUND).getCompoundTagAt(0);
+        NBTTagCompound saved = !level.hasKey(SECTIONS) ? null : level.getTagList(SECTIONS, Constants.NBT.TAG_COMPOUND).getCompoundTagAt(0);
         ExtendedBlockStorage storage = saved == null ? null : IONbtReader.decodeStorage(saved, world, cubeY);
         live.setStorage(storage);
         live.pushOpacity(storage);
-        NBTTagList held = level.getTagList("TileEntities", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < held.tagCount(); i++) {
-            TileEntity entity = TileEntity.create(world, held.getCompoundTagAt(i));
-            if (entity != null && live.getCoords().containsBlock(entity.getPos())) { live.addTileEntity(entity); }
-        }
+        restoreTiles(world, level, tag -> true, entity -> { if (live.getCoords().containsBlock(entity.getPos())) { live.addTileEntity(entity); } });
         live.markDirty();
         return true;
     }
@@ -210,8 +220,7 @@ public final class ClaimRestore {
         for (EntityPlayer player : world.playerEntities) {
             if (player instanceof EntityPlayerMP) { players.add((EntityPlayerMP) player); }
         }
-        for (Object held : ((IColumn) column).getLoadedCubes().toArray()) {
-            Cube cube = (Cube) held;
+        for (Cube cube : new ArrayList<>(((IColumn) column).loadedCubes())) {
             ExtendedBlockStorage storage = cube.getStorage();
             if (storage != null) {
                 if (world.provider.hasSkyLight()) { Arrays.fill(storage.getSkyLight().getData(), (byte) 0); }
@@ -224,8 +233,8 @@ public final class ClaimRestore {
             }
         }
         column.markDirty();
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) { watchers.heightUpdated((chunkX << 4) + x, (chunkZ << 4) + z); }
+        for (int x = 0; x < ICube.SIZE; x++) {
+            for (int z = 0; z < ICube.SIZE; z++) { watchers.heightUpdated(Coords.localToBlock(chunkX, x), Coords.localToBlock(chunkZ, z)); }
         }
     }
 }

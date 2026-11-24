@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.zones;
 
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +20,7 @@ public final class ZoneDamageDef {
     public ZoneDamageDef(List<String> entities, boolean unlessAttackerInside, boolean allowNoAttacker) {
         List<EnumCreatureType> found = new ArrayList<>();
         for (String entity : entities) {
-            if (entity.startsWith("#")) { found.add(EnumCreatureType.valueOf(entity.substring(1).toUpperCase(Locale.ROOT))); }
+            if (IdNames.isTag(entity)) { found.add(EnumCreatureType.valueOf(IdNames.tagPath(entity).toUpperCase(Locale.ROOT))); }
             else { ids.add(new ResourceLocation(entity)); }
         }
         this.kinds = found.toArray(new EnumCreatureType[0]);

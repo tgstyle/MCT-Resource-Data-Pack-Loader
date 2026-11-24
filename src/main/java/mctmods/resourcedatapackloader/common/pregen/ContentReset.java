@@ -31,16 +31,16 @@ public final class ContentReset {
 
     public static int run(MinecraftServer server) {
         if (server == null) { return 0; }
-        String said = ContentPregenProgress.says("resetSays", Config.chunks.resetSays).trim();
+        String said = ContentPregenProgress.says(ContentControl.RESET_SAYS, Config.chunks.resetSays).trim();
         ContentPregenHold.holdEveryone(false);
         if (!said.isEmpty()) { ContentPregenHold.tellBar(server, said); }
         int swept = 0;
-        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) { swept = sweep(server); }
-        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores)) { wipe(server); }
-        boolean inventory = ContentControl.flag(ContentControl.CHUNKS, "resetClearsInventory", Config.chunks.resetClearsInventory);
-        strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience));
+        if (ContentControl.flag(ContentControl.CHUNKS, ContentControl.RESET_CLEARS_ENTITIES, Config.chunks.resetClearsEntities)) { swept = sweep(server); }
+        if (ContentControl.flag(ContentControl.CHUNKS, ContentControl.RESET_CLEARS_SCORES, Config.chunks.resetClearsScores)) { wipe(server); }
+        boolean inventory = ContentControl.flag(ContentControl.CHUNKS, ContentControl.RESET_CLEARS_INVENTORY, Config.chunks.resetClearsInventory);
+        strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, ContentControl.RESET_CLEARS_EXPERIENCE, Config.chunks.resetClearsExperience));
         if (inventory) { ContentTeams.giveAll(server); }
-        String runs = ContentPregenProgress.says("resetRuns", Config.chunks.resetRuns).trim();
+        String runs = ContentPregenProgress.says(ContentControl.RESET_RUNS, Config.chunks.resetRuns).trim();
         if (!runs.isEmpty()) { Functions.run(server, runs, "The reset"); }
         place(server);
         noted(server);
@@ -61,7 +61,7 @@ public final class ContentReset {
         int count = GateStorage.countGlobally(server.getWorld(0), RESETS);
         if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
         GateStorage.noteFor(player, RESETS, count);
-        Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo).trim(), player);
+        Landing landing = landingFor(server, ContentPregenProgress.says(ContentControl.RESET_SENDS_TO, Config.chunks.resetSendsTo).trim(), player);
         if (landing == null) { return; }
         send(player, landing);
         ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getName());
@@ -103,7 +103,7 @@ public final class ContentReset {
     }
 
     private static void place(MinecraftServer server) {
-        String asked = ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo).trim();
+        String asked = ContentPregenProgress.says(ContentControl.RESET_SENDS_TO, Config.chunks.resetSendsTo).trim();
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Landing landing = landingFor(server, asked, player);
             if (landing == null) { continue; }

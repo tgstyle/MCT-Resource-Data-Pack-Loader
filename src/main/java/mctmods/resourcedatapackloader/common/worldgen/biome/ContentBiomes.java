@@ -101,12 +101,12 @@ public final class ContentBiomes {
     public static boolean load() {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
-        if (!Config.registersToClients() || !Config.content.biomes) { return false; }
+        if (!Config.loads(Config.content.biomes)) { return false; }
         Json.eachInheritedFile(PackManager.BIOMES, "biome file", ContentInherits.BIOME_IDENTITY, (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
             read(key, contents);
         });
-        if (!DEFS.isEmpty()) { Summary.info("biomes", "Loaded " + DEFS.size() + " biome definition(s) from packs"); }
+        Summary.loaded("biomes", DEFS.size(), "biome definition(s) from packs");
         return !DEFS.isEmpty();
     }
 
@@ -116,12 +116,7 @@ public final class ContentBiomes {
         Json.unknownKeys(json, "the top level", BIOME_KEYS);
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (json.has("spawns")) {
-            for (JsonElement element : Json.getJsonArray(json, "spawns")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject entry = element.getAsJsonObject();
+            for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "spawns"), "A spawn entry in {} is not an object, skipping it", key)) {
                 Json.unknownKeys(entry, "spawns", SPAWN_KEYS);
                 String entity = Json.getString(entry, "entity", "");
                 if (entity.isEmpty()) {
@@ -139,7 +134,8 @@ public final class ContentBiomes {
             if (!entry.getValue().isJsonPrimitive()) { continue; }
             decoration.put(entry.getKey(), Json.asInt(entry.getValue(), entry.getKey(), 0));
         }
-        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "spawnRates", new JsonObject()).entrySet()) {
+        JsonObject rates = Json.getJsonObject(json, "spawnRates", new JsonObject());
+        for (Map.Entry<String, JsonElement> entry : rates.entrySet()) {
             if (RATE_KEYS.contains(entry.getKey())) { continue; }
             ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, entry.getKey(), RATE_KEYS);
         }
@@ -169,10 +165,10 @@ public final class ContentBiomes {
                 Json.getBoolean(placement, "strongholds", false),
                 Collections.unmodifiableMap(decoration),
                 spawnChance(key, Json.getFloat(json, "spawnChance", 0.1F)),
-                rate(json, "surfaceDay"),
-                rate(json, "surfaceNight"),
-                rate(json, "undergroundDay"),
-                rate(json, "undergroundNight"),
+                rate(rates, RATE_KEYS.get(0)),
+                rate(rates, RATE_KEYS.get(1)),
+                rate(rates, RATE_KEYS.get(2)),
+                rate(rates, RATE_KEYS.get(3)),
                 color(json, "grassColor", key),
                 color(json, "foliageColor", key),
                 color(json, "snowColor", key),
@@ -203,8 +199,7 @@ public final class ContentBiomes {
         return 0.99F;
     }
 
-    private static float rate(JsonObject json, String name) {
-        JsonObject rates = Json.getJsonObject(json, "spawnRates", new JsonObject());
+    private static float rate(JsonObject rates, String name) {
         return rates.has(name) ? Math.max(0.0F, Json.getFloat(rates, name)) : -1.0F;
     }
 

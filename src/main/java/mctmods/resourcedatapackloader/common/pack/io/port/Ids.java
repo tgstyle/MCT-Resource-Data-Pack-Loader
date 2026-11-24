@@ -16,16 +16,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
 public final class Ids {
-    public static final String MINECRAFT = "minecraft";
+    public static final String MINECRAFT = IdNames.VANILLA;
+    public static final String ORE_DICT = "forge:ore_dict";
     private static final String TABLE = "/assets/resourcedatapackloader/port/flattening.json";
     private static final String ENTITY_TABLES = "entities/";
+    private static final String LEFT_AS_WRITTEN = ", so vanilla ids in modern packs are left as written";
     private static final Map<String, List<Legacy>> BLOCKS = new HashMap<>();
     private static final Map<String, List<Legacy>> ITEMS = new HashMap<>();
     private static final Map<String, String> SPAWN_EGGS = new HashMap<>();
@@ -111,16 +112,20 @@ public final class Ids {
         Legacy lossy() { return new Legacy(id, meta, properties, legacyProperties, true); }
     }
 
-    public static boolean vanilla(String name) { return name.startsWith(MINECRAFT + ":") || name.indexOf(':') < 0; }
+    public static boolean vanilla(String name) { return name.startsWith(IdNames.MINECRAFT) || name.indexOf(':') < 0; }
 
     public static String namespaced(String name) { return IdNames.namespaced(name.trim()); }
+
+    public static String type(@Nullable JsonObject json) { return json != null && JsonUtils.isJsonPrimitive(json, "type") ? namespaced(json.get("type").getAsString()) : ""; }
+
+    public static String lowerId(String name) { return namespaced(Settings.lower(name)); }
 
     private static synchronized void load() {
         if (loaded) { return; }
         loaded = true;
         try (InputStream stream = Ids.class.getResourceAsStream(TABLE)) {
             if (stream == null) {
-                ContentLog.LOGGER.error("The flattening table {} is missing from the jar, so vanilla ids in modern packs are left as written", TABLE);
+                ContentLog.LOGGER.error("The flattening table {} is missing from the jar" + LEFT_AS_WRITTEN, TABLE);
                 return;
             }
             JsonObject table = new JsonParser().parse(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -134,7 +139,7 @@ public final class Ids {
             varied(BLOCKS, VARIED_BLOCKS);
             varied(ITEMS, VARIED_ITEMS);
         }
-        catch (Exception failed) { ContentLog.LOGGER.error("Could not read the flattening table {}, so vanilla ids in modern packs are left as written", TABLE, failed); }
+        catch (Exception failed) { ContentLog.LOGGER.error("Could not read the flattening table {}" + LEFT_AS_WRITTEN, TABLE, failed); }
     }
 
     private static void varied(Map<String, List<Legacy>> table, Set<String> into) {
@@ -241,29 +246,29 @@ public final class Ids {
 
     public static String entity(String name) {
         load();
-        String id = namespaced(name.toLowerCase(Locale.ROOT));
+        String id = lowerId(name);
         String found = ENTITIES.get(id);
         return found == null ? id : found;
     }
 
     public static String biome(String name) {
         load();
-        String id = namespaced(name.toLowerCase(Locale.ROOT));
+        String id = lowerId(name);
         String found = BIOMES.get(id);
         return found == null ? id : found;
     }
 
     public static String lootTable(String name) {
-        String asked = namespaced(Settings.lower(name));
-        if (!asked.startsWith(MINECRAFT + ":")) { return asked; }
-        String path = asked.substring(MINECRAFT.length() + 1);
+        String asked = lowerId(name);
+        if (!asked.startsWith(IdNames.MINECRAFT)) { return asked; }
+        String path = IdNames.bare(asked);
         String renamed = LOOT_TABLES.get(path);
-        if (renamed != null) { return MINECRAFT + ":" + renamed; }
+        if (renamed != null) { return IdNames.MINECRAFT + renamed; }
         if (!path.startsWith(ENTITY_TABLES)) { return asked; }
         String rest = path.substring(ENTITY_TABLES.length());
         int slash = rest.indexOf('/');
         String entity = entity(slash < 0 ? rest : rest.substring(0, slash));
-        return MINECRAFT + ":" + ENTITY_TABLES + IdNames.path(entity) + (slash < 0 ? "" : rest.substring(slash));
+        return IdNames.MINECRAFT + ENTITY_TABLES + IdNames.path(entity) + (slash < 0 ? "" : rest.substring(slash));
     }
 
     public static String attribute(String name) {
@@ -274,16 +279,16 @@ public final class Ids {
     }
 
     public static String enchantment(String name) {
-        String id = namespaced(name.toLowerCase(Locale.ROOT));
+        String id = lowerId(name);
         return "minecraft:sweeping_edge".equals(id) ? "minecraft:sweeping" : id;
     }
 
     public static String sound(String given) {
         String name = given.trim();
         String namespace = "";
-        if (name.startsWith(MINECRAFT + ":")) {
-            namespace = MINECRAFT + ":";
-            name = name.substring(namespace.length());
+        if (name.startsWith(IdNames.MINECRAFT)) {
+            namespace = IdNames.MINECRAFT;
+            name = IdNames.bare(name);
         }
         else if (name.indexOf(':') >= 0) { return given; }
         String exact = SOUNDS.get(name);
@@ -301,9 +306,15 @@ public final class Ids {
 
     @Nullable public static String particle(String given) { return PARTICLES.get(IdNames.bare(given.trim())); }
 
+    public static String oreKey(String tag) {
+        String ore = oreName(tag);
+        return ore == null ? camel(namespaced(tag).replace(':', '_').replace('/', '_'), false) : ore;
+    }
+
     @Nullable public static String oreName(String tag) {
-        String id = namespaced(tag.trim().startsWith("#") ? tag.trim().substring(1) : tag.trim());
-        String namespace = id.substring(0, id.indexOf(':'));
+        String held = tag.trim();
+        String id = namespaced(IdNames.isTag(held) ? IdNames.tagPath(held) : held);
+        String namespace = IdNames.namespace(id);
         String path = IdNames.path(id);
         String whole = ORE_WHOLE.get(id);
         if (whole != null) { return whole; }

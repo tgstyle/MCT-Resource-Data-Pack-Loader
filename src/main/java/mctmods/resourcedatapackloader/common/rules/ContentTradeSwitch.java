@@ -8,8 +8,10 @@ import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.trades.ITradeSwitchHolder;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -79,12 +81,8 @@ public final class ContentTradeSwitch {
             return null;
         }
         List<TradeDef> trades = new ArrayList<>();
-        for (JsonElement entry : element.getAsJsonArray()) {
-            if (!entry.isJsonObject()) {
-                ContentLog.LOGGER.error("{} gives a trade that is not an object, skipping it", owner);
-                continue;
-            }
-            TradeDef def = ContentVillagers.trade(key, entry.getAsJsonObject());
+        for (JsonObject entry : Json.objectsOrSkip(element.getAsJsonArray(), "{} gives a trade that is not an object, skipping it", owner)) {
+            TradeDef def = ContentVillagers.trade(key, entry);
             if (def != null) { trades.add(def); }
         }
         return new TradeSwitchDef(set, element.toString().hashCode(), trades);

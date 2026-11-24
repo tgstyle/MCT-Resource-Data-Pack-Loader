@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer.debug;
 
 import mctmods.resourcedatapackloader.client.renderer.CubeChunkBorder;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DebugRendererChunkBorder.class) public class MixinDebugRenderChunkBorder {
     @Inject(method = "render", at = @At(value = "HEAD"), cancellable = true) private void rdpl$renderChunkBorder(float partialTicks, long finishTimeNano, CallbackInfo ci) {
-        if (((IRubicWorld) Minecraft.getMinecraft().world).rdpl$isRubicWorld()) {
+        if (GenHeights.rubic(Minecraft.getMinecraft().world)) {
             ci.cancel();
             CubeChunkBorder.render(Minecraft.getMinecraft().player, Tessellator.getInstance(), partialTicks);
         }

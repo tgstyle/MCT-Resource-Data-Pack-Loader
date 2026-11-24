@@ -5,9 +5,12 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffe
 import mctmods.resourcedatapackloader.common.pack.definitions.items.DietDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.util.NbtStrings;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -23,7 +26,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +38,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FoodStats;
@@ -60,8 +59,7 @@ public final class ContentDiet {
     private static final List<String> DIET_KEYS = Collections.unmodifiableList(Arrays.asList("requires", "keepOnDeath", "memory", "repeat", "variety", "exempt", "groups", "messages", "tooltip"));
     private static final List<String> KEEP_KEYS = Collections.unmodifiableList(Arrays.asList("hunger", "saturation"));
     private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentDiet::eaten, ContentDiet::tooltip, RDPLNetwork::sendEaten);
-    private static final Map<UUID, float[]> BEFORE = new HashMap<>();
-    private static final Map<PotionEffectDef, Potion> EFFECTS = new IdentityHashMap<>();
+    private static final Map<UUID, float[]> BEFORE = PlayerLogout.track(new HashMap<>());
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final String KEEP_ON_DEATH = "keepOnDeath";
     private static final float FULL = 20.0F;
@@ -83,7 +81,6 @@ public final class ContentDiet {
         source = null;
         keepFood = null;
         keepSaturation = null;
-        EFFECTS.clear();
         GENERATION.stale();
         Json.eachObject(PackManager.DIETS, "diet file", ContentDiet::read);
         if (diet != null) { Summary.info("diet", "Food variety from " + source + ": remembers " + diet.memory + " meal(s)"); }
@@ -92,7 +89,7 @@ public final class ContentDiet {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", DIET_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         if (json.has(KEEP_ON_DEATH)) { readKeep(key, json); }
         if (onlyKeep(json)) { return; }
         if (diet != null) {
@@ -107,7 +104,7 @@ public final class ContentDiet {
     }
 
     private static boolean onlyKeep(JsonObject json) {
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) { if (!KEEP_ON_DEATH.equals(entry.getKey()) && !"requires".equals(entry.getKey())) { return false; } }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) { if (!KEEP_ON_DEATH.equals(entry.getKey()) && !ContentRegistry.REQUIRES.equals(entry.getKey())) { return false; } }
         return true;
     }
 
@@ -166,11 +163,6 @@ public final class ContentDiet {
         seen[1] = food.getSaturationLevel();
     }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        BEFORE.remove(event.player.getUniqueID());
-        SYNC.forget(event.player);
-    }
-
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) { return; }
         if (GENERATION.stale()) { reload(); }
@@ -200,30 +192,26 @@ public final class ContentDiet {
         String key = diet.kind(event.getItem(), key(event.getItem()));
         int count = 0;
         for (String meal : meals) { if (meal.equals(key)) { count++; } }
-        int distinctBefore = new HashSet<>(meals).size();
+        int distinctBefore = distinct(meals);
         meals.add(key);
         while (meals.size() > diet.memory) { meals.remove(0); }
-        int distinctAfter = new HashSet<>(meals).size();
+        int distinctAfter = distinct(meals);
         int everBefore = eaten.size();
         eaten.add(key);
-        NBTTagList ever = new NBTTagList();
-        for (String kind : eaten) { ever.appendTag(new NBTTagString(kind)); }
-        section.setTag(EATEN, ever);
+        section.setTag(EATEN, NbtStrings.write(eaten));
         float repeat = diet.repeatMultiplier(count);
         float variety = diet.varietyMultiplier(distinctAfter);
         float multiplier = repeat * variety;
         String message = variety > 1.0F ? diet.varietyMessage : repeat < 1.0F ? diet.repeatMessage : "";
         if (!message.isEmpty()) { player.sendStatusMessage(new TextComponentString(Lang.tr(player, message)), true); }
-        int level = Math.max(0, Math.min(20, foodBefore + Math.round(Math.max(0, foodGain) * multiplier)));
-        float saturation = Math.max(0, Math.min(level, seen[1] + Math.max(0, satGain) * multiplier));
+        int level = MathHelper.clamp(foodBefore + Math.round(Math.max(0, foodGain) * multiplier), 0, (int) FULL);
+        float saturation = MathHelper.clamp(seen[1] + Math.max(0, satGain) * multiplier, 0, level);
         NBTTagCompound stats = new NBTTagCompound();
         food.writeNBT(stats);
         stats.setInteger("foodLevel", level);
         stats.setFloat("foodSaturationLevel", saturation);
         food.readNBT(stats);
-        NBTTagList written = new NBTTagList();
-        for (String meal : meals) { written.appendTag(new NBTTagString(meal)); }
-        section.setTag(MEALS, written);
+        section.setTag(MEALS, NbtStrings.write(meals));
         SYNC.push(player);
         ContentHearts.onMeal(player, distinctBefore, distinctAfter, everBefore, eaten.size());
         reward(player, diet.bestTier(distinctBefore), diet.bestTier(distinctAfter));
@@ -232,8 +220,8 @@ public final class ContentDiet {
     private static void reward(EntityPlayerMP player, @Nullable DietDef.Tier before, @Nullable DietDef.Tier after) {
         if (after == null) { return; }
         for (PotionEffectDef effect : after.effects) {
-            Potion potion = EFFECTS.computeIfAbsent(effect, held -> Potion.getPotionFromResourceLocation(held.potion));
-            if (potion != null) { player.addPotionEffect(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles)); }
+            PotionEffect built = PotionEffects.resolve(effect, effect.duration, effect.showParticles);
+            if (built != null) { player.addPotionEffect(built); }
         }
         if (!after.runs.isEmpty() && (before == null || after.distinct > before.distinct)) { Functions.runAs(player, after.runs, "Diet tier " + after.distinct + " in " + source); }
     }
@@ -242,7 +230,9 @@ public final class ContentDiet {
 
     public static boolean hasTier(int distinct) { return diet != null && diet.hasTier(distinct); }
 
-    public static int distinct(EntityPlayer player) { return diet == null ? 0 : new HashSet<>(meals(PlayerPersisted.section(player, SECTION))).size(); }
+    public static int distinct(EntityPlayer player) { return diet == null ? 0 : distinct(meals(PlayerPersisted.section(player, SECTION))); }
+
+    private static int distinct(List<String> meals) { return new HashSet<>(meals).size(); }
 
     public static int eatenEver(EntityPlayer player) { return diet == null ? 0 : eaten(player).size(); }
 
@@ -256,7 +246,7 @@ public final class ContentDiet {
         return rules == null || rules.exempts(stack) || notFood(stack) ? "" : rules.kind(stack, key(stack));
     }
 
-    public static boolean lifetime(JsonObject json, Object owner) { return LIFETIME.equals(Json.choice(json, "dietCount", MEMORY, owner, COUNTS)); }
+    public static boolean lifetime(JsonObject json, Object owner) { return Json.choiceIs(json, "dietCount", MEMORY, owner, COUNTS, LIFETIME); }
 
     private static Set<String> eaten(EntityPlayer player) {
         NBTTagCompound section = PlayerPersisted.read(player, SECTION);
@@ -266,17 +256,15 @@ public final class ContentDiet {
     private static Set<String> eaten(NBTTagCompound section, List<String> meals) {
         Set<String> eaten = new LinkedHashSet<>();
         if (!section.hasKey(EATEN)) { eaten.addAll(meals); }
-        NBTTagList stored = section.getTagList(EATEN, Constants.NBT.TAG_STRING);
-        for (int i = 0; i < stored.tagCount(); i++) { eaten.add(stored.getStringTagAt(i)); }
+        NbtStrings.read(section.getTagList(EATEN, Constants.NBT.TAG_STRING), eaten);
         return eaten;
     }
 
     private static boolean notFood(ItemStack stack) { return !(stack.getItem() instanceof ItemFood) || ((ItemFood) stack.getItem()).getHealAmount(stack) < 1; }
 
     private static List<String> meals(NBTTagCompound section) {
-        NBTTagList stored = section.getTagList(MEALS, Constants.NBT.TAG_STRING);
         List<String> meals = new ArrayList<>();
-        for (int i = 0; i < stored.tagCount(); i++) { meals.add(stored.getStringTagAt(i)); }
+        NbtStrings.read(section.getTagList(MEALS, Constants.NBT.TAG_STRING), meals);
         return meals;
     }
 

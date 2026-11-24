@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.util.ScreenEvents;
 import mctmods.resourcedatapackloader.client.util.TrueDarkness;
 
 import javax.annotation.Nullable;
@@ -17,10 +18,10 @@ public final class GammaLock {
     private GammaLock() {}
 
     @SubscribeEvent public static void lockSlider(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (!(event.getGui() instanceof GuiVideoSettings)) { return; }
+        GuiVideoSettings screen = ScreenEvents.screen(event, GuiVideoSettings.class);
+        if (screen == null) { return; }
         float locked = TrueDarkness.lockedGamma(Minecraft.getMinecraft().world);
         if (Float.isNaN(locked)) { return; }
-        GuiVideoSettings screen = (GuiVideoSettings) event.getGui();
         if (screen.optionsRowList instanceof GuiOptionsRowList) {
             for (GuiOptionsRowList.Row row : ((GuiOptionsRowList) screen.optionsRowList).options) {
                 lock(row.buttonA, locked);

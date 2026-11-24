@@ -51,14 +51,14 @@ public final class OwnershipCommand {
         boolean all = args.length == 2;
         int dimension = all ? 0 : CommandBase.parseInt(args[2]);
         if (!all && !DimensionManager.isDimensionRegistered(dimension)) { throw new CommandException(Lang.tr(sender, "rdpl.command.nodimension", dimension)); }
-        int[] progress = OwnershipSweep.start(server, all, dimension);
+        OwnershipSweep.Progress progress = OwnershipSweep.start(server, all, dimension);
         if (progress == null) { throw new CommandException(Lang.tr(sender, all ? "rdpl.command.ownershipnoneall" : "rdpl.command.ownershipnone", dimension)); }
-        CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, all ? "rdpl.command.ownershipstartall" : "rdpl.command.ownershipstart", progress[4], progress[0], progress[2]));
+        CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, all ? "rdpl.command.ownershipstartall" : "rdpl.command.ownershipstart", progress.dimensions, progress.dimension, progress.total));
     }
 
     private static void status(MinecraftServer server, ICommandSender sender) {
-        int[] progress = OwnershipSweep.progress(server);
+        OwnershipSweep.Progress progress = OwnershipSweep.progress(server);
         if (progress == null) { CommandShared.send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.ownershipidle")); }
-        else { CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, progress[5] == 1 ? "rdpl.command.ownershipstatus" : "rdpl.command.ownershipstatusone", progress[0], progress[3], progress[4], progress[1], progress[2])); }
+        else { CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, progress.all ? "rdpl.command.ownershipstatus" : "rdpl.command.ownershipstatusone", progress.dimension, progress.index, progress.dimensions, progress.done, progress.total)); }
     }
 }

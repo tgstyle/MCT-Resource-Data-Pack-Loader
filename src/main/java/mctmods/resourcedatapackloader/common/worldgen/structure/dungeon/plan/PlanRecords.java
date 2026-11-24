@@ -33,6 +33,7 @@ public final class PlanRecords {
     private PlanRecords() {}
 
     public static final class Shaft {
+        public static final int SIDE = 3;
         public final int type;
         public final int x;
         public final int z;
@@ -46,6 +47,20 @@ public final class PlanRecords {
             this.topY = topY;
             this.bottomY = bottomY;
         }
+
+        public int minX(int pad) { return x - pad; }
+
+        public int maxX(int pad) { return x + SIDE - 1 + pad; }
+
+        public int minZ(int pad) { return z - pad; }
+
+        public int maxZ(int pad) { return z + SIDE - 1 + pad; }
+
+        public int centreX() { return x + SIDE / 2; }
+
+        public int centreZ() { return z + SIDE / 2; }
+
+        public boolean covers(int px, int pz, int pad) { return px >= minX(pad) && px <= maxX(pad) && pz >= minZ(pad) && pz <= maxZ(pad); }
     }
 
     public static final class Entrance {

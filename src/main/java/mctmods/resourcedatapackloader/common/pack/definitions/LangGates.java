@@ -123,8 +123,8 @@ public final class LangGates {
                 for (List<Gate> gates : paths.values()) {
                     for (Gate gate : gates) {
                         for (String asked : gate.requires) {
-                            if (!asked.startsWith("config:")) { continue; }
-                            String option = asked.substring("config:".length());
+                            if (!asked.startsWith(ContentRegistry.CONFIG_PREFIX)) { continue; }
+                            String option = asked.substring(ContentRegistry.CONFIG_PREFIX.length());
                             if (option.equals(name) || option.equals(file + ":" + name)) { return true; }
                         }
                     }

@@ -43,9 +43,7 @@ public final class BeardRailsGrade {
     }
 
     private static boolean onRamp(@Nullable int[] rising, int row) {
-        if (rising == null) { return false; }
-        int ramp = BeardRails.subwayDepth() * BeardRails.climb(true);
-        return rising[1] > 0 ? row >= rising[0] - ramp : row <= rising[0] + ramp;
+        return BeardRails.surfaced(rising, row, BeardRails.subwayDepth() * BeardRails.climb(true));
     }
 
     @Nullable public static BeardRoads.Grade profile(World world, RailPiece rail) {
@@ -171,30 +169,25 @@ public final class BeardRailsGrade {
 
     private static int span(int climb) { return Math.max(4, 2 * climb); }
 
-    private static double[] meaned(double[] base, int span) {
+    private static double[] meaned(double[] base, int span) { return windowed(base, span, false); }
+
+    private static double[] lowest(double[] base, int span) { return windowed(base, span, true); }
+
+    private static double[] windowed(double[] base, int span, boolean least) {
         int rows = base.length;
-        double[] mean = new double[rows];
+        double[] folded = new double[rows];
         for (int at = 0; at < rows; at++) {
             double total = 0.0D;
+            double found = base[at];
             int count = 0;
             for (int near = Math.max(0, at - span); near <= Math.min(rows - 1, at + span); near++) {
                 total += base[near];
+                found = Math.min(found, base[near]);
                 count++;
             }
-            mean[at] = total / count;
+            folded[at] = least ? found : total / count;
         }
-        return mean;
-    }
-
-    private static double[] lowest(double[] base, int span) {
-        int rows = base.length;
-        double[] least = new double[rows];
-        for (int at = 0; at < rows; at++) {
-            double found = base[at];
-            for (int near = Math.max(0, at - span); near <= Math.min(rows - 1, at + span); near++) { found = Math.min(found, base[near]); }
-            least[at] = found;
-        }
-        return least;
+        return folded;
     }
 
     private static double[] under(double[] level, double step) {
@@ -316,8 +309,8 @@ public final class BeardRailsGrade {
             if (!(other instanceof StructureVillagePieces.Path) || BeardPlots.roadAlongX(other) == alongX) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
             if (!road.intersectsWith(rail.getBoundingBox().minX, rail.getBoundingBox().minZ, rail.getBoundingBox().maxX, rail.getBoundingBox().maxZ)) { continue; }
-            int from = Math.max(0, (alongX ? road.minX : road.minZ) - 1 - rowLeast);
-            int to = Math.min(rows - 1, (alongX ? road.maxX : road.maxZ) + 1 - rowLeast);
+            int from = Math.max(0, (BeardPlots.least(road, alongX)) - 1 - rowLeast);
+            int to = Math.min(rows - 1, (BeardPlots.most(road, alongX)) + 1 - rowLeast);
             if (from > to) { continue; }
             int center = MathHelper.clamp((alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2) - rowLeast, 0, rows - 1);
             int level = profile[center];

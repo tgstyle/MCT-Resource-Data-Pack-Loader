@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.core.integration.forgemultipartcbe;
 
 import mctmods.resourcedatapackloader.common.rubic.world.CubeWatchEvent;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.core.integration.CompatHooks;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.network.world.MultipartDescMessage;
@@ -23,8 +22,6 @@ public final class CbmpRubicParts {
     private CbmpRubicParts() {}
 
     public static void register() { if (CompatHooks.present("forgemultipartcbe", "Forge Multipart only describes its parts to a client when a whole chunk is watched, so on rubic worlds every cube sent to a player carries its part descriptions with it")) { MinecraftForge.EVENT_BUS.register(new Handler()); } }
-
-    public static boolean rubic(World world) { return world instanceof IRubicWorld && ((IRubicWorld) world).rdpl$isRubicWorld(); }
 
     public static final class Client {
         private Client() {}

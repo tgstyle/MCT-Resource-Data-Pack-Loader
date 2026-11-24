@@ -14,8 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkGeneratorEnd.class) public abstract class MixinChunkGeneratorEnd {
     @Inject(method = "generateChunk(II)Lnet/minecraft/world/chunk/Chunk;", at = @At("HEAD"), cancellable = true) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(rdpl$world(), x, z);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(rdpl$world())) { cir.setReturnValue(ContentVoidWorld.emptyChunk(rdpl$world(), x, z)); }
     }
 
     @Inject(method = "populate(II)V", at = @At("HEAD"), cancellable = true) private void rdpl$skipPopulate(int x, int z, CallbackInfo ci) {

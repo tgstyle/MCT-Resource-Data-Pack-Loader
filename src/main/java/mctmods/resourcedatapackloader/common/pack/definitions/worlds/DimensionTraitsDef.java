@@ -13,6 +13,14 @@ public final class DimensionTraitsDef {
     public static final long NO_DAY = 0L;
     public static final float VANILLA_SUN = 30.0F;
     public static final float VANILLA_MOON = 20.0F;
+    public static final ResourceLocation VANILLA_SUN_TEXTURE = new ResourceLocation("textures/environment/sun.png");
+    public static final ResourceLocation VANILLA_MOON_TEXTURE = new ResourceLocation("textures/environment/moon_phases.png");
+
+    public static boolean inWindow(long tick, long from, long to, boolean endInclusive) {
+        boolean beforeEnd = endInclusive ? tick <= to : tick < to;
+        return from <= to ? tick >= from && beforeEnd : tick >= from || beforeEnd;
+    }
+
     public final double gravity;
     public final double fallDamage;
     public final double arrowGravity;

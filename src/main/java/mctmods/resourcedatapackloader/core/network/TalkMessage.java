@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
+
 import io.netty.buffer.ByteBuf;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
@@ -55,8 +57,8 @@ public class TalkMessage implements IMessage {
         npc = buf.readInt();
         end = buf.readBoolean();
         title = ByteBufUtils.readUTF8String(buf);
-        lines = strings(buf);
-        replies = strings(buf);
+        lines = PacketUtils.readLines(buf);
+        replies = PacketUtils.readLines(buf);
         icon = ByteBufUtils.readItemStack(buf);
         image = ByteBufUtils.readUTF8String(buf);
         background = buf.readInt();
@@ -74,8 +76,8 @@ public class TalkMessage implements IMessage {
         buf.writeInt(npc);
         buf.writeBoolean(end);
         ByteBufUtils.writeUTF8String(buf, title);
-        write(buf, lines);
-        write(buf, replies);
+        PacketUtils.writeLines(buf, lines);
+        PacketUtils.writeLines(buf, replies);
         ByteBufUtils.writeItemStack(buf, icon);
         ByteBufUtils.writeUTF8String(buf, image);
         buf.writeInt(background);
@@ -87,18 +89,5 @@ public class TalkMessage implements IMessage {
         buf.writeInt(hoverColor);
         buf.writeInt(hoverBackground);
         buf.writeBoolean(history);
-    }
-
-    private static List<String> strings(ByteBuf buf) {
-        int count = buf.readByte();
-        List<String> read = new ArrayList<>();
-        for (int i = 0; i < count; i++) { read.add(ByteBufUtils.readUTF8String(buf)); }
-        return read;
-    }
-
-    private static void write(ByteBuf buf, List<String> strings) {
-        int count = Math.min(strings.size(), 16);
-        buf.writeByte(count);
-        for (int i = 0; i < count; i++) { ByteBufUtils.writeUTF8String(buf, strings.get(i)); }
     }
 }

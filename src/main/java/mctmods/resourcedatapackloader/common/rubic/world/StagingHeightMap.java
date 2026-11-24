@@ -68,13 +68,12 @@ public class StagingHeightMap implements IHeightMap {
         return found;
     }
 
-    @SuppressWarnings("deprecation") private int computeHeightMap(int localX, int localZ) {
+    private int computeHeightMap(int localX, int localZ) {
         for (ICube stagedCube : stagedCubes) {
             ExtendedBlockStorage ebs = stagedCube.getStorage();
             if (ebs == null || ebs.isEmpty()) { continue; }
-            for (int i = 15; i >= 0; i--) {
-                if (ebs.get(localX, i, localZ).getLightOpacity() > 0) { return Coords.localToBlock(stagedCube.getY(), i); }
-            }
+            int top = Coords.topOpaqueLocalY(ebs, localX, localZ);
+            if (top >= 0) { return Coords.localToBlock(stagedCube.getY(), top); }
         }
         return Coords.NO_HEIGHT;
     }

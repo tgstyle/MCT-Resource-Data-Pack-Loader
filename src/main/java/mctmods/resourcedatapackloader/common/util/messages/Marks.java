@@ -49,14 +49,14 @@ public final class Marks {
         int i = from;
         while (i < to) {
             char c = s.charAt(i);
-            if (c == '\\' && i + 1 < to && ESCAPED.indexOf(s.charAt(i + 1)) >= 0) {
+            if (c == '\\' && escapeEnd(s, i, to) > 0) {
                 text.append(s.charAt(i + 1));
                 i += 2;
                 continue;
             }
             if (c == '`') {
-                int close = s.indexOf('`', i + 1);
-                if (close > i + 1 && close < to) {
+                int close = codeSpanEnd(s, i, to);
+                if (close > 0) {
                     flush(text, marks, runs);
                     runs.add(new Run(s.substring(i + 1, close), marks | CODE));
                     i = close + 1;
@@ -156,6 +156,13 @@ public final class Marks {
             i++;
         }
         return -1;
+    }
+
+    private static int escapeEnd(String s, int i, int to) { return i + 1 < to && ESCAPED.indexOf(s.charAt(i + 1)) >= 0 ? i + 2 : -1; }
+
+    private static int codeSpanEnd(String s, int i, int to) {
+        int close = s.indexOf('`', i + 1);
+        return close > i + 1 && close < to ? close : -1;
     }
 
     private static void flush(StringBuilder text, int marks, List<Run> runs) {

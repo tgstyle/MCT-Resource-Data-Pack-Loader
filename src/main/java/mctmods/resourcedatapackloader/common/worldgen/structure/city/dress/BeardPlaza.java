@@ -39,23 +39,12 @@ public final class BeardPlaza {
             for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
                 if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { continue; }
                 if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
-                IBlockState ground = Blocks.DIRT.getDefaultState();
+                IBlockState ground = restingGround(start, piece, world, clip, at, x, z, rim, rim - ContentBeard.BAND + 1);
                 for (int y = rim; y >= rim - ContentBeard.BAND + 1; y--) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
-                    IBlockState resting = world.getBlockState(at);
-                    if (resting.isFullBlock()) { ground = resting; }
-                    break;
-                }
-                for (int y = rim; y >= rim - ContentBeard.BAND + 1; y--) {
-                    at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     if (world.getBlockState(at).getMaterial().isSolid() || BeardRails.insideBore(world, bores, x, y, z)) { break; }
-                    IBlockState laidAs = ground;
-                    if (y == rim && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
-                    else if (y != rim && ground.getBlock() == Blocks.GRASS) { laidAs = Blocks.DIRT.getDefaultState(); }
-                    world.setBlockState(at, laidAs, BlockFlags.UPDATE_CLIENTS);
+                    world.setBlockState(at, BeardBlocks.laidAs(ground, y == rim), BlockFlags.UPDATE_CLIENTS);
                     banked++;
                 }
                 opened += sweep(start, piece, world, clip, at, x, z, rim + 1, rim + 4);
@@ -67,18 +56,10 @@ public final class BeardPlaza {
                 int lx = x - box.minX;
                 int lz = z - box.minZ;
                 if (lx != 0 && lx != 5 && lz != 0 && lz != 5) { continue; }
-                IBlockState ground = Blocks.DIRT.getDefaultState();
+                IBlockState ground = restingGround(start, piece, world, clip, at, x, z, rim - 1, rim - ContentBeard.BAND);
                 for (int y = rim - 1; y >= rim - ContentBeard.BAND; y--) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
-                    IBlockState resting = world.getBlockState(at);
-                    if (resting.isFullBlock()) { ground = resting; }
-                    break;
-                }
-                for (int y = rim - 1; y >= rim - ContentBeard.BAND; y--) {
-                    at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     if (world.getBlockState(at).getMaterial().isSolid() || BeardRails.insideBore(world, bores, x, y, z)) { break; }
                     world.setBlockState(at, ground.getBlock() == Blocks.GRASS ? Blocks.DIRT.getDefaultState() : ground, BlockFlags.UPDATE_CLIENTS);
                     shored++;
@@ -99,6 +80,17 @@ public final class BeardPlaza {
             }
         }
         if (banked + opened + swept + shored > 0) { ContentLog.LOGGER.debug("Banked {} block(s), opened {}, swept {} out of the frame and shored {} under the rim around the well at {}, {}, up to its rim at y {}", banked, opened, swept, shored, box.minX, box.minZ, rim); }
+    }
+
+    private static IBlockState restingGround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z, int top, int bottom) {
+        for (int y = top; y >= bottom; y--) {
+            at.setPos(x, y, z);
+            if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
+            if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
+            IBlockState resting = world.getBlockState(at);
+            return resting.isFullBlock() ? resting : Blocks.DIRT.getDefaultState();
+        }
+        return Blocks.DIRT.getDefaultState();
     }
 
     public static void wellPlaza(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) { BeardBiome.within(world, clip, () -> plazaLaid(start, piece, world, clip)); }
@@ -164,7 +156,7 @@ public final class BeardPlaza {
                 if (BeardPlots.underBuilding(start, piece, x, z) || BeardPlots.underRoad(start, piece, x, z)) { continue; }
                 int shelf = ground - band;
                 at.setPos(x, shelf + 1, z);
-                if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                 if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
                 tapered += BeardBlocks.fillBank(world, at, x, z, shelf, shelf - 4, false);
             }
@@ -184,7 +176,7 @@ public final class BeardPlaza {
         int cleared = 0;
         for (int y = from; y <= to; y++) {
             at.setPos(x, y, z);
-            if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+            if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
             if (BeardKeep.holds(x, y, z)) { continue; }
             Material material = world.getBlockState(at).getMaterial();
             if (BeardBlocks.loose(material)) {

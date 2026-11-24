@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
-import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
+import mctmods.resourcedatapackloader.common.util.plant.Plants;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.ArrayList;
@@ -12,9 +13,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockSapling;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +26,6 @@ public final class TreeRecorder {
     public static final ThreadLocal<Boolean> RECORDING = ThreadLocal.withInitial(() -> Boolean.FALSE);
     public static final int MAX_ENTRIES = 4096;
     private static final int MAX_CALLS = 16;
-    private static final int RESTORE_FLAGS = 18;
     private static final int LIMIT_XZ = 24;
     private static final int LIMIT_Y = 16;
 
@@ -52,6 +52,8 @@ public final class TreeRecorder {
         try { return world.setBlockState(pos, state, flags); }
         finally { world.captureBlockSnapshots = prior; }
     }
+
+    public static void clear(World world, BlockPos pos) { write(world, pos, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_ALL); }
 
     @Nullable public static Result record(World world, BlockPos pos, @Nullable IBlockState sapling, long seed, String source, @Nullable Consumer<Random> own, Predicate<Result> whole) {
         int saved = world.capturedBlockSnapshots.size();
@@ -94,7 +96,7 @@ public final class TreeRecorder {
     }
 
     private static void grow(World world, BlockPos pos, @Nullable IBlockState sapling, Random rand, @Nullable Consumer<Random> own, int saved) {
-        if (own == null && sapling != null) { world.setBlockState(pos, sapling, 2); }
+        if (own == null && sapling != null) { world.setBlockState(pos, sapling, BlockFlags.UPDATE_CLIENTS); }
         for (int call = 0; call < MAX_CALLS; call++) {
             if (own != null) { own.accept(rand); }
             else {
@@ -107,7 +109,7 @@ public final class TreeRecorder {
         }
     }
 
-    private static boolean onlyStart(List<BlockSnapshot> list, int saved, BlockPos start) {
+    static boolean onlyStart(List<BlockSnapshot> list, int saved, BlockPos start) {
         if (list.size() <= saved) { return false; }
         for (int i = saved; i < list.size(); i++) {
             if (!list.get(i).getPos().equals(start)) { return false; }
@@ -126,17 +128,15 @@ public final class TreeRecorder {
             IBlockState under = entry.getValue();
             IBlockState now = world.getBlockState(at);
             boolean isStart = at.equals(start);
-            boolean isSapling = isStart || under.getBlock() instanceof BlockSapling || under.getBlock() instanceof ContentSaplingBlock;
+            boolean isSapling = isStart || Plants.sapling(under.getBlock());
             if (!isSapling && now.getBlock() == under.getBlock()) { continue; }
-            int dx = at.getX() - start.getX();
-            int dy = at.getY() - start.getY();
-            int dz = at.getZ() - start.getZ();
-            if (outOfBounds(dx, dy, dz) || result.offsets.size() >= MAX_ENTRIES) {
+            BlockPos offset = at.subtract(start);
+            if (outOfBounds(offset.getX(), offset.getY(), offset.getZ()) || result.offsets.size() >= MAX_ENTRIES) {
                 Result over = new Result();
                 over.overBounds = true;
                 return over;
             }
-            int packed = TreeEntry.pack(dx, dy, dz);
+            int packed = TreeEntry.pack(offset);
             result.offsets.add(packed);
             result.states.add(now);
             result.unders.add(under);
@@ -164,7 +164,7 @@ public final class TreeRecorder {
         int end = list.size();
         world.captureBlockSnapshots = true;
         try {
-            for (int i = end - 1; i >= saved; i--) { world.setBlockState(list.get(i).getPos(), list.get(i).getReplacedBlock(), RESTORE_FLAGS); }
+            for (int i = end - 1; i >= saved; i--) { world.setBlockState(list.get(i).getPos(), list.get(i).getReplacedBlock(), BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE); }
         }
         finally {
             if (list.size() > saved) { list.subList(saved, list.size()).clear(); }

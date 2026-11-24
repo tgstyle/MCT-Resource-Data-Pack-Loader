@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.io.port.commands;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
+import mctmods.resourcedatapackloader.core.util.text.CommandWords;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,10 +35,10 @@ final class CommandSelectors {
         String sort = null;
         String limit = null;
         for (String part : splitTop(m.group(2))) {
-            int equals = part.indexOf('=');
-            if (equals <= 0) { throw new Commands.Kept("the selector " + token + " holds '" + part + "', which is not an argument"); }
-            String key = part.substring(0, equals).trim();
-            String value = part.substring(equals + 1).trim();
+            String[] argument = CommandWords.pair(part);
+            if (argument == null) { throw new Commands.Kept("the selector " + token + " holds '" + part + "', which is not an argument"); }
+            String key = argument[0];
+            String value = argument[1];
             switch (key) {
                 case "type": out.add("type=" + negated(value, Ids::entity)); break;
                 case "name":
@@ -111,18 +112,9 @@ final class CommandSelectors {
     private static void scores(List<String> out, String value) {
         if (!value.startsWith("{") || !value.endsWith("}")) { throw new Commands.Kept("the scores argument " + value + " is not a set of scores"); }
         for (String part : splitTop(value.substring(1, value.length() - 1))) {
-            int equals = part.indexOf('=');
-            if (equals <= 0) { continue; }
-            String objective = part.substring(0, equals).trim();
-            String bounds = part.substring(equals + 1).trim();
-            Matcher m = RANGE.matcher(bounds);
-            if (!m.matches()) {
-                out.add("score_" + objective + "_min=" + whole(bounds));
-                out.add("score_" + objective + "=" + whole(bounds));
-                continue;
-            }
-            if (!m.group(1).isEmpty()) { out.add("score_" + objective + "_min=" + whole(m.group(1))); }
-            if (!m.group(2).isEmpty()) { out.add("score_" + objective + "=" + whole(m.group(2))); }
+            String[] score = CommandWords.pair(part);
+            if (score == null) { continue; }
+            range(out, "score_" + score[0] + "_min", "score_" + score[0], score[1]);
         }
     }
 }

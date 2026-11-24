@@ -169,7 +169,7 @@ public final class ContentPortals {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
             if (binding.igniter == null || held.getItem() != binding.igniter) { continue; }
-            if (world.provider.getDimension() == binding.dimension.id && binding.portal.noLightBack()) { continue; }
+            if (binding.blockedIn(world)) { continue; }
             for (PortalFrameDef frame : binding.itemFrames) {
                 for (BlockPos candidate : candidates(world, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(world, candidate, frame);
@@ -188,7 +188,7 @@ public final class ContentPortals {
         if (fluid == null || !litFluids.contains(fluid) || !besideFrame(world, at)) { return; }
         for (Binding binding : bindings()) {
             if (binding.fluid != fluid) { continue; }
-            if (world.provider.getDimension() == binding.dimension.id && binding.portal.noLightBack()) { continue; }
+            if (binding.blockedIn(world)) { continue; }
             for (PortalFrameDef frame : binding.fluidFrames) {
                 PortalFit fit = ContentPortalFrames.fit(world, at, frame, null, fluid);
                 if (fit == null) { continue; }
@@ -308,5 +308,7 @@ public final class ContentPortals {
             this.fluidFrames = fluidFrames;
             this.block = block;
         }
+
+        private boolean blockedIn(World world) { return world.provider.getDimension() == dimension.id && portal.noLightBack(); }
     }
 }

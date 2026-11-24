@@ -11,17 +11,7 @@ public final class ContentSpire extends ContentShapeBase {
     public ContentSpire(ContentPlacer placer, ShapeDef shape) { super(placer, shape); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
-        int radius = radius(random);
-        int height = rise(random);
-        int step = step();
-        boolean round = shape.isRound();
-        boolean placed = false;
-        for (int level = 0; level < height; level++) {
-            int reach = reach(radius, level / (double) height);
-            int y = origin.getY() + step * level;
-            placed |= placer.disc(world, random, origin, reach, round, y, y);
-        }
-        return placed;
+        return discColumn(world, random, origin, (radius, level, height) -> reach(radius, level / (double) height), false);
     }
 
     private int reach(int radius, double climbed) {

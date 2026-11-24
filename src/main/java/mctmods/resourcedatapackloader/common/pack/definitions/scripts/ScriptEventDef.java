@@ -46,6 +46,8 @@ public final class ScriptEventDef {
         this.className = className;
     }
 
+    public boolean due(long time) { return every == 1 || time % every == 0; }
+
     public static boolean disablesOnError(String kind) { return NEW_KINDS.contains(kind); }
 
     private static int defaultEvery(String kind) { return PLAYER_TICK.equals(kind) || SERVER_TICK.equals(kind) ? 20 : 1; }
@@ -54,10 +56,10 @@ public final class ScriptEventDef {
         switch (kind) {
             case PLAYER_TICK:
             case DIMENSION_CHANGE:
-                return new HashSet<>(Arrays.asList("dimension", "item"));
+                return new HashSet<>(Arrays.asList(EventFilter.DIMENSION, EventFilter.ITEM));
             case LOOT_DROP:
             case ENTITY_TRAVEL:
-                return new HashSet<>(Arrays.asList("dimension", "entity", "item"));
+                return new HashSet<>(Arrays.asList(EventFilter.DIMENSION, EventFilter.ENTITY, EventFilter.ITEM));
             case SERVER_TICK:
             case MOD_EVENT:
                 return NO_KEYS;

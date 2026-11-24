@@ -34,25 +34,17 @@ public final class LootInjections {
     private LootInjections() {}
 
     private static void reload() {
-        BY_TABLE.clear();
-        GENERATION.stale();
-        if (!Config.data.lootInjections) { return; }
         int[] count = new int[1];
-        Json.eachObject(PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count));
-        if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
+        GENERATION.load(Config.data.lootInjections, BY_TABLE::clear, PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count), () -> {
+            if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
         Json.unknownKeys(json, "the top level", INJECTION_KEYS);
-        String target = Json.getString(json, TARGET, "");
-        if (target.isEmpty()) {
-            ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
-            return;
-        }
-        if (!json.has(POOLS)) {
-            ContentLog.LOGGER.error("Loot injection {} has no pools, ignoring it", key);
-            return;
-        }
+        String target = Json.required(json, TARGET, key, "Loot injection {} has no target table, ignoring it");
+        if (target.isEmpty()) { return; }
+        if (Json.missing(json, POOLS, key, "Loot injection {} has no pools, ignoring it")) { return; }
         List<String> pools = BY_TABLE.computeIfAbsent(new ResourceLocation(target), k -> new ArrayList<>());
         for (com.google.gson.JsonElement element : Json.getJsonArray(json, POOLS)) {
             pools.add(element.toString());

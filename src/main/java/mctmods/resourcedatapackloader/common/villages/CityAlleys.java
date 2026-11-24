@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.villages;
 
 import mctmods.resourcedatapackloader.common.util.world.Facings;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
@@ -20,8 +21,8 @@ public final class CityAlleys {
     public static void alleyFill(StructureStart held, Random rand) {
         if (!ContentBeard.wanted() || BeardRoads.alleyChance() <= 0 || CityLayout.drawn()) { return; }
         List<StructureComponent> components = held.getComponents();
-        if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
-        StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
+        StructureVillagePieces.Start startPiece = CityGrowth.startOf(components);
+        if (startPiece == null) { return; }
         int shortest = 14;
         int longest = 42;
         int laid = 0;
@@ -29,13 +30,13 @@ public final class CityAlleys {
             if (!(piece instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
-            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
+            if (BeardRoads.roadNarrow(piece)) { continue; }
             int spacing = 2 * ContentVillages.blockOf(piece);
-            int lo = (alongX ? box.minX : box.minZ) + 2;
-            int hi = (alongX ? box.maxX : box.maxZ) - 2;
+            int lo = BeardPlots.least(box, alongX) + 2;
+            int hi = BeardPlots.most(box, alongX) - 2;
             for (int side = 0; side < 2; side++) {
                 boolean outward = side == 1;
-                int edge = alongX ? (outward ? box.maxZ : box.minZ) : (outward ? box.maxX : box.minX);
+                int edge = outward ? BeardPlots.acrossMost(box, alongX) : BeardPlots.acrossLeast(box, alongX);
                 int dir = outward ? 1 : -1;
                 for (int row = lo; row <= hi; ) {
                     int length = alleyRun(components, alongX, row, edge, dir, longest);
@@ -50,16 +51,14 @@ public final class CityAlleys {
                         if (other instanceof StructureVillagePieces.Path) { continue; }
                         StructureBoundingBox plot = other.getBoundingBox();
                         if (!plot.intersectsWith(alongX ? row - 1 : Math.min(from, to), alongX ? Math.min(from, to) : row - 1, alongX ? row + 1 : Math.max(from, to), alongX ? Math.max(from, to) : row + 1)) { continue; }
-                        int near = dir > 0 ? (alongX ? plot.minZ : plot.minX) - 1 : (alongX ? plot.maxZ : plot.maxX) + 1;
+                        int near = dir > 0 ? BeardPlots.acrossLeast(plot, alongX) - 1 : BeardPlots.acrossMost(plot, alongX) + 1;
                         if (dir > 0 ? near < to : near > to) { to = near; }
                     }
                     if ((dir > 0 ? to < from : to > from) || Math.abs(to - from) + 1 < shortest) {
                         row += 7;
                         continue;
                     }
-                    StructureBoundingBox alley = new StructureBoundingBox(
-                            alongX ? row - 1 : Math.min(from, to), box.minY, alongX ? Math.min(from, to) : row - 1,
-                            alongX ? row + 1 : Math.max(from, to), box.maxY, alongX ? Math.max(from, to) : row + 1);
+                    StructureBoundingBox alley = ContentBeard.span(!alongX, Math.min(from, to), Math.max(from, to), row - 1, row + 1, box.minY, box.maxY);
                     boolean onPlaza = false;
                     for (StructureBoundingBox square : BeardPlots.plazaSquares(components)) {
                         if (square.intersectsWith(alley.minX, alley.minZ, alley.maxX, alley.maxZ)) {
@@ -74,10 +73,7 @@ public final class CityAlleys {
                     EnumFacing facing = Facings.across(alongX, outward);
                     StructureVillagePieces.Path lane = new StructureVillagePieces.Path(startPiece, 0, rand, alley, facing);
                     components.add(lane);
-                    CityGrowth.laying(false, () -> {
-                        lane.buildComponent(startPiece, components, rand);
-                        CityGrowth.drain(startPiece, components, rand);
-                    });
+                    CityGrowth.laying(false, () -> CityGrowth.buildAndDrain(startPiece, lane, components, rand));
                     laid++;
                     ContentLog.LOGGER.debug("An alley {} long fills the block beside the road at {}, {}, running from {}, {}", length, box.minX, box.minZ, alley.minX, alley.minZ);
                     row += spacing;
@@ -92,11 +88,9 @@ public final class CityAlleys {
         int nearPath = Integer.MAX_VALUE;
         for (StructureComponent other : components) {
             StructureBoundingBox met = other.getBoundingBox();
-            int acrossLo = alongX ? met.minX : met.minZ;
-            int acrossHi = alongX ? met.maxX : met.maxZ;
-            if (acrossHi < row - 2 || acrossLo > row + 2) { continue; }
-            int alongLo = alongX ? met.minZ : met.minX;
-            int alongHi = alongX ? met.maxZ : met.maxX;
+            if (BeardPlots.most(met, alongX) < row - 2 || BeardPlots.least(met, alongX) > row + 2) { continue; }
+            int alongLo = BeardPlots.acrossLeast(met, alongX);
+            int alongHi = BeardPlots.acrossMost(met, alongX);
             int away = dir > 0 ? alongLo - edge : edge - alongHi;
             if (away < 1) {
                 if (dir > 0 ? alongHi >= edge + 1 : alongLo <= edge - 1) { return 0; }
@@ -119,10 +113,10 @@ public final class CityAlleys {
             StructureBoundingBox met = other.getBoundingBox();
             if (!BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(met)) || CityGrowth.bulbWide(other)) { continue; }
             if (BeardPlots.roadAlongX(met) == alongX) { continue; }
-            int center = alongX ? (met.minX + met.maxX) / 2 : (met.minZ + met.maxZ) / 2;
+            int center = StructureBoxes.across(met, !alongX);
             if (Math.abs(center - row) >= spacing) { continue; }
-            int alongLo = alongX ? met.minZ : met.minX;
-            int alongHi = alongX ? met.maxZ : met.maxX;
+            int alongLo = BeardPlots.acrossLeast(met, alongX);
+            int alongHi = BeardPlots.acrossMost(met, alongX);
             if (alongHi >= from && alongLo <= to) { return true; }
         }
         return false;

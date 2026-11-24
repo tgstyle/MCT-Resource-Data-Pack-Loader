@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer.chunk;
 
 import mctmods.resourcedatapackloader.client.renderer.RenderCubeCache;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -24,6 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Redirect(method = "setPosition", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V")) private void rdpl$noop(RenderChunk instance) {}
 
     @Inject(method = "createRegionRenderCache", at = @At(value = "HEAD"), remap = false, cancellable = true) private void rdpl$createRubicChunkCache(World world, BlockPos from, BlockPos _to, int subtract, CallbackInfoReturnable<ChunkCache> cbi) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) { cbi.setReturnValue(new RenderCubeCache(world, from, _to, subtract)); }
+        if (GenHeights.rubic(world)) { cbi.setReturnValue(new RenderCubeCache(world, from, _to, subtract)); }
     }
 }

@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.common.rubic.worldgen;
 
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.core.util.address.AddressTools;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -12,7 +15,7 @@ public class CubePrimer {
     private int lastId;
     private byte[] extData = null;
 
-    public CubePrimer() { this(new char[4096]); }
+    public CubePrimer() { this(new char[ICube.VOLUME]); }
 
     protected CubePrimer(char[] data) { this.data = data; }
 
@@ -34,7 +37,7 @@ public class CubePrimer {
         int idx = getBlockIndex(x, y, z);
         this.data[idx] = lsb;
         if (value > 0xFFFF) {
-            if (extData == null) { extData = new byte[4096]; }
+            if (extData == null) { extData = new byte[ICube.VOLUME]; }
             extData[idx] = (byte) (value >>> 16);
         }
         else if (extData != null) { extData[idx] = 0; }
@@ -47,5 +50,5 @@ public class CubePrimer {
         this.extData = null;
     }
 
-    private static int getBlockIndex(int x, int y, int z) { return y << 8 | z << 4 | x; }
+    private static int getBlockIndex(int x, int y, int z) { return AddressTools.getLocalAddress(x, y, z); }
 }

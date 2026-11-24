@@ -38,17 +38,12 @@ public final class SniffGoal extends EntityAIBase {
     }
 
     @Nullable private EntityPlayer loudest() {
-        EntityPlayer best = null;
-        double nearest = Double.MAX_VALUE;
-        for (EntityPlayer player : mob.world.playerEntities) {
-            if (player.isSpectator() || player.isCreative() || player.isSneaking() || !player.isEntityAlive()) { continue; }
-            if (player.motionX * player.motionX + player.motionZ * player.motionZ < 1.0E-4D && !player.isSprinting()) { continue; }
-            double away = mob.getDistanceSq(player);
-            if (away > (double) radius * radius || away >= nearest) { continue; }
-            nearest = away;
-            best = player;
-        }
-        return best;
+        return Walking.nearest(mob.world.playerEntities, SniffGoal::audible, mob::getDistanceSq, (double) radius * radius);
+    }
+
+    private static boolean audible(EntityPlayer player) {
+        if (player.isSpectator() || player.isCreative() || player.isSneaking() || !player.isEntityAlive()) { return false; }
+        return player.motionX * player.motionX + player.motionZ * player.motionZ >= 1.0E-4D || player.isSprinting();
     }
 
     @Override public boolean shouldContinueExecuting() { return heardAt != null && mob.getAttackTarget() == null && walked < GIVE_UP && !mob.getNavigator().noPath(); }

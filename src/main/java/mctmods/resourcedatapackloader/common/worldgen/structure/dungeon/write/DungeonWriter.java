@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
 import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan;
@@ -19,11 +22,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
+import javax.annotation.Nullable;
 import net.minecraft.block.BlockChest;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -37,7 +39,6 @@ import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.Template;
 
 public final class DungeonWriter {
-    private static final int FLAGS = BlockFlags.UPDATE_CLIENTS;
     private static final Set<String> BAD_NBT = new HashSet<>();
     private static final WeakHashMap<DungeonPlan, DungeonShapes.Palette> PALETTES = new WeakHashMap<>();
 
@@ -56,7 +57,7 @@ public final class DungeonWriter {
         DungeonPlan plan = build(world, site, window, floor, ceiling);
         if (site.def.respawn == null) { return; }
         StructureBoundingBox area = new StructureBoundingBox(window.minX, Math.max(window.minY, plan.minY), window.minZ, window.maxX, Math.min(window.maxY, plan.maxY), window.maxZ);
-        RespawnInstance fresh = new RespawnInstance(RespawnInstance.DUNGEON, site.def.key.toString(), "", new BlockPos(window.minX, window.minY, window.minZ), Rotation.NONE, Mirror.NONE, 100, new BlockPos(site.originX, site.surfaceY, site.originZ).toLong(), area);
+        RespawnInstance fresh = new RespawnInstance(RespawnInstance.DUNGEON, site.def.key.toString(), "", new BlockPos(window.minX, window.minY, window.minZ), Rotation.NONE, Mirror.NONE, RespawnInstance.WHOLE, new BlockPos(site.originX, site.surfaceY, site.originZ).toLong(), area);
         RespawnRecorder.record(world, site.def.respawn, fresh, window);
     }
 
@@ -66,13 +67,13 @@ public final class DungeonWriter {
             if (there == state || !there.getBlock().isReplaceable(world, at) && !WRITTEN.get().contains(at.toLong())) { return false; }
             WRITTEN.get().add(at.toLong());
         }
-        world.setBlockState(at, state, FLAGS);
+        world.setBlockState(at, state, BlockFlags.UPDATE_CLIENTS);
         return true;
     }
 
     static boolean broken() { return BROKEN.get(); }
 
-    static ITemplateProcessor gated(ITemplateProcessor first) { return TemplateFilters.chain(first, BROKEN.get() ? TemplateFilters.broken() : null); }
+    @Nullable static ITemplateProcessor gate() { return BROKEN.get() ? TemplateFilters.broken() : null; }
 
     private static DungeonPlan build(World world, DungeonSites.Site site, StructureBoundingBox window, int floor, int ceiling) {
         DungeonPlan plan = DungeonPlanner.get(world, site.def, site);
@@ -82,11 +83,11 @@ public final class DungeonWriter {
         int low = Math.max(floor, plan.minY);
         int high = Math.min(ceiling, plan.maxY);
         DungeonTemplates.write(world, plan, site, window, low, high);
-        for (int chunkX = window.minX >> 4; chunkX <= window.maxX >> 4; chunkX++) {
-            for (int chunkZ = window.minZ >> 4; chunkZ <= window.maxZ >> 4; chunkZ++) {
+        for (int chunkX = Coords.blockToCube(window.minX); chunkX <= Coords.blockToCube(window.maxX); chunkX++) {
+            for (int chunkZ = Coords.blockToCube(window.minZ); chunkZ <= Coords.blockToCube(window.maxZ); chunkZ++) {
                 DungeonPlan.Bucket bucket = plan.bucket(chunkX, chunkZ);
                 if (bucket.isEmpty()) { continue; }
-                StructureBoundingBox columns = new StructureBoundingBox(Math.max(window.minX, chunkX << 4), low, Math.max(window.minZ, chunkZ << 4), Math.min(window.maxX, (chunkX << 4) + 15), high, Math.min(window.maxZ, (chunkZ << 4) + 15));
+                StructureBoundingBox columns = new StructureBoundingBox(Math.max(window.minX, Coords.cubeToMinBlock(chunkX)), low, Math.max(window.minZ, Coords.cubeToMinBlock(chunkZ)), Math.min(window.maxX, Coords.cubeToMaxBlock(chunkX)), high, Math.min(window.maxZ, Coords.cubeToMaxBlock(chunkZ)));
                 shape(world, plan, bucket, palette, columns);
                 DungeonShafts.write(world, plan, bucket, palette, columns);
                 DungeonEntrance.write(world, plan, bucket, palette, columns);
@@ -122,27 +123,28 @@ public final class DungeonWriter {
 
     private static void spawner(World world, FillRules rules, Spawner spawner) {
         BlockPos at = new BlockPos(spawner.x, spawner.y, spawner.z);
-        int brace = spawner.mobId.indexOf('{');
-        String id = brace < 0 ? spawner.mobId : spawner.mobId.substring(0, brace);
         IBlockState state = Blocks.MOB_SPAWNER.getDefaultState();
         if (!set(world, at, state)) { return; }
-        Template.BlockInfo filled = ContentMapFill.fill(rules, spawner.seed, at, new Template.BlockInfo(at, state, null), id, null);
-        NBTTagCompound tag = filled.tileentityData;
+        NBTTagCompound tag = spawner(rules, spawner.seed, at, new Template.BlockInfo(at, state, null), spawner.mobId).tileentityData;
         if (tag == null) { return; }
-        if (brace >= 0) { merge(tag, spawner.mobId.substring(brace), spawner.mobId); }
         load(world, at, tag);
     }
 
+    static Template.BlockInfo spawner(FillRules rules, long seed, BlockPos at, Template.BlockInfo info, String mob) {
+        int brace = mob.indexOf('{');
+        Template.BlockInfo filled = ContentMapFill.fill(rules, seed, at, info, brace < 0 ? mob : mob.substring(0, brace), null);
+        if (filled != info && brace >= 0 && filled.tileentityData != null) { merge(filled.tileentityData, mob.substring(brace), mob); }
+        return filled;
+    }
+
     static void merge(NBTTagCompound tag, String written, String whole) {
-        try {
-            NBTTagCompound extra = JsonToNBT.getTagFromJson(written);
-            NBTTagCompound entity = tag.getCompoundTag("SpawnData");
-            String named = entity.getString("id");
-            entity.merge(extra);
-            entity.setString("id", named);
-            tag.setTag("SpawnData", entity);
-        }
-        catch (NBTException bad) { ContentLog.LOGGER.errorOnce(BAD_NBT, whole, "Dungeon spawner nbt '{}' could not be parsed, so its mob spawns without it: {}", whole, bad.getMessage()); }
+        NBTTagCompound extra = ContentStates.parseTag(written, BAD_NBT, whole, "Dungeon spawner nbt '{}' could not be parsed, so its mob spawns without it: {}", whole);
+        if (extra == null) { return; }
+        NBTTagCompound entity = tag.getCompoundTag(ContentMapFill.SPAWN_DATA);
+        String named = entity.getString(ContentMapFill.ID);
+        entity.merge(extra);
+        entity.setString(ContentMapFill.ID, named);
+        tag.setTag(ContentMapFill.SPAWN_DATA, entity);
     }
 
     private static void chest(World world, DungeonPlan plan, FillRules rules, Chest chest) {
@@ -157,11 +159,7 @@ public final class DungeonWriter {
         for (Level level : plan.levels) {
             for (Room room : level.rooms) {
                 if (chest.y < room.y0 || chest.y > room.y1 || !room.contains(chest.x, chest.z)) { continue; }
-                if (chest.x == room.x0) { return EnumFacing.EAST; }
-                if (chest.x == room.x1) { return EnumFacing.WEST; }
-                if (chest.z == room.z0) { return EnumFacing.SOUTH; }
-                if (chest.z == room.z1) { return EnumFacing.NORTH; }
-                return EnumFacing.NORTH;
+                return room.away(chest.x, chest.z);
             }
         }
         return EnumFacing.NORTH;
@@ -170,10 +168,7 @@ public final class DungeonWriter {
     private static void load(World world, BlockPos at, NBTTagCompound tag) {
         TileEntity entity = world.getTileEntity(at);
         if (entity == null) { return; }
-        tag.setInteger("x", at.getX());
-        tag.setInteger("y", at.getY());
-        tag.setInteger("z", at.getZ());
-        entity.readFromNBT(tag);
+        entity.readFromNBT(TileData.at(tag, at));
         entity.markDirty();
     }
 

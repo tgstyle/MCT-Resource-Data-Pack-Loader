@@ -34,7 +34,10 @@ public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> 
     }
 
     @Override public void forRegion(K key, ICheckedConsumer<? super IRegion<K>, IOException> consumer) throws IOException {
-        try (IRegion<K> r = getRegion(key)) { consumer.accept(r); }
+        fromRegion(key, r -> {
+            consumer.accept(r);
+            return null;
+        });
     }
 
     @Override public IRegion<K> getRegion(K key) throws IOException { return regionBuilder.create(keyProvider, key.getRegionKey()); }
@@ -42,8 +45,7 @@ public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> 
     @Override public Optional<IRegion<K>> getExistingRegion(K key) throws IOException {
         Path regionPath = directory.resolve(key.getRegionKey().getName());
         if (!regionExists.test(regionPath, key)) { return Optional.empty(); }
-        IRegion<K> reg = regionBuilder.create(keyProvider, key.getRegionKey());
-        return Optional.of(reg);
+        return Optional.of(getRegion(key));
     }
 
     @Override public void flush() throws IOException {}

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.tabs.ContentCreativeTab;
 import mctmods.resourcedatapackloader.common.tabs.ContentTabs;
+import mctmods.resourcedatapackloader.common.types.PropertyVariant;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
 
@@ -30,6 +31,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -55,6 +57,8 @@ public final class ContentSetup {
         return 0;
     }
 
+    public static BlockVariant variantOf(BlockDef def, PropertyVariant property, IBlockState state) { return def.at(metaOf(def, state.getValue(property))); }
+
     public static void material(Block block, BlockDef def) {
         if (def.material == null) { return; }
         block.material = def.material;
@@ -69,8 +73,32 @@ public final class ContentSetup {
         properties(block, def);
     }
 
+    public static String singleKey(BlockDef def) { return def.registryName + "." + def.at(0).name; }
+
+    public static void plantNamed(Block block, BlockDef def) {
+        block.setRegistryName(def.registryName);
+        block.setTranslationKey(singleKey(def));
+        properties(block, def);
+    }
+
+    public static void applyPlantNamed(Block block, BlockDef def) {
+        plantNamed(block, def);
+        apply(block, def.creativeTab);
+    }
+
+    public static void named(Block block, BlockDef def) {
+        plantNamed(block, def);
+        harvest(block, def);
+    }
+
+    public static void applyNamed(Block block, BlockDef def) {
+        named(block, def);
+        apply(block, def.creativeTab);
+    }
+
     public static void properties(Block block, BlockDef def) {
         BlockVariant first = def.at(0);
+        if (def.soundType != null) { block.blockSoundType = def.soundType; }
         block.setDefaultSlipperiness(def.slipperiness);
         block.setLightOpacity(def.lightOpacity);
         block.setHardness(first.hardness);
@@ -80,6 +108,8 @@ public final class ContentSetup {
     }
 
     public static void flammable(Block block, int fireSpread, int flammability) { if (flammability > 0 || fireSpread > 0) { FLAMMABLE.put(block, new int[] {fireSpread, flammability}); } }
+
+    static float lightLevel(int light) { return MathHelper.clamp(light, 0, 15) / 15.0F; }
 
     public static float resistanceOf(BlockDef def, BlockVariant variant) { return variant.resistance / def.explosionResistanceDivisor; }
 

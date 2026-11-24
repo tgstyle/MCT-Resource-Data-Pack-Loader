@@ -10,11 +10,11 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProvide
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldSettings;
-import mctmods.resourcedatapackloader.common.util.world.Coords;
 import static mctmods.resourcedatapackloader.common.util.world.Coords.blockToCube;
 import static mctmods.resourcedatapackloader.common.util.world.Coords.cubeToMinBlock;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.PredictedChunk;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.NotRubicWorldException;
 import mctmods.resourcedatapackloader.core.util.math.IntRange;
@@ -81,9 +81,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique @Nullable protected LightingManager rdpl$lightingManager;
     @Unique protected boolean rdpl$isRubicWorld;
     @Unique protected int rdpl$minHeight = 0;
-    @Unique protected int rdpl$maxHeight = 256;
+    @Unique protected int rdpl$maxHeight = CompatHandler.VANILLA_HEIGHT;
     @Unique protected int rdpl$fakedMaxHeight = 0;
-    @Unique private int rdpl$maxGenerationHeight = 256;
+    @Unique private int rdpl$maxGenerationHeight = CompatHandler.VANILLA_HEIGHT;
     @Unique private int rdpl$updateEntity_entityPosY;
     @Unique private int rdpl$updateEntity_entityPosX;
     @Unique private int rdpl$updateEntity_entityPosZ;
@@ -93,7 +93,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (isRemote) { return self.getChunk(pos); }
         ChunkPos populating = Chunk.populating;
         if (populating == null) { return self.getChunk(pos); }
-        if (pos.getX() >> 4 == populating.x && pos.getZ() >> 4 == populating.z) { return self.getChunk(pos); }
+        if (blockToCube(pos.getX()) == populating.x && blockToCube(pos.getZ()) == populating.z) { return self.getChunk(pos); }
         return rdpl$predictInstead(self, pos, populating);
     }
 
@@ -104,8 +104,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
             rdpl$lastZ = Integer.MIN_VALUE;
             rdpl$lastChunk = null;
         }
-        int chunkX = pos.getX() >> 4;
-        int chunkZ = pos.getZ() >> 4;
+        int chunkX = blockToCube(pos.getX());
+        int chunkZ = blockToCube(pos.getZ());
         if (chunkX == populating.x && chunkZ == populating.z) { return self.getChunk(pos); }
         if (chunkX == rdpl$lastX && chunkZ == rdpl$lastZ && rdpl$lastChunk != null) { return rdpl$lastChunk; }
         Chunk loaded = self.getChunkProvider().getLoadedChunk(chunkX, chunkZ);
@@ -223,8 +223,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true) private void rdpl$blockState(BlockPos pos, CallbackInfoReturnable<IBlockState> cir) {
         if (rdpl$outsideBuildHeight(pos)) { cir.setReturnValue(Objects.requireNonNull(Blocks.AIR).getDefaultState()); }
-        else if (this.rdpl$isRubicWorld) {
-            ICube cube = ((ICubeProviderInternal) this.chunkProvider).getCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
+        else if (this.rdpl$isRubicWorld()) {
+            ICube cube = this.rdpl$getCubeFromBlockCoords(pos);
             cir.setReturnValue(cube.getBlockState(pos));
         }
         else { cir.setReturnValue(rdpl$leaveLandAlone((World) (Object) this, pos).getBlockState(pos)); }
@@ -277,7 +277,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "getLightFor", at = @At("HEAD"), cancellable = true) private void rdpl$lightFor(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (!this.rdpl$isRubicWorld) { return; }
+        if (!this.rdpl$isRubicWorld()) { return; }
         BlockPos at = pos.getY() < rdpl$getMinHeight() ? new BlockPos(pos.getX(), rdpl$getMinHeight(), pos.getZ()) : pos;
         if (!isValid(at) || !isBlockLoaded(at)) { cir.setReturnValue(type.defaultLightValue); }
         else { cir.setReturnValue(getChunk(at).getLightFor(type, at)); }
@@ -292,15 +292,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "isBlockLoaded(Lnet/minecraft/util/math/BlockPos;Z)Z", cancellable = true, at = @At(value = "HEAD")) private void rdpl$isBlockLoaded(BlockPos pos, boolean allowEmpty, CallbackInfoReturnable<Boolean> cbi) {
         if (!rdpl$isRubicWorld()) { return; }
         ICube cube = this.rdpl$getCubeCache().getLoadedCube(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ()));
-        if (allowEmpty) { cbi.setReturnValue(cube != null); }
-        else { cbi.setReturnValue(cube != null && !(cube instanceof BlankCube)); }
+        cbi.setReturnValue(BlankCube.loaded(cube, allowEmpty));
     }
 
     @Unique private boolean rdpl$columnOrCubeLoaded(int chunkX, int blockY, int chunkZ, boolean allowEmpty) {
         if (!rdpl$isRubicWorld()) { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
         ICube cube = this.rdpl$getCubeCache().getLoadedCube(chunkX, blockToCube(blockY), chunkZ);
-        if (allowEmpty) { return cube != null; }
-        return cube != null && !(cube instanceof BlankCube);
+        return BlankCube.loaded(cube, allowEmpty);
     }
 
     @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 0)) private boolean rdpl$updateEntityWithOptionalForce_isChunkLoaded0(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
@@ -322,7 +320,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void rdpl$getBiome(BlockPos pos, CallbackInfoReturnable<Biome> ci) {
         if (!this.rdpl$isRubicWorld()) { return; }
-        ICube cube = this.rdpl$getCubeCache().getLoadedCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
+        ICube cube = this.rdpl$getCubeCache().getLoadedCube(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ()));
         if (cube == null) { return; }
         Biome biome = cube.getBiome(pos);
         ci.setReturnValue(biome);
@@ -348,7 +346,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Redirect(method = "markAndNotifyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;isPopulated()Z")) private boolean rdpl$markNotifyBlock_CubeCheck(Chunk _this, BlockPos pos, Chunk chunk, IBlockState iblockstate, IBlockState newState, int flags) {
         if (!this.rdpl$isRubicWorld()) { return chunk.isPopulated(); }
         IColumn column = (IColumn) chunk;
-        ICube cube = column.getCube(Coords.blockToCube(pos.getY()));
+        ICube cube = column.getCube(blockToCube(pos.getY()));
         return cube.isFullyPopulated();
     }
 

@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
@@ -64,7 +65,9 @@ public final class ContentVillages {
     private static final Map<VillageDef, Boolean> BARRED = new HashMap<>();
     private static final TemplateMemo<Boolean> BARRED_READ = new TemplateMemo<>();
     private static final TemplateMemo<Integer> LARGEST = new TemplateMemo<>();
-    private static final WeightedPicks BLOCK_SIZES = new WeightedPicks("villageBlockSizes");
+    private static final String BLOCKS_KEY = "villageBlocks";
+    private static final String BLOCK_SIZES_KEY = "villageBlockSizes";
+    private static final WeightedPicks BLOCK_SIZES = new WeightedPicks(BLOCK_SIZES_KEY);
     private static final List<String> VILLAGE_KEYS = Collections.unmodifiableList(Arrays.asList("type", "structure", "orderSign", "weight", "leastCount", "mostCount", "width", "height", "depth", "apron", "crops", "edge", "soil", "water", "rowWidth", "ground", "integrity", "villagers", "villagerEntity", "villagerX", "villagerY", "villagerZ", "requires", "lootTable", "orderX", "orderY", "orderZ", "respawn"));
     private static boolean loaded;
     private static boolean registered;
@@ -86,7 +89,7 @@ public final class ContentVillages {
             }
             DEFS.put(key.toString(), def);
         });
-        if (!DEFS.isEmpty()) { Summary.info("villages", "Loaded " + DEFS.size() + " village plot(s) from packs"); }
+        Summary.loaded("villages", DEFS.size(), "village plot(s) from packs");
         return !DEFS.isEmpty();
     }
 
@@ -105,7 +108,7 @@ public final class ContentVillages {
     public static boolean allowed(Class<?> piece) {
         if (piece == null) { return true; }
         boolean listed = names().contains(piece.getSimpleName().toLowerCase(Locale.ROOT));
-        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return !listed; }
+        if (blacklist()) { return !listed; }
         if (listed) { return true; }
         return piece.getEnclosingClass() != StructureVillagePieces.class;
     }
@@ -160,7 +163,7 @@ public final class ContentVillages {
     }
 
     public static void sizeBlock(World world, StructureVillagePieces.Start start) {
-        if (BLOCK_SIZES.stale()) { BLOCK_SIZES.load(ContentControl.list(ContentControl.VILLAGES, "villageBlockSizes", Config.worldgen.villageBlockSizes)); }
+        if (BLOCK_SIZES.stale()) { BLOCK_SIZES.load(ContentControl.list(ContentControl.VILLAGES, BLOCK_SIZES_KEY, Config.worldgen.villageBlockSizes)); }
         if (BLOCK_SIZES.isEmpty() || !(start instanceof IVillageBlock)) { return; }
         StructureBoundingBox well = start.getBoundingBox();
         WeightedPicks.Pick chosen = BLOCK_SIZES.pick(SeededRandom.at(world, well.minX, well.minZ));
@@ -168,7 +171,7 @@ public final class ContentVillages {
         int size;
         try { size = Integer.parseInt(chosen.name); }
         catch (NumberFormatException wrong) {
-            ContentLog.LOGGER.error("villageBlockSizes entry '{}' is not a whole number of blocks, so the district at {}, {} keeps the largest plot as its block", chosen.name, well.minX, well.minZ);
+            ContentLog.LOGGER.error(BLOCK_SIZES_KEY + " entry '{}' is not a whole number of blocks, so the district at {}, {} keeps the largest plot as its block", chosen.name, well.minX, well.minZ);
             return;
         }
         ((IVillageBlock) start).rdpl$block(Math.max(13, size));
@@ -176,7 +179,7 @@ public final class ContentVillages {
     }
 
     public static int blockOf(@Nullable StructureComponent piece) {
-        int held = piece instanceof IVillageBlock ? ((IVillageBlock) piece).rdpl$block() : 0;
+        int held = IVillageBlock.rdpl$blockOf(piece);
         return held > 0 ? held : largestPlot();
     }
 
@@ -232,7 +235,7 @@ public final class ContentVillages {
         BLOCKS.clear();
         REPLACEMENTS.clear();
         RULES.clear();
-        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, BLOCKS_KEY, Config.worldgen.villageBlocks)) {
             VillageRule rule = rule(entry);
             if (rule == null) { continue; }
             if (rule.plain()) {
@@ -247,10 +250,10 @@ public final class ContentVillages {
 
     @Nullable private static VillageRule rule(String entry) {
         String[] fields = entry.split(",");
-        String[] parts = Settings.pair(fields[0], "villageBlocks", "original=replacement");
+        String[] parts = Settings.pair(fields[0], BLOCKS_KEY, "original=replacement");
         if (parts == null) { return null; }
-        IBlockState from = ContentStates.parse(parts[0], "villageBlocks");
-        IBlockState to = ContentStates.parse(parts[1], "villageBlocks");
+        IBlockState from = ContentStates.parse(parts[0], BLOCKS_KEY);
+        IBlockState to = ContentStates.parse(parts[1], BLOCKS_KEY);
         if (from == null || to == null) { return null; }
         int chance = VillageRule.ALWAYS;
         IBlockState at = null;
@@ -259,11 +262,11 @@ public final class ContentVillages {
             String said = fields[field].trim();
             if (said.isEmpty()) { continue; }
             if (said.startsWith(AT)) {
-                at = ContentStates.parse(said.substring(AT.length()), "villageBlocks");
+                at = ContentStates.parse(said.substring(AT.length()), BLOCKS_KEY);
                 if (at == null) { return null; }
             }
             else if (said.startsWith(UNDER)) {
-                under = ContentStates.parse(said.substring(UNDER.length()), "villageBlocks");
+                under = ContentStates.parse(said.substring(UNDER.length()), BLOCKS_KEY);
                 if (under == null) { return null; }
             }
             else {
@@ -278,20 +281,22 @@ public final class ContentVillages {
         int asked;
         try { asked = Integer.parseInt(said); }
         catch (NumberFormatException wrong) {
-            ContentLog.LOGGER.error("villageBlocks entry '{}' says '{}', which is neither a chance out of 100 nor an at= or under= block, ignoring the entry", entry, said);
+            ContentLog.LOGGER.error(BLOCKS_KEY + " entry '{}' says '{}', which is neither a chance out of 100 nor an at= or under= block, ignoring the entry", entry, said);
             return -1;
         }
         if (asked >= 1 && asked <= VillageRule.ALWAYS) { return asked; }
-        ContentLog.LOGGER.error("villageBlocks entry '{}' asks for a chance of {}, which is not between 1 and 100, ignoring the entry", entry, asked);
+        ContentLog.LOGGER.error(BLOCKS_KEY + " entry '{}' asks for a chance of {}, which is not between 1 and 100, ignoring the entry", entry, asked);
         return -1;
     }
 
     public static boolean blockedTemplate(ResourceLocation template) {
         if (template == null || !filtering()) { return false; }
         boolean listed = named(template);
-        if (!ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return false; }
+        if (!blacklist()) { return false; }
         return listed;
     }
+
+    private static boolean blacklist() { return ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist); }
 
     public static boolean blocked(VillageDef def) {
         BARRED_READ.get(() -> {
@@ -306,7 +311,7 @@ public final class ContentVillages {
             listed = named(template);
         }
         if (!listed) { listed = named(def.registryName); }
-        boolean barred = Listing.blocks(listed, ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist));
+        boolean barred = Listing.blocks(listed, blacklist());
         BARRED.put(def, barred);
         return barred;
     }
@@ -324,15 +329,20 @@ public final class ContentVillages {
     @Nullable public static ContentVillagePiece behind(StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, ContentVillagePiece front) {
         EnumFacing facing = front.getCoordBaseMode();
         if (facing == null) { return null; }
-        int block = blockOf(start);
+        return seatFirst(random, blockOf(start), false, def -> Handler.seatBehind(start, placed, front, facing, def));
+    }
+
+    @Nullable private static <T> T seatFirst(Random random, int block, boolean pickRequired, Function<VillageDef, T> seat) {
         VillageDef def = pick(random, block);
+        if (def == null && pickRequired) { return null; }
         if (def != null) {
-            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, def);
+            T seated = seat.apply(def);
             if (seated != null) { return seated; }
         }
+        boolean filtering = filtering();
         for (VillageDef held : Handler.bySize()) {
-            if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
-            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, held);
+            if (held == def || (filtering && blocked(held)) || exceeds(held, block)) { continue; }
+            T seated = seat.apply(held);
             if (seated != null) { return seated; }
         }
         return null;
@@ -387,17 +397,7 @@ public final class ContentVillages {
         }
 
         @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
-            int block = blockOf(start);
-            VillageDef def = pick(random, block);
-            if (def == null) { return null; }
-            StructureVillagePieces.Village seated = seat(start, placed, x, y, z, facing, type, def);
-            if (seated != null) { return seated; }
-            for (VillageDef held : bySize()) {
-                if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
-                seated = seat(start, placed, x, y, z, facing, type, held);
-                if (seated != null) { return seated; }
-            }
-            return null;
+            return seatFirst(random, blockOf(start), true, def -> seat(start, placed, x, y, z, facing, type, def));
         }
 
         private static StructureBoundingBox behindBox(StructureBoundingBox f, EnumFacing facing, BlockPos size) {

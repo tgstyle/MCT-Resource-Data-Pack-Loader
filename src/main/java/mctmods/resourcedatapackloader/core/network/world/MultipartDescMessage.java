@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core.network.world;
 
 import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
@@ -22,17 +23,13 @@ public class MultipartDescMessage implements IMessage {
     }
 
     @Override public void fromBytes(ByteBuf buf) {
-        this.pos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        this.data = new byte[buf.readInt()];
-        buf.readBytes(this.data);
+        this.pos = PacketUtils.readBlockPos(buf);
+        this.data = PacketUtils.readBytes(buf);
     }
 
     @Override public void toBytes(ByteBuf buf) {
-        buf.writeInt(pos.getX());
-        buf.writeInt(pos.getY());
-        buf.writeInt(pos.getZ());
-        buf.writeInt(data.length);
-        buf.writeBytes(data);
+        PacketUtils.write(buf, pos);
+        PacketUtils.writeBytes(buf, data);
     }
 
     public static class Handler extends AbstractClientMessageHandler<MultipartDescMessage> {

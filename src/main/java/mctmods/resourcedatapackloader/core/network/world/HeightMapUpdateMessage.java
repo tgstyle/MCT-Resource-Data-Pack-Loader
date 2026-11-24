@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInter
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 import mctmods.resourcedatapackloader.core.util.address.AddressTools;
 
 import com.google.common.base.Preconditions;
@@ -39,12 +40,12 @@ public class HeightMapUpdateMessage implements IMessage {
         this.heights = new TIntArrayList();
         for (int i = updates.nextSetBit(0); i >= 0; i = updates.nextSetBit(i + 1)) {
             this.updates.add((byte) i);
-            this.heights.add(((IColumnInternal) chunk).getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i)));
+            this.heights.add(WorldEncoder.topY((IColumnInternal) chunk, i));
         }
     }
 
     @Override public void fromBytes(ByteBuf buf) {
-        this.chunk = new ChunkPos(buf.readInt(), buf.readInt());
+        this.chunk = PacketUtils.readChunkPos(buf);
         int size = buf.readUnsignedShort();
         this.updates = new TByteArrayList(size);
         this.heights = new TIntArrayList(size);
@@ -55,12 +56,10 @@ public class HeightMapUpdateMessage implements IMessage {
     }
 
     @Override public void toBytes(ByteBuf buf) {
-        buf.writeInt(this.chunk.x);
-        buf.writeInt(this.chunk.z);
+        PacketUtils.write(buf, this.chunk);
         buf.writeShort(this.updates.size());
         for (int i = 0; i < this.updates.size(); i++) {
-            buf.writeByte(this.updates.get(i) & 0xFF);
-            ByteBufUtils.writeVarInt(buf, this.heights.get(i), 5);
+            WorldEncoder.writeHeight(buf, this.updates.get(i) & 0xFF, this.heights.get(i));
         }
     }
 

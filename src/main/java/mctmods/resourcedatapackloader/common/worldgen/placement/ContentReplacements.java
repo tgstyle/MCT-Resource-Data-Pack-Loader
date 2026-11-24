@@ -27,6 +27,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public final class ContentReplacements {
+    public static final String REPLACE_PREFIX = "replace:";
     private static final Blocked REPLACED = new Blocked();
     private static final Set<String> REPORTED = new HashSet<>();
     private static final Map<IBlockState, IBlockState> EXACT = new HashMap<>();
@@ -95,7 +96,7 @@ public final class ContentReplacements {
     public static void report() {
         if (REPLACED.total() == 0) { return; }
         Summary.info("replacements", "Replaced " + REPLACED.total() + " block(s) in " + chunks + " chunk(s) that already existed");
-        if (ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements)) {
+        if (logging) {
             for (Map.Entry<String, Integer> entry : REPLACED.map().entrySet()) { ContentLog.LOGGER.debug("  replaced {} {}", entry.getValue(), entry.getKey()); }
         }
     }
@@ -127,7 +128,7 @@ public final class ContentReplacements {
 
     private static String name(IBlockState state) {
         ResourceLocation registry = state.getBlock().getRegistryName();
-        return (registry == null ? "unknown" : registry.toString()) + ":" + state.getBlock().getMetaFromState(state);
+        return (registry == null ? ContentGeneratorControl.UNKNOWN : registry.toString()) + ":" + state.getBlock().getMetaFromState(state);
     }
 
     private static Set<String> sources() {
@@ -140,7 +141,7 @@ public final class ContentReplacements {
     private static void load() {
         if (ContentControl.off(ContentControl.REPLACEMENTS)) {
             dimensions = new HashSet<>();
-            token = "replace:off";
+            token = REPLACE_PREFIX + "off";
             wanted = false;
             return;
         }
@@ -165,7 +166,7 @@ public final class ContentReplacements {
         blacklist = ContentControl.flag(ContentControl.REPLACEMENTS, "blockReplacementDimensionsAreBlacklist", Config.worldgen.blockReplacementDimensionsAreBlacklist);
         logging = ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements);
         wanted = !EXACT.isEmpty() || !WHOLE.isEmpty();
-        token = "replace:" + sources().hashCode() + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey).trim();
+        token = REPLACE_PREFIX + sources().hashCode() + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey).trim();
         if (wanted) { Summary.info("replacements.setup", "Replacing " + (EXACT.size() + WHOLE.size()) + " kind(s) of block in chunks that already exist, between y" + minHeight + " and y" + maxHeight); }
     }
 }

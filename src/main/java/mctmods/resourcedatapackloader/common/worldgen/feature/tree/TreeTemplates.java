@@ -1,27 +1,23 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
+import mctmods.resourcedatapackloader.common.util.world.TemplateBlocks;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.common.util.Constants;
 
 public final class TreeTemplates {
     private static final Map<String, Built> CACHE = new HashMap<>();
@@ -70,26 +66,19 @@ public final class TreeTemplates {
         Map<BlockPos, NBTTagCompound> blockEntities = new HashMap<>();
         int hash = 1;
         boolean over = false;
-        NBTTagCompound tag = template.writeToNBT(new NBTTagCompound());
-        NBTTagList paletteTag = tag.getTagList("palette", Constants.NBT.TAG_COMPOUND);
-        List<IBlockState> palette = new ArrayList<>();
-        for (int i = 0; i < paletteTag.tagCount(); i++) { palette.add(NBTUtil.readBlockState(paletteTag.getCompoundTagAt(i))); }
-        NBTTagList list = tag.getTagList("blocks", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound entry = list.getCompoundTagAt(i);
-            IBlockState state = palette.get(entry.getInteger("state"));
+        for (TemplateBlocks.Entry entry : TemplateBlocks.blocks(template)) {
+            IBlockState state = entry.state();
             Block block = state.getBlock();
             if (block == Blocks.AIR || block == Blocks.STRUCTURE_VOID) { continue; }
-            NBTTagList at = entry.getTagList("pos", Constants.NBT.TAG_INT);
-            BlockPos local = new BlockPos(at.getIntAt(0), at.getIntAt(1), at.getIntAt(2));
+            BlockPos local = entry.pos;
             hash = 31 * hash + Long.hashCode(local.toLong());
             hash = 31 * hash + String.valueOf(block.getRegistryName()).hashCode();
             hash = 31 * hash + block.getMetaFromState(state);
             BlockPos offset = Template.transformedBlockPos(turn, new BlockPos(local.getX() - cx, local.getY(), local.getZ() - cz));
             if (TreeRecorder.outOfBounds(offset.getX(), offset.getY(), offset.getZ())) { over = true; }
             blocks.put(offset, state.withMirror(mirror).withRotation(rotation));
-            if (entry.hasKey("nbt")) {
-                NBTTagCompound data = entry.getCompoundTag("nbt").copy();
+            if (entry.nbt != null) {
+                NBTTagCompound data = entry.nbt.copy();
                 data.removeTag("x");
                 data.removeTag("y");
                 data.removeTag("z");

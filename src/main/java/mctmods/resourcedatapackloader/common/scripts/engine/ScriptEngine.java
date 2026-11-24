@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ScriptEngine {
+    public static final String CANCEL = "cancel";
     private static final ScriptFactory FACTORY = new ScriptFactory();
     private static final Map<String, Script> COMPILED = new ConcurrentHashMap<>();
     private static final Set<String> FAILED = ConcurrentHashMap.newKeySet();
@@ -127,7 +128,7 @@ public final class ScriptEngine {
             turnOff(ref, disableOnError);
             return new Outcome(null, true);
         } catch (ScriptTimeout e) {
-            ContentLog.LOGGER.error("Script {} took longer than 50 ms, stopped", sourceName(ref));
+            ContentLog.LOGGER.error("Script {} took longer than {} ms, stopped", sourceName(ref), ScriptFactory.TIME_LIMIT_MS);
             turnOff(ref, disableOnError);
             return new Outcome(null, true);
         }
@@ -151,14 +152,14 @@ public final class ScriptEngine {
             logFailure("scheduled function", e);
             return null;
         } catch (ScriptTimeout e) {
-            ContentLog.LOGGER.error("Script scheduled function took longer than 50 ms, stopped");
+            ContentLog.LOGGER.error("Script scheduled function took longer than {} ms, stopped", ScriptFactory.TIME_LIMIT_MS);
             return null;
         }
     }
 
     @Nullable
     private static String verdict(Object result) {
-        return "cancel".equals(Context.toString(result)) ? "cancel" : null;
+        return CANCEL.equals(Context.toString(result)) ? CANCEL : null;
     }
 
     private static void logFailure(String sourceName, RhinoException e) {

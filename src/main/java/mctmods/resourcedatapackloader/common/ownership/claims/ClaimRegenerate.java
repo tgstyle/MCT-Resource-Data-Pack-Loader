@@ -3,12 +3,12 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.CubePrimer;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.common.util.world.TileScan;
 
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
@@ -35,14 +35,14 @@ public final class ClaimRegenerate {
         ExtendedBlockStorage source = fresh.getBlockStorageArray()[sectionY];
         ExtendedBlockStorage copy = null;
         if (source != null && !source.isEmpty()) {
-            copy = new ExtendedBlockStorage(sectionY << 4, world.provider.hasSkyLight());
-            for (int y = 0; y < 16; y++) {
-                for (int z = 0; z < 16; z++) {
-                    for (int x = 0; x < 16; x++) { copy.set(x, y, z, source.get(x, y, z)); }
+            copy = new ExtendedBlockStorage(Coords.cubeToMinBlock(sectionY), world.provider.hasSkyLight());
+            for (int y = 0; y < ICube.SIZE; y++) {
+                for (int z = 0; z < ICube.SIZE; z++) {
+                    for (int x = 0; x < ICube.SIZE; x++) { copy.set(x, y, z, source.get(x, y, z)); }
                 }
             }
         }
-        removeTileEntities(world, new ArrayList<>(live.getTileEntityMap().keySet()), sectionY);
+        TileScan.clearSection(world, live.getTileEntityMap().keySet(), sectionY);
         live.getBlockStorageArray()[sectionY] = copy;
         live.markDirty();
     }
@@ -63,24 +63,19 @@ public final class ClaimRegenerate {
         CubePrimer primer = provider.getCubeGenerator().generateCube(cubeX, cubeY, cubeZ, new CubePrimer());
         IBlockState air = Blocks.AIR.getDefaultState();
         ExtendedBlockStorage copy = null;
-        for (int y = 0; y < 16; y++) {
-            for (int z = 0; z < 16; z++) {
-                for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < ICube.SIZE; y++) {
+            for (int z = 0; z < ICube.SIZE; z++) {
+                for (int x = 0; x < ICube.SIZE; x++) {
                     IBlockState state = primer.getBlockState(x, y, z);
                     if (state == air) { continue; }
-                    if (copy == null) { copy = new ExtendedBlockStorage(cubeY << 4, world.provider.hasSkyLight()); }
+                    if (copy == null) { copy = new ExtendedBlockStorage(Coords.cubeToMinBlock(cubeY), world.provider.hasSkyLight()); }
                     copy.set(x, y, z, state);
                 }
             }
         }
-        removeTileEntities(world, new ArrayList<>(live.getTileEntityMap().keySet()), cubeY);
+        TileScan.clearSection(world, live.getTileEntityMap().keySet(), cubeY);
         live.setStorage(copy);
         live.pushOpacity(copy);
     }
 
-    private static void removeTileEntities(WorldServer world, List<BlockPos> positions, int sectionY) {
-        for (BlockPos pos : positions) {
-            if (pos.getY() >> 4 == sectionY) { world.removeTileEntity(pos); }
-        }
-    }
 }

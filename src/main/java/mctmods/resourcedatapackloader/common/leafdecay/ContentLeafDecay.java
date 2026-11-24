@@ -29,12 +29,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public final class ContentLeafDecay {
-    private static final String BLOCKS = "blocks";
     private static final String TAG = "tag";
     private static final String ALL = "all";
     private static final String EXCEPT = "except";
-    private static final List<String> DECAY_KEYS = Collections.unmodifiableList(Arrays.asList(BLOCKS, TAG, ALL, EXCEPT, "minTicks", "maxTicks", "dimensions", "requires"));
-    private static final List<String> EXCEPT_KEYS = Collections.unmodifiableList(Arrays.asList(BLOCKS, TAG));
+    private static final List<String> DECAY_KEYS = Collections.unmodifiableList(Arrays.asList(ContentParser.BLOCKS, TAG, ALL, EXCEPT, "minTicks", "maxTicks", "dimensions", "requires"));
+    private static final List<String> EXCEPT_KEYS = Collections.unmodifiableList(Arrays.asList(ContentParser.BLOCKS, TAG));
     private static final int MOST_TICKS = 1200;
     private static final List<LeafDecayRule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -51,7 +50,7 @@ public final class ContentLeafDecay {
 
     private static BlockGroup group(ResourceLocation key, JsonObject json, String part) {
         BlockGroup group = new BlockGroup();
-        for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { group.add(match, key, part); }
+        for (BlockMatchDef match : ContentParser.matches(key, json, ContentParser.BLOCKS)) { group.add(match, key, part); }
         return group;
     }
 
@@ -65,14 +64,14 @@ public final class ContentLeafDecay {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (!ContentRegistry.available(json, key)) { return; }
         Json.unknownKeys(json, "the top level", DECAY_KEYS);
         boolean all = Json.getBoolean(json, ALL, false);
-        if (!json.has(BLOCKS) && !json.has(TAG) && !all) {
+        if (!json.has(ContentParser.BLOCKS) && !json.has(TAG) && !all) {
             ContentLog.LOGGER.error("Leaf decay {} needs blocks, tag or all, ignoring it", key);
             return;
         }
-        BlockGroup blocks = group(key, json, BLOCKS);
+        BlockGroup blocks = group(key, json, ContentParser.BLOCKS);
         List<BlockMatch> tags = tags(key, json, TAG);
         if (!all && blocks.isEmpty() && tags.isEmpty()) {
             ContentLog.LOGGER.error("Leaf decay {} names no registered blocks, ignoring it", key);
@@ -80,13 +79,13 @@ public final class ContentLeafDecay {
         }
         JsonObject except = Json.object(json, EXCEPT);
         Json.unknownKeys(except, EXCEPT, EXCEPT_KEYS);
-        int min = (int) Json.ranged(json, "minTicks", 10, 1, MOST_TICKS, key);
-        int max = (int) Json.ranged(json, "maxTicks", 60, 1, MOST_TICKS, key);
+        int min = (int) Json.ranged(json, "minTicks", 10.0F, 1.0F, MOST_TICKS, key);
+        int max = (int) Json.ranged(json, "maxTicks", 60.0F, 1.0F, MOST_TICKS, key);
         if (max < min) {
             ContentLog.LOGGER.error("Leaf decay {} gives maxTicks {} below minTicks {}, ignoring it", key, max, min);
             return;
         }
-        RULES.add(new LeafDecayRule(blocks, tags, all, group(key, except, EXCEPT + "." + BLOCKS), tags(key, except, EXCEPT + "." + TAG), Json.names(json, "dimensions"), min, max));
+        RULES.add(new LeafDecayRule(blocks, tags, all, group(key, except, EXCEPT + "." + ContentParser.BLOCKS), tags(key, except, EXCEPT + "." + TAG), Json.names(json, "dimensions"), min, max));
     }
 
     static boolean qualifies(IBlockState state, World world, BlockPos pos) {

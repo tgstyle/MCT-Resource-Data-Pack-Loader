@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.city.road;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.Facings;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
@@ -53,6 +54,10 @@ public final class BeardLinks {
     private static final int PACKED = 10;
     private static final int HEAD = 5;
     private static final int END = HEAD + PACKED;
+    private static final int JOIN_ROW = 1;
+    private static final int TAIL = 2;
+    private static final int PARTNER_X = 3;
+    private static final int PARTNER_Z = 4;
     private static final Map<World, Set<Long>> FOUNDED = new WeakHashMap<>();
 
     private BeardLinks() {}
@@ -140,7 +145,7 @@ public final class BeardLinks {
     public static int lineCenter(World world, StructureBoundingBox well, boolean sub, int rolled) {
         if (!on() || sub != carriedUnderground() || BeardSurface.unreadable(world)) { return rolled; }
         int grid = grid(world);
-        Node node = BeardLinksSurvey.node(world, grid, Math.floorDiv((well.minX + 2) >> 4, grid), Math.floorDiv((well.minZ + 2) >> 4, grid));
+        Node node = BeardLinksSurvey.node(world, grid, BeardSite.wellCell(well.minX, grid), BeardSite.wellCell(well.minZ, grid));
         return node == null || !node.is(well) ? rolled : node.center;
     }
 
@@ -158,8 +163,8 @@ public final class BeardLinks {
         if (!on() || sub != carriedUnderground() || BeardSurface.unreadable(world)) { return; }
         StructureBoundingBox wellBox = well.getBoundingBox();
         int grid = grid(world);
-        int cellX = Math.floorDiv((wellBox.minX + 2) >> 4, grid);
-        int cellZ = Math.floorDiv((wellBox.minZ + 2) >> 4, grid);
+        int cellX = BeardSite.wellCell(wellBox.minX, grid);
+        int cellZ = BeardSite.wellCell(wellBox.minZ, grid);
         Node node = BeardLinksSurvey.node(world, grid, cellX, cellZ);
         if (node == null || !node.is(wellBox)) {
             ContentLog.LOGGER.debug("The village at {}, {} is not the one its cell links, so it lays no railway link", wellBox.minX, wellBox.minZ);
@@ -216,7 +221,7 @@ public final class BeardLinks {
 
     public static void fitted(RailPiece rail, int dir, int tailEnd) {
         int[] ends = rail.ends();
-        for (int at = 0; at + END <= ends.length; at += END) { if (ends[at] == dir) { ends[at + 2] = tailEnd; } }
+        for (int at = 0; at + END <= ends.length; at += END) { if (dirOf(ends, at) == dir) { ends[at + TAIL] = tailEnd; } }
     }
 
     private static StructureBoundingBox box(boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, StructureBoundingBox well) {
@@ -266,8 +271,8 @@ public final class BeardLinks {
         if (own == null || own.isEmpty() || !(own.get(0) instanceof StructureVillagePieces.Start) || !on() || BeardSurface.unreadable(world)) { return Collections.emptyList(); }
         StructureBoundingBox well = own.get(0).getBoundingBox();
         int grid = grid(world);
-        int cellX = Math.floorDiv((well.minX + 2) >> 4, grid);
-        int cellZ = Math.floorDiv((well.minZ + 2) >> 4, grid);
+        int cellX = BeardSite.wellCell(well.minX, grid);
+        int cellZ = BeardSite.wellCell(well.minZ, grid);
         List<RailPiece> found = new ArrayList<>();
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
@@ -290,7 +295,7 @@ public final class BeardLinks {
         Set<Long> known = FOUNDED.computeIfAbsent(world, key -> new HashSet<>());
         long key = Longs.pack(wellX, wellZ);
         if (known.contains(key)) { return true; }
-        if (!ContentStructureSearch.villageFoundedAt(world, (wellX + 2) >> 4, (wellZ + 2) >> 4)) { return false; }
+        if (!ContentStructureSearch.villageFoundedAt(world, BeardSite.wellChunk(wellX), BeardSite.wellChunk(wellZ))) { return false; }
         known.add(key);
         return true;
     }
@@ -306,18 +311,28 @@ public final class BeardLinks {
     public static boolean unlaid(World world, RailPiece rail, int row) {
         int[] ends = rail.ends();
         for (int at = 0; at + END <= ends.length; at += END) {
-            int dir = ends[at];
-            if ((row - ends[at + 2]) * dir <= 0) { continue; }
-            if (!founded(world, ends[at + 3], ends[at + 4])) { return true; }
+            int dir = dirOf(ends, at);
+            if ((row - tailOf(ends, at)) * dir <= 0) { continue; }
+            if (!founded(world, partnerXOf(ends, at), partnerZOf(ends, at))) { return true; }
         }
         return false;
     }
 
     public static boolean linked(RailPiece rail, int dir) {
         int[] ends = rail.ends();
-        for (int at = 0; at + END <= ends.length; at += END) { if (ends[at] == dir) { return true; } }
+        for (int at = 0; at + END <= ends.length; at += END) { if (dirOf(ends, at) == dir) { return true; } }
         return false;
     }
+
+    private static int dirOf(int[] ends, int at) { return ends[at]; }
+
+    private static int joinRowOf(int[] ends, int at) { return ends[at + JOIN_ROW]; }
+
+    private static int tailOf(int[] ends, int at) { return ends[at + TAIL]; }
+
+    private static int partnerXOf(int[] ends, int at) { return ends[at + PARTNER_X]; }
+
+    private static int partnerZOf(int[] ends, int at) { return ends[at + PARTNER_Z]; }
 
     private static Trunk trunkOfEnd(int[] ends, int at) { return Trunk.of(Arrays.copyOfRange(ends, at + HEAD, at + END)); }
 
@@ -328,13 +343,13 @@ public final class BeardLinks {
         int pinned = 0;
         boolean[] band = new boolean[profile.length];
         for (int at = 0; at + END <= ends.length; at += END) {
-            int dir = ends[at];
+            int dir = dirOf(ends, at);
             Trunk trunk = trunkOfEnd(ends, at);
             int[][] graded = BeardLinksSurvey.trunkProfile(world, trunk);
             if (graded == null) { continue; }
             int level = graded[0][trunk.rows[joinOf(trunk, dir)] - trunk.least];
             for (int k = 0; k < pinRows(trunk.buried); k++) {
-                int i = ends[at + 1] - dir * k - rowLeast;
+                int i = joinRowOf(ends, at) - dir * k - rowLeast;
                 if (i < 0 || i >= profile.length) { continue; }
                 profile[i] = level;
                 fixed[i] = true;
@@ -350,8 +365,8 @@ public final class BeardLinks {
     @Nullable public static int[] climbOut(RailPiece rail) {
         int[] ends = rail.ends();
         if (ends.length < END || trunkOfEnd(ends, 0).buried) { return null; }
-        int dir = ends[0];
-        return new int[] { ends[1] - dir * (pinRows(false) - 1) - dir * ramp(), dir };
+        int dir = dirOf(ends, 0);
+        return new int[] { joinRowOf(ends, 0) - dir * (pinRows(false) - 1) - dir * ramp(), dir };
     }
 
     private static int fromEnd(RailPiece rail, int row, boolean surfaceOnly, boolean station) {
@@ -359,7 +374,7 @@ public final class BeardLinks {
         for (int at = 0; at + END <= ends.length; at += END) {
             boolean buried = trunkOfEnd(ends, at).buried;
             if (surfaceOnly && buried) { continue; }
-            int k = (ends[at + 1] - row) * ends[at];
+            int k = (joinRowOf(ends, at) - row) * dirOf(ends, at);
             if (k >= 0 && k < (station ? pinRows(buried) : APPROACH)) { return k; }
         }
         return -1;
@@ -392,9 +407,9 @@ public final class BeardLinks {
         if (!stationShape().startsWith("o")) { return true; }
         int[] ends = rail.ends();
         for (int at = 0; at + END <= ends.length; at += END) {
-            int k = (ends[at + 1] - row) * ends[at];
+            int k = (joinRowOf(ends, at) - row) * dirOf(ends, at);
             if (k < 0 || k >= pinRows(false)) { continue; }
-            return side == (rail.alongX() ? -ends[at] : ends[at]);
+            return side == (rail.alongX() ? -dirOf(ends, at) : dirOf(ends, at));
         }
         return false;
     }
@@ -449,7 +464,7 @@ public final class BeardLinks {
         return contains(BeardRails.trackRows(trunk.sub, trunk.rows[0]), row) ? SPUR : BED;
     }
 
-    private static boolean contains(int[] rows, int row) { return index(rows, row, true) >= 0; }
+    public static boolean contains(int[] rows, int row) { return index(rows, row, true) >= 0; }
 
     public static IBlockState junctionTrack(RailPiece rail, int row, int across, IBlockState track) {
         int code = junction(rail, row, across);
@@ -458,8 +473,8 @@ public final class BeardLinks {
         Trunk trunk = Trunk.of(packed);
         if (code == SPUR) { return BeardRails.shaped(track, trunk.alongX ? BlockRailBase.EnumRailDirection.NORTH_SOUTH : BlockRailBase.EnumRailDirection.EAST_WEST, !trunk.alongX); }
         int j = Math.abs(row - trunk.rows[0]) <= trunk.spurHalf() ? 0 : 1;
-        EnumFacing toSpur = EnumFacing.getFacingFromAxis(trunk.sides[j] > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, trunk.alongX ? EnumFacing.Axis.Z : EnumFacing.Axis.X);
-        EnumFacing along = EnumFacing.getFacingFromAxis(trunk.body(j) > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, trunk.alongX ? EnumFacing.Axis.X : EnumFacing.Axis.Z);
+        EnumFacing toSpur = Facings.across(trunk.alongX, trunk.sides[j] > 0);
+        EnumFacing along = Facings.along(trunk.alongX, trunk.body(j) > 0);
         boolean north = toSpur == EnumFacing.NORTH || along == EnumFacing.NORTH;
         boolean east = toSpur == EnumFacing.EAST || along == EnumFacing.EAST;
         BlockRailBase.EnumRailDirection shape = north ? (east ? BlockRailBase.EnumRailDirection.NORTH_EAST : BlockRailBase.EnumRailDirection.NORTH_WEST) : (east ? BlockRailBase.EnumRailDirection.SOUTH_EAST : BlockRailBase.EnumRailDirection.SOUTH_WEST);
@@ -502,9 +517,9 @@ public final class BeardLinks {
         int laid = 0;
         for (int end = 0; end + END <= ends.length; end += END) {
             if (trunkOfEnd(ends, end).buried) { continue; }
-            int dir = ends[end];
-            int near = ends[end + 1] - dir * APPROACH;
-            int far = ends[end + 1] - dir * (pinRows(false) - 1);
+            int dir = dirOf(ends, end);
+            int near = joinRowOf(ends, end) - dir * APPROACH;
+            int far = joinRowOf(ends, end) - dir * (pinRows(false) - 1);
             int middle = (near + far) / 2;
             int level = grade.at(middle);
             if (level == Integer.MIN_VALUE || unlaid(world, rail, middle)) { continue; }

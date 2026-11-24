@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.villages;
 
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRails;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRailsGrade;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRailsLay;
@@ -13,14 +14,14 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 
-public class RailPiece extends StructureVillagePieces.Road {
+public class RailPiece extends RoadPiece {
     public static final String ID = "RdplRail";
+    private static final String RISING = "RdplRising";
     private int line;
     private boolean subway;
     private final List<StructureBoundingBox> stations = new ArrayList<>();
@@ -34,20 +35,18 @@ public class RailPiece extends StructureVillagePieces.Road {
     @SuppressWarnings("unused") public RailPiece() {}
 
     public RailPiece(StructureBoundingBox box, boolean alongX, boolean subway) {
-        setCoordBaseMode(alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
-        this.boundingBox = box;
+        lay(box, alongX);
         this.subway = subway;
     }
 
     public RailPiece(StructureVillagePieces.Start start, StructureBoundingBox box, boolean alongX, int line, boolean subway) {
-        super(start, 0);
-        setCoordBaseMode(alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
-        this.boundingBox = box;
+        super(start);
+        lay(box, alongX);
         this.line = line;
         this.subway = subway;
     }
 
-    public boolean alongX() { return trunk != null ? BeardLinks.Trunk.of(trunk).alongX() : boundingBox.maxX - boundingBox.minX >= boundingBox.maxZ - boundingBox.minZ; }
+    @Override public boolean alongX() { return trunk != null ? BeardLinks.Trunk.of(trunk).alongX() : boundingBox.maxX - boundingBox.minX >= boundingBox.maxZ - boundingBox.minZ; }
 
     public int line() { return line; }
 
@@ -91,13 +90,9 @@ public class RailPiece extends StructureVillagePieces.Road {
 
     public void stationTop(int which, int y) { if (which >= 0 && which < stationTops.length) { stationTops[which] = y; } }
 
-    public int rowLeast() { return alongX() ? boundingBox.minX : boundingBox.minZ; }
+    public int acrossLeast() { return BeardPlots.acrossLeast(boundingBox, alongX()); }
 
-    public int rowMost() { return alongX() ? boundingBox.maxX : boundingBox.maxZ; }
-
-    public int acrossLeast() { return alongX() ? boundingBox.minZ : boundingBox.minX; }
-
-    public int acrossMost() { return alongX() ? boundingBox.maxZ : boundingBox.maxX; }
+    public int acrossMost() { return BeardPlots.acrossMost(boundingBox, alongX()); }
 
     @Nullable public BeardRoads.Grade grade(World world) {
         if (grade != null && (grade.start() != gradeLeast() || grade.rows() != gradeRows())) { regrade(); }
@@ -127,19 +122,11 @@ public class RailPiece extends StructureVillagePieces.Road {
         tag.setBoolean("RdplSubway", subway);
         if (!stations.isEmpty()) {
             int[] held = new int[stations.size() * 6];
-            for (int at = 0; at < stations.size(); at++) {
-                StructureBoundingBox box = stations.get(at);
-                held[at * 6] = box.minX;
-                held[at * 6 + 1] = box.minY;
-                held[at * 6 + 2] = box.minZ;
-                held[at * 6 + 3] = box.maxX;
-                held[at * 6 + 4] = box.maxY;
-                held[at * 6 + 5] = box.maxZ;
-            }
+            for (int at = 0; at < stations.size(); at++) { System.arraycopy(stations.get(at).toNBTTagIntArray().getIntArray(), 0, held, at * 6, 6); }
             tag.setIntArray("RdplStations", held);
             tag.setIntArray("RdplStationTops", stationTops);
         }
-        if (risingKnown) { tag.setIntArray("RdplRising", rising == null ? new int[0] : rising); }
+        if (risingKnown) { tag.setIntArray(RISING, rising == null ? new int[0] : rising); }
         if (trunk != null) { tag.setIntArray("RdplTrunk", trunk); }
         if (ends.length > 0) { tag.setIntArray("RdplLinkEnds", ends); }
         if (grade != null) { grade.write(tag); }
@@ -151,14 +138,14 @@ public class RailPiece extends StructureVillagePieces.Road {
         subway = tag.getBoolean("RdplSubway");
         stations.clear();
         int[] held = tag.hasKey("RdplStations") ? tag.getIntArray("RdplStations") : tag.getIntArray("RdplStation");
-        for (int at = 0; at + 5 < held.length; at += 6) { stations.add(new StructureBoundingBox(held[at], held[at + 1], held[at + 2], held[at + 3], held[at + 4], held[at + 5])); }
+        for (int at = 0; at + 5 < held.length; at += 6) { stations.add(new StructureBoundingBox(Arrays.copyOfRange(held, at, at + 6))); }
         stationTops = new int[stations.size()];
         Arrays.fill(stationTops, Integer.MIN_VALUE);
         int[] tops = tag.hasKey("RdplStationTops") ? tag.getIntArray("RdplStationTops")
                 : tag.hasKey("RdplStationTop") ? new int[] {tag.getInteger("RdplStationTop")} : new int[0];
         System.arraycopy(tops, 0, stationTops, 0, Math.min(tops.length, stationTops.length));
-        risingKnown = tag.hasKey("RdplRising");
-        int[] rose = tag.getIntArray("RdplRising");
+        risingKnown = tag.hasKey(RISING);
+        int[] rose = tag.getIntArray(RISING);
         rising = rose.length == 2 ? rose : null;
         trunk = tag.hasKey("RdplTrunk") ? tag.getIntArray("RdplTrunk") : null;
         ends = tag.getIntArray("RdplLinkEnds");

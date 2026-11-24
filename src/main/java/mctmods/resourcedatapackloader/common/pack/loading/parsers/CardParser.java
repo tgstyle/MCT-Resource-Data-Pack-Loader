@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.common.cards.CardLook;
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.cards.CardRule;
 import mctmods.resourcedatapackloader.common.cards.CardWhen;
-import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.syncdata.DataCheck;
 import mctmods.resourcedatapackloader.common.syncdata.DataSets;
@@ -14,7 +13,9 @@ import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.entity.WornCheck;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -31,7 +32,7 @@ public final class CardParser {
     private static final List<String> WHEN_KEYS = Collections.unmodifiableList(Arrays.asList("biomes", "environments", "season", "dimension", "timeFrom", "timeTo", "dayAtLeast", "advancement", "gameMode", "portway", "network", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective", "worn", "each", "data"));
     private static final int MOST_LINES = 16;
     private static final int METER_TICKS = 40;
-    private static final int METER_STEP = 20;
+    private static final int METER_STEP = MathUtil.TICKS_PER_SECOND;
     private static final int TICKS_IN_DAY = (int) DimensionTraitsDef.VANILLA_DAY;
 
     private CardParser() {}
@@ -51,16 +52,17 @@ public final class CardParser {
         rule.dimension = Json.getString(json, "dimension", "").trim();
         rule.biomes = Json.strings(json, "biomes");
         rule.structures = Json.strings(json, "structures");
-        rule.radius = Math.max(1, Json.getInt(json, "radius", CardPlace.NEAR));
+        rule.radius = Json.atLeast(json, "radius", CardPlace.NEAR, 1);
         rule.advancement = Json.getString(json, "advancement", "").trim();
         rule.item = Json.getString(json, "item", "").trim();
         rule.entity = Json.getString(json, "entity", "").trim();
-        rule.count = Math.max(1, Json.getInt(json, "count", 1));
-        rule.below = json.has("below") ? Json.getInt(json, "below") : null;
-        rule.above = json.has("above") ? Json.getInt(json, "above") : null;
+        rule.count = Json.atLeast(json, "count", 1, 1);
+        rule.below = Json.intOrNull(json, "below");
+        rule.above = Json.intOrNull(json, "above");
         rule.time = Math.floorMod(Json.getInt(json, "time", 0), TICKS_IN_DAY);
-        rule.day = json.has("day") ? Math.max(0L, Json.getInt(json, "day")) : -1L;
-        rule.minutes = Math.max(0, Json.getInt(json, "minutes", 0));
+        Integer day = Json.intOrNull(json, "day");
+        rule.day = day == null ? -1L : Math.max(0L, day);
+        rule.minutes = Json.atLeast(json, "minutes", 0, 0);
         rule.objective = Json.getString(json, "objective", "").trim();
         rule.score = Json.getInt(json, "score", 1);
         rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
@@ -69,28 +71,28 @@ public final class CardParser {
         rule.environment = Json.getString(json, "environment", "").trim();
         rule.portway = Json.getString(json, "portway", "").trim();
         rule.raid = Json.getString(json, "raid", "").trim();
-        rule.rank = ContentRanks.key(id.getNamespace(), Json.getString(json, "rank", "").trim());
+        rule.rank = IdNames.namespaced(Json.getString(json, "rank", "").trim(), id.getNamespace());
         rule.network = Json.getString(json, "network", "").trim();
         rule.reason = Json.getString(json, "reason", "").trim();
-        rule.level = json.has("level") ? Json.getInt(json, "level") : null;
-        rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
-        rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
+        rule.level = Json.intOrNull(json, "level");
+        rule.atLeast = Json.intOrNull(json, "atLeast");
+        rule.atMost = Json.intOrNull(json, "atMost");
         if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when"), id, "Card rule"); }
-        rule.title = json.has("title") ? Json.getString(json, "title") : null;
+        rule.title = Json.stringOrNull(json, "title");
         rule.lines = json.has("lines") ? lines(key, json) : null;
         rule.icon = optional(json, "icon");
         rule.color = optional(json, "color");
         rule.image = optional(json, "image");
-        rule.background = json.has("background") ? Json.getBoolean(json, "background") : null;
+        rule.background = Json.flagOrNull(json, "background");
         rule.font = optional(json, "font");
         String owner = "Card rule " + key;
         rule.style = Json.choice(json, "style", null, owner, CardLook.STYLES);
-        rule.ticks = Math.max(0, Json.getInt(json, "ticks", 0));
+        rule.ticks = Json.atLeast(json, "ticks", 0, 0);
         rule.sound = Json.getString(json, "sound", "").trim();
         rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
         rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
-        rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
-        rule.runs = Json.getString(json, "runs", "").trim();
+        rule.cooldown = Json.atLeast(json, "cooldown", 0, 0);
+        rule.runs = Json.getString(json, Json.RUNS, "").trim();
         rule.sets = DataSets.parse(json, "Card rule", key, id);
         if (CardRule.WORN.equals(rule.trigger)) { meter(rule, json); }
         rule.requires = Json.strings(json, "requires");
@@ -100,7 +102,7 @@ public final class CardParser {
     private static void meter(CardRule rule, JsonObject json) {
         int asked = Json.getInt(json, "every", METER_TICKS);
         rule.every = Math.max(METER_STEP, (asked + METER_STEP - 1) / METER_STEP * METER_STEP);
-        if (rule.every != asked) { ContentLog.LOGGER.error("Card rule {} sets every {}, which is not a multiple of 20 ticks, so it refreshes every {} ticks", rule.key, asked, rule.every); }
+        if (rule.every != asked) { ContentLog.LOGGER.error("Card rule {} sets every {}, which is not a multiple of {} ticks, so it refreshes every {} ticks", rule.key, asked, METER_STEP, rule.every); }
         if (rule.cooldown > 0 || !CardRule.ALWAYS.equals(rule.repeat)) { ContentLog.LOGGER.warn("Card rule {} has trigger worn and sets cooldown or repeat, which a meter ignores", rule.key); }
     }
 
@@ -137,7 +139,10 @@ public final class CardParser {
         return Collections.unmodifiableList(lines);
     }
 
-    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }
+    @Nullable public static String optional(JsonObject json, String member) {
+        String value = Json.stringOrNull(json, member);
+        return value == null ? null : value.trim();
+    }
 
     private static boolean missing(CardRule rule) {
         String needs = needs(rule);

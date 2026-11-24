@@ -4,10 +4,8 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.text.TextLines;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import net.minecraft.advancements.FunctionManager;
 import net.minecraft.command.FunctionObject;
@@ -40,16 +38,14 @@ public final class FunctionOverrides {
             functions.put(key, function);
             added[0]++;
         });
-        if (added[0] > 0) { Summary.info("functions", "Loaded " + added[0] + " function(s) from packs"); }
+        Summary.loaded("functions", added[0], "function(s) from packs");
     }
 
     private static FunctionObject build(FunctionManager manager, ResourceLocation key, String contents) {
-        try { return FunctionObject.create(manager, lines(contents)); }
+        try { return FunctionObject.create(manager, TextLines.lines(contents)); }
         catch (RuntimeException ex) {
             ContentLog.LOGGER.error("Parsing error in function {}, skipping it", key, ex);
             return null;
         }
     }
-
-    private static List<String> lines(String contents) { return new ArrayList<>(Arrays.asList(contents.split("\r\n|\r|\n", -1))); }
 }

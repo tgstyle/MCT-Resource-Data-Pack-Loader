@@ -100,7 +100,6 @@ import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentTasks {
     private static final Map<String, Kind> KINDS = new LinkedHashMap<>();
@@ -113,6 +112,9 @@ public final class ContentTasks {
     private static final String ANIMAL = "an animal";
     private static final List<String> TASK_KEYS = Collections.unmodifiableList(Arrays.asList("task", "priority", "speed", "nearSpeed", "distance", "near", "chance", "leap", "cooldown", "entity", "items",
             "sight", "nearby", "help", "memory", "close", "nocturnal", "scared"));
+    private static final double RANGED_SPEED = 1.0D;
+    private static final int RANGED_COOLDOWN = 20;
+    private static final float RANGED_DISTANCE = 15.0F;
 
     private ContentTasks() {}
 
@@ -144,7 +146,7 @@ public final class ContentTasks {
 
     static {
         task("attackMelee", EntityCreature.class, WALKER, EntityAIAttackMelee.class, (l, t, d) -> new EntityAIAttackMelee((EntityCreature) l, t.speed(1.0D), t.memory));
-        task("attackRanged", IRangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", EntityAIAttackRanged.class, (l, t, d) -> new EntityAIAttackRanged((IRangedAttackMob) l, t.speed(1.0D), t.cooldown(20), t.distance(15.0F)));
+        task("attackRanged", IRangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", EntityAIAttackRanged.class, (l, t, d) -> new EntityAIAttackRanged((IRangedAttackMob) l, t.speed(RANGED_SPEED), t.cooldown(RANGED_COOLDOWN), t.distance(RANGED_DISTANCE)));
         task("attackRangedBow", EntityMob.class, "a monster that shoots, like a skeleton", EntityAIAttackRangedBow.class, ContentTasks::bow);
         task("avoidEntity", EntityCreature.class, WALKER, EntityAIAvoidEntity.class, (l, t, d) -> {
             Class<? extends Entity> avoided = entity(t, d, Entity.class);
@@ -231,7 +233,7 @@ public final class ContentTasks {
             ContentLog.LOGGER.error("Entity variant {} asks for the task attackRangedBow, which needs a base that shoots, like a skeleton; {} does not", def.registryName, def.base);
             return null;
         }
-        return new EntityAIAttackRangedBow((EntityMob & IRangedAttackMob) living, task.speed(1.0D), task.cooldown(20), task.distance(15.0F));
+        return new EntityAIAttackRangedBow((EntityMob & IRangedAttackMob) living, task.speed(RANGED_SPEED), task.cooldown(RANGED_COOLDOWN), task.distance(RANGED_DISTANCE));
     }
 
     public static String names() { return String.join(", ", KINDS.values().stream().map(kind -> kind.name).toArray(String[]::new)); }
@@ -280,11 +282,14 @@ public final class ContentTasks {
         return kind;
     }
 
-    @Nullable private static Double number(JsonObject json, String name) { return json.has(name) ? (Double) (double) Json.getFloat(json, name) : null; }
+    @Nullable private static Double number(JsonObject json, String name) {
+        Float value = decimal(json, name);
+        return value == null ? null : (Double) (double) value;
+    }
 
     @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? (Float) Json.getFloat(json, name) : null; }
 
-    public static void apply(EntityLiving living, EntityVariantDef def) { apply(living, def, def.tasks); }
+    public static void apply(EntityLiving living, EntityVariantDef def) { apply(living, def, def.combat.tasks); }
 
     static void apply(EntityLiving living, EntityVariantDef def, List<TaskDef> asked) {
         if (asked.isEmpty()) { return; }
@@ -307,7 +312,7 @@ public final class ContentTasks {
             (kind.targeting ? living.targetTasks : living.tasks).addTask(task.priority, made);
             if (taken != null) { taken.append(' ').append(kind.name).append('@').append(task.priority); }
         }
-        if (taken != null) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its tasks:{}", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ, taken); }
+        if (taken != null) { ContentLog.LOGGER.debug("Entity variant {} at {} takes its tasks:{}", def.registryName, ContentLog.at(living), taken); }
     }
 
     private static void drop(EntityAITasks tasks, Class<? extends EntityAIBase> type) { AiTasks.remove(tasks, action -> action.getClass() == type); }
@@ -333,7 +338,7 @@ public final class ContentTasks {
         }
         Set<Item> wanted = new HashSet<>();
         for (String name : task.items) {
-            Item item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(name));
+            Item item = Registries.itemNamed(name);
             if (item == null) { ContentLog.LOGGER.error("Entity variant {} would be tempted by '{}', which is not a registered item", def.registryName, name); }
             else { wanted.add(item); }
         }

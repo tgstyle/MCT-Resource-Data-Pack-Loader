@@ -2,10 +2,12 @@ package mctmods.resourcedatapackloader.client.gui.intro;
 
 import mctmods.resourcedatapackloader.client.gui.hud.MarkPage;
 import mctmods.resourcedatapackloader.client.util.Crisp;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.intro.ContentWorldIntro;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.IntroPageDef;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,11 +23,11 @@ import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.IOUtils;
@@ -70,7 +72,7 @@ import org.lwjgl.opengl.GL11;
     @Nullable private static ISound track() {
         ResourceLocation key = ContentWorldIntro.music();
         if (key == null) { return null; }
-        SoundEvent event = SoundEvent.REGISTRY.getObject(key);
+        SoundEvent event = Registries.find(ForgeRegistries.SOUND_EVENTS, key);
         if (event == null) {
             ContentLog.LOGGER.error("World intro names music {}, which nothing registers, so it plays silently", key);
             return null;
@@ -171,9 +173,7 @@ import org.lwjgl.opengl.GL11;
             return;
         }
         int index = def.cycles() ? (int) ((ticks + partialTicks) / (def.interval * 20.0F)) % def.backgrounds.size() : 0;
-        mc.getTextureManager().bindTexture(def.backgrounds.get(index));
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        drawModalRectWithCustomSizedTexture(0, 0, 0.0F, 0.0F, width, height, width, height);
+        Draw.blit(def.backgrounds.get(index), 0, 0, width, height, 1.0F);
     }
 
     private void loadPage() {
@@ -188,12 +188,14 @@ import org.lwjgl.opengl.GL11;
         float room = height - BUTTONS;
         scale = Crisp.scale(scale);
         for (int tries = 0; tries < FITS; tries++) {
-            wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+            wrap(wrapWidth());
             if (totalScrollLength <= room || scale <= SMALLEST) { return; }
             scale = Crisp.below(scale * room / totalScrollLength, SMALLEST);
         }
-        wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+        wrap(wrapWidth());
     }
+
+    private int wrapWidth() { return (int) Math.max(1.0F, (width - MARGIN * 2) / scale); }
 
     private void read(IntroPageDef def) {
         if (def.text == null) { return; }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.pack.io.port.commands;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.common.pack.io.port.Snbt;
 import mctmods.resourcedatapackloader.common.pack.io.port.convert.Convert;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -39,8 +40,9 @@ final class CommandStacks {
             String components = token.substring(bracket + 1, close);
             if (close + 1 < token.length()) { nbt = token.substring(close + 1); }
             for (String component : CommandSelectors.splitTop(components)) {
-                String key = component.indexOf('=') < 0 ? component : component.substring(0, component.indexOf('='));
-                String value = component.indexOf('=') < 0 ? "" : component.substring(component.indexOf('=') + 1);
+                int equals = component.indexOf('=');
+                String key = equals < 0 ? component : component.substring(0, equals);
+                String value = equals < 0 ? "" : component.substring(equals + 1);
                 if ("damage".equals(key) || "minecraft:damage".equals(key)) { meta = CommandSelectors.whole(value); }
                 else if ("custom_data".equals(key) || "minecraft:custom_data".equals(key)) { nbt = value; }
                 else if (!key.isEmpty()) { throw new Commands.Kept("the item component " + key + " has no twin on 1.12.2"); }
@@ -52,7 +54,7 @@ final class CommandStacks {
             Matcher damage = DAMAGE.matcher(nbt);
             if (damage.find()) { meta = Integer.parseInt(damage.group(1)); }
         }
-        if (name.startsWith("#")) { throw new Commands.Kept("an item tag has no twin in a 1.12.2 command"); }
+        if (IdNames.isTag(name)) { throw new Commands.Kept("an item tag has no twin in a 1.12.2 command"); }
         Convert.Ref ref = Convert.item(name, pack, "a function");
         if (ref == null) { return new Stack(name, meta, nbt); }
         return new Stack(ref.id, meta > 0 ? meta : ref.meta, nbt);
@@ -66,7 +68,7 @@ final class CommandStacks {
             name = token.substring(0, brace);
             nbt = token.substring(brace);
         }
-        if (name.startsWith("#")) { throw new Commands.Kept("a block tag has no twin in a 1.12.2 command"); }
+        if (IdNames.isTag(name)) { throw new Commands.Kept("a block tag has no twin in a 1.12.2 command"); }
         Convert.Ref ref = Convert.block(name, Collections.emptyMap(), pack, "a function");
         if (ref == null) { throw new Commands.Kept("'" + name + "' is not a block"); }
         if (nbt != null && "minecraft:mob_spawner".equals(ref.id)) {

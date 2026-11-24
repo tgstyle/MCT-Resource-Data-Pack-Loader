@@ -13,31 +13,28 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
 
 public final class ContentParserCrops {
-    private static final List<String> SOURCES = Arrays.asList(TallDef.FROM_BASE, TallDef.FROM_ALL);
+    private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(TallDef.FROM_BASE, TallDef.FROM_ALL));
 
-    private static final List<String> AGE_KEYS = Arrays.asList("rise", "regrow", "produceFrom");
+    private static final List<String> AGE_KEYS = Collections.unmodifiableList(Arrays.asList("rise", "regrow", "produceFrom"));
     private static final List<String> TALL_KEYS = Collections.unmodifiableList(Arrays.asList("parts", "rise", "regrow", "produceFrom"));
 
     private ContentParserCrops() {}
 
     @Nullable static TallDef tall(JsonObject json, ResourceLocation key, int maxAge) {
-        if (!json.has("tall") || !json.get("tall").isJsonObject()) { return null; }
+        JsonObject held = Json.objectOrNull(json, "tall");
+        if (held == null) { return null; }
         String type = Json.getString(json, "type", ContentBlockTypes.DEFAULT);
         boolean flower = "flower".equals(type);
         if (!flower && !"crop".equals(type)) {
             ContentLog.LOGGER.warn("Block {} has a 'tall' section but its type is not 'crop' or 'flower', ignoring it", key);
             return null;
         }
-        JsonObject held = Json.getJsonObject(json, "tall");
         Json.unknownKeys(held, "tall", TALL_KEYS);
-        int parts = MathHelper.clamp(Json.getInt(held, "parts", TallDef.DEFAULT_PARTS), TallDef.MIN_PARTS, TallDef.MAX_PARTS);
+        int parts = Json.clamped(held, "parts", TallDef.DEFAULT_PARTS, TallDef.MIN_PARTS, TallDef.MAX_PARTS);
         if (flower) {
-            for (String ignored : AGE_KEYS) {
-                if (held.has(ignored)) { ContentLog.LOGGER.warn("Block {} is a flower, so its tall '{}' is ignored", key, ignored); }
-            }
+            for (String ignored : Json.present(held, AGE_KEYS)) { ContentLog.LOGGER.warn("Block {} is a flower, so its tall '{}' is ignored", key, ignored); }
             return new TallDef(parts, TallDef.defaultRise(parts, maxAge), TallDef.FROM_BASE, false);
         }
         return new TallDef(parts, rise(held, key, parts, maxAge), Json.choice(held, "produceFrom", TallDef.FROM_BASE, key, SOURCES), Json.getBoolean(held, "regrow", false));

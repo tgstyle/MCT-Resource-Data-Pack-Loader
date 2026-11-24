@@ -4,8 +4,10 @@ import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
 import mctmods.resourcedatapackloader.common.util.plant.PlantWater;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.BlockSupport;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 
 import java.util.Random;
@@ -46,14 +48,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.def = def;
         this.growth = growth;
         this.soil = new ContentSoil(growth.soil, def.registryName);
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        if (def.soundType != null) { setSoundType(def.soundType); }
         setTickRandomly(true);
         setDefaultState(blockState.getBaseState().withProperty(AGE, 0));
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyPlantNamed(this, def);
     }
 
     @Override public ContentSoil soil() { return soil; }
@@ -87,16 +84,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (!world.isAreaLoaded(pos, 1)) { return; }
         if (!checkStay(world, pos)) { return; }
         if (!world.isAirBlock(pos.up())) { return; }
-        int height = 1;
-        while (world.getBlockState(pos.down(height)).getBlock() == this) { height++; }
-        if (height >= growth.maxHeight) { return; }
+        if (TallPlants.run(world, pos, this, EnumFacing.DOWN) >= growth.maxHeight) { return; }
         int age = state.getValue(AGE);
         if (!ForgeHooks.onCropsGrowPre(world, pos, state, true)) { return; }
         if (age >= growth.stages - 1) {
             world.setBlockState(pos.up(), getDefaultState());
-            world.setBlockState(pos, state.withProperty(AGE, 0), 4);
+            world.setBlockState(pos, state.withProperty(AGE, 0), BlockFlags.NO_RERENDER);
         }
-        else { world.setBlockState(pos, state.withProperty(AGE, age + 1), 4); }
+        else { world.setBlockState(pos, state.withProperty(AGE, age + 1), BlockFlags.NO_RERENDER); }
         ForgeHooks.onCropsGrowPost(world, pos, state, world.getBlockState(pos));
     }
 
@@ -118,10 +113,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random random, int fortune) { return Item.getItemFromBlock(this); }
 
     private boolean checkStay(World world, BlockPos pos) {
-        if (supported(world, pos)) { return true; }
-        dropBlockAsItem(world, pos, world.getBlockState(pos), 0);
-        world.setBlockToAir(pos);
-        return false;
+        return BlockSupport.dropUnless(this, world, pos, world.getBlockState(pos), supported(world, pos));
     }
 
     private void checkDrop(World world, BlockPos pos) {

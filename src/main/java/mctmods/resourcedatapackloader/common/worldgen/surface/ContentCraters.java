@@ -35,7 +35,7 @@ import net.minecraft.world.gen.structure.StructureStart;
 
 public final class ContentCraters {
     private static final long SALT = 0x435241544552L;
-    private static final int TOP = 255;
+    private static final int TOP = ContentCaveWorld.HEIGHT - 1;
     private static final int MARGIN = 12;
     private static final IBlockState AIR = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     private static final Field[] NO_FIELDS = new Field[0];
@@ -61,8 +61,8 @@ public final class ContentCraters {
         }
 
         boolean near(int minX, int minZ, int maxX, int maxZ, int keep) {
-            long dx = Math.max(0, Math.max(minX - x, x - maxX));
-            long dz = Math.max(0, Math.max(minZ - z, z - maxZ));
+            long dx = MathUtil.gap(x, minX, maxX);
+            long dz = MathUtil.gap(z, minZ, maxZ);
             return dx * dx + dz * dz < (long) keep * keep;
         }
 

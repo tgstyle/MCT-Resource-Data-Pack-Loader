@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.items.ContentBannerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -32,12 +31,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     public ContentBannerBlock(BlockDef def) {
         this.def = def;
-        BlockVariant variant = def.at(0);
         ContentSetup.material(this, def);
         setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
+        setTranslationKey(ContentSetup.singleKey(def));
         ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
         ContentSetup.properties(this, def);
     }
 
@@ -51,7 +48,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override @Nullable public Item createItem() {
         ContentBannerItem item = new ContentBannerItem(this);
-        item.setTranslationKey(def.registryName + "." + def.at(0).name);
+        item.setTranslationKey(ContentSetup.singleKey(def));
         ContentSetup.apply(item, def.creativeTab);
         this.banner = item;
         return item;

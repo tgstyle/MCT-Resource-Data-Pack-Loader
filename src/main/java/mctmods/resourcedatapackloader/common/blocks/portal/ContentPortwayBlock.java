@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.logic.TileEntityPortway;
 import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayDef;
 import mctmods.resourcedatapackloader.common.portways.PortwayGlobal;
 import mctmods.resourcedatapackloader.common.portways.PortwayTeam;
@@ -100,7 +101,7 @@ import net.minecraft.world.World;
 
     @Override public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase placer, @Nonnull ItemStack stack) {
         super.onBlockPlacedBy(world, pos, state, placer, stack);
-        if (settings().tall) { world.setBlockState(pos.up(), state.withProperty(HALF, BlockDoor.EnumDoorHalf.UPPER), 3); }
+        if (settings().tall) { world.setBlockState(pos.up(), state.withProperty(HALF, BlockDoor.EnumDoorHalf.UPPER), BlockFlags.UPDATE_ALL); }
         TileEntity tile = world.getTileEntity(pos);
         if (world.isRemote || !(tile instanceof TileEntityPortway)) { return; }
         if (stack.hasDisplayName()) { ((TileEntityPortway) tile).rename(stack.getDisplayName()); }

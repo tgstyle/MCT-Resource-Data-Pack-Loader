@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.core.integration.galacticraftcore;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalacticraftDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
-import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserModPlanets;
 import mctmods.resourcedatapackloader.core.integration.extraplanets.EpPlanets;
 
 import java.util.Random;
@@ -13,7 +12,6 @@ import micdoodle8.mods.galacticraft.api.world.ITeleportType;
 import micdoodle8.mods.galacticraft.core.entities.EntityLander;
 import micdoodle8.mods.galacticraft.core.entities.EntityLanderBase;
 import micdoodle8.mods.galacticraft.core.entities.player.GCPlayerStats;
-import micdoodle8.mods.galacticraft.core.util.CompatibilityManager;
 import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -115,16 +113,14 @@ public final class GcTeleport implements ITeleportType {
             return;
         }
         GalacticraftDef gc = gc(newWorld.provider.getDimension());
-        EntityLanderBase lander = gc != null && gc.extraPlanets != null && gc.extraPlanets.lander != null && Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS) ? EpPlanets.lander(gc.extraPlanets.lander, player) : new EntityLander(player);
+        EntityLanderBase lander = gc != null && gc.extraPlanets != null && gc.extraPlanets.lander != null && GcCelestial.EXTRA_PLANETS ? EpPlanets.lander(gc.extraPlanets.lander, player) : new EntityLander(player);
         lander.setPosition(player.posX, player.posY, player.posZ);
         if (!newWorld.isRemote) {
-            boolean previous = CompatibilityManager.forceLoadChunks((WorldServer) newWorld);
-            lander.forceSpawn = true;
-            newWorld.spawnEntity(lander);
-            lander.setWorld(newWorld);
-            newWorld.updateEntityWithOptionalForce(lander, true);
-            player.startRiding(lander);
-            CompatibilityManager.forceLoadChunksEnd((WorldServer) newWorld, previous);
+            GcBalloons.spawnForced((WorldServer) newWorld, lander, () -> {
+                lander.setWorld(newWorld);
+                newWorld.updateEntityWithOptionalForce(lander, true);
+                player.startRiding(lander);
+            });
         }
         stats.setTeleportCooldown(10);
     }

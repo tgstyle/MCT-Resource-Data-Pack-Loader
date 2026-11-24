@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer;
 
 import mctmods.resourcedatapackloader.common.entities.ReturningThrow;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
@@ -19,7 +20,7 @@ public final class RenderReturningThrow extends Render<ReturningThrow> {
     static void drawStack(Entity entity, ItemStack stack, double x, double y, double z, float partialTicks, float spin) {
         GlStateManager.pushMatrix();
         GlStateManager.translate((float) x, (float) y + 0.25F, (float) z);
-        GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partialTicks - 90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(MathUtil.lerp(partialTicks, entity.prevRotationYaw, entity.rotationYaw) - 90.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(spin, 0.0F, 0.0F, 1.0F);
         Minecraft.getMinecraft().getRenderItem().renderItem(stack, ItemCameraTransforms.TransformType.GROUND);
         GlStateManager.popMatrix();

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IMinMaxHeigh
 import mctmods.resourcedatapackloader.common.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.common.util.worldgen.Noise3D;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -55,8 +56,6 @@ public class DeepGeneration {
     private final Field pillarRare;
     private final Field pillarThick;
     final Field surfaceDepth;
-    private final boolean voidDimension;
-    private final int dimension;
     @Nullable private final DeepRavines ravines;
     private final RubicAquifer aquifer;
     private final DeepSky sky;
@@ -66,8 +65,8 @@ public class DeepGeneration {
         this.seed = world.getSeed();
         this.offsetBlocks = offsetBlocks;
         this.genFloor = ((IMinMaxHeight) world).rdpl$getMinHeight() - offsetBlocks;
-        this.voidDimension = world.provider.getDimensionType() == DimensionType.THE_END;
-        this.dimension = world.provider.getDimension();
+        boolean voidDimension = voidDimension(world);
+        int dimension = world.provider.getDimension();
         this.extensionBottom = extensionBottom;
         this.deepStone = parseState(scoped("deepStone", Config.worldgen.deepStone), "deepStone");
         this.sky = new DeepSky(this, world, offsetBlocks);
@@ -101,8 +100,12 @@ public class DeepGeneration {
                 sky.skyStone == null ? "none" : sky.skyStone.getBlock().getRegistryName(), sky.skyShape == DeepSky.SKY_CAVES ? "caves" : "islands");
     }
 
-    String scoped(String key, String fallback) {
-        List<String> found = Settings.forDimension(ContentControl.lines(ContentControl.TERRAIN, key, new String[] {fallback}), dimension, !voidDimension, key);
+    String scoped(String key, String fallback) { return scoped(world, key, fallback); }
+
+    static boolean voidDimension(World world) { return world.provider.getDimensionType() == DimensionType.THE_END; }
+
+    public static String scoped(World world, String key, String fallback) {
+        List<String> found = Settings.forDimension(ContentControl.lines(ContentControl.TERRAIN, key, new String[] {fallback}), world.provider.getDimension(), !voidDimension(world), key);
         return found.isEmpty() ? "" : found.get(found.size() - 1);
     }
 
@@ -110,9 +113,7 @@ public class DeepGeneration {
 
     public static boolean reworksBand(World world) {
         if (!GenHeights.rubic(world)) { return false; }
-        List<String> found = Settings.forDimension(ContentControl.lines(ContentControl.TERRAIN, "noiseCaves", new String[] {Config.worldgen.noiseCaves}),
-                world.provider.getDimension(), world.provider.getDimensionType() != DimensionType.THE_END, "noiseCaves");
-        return !found.isEmpty() && "world".equalsIgnoreCase(found.get(found.size() - 1));
+        return "world".equalsIgnoreCase(scoped(world, "noiseCaves", Config.worldgen.noiseCaves));
     }
 
     public boolean wantsDeep() { return deepStone != null || caveScope > 0 || !veins.isEmpty() || ravines != null; }
@@ -137,24 +138,24 @@ public class DeepGeneration {
 
     public void fillDeepCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
         int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
-        double[][][] lattice = caveScope > 0 ? sampleLattice(cubeX << 4, Coords.cubeToMinBlock(cubeY) - offsetBlocks, cubeZ << 4) : null;
+        double[][][] lattice = caveScope > 0 ? sampleLattice(Coords.cubeToMinBlock(cubeX), Coords.cubeToMinBlock(cubeY) - offsetBlocks, Coords.cubeToMinBlock(cubeZ)) : null;
         for (int y = 0; y < Cube.SIZE; y++) {
             int genY = Coords.cubeToMinBlock(cubeY) + y - offsetBlocks;
             int blockY = Coords.localToBlock(vanillaY, y);
             for (int z = 0; z < Cube.SIZE; z++) {
-                int worldZ = (cubeZ << 4) + z;
+                int worldZ = Coords.cubeToMinBlock(cubeZ) + z;
                 for (int x = 0; x < Cube.SIZE; x++) {
-                    int worldX = (cubeX << 4) + x;
+                    int worldX = Coords.cubeToMinBlock(cubeX) + x;
                     double carved = lattice != null ? trilerp(lattice, x, y, z) : 1.0D;
                     if (carved <= CAVE_THRESHOLD) {
                         IBlockState opened = fluidOrAir(worldX, genY, worldZ, carved);
-                        opened = WorldGenUtils.getRandomBedrockReplacement(world, rand, opened, blockY, 5, topBedrock, bottomBedrock);
+                        opened = WorldGenUtils.getRandomBedrockReplacement(world, rand, opened, blockY, topBedrock, bottomBedrock);
                         primer.setBlockState(x, y, z, opened);
                         continue;
                     }
                     IBlockState state = deepStone != null ? deepStone : extensionBottom;
                     state = veinState(worldX, genY, worldZ, state);
-                    state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5, topBedrock, bottomBedrock);
+                    state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, topBedrock, bottomBedrock);
                     primer.setBlockState(x, y, z, state);
                 }
             }
@@ -168,13 +169,13 @@ public class DeepGeneration {
             return;
         }
         int[] tops = caveScope == 2 ? columnTops(primer) : null;
-        double[][][] lattice = tops != null ? sampleBandLattice(cubeX << 4, cubeZ << 4, tops) : null;
+        double[][][] lattice = tops != null ? sampleBandLattice(Coords.cubeToMinBlock(cubeX), Coords.cubeToMinBlock(cubeZ), tops) : null;
         for (int y = 0; y < 256; y++) {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     IBlockState state = primer.getBlockState(x, y, z);
-                    int worldX = (cubeX << 4) + x;
-                    int worldZ = (cubeZ << 4) + z;
+                    int worldX = Coords.cubeToMinBlock(cubeX) + x;
+                    int worldZ = Coords.cubeToMinBlock(cubeZ) + z;
                     if (lattice != null && state.getMaterial() == Material.LAVA) {
                         double lavaCarved = trilerp(lattice, x, y, z);
                         primer.setBlockState(x, y, z, lavaCarved <= CAVE_THRESHOLD ? fluidOrAir(worldX, y, worldZ, lavaCarved) : Blocks.AIR.getDefaultState());
@@ -206,15 +207,15 @@ public class DeepGeneration {
     }
 
     private void sealSeamFluids(ChunkPrimer primer, int cubeX, int cubeZ) {
-        double[][][] lattice = sampleLattice(cubeX << 4, -Cube.SIZE, cubeZ << 4);
+        double[][][] lattice = sampleLattice(Coords.cubeToMinBlock(cubeX), -Cube.SIZE, Coords.cubeToMinBlock(cubeZ));
         for (int z = 0; z < Cube.SIZE; z++) {
             for (int x = 0; x < Cube.SIZE; x++) {
                 Material material = primer.getBlockState(x, 0, z).getMaterial();
                 if (material != Material.WATER && material != Material.LAVA) { continue; }
                 double carved = trilerp(lattice, x, Cube.SIZE - 1, z);
                 if (carved > CAVE_THRESHOLD) { continue; }
-                int worldX = (cubeX << 4) + x;
-                int worldZ = (cubeZ << 4) + z;
+                int worldX = Coords.cubeToMinBlock(cubeX) + x;
+                int worldZ = Coords.cubeToMinBlock(cubeZ) + z;
                 if (fluidOrAir(worldX, -1, worldZ, carved).getMaterial() != Material.AIR) { continue; }
                 primer.setBlockState(x, 0, z, barrierState());
             }
@@ -313,11 +314,11 @@ public class DeepGeneration {
         double fx = (x & 3) / 4.0D;
         double fy = (y & 7) / 8.0D;
         double fz = (z & 3) / 4.0D;
-        double c00 = lerp(fx, lattice[x0][y0][z0], lattice[x0 + 1][y0][z0]);
-        double c01 = lerp(fx, lattice[x0][y0][z0 + 1], lattice[x0 + 1][y0][z0 + 1]);
-        double c10 = lerp(fx, lattice[x0][y0 + 1][z0], lattice[x0 + 1][y0 + 1][z0]);
-        double c11 = lerp(fx, lattice[x0][y0 + 1][z0 + 1], lattice[x0 + 1][y0 + 1][z0 + 1]);
-        return lerp(fy, lerp(fz, c00, c01), lerp(fz, c10, c11));
+        double c00 = MathUtil.lerp(fx, lattice[x0][y0][z0], lattice[x0 + 1][y0][z0]);
+        double c01 = MathUtil.lerp(fx, lattice[x0][y0][z0 + 1], lattice[x0 + 1][y0][z0 + 1]);
+        double c10 = MathUtil.lerp(fx, lattice[x0][y0 + 1][z0], lattice[x0 + 1][y0 + 1][z0]);
+        double c11 = MathUtil.lerp(fx, lattice[x0][y0 + 1][z0 + 1], lattice[x0 + 1][y0 + 1][z0 + 1]);
+        return MathUtil.lerp(fy, MathUtil.lerp(fz, c00, c01), MathUtil.lerp(fz, c10, c11));
     }
 
     private double density(int x, int y, int z, double cheeseFade) {
@@ -374,9 +375,7 @@ public class DeepGeneration {
         return base;
     }
 
-    private float hash01(int x, int y, int z, int salt) { return (MathUtil.scramble(seed ^ (salt * MathUtil.GOLDEN_GAMMA), x, y, z) >>> 40) / (float) (1 << 24); }
-
-    private static double lerp(double t, double a, double b) { return a + t * (b - a); }
+    private float hash01(int x, int y, int z, int salt) { return MathUtil.unitFloat(MathUtil.scramble(seed ^ (salt * MathUtil.GOLDEN_GAMMA), x, y, z)); }
 
     public static IBlockState parseState(String name, String key) {
         if (name == null || name.trim().isEmpty()) { return null; }
@@ -452,7 +451,7 @@ public class DeepGeneration {
     }
 
     static class Field {
-        private final int[] perm = new int[512];
+        private final Noise3D noise;
         private final double freqXZ;
         private final double freqY;
         private final int octaves;
@@ -463,16 +462,7 @@ public class DeepGeneration {
             this.freqY = 1.0D / waveY;
             this.octaves = octaves;
             this.scale = scale;
-            Random random = new Random(seed ^ (salt * MathUtil.GOLDEN_GAMMA));
-            int[] source = new int[256];
-            for (int index = 0; index < 256; index++) { source[index] = index; }
-            for (int index = 255; index > 0; index--) {
-                int swap = random.nextInt(index + 1);
-                int held = source[index];
-                source[index] = source[swap];
-                source[swap] = held;
-            }
-            for (int index = 0; index < 512; index++) { perm[index] = source[index & 255]; }
+            this.noise = new Noise3D(seed ^ (salt * MathUtil.GOLDEN_GAMMA));
         }
 
         double sample(double x, double y, double z) {
@@ -482,44 +472,13 @@ public class DeepGeneration {
             double fx = freqXZ;
             double fy = freqY;
             for (int octave = 0; octave < octaves; octave++) {
-                total += noise(x * fx, y * fy, z * fx) * amplitude;
+                total += noise.noise(x * fx, y * fy, z * fx) * amplitude;
                 reach += amplitude;
                 amplitude *= 0.5D;
                 fx *= 2.0D;
                 fy *= 2.0D;
             }
             return MathHelper.clamp(total * scale / reach, -1.0D, 1.0D);
-        }
-
-        private double noise(double x, double y, double z) {
-            int cellX = (int) Math.floor(x) & 255;
-            int cellY = (int) Math.floor(y) & 255;
-            int cellZ = (int) Math.floor(z) & 255;
-            double dx = x - Math.floor(x);
-            double dy = y - Math.floor(y);
-            double dz = z - Math.floor(z);
-            double u = fade(dx);
-            double v = fade(dy);
-            double w = fade(dz);
-            int a = perm[cellX] + cellY;
-            int aa = perm[a] + cellZ;
-            int ab = perm[a + 1] + cellZ;
-            int b = perm[cellX + 1] + cellY;
-            int ba = perm[b] + cellZ;
-            int bb = perm[b + 1] + cellZ;
-            return lerp(w, lerp(v, lerp(u, grad(perm[aa], dx, dy, dz), grad(perm[ba], dx - 1, dy, dz)),
-                            lerp(u, grad(perm[ab], dx, dy - 1, dz), grad(perm[bb], dx - 1, dy - 1, dz))),
-                    lerp(v, lerp(u, grad(perm[aa + 1], dx, dy, dz - 1), grad(perm[ba + 1], dx - 1, dy, dz - 1)),
-                            lerp(u, grad(perm[ab + 1], dx, dy - 1, dz - 1), grad(perm[bb + 1], dx - 1, dy - 1, dz - 1))));
-        }
-
-        private static double fade(double t) { return t * t * t * (t * (t * 6.0D - 15.0D) + 10.0D); }
-
-        private static double grad(int hash, double x, double y, double z) {
-            int h = hash & 15;
-            double u = h < 8 ? x : y;
-            double v = h < 4 ? y : h == 12 || h == 14 ? x : z;
-            return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
         }
     }
 }

@@ -18,6 +18,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -28,7 +29,6 @@ public final class SoulboundDeath {
     private static final String STASH = "rdpl_soulbound";
     private static final String SLOT = "Slot";
     private static final String STACK = "Stack";
-    private static final int COMPOUND = 10;
     private static final Map<UUID, List<Held>> RECORDS = new HashMap<>();
 
     private SoulboundDeath() {}
@@ -77,11 +77,11 @@ public final class SoulboundDeath {
     }
 
     private static void rollStashed(EntityPlayerMP player) {
-        NBTTagList stash = player.getEntityData().getTagList(STASH, COMPOUND);
+        NBTTagList stash = stash(player);
         NBTTagList kept = new NBTTagList();
         for (int at = 0; at < stash.tagCount(); at++) {
             NBTTagCompound saved = stash.getCompoundTagAt(at);
-            ItemStack stack = new ItemStack(saved.getCompoundTag(STACK));
+            ItemStack stack = stackOf(saved);
             if (stack.isEmpty()) {
                 kept.appendTag(saved);
                 continue;
@@ -103,7 +103,7 @@ public final class SoulboundDeath {
         EntityPlayer player = event.getEntityPlayer();
         List<Held> recorded = RECORDS.remove(player.getUniqueID());
         if (recorded == null || event.isCanceled()) { return; }
-        NBTTagList stash = player.getEntityData().getTagList(STASH, COMPOUND);
+        NBTTagList stash = stash(player);
         Iterator<EntityItem> drops = event.getDrops().iterator();
         while (drops.hasNext()) {
             ItemStack stack = drops.next().getItem();
@@ -142,6 +142,10 @@ public final class SoulboundDeath {
         return null;
     }
 
+    private static NBTTagList stash(EntityPlayer player) { return player.getEntityData().getTagList(STASH, Constants.NBT.TAG_COMPOUND); }
+
+    private static ItemStack stackOf(NBTTagCompound entry) { return new ItemStack(entry.getCompoundTag(STACK)); }
+
     private static NBTTagCompound entry(int slot, ItemStack stack) {
         NBTTagCompound entry = new NBTTagCompound();
         entry.setInteger(SLOT, slot);
@@ -150,18 +154,21 @@ public final class SoulboundDeath {
     }
 
     private static void restore(EntityPlayer from, EntityPlayer to) {
-        NBTTagList stash = from.getEntityData().getTagList(STASH, COMPOUND);
+        NBTTagList stash = stash(from);
         for (int at = 0; at < stash.tagCount(); at++) {
             NBTTagCompound entry = stash.getCompoundTagAt(at);
-            ItemStack stack = new ItemStack(entry.getCompoundTag(STACK));
-            if (stack.isEmpty()) {
-                ContentLog.LOGGER.error("A soulbound stack of {} no longer loads, skipping it", to.getName());
-                continue;
-            }
+            ItemStack stack = loaded(entry, to);
+            if (stack.isEmpty()) { continue; }
             give(to, entry.getInteger(SLOT), stack);
         }
         from.getEntityData().removeTag(STASH);
         to.getEntityData().removeTag(STASH);
+    }
+
+    private static ItemStack loaded(NBTTagCompound entry, EntityPlayer player) {
+        ItemStack stack = stackOf(entry);
+        if (stack.isEmpty()) { ContentLog.LOGGER.error("A soulbound stack of {} no longer loads, skipping it", player.getName()); }
+        return stack;
     }
 
     private static void give(EntityPlayer player, int slot, ItemStack stack) {

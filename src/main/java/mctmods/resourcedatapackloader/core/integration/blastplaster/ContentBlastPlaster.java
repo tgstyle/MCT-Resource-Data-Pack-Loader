@@ -88,7 +88,7 @@ public final class ContentBlastPlaster {
             }
             read[0]++;
         });
-        if (read[0] > 0) { Summary.info("blastplaster", "Loaded " + read[0] + " Blast Plaster settings file(s) from packs"); }
+        Summary.loaded("blastplaster", read[0], "Blast Plaster settings file(s) from packs");
     }
 
     private static final class PackView implements View {
@@ -101,7 +101,7 @@ public final class ContentBlastPlaster {
         }
 
         private static ExplosionMode explosionMode(JsonElement held) {
-            if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
+            if (held != null && Json.isString(held)) {
                 ExplosionMode found = Enums.byName(ExplosionMode.class, held.getAsString());
                 if (found != null) { return found; }
                 ContentLog.LOGGER.error("Blast Plaster explosionMode '{}' is not HEAL, EJECT_DROPS or VISUAL_TOSS, using EJECT_DROPS", held.getAsString());
@@ -129,7 +129,7 @@ public final class ContentBlastPlaster {
             if (held == null) { return null; }
             List<String> given = new ArrayList<>();
             for (JsonElement entry : held.getAsJsonArray()) {
-                if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { given.add(entry.getAsString()); }
+                if (Json.isString(entry)) { given.add(entry.getAsString()); }
             }
             return given;
         }

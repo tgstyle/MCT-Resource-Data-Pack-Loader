@@ -55,33 +55,33 @@ public final class BeardRoadsTunnels {
         if (apart(box, plot, alongX)) { return false; }
         EnumFacing facing = road.getCoordBaseMode();
         boolean[] hill = HILLS.computeIfAbsent(world, held -> new HashMap<>()).computeIfAbsent(box, held -> hillRows(world, held, alongX, facing));
-        int start = alongX ? box.minX : box.minZ;
-        for (int row = Math.max(start, (alongX ? plot.minX : plot.minZ) - 1); row <= Math.min(start + hill.length - 1, (alongX ? plot.maxX : plot.maxZ) + 1); row++) {
+        int start = BeardPlots.least(box, alongX);
+        for (int row = Math.max(start, BeardPlots.least(plot, alongX) - 1); row <= Math.min(start + hill.length - 1, BeardPlots.most(plot, alongX) + 1); row++) {
             if (hill[row - start]) { return true; }
         }
         return false;
     }
 
-    private static boolean apart(StructureBoundingBox box, StructureBoundingBox plot, boolean alongX) { return (alongX ? plot.minZ : plot.minX) > (alongX ? box.maxZ : box.maxX) + 3 || (alongX ? plot.maxZ : plot.maxX) < (alongX ? box.minZ : box.minX) - 3; }
+    private static boolean apart(StructureBoundingBox box, StructureBoundingBox plot, boolean alongX) { return BeardPlots.acrossLeast(plot, alongX) > BeardPlots.acrossMost(box, alongX) + 3 || BeardPlots.acrossMost(plot, alongX) < BeardPlots.acrossLeast(box, alongX) - 3; }
 
     public static void standOff(World world, StructureStart start) {
         if (tunnelDepth() <= 0) { return; }
         List<StructureComponent> components = start.getComponents();
         List<StructureComponent> streets = new ArrayList<>();
         for (StructureComponent other : ContentBeard.everyone(world, components)) {
-            if (other instanceof StructureVillagePieces.Path && other instanceof IRoadLayout && !CityGrowth.bulbWide(other)) { streets.add(other); }
+            if (other instanceof StructureVillagePieces.Path && BeardRoads.layoutOf(other) != null && !CityGrowth.bulbWide(other)) { streets.add(other); }
         }
         for (StructureComponent plot : components.toArray(new StructureComponent[0])) {
             if (plot instanceof StructureVillagePieces.Road || plot instanceof StructureVillagePieces.Well || BeardRails.isRail(plot)) { continue; }
             StructureBoundingBox met = plot.getBoundingBox();
             StructureBoundingBox beside = null;
             for (StructureComponent road : streets) {
-                BeardRoads.Grade grade = ((IRoadLayout) road).rdpl$layout();
+                BeardRoads.Grade grade = BeardRoads.layoutOf(road);
                 if (grade == null) { continue; }
                 StructureBoundingBox street = road.getBoundingBox();
                 boolean alongX = BeardPlots.roadAlongX(street);
                 if (apart(street, met, alongX)) { continue; }
-                String fronted = tunnelRows(grade, (alongX ? met.minX : met.minZ) - 1, (alongX ? met.maxX : met.maxZ) + 1);
+                String fronted = tunnelRows(grade, BeardPlots.least(met, alongX) - 1, BeardPlots.most(met, alongX) + 1);
                 if (!fronted.isEmpty()) {
                     components.remove(plot);
                     ContentLog.LOGGER.debug("{} at {}, {}, {} to {}, {}, {} makes way for the street tunnel of the road at {}, {}: the road is roofed over the row(s){} its frontage stands on, so those rows are buried and offer it no way out", plot.getClass().getSimpleName(), met.minX, met.minY, met.minZ, met.maxX, met.maxY, met.maxZ, street.minX, street.minZ, fronted);
@@ -103,13 +103,13 @@ public final class BeardRoadsTunnels {
     }
 
     private static boolean[] hillRows(World world, StructureBoundingBox box, boolean alongX, @Nullable EnumFacing facing) {
-        int rowLeast = alongX ? box.minX : box.minZ;
-        int rowMost = alongX ? box.maxX : box.maxZ;
-        int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX);
+        int rowLeast = BeardPlots.least(box, alongX);
+        int rowMost = BeardPlots.most(box, alongX);
+        int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, BeardPlots.acrossLeast(box, alongX), BeardPlots.acrossMost(box, alongX));
         boolean[] hill = new boolean[rowMost - rowLeast + 1];
         if (profile == null) { return hill; }
         int[] ground = profile.clone();
-        BeardGrade.flatRuns(world, alongX, rowLeast, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, profile);
+        BeardGrade.flatRuns(world, alongX, rowLeast, BeardPlots.acrossLeast(box, alongX), BeardPlots.acrossMost(box, alongX), profile);
         boolean[] bridged = BeardGrade.smooth(profile);
         boolean[] none = new boolean[profile.length];
         BeardGrade.settle(profile, none);
@@ -131,7 +131,7 @@ public final class BeardRoadsTunnels {
         if (tunnelDepth() <= 0) { return 0; }
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
-        int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
+        int rows = BeardPlots.most(box, alongX) - BeardPlots.least(box, alongX) + 1;
         int room = 0;
         for (int extra = 7; extra <= BeardGrade.TUNNEL_REACH; extra += 7) {
             StructureBoundingBox longer = new StructureBoundingBox(box);
@@ -165,36 +165,22 @@ public final class BeardRoadsTunnels {
     }
 
     static void dropShortRuns(boolean[] tunnels) {
-        int i = 0;
-        while (i < tunnels.length) {
-            if (!tunnels[i]) {
-                i++;
-                continue;
-            }
-            int end = Runs.end(k -> tunnels[k], i, tunnels.length);
-            if (end - i + 1 < BeardGrade.TUNNEL_LEAST) { Arrays.fill(tunnels, i, end + 1, false); }
-            i = end + 1;
-        }
+        Runs.each(tunnels, (from, end) -> {
+            if (end - from + 1 < BeardGrade.TUNNEL_LEAST) { Arrays.fill(tunnels, from, end + 1, false); }
+        });
     }
 
     static boolean[] tunnelLights(boolean[] tunnels, int start, int run) {
         boolean[] lit = new boolean[tunnels.length];
-        int i = 0;
-        while (i < tunnels.length) {
-            if (!tunnels[i]) {
-                i++;
-                continue;
-            }
-            int end = Runs.end(k -> tunnels[k], i, tunnels.length);
+        Runs.each(tunnels, (from, end) -> {
             boolean any = false;
-            for (int k = i; k <= end; k++) {
+            for (int k = from; k <= end; k++) {
                 if (Math.floorMod(start + k, run) != 0) { continue; }
                 lit[k] = true;
                 any = true;
             }
-            if (!any) { lit[(i + end) / 2] = true; }
-            i = end + 1;
-        }
+            if (!any) { lit[(from + end) / 2] = true; }
+        });
         return lit;
     }
 
@@ -211,7 +197,7 @@ public final class BeardRoadsTunnels {
 
     static boolean uncrossedRow(List<StructureBoundingBox> crossed, boolean alongX, int row) {
         for (StructureBoundingBox other : crossed) {
-            if (row >= (alongX ? other.minX : other.minZ) - 1 && row <= (alongX ? other.maxX : other.maxZ) + 1) { return false; }
+            if (row >= BeardPlots.least(other, alongX) - 1 && row <= BeardPlots.most(other, alongX) + 1) { return false; }
         }
         return true;
     }
@@ -231,7 +217,7 @@ public final class BeardRoadsTunnels {
         List<StructureComponent> found = new ArrayList<>();
         if (!ContentBeard.wanted() || tunnelDepth() <= 0) { return found; }
         for (StructureComponent piece : BeardRoads.villagePieces(world)) {
-            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout) || ((IRoadLayout) piece).rdpl$layout() == null) { continue; }
+            if (!(piece instanceof StructureVillagePieces.Path) || BeardRoads.layoutOf(piece) == null) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             if (!box.intersectsWith(near)) { continue; }
             found.add(piece);
@@ -243,9 +229,9 @@ public final class BeardRoadsTunnels {
         for (StructureComponent road : roads) {
             StructureBoundingBox box = road.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
-            BeardRoads.Grade grade = ((IRoadLayout) road).rdpl$layout();
+            BeardRoads.Grade grade = BeardRoads.layoutOf(road);
             int row = BeardPlots.roadAlongX(road) ? x : z;
-            if (grade != null && grade.tunneledAt(row, tunnelDepth()) && y >= grade.at(row) - 1) { return true; }
+            if (tunnelAt(grade, row) && y >= grade.at(row) - 1) { return true; }
         }
         return false;
     }

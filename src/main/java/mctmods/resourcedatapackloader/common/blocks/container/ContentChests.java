@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.container;
 
 import mctmods.resourcedatapackloader.common.containers.IChestPartner;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import javax.annotation.Nullable;
@@ -54,7 +55,7 @@ public final class ContentChests {
 
     public static void placed(World world, BlockPos pos, IBlockState state, ItemStack stack) {
         Placing placing = PLACING.get();
-        world.setBlockState(pos, state.withProperty(BlockChest.FACING, placing.facing), 3);
+        world.setBlockState(pos, state.withProperty(BlockChest.FACING, placing.facing), BlockFlags.UPDATE_ALL);
         TileEntity chest = world.getTileEntity(pos);
         if (chest instanceof IChestPartner) { ((IChestPartner) chest).rdpl$setPartner(placing.partner); }
         if (stack.hasDisplayName() && chest instanceof TileEntityChest) { ((TileEntityChest) chest).setCustomName(stack.getDisplayName()); }
@@ -62,9 +63,9 @@ public final class ContentChests {
             EnumFacing toward = EnumFacing.byIndex(placing.partner);
             BlockPos beside = pos.offset(toward);
             TileEntity other = world.getTileEntity(beside);
-            if (other instanceof IChestPartner) { ((IChestPartner) other).rdpl$setPartner(toward.getOpposite().getIndex()); }
+            if (other instanceof IChestPartner) { ((IChestPartner) other).rdpl$setPartner(backFrom(toward)); }
             IBlockState otherState = world.getBlockState(beside);
-            world.notifyBlockUpdate(beside, otherState, otherState, 3);
+            world.notifyBlockUpdate(beside, otherState, otherState, BlockFlags.UPDATE_ALL);
         }
         recheck(world, pos);
     }
@@ -79,7 +80,7 @@ public final class ContentChests {
         int theirs = partnerOf(world, other);
         if (mine == UNKEYED && theirs == UNKEYED) { return false; }
         EnumFacing toward = EnumFacing.getFacingFromVector(other.getX() - one.getX(), 0, other.getZ() - one.getZ());
-        return mine != toward.getIndex() || theirs != toward.getOpposite().getIndex();
+        return mine != toward.getIndex() || theirs != backFrom(toward);
     }
 
     public static void recheck(World world, BlockPos pos) {
@@ -101,9 +102,9 @@ public final class ContentChests {
             TileEntity other = world.getTileEntity(beside);
             if (besideState.getBlock() != was || !(other instanceof IChestPartner)) { continue; }
             int partner = ((IChestPartner) other).rdpl$partner();
-            if (partner != UNKEYED && partner != side.getOpposite().getIndex()) { continue; }
+            if (partner != UNKEYED && partner != backFrom(side)) { continue; }
             ((IChestPartner) other).rdpl$setPartner(SINGLE);
-            world.notifyBlockUpdate(beside, besideState, besideState, 3);
+            world.notifyBlockUpdate(beside, besideState, besideState, BlockFlags.UPDATE_ALL);
         }
         recheck(world, pos);
     }
@@ -128,8 +129,12 @@ public final class ContentChests {
         if (partner == SINGLE) { return false; }
         EnumFacing toward = EnumFacing.byIndex(partner);
         BlockPos beside = pos.offset(toward);
-        return world.getBlockState(beside).getBlock() == block && partnerOf(world, beside) == toward.getOpposite().getIndex();
+        return world.getBlockState(beside).getBlock() == block && pointsBack(world, beside, toward);
     }
+
+    private static int backFrom(EnumFacing toward) { return toward.getOpposite().getIndex(); }
+
+    private static boolean pointsBack(IBlockAccess world, BlockPos beside, EnumFacing toward) { return partnerOf(world, beside) == backFrom(toward); }
 
     private static int partnerOf(IBlockAccess world, BlockPos pos) {
         Placing placing = PLACING.get();

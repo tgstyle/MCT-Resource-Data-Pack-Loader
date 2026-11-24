@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world.gen.structure;
 
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.villages.CityLayout;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
@@ -52,13 +53,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         StructureStart self = (StructureStart) (Object) this;
         if (!ContentBeard.wanted() || self.getComponents().isEmpty()) { return pending.remove(index); }
         StructureBoundingBox well = self.getComponents().get(0).getBoundingBox();
-        int wellX = (well.minX + well.maxX) / 2;
-        int wellZ = (well.minZ + well.maxZ) / 2;
+        int wellX = StructureBoxes.centerX(well);
+        int wellZ = StructureBoxes.centerZ(well);
         int nearest = index;
         int closest = Integer.MAX_VALUE;
         for (int i = 0; i < pending.size(); i++) {
             StructureBoundingBox box = pending.get(i).getBoundingBox();
-            int away = Math.abs((box.minX + box.maxX) / 2 - wellX) + Math.abs((box.minZ + box.maxZ) / 2 - wellZ);
+            int away = Math.abs(StructureBoxes.centerX(box) - wellX) + Math.abs(StructureBoxes.centerZ(box) - wellZ);
             if (away < closest) {
                 closest = away;
                 nearest = i;

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.items;
 
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentBannerBlock;
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentWallBannerBlock;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
 import javax.annotation.Nonnull;
 import net.minecraft.block.BlockBanner;
@@ -39,12 +40,12 @@ public class ContentBannerItem extends ItemBlock {
         if (replaceable) { placed = placed.down(); }
         if (facing == EnumFacing.UP) {
             int rotation = MathHelper.floor((double) ((player.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
-            world.setBlockState(placed, standing.getDefaultState().withProperty(BlockBanner.ROTATION, rotation), 3);
+            world.setBlockState(placed, standing.getDefaultState().withProperty(BlockBanner.ROTATION, rotation), BlockFlags.UPDATE_ALL);
         }
         else {
             ContentWallBannerBlock wall = standing.getWall();
             if (wall == null) { return EnumActionResult.FAIL; }
-            world.setBlockState(placed, wall.getDefaultState().withProperty(BlockBanner.FACING, facing), 3);
+            world.setBlockState(placed, wall.getDefaultState().withProperty(BlockBanner.FACING, facing), BlockFlags.UPDATE_ALL);
         }
         held.shrink(1);
         return EnumActionResult.SUCCESS;

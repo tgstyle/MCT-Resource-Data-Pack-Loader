@@ -5,14 +5,15 @@ import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 import mctmods.resourcedatapackloader.core.util.text.Listing;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 public final class ContentTerrain {
-    private static final String BOP = "BIOMESOP";
+    public static final String BOP = "BIOMESOP";
     private static final List<String> BOP_KEYS = Collections.unmodifiableList(Arrays.asList(
             "amplitude", "biomeSize", "coordinateScale", "heightScale", "lowerLimitScale", "upperLimitScale",
             "mainNoiseScaleX", "mainNoiseScaleY", "mainNoiseScaleZ", "landScheme", "tempScheme", "rainScheme",
@@ -117,37 +118,23 @@ public final class ContentTerrain {
     }
 
     public static boolean keeps(String worldType) {
-        for (String name : ContentControl.list(ContentControl.TERRAIN, "worldTypeExceptions", Config.worldgen.worldTypeExceptions)) {
-            if (name.equalsIgnoreCase(worldType)) { return true; }
-        }
-        return false;
+        return Settings.containsIgnoreCase(ContentControl.list(ContentControl.TERRAIN, "worldTypeExceptions", Config.worldgen.worldTypeExceptions), worldType);
     }
 
     public static boolean leaves(String worldType) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return true; }
         String[] wanted = ContentControl.list(ContentControl.TERRAIN, "terrainWorldTypes", Config.worldgen.terrainWorldTypes);
         if (wanted.length == 0) { return false; }
-        boolean listed = false;
-        for (String name : wanted) {
-            if (name.equalsIgnoreCase(worldType)) {
-                listed = true;
-                break;
-            }
-        }
-        return Listing.blocks(listed, ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist));
+        return Listing.blocks(Settings.containsIgnoreCase(wanted, worldType), ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist));
     }
 
     public static String merge(String existing, String worldType) {
         String options = options(worldType);
         if (options.isEmpty()) { return existing; }
         if (existing == null || existing.trim().isEmpty()) { return options; }
-        JsonObject was;
-        JsonObject wanted;
-        try {
-            was = new JsonParser().parse(existing).getAsJsonObject();
-            wanted = new JsonParser().parse(options).getAsJsonObject();
-        }
-        catch (RuntimeException notJson) { return options; }
+        JsonObject was = Json.parseObject(existing);
+        JsonObject wanted = Json.parseObject(options);
+        if (was == null || wanted == null) { return options; }
         for (Map.Entry<String, JsonElement> entry : wanted.entrySet()) { was.add(entry.getKey(), entry.getValue()); }
         return was.toString();
     }
@@ -171,14 +158,12 @@ public final class ContentTerrain {
         if (leaves(worldType)) { return null; }
         String options = generatorOptions();
         if (options.isEmpty()) { return null; }
-        try { return new JsonParser().parse(options).getAsJsonObject(); }
-        catch (RuntimeException notJson) { return null; }
+        return Json.parseObject(options);
     }
 
     private static String forBiomesOPlenty(String options) {
-        JsonObject json;
-        try { json = new JsonParser().parse(options).getAsJsonObject(); }
-        catch (RuntimeException notJson) {
+        JsonObject json = Json.parseObject(options);
+        if (json == null) {
             ContentLog.LOGGER.error("The terrain settings are not something Biomes O' Plenty can read, so the world is shaped the way that mod shapes it: {}", options);
             return "";
         }

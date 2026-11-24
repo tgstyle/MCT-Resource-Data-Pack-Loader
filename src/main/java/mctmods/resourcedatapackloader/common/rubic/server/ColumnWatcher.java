@@ -53,9 +53,13 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         this.players.add(player);
         if (this.isSentToPlayers()) {
             Chunk chunk = Objects.requireNonNull(this.getChunk());
-            RDPLNetwork.sendTo(new ColumnMessage(chunk), player);
-            MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk, player));
+            sendColumnTo(new ColumnMessage(chunk), chunk, player);
         }
+    }
+
+    private static void sendColumnTo(ColumnMessage message, Chunk chunk, EntityPlayerMP player) {
+        RDPLNetwork.sendTo(message, player);
+        MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk, player));
     }
 
     @Override public void removePlayer(@Nonnull EntityPlayerMP player) {
@@ -79,10 +83,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         if (getChunk() == null) { return false; }
         try {
             ColumnMessage message = new ColumnMessage(this.getChunk());
-            for (EntityPlayerMP player : this.players) {
-                RDPLNetwork.sendTo(message, player);
-                MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(this.getChunk(), player));
-            }
+            for (EntityPlayerMP player : this.players) { sendColumnTo(message, this.getChunk(), player); }
             this.sentToPlayers = true;
         } catch (Throwable throwable) {
             throw new RuntimeException(throwable);

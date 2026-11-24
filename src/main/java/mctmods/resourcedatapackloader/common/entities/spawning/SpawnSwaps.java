@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnSwap
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.util.Lists;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -26,7 +27,6 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -93,33 +93,24 @@ public final class SpawnSwaps {
 
     private static boolean involved(Entity entity) {
         for (SpawnSwapDef rule : RULES) {
-            if (rule.swaps() && MobStats.targets(rule.entities, entity)) { return true; }
+            if (swapsFor(rule, entity)) { return true; }
         }
         return false;
     }
 
+    private static boolean swapsFor(SpawnSwapDef rule, Entity entity) { return rule.swaps() && MobStats.targets(rule.entities, entity); }
+
     @SubscribeEvent(priority = EventPriority.LOW) public static void onJoinRuns(EntityJoinWorldEvent event) {
         if (RULES.isEmpty() || event.getWorld().isRemote) { return; }
         Entity entity = event.getEntity();
-        List<String> functions = null;
-        for (SpawnSwapDef rule : RULES) {
-            if (rule.runs.isEmpty() || !MobStats.targets(rule.entities, entity)) { continue; }
-            if (functions == null) { functions = new ArrayList<>(); }
-            functions.add(rule.runs);
-        }
-        if (functions == null || entity.getEntityData().hasKey(RAN)) { return; }
+        List<String> functions = Lists.collect(RULES, rule -> !rule.runs.isEmpty() && MobStats.targets(rule.entities, entity), rule -> rule.runs);
+        if (functions.isEmpty() || entity.getEntityData().hasKey(RAN)) { return; }
         entity.getEntityData().setBoolean(RAN, true);
         for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName()); }
     }
 
     private static List<SpawnSwapDef> matching(Entity entity, byte kind) {
-        List<SpawnSwapDef> found = null;
-        for (SpawnSwapDef rule : RULES) {
-            if (!rule.swaps() || !MobStats.targets(rule.entities, entity) || kind == SPAWNER && !rule.fromSpawners) { continue; }
-            if (found == null) { found = new ArrayList<>(); }
-            found.add(rule);
-        }
-        return found == null ? Collections.emptyList() : found;
+        return Lists.collect(RULES, rule -> swapsFor(rule, entity) && (kind != SPAWNER || rule.fromSpawners), rule -> rule);
     }
 
     private static boolean placeHolds(SpawnSwapDef rule, World world, BlockPos spot) {
@@ -154,13 +145,13 @@ public final class SpawnSwaps {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        List<String> entities = json.has("entities") ? MobStats.entities("Spawn swap file " + key, "entities", json.get("entities")) : null;
-        if (entities == null || entities.isEmpty()) {
+        List<String> entities = MobStats.required("Spawn swap file " + key, json, "entities", "entities");
+        if (entities == null) {
             ContentLog.LOGGER.error("Spawn swap file {} names no entities, ignoring it", key);
             return;
         }
         List<PickDef> becomes = ContentParser.picks(json, "becomes", "entity");
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (becomes.isEmpty() && runs.isEmpty()) {
             ContentLog.LOGGER.error("Spawn swap file {} names nothing it becomes and no function it runs, ignoring it", key);
             return;
@@ -174,8 +165,8 @@ public final class SpawnSwaps {
         JsonObject elsewhere = Json.object(json, "elsewhere");
         Json.unknownKeys(elsewhere, "elsewhere", ELSEWHERE_KEYS);
         RULES.add(new SpawnSwapDef(entities, becomes, Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), blocks, Json.getBoolean(json, "requireAll", false),
-                SpawnGateDef.read(key, json, "Spawn swap file"), json.has("elsewhere"), MathHelper.clamp(Json.getFloat(elsewhere, "chance", 1.0F), 0.0F, 1.0F),
-                MathHelper.clamp(Json.getInt(elsewhere, "lightBelow", 0), 0, 16), Json.getBoolean(elsewhere, "night", false), MathHelper.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA),
+                SpawnGateDef.read(key, json, "Spawn swap file"), json.has("elsewhere"), Json.chance(elsewhere, "chance", 1.0F),
+                Json.clamped(elsewhere, "lightBelow", 0, 0, 16), Json.getBoolean(elsewhere, "night", false), Json.clamped(json, "extra", 0, 0, MAX_EXTRA),
                 Json.getBoolean(json, "fromSpawners", false), runs));
     }
 }

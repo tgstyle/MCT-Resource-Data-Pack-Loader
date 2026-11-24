@@ -32,7 +32,7 @@ public final class PackSchedules {
         SCHEDULES.clear();
         Json.eachObject(PackManager.SCHEDULES, "schedule file", PackSchedules::read);
         restart();
-        if (!SCHEDULES.isEmpty()) { Summary.info("schedules", "Loaded " + SCHEDULES.size() + " schedule(s)"); }
+        Summary.loaded("schedules", SCHEDULES.size(), "schedule(s)");
     }
 
     public static void restart() {
@@ -61,7 +61,7 @@ public final class PackSchedules {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", SCHEDULE_KEYS);
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (runs.isEmpty()) {
             ContentLog.LOGGER.error("Schedule file {} names no function to run, ignoring it", key);
             return;

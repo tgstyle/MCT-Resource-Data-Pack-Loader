@@ -130,8 +130,7 @@ public final class BeardClearing {
                             if (BeardBlocks.terrainBlock(beside.getBlock()) && BeardBlocks.opening(beside.getMaterial())) { embedded++; }
                         }
                         if (embedded < 2) { BeardBlocks.note(world, at, "Burying a doorstep left standing"); }
-                        IBlockState laid = BeardBlocks.fillGround(world, x, z);
-                        if (laid.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { laid = Blocks.GRASS.getDefaultState(); }
+                        IBlockState laid = BeardBlocks.grassed(BeardBlocks.fillGround(world, x, z), !world.getBlockState(at.up()).getMaterial().isSolid());
                         world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
                         opened++;
                     }
@@ -223,7 +222,7 @@ public final class BeardClearing {
                         int outZ = outX != 0 ? 0 : z == box.minZ ? -1 : 1;
                         for (int up = 0; up <= 1; up++) {
                             at.setPos(x + outX, y + up, z + outZ);
-                            if (!reach.isVecInside(at) || !world.isBlockLoaded(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                            if (outOfReach(world, reach, at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                             IBlockState held = world.getBlockState(at);
                             if (!held.getMaterial().isSolid() || !BeardBlocks.terrainBlock(held.getBlock())) { continue; }
                             BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
@@ -245,8 +244,8 @@ public final class BeardClearing {
             for (long cell : lamp) {
                 int[] spot = BeardKeep.unpacked(cell);
                 at.setPos(spot[0], spot[1], spot[2]);
-                if (!reach.isVecInside(at) || !world.isBlockLoaded(at)) { continue; }
-                world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
+                if (outOfReach(world, reach, at)) { continue; }
+                clearBlock(world, at);
                 taken++;
             }
             return taken;
@@ -260,13 +259,17 @@ public final class BeardClearing {
         int taken = 0;
         for (int up = 0; up <= ContentBeard.lampHeight(); up++) {
             at.setPos(x, foot + up, z);
-            if (!reach.isVecInside(at) || !world.isBlockLoaded(at)) { break; }
+            if (outOfReach(world, reach, at)) { break; }
             Block held = world.getBlockState(at).getBlock();
             if (held != post.getBlock() && held != head.getBlock()) { break; }
             BeardKeep.letGo(x, foot + up, z);
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
+            clearBlock(world, at);
             taken++;
         }
         return taken;
     }
+
+    private static boolean outOfReach(World world, StructureBoundingBox reach, BlockPos at) { return !reach.isVecInside(at) || !world.isBlockLoaded(at); }
+
+    private static void clearBlock(World world, BlockPos at) { world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
 }

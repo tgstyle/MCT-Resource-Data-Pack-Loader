@@ -40,13 +40,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     protected ContentLogBlock(BlockDef def, PropertyVariant property) {
         this.def = def;
         this.variant = property;
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName.toString());
-        ContentSetup.harvest(this, def);
+        ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setDefaultSlipperiness(def.slipperiness);
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
         setDefaultState(this.blockState.getBaseState().withProperty(LOG_AXIS, EnumAxis.Y).withProperty(property, def.at(0).name));
     }
 
@@ -91,12 +86,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        if (def.at(damageDropped(state)).drops.isEmpty()) { super.getDrops(drops, world, pos, state, fortune); }
-        else { VariantDrops.roll(this, drops, world, state, def.at(damageDropped(state)), fortune); }
+        VariantDrops.drops(this, drops, world, state, def.at(damageDropped(state)), fortune, () -> super.getDrops(drops, world, pos, state, fortune));
     }
 
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, def.at(damageDropped(state))); }
+        BlockVariants.breakDrops(world, pos, def.at(damageDropped(state)));
         super.breakBlock(world, pos, state);
     }
 

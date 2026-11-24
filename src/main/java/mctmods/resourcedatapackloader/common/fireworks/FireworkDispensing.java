@@ -31,7 +31,7 @@ public final class FireworkDispensing {
 
         @Override @Nonnull protected ItemStack dispenseStack(@Nonnull IBlockSource source, @Nonnull ItemStack stack) {
             EnumFacing facing = source.getBlockState().getValue(BlockDispenser.FACING);
-            FireworkRockets.dispense(source.getWorld(), source.getBlockPos(), facing, FireworkRockets.stack(item, def), FireworkDef.MODE_BURST.equals(def.mode));
+            FireworkRockets.dispense(source.getWorld(), source.getBlockPos(), facing, FireworkRockets.stack(item, def), def.bursts());
             stack.shrink(1);
             return stack;
         }

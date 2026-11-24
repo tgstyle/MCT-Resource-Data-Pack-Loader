@@ -25,6 +25,11 @@ abstract class PendingLoad<T> {
 
     abstract String describe();
 
+    final <D> D readOrThrow(@Nullable D held) {
+        if (held == null) { throw new IllegalStateException("Nothing was read for " + describe()); }
+        return held;
+    }
+
     void waitFor(Consumer<T> listener) { waiting.add(listener); }
 
     void stopWaiting(Consumer<T> listener) { waiting.remove(listener); }

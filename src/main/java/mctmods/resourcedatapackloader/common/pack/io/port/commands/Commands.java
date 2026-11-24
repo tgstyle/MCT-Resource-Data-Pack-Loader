@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.common.pack.io.port.convert.Convert;
 import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.text.CommandWords;
 
 import com.google.gson.Gson;
@@ -15,22 +16,20 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
-import net.minecraft.util.JsonUtils;
 
 public final class Commands {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String SELF = "@s";
-    private static final Set<String> SIMPLE = new HashSet<>(Arrays.asList("say", "me", "msg", "tell", "w", "time", "seed", "list", "help", "stop", "save-all", "save-on", "save-off", "op", "deop", "ban", "ban-ip", "pardon", "pardon-ip", "whitelist", "kick", "worldborder", "setidletimeout", "publish", "debug", "reload", "trigger", "defaultgamemode", "difficulty", "gamemode", "spawnpoint", "setworldspawn", "advancement", "recipe"));
-    private static final Set<String> NO_TWIN = new HashSet<>(Arrays.asList("attribute", "bossbar", "datapack", "forceload", "item", "jfr", "loot", "perf", "place", "random", "return", "ride", "schedule", "spectate", "teammsg", "tm", "fillbiome", "damage", "tick", "transfer", "rotate", "dialog", "waypoint", "test", "stopwatch", "version"));
-    private static final Set<String> RULES = new HashSet<>(Arrays.asList("announceAdvancements", "commandBlockOutput", "disableElytraMovementCheck", "doDaylightCycle", "doEntityDrops", "doFireTick", "doLimitedCrafting", "doMobLoot", "doMobSpawning", "doTileDrops", "doWeatherCycle", "gameLoopFunction", "keepInventory", "logAdminCommands", "maxCommandChainLength", "maxEntityCramming", "mobGriefing", "naturalRegeneration", "randomTickSpeed", "reducedDebugInfo", "sendCommandFeedback", "showDeathMessages", "spawnRadius", "spectatorsGenerateChunks"));
+    private static final String CLICK_EVENT = "clickEvent";
+    private static final Set<String> SIMPLE = Convert.set("say", "me", "msg", "tell", "w", "time", "seed", "list", "help", "stop", "save-all", "save-on", "save-off", "op", "deop", "ban", "ban-ip", "pardon", "pardon-ip", "whitelist", "kick", "worldborder", "setidletimeout", "publish", "debug", "reload", "trigger", "defaultgamemode", "difficulty", "gamemode", "spawnpoint", "setworldspawn", "advancement", "recipe");
+    private static final Set<String> NO_TWIN = Convert.set("attribute", "bossbar", "datapack", "forceload", "item", "jfr", "loot", "perf", "place", "random", "return", "ride", "schedule", "spectate", "teammsg", "tm", "fillbiome", "damage", "tick", "transfer", "rotate", "dialog", "waypoint", "test", "stopwatch", "version");
+    private static final Set<String> RULES = Convert.set("announceAdvancements", "commandBlockOutput", "disableElytraMovementCheck", "doDaylightCycle", "doEntityDrops", "doFireTick", "doLimitedCrafting", "doMobLoot", "doMobSpawning", "doTileDrops", "doWeatherCycle", "gameLoopFunction", "keepInventory", "logAdminCommands", "maxCommandChainLength", "maxEntityCramming", "mobGriefing", "naturalRegeneration", "randomTickSpeed", "reducedDebugInfo", "sendCommandFeedback", "showDeathMessages", "spawnRadius", "spectatorsGenerateChunks");
     private static final Map<String, String> STRUCTURES = new LinkedHashMap<>();
 
     static {
@@ -75,11 +74,11 @@ public final class Commands {
             catch (Kept why) {
                 kept++;
                 out.append("# ").append(line);
-                pack.note("'" + from + "' line " + (i + 1) + " is turned into a comment, since " + why.getMessage() + ": " + line);
+                pack.note(Ported.where(from) + " line " + (i + 1) + " is turned into a comment, since " + why.getMessage() + ": " + line);
             }
         }
-        if (pack.overworldShift() != 0 && changed > 0) { pack.note("'" + from + "': the pack's overworld is a modern flat world, whose floor sits at the bottom of the world, so every absolute y in its functions moves by " + pack.overworldShift() + " to the 1.12.2 flat floor at y 0; a function that runs in another dimension needs its heights checked by hand"); }
-        if (changed > 0 || kept > 0) { pack.note("'" + from + "' is a modern function: " + changed + " command(s) rewritten for 1.12.2, " + kept + " turned into comments"); }
+        if (pack.overworldShift() != 0 && changed > 0) { pack.note(Ported.where(from) + ": the pack's overworld is a modern flat world, whose floor sits at the bottom of the world, so every absolute y in its functions moves by " + pack.overworldShift() + " to the 1.12.2 flat floor at y 0; a function that runs in another dimension needs its heights checked by hand"); }
+        if (changed > 0 || kept > 0) { pack.note(Ported.where(from) + " is a modern function: " + changed + " command(s) rewritten for 1.12.2, " + kept + " turned into comments"); }
         return out.toString();
     }
 
@@ -119,7 +118,7 @@ public final class Commands {
             case "spreadplayers": return spreadplayers(args, pack);
             case "kill": return args.size() > 1 ? "kill " + CommandSelectors.target(args.get(1), pack) : "kill";
             case "function":
-                if (at(args, 1).startsWith("#") || args.size() > 2) { throw new Kept("calling a function tag or passing macro arguments has no twin on 1.12.2"); }
+                if (IdNames.isTag(at(args, 1)) || args.size() > 2) { throw new Kept("calling a function tag or passing macro arguments has no twin on 1.12.2"); }
                 return "function " + Ids.namespaced(args.get(1));
             default:
                 if (!SIMPLE.contains(head)) { throw new Kept("the command " + head + " is not one the port knows"); }
@@ -131,6 +130,8 @@ public final class Commands {
         if (args.size() <= index) { throw new Kept("it has fewer arguments than " + args.get(0) + " needs"); }
         return args.get(index);
     }
+
+    static String argOr(List<String> args, int index, String fallback) { return args.size() > index ? args.get(index) : fallback; }
 
     static String join(List<String> args, int from) { return String.join(" ", args.subList(Math.min(from, args.size()), args.size())); }
 
@@ -173,7 +174,7 @@ public final class Commands {
 
     private static String give(List<String> args, Ported pack) {
         CommandStacks.Stack stack = CommandStacks.item(at(args, 2), pack);
-        String count = args.size() > 3 ? args.get(3) : "1";
+        String count = argOr(args, 3, "1");
         return "give " + CommandSelectors.target(args.get(1), pack) + " " + stack.id + " " + count + " " + stack.meta + (stack.nbt == null ? "" : " " + stack.nbt);
     }
 
@@ -182,7 +183,7 @@ public final class Commands {
         StringBuilder out = new StringBuilder("clear ").append(CommandSelectors.target(args.get(1), pack));
         if (args.size() < 3) { return out.toString(); }
         CommandStacks.Stack stack = CommandStacks.item(args.get(2), pack);
-        String most = args.size() > 3 ? args.get(3) : "-1";
+        String most = argOr(args, 3, "-1");
         out.append(' ').append(stack.id).append(' ').append(stack.meta > 0 || Ids.variedItem(stack.id) ? stack.meta : -1).append(' ').append(most);
         if (stack.nbt != null) { out.append(' ').append(stack.nbt); }
         return out.toString();
@@ -190,7 +191,7 @@ public final class Commands {
 
     private static String setblock(List<String> args, Ported pack) {
         CommandStacks.Stack state = CommandStacks.block(at(args, 4), pack);
-        String mode = args.size() > 5 ? args.get(5) : "replace";
+        String mode = argOr(args, 5, "replace");
         if (!"replace".equals(mode) && !"destroy".equals(mode) && !"keep".equals(mode)) { throw new Kept("the setblock mode " + mode + " has no twin on 1.12.2"); }
         return "setblock " + position(args, 1, pack) + " " + state.id + " " + state.meta + " " + mode + (state.nbt == null ? "" : " " + state.nbt);
     }
@@ -212,7 +213,7 @@ public final class Commands {
         if (args.size() <= 10) { return out; }
         if ("filtered".equals(args.get(10))) {
             CommandStacks.Stack filter = CommandStacks.block(at(args, 11), pack);
-            return out + " filtered " + (args.size() > 12 ? args.get(12) : "normal") + " " + filter.id + " " + filter.meta;
+            return out + " filtered " + argOr(args, 12, "normal") + " " + filter.id + " " + filter.meta;
         }
         return out + " " + join(args, 10);
     }
@@ -232,7 +233,7 @@ public final class Commands {
     private static String effect(List<String> args, Ported pack) {
         String action = at(args, 1);
         if ("clear".equals(action)) {
-            String who = args.size() > 2 ? CommandSelectors.target(args.get(2), pack) : SELF;
+            String who = CommandSelectors.target(argOr(args, 2, SELF), pack);
             return args.size() > 3 ? "effect " + who + " " + Ids.namespaced(args.get(3)) + " 0" : "effect " + who + " clear";
         }
         if (!"give".equals(action)) { throw new Kept("effect takes give or clear"); }
@@ -247,7 +248,7 @@ public final class Commands {
         if (args.size() < 5) { return "particle " + legacy + " ~ ~ ~ 0 0 0 0"; }
         StringBuilder out = new StringBuilder("particle ").append(legacy).append(' ').append(position(args, 2, pack));
         out.append(' ').append(args.size() > 7 ? String.join(" ", args.subList(5, 8)) : "0 0 0");
-        out.append(' ').append(args.size() > 8 ? args.get(8) : "0");
+        out.append(' ').append(argOr(args, 8, "0"));
         if (args.size() > 9) { out.append(' ').append(args.get(9)); }
         if (args.size() > 10) { out.append(' ').append(args.get(10)); }
         if (args.size() > 11) { out.append(' ').append(CommandSelectors.target(args.get(11), pack)); }
@@ -299,9 +300,10 @@ public final class Commands {
         }
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        if (JsonUtils.isJsonPrimitive(held, "selector")) { held.addProperty("selector", CommandSelectors.target(held.get("selector").getAsString(), pack)); }
-        if (held.has("score") && held.get("score").isJsonObject() && held.getAsJsonObject("score").has("name")) { held.getAsJsonObject("score").addProperty("name", CommandSelectors.target(held.getAsJsonObject("score").get("name").getAsString(), pack)); }
-        for (String key : new String[] {"clickEvent", "click_event"}) {
+        Json.rewriteText(held, "selector", token -> CommandSelectors.target(token, pack));
+        JsonObject score = Json.object(held, "score");
+        if (score.has("name")) { score.addProperty("name", CommandSelectors.target(score.get("name").getAsString(), pack)); }
+        for (String key : new String[] {CLICK_EVENT, "click_event"}) {
             if (!held.has(key) || !held.get(key).isJsonObject()) { continue; }
             JsonObject click = held.remove(key).getAsJsonObject();
             String action = click.has("action") ? click.get("action").getAsString() : "";
@@ -309,10 +311,10 @@ public final class Commands {
             JsonObject out = new JsonObject();
             out.addProperty("action", action);
             out.addProperty("value", ("run_command".equals(action) || "suggest_command".equals(action)) && value.startsWith("/") && value.length() > 1 ? "/" + command(value.substring(1), pack) : value);
-            held.add("clickEvent", out);
+            held.add(CLICK_EVENT, out);
         }
         for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
-            if (!"clickEvent".equals(entry.getKey())) { textWalk(entry.getValue(), pack); }
+            if (!CLICK_EVENT.equals(entry.getKey())) { textWalk(entry.getValue(), pack); }
         }
     }
 
@@ -338,7 +340,7 @@ public final class Commands {
 
     private static String locate(List<String> args) {
         String named = "structure".equals(at(args, 1)) ? at(args, 2) : args.get(1);
-        String bare = named.startsWith("#") ? named.substring(1) : named;
+        String bare = IdNames.isTag(named) ? IdNames.tagPath(named) : named;
         bare = IdNames.path(bare).toLowerCase(Locale.ROOT);
         for (Map.Entry<String, String> structure : STRUCTURES.entrySet()) {
             if (bare.equals(structure.getKey()) || bare.startsWith(structure.getKey() + "_")) { return "locate " + structure.getValue(); }

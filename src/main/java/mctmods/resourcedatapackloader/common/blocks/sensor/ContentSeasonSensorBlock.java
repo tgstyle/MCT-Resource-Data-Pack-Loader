@@ -5,8 +5,8 @@ import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.environment.SeasonState;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SeasonSensorDef;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -32,13 +32,7 @@ import net.minecraft.world.World;
         super(def.material, def.mapColor);
         this.def = def;
         this.sensor = def.sensor == null ? SeasonSensorDef.PLAIN : def.sensor;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyNamed(this, def);
         setDefaultState(blockState.getBaseState().withProperty(POWER, 0));
     }
 
@@ -69,7 +63,7 @@ import net.minecraft.world.World;
         world.scheduleUpdate(pos, this, POLL);
         int power = power(world);
         if (power == state.getValue(POWER)) { return; }
-        world.setBlockState(pos, state.withProperty(POWER, power), 3);
+        world.setBlockState(pos, state.withProperty(POWER, power), BlockFlags.UPDATE_ALL);
         world.notifyNeighborsOfStateChange(pos, this, false);
     }
 

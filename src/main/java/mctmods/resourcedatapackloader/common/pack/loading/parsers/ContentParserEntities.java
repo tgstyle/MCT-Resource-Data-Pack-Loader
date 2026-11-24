@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import static mctmods.resourcedatapackloader.core.util.json.Json.strings;
 
 import com.google.gson.JsonArray;
@@ -33,10 +34,8 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
 
 public final class ContentParserEntities {
-    private static final Set<String> PHASE_KEYS = new LinkedHashSet<>(Arrays.asList("below", "attributes", "tasks", "charges", "pounces", "gusts", "gustPower", "bossBar"));
     private static final List<String> ENTITY_KEYS = Collections.unmodifiableList(Arrays.asList("entity", "attributes", "tintParts", "spawns", "sounds", "effects", "pathPriorities", "egg", "bossBar", "name", "texture", "lootTable", "profession", "career", "baby", "keepsBaseBaby", "becomes", "immuneTo", "jumpMultiplier", "fallDamage", "hitEffects", "ignoresEffects", "soundVolume", "soundPitch", "waterSlowdown", "experience", "maxFallHeight", "absorption", "creatureAttribute", "breathesUnderwater", "swims", "amphibious", "despawns", "despawnAfter", "leash", "noAI", "leftHanded", "fireproof", "invulnerable", "glowing", "invisible", "dropChance", "scale", "angryScale", "leashable", "steerable", "width", "height", "trackingRange", "trackingFrequency", "trackVelocity", "hostile", "passive", "ignoresSpawnRules", "targets", "persistent", "silent", "picksUpLoot", "hideArmor", "hideHeld", "tint", "showName", "explodes", "throws", "throwReload", "throwRetreat", "throwAmmo", "throwPower", "throwArc", "explosionPower", "explosionFuse", "explosionFire", "equipment", "biomes", "biomeTypes", "requires", "charges", "pounces", "sniffs", "sleepsByDay", "home", "fleesWhenHurt", "patrols", "swoops", "gusts", "gustPower", "threatLeast", "threatHostile", "tasks", "attackReach", "hurtResistance", "stepHeight", "hitFire", "climbs", "teleports", "knockback", "digs", "bright", "collectsExperience", "walks", "throwReturns", "fleesLight", "followsPlayers", "teleportsWhenHit", "pulls", "pullReload", "pullPower", "pullItem", "galacticraft", "storage", "phases", "dialog", "dimensions", "structures", "radius", "timeFrom", "timeTo", "dayAtLeast", "advancement", "scoreAtLeast", "dietAtLeast", "dietCount", "team", "objective"));
     private static final List<String> SOUNDS_KEYS = Collections.unmodifiableList(Arrays.asList("ambient", "hurt", "death", "target", "explode", "targetVaries", "throw"));
     private static final List<String> EGG_KEYS = Collections.unmodifiableList(Arrays.asList("primary", "secondary"));
@@ -46,20 +45,16 @@ public final class ContentParserEntities {
     private static final List<String> ITEMS_KEYS = Collections.singletonList("filter");
     private static final List<String> FLUID_KEYS = Collections.unmodifiableList(Arrays.asList("capacity", "buckets", "use", "filter"));
     private static final List<String> ENERGY_KEYS = Collections.unmodifiableList(Arrays.asList("capacity", "transfer", "use"));
+    private static final Set<String> PHASE_KEYS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("below", "attributes", "tasks", "charges", "pounces", "gusts", "gustPower", "bossBar")));
 
     private ContentParserEntities() {}
 
     public static Map<String, Integer> effects(ResourceLocation key, JsonObject json) {
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (json.has("effects")) {
-            for (JsonElement element : Json.getJsonArray(json, "effects")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject effect = element.getAsJsonObject();
+            for (JsonObject effect : Json.objectsOrSkip(Json.getJsonArray(json, "effects"), "An effect in {} is not an object, skipping it", key)) {
                 Json.unknownKeys(effect, "effects", EFFECT_KEYS);
-                effects.put(Json.getString(effect, "potion", ""), Math.max(0, Json.getInt(effect, "amplifier", 0)));
+                effects.put(Json.getString(effect, "potion", ""), Json.atLeast(effect, "amplifier", 0, 0));
             }
         }
         return effects;
@@ -97,7 +92,7 @@ public final class ContentParserEntities {
         Json.unknownKeys(sounds, "sounds", SOUNDS_KEYS);
         Map<String, Integer> effects = effects(key, json);
         Map<String, Float> priorities = numbers(key, json, "pathPriorities", "path priority", JsonElement::getAsFloat);
-        JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? Json.getJsonObject(json, "egg") : null;
+        JsonObject egg = Json.objectOrNull(json, "egg");
         if (egg != null) { Json.unknownKeys(egg, "egg", EGG_KEYS); }
         BossBarDef bar = BossBars.read("Entity variant " + key, json);
         boolean wantsEgg = !json.has("egg") || egg != null || Json.getBoolean(json, "egg", true);
@@ -106,7 +101,7 @@ public final class ContentParserEntities {
                 Json.getString(json, "texture", ""),
                 Json.getString(json, "lootTable", ""),
                 Json.getString(json, "profession", ""),
-                Math.max(0, Json.getInt(json, "career", 0)),
+                Json.atLeast(json, "career", 0, 0),
                 baby(json),
                 Json.getBoolean(json, "keepsBaseBaby", false),
                 ContentParser.picks(json, "becomes", "variant"),
@@ -114,22 +109,22 @@ public final class ContentParserEntities {
                 Json.getString(sounds, "hurt", ""),
                 Json.getString(sounds, "death", ""),
                 strings(json, "immuneTo"),
-                Math.max(0.1F, Json.getFloat(json, "jumpMultiplier", 1.0F)),
-                Math.max(0.0F, Json.getFloat(json, "fallDamage", 1.0F)),
+                Json.atLeast(json, "jumpMultiplier", 1.0F, 0.1F),
+                Json.atLeast(json, "fallDamage", 1.0F, 0.0F),
                 Json.getBoolean(json, "hitEffects", true),
                 strings(json, "ignoresEffects"),
-                Math.max(0.0F, Json.getFloat(json, "soundVolume", 1.0F)),
-                Math.max(0.1F, Json.getFloat(json, "soundPitch", 1.0F)),
-                Math.max(0.0F, Json.getFloat(json, "waterSlowdown", 0.8F)),
-                Math.max(-1, Json.getInt(json, "experience", -1)),
-                Math.max(-1, Json.getInt(json, "maxFallHeight", -1)),
-                Math.max(0.0F, Json.getFloat(json, "absorption", 0.0F)),
+                Json.atLeast(json, "soundVolume", 1.0F, 0.0F),
+                Json.atLeast(json, "soundPitch", 1.0F, 0.1F),
+                Json.atLeast(json, "waterSlowdown", 0.8F, 0.0F),
+                Json.atLeast(json, "experience", -1, -1),
+                Json.atLeast(json, "maxFallHeight", -1, -1),
+                Json.atLeast(json, "absorption", 0.0F, 0.0F),
                 Json.getString(json, "creatureAttribute", ""),
                 Json.getBoolean(json, "breathesUnderwater", false),
                 Json.getBoolean(json, "swims", false),
                 Json.getBoolean(json, "amphibious", false),
                 Json.getBoolean(json, "despawns", true),
-                Math.max(0, Json.getInt(json, "despawnAfter", 0)) * 20,
+                Json.atLeast(json, "despawnAfter", 0, 0) * MathUtil.TICKS_PER_SECOND,
                 dropsLead(key, json),
                 Json.getBoolean(json, "noAI", false),
                 Json.getBoolean(json, "leftHanded", false),
@@ -137,19 +132,19 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "invulnerable", false),
                 Json.getBoolean(json, "glowing", false),
                 Json.getBoolean(json, "invisible", false),
-                MathHelper.clamp(Json.getFloat(json, "dropChance", 0.0F), 0.0F, 1.0F),
-                Math.max(0.05F, Json.getFloat(json, "scale", 1.0F)),
-                Math.max(0.05F, Json.getFloat(json, "angryScale", Json.getFloat(json, "scale", 1.0F))),
+                Json.chance(json, "dropChance", 0.0F),
+                Json.atLeast(json, "scale", 1.0F, 0.05F),
+                Json.atLeast(json, "angryScale", Json.getFloat(json, "scale", 1.0F), 0.05F),
                 Json.getBoolean(json, "leashable", false),
                 Json.getBoolean(json, "steerable", false),
-                Math.max(0.0F, Json.getFloat(json, "width", 0.0F)),
-                Math.max(0.0F, Json.getFloat(json, "height", 0.0F)),
+                Json.atLeast(json, "width", 0.0F, 0.0F),
+                Json.atLeast(json, "height", 0.0F, 0.0F),
                 effects, priorities,
                 wantsEgg,
                 egg == null || !egg.has("primary") ? -1 : ContentTypes.color(Json.getString(egg, "primary", ""), key + " egg primary"),
                 egg == null || !egg.has("secondary") ? -1 : ContentTypes.color(Json.getString(egg, "secondary", ""), key + " egg secondary"),
-                Math.max(1, Json.getInt(json, "trackingRange", 80)),
-                Math.max(1, Json.getInt(json, "trackingFrequency", 3)),
+                Json.atLeast(json, "trackingRange", 80, 1),
+                Json.atLeast(json, "trackingFrequency", 3, 1),
                 Json.getBoolean(json, "trackVelocity", true),
                 attributes,
                 Json.getBoolean(json, "hostile", false),
@@ -166,52 +161,52 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "showName", false),
                 Json.getBoolean(json, "explodes", false),
                 Json.getBoolean(json, "throws", false),
-                Math.max(0, Json.getInt(json, "throwReload", 0)) * 20,
-                Math.max(0, Json.getInt(json, "throwRetreat", 0)) * 20,
-                Math.max(0, Json.getInt(json, "throwAmmo", 0)),
-                Math.max(0.0F, Json.getFloat(json, "throwPower", 1.0F)),
+                Json.atLeast(json, "throwReload", 0, 0) * MathUtil.TICKS_PER_SECOND,
+                Json.atLeast(json, "throwRetreat", 0, 0) * MathUtil.TICKS_PER_SECOND,
+                Json.atLeast(json, "throwAmmo", 0, 0),
+                Json.atLeast(json, "throwPower", 1.0F, 0.0F),
                 Json.getFloat(json, "throwArc", 0.35F),
-                Math.max(0.0F, Json.getFloat(json, "explosionPower", 3.0F)),
-                Math.max(1, Json.getInt(json, "explosionFuse", 30)),
+                Json.atLeast(json, "explosionPower", 3.0F, 0.0F),
+                Json.atLeast(json, "explosionFuse", 30, 1),
                 Json.getBoolean(json, "explosionFire", false),
                 equipment(key, json), spawns,
                 strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"),
                 Json.getBoolean(json, "charges", false),
                 Json.getBoolean(json, "pounces", false),
-                Math.max(0, Json.getInt(json, "sniffs", 0)),
+                Json.atLeast(json, "sniffs", 0, 0),
                 Json.getBoolean(json, "sleepsByDay", false),
-                Math.max(0, Json.getInt(json, "home", 0)),
-                MathHelper.clamp(Json.getFloat(json, "fleesWhenHurt", 0.0F), 0.0F, 1.0F),
+                Json.atLeast(json, "home", 0, 0),
+                Json.chance(json, "fleesWhenHurt", 0.0F),
                 Json.getBoolean(json, "patrols", false),
                 Json.getBoolean(json, "swoops", false),
                 Json.getBoolean(json, "gusts", false),
-                Math.max(0.1F, Json.getFloat(json, "gustPower", 1.5F)),
-                Math.max(0, Json.getInt(json, "threatLeast", 0)),
-                Math.max(0, Json.getInt(json, "threatHostile", 0)),
+                Json.atLeast(json, "gustPower", 1.5F, 0.1F),
+                Json.atLeast(json, "threatLeast", 0, 0),
+                Json.atLeast(json, "threatHostile", 0, 0),
                 ContentTasks.parse(key, json),
-                Math.max(0.0F, Json.getFloat(json, "attackReach", 0.0F)),
-                Math.max(-1, Json.getInt(json, "hurtResistance", -1)),
-                json.has("stepHeight") ? Math.max(0.0F, Json.getFloat(json, "stepHeight", 0.0F)) : -1.0F,
+                Json.atLeast(json, "attackReach", 0.0F, 0.0F),
+                Json.atLeast(json, "hurtResistance", -1, -1),
+                json.has("stepHeight") ? Json.atLeast(json, "stepHeight", 0.0F, 0.0F) : -1.0F,
                 Json.getBoolean(json, "hitFire", true),
-                json.has("climbs") ? Json.getBoolean(json, "climbs", false) : null,
+                Json.flagOrNull(json, "climbs", false),
                 Json.getBoolean(json, "teleports", true),
-                json.has("knockback") ? Math.max(0.0F, Json.getFloat(json, "knockback", 0.4F)) : -1.0F,
+                json.has("knockback") ? Json.atLeast(json, "knockback", 0.4F, 0.0F) : -1.0F,
                 json.has("explosionPower") || json.has("explosionFuse"),
                 Json.getBoolean(json, "digs", false),
                 Json.getString(sounds, "target", ""),
                 Json.getString(sounds, "explode", ""),
-                Math.max(0.0F, Json.getFloat(sounds, "targetVaries", 0.0F)),
+                Json.atLeast(sounds, "targetVaries", 0.0F, 0.0F),
                 Json.getBoolean(json, "bright", false),
                 Json.getBoolean(json, "collectsExperience", false),
                 Json.getBoolean(json, "walks", false),
                 Json.getBoolean(json, "throwReturns", false),
                 Json.getString(sounds, "throw", ""),
-                MathHelper.clamp(Json.getInt(json, "fleesLight", 0), 0, 15),
-                Math.max(0, Json.getInt(json, "followsPlayers", 0)),
-                Math.max(0, Json.getInt(json, "teleportsWhenHit", 0)),
+                Json.clamped(json, "fleesLight", 0, 0, 15),
+                Json.atLeast(json, "followsPlayers", 0, 0),
+                Json.atLeast(json, "teleportsWhenHit", 0, 0),
                 Json.getBoolean(json, "pulls", false),
-                Math.max(1, Json.getInt(json, "pullReload", 5)) * 20,
-                Math.max(0.1F, Json.getFloat(json, "pullPower", 1.0F)),
+                Json.atLeast(json, "pullReload", 5, 1) * MathUtil.TICKS_PER_SECOND,
+                Json.atLeast(json, "pullPower", 1.0F, 0.1F),
                 Json.getString(json, "pullItem", "minecraft:ender_pearl").trim(),
                 rocket(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
                 Json.getString(json, "dialog", "").trim());
@@ -220,12 +215,7 @@ public final class ContentParserEntities {
     private static List<PhaseDef> phases(ResourceLocation key, JsonObject json, boolean hasBar) {
         List<PhaseDef> phases = new ArrayList<>();
         boolean hostile = Json.getBoolean(json, "hostile", false) && !Json.getBoolean(json, "passive", false);
-        for (JsonElement element : Json.getJsonArray(json, "phases", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("Entity variant {} has a phases entry that is not an object, ignoring it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "phases", new JsonArray()), "Entity variant {} has a phases entry that is not an object, ignoring it", key)) {
             for (Map.Entry<String, JsonElement> member : entry.entrySet()) {
                 if (!PHASE_KEYS.contains(member.getKey())) { ContentLog.LOGGER.error("Entity variant {} has a phase key '{}', which is not one of {}, so it is ignored", key, member.getKey(), PHASE_KEYS); }
             }
@@ -260,7 +250,7 @@ public final class ContentParserEntities {
                 pounces = false;
                 gusts = false;
             }
-            phases.add(new PhaseDef(below, attributes, ContentTasks.parse(key, entry), charges, pounces, gusts, Math.max(0.1F, Json.getFloat(entry, "gustPower", 1.5F)), bar));
+            phases.add(new PhaseDef(below, attributes, ContentTasks.parse(key, entry), charges, pounces, gusts, Json.atLeast(entry, "gustPower", 1.5F, 0.1F), bar));
         }
         phases.sort((a, b) -> Float.compare(b.below, a.below));
         return phases;
@@ -288,7 +278,7 @@ public final class ContentParserEntities {
             ContentLog.LOGGER.error("Entity variant {} sets cargoSlots to {}, which is not one of 0, 27, 36 or 54, using 0", key, slots);
             slots = 0;
         }
-        return new RocketDef(Math.max(-1, Json.getInt(rocket, "tier", -1)), Math.max(-1, Json.getInt(rocket, "fuelTank", -1)), slots,
+        return new RocketDef(Json.atLeast(rocket, "tier", -1, -1), Json.atLeast(rocket, "fuelTank", -1, -1), slots,
                 new FilterDef(entries(key, rocket, "cargo", "max", 0)), entries(key, rocket, "requiredPayload", "count", 1), entries(key, rocket, "payload", "count", 1));
     }
 
@@ -300,11 +290,11 @@ public final class ContentParserEntities {
         Json.unknownKeys(items, "items", ITEMS_KEYS);
         JsonObject fluid = Json.getJsonObject(storage, "fluid", new JsonObject());
         Json.unknownKeys(fluid, "fluid", FLUID_KEYS);
-        int fluidCapacity = Math.max(0, Json.getInt(fluid, "capacity", 0));
+        int fluidCapacity = Json.atLeast(fluid, "capacity", 0, 0);
         JsonObject energy = Json.getJsonObject(storage, "energy", new JsonObject());
         Json.unknownKeys(energy, "energy", ENERGY_KEYS);
-        int energyCapacity = Math.max(0, Json.getInt(energy, "capacity", 0));
-        int energyTransfer = MathHelper.clamp(Json.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
+        int energyCapacity = Json.atLeast(energy, "capacity", 0, 0);
+        int energyTransfer = Json.clamped(energy, "transfer", energyCapacity, 0, energyCapacity);
         int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
         boolean hasItems = storage.has("items");
         if (!hasItems && gauges == 0) {
@@ -312,8 +302,8 @@ public final class ContentParserEntities {
             return null;
         }
         return new StorageDef(hasItems, new FilterDef(entries(key, items, "filter", "max", 0)), fluidCapacity, new FilterDef(entries(key, fluid, "filter", "max", 0)), energyCapacity, energyTransfer,
-                Json.getBoolean(fluid, "buckets", false), Json.getBoolean(storage, "dropsOnDeath", true), Math.max(0, Json.getInt(fluid, "use", 0)),
-                Math.max(0, Json.getInt(energy, "use", 0)), runsDry(key, storage));
+                Json.getBoolean(fluid, "buckets", false), Json.getBoolean(storage, "dropsOnDeath", true), Json.atLeast(fluid, "use", 0, 0),
+                Json.atLeast(energy, "use", 0, 0), runsDry(key, storage));
     }
 
     private static StorageDef.Dry runsDry(ResourceLocation key, JsonObject storage) {
@@ -337,7 +327,7 @@ public final class ContentParserEntities {
                 ContentLog.LOGGER.error("A {} entry in {} names no item, oreDict or fluid, skipping it", list, key);
                 continue;
             }
-            entries.add(new FilterDef.Entry(key, item, oreDict, fluid, Math.max(least, Json.getInt(entry, amount, least))));
+            entries.add(new FilterDef.Entry(key, item, oreDict, fluid, Json.atLeast(entry, amount, least, least)));
         }
         return entries;
     }
@@ -353,6 +343,6 @@ public final class ContentParserEntities {
         if (!json.has("baby")) { return 0.0F; }
         JsonElement held = json.get("baby");
         if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isBoolean()) { return held.getAsBoolean() ? 1.0F : 0.0F; }
-        return MathHelper.clamp(Json.getFloat(json, "baby", 0.0F), 0.0F, 1.0F);
+        return Json.chance(json, "baby", 0.0F);
     }
 }

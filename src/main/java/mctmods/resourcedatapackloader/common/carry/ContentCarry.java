@@ -6,9 +6,12 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -54,7 +57,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentCarry {
-    private static final String BLOCKS = "blocks";
     private static final String MOBS = "mobs";
     private static final String CARRY = "rdplCarry";
     private static final String KIND = "kind";
@@ -63,8 +65,9 @@ public final class ContentCarry {
     private static final String META = "meta";
     private static final String TILE = "tile";
     private static final String ID = "id";
+    public static final String DENIED = "rdpl.carry.denied";
     private static final int EVERY = 10;
-    private static final List<String> CARRY_KEYS = Collections.unmodifiableList(Arrays.asList("requires", BLOCKS, MOBS));
+    private static final List<String> CARRY_KEYS = Collections.unmodifiableList(Arrays.asList("requires", ContentParser.BLOCKS, MOBS));
     private static final UUID CARRIED = UUID.fromString("6d1f3a52-94c7-4e08-b3a1-7f2c5e9d0b46");
     private static BlockGroup blockRules = new BlockGroup();
     private static final Set<ResourceLocation> MOB_RULES = new HashSet<>();
@@ -81,7 +84,7 @@ public final class ContentCarry {
     @SuppressWarnings("deprecation") public static ItemStack carried(EntityPlayer player) {
         NBTTagCompound held = PlayerPersisted.read(player, CARRY);
         if (!BLOCK.equals(held.getString(KIND))) { return ItemStack.EMPTY; }
-        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(held.getString(BLOCK)));
+        Block block = blockOf(held);
         Item item = block == null ? Items.AIR : Item.getItemFromBlock(block);
         return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item, 1, block.damageDropped(block.getStateFromMeta(held.getInteger(META))));
     }
@@ -105,13 +108,13 @@ public final class ContentCarry {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", CARRY_KEYS);
-        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
-        if (!json.has(BLOCKS) && !json.has(MOBS)) {
+        if (!ContentRegistry.available(json, key)) { return; }
+        if (!json.has(ContentParser.BLOCKS) && !json.has(MOBS)) {
             ContentLog.LOGGER.error("Carry {} names no blocks and no mobs, ignoring it", key);
             return;
         }
-        if (json.has(BLOCKS)) {
-            for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { blockRules.add(match, key, BLOCKS); }
+        if (json.has(ContentParser.BLOCKS)) {
+            for (BlockMatchDef match : ContentParser.matches(key, json, ContentParser.BLOCKS)) { blockRules.add(match, key, ContentParser.BLOCKS); }
         }
         if (json.has(MOBS)) {
             for (JsonElement element : Json.getJsonArray(json, MOBS)) {
@@ -189,10 +192,16 @@ public final class ContentCarry {
         slow(player, carrying);
     }
 
+    private static ResourceLocation blockId(NBTTagCompound held) { return new ResourceLocation(held.getString(BLOCK)); }
+
+    private static Block blockOf(NBTTagCompound held) { return ForgeRegistries.BLOCKS.getValue(blockId(held)); }
+
+    private static ResourceLocation mobId(NBTTagCompound held) { return new ResourceLocation(held.getCompoundTag(MOB).getString(ID)); }
+
     private static boolean unresolved(NBTTagCompound held) {
         String kind = held.getString(KIND);
-        if (BLOCK.equals(kind)) { return !ForgeRegistries.BLOCKS.containsKey(new ResourceLocation(held.getString(BLOCK))); }
-        return !MOB.equals(kind) || !EntityList.isRegistered(new ResourceLocation(held.getCompoundTag(MOB).getString(ID)));
+        if (BLOCK.equals(kind)) { return !ForgeRegistries.BLOCKS.containsKey(blockId(held)); }
+        return !MOB.equals(kind) || !EntityList.isRegistered(mobId(held));
     }
 
     private static void slow(EntityPlayer player, boolean carrying) {
@@ -235,15 +244,15 @@ public final class ContentCarry {
         finally { probing = false; }
     }
 
-    private static ITextComponent called(Block block) { return new TextComponentTranslation(block.getTranslationKey() + ".name"); }
+    private static ITextComponent called(Block block) { return new TextComponentTranslation(Lang.nameKey(block.getTranslationKey())); }
 
     private static void pickUp(EntityPlayerMP player, BlockPos pos, IBlockState state) {
         World world = player.world;
         Block block = state.getBlock();
         ResourceLocation name = block.getRegistryName();
-        if (state.getBlockHardness(world, pos) < 0.0F) { refuse(player, name, "unbreakable", "rdpl.carry.denied"); return; }
-        if (twoBlock(state)) { refuse(player, name, "two blocks", "rdpl.carry.denied"); return; }
-        if (!permits(player, pos)) { refuse(player, name, "not allowed to break it", "rdpl.carry.denied"); return; }
+        if (state.getBlockHardness(world, pos) < 0.0F) { refuse(player, name, "unbreakable", DENIED); return; }
+        if (twoBlock(state)) { refuse(player, name, "two blocks", DENIED); return; }
+        if (!permits(player, pos)) { refuse(player, name, "not allowed to break it", DENIED); return; }
         NBTTagCompound saved = new NBTTagCompound();
         saved.setString(KIND, BLOCK);
         saved.setString(BLOCK, String.valueOf(name));
@@ -253,17 +262,17 @@ public final class ContentCarry {
             saved.setTag(TILE, tile.writeToNBT(new NBTTagCompound()));
             world.removeTileEntity(pos);
         }
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
+        world.setBlockState(pos, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_ALL);
         taken(player, saved, name, called(block), "rdpl.carry.block");
     }
 
     private static void pickUp(EntityPlayerMP player, Entity target) {
         ResourceLocation name = EntityList.getKey(target);
-        if (!target.isEntityAlive()) { refuse(player, name, "not alive", "rdpl.carry.denied"); return; }
+        if (!target.isEntityAlive()) { refuse(player, name, "not alive", DENIED); return; }
         target.removePassengers();
         target.dismountRidingEntity();
         NBTTagCompound data = new NBTTagCompound();
-        if (!target.writeToNBTOptional(data)) { refuse(player, name, "cannot be saved", "rdpl.carry.denied"); return; }
+        if (!target.writeToNBTOptional(data)) { refuse(player, name, "cannot be saved", DENIED); return; }
         ITextComponent label = target.getDisplayName();
         target.setDead();
         NBTTagCompound saved = new NBTTagCompound();
@@ -275,30 +284,26 @@ public final class ContentCarry {
     private static void setDown(EntityPlayerMP player, NBTTagCompound held, BlockPos pos, EnumFacing side) {
         World world = player.world;
         BlockPos target = world.getBlockState(pos).getBlock().isReplaceable(world, pos) ? pos : pos.offset(side);
-        if (unresolved(held)) { refuse(player, held.getString(KIND), "nothing registers it", "rdpl.carry.denied"); return; }
+        if (unresolved(held)) { refuse(player, held.getString(KIND), "nothing registers it", DENIED); return; }
         if (BLOCK.equals(held.getString(KIND))) { setDownBlock(player, held, target, side); }
         else { setDownMob(player, held, target, side); }
     }
 
     @SuppressWarnings({"deprecation", "ConstantConditions"}) private static void setDownBlock(EntityPlayerMP player, NBTTagCompound held, BlockPos target, EnumFacing side) {
         World world = player.world;
-        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(held.getString(BLOCK)));
+        Block block = blockOf(held);
         IBlockState state = block.getStateFromMeta(held.getInteger(META));
-        if (!player.canPlayerEdit(target, side, ItemStack.EMPTY) || !world.mayPlace(block, target, false, side, null)) { refuse(player, block.getRegistryName(), "no room", "rdpl.carry.denied"); return; }
+        if (!player.canPlayerEdit(target, side, ItemStack.EMPTY) || !world.mayPlace(block, target, false, side, null)) { refuse(player, block.getRegistryName(), "no room", DENIED); return; }
         BlockSnapshot snapshot = BlockSnapshot.getBlockSnapshot(world, target);
-        if (!world.setBlockState(target, state, 3) || ForgeEventFactory.onPlayerBlockPlace(player, snapshot, side, EnumHand.MAIN_HAND).isCanceled()) {
+        if (!world.setBlockState(target, state, BlockFlags.UPDATE_ALL) || ForgeEventFactory.onPlayerBlockPlace(player, snapshot, side, EnumHand.MAIN_HAND).isCanceled()) {
             snapshot.restore(true);
-            refuse(player, block.getRegistryName(), "placement canceled", "rdpl.carry.denied");
+            refuse(player, block.getRegistryName(), "placement canceled", DENIED);
             return;
         }
         if (held.hasKey(TILE, Constants.NBT.TAG_COMPOUND)) {
             TileEntity tile = world.getTileEntity(target);
             if (tile != null) {
-                NBTTagCompound data = held.getCompoundTag(TILE).copy();
-                data.setInteger("x", target.getX());
-                data.setInteger("y", target.getY());
-                data.setInteger("z", target.getZ());
-                tile.readFromNBT(data);
+                tile.readFromNBT(TileData.at(held.getCompoundTag(TILE), target));
                 tile.markDirty();
                 IBlockState placed = world.getBlockState(target);
                 world.notifyBlockUpdate(target, placed, placed, 3);
@@ -310,14 +315,14 @@ public final class ContentCarry {
     private static void setDownMob(EntityPlayerMP player, NBTTagCompound held, BlockPos target, EnumFacing side) {
         World world = player.world;
         Entity entity = EntityList.createEntityFromNBT(held.getCompoundTag(MOB).copy(), world);
-        ResourceLocation name = new ResourceLocation(held.getCompoundTag(MOB).getString(ID));
-        if (entity == null) { refuse(player, name, "cannot be created", "rdpl.carry.denied"); return; }
+        ResourceLocation name = mobId(held);
+        if (entity == null) { refuse(player, name, "cannot be created", DENIED); return; }
         entity.setLocationAndAngles(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, entity.rotationYaw, entity.rotationPitch);
         entity.motionX = 0.0D;
         entity.motionY = 0.0D;
         entity.motionZ = 0.0D;
         if (!player.canPlayerEdit(target, side, ItemStack.EMPTY) || !world.getCollisionBoxes(entity, entity.getEntityBoundingBox()).isEmpty() || !world.checkNoEntityCollision(entity.getEntityBoundingBox(), entity) || !world.spawnEntity(entity)) {
-            refuse(player, name, "no room", "rdpl.carry.denied");
+            refuse(player, name, "no room", DENIED);
             return;
         }
         given(player, name, entity.getDisplayName());

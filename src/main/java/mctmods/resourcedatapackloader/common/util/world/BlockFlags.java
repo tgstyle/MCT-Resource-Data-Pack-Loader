@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util.world;
 
 public final class BlockFlags {
     public static final int UPDATE_ALL = 3;
+    public static final int NO_RERENDER = 4;
     public static final int UPDATE_CLIENTS = 2;
     public static final int UPDATE_KNOWN_SHAPE = 16;
     public static final int UPDATE_CLIENTS_KNOWN_SHAPE = UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE;

@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -59,38 +60,31 @@ public final class ContentPotions {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (!Config.registersToClients() || !Config.content.potions) { return false; }
-        Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
-            if (!ContentOwners.reserved(key)) { readPotion(key, contents); }
+        if (!Config.loads(Config.content.potions)) { return false; }
+        Json.eachObject(PackManager.POTIONS, "potion file", (key, json) -> {
+            if (!ContentOwners.reserved(key)) { readPotion(key, json); }
         });
-        Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
-            if (!ContentOwners.reserved(key)) { readType(key, contents); }
+        Json.eachObject(PackManager.POTION_TYPES, "potion type file", (key, json) -> {
+            if (!ContentOwners.reserved(key)) { readType(key, json); }
         });
         if (Config.content.brewing) {
-            Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
-                if (!ContentOwners.reserved(key)) { readBrewing(key, contents); }
+            Json.eachObject(PackManager.BREWING, "brewing file", (key, json) -> {
+                if (!ContentOwners.reserved(key)) { readBrewing(key, json); }
             });
         }
-        if (!POTIONS.isEmpty()) { Summary.info("potions", "Loaded " + POTIONS.size() + " potion effect(s) from packs"); }
-        if (!TYPES.isEmpty()) { Summary.info("potion_types", "Loaded " + TYPES.size() + " potion type(s) from packs"); }
-        if (!BREWING.isEmpty()) { Summary.info("brewing", "Loaded " + BREWING.size() + " brewing recipe(s) from packs"); }
+        Summary.loaded("potions", POTIONS.size(), "potion effect(s) from packs");
+        Summary.loaded("potion_types", TYPES.size(), "potion type(s) from packs");
+        Summary.loaded("brewing", BREWING.size(), "brewing recipe(s) from packs");
         return wanted();
     }
 
     public static boolean wanted() { return !POTIONS.isEmpty() || !TYPES.isEmpty() || !BREWING.isEmpty(); }
 
-    private static void readPotion(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "potion file");
-        if (json == null) { return; }
+    private static void readPotion(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", POTION_KEYS);
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
-            for (JsonElement element : Json.getJsonArray(json, "attributes")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An attribute in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject entry = element.getAsJsonObject();
+            for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "attributes"), "An attribute in {} is not an object, skipping it", key)) {
                 Json.unknownKeys(entry, "attributes", ATTRIBUTE_KEYS);
                 String uuid = Json.getString(entry, "uuid", "");
                 if (uuid.isEmpty()) {
@@ -118,14 +112,12 @@ public final class ContentPotions {
                 strings(json, "requires")));
     }
 
-    private static void readType(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "potion type file");
-        if (json == null) { return; }
+    private static void readType(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", TYPE_KEYS);
         for (JsonElement element : Json.getJsonArray(json, "effects")) {
             if (element.isJsonObject()) { Json.unknownKeys(element.getAsJsonObject(), "effects", EFFECT_KEYS); }
         }
-        List<PotionEffectDef> effects = ContentParser.effects(key, Json.getJsonArray(json, "effects"), 3600, true);
+        List<PotionEffectDef> effects = ContentParser.effects(key, Json.getJsonArray(json, "effects"), ContentParser.DEFAULT_EFFECT_TICKS, true);
         if (effects.isEmpty()) {
             ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
             return;
@@ -136,16 +128,9 @@ public final class ContentPotions {
                 strings(json, "requires")));
     }
 
-    private static void readBrewing(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "brewing file");
-        if (json == null) { return; }
+    private static void readBrewing(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", BREWING_FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "brewing")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "brewing"), "A brewing recipe in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "brewing", BREWING_KEYS);
             BrewingDef def = new BrewingDef(key,
                     Json.getString(entry, "from", ""),
@@ -195,7 +180,7 @@ public final class ContentPotions {
                     ContentLog.LOGGER.error("Potion type {} names potion '{}', which is not registered, skipping that effect", def.registryName, entry.potion);
                     continue;
                 }
-                effects.add(new PotionEffect(potion, entry.duration, entry.amplifier, entry.ambient, entry.showParticles));
+                effects.add(PotionEffects.build(potion, entry, entry.duration, entry.showParticles));
             }
             if (effects.isEmpty()) {
                 ContentLog.LOGGER.error("Potion type {} has no effect whose potion exists, skipping it", def.registryName);

@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.common.util.dimension;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.CelestialDef;
+import mctmods.resourcedatapackloader.core.config.Settings;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.util.ResourceLocation;
@@ -49,18 +49,16 @@ public final class BodyRings {
     public static void register(CelestialDef def) {
         if (def.ring == null) { return; }
         Ring ring = new Ring(def.ring, def.ringSize, def.ringFront, false);
-        RINGS.put(name(def.name), ring);
-        RINGS.put(name(def.key.getPath()), ring);
+        RINGS.put(Settings.lower(def.name), ring);
+        RINGS.put(Settings.lower(def.key.getPath()), ring);
     }
 
-    public static void register(String name, ResourceLocation texture, float size, Front front) { RINGS.put(name(name), new Ring(texture, size, front, true)); }
+    public static void register(String name, ResourceLocation texture, float size, Front front) { RINGS.put(Settings.lower(name), new Ring(texture, size, front, true)); }
 
     public static boolean overrides(String name) {
-        Ring ring = RINGS.get(name(name));
+        Ring ring = RINGS.get(Settings.lower(name));
         return ring != null && ring.override;
     }
 
-    @Nullable public static Ring find(String name) { return RINGS.get(name(name)); }
-
-    private static String name(String name) { return name.trim().toLowerCase(Locale.ROOT); }
+    @Nullable public static Ring find(String name) { return RINGS.get(Settings.lower(name)); }
 }

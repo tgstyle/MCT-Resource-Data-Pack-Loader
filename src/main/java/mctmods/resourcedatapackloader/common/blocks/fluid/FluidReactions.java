@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.portways.PortwayFx;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +24,6 @@ public final class FluidReactions {
     public static final int COST_BLOCK = 1;
     public static final int COST_FUNCTION = 4;
     public static final int COST_EXPLOSION = 16;
-    private static final int PLACE_FLAGS = 3;
     private static boolean firing;
 
     private FluidReactions() {}
@@ -106,7 +106,7 @@ public final class FluidReactions {
         IBlockState placed = ForgeEventFactory.fireFluidPlaceBlockEvent(world, at, liquid, wanted);
         if (placed == current) { return; }
         if (drops) { current.getBlock().dropBlockAsItem(world, at, current, 0); }
-        world.setBlockState(at, placed, PLACE_FLAGS);
+        world.setBlockState(at, placed, BlockFlags.UPDATE_ALL);
     }
 
     @Nullable private static IBlockState named(String name, Object owner) { return name.isEmpty() ? null : ContentStates.parse(name, owner); }

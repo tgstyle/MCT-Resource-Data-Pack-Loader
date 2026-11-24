@@ -24,6 +24,12 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 public final class BeardRoadsSurface {
     private BeardRoadsSurface() {}
 
+    static final int WEST = 1;
+    static final int EAST = 2;
+    static final int NORTH = 4;
+    static final int SOUTH = 8;
+
+    static boolean arm(int found, int bit) { return (found & bit) != 0; }
     private static final Map<World, Map<Long, Boolean>> SQUARE_DECK = new WeakHashMap<>();
 
     static boolean deckSquare(World world, StructureBoundingBox ew, StructureBoundingBox ns) {
@@ -69,16 +75,9 @@ public final class BeardRoadsSurface {
     private static StructureBoundingBox through(StructureBoundingBox road, boolean roadAlongX, StructureBoundingBox box) {
         StructureBoundingBox held = new StructureBoundingBox(road);
         int coreHalf = ContentBeard.streetHalf() - BeardRoads.pathLineColumns() - BeardRoads.pathSidewalkWidth();
-        if (roadAlongX) {
-            int center = (box.minX + box.maxX) / 2;
-            if (held.maxX >= box.minX - 1 && held.maxX < center + coreHalf) { held.maxX = center + coreHalf; }
-            if (held.minX <= box.maxX + 1 && held.minX > center - coreHalf) { held.minX = center - coreHalf; }
-        }
-        else {
-            int center = (box.minZ + box.maxZ) / 2;
-            if (held.maxZ >= box.minZ - 1 && held.maxZ < center + coreHalf) { held.maxZ = center + coreHalf; }
-            if (held.minZ <= box.maxZ + 1 && held.minZ > center - coreHalf) { held.minZ = center - coreHalf; }
-        }
+        int center = BeardPlots.center(box, roadAlongX);
+        if (BeardPlots.most(held, roadAlongX) >= BeardPlots.least(box, roadAlongX) - 1 && BeardPlots.most(held, roadAlongX) < center + coreHalf) { BeardPlots.setEnd(held, roadAlongX, true, center + coreHalf); }
+        if (BeardPlots.least(held, roadAlongX) <= BeardPlots.most(box, roadAlongX) + 1 && BeardPlots.least(held, roadAlongX) > center - coreHalf) { BeardPlots.setEnd(held, roadAlongX, false, center - coreHalf); }
         return held;
     }
 
@@ -129,25 +128,33 @@ public final class BeardRoadsSurface {
         return plazaMouth(world, box, alongX, row, across, acrossCenter, core, path);
     }
 
+    static boolean onArm(int reach, int cellX, int cellZ, int centerX, int centerZ, int core) {
+        int offX = Math.abs(cellX - centerX);
+        int offZ = Math.abs(cellZ - centerZ);
+        boolean onEW = offZ <= core && (offX <= core || (cellX < centerX && arm(reach, WEST)) || (cellX > centerX && arm(reach, EAST)));
+        boolean onNS = offX <= core && (offZ <= core || (cellZ < centerZ && arm(reach, NORTH)) || (cellZ > centerZ && arm(reach, SOUTH)));
+        return onEW || onNS;
+    }
+
+    static boolean armSide(int reach, int cell, int center, boolean alongX) {
+        boolean before = arm(reach, alongX ? WEST : NORTH);
+        boolean after = arm(reach, alongX ? EAST : SOUTH);
+        return cell > center ? after : cell >= center || before;
+    }
+
     static int arms(StructureBoundingBox ew, StructureBoundingBox ns, StructureBoundingBox mine, List<StructureBoundingBox> crossed) {
         int found = 0;
         for (int i = -1; i < crossed.size(); i++) {
             StructureBoundingBox c = i < 0 ? mine : crossed.get(i);
             if (BeardRoads.roadNarrow(c, BeardPlots.roadAlongX(c))) { continue; }
-            if (BeardPlots.roadAlongX(c)) {
-                if (c.maxZ < ew.minZ || c.minZ > ew.maxZ) { continue; }
-                int center = (c.minZ + c.maxZ) / 2;
-                if (center < ew.minZ || center > ew.maxZ) { continue; }
-                if (c.minX < ns.minX && c.maxX >= ns.minX - 1) { found |= 1; }
-                if (c.maxX > ns.maxX && c.minX <= ns.maxX + 1) { found |= 2; }
-            }
-            else {
-                if (c.maxX < ns.minX || c.minX > ns.maxX) { continue; }
-                int center = (c.minX + c.maxX) / 2;
-                if (center < ns.minX || center > ns.maxX) { continue; }
-                if (c.minZ < ew.minZ && c.maxZ >= ew.minZ - 1) { found |= 4; }
-                if (c.maxZ > ew.maxZ && c.minZ <= ew.maxZ + 1) { found |= 8; }
-            }
+            boolean along = BeardPlots.roadAlongX(c);
+            StructureBoundingBox acrossRef = along ? ew : ns;
+            StructureBoundingBox alongRef = along ? ns : ew;
+            if (BeardPlots.acrossMost(c, along) < BeardPlots.acrossLeast(acrossRef, along) || BeardPlots.acrossLeast(c, along) > BeardPlots.acrossMost(acrossRef, along)) { continue; }
+            int center = BeardPlots.acrossCenter(c, along);
+            if (center < BeardPlots.acrossLeast(acrossRef, along) || center > BeardPlots.acrossMost(acrossRef, along)) { continue; }
+            if (BeardPlots.least(c, along) < BeardPlots.least(alongRef, along) && BeardPlots.most(c, along) >= BeardPlots.least(alongRef, along) - 1) { found |= along ? WEST : NORTH; }
+            if (BeardPlots.most(c, along) > BeardPlots.most(alongRef, along) && BeardPlots.least(c, along) <= BeardPlots.most(alongRef, along) + 1) { found |= along ? EAST : SOUTH; }
         }
         return found;
     }
@@ -183,19 +190,13 @@ public final class BeardRoadsSurface {
             int offX = Math.abs(cellX - centerX);
             int offZ = Math.abs(cellZ - centerZ);
             int reach = arms(ew, ns, box, crossed);
-            boolean west = (reach & 1) != 0;
-            boolean east = (reach & 2) != 0;
-            boolean north = (reach & 4) != 0;
-            boolean south = (reach & 8) != 0;
-            boolean onEW = offZ <= core && (offX <= core || (cellX < centerX && west) || (cellX > centerX && east));
-            boolean onNS = offX <= core && (offZ <= core || (cellZ < centerZ && north) || (cellZ > centerZ && south));
-            if (onEW || onNS) {
+            if (onArm(reach, cellX, cellZ, centerX, centerZ, core)) {
                 IBlockState flipped = junctionCell(world, !alongX, across, row, alongX ? centerX : centerZ, core, ew, ns, box, crossed, road0);
                 if (flipped != null) { return flipped; }
                 return path;
             }
-            boolean armX = cellX > centerX ? east : cellX >= centerX || west;
-            boolean armZ = cellZ > centerZ ? south : cellZ >= centerZ || north;
+            boolean armX = armSide(reach, cellX, centerX, true);
+            boolean armZ = armSide(reach, cellZ, centerZ, false);
             int lines = BeardRoads.pathLineColumns();
             boolean bandX = lines > 0 && offX > core && offX <= core + lines;
             boolean bandZ = lines > 0 && offZ > core && offZ <= core + lines;
@@ -233,8 +234,8 @@ public final class BeardRoadsSurface {
         PathIntersectDef def = ContentPathIntersects.forJunction(world, (ns.minX + ns.maxX) / 2, (ew.minZ + ew.maxZ) / 2);
         if (def == null) { return null; }
         int otherCore = BeardRoads.roadCore(alongX ? ns : ew, !alongX);
-        boolean beforeArm = (found & (alongX ? 1 : 4)) != 0;
-        boolean afterArm = (found & (alongX ? 2 : 8)) != 0;
+        boolean beforeArm = arm(found, alongX ? WEST : NORTH);
+        boolean afterArm = arm(found, alongX ? EAST : SOUTH);
         if ((row <= otherCenter - otherCore - 1 && beforeArm) || (row >= otherCenter + otherCore + 1 && afterArm)) {
             IBlockState fromMouth = mouthCell(def, row, across, acrossCenter, core, otherCenter - otherCore - 1, otherCenter + otherCore + 1, road0);
             if (fromMouth != null) { return fromMouth; }

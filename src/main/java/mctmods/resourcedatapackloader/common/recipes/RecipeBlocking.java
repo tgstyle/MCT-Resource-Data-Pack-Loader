@@ -5,16 +5,13 @@ import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryModifiable;
 
 public final class RecipeBlocking {
     private static final String MATCH_RECIPE = "recipe";
@@ -28,18 +25,12 @@ public final class RecipeBlocking {
     public static void apply(IForgeRegistry<IRecipe> registry) {
         BLOCKING.reset();
         if (BLOCKING.disabled()) { return; }
-        IForgeRegistryModifiable<IRecipe> modifiable = RecipeRemovals.modifiable(registry);
-        if (modifiable == null) {
-            ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipes were blocked");
+        String match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch).toLowerCase(Locale.ROOT);
+        if (RecipeRemovals.modifiable(registry) == null) {
+            RecipeRemovals.removeWhere(registry, (key, recipe) -> false, "blocked");
             return;
         }
-        String match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch).toLowerCase(Locale.ROOT);
-        List<ResourceLocation> doomed = new ArrayList<>();
-        for (ResourceLocation key : registry.getKeys()) {
-            if (RecipeSpared.spares(key)) { continue; }
-            if (BLOCKING.blocks(owners(key, registry.getValue(key), match))) { doomed.add(key); }
-        }
-        for (ResourceLocation key : doomed) { modifiable.remove(key); }
+        RecipeRemovals.removeWhere(registry, (key, recipe) -> !RecipeSpared.spares(key) && BLOCKING.blocks(owners(key, recipe, match)), "blocked");
         BLOCKING.report("");
     }
 

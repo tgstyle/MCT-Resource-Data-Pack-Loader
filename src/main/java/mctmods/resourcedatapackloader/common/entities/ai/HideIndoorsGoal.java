@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.village.Village;
@@ -58,10 +58,9 @@ public final class HideIndoorsGoal extends EntityAIBase {
     }
 
     private void walkIn(BlockPos place) {
-        Vec3d door = new Vec3d(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D);
+        Vec3d door = Walking.feet(place);
         if (mob.getDistanceSq(place) > FAR_SQ) {
-            Vec3d toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 14, 3, door);
-            if (toward != null) { mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, SPEED); }
+            Walking.toward(mob, door, 14, 3, SPEED);
             return;
         }
         mob.getNavigator().tryMoveToXYZ(door.x, door.y, door.z, SPEED);
@@ -75,7 +74,7 @@ public final class HideIndoorsGoal extends EntityAIBase {
     @Override public void updateTask() {
         BlockPos place = inside;
         if (place == null) { return; }
-        if (mob.getDistanceSq(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D) <= ARRIVED_SQ) {
+        if (Walking.feetDistanceSq(mob, place) <= ARRIVED_SQ) {
             mob.getNavigator().clearPath();
             return;
         }

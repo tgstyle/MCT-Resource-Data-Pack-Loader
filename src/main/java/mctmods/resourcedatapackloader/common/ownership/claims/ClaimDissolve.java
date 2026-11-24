@@ -68,7 +68,6 @@ public final class ClaimDissolve {
         if (mode == OwnershipSettings.Dissolve.KEEP) { return; }
         for (WorldServer world : DimensionManager.getWorlds()) {
             ClaimIndex index = ClaimIndex.obtain(world);
-            if (index == null) { continue; }
             for (ChunkPos pos : index.chunksOf(handle)) {
                 index.release(pos.x, pos.z);
                 if (mode == OwnershipSettings.Dissolve.REMOVE && index.addPending(pos.x, pos.z, handle, ClaimIndex.MODE_REMOVE) && world.getChunkProvider().getLoadedChunk(pos.x, pos.z) != null) { JOBS.add(new Job(world.provider.getDimension(), pos.x, pos.z)); }
@@ -81,8 +80,7 @@ public final class ClaimDissolve {
 
     public static void onLoad(World world, int chunkX, int chunkZ) {
         if (world.isRemote || !ClaimSettings.any()) { return; }
-        ClaimIndex index = ClaimIndex.obtain(world);
-        if (index != null && index.pendingAt(chunkX, chunkZ) != null) { JOBS.add(new Job(world.provider.getDimension(), chunkX, chunkZ)); }
+        if (ClaimIndex.obtain(world).pendingAt(chunkX, chunkZ) != null) { JOBS.add(new Job(world.provider.getDimension(), chunkX, chunkZ)); }
     }
 
     public static void drain() {
@@ -91,9 +89,13 @@ public final class ClaimDissolve {
         for (Iterator<Job> each = JOBS.iterator(); each.hasNext() && budget.sections > 0 && budget.blocks > 0; ) {
             Job job = each.next();
             WorldServer world = DimensionManager.getWorld(job.dimension);
+            if (world == null) {
+                each.remove();
+                continue;
+            }
             ClaimIndex index = ClaimIndex.obtain(world);
-            ClaimIndex.Pending pending = index == null ? null : index.pendingAt(job.x, job.z);
-            if (world == null || pending == null || world.getChunkProvider().getLoadedChunk(job.x, job.z) == null || work(world, index, pending, job, budget)) { each.remove(); }
+            ClaimIndex.Pending pending = index.pendingAt(job.x, job.z);
+            if (pending == null || world.getChunkProvider().getLoadedChunk(job.x, job.z) == null || work(world, index, pending, job, budget)) { each.remove(); }
         }
     }
 

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 
 import java.util.List;
 import java.util.UUID;
@@ -9,7 +10,6 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.text.TextComponentTranslation;
 
@@ -47,8 +47,8 @@ final class WeightTiers {
         if (entry.exhaustion > 0.0D) { player.addExhaustion((float) entry.exhaustion); }
         if (player.ticksExisted % REFRESH != 0) { return; }
         for (PotionEffectDef effect : ContentWeights.settings().tiers.get(entry.tier).effects) {
-            Potion potion = Potion.getPotionFromResourceLocation(effect.potion);
-            if (potion != null) { player.addPotionEffect(new PotionEffect(potion, LENGTH, effect.amplifier, effect.ambient, false)); }
+            PotionEffect built = PotionEffects.resolve(effect, LENGTH, false);
+            if (built != null) { player.addPotionEffect(built); }
         }
     }
 

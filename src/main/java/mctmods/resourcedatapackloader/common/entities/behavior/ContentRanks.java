@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
-import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.StealContainerGoal;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankRandomDef;
@@ -10,9 +9,11 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserRanks;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.google.common.collect.MapMaker;
 import com.google.gson.JsonObject;
@@ -31,7 +32,6 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.passive.AbstractChestHorse;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -58,7 +58,7 @@ public final class ContentRanks {
 
     public static boolean load() {
         DEFS.clear();
-        Json.eachFile(PackManager.RANKS, "rank definition", ContentRanks::read);
+        Json.eachObject(PackManager.RANKS, "rank definition", ContentRanks::read);
         return !DEFS.isEmpty();
     }
 
@@ -66,14 +66,10 @@ public final class ContentRanks {
 
     public static String killKey(String namespace, String entry) {
         int at = entry.indexOf('@');
-        return at < 0 ? entry : entry.substring(0, at) + "@" + key(namespace, entry.substring(at + 1).trim());
+        return at < 0 ? entry : entry.substring(0, at) + "@" + IdNames.namespaced(entry.substring(at + 1).trim(), namespace);
     }
 
-    public static String key(String namespace, String rank) { return rank.isEmpty() || rank.indexOf(':') >= 0 ? rank : namespace + ":" + rank; }
-
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "rank definition");
-        if (json == null) { return; }
+    private static void read(ResourceLocation key, JsonObject json) {
         RankDef def = ContentParserRanks.parse(key, json);
         if (def != null) { DEFS.put(key.toString(), def); }
     }
@@ -81,7 +77,7 @@ public final class ContentRanks {
     public static void verify() {
         MobGearPool.clear();
         DEFS.values().removeIf(ContentRanks::unregistered);
-        if (!DEFS.isEmpty()) { Summary.info("ranks", "Loaded " + DEFS.size() + " mob rank(s)"); }
+        Summary.loaded("ranks", DEFS.size(), "mob rank(s)");
     }
 
     public static boolean stealing() {
@@ -99,19 +95,19 @@ public final class ContentRanks {
             if (exclude.indexOf(':') >= 0) { items.add(exclude); }
         }
         for (String item : items) {
-            if (Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(item)) == null) {
+            if (Registries.itemNamed(item) == null) {
                 ContentLog.LOGGER.error("Rank {} names item '{}', which nothing registers, ignoring the rank", def.key, item);
                 missing = true;
             }
         }
         for (String id : def.entities) {
-            if (!id.startsWith("#") && !EntityList.isRegistered(new ResourceLocation(id))) {
+            if (MobStats.unknownEntity(id)) {
                 ContentLog.LOGGER.error("Rank {} names entity '{}', which is not an entity, ignoring the rank", def.key, id);
                 missing = true;
             }
         }
         for (String potion : def.effects.keySet()) {
-            if (Registries.find(ForgeRegistries.POTIONS, new ResourceLocation(potion)) == null) {
+            if (Registries.find(ForgeRegistries.POTIONS, potion) == null) {
                 ContentLog.LOGGER.error("Rank {} wants effect '{}', which nothing registers, ignoring the rank", def.key, potion);
                 missing = true;
             }
@@ -155,10 +151,7 @@ public final class ContentRanks {
 
     private static void arm(EntityLiving mob, RankDef def) {
         if (def.digs) {
-            if (mob instanceof EntityCreature) {
-                mob.tasks.addTask(1, new DigGoal((EntityCreature) mob));
-                MobAbilities.sightlessTarget((EntityCreature) mob, EntityPlayer.class, 2);
-            }
+            if (mob instanceof EntityCreature) { MobAbilities.dig((EntityCreature) mob, true); }
             else if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Rank {} digs, but {} is not a walking creature, skipping it", def.key, EntityList.getKey(mob)); }
         }
         if (def.breaksDoors) {
@@ -214,8 +207,7 @@ public final class ContentRanks {
             ItemStack stack = drop.getItem();
             if (stack.getMaxStackSize() <= 1 || held != null && carried(held, stack)) { continue; }
             float wanted = stack.getCount() * def.loot;
-            int count = (int) wanted;
-            if (entity.world.rand.nextFloat() < wanted - count) { count++; }
+            int count = MathUtil.roundRandom(wanted, entity.world.rand);
             int most = stack.getMaxStackSize();
             ItemStack first = stack.copy();
             first.setCount(Math.min(count, most));

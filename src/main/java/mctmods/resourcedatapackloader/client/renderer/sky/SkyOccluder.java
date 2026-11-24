@@ -1,19 +1,19 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.client.util.ContentPixelImages;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT) public final class SkyOccluder {
-    private static final double RADIUS = 100.0D;
+    static final double RADIUS = 100.0D;
     private static final int THRESHOLD = 8;
     private static final double REACH = Math.sqrt(0.5D);
     private static final double MARGIN = 0.055D;
@@ -29,8 +29,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private final double rollCos;
     private final double rollSin;
     private final boolean spins;
-    private final boolean flipU;
-    private final boolean flipV;
+    private final SkyPoseDef pose;
     private float turn;
     private boolean[] mask;
     private boolean[] rings;
@@ -43,8 +42,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         rollCos = Math.cos(Math.toRadians(pose.roll));
         rollSin = Math.sin(Math.toRadians(pose.roll));
         spins = pose.spins();
-        flipU = pose.flipU;
-        flipV = pose.flipV;
+        this.pose = pose;
         this.angle = angle;
         this.tilt = tilt;
         this.size = size;
@@ -70,7 +68,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     boolean sweeps(double x, double reach) {
         if (ContentSkyGates.hides(gate)) { return false; }
-        double gap = Math.abs(Math.asin(MathHelper.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
+        double gap = Math.abs(MathUtil.asinClamped(x) - Math.asin(-Math.sin(tilt)));
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
 
@@ -89,8 +87,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (spins) { return spunCovers(Math.hypot(sx, sz) / 2.0D, r); }
         double px = sx * rollCos - sz * rollSin;
         double pz = sx * rollSin + sz * rollCos;
-        double u = moon != flipU ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
-        double v = moon != flipV ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
+        double u = moon != pose.flipU ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
+        double v = moon != pose.flipV ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
         int fromX = clamp((int) Math.floor((u - r) * width), width);
         int toX = clamp((int) Math.floor((u + r) * width), width);
@@ -141,9 +139,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         mask = null;
         loaded = generation;
         for (ResourceLocation texture : textures) {
-            try (IResource resource = Minecraft.getMinecraft().getResourceManager().getResource(texture)) {
-                merge(TextureUtil.readBufferedImage(resource.getInputStream()));
-            }
+            try { merge(ContentPixelImages.load(texture)); }
             catch (IOException e) {
                 width = 1;
                 height = 1;
@@ -172,7 +168,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
                     for (int x = 0; x < width; ++x) {
                         int pixel = image.getRGB(cellColumn * cellWidth + x * cellWidth / width, cellRow * cellHeight + y * cellHeight / height);
                         int alpha = pixel >>> 24;
-                        int bright = Math.max(pixel >> 16 & 255, Math.max(pixel >> 8 & 255, pixel & 255));
+                        int bright = Math.max(Colors.red(pixel), Math.max(Colors.green(pixel), Colors.blue(pixel)));
                         if (alpha * bright > THRESHOLD * 255) { mask[y * width + x] = true; }
                     }
                 }

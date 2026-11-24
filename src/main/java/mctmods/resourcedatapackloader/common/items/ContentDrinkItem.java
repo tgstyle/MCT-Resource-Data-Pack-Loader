@@ -35,19 +35,13 @@ import net.minecraft.world.World;
 
     @Nullable private ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
-    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); } }
+    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { ItemVariants.subItems(this, def, tab, list); }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 
-    @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? EnumRarity.COMMON : value.rarity;
-    }
+    @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) { return ItemVariants.rarity(variant(stack)); }
 
-    @Override public int getItemStackLimit(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return value == null ? 64 : value.maxSize;
-    }
+    @Override public int getItemStackLimit(@Nonnull ItemStack stack) { return ItemVariants.stackLimit(variant(stack)); }
 
     @Override public int getMetadata(int damage) { return damage; }
 
@@ -62,7 +56,7 @@ import net.minecraft.world.World;
 
     @Override @Nonnull public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase entity) {
         if (!world.isRemote) { ItemVariants.applyPotion(variant(stack), entity); }
-        if (entity instanceof EntityPlayer && def.cooldown > 0) { ((EntityPlayer) entity).getCooldownTracker().setCooldown(this, def.cooldown); }
+        ItemVariants.cooldown(entity, this, def.cooldown);
         if (entity instanceof EntityPlayer && ((EntityPlayer) entity).capabilities.isCreativeMode) { return stack; }
         stack.shrink(1);
         ItemStack container = def.getResolvedContainer();

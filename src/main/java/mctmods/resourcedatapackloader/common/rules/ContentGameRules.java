@@ -60,7 +60,7 @@ public final class ContentGameRules {
         if (storage == null) { return; }
         for (Map.Entry<Integer, GameRules> entry : BY_DIMENSION.entrySet()) {
             String dimension = String.valueOf(entry.getKey());
-            for (Map.Entry<String, String> rule : storage.saved(dimension).entrySet()) { entry.getValue().setOrCreateGameRule(rule.getKey(), rule.getValue()); }
+            apply(entry.getValue(), storage.saved(dimension));
             storage.watch(dimension, entry.getValue(), GameRuleStorage.values(build(PACK.get(entry.getKey()))));
         }
         for (String dimension : storage.unwatched()) { ContentLog.LOGGER.warn("Dimension {} was saved with its own game rules, but no pack gives it any now, so they are dropped", dimension); }
@@ -70,9 +70,10 @@ public final class ContentGameRules {
         for (Map.Entry<Integer, Map<String, String>> entry : PACK.entrySet()) { BY_DIMENSION.put(entry.getKey(), build(entry.getValue())); }
     }
 
-    private static GameRules build(Map<String, String> pack) {
-        GameRules rules = new GameRules();
-        for (Map.Entry<String, String> rule : pack.entrySet()) { rules.setOrCreateGameRule(rule.getKey(), rule.getValue()); }
+    private static GameRules build(Map<String, String> pack) { return apply(new GameRules(), pack); }
+
+    private static GameRules apply(GameRules rules, Map<String, String> values) {
+        for (Map.Entry<String, String> rule : values.entrySet()) { rules.setOrCreateGameRule(rule.getKey(), rule.getValue()); }
         return rules;
     }
 }

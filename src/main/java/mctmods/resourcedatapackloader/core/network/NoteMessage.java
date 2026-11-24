@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -12,7 +13,7 @@ public class NoteMessage implements IMessage {
     public NoteMessage() {}
 
     public NoteMessage(String said, boolean backdrop, String font) {
-        this.said = said == null ? "" : said;
+        this.said = Strings.nullToEmpty(said);
         this.backdrop = backdrop;
         this.font = font;
     }

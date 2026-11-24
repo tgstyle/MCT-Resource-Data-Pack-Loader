@@ -1,18 +1,20 @@
 package mctmods.resourcedatapackloader.common.rules;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
-import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
-import mctmods.resourcedatapackloader.common.util.plant.DynamicTrees;
+import mctmods.resourcedatapackloader.common.util.plant.Plants;
+import mctmods.resourcedatapackloader.common.util.ticks.RandomTicks;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,11 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCocoa;
-import net.minecraft.block.BlockCrops;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockNetherWart;
-import net.minecraft.block.BlockSapling;
-import net.minecraft.block.BlockStem;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
@@ -53,11 +52,17 @@ import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentSneakGrow {
-    private static final List<String> KEYS = Arrays.asList("chance", "radius", "height", "blocks", "mode", "ticks", "hunger", "cooldown", "items", "equipment", "enchantment", "damage", "except", "grass", "sound", "toggle", "most", "particles", "gameModes");
+    private static final String CHANCE = "chance";
+    private static final String RADIUS = "radius";
+    private static final String HEIGHT = "height";
+    private static final String TICKS = "ticks";
+    private static final String HUNGER = "hunger";
+    private static final String COOLDOWN = "cooldown";
+    private static final String DAMAGE = "damage";
+    private static final List<String> KEYS = Arrays.asList(CHANCE, RADIUS, HEIGHT, "blocks", "mode", TICKS, HUNGER, COOLDOWN, "items", "equipment", "enchantment", DAMAGE, "except", "grass", "sound", "toggle", "most", "particles", "gameModes");
     private static final List<String> MODES = Arrays.asList("bonemeal", "tick", "auto");
     private static final List<String> GAME_MODES = Arrays.asList("survival", "creative", "adventure");
     private static final List<String> SLOTS = Arrays.asList("head", "chest", "legs", "feet", "mainhand", "offhand");
@@ -67,26 +72,17 @@ public final class ContentSneakGrow {
     private static final String OFF = "rdplSneakOff";
     private static final int BONEMEAL_EVENT = 2005;
     private static final long NEVER = Long.MIN_VALUE / 2;
-    private static final BlockMatch TREE_SAPLING = BlockMatch.group("treeSapling");
-    private static final Map<UUID, long[]> STATE = new ConcurrentHashMap<>();
+    private static final Map<UUID, long[]> STATE = PlayerLogout.track(new ConcurrentHashMap<>());
     private static boolean any;
 
     private ContentSneakGrow() {}
 
-    private static void bad(String owner, String key, JsonElement value, String expected) { ContentLog.LOGGER.error("{} gives {}.{} as {}, which is not {}, ignoring it", owner, PART, key, value, expected); }
+    private static void bad(String owner, String key, JsonElement value, String expected) { Json.bad(owner, PART + "." + key, value, expected); }
 
     private static int whole(String owner, String key, JsonElement value, int low, int high, int fallback) {
-        Float number = ContentGrowSwitch.within(owner, PART + "." + key, value, true, low, high);
+        Float number = Json.within(owner, PART + "." + key, value, true, low, high);
         return number == null ? fallback : number.intValue();
     }
-
-    private static boolean bool(String owner, String key, JsonElement value, boolean fallback) {
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return value.getAsBoolean(); }
-        bad(owner, key, value, "true or false");
-        return fallback;
-    }
-
-    @Nullable private static String text(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? value.getAsString() : null; }
 
     private static List<BlockMatch> blockList(String owner, String key, JsonElement value) {
         List<BlockMatch> found = new ArrayList<>();
@@ -95,7 +91,7 @@ public final class ContentSneakGrow {
             return found;
         }
         for (JsonElement entry : value.getAsJsonArray()) {
-            String name = text(entry);
+            String name = Json.text(entry);
             BlockMatch match = name == null ? null : BlockMatches.parse(owner, name, PART + "." + key);
             if (match != null) { found.add(match); }
             else if (name == null) { bad(owner, key, entry, "a block id or #name"); }
@@ -111,7 +107,7 @@ public final class ContentSneakGrow {
             return;
         }
         for (JsonElement entry : value.getAsJsonArray()) {
-            String name = text(entry);
+            String name = Json.text(entry);
             ItemMatch match = name == null ? null : ItemMatch.parse(itemKey(), name);
             if (match != null) { builder.items.add(match); }
             else if (name == null) { bad(owner, "items", entry, "an item id or #name"); }
@@ -125,7 +121,7 @@ public final class ContentSneakGrow {
         }
         for (Map.Entry<String, JsonElement> entry : value.getAsJsonObject().entrySet()) {
             int slot = SLOTS.indexOf(entry.getKey());
-            String name = text(entry.getValue());
+            String name = Json.text(entry.getValue());
             if (slot < 0) { ContentLog.LOGGER.error("{} gives {}.equipment.{}, which is not one of {}, ignoring it", owner, PART, entry.getKey(), SLOTS); }
             else if (name == null) { bad(owner, "equipment." + entry.getKey(), entry.getValue(), "an item id or #name"); }
             else {
@@ -139,7 +135,7 @@ public final class ContentSneakGrow {
         Set<GameType> modes = EnumSet.noneOf(GameType.class);
         if (value.isJsonArray()) {
             for (JsonElement entry : value.getAsJsonArray()) {
-                String name = text(entry);
+                String name = Json.text(entry);
                 int mode = name == null ? -1 : GAME_MODES.indexOf(name);
                 if (mode >= 0) { modes.add(GAME_TYPES[mode]); }
                 else { bad(owner, "gameModes", entry, "one of " + GAME_MODES); }
@@ -151,22 +147,22 @@ public final class ContentSneakGrow {
 
     private static void numbers(String owner, String key, JsonElement value, SneakGrowDef.Builder builder) {
         switch (key) {
-            case "chance": {
-                Float chance = ContentGrowSwitch.within(owner, PART + ".chance", value, false, 0.0F, 1.0F);
+            case CHANCE: {
+                Float chance = Json.within(owner, PART + ".chance", value, false, 0.0F, 1.0F);
                 if (chance != null && chance > 0.0F) { builder.chance = chance; }
                 else if (chance != null) { bad(owner, key, value, "above 0"); }
                 break;
             }
-            case "hunger": {
-                Float hunger = ContentGrowSwitch.within(owner, PART + ".hunger", value, false, 0.0F, 20.0F);
+            case HUNGER: {
+                Float hunger = Json.within(owner, PART + ".hunger", value, false, 0.0F, 20.0F);
                 if (hunger != null) { builder.hunger = hunger; }
                 break;
             }
-            case "radius": builder.radius = whole(owner, key, value, 1, 16, builder.radius); break;
-            case "height": builder.height = whole(owner, key, value, 0, 2, builder.height); break;
-            case "ticks": builder.ticks = whole(owner, key, value, 1, 16, builder.ticks); break;
-            case "cooldown": builder.cooldown = whole(owner, key, value, 4, 600, builder.cooldown); break;
-            case "damage": builder.damage = whole(owner, key, value, 0, 64, builder.damage); break;
+            case RADIUS: builder.radius = whole(owner, key, value, 1, 16, builder.radius); break;
+            case HEIGHT: builder.height = whole(owner, key, value, 0, 2, builder.height); break;
+            case TICKS: builder.ticks = whole(owner, key, value, 1, 16, builder.ticks); break;
+            case COOLDOWN: builder.cooldown = whole(owner, key, value, 4, 600, builder.cooldown); break;
+            case DAMAGE: builder.damage = whole(owner, key, value, 0, 64, builder.damage); break;
             default: builder.most = whole(owner, key, value, 1, 256, builder.most); break;
         }
     }
@@ -181,7 +177,7 @@ public final class ContentSneakGrow {
             }
             case "except": builder.except = blockList(owner, key, value); break;
             case "mode": {
-                String name = text(value);
+                String name = Json.text(value);
                 int mode = name == null ? -1 : MODES.indexOf(name);
                 if (mode < 0) { bad(owner, key, value, "one of " + MODES); }
                 else { builder.mode = mode; }
@@ -190,26 +186,23 @@ public final class ContentSneakGrow {
             case "items": items(owner, value, builder); break;
             case "equipment": equipment(owner, value, builder); break;
             case "enchantment": {
-                String name = text(value);
+                String name = Json.text(value);
                 if (name == null) { bad(owner, key, value, "an enchantment id"); }
                 else { builder.enchantment = name; }
                 break;
             }
             case "gameModes": builder.gameModes = gameModes(owner, value, builder.gameModes); break;
-            case "particles": builder.particles = bool(owner, key, value, builder.particles); break;
-            case "sound": builder.sound = bool(owner, key, value, builder.sound); break;
-            case "grass": builder.grass = bool(owner, key, value, builder.grass); break;
-            case "toggle": builder.toggle = bool(owner, key, value, builder.toggle); break;
+            case "particles": builder.particles = Json.flag(owner, PART + "." + key, value, builder.particles); break;
+            case "sound": builder.sound = Json.flag(owner, PART + "." + key, value, builder.sound); break;
+            case "grass": builder.grass = Json.flag(owner, PART + "." + key, value, builder.grass); break;
+            case "toggle": builder.toggle = Json.flag(owner, PART + "." + key, value, builder.toggle); break;
             default: numbers(owner, key, value, builder); break;
         }
     }
 
     @Nullable public static SneakGrowDef parse(String owner, JsonElement element) {
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth.sneak that is not an object of sneak keys, ignoring it", owner);
-            return null;
-        }
-        JsonObject json = element.getAsJsonObject();
+        JsonObject json = Json.object(owner, PART, element, "an object of sneak keys");
+        if (json == null) { return null; }
         SneakGrowDef.Builder builder = new SneakGrowDef.Builder();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (KEYS.contains(entry.getKey())) { apply(owner, entry.getKey(), entry.getValue(), builder); }
@@ -226,8 +219,6 @@ public final class ContentSneakGrow {
         else { PlayerPersisted.of(player).removeTag(OFF); }
     }
 
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { STATE.remove(event.player.getUniqueID()); }
-
     @SubscribeEvent public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         EntityPlayer player = event.player;
         if (!any || event.phase != TickEvent.Phase.END || player.world.isRemote || !(player instanceof EntityPlayerMP) || player instanceof FakePlayer || ((EntityPlayerMP) player).connection == null) { return; }
@@ -242,12 +233,8 @@ public final class ContentSneakGrow {
         if (sneaking && player.onGround && !player.isRiding()) { crouch((EntityPlayerMP) player, state); }
     }
 
-    private static boolean sapling(Block block, WorldServer world, BlockPos pos) {
-        return block instanceof BlockSapling || block instanceof ContentSaplingBlock || TREE_SAPLING.matches(block, world, pos) || DynamicTrees.isSapling(block);
-    }
-
     private static boolean plant(Block block, WorldServer world, BlockPos pos) {
-        if (block instanceof BlockCrops || block instanceof BlockStem || block instanceof BlockCocoa || block instanceof BlockNetherWart || sapling(block, world, pos)) { return true; }
+        if (Plants.crop(block) || block instanceof BlockCocoa || block instanceof BlockNetherWart || Plants.treeSapling(block, world, pos)) { return true; }
         return block instanceof IPlantable && block instanceof IGrowable && ((IPlantable) block).getPlantType(world, pos) == EnumPlantType.Crop;
     }
 
@@ -331,7 +318,7 @@ public final class ContentSneakGrow {
         if (world.rand.nextFloat() >= def.chance) { return false; }
         if (plain) { return world.setBlockState(pos, Blocks.GRASS.getDefaultState()); }
         if (def.mode == SneakGrowDef.TICK) { return tick(world, pos, state, def.ticks); }
-        return bonemeal(world, pos, state, sapling(block, world, pos)) || def.mode == SneakGrowDef.AUTO && tick(world, pos, state, def.ticks);
+        return bonemeal(world, pos, state, Plants.treeSapling(block, world, pos)) || def.mode == SneakGrowDef.AUTO && tick(world, pos, state, def.ticks);
     }
 
     private static boolean bonemeal(WorldServer world, BlockPos pos, IBlockState state, boolean sapling) {
@@ -347,11 +334,7 @@ public final class ContentSneakGrow {
     private static boolean tick(WorldServer world, BlockPos pos, IBlockState state, int ticks) {
         Block block = state.getBlock();
         if (!block.getTickRandomly()) { return false; }
-        for (int index = 0; index < ticks; index++) {
-            IBlockState now = world.getBlockState(pos);
-            if (now.getBlock() != block) { break; }
-            if (!ContentTreeEvents.sneak(world, pos, now, false)) { block.randomTick(world, pos, now, world.rand); }
-        }
+        RandomTicks.run(world, pos, block, ticks, (at, now) -> ContentTreeEvents.sneak(world, at, now, false));
         return true;
     }
 

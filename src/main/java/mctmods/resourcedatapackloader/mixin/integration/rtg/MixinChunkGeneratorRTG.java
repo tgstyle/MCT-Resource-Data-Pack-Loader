@@ -21,8 +21,7 @@ import rtg.world.gen.ChunkGeneratorRTG;
     @Shadow @Final private World world;
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int cx, int cz, CallbackInfoReturnable<Chunk> cir) {
-        Chunk chunk = ContentVoidWorld.emptyChunk(world, cx, cz);
-        if (chunk != null) { cir.setReturnValue(chunk); }
+        if (ContentVoidWorld.appliesTo(world)) { cir.setReturnValue(ContentVoidWorld.emptyChunk(world, cx, cz)); }
     }
 
     @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int chunkX, int chunkZ, CallbackInfo ci) {

@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow public boolean useLavaOceans;
 
     @Inject(method = "fromConfigObj", at = @At("TAIL"), remap = false) private void rdpl$packSettings(CallbackInfo ci) {
-        JsonObject settings = ContentTerrain.settings("BIOMESOP");
+        JsonObject settings = ContentTerrain.settings(ContentTerrain.BOP);
         if (settings == null) { return; }
         seaLevel = rdpl$number(settings, "seaLevel", seaLevel);
         dungeonChance = rdpl$number(settings, "dungeonChance", dungeonChance);

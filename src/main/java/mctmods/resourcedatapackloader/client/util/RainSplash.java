@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.util;
 
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
+import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.Random;
@@ -36,12 +37,12 @@ public final class RainSplash {
         IParticleFactory factory = type == null ? null : Minecraft.getMinecraft().effectRenderer.particleTypes.get(type.getParticleID());
         Particle particle = factory == null ? null : factory.createParticle(type.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D);
         Particle made = particle == null ? new ParticleRain.Factory().createParticle(EnumParticleTypes.WATER_DROP.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D) : particle;
-        if (rain != null && rain.splashColor >= 0) { made.setRBGColorF(Colors.red(rain.splashColor) / 255.0F, Colors.green(rain.splashColor) / 255.0F, Colors.blue(rain.splashColor) / 255.0F); }
+        if (rain != null && rain.splashColor >= 0) { made.setRBGColorF(Colors.redF(rain.splashColor), Colors.greenF(rain.splashColor), Colors.blueF(rain.splashColor)); }
         return made;
     }
 
     public static void sound(World world, RainDef rain, BlockPos pos, double x, double y, double z) {
-        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(rain.sound);
+        SoundEvent sound = Registries.find(ForgeRegistries.SOUND_EVENTS, rain.sound);
         if (sound == null) { return; }
         if ((int) y >= pos.getY() + 1 && world.getPrecipitationHeight(pos).getY() > pos.getY()) { world.playSound(x, y, z, sound, SoundCategory.WEATHER, rain.volume * 0.5F, 0.5F, false); }
         else { world.playSound(x, y, z, sound, SoundCategory.WEATHER, rain.volume, 1.0F, false); }

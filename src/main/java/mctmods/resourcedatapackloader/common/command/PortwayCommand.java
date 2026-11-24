@@ -51,10 +51,14 @@ final class PortwayCommand {
         return Collections.emptyList();
     }
 
+    private static BlockPos parsePos(String[] args) throws CommandException { return new BlockPos(CommandBase.parseInt(args[COORDS]), CommandBase.parseInt(args[COORDS + 1]), CommandBase.parseInt(args[COORDS + 2])); }
+
+    private static int parseDimension(ICommandSender sender, String[] args) throws CommandException { return args.length == COORDS + 4 ? CommandBase.parseInt(args[COORDS + 3]) : CommandShared.dimensionOf(sender); }
+
     private static PortwayStop stopAt(MinecraftServer server, ICommandSender sender, String[] args, String usage) throws CommandException {
         if (args.length != COORDS + 3 && args.length != COORDS + 4) { throw new WrongUsageException(usage); }
-        BlockPos pos = new BlockPos(CommandBase.parseInt(args[COORDS]), CommandBase.parseInt(args[COORDS + 1]), CommandBase.parseInt(args[COORDS + 2]));
-        int dimension = args.length == COORDS + 4 ? CommandBase.parseInt(args[COORDS + 3]) : sender.getEntityWorld().provider.getDimension();
+        BlockPos pos = parsePos(args);
+        int dimension = parseDimension(sender, args);
         if (!DimensionManager.isDimensionRegistered(dimension)) { throw new CommandException(Lang.tr(sender, "rdpl.command.nodimension", dimension)); }
         World world = server.getWorld(dimension);
         PortwayStop live = Portways.snapshot(world, Portways.base(world, pos));
@@ -84,8 +88,8 @@ final class PortwayCommand {
             });
         }
         else if (args.length == 6 || args.length == 7) {
-            BlockPos pos = new BlockPos(CommandBase.parseInt(args[3]), CommandBase.parseInt(args[4]), CommandBase.parseInt(args[5]));
-            int dimension = args.length == 7 ? CommandBase.parseInt(args[6]) : sender.getEntityWorld().provider.getDimension();
+            BlockPos pos = parsePos(args);
+            int dimension = parseDimension(sender, args);
             removed = Portways.forget(player, stop -> stop.dimension == dimension && stop.pos.equals(pos));
         }
         else { throw new WrongUsageException(usage); }

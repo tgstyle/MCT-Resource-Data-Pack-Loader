@@ -80,7 +80,7 @@ public class LightingManager implements ILightingManager {
     @Override public void doFirstLight(ICube cube) { lightEngine.firstLight(cube); }
 
     private void tryScheduleOnLoadHeightChangeRelight(ICube cube) {
-        CubeLightData data = (CubeLightData) ((Cube) cube).getCubeLightData();
+        CubeLightData data = getLightData(cube);
         if (data.lastHeightMap == null || !cube.isSurfaceTracked()) { return; }
         IColumnInternal column = cube.getColumn();
         int minOwn = Coords.cubeToMinBlock(cube.getY());
@@ -108,7 +108,7 @@ public class LightingManager implements ILightingManager {
         @Override public boolean needsSaving(ICube cube) {
             int[] heightmap = cube.getColumn().getHeightMap();
             for (int i = 0; i < heightmap.length; i++) {
-                int flags = (int) ((lastSaveHeightMapInfo[i >> 5] >>> ((i & 31) << 1)) & 3);
+                int flags = flagAt(lastSaveHeightMapInfo, i);
                 if (flags == 0 || flags != flagsFor(heightmap[i], cube.getY())) { return true; }
             }
             return false;
@@ -126,7 +126,11 @@ public class LightingManager implements ILightingManager {
 
         static void packFlags(int[] heights, int cubeY, long[] out) {
             Arrays.fill(out, 0L);
-            for (int i = 0; i < heights.length; i++) { out[i >> 5] |= ((long) flagsFor(heights[i], cubeY)) << ((i & 31) << 1); }
+            for (int i = 0; i < heights.length; i++) { setFlag(out, i, flagsFor(heights[i], cubeY)); }
         }
+
+        static int flagAt(long[] packed, int i) { return (int) ((packed[i >> 5] >>> ((i & 31) << 1)) & 3); }
+
+        static void setFlag(long[] packed, int i, int flags) { packed[i >> 5] |= ((long) flags) << ((i & 31) << 1); }
     }
 }

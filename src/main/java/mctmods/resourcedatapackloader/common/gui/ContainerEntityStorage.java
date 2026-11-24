@@ -51,10 +51,8 @@ public class ContainerEntityStorage extends Container {
         this.items = storage == null ? null : storage.items();
         int wide = ContainerPack.width(PER_ROW);
         int tall = ContainerPack.height(bands());
-        for (int slot = 0; items != null && slot < def.slots(); slot++) {
-            int row = slot / PER_ROW;
-            int left = (wide - Math.min(PER_ROW, def.slots() - row * PER_ROW) * ContainerPack.SLOT) / 2 + 1;
-            addSlotToContainer(new SlotItemHandler(items, slot, left + slot % PER_ROW * ContainerPack.SLOT, ContainerPack.HEADER + 1 + row * ContainerPack.SLOT));
+        if (items != null) {
+            for (Slot slot : ContainerPack.gridSlots(wide, PER_ROW, def.slots(), true, (index, x, y) -> new SlotItemHandler(items, index, x, y))) { addSlotToContainer(slot); }
         }
         for (Slot slot : ContainerPack.playerSlots(player, wide, tall, Slot::new)) { addSlotToContainer(slot); }
     }

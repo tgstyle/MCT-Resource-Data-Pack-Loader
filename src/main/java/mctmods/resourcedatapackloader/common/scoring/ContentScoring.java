@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -126,7 +127,7 @@ public final class ContentScoring {
         Entity died = event.getEntity();
         if (died == null || died.world.isRemote) { return; }
         ResourceLocation id = died instanceof EntityPlayer ? null : EntityList.getKey(died);
-        String killed = id == null ? "minecraft:player" : id.toString();
+        String killed = id == null ? IdNames.PLAYER : id.toString();
         Entity killer = event.getSource() == null ? null : event.getSource().getTrueSource();
         String rank = ContentRanks.rankOf(died);
         String killerSide = killer == null ? null : sideOf(died.world, killer, ContentTeams.memberName(killer));
@@ -145,7 +146,7 @@ public final class ContentScoring {
             if (def.deathPoints != 0) { credit(died.world, def, died, def.deathPoints); }
         }
         if (!scored) { return; }
-        String kind = killer instanceof EntityPlayer ? "minecraft:player" : String.valueOf(EntityList.getKey(killer));
+        String kind = killer instanceof EntityPlayer ? IdNames.PLAYER : String.valueOf(EntityList.getKey(killer));
         KILLS.merge(kind, 1, Integer::sum);
         DEATHS.merge(killed, 1, Integer::sum);
         if (own) { OWN.merge(kind, 1, Integer::sum); }
@@ -178,8 +179,7 @@ public final class ContentScoring {
         if (!def.teamTotals) { return; }
         String side = sideOf(world, who, member);
         if (side == null) { return; }
-        bump(board, objective, side, points);
-        watch(def, board.getOrCreateScore(side, objective).getScorePoints());
+        watch(def, bump(board, objective, side, points));
     }
 
     @Nullable public static String sideOf(World world, Entity who, String member) {
@@ -193,9 +193,10 @@ public final class ContentScoring {
         return claiming.isEmpty() ? null : claiming.get(0).name;
     }
 
-    private static void bump(Scoreboard board, ScoreObjective objective, String row, int points) {
+    private static int bump(Scoreboard board, ScoreObjective objective, String row, int points) {
         Score score = board.getOrCreateScore(row, objective);
         score.setScorePoints(score.getScorePoints() + points);
+        return score.getScorePoints();
     }
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -256,8 +257,7 @@ public final class ContentScoring {
         if (RESET.equals(why)) { ContentLog.LOGGER.info("A reset round is awarded to nobody"); }
         else { awardRound(server, def, winner); }
         if (def.endsResets) {
-            resetting = def;
-            waiting = Math.max(1, def.endsIntermission);
+            armReset(def);
             ContentLog.LOGGER.info("The map is reset in {} second(s), so the scores can be read first", def.endsIntermission);
         }
         ItemStack icon = def.resultsIcon.isEmpty() ? ItemStack.EMPTY
@@ -296,15 +296,14 @@ public final class ContentScoring {
             ContentLog.LOGGER.info("The round ended level, so no round win is recorded");
             return;
         }
-        Score held = board.getOrCreateScore(best.getPlayerName(), match);
-        held.setScorePoints(held.getScorePoints() + 1);
-        ContentLog.LOGGER.info("{} took the round, and now holds {} in {}", best.getPlayerName(), held.getScorePoints(), def.awardsTo);
+        int held = bump(board, match, best.getPlayerName(), 1);
+        ContentLog.LOGGER.info("{} took the round, and now holds {} in {}", best.getPlayerName(), held, def.awardsTo);
         ScoreDef whole = BY_NAME.get(def.awardsTo);
         if (whole == null || FINISHED.contains(whole.name)) { return; }
         int played = 0;
         for (Score one : board.getSortedScores(match)) { played += one.getScorePoints(); }
         if (whole.endsAfterRounds > 0 && played >= whole.endsAfterRounds) { finish(whole, "rounds", null); }
-        else { watch(whole, held.getScorePoints()); }
+        else { watch(whole, held); }
     }
 
     public static void award(MinecraftServer server, String objective, String row, int points) {
@@ -314,10 +313,10 @@ public final class ContentScoring {
             ContentLog.LOGGER.error("A board game pays {} points to {}, which is not an objective this world keeps, so nothing is paid", points, objective);
             return;
         }
-        bump(board, held, row, points);
+        int total = bump(board, held, row, points);
         ContentLog.LOGGER.info("{} is paid {} in {} for a board game", row, points, objective);
         ScoreDef def = BY_NAME.get(objective);
-        if (def != null) { watch(def, board.getOrCreateScore(row, held).getScorePoints()); }
+        if (def != null) { watch(def, total); }
     }
 
     public static void starting(MinecraftServer server) {
@@ -347,9 +346,13 @@ public final class ContentScoring {
         }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server != null) { ContentDowned.clear(server); }
-        resetting = offered;
-        waiting = Math.max(1, offered.endsIntermission);
+        armReset(offered);
         ContentLog.LOGGER.info("The round was reset, so the map is reset in {} second(s)", waiting);
+    }
+
+    private static void armReset(ScoreDef def) {
+        resetting = def;
+        waiting = Math.max(1, def.endsIntermission);
     }
 
     @Nullable static ScoreDef lobbyDef() {

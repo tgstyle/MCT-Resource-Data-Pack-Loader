@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.integration.asmodeuscore;
 
-import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.core.integration.galacticraftcore.GcNesting;
 import mctmods.resourcedatapackloader.core.integration.galaxyspace.GsStarAura;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
@@ -20,8 +20,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(value = NewGuiCelestialSelection.class, remap = false) public class MixinNewGuiCelestialSelection {
     @WrapOperation(method = "drawCelestialBodies(Lorg/lwjgl/util/vector/Matrix4f;)Ljava/util/HashMap;", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glColor4f(FFFF)V", ordinal = 1)) private void rdpl$packAura(float red, float green, float blue, float alpha, Operation<Void> original, @Local(name = "body") CelestialBody body) {
         int rgb = GsStarAura.color(body);
-        if (rgb == SkyLookDef.UNSET) { original.call(red, green, blue, alpha); }
-        else { original.call(Colors.red(rgb) / 255.0F, Colors.green(rgb) / 255.0F, Colors.blue(rgb) / 255.0F, alpha); }
+        if (rgb == ContentTypes.NO_COLOR) { original.call(red, green, blue, alpha); }
+        else { original.call(Colors.redF(rgb), Colors.greenF(rgb), Colors.blueF(rgb), alpha); }
     }
 
     @ModifyArg(method = "getCelestialBodyPosition(Lmicdoodle8/mods/galacticraft/api/galaxies/CelestialBody;)Lorg/lwjgl/util/vector/Vector3f;", at = @At(value = "INVOKE", target = "Lasmodeuscore/core/astronomy/gui/screen/NewGuiCelestialSelection;getCelestialBodyPosition(Lmicdoodle8/mods/galacticraft/api/galaxies/CelestialBody;)Lorg/lwjgl/util/vector/Vector3f;")) private CelestialBody rdpl$nestPosition(CelestialBody center, @Local(argsOnly = true) CelestialBody body) { return GcNesting.center(body, center); }

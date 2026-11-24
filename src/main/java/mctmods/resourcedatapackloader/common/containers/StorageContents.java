@@ -23,6 +23,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
@@ -45,7 +46,7 @@ final class StorageContents {
 
     static Map<String, Long> census(NBTTagCompound root) {
         Map<String, Long> totals = new HashMap<>();
-        eachStack(root, stack -> totals.merge(new ResourceLocation(stack.getString(ID)).toString(), (long) count(stack), Long::sum));
+        eachStack(root, stack -> totals.merge(itemKey(new ResourceLocation(stack.getString(ID))), (long) count(stack), Long::sum));
         return totals;
     }
 
@@ -88,10 +89,12 @@ final class StorageContents {
     static Map<String, Long> totals(List<ItemStack> stacks) {
         Map<String, Long> totals = new HashMap<>();
         for (ItemStack stack : stacks) {
-            if (!stack.isEmpty()) { totals.merge(String.valueOf(stack.getItem().getRegistryName()), (long) stack.getCount(), Long::sum); }
+            if (!stack.isEmpty()) { totals.merge(itemKey(stack.getItem().getRegistryName()), (long) stack.getCount(), Long::sum); }
         }
         return totals;
     }
+
+    private static String itemKey(@Nullable ResourceLocation id) { return String.valueOf(id); }
 
     static List<ItemStack> shown(IItemHandler handler) {
         List<ItemStack> stacks = new ArrayList<>();
@@ -160,7 +163,7 @@ final class StorageContents {
     @Nullable private static IItemHandler onSide(TileEntity tile, @Nullable EnumFacing side) {
         try {
             if (side == null) { return OrderItems.handler(tile.getWorld(), tile.getPos()); }
-            return tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side) ? tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side) : null;
+            return capability(tile, CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
         }
         catch (RuntimeException ex) { return null; }
     }
@@ -168,8 +171,10 @@ final class StorageContents {
     @Nullable static IItemHandler forProbe(TileEntity probe) {
         IItemHandler own = own(probe);
         if (own != null) { return own; }
-        return probe.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) ? probe.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) : null;
+        return capability(probe, CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
     }
+
+    @Nullable private static <T> T capability(TileEntity tile, Capability<T> kind, @Nullable EnumFacing side) { return tile.hasCapability(kind, side) ? tile.getCapability(kind, side) : null; }
 
     @Nullable static IItemHandler forFill(TileEntity placed) {
         IItemHandler own = own(placed);
@@ -205,8 +210,7 @@ final class StorageContents {
     static boolean holdsFluid(TileEntity tile) {
         for (EnumFacing side : SIDES) {
             try {
-                if (!tile.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side)) { continue; }
-                IFluidHandler handler = tile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
+                IFluidHandler handler = capability(tile, CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
                 if (handler == null) { continue; }
                 for (IFluidTankProperties tank : handler.getTankProperties()) {
                     FluidStack held = tank.getContents();

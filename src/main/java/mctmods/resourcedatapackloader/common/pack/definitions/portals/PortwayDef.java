@@ -45,9 +45,9 @@ public final class PortwayDef {
         this.menu = menu;
     }
 
-    public boolean global() { return GateDef.GLOBAL.equals(scope); }
+    public boolean global() { return GateDef.global(scope); }
 
-    public boolean teamWide() { return GateDef.TEAM.equals(scope); }
+    public boolean teamWide() { return GateDef.teamWide(scope); }
 
     public boolean bars(int dimension) { return deny.contains(dimension) || !allow.isEmpty() && !allow.contains(dimension); }
 }

@@ -9,7 +9,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 
 public final class ContentDicePile extends WorldSavedData {
@@ -58,9 +57,7 @@ public final class ContentDicePile extends WorldSavedData {
     }
 
     @Nullable private static ContentDicePile get(World world) {
-        MapStorage storage = world.getMapStorage();
-        if (storage == null) { return null; }
-        return SavedData.get(storage, ContentDicePile.class, NAME, ContentDicePile::new);
+        return SavedData.of(world.getMapStorage(), ContentDicePile.class, NAME, ContentDicePile::new);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) { piles = compound.getCompoundTag(TAG); }

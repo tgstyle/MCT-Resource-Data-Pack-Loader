@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 
-import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
@@ -11,6 +10,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Dun
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentMapFill;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+import mctmods.resourcedatapackloader.core.util.math.Turns;
 
 import java.util.Collections;
 import java.util.Random;
@@ -22,14 +22,10 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
-import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 
 final class DungeonTemplates {
-    private static final int FLAGS = BlockFlags.UPDATE_CLIENTS;
-
     private DungeonTemplates() {}
 
     static void write(World world, DungeonPlan plan, DungeonSites.Site site, StructureBoundingBox window, int low, int high) {
@@ -49,16 +45,9 @@ final class DungeonTemplates {
             ContentLog.LOGGER.onceWarn("Dungeon {} names template '{}', which could not be loaded, so its room is left empty", site.def.key, room.templateId);
             return;
         }
-        Rotation turn = Rotation.values()[room.turn];
-        BlockPos span = template.transformedSize(turn);
-        PlacementSettings settings = new PlacementSettings();
-        settings.setRotation(turn);
-        settings.setRandom(new Random(room.seed));
-        settings.setBoundingBox(box);
-        BlockPos placeAt = new BlockPos(room.x0 + ContentImprint.backX(turn, span), room.floorY, room.z0 + ContentImprint.backZ(turn, span));
+        Rotation turn = Turns.ALL[room.turn];
         DungeonPopulation.Draw draw = DungeonPopulation.draw(plan, site.def, level, room);
-        if (draw == null) { template.addBlocksToWorld(world, placeAt, DungeonWriter.gated(new BlockRotationProcessor(placeAt, settings)), settings, FLAGS); }
-        else { template.addBlocksToWorld(world, placeAt, DungeonWriter.gated(filler(rules, draw, room)), settings, FLAGS); }
+        ContentImprint.place(world, template, room.x0, room.z0, room.floorY, turn, new Random(room.seed), box, draw == null ? null : filler(rules, draw, room), DungeonWriter.gate());
     }
 
     private static ITemplateProcessor filler(FillRules rules, DungeonPopulation.Draw draw, Room room) { return (placed, at, info) -> fill(rules, draw, room, at, info); }
@@ -74,9 +63,6 @@ final class DungeonTemplates {
         }
         String mob = draw.mob(seed);
         if (mob == null) { return info; }
-        int brace = mob.indexOf('{');
-        Template.BlockInfo filled = ContentMapFill.fill(rules, seed, at, info, brace < 0 ? mob : mob.substring(0, brace), null);
-        if (filled != info && brace >= 0 && filled.tileentityData != null) { DungeonWriter.merge(filled.tileentityData, mob.substring(brace), mob); }
-        return filled;
+        return DungeonWriter.spawner(rules, seed, at, info, mob);
     }
 }

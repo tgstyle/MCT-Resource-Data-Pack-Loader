@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.common.villages;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.*;
 import javax.annotation.Nullable;
@@ -84,8 +86,7 @@ public final class CityGrowth {
                 tried.clear();
             }
         }
-        if (built < least && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("District growth drained after {} attempt(s): {} sites too near a well, {} on unreadable ground, {} on built ground, {} beside another village", attempts, CityDistricts.settledCrowded, CityDistricts.settledUngrounded, CityDistricts.settledTaken, CityDistricts.settledNeighbored); }
-        CityDistricts.settledCrowded = CityDistricts.settledUngrounded = CityDistricts.settledTaken = CityDistricts.settledNeighbored = 0;
+        CityDistricts.drainSettled(attempts, built < least);
         if (built < least) { built = infill(rand, components, least, sizeFor); }
         held.updateBoundingBox();
         ContentLog.LOGGER.debug("The village at chunk {}, {} grew {} district(s) to {} plot(s) against the asked minimum of {}", held.getChunkPosX(), held.getChunkPosZ(), districts, built, least);
@@ -119,7 +120,7 @@ public final class CityGrowth {
 
     public static void roadsFirst(StructureStart held) {
         List<StructureComponent> components = held.getComponents();
-        if (components.size() < 3 || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
+        if (components.size() < 3 || startOf(components) == null) { return; }
         List<StructureComponent> sorted = new ArrayList<>(components.size());
         sorted.add(components.get(0));
         for (StructureComponent piece : components) {
@@ -148,6 +149,11 @@ public final class CityGrowth {
         }
     }
 
+    static void buildAndDrain(StructureVillagePieces.Start start, StructureComponent piece, List<StructureComponent> components, Random rand) {
+        piece.buildComponent(start, components, rand);
+        drain(start, components, rand);
+    }
+
     private static int infill(Random rand, List<StructureComponent> components, int least, int sizeFor) {
         int built = ContentVillages.plots(components);
         laying = true;
@@ -160,8 +166,7 @@ public final class CityGrowth {
                     if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
                     StructureVillagePieces.Start near = nearestStart(components, piece.getBoundingBox());
                     if (near == null) { continue; }
-                    piece.buildComponent(near, components, rand);
-                    drain(near, components, rand);
+                    buildAndDrain(near, piece, components, rand);
                 }
                 int now = ContentVillages.plots(components);
                 if (now == built) {
@@ -180,17 +185,21 @@ public final class CityGrowth {
         return built;
     }
 
+    @Nullable static StructureVillagePieces.Start startOf(List<StructureComponent> components) {
+        return !components.isEmpty() && components.get(0) instanceof StructureVillagePieces.Start ? (StructureVillagePieces.Start) components.get(0) : null;
+    }
+
     @Nullable private static StructureVillagePieces.Start nearestStart(List<StructureComponent> components, StructureBoundingBox box) {
         StructureVillagePieces.Start best = null;
         long bestAway = Long.MAX_VALUE;
-        int x = (box.minX + box.maxX) / 2;
-        int z = (box.minZ + box.maxZ) / 2;
+        int x = StructureBoxes.centerX(box);
+        int z = StructureBoxes.centerZ(box);
         for (StructureComponent piece : components) {
             if (!(piece instanceof StructureVillagePieces.Start)) { continue; }
             StructureBoundingBox well = piece.getBoundingBox();
-            int wx = (well.minX + well.maxX) / 2;
-            int wz = (well.minZ + well.maxZ) / 2;
-            long away = (long) (x - wx) * (x - wx) + (long) (z - wz) * (z - wz);
+            int wx = StructureBoxes.centerX(well);
+            int wz = StructureBoxes.centerZ(well);
+            long away = MathUtil.dist2(x, z, wx, wz);
             if (away < bestAway) {
                 bestAway = away;
                 best = (StructureVillagePieces.Start) piece;

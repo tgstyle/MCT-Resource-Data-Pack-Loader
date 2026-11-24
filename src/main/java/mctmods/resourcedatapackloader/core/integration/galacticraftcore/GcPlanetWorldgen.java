@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.util.worldgen.FmlWorldgen;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.ReflectionUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +74,8 @@ public final class GcPlanetWorldgen {
         }
 
         private static void add(List<Class<?>> list, String name) {
-            try { list.add(Class.forName(name)); }
-            catch (ClassNotFoundException ignored) { }
+            Class<?> found = ReflectionUtil.getClassOrDefault(name, null);
+            if (found != null) { list.add(found); }
         }
     }
 }

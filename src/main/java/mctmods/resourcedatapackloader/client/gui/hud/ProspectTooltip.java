@@ -2,8 +2,6 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
 
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,9 +13,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
         ContentProspect.Reads reads = ContentProspect.describe(event.getItemStack());
         if (reads == null) { return; }
-        String line;
-        if (reads.labels.isEmpty()) { line = I18n.format("rdpl.prospect.tooltipall"); }
-        else { line = I18n.format(reads.blacklist ? "rdpl.prospect.tooltipnot" : "rdpl.prospect.tooltip", String.join(", ", reads.labels)); }
-        event.getToolTip().add(TextFormatting.GRAY + line);
+        if (reads.labels.isEmpty()) { event.getToolTip().add(PackTooltips.grey("rdpl.prospect.tooltipall")); }
+        else { event.getToolTip().add(PackTooltips.grey(reads.blacklist ? "rdpl.prospect.tooltipnot" : "rdpl.prospect.tooltip", String.join(", ", reads.labels))); }
     }
 }

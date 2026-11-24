@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,13 +55,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     private static boolean compute() {
-        for (DimensionDef def : ContentDimensions.available().values()) {
-            if (def.look != null && def.look.tintsPlants()) { return true; }
-        }
-        for (SkyLookDef look : ContentEnvironments.looks()) {
-            if (look.tintsPlants()) { return true; }
-        }
-        return false;
+        return ContentEnvironments.anyLook(SkyLookDef::tintsPlants);
     }
 
     public static void changed() { dirty = true; }
@@ -118,10 +113,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     private static int multiply(int color, int tint) {
-        int red = (color >> 16 & 255) * (tint >> 16 & 255) / 255;
-        int green = (color >> 8 & 255) * (tint >> 8 & 255) / 255;
-        int blue = (color & 255) * (tint & 255) / 255;
-        return red << 16 | green << 8 | blue;
+        return Colors.rgb(Colors.red(color) * Colors.red(tint) / 255, Colors.green(color) * Colors.green(tint) / 255, Colors.blue(color) * Colors.blue(tint) / 255);
     }
 
     private static int[] tints(Biome biome) {

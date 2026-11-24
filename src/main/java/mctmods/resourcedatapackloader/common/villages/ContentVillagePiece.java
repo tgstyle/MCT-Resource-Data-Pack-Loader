@@ -6,7 +6,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDe
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
 import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -20,8 +23,6 @@ import net.minecraft.block.BlockCrops;
 import net.minecraft.block.BlockStandingSign;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -41,7 +42,7 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 
-public class ContentVillagePiece extends StructureVillagePieces.Village {
+public class ContentVillagePiece extends GroundedVillagePiece {
     private String plot = "";
 
     @SuppressWarnings("unused") public ContentVillagePiece() {}
@@ -73,11 +74,7 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox box) {
         VillageDef def = ContentVillages.byName(plot);
         if (def == null) { return true; }
-        if (averageGroundLvl < 0) {
-            averageGroundLvl = getAverageGroundLevel(world, box);
-            if (averageGroundLvl < 0) { return true; }
-            boundingBox.offset(0, averageGroundLvl - boundingBox.minY, 0);
-        }
+        if (!settle(world, box, 0)) { return true; }
         if (def.isTemplate()) { template(world, def, box); }
         else { farm(world, random, def, box); }
         if (def.villagers > 0) { residents(world, def, box); }
@@ -92,18 +89,18 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         BlockPos pos;
         if (map == null) { pos = turned.add(corner(rotation)); }
         else {
-            boolean swapped = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
+            boolean swapped = Coords.quarter(rotation);
             BlockPos span = new BlockPos(swapped ? map.cellsDeep * map.cell : map.cellsWide * map.cell, 1, swapped ? map.cellsWide * map.cell : map.cellsDeep * map.cell);
             pos = new BlockPos(boundingBox.minX + ContentImprint.backX(rotation, span) + turned.getX(), boundingBox.minY + turned.getY(), boundingBox.minZ + ContentImprint.backZ(rotation, span) + turned.getZ());
         }
         if (!box.isVecInside(pos)) { return; }
-        world.setBlockState(pos, Blocks.STANDING_SIGN.getDefaultState().withProperty(BlockStandingSign.ROTATION, rotation.ordinal() * 4), 2);
+        world.setBlockState(pos, Blocks.STANDING_SIGN.getDefaultState().withProperty(BlockStandingSign.ROTATION, rotation.ordinal() * 4), BlockFlags.UPDATE_CLIENTS);
         TileEntity tile = world.getTileEntity(pos);
         if (!(tile instanceof TileEntitySign)) { return; }
         ((TileEntitySign) tile).signText[0] = new TextComponentString(def.orderSign);
         tile.getTileData().setBoolean(ContentOrders.PLOT_MARK, true);
         tile.markDirty();
-        ContentOrders.plotSign(world, pos);
+        ContentOrders.plotSign(world, pos, null);
     }
 
     private void residents(World world, VillageDef def, StructureBoundingBox box) {
@@ -117,13 +114,11 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             int y = getYWithOffset(def.villagerY);
             int z = getZWithOffset(def.villagerX + index, def.villagerZ);
             if (!box.isVecInside(new BlockPos(x, y, z))) { continue; }
-            Entity made = EntityList.createEntityByIDFromName(name, world);
+            Entity made = Spawns.placed(world, name, x + 0.5D, y, z + 0.5D, 0.0F, 0.0F, true);
             if (made == null) {
                 ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.registryName, name);
                 return;
             }
-            made.setLocationAndAngles(x + 0.5D, y, z + 0.5D, 0.0F, 0.0F);
-            if (made instanceof EntityLiving) { ((EntityLiving) made).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(made)), null); }
             world.spawnEntity(made);
         }
     }
@@ -164,8 +159,8 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (map != null) {
             long seed = MathUtil.mix(world.getSeed(), boundingBox.minX, 2, boundingBox.minZ);
             BlockPos base = new BlockPos(boundingBox.minX, boundingBox.minY - map.ground * map.cell, boundingBox.minZ);
-            ContentStructureMaps.cells(world, map, seed, rotation(), base.getX(), base.getY(), base.getZ(), box);
-            RespawnRecorder.record(world, def.respawn, new RespawnInstance(RespawnInstance.PLOT, def.registryName.toString(), "", base, rotation(), Mirror.NONE, 100, seed, boundingBox), box);
+            ContentStructureMaps.cells((WorldServer) world, map, seed, rotation(), base.getX(), base.getY(), base.getZ(), box);
+            RespawnRecorder.record(world, def.respawn, new RespawnInstance(RespawnInstance.PLOT, def.registryName.toString(), "", base, rotation(), Mirror.NONE, RespawnInstance.WHOLE, seed, boundingBox), box);
         }
         else {
             ResourceLocation name = new ResourceLocation(def.structure);
@@ -215,8 +210,7 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
     }
 
     private static IBlockState state(@Nullable String name, IBlockState fallback) {
-        if (name == null || name.isEmpty()) { return fallback; }
-        IBlockState parsed = ContentStates.parse(name, "a village plot");
+        IBlockState parsed = ContentStates.optional(name, "a village plot");
         return parsed == null ? fallback : parsed;
     }
 }

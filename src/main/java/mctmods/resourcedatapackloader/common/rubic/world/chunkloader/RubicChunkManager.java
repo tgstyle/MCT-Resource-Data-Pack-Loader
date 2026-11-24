@@ -35,6 +35,12 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public class RubicChunkManager {
     private static final MethodHandle ticketConstructor = ReflectionUtil.constructHandle(ForgeChunkManager.Ticket.class, String.class, ForgeChunkManager.Type.class, World.class);
     private static final int MAX_FORCED_CUBES_PER_TICKET = 400;
+    private static final String RUBIC_KEY = "rdplRubic";
+    private static final String ENTITY_CUBE_Y_KEY = "entityCubeY";
+    private static final String CHUNK_MAP_KEY = "chunkMap";
+    private static final String X_KEY = "x";
+    private static final String Z_KEY = "z";
+    private static final String CUBES_KEY = "cubes";
 
     public static ForgeChunkManager.Ticket makeTicket(String str, ForgeChunkManager.Type type, World world) {
         try {
@@ -45,16 +51,16 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
     }
 
     public static void onDeserializeTicket(NBTTagCompound ticketNBT, ForgeChunkManager.Ticket ticket) {
-        if (!ticketNBT.hasKey("rdplRubic", Constants.NBT.TAG_COMPOUND)) { return; }
-        NBTTagCompound rubicNBT = ticketNBT.getCompoundTag("rdplRubic");
-        int entityCubeY = rubicNBT.getInteger("entityCubeY");
+        if (!ticketNBT.hasKey(RUBIC_KEY, Constants.NBT.TAG_COMPOUND)) { return; }
+        NBTTagCompound rubicNBT = ticketNBT.getCompoundTag(RUBIC_KEY);
+        int entityCubeY = rubicNBT.getInteger(ENTITY_CUBE_Y_KEY);
         Map<ChunkPos, IntSet> coordsMap = new LinkedHashMap<>();
-        NBTTagList chunkMap = rubicNBT.getTagList("chunkMap", Constants.NBT.TAG_COMPOUND);
+        NBTTagList chunkMap = rubicNBT.getTagList(CHUNK_MAP_KEY, Constants.NBT.TAG_COMPOUND);
         for (NBTBase entryTagBase : chunkMap) {
             NBTTagCompound entry = (NBTTagCompound) entryTagBase;
-            int x = entry.getInteger("x");
-            int z = entry.getInteger("z");
-            IntSet cubes = new IntArraySet(entry.getIntArray("cubes"));
+            int x = entry.getInteger(X_KEY);
+            int z = entry.getInteger(Z_KEY);
+            IntSet cubes = new IntArraySet(entry.getIntArray(CUBES_KEY));
             coordsMap.put(new ChunkPos(x, z), cubes);
         }
         ((IRubicTicketInternal) ticket).rdpl$setEntityChunkY(entityCubeY);
@@ -64,17 +70,17 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
     public static void onSerializeTicket(NBTTagCompound ticket, ForgeChunkManager.Ticket tick) {
         if (((IRubicTicketInternal) tick).rdpl$getAllForcedChunkCubes().isEmpty()) { return; }
         NBTTagCompound rubicNBT = new NBTTagCompound();
-        rubicNBT.setInteger("entityCubeY", ((IRubicTicketInternal) tick).rdpl$getEntityChunkY());
+        rubicNBT.setInteger(ENTITY_CUBE_Y_KEY, ((IRubicTicketInternal) tick).rdpl$getEntityChunkY());
         NBTTagList chunkMap = new NBTTagList();
         ((IRubicTicketInternal) tick).rdpl$getAllForcedChunkCubes().forEach((pos, cubes) -> {
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setInteger("x", pos.x);
-            entry.setInteger("z", pos.z);
-            entry.setIntArray("cubes", cubes.toIntArray());
+            entry.setInteger(X_KEY, pos.x);
+            entry.setInteger(Z_KEY, pos.z);
+            entry.setIntArray(CUBES_KEY, cubes.toIntArray());
             chunkMap.appendTag(entry);
         });
-        rubicNBT.setTag("chunkMap", chunkMap);
-        ticket.setTag("rdplRubic", rubicNBT);
+        rubicNBT.setTag(CHUNK_MAP_KEY, chunkMap);
+        ticket.setTag(RUBIC_KEY, rubicNBT);
     }
 
     public static void onLoadEntityTicketChunk(World world, ForgeChunkManager.Ticket tick) {

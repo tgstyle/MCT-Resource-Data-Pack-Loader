@@ -30,6 +30,7 @@ import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.zones.ZoneRules;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
 import java.nio.file.Path;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
@@ -58,6 +60,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class CommandShared {
+    public static final String NAME = "rdplserver";
     private static final int FIND_RANGE = 6400;
 
     private CommandShared() {}
@@ -73,6 +76,12 @@ public final class CommandShared {
         if (sender.getCommandSenderEntity() instanceof EntityPlayerMP) { return (EntityPlayerMP) sender.getCommandSenderEntity(); }
         throw new PlayerNotFoundException("commands.generic.player.unspecified");
     }
+
+    static EntityPlayerMP target(MinecraftServer server, ICommandSender sender, @Nullable String named) throws CommandException {
+        return named == null ? goer(sender) : CommandBase.getPlayer(server, sender, named);
+    }
+
+    static int dimensionOf(ICommandSender sender) { return sender.getEntityWorld().provider.getDimension(); }
 
     public static void listPacks(ICommandSender sender, BiConsumer<RDPLPack, String> each) {
         List<RDPLPack> packs = PackManager.get().getPacks();
@@ -130,7 +139,7 @@ public final class CommandShared {
 
     public static void which(ICommandSender sender, String target, boolean clientSide) {
         int colon = target.indexOf(':');
-        String namespace = colon < 0 ? "minecraft" : target.substring(0, colon);
+        String namespace = colon < 0 ? IdNames.VANILLA : target.substring(0, colon);
         String path = colon < 0 ? target : target.substring(colon + 1);
         List<RDPLPack> holders = PackManager.get().holders(namespace, path);
         if (holders.isEmpty()) {
@@ -196,7 +205,7 @@ public final class CommandShared {
         for (Biome biome : ForgeRegistries.BIOMES) {
             ResourceLocation name = biome.getRegistryName();
             if (name == null) { continue; }
-            if (!all && "minecraft".equals(name.getNamespace())) {
+            if (!all && IdNames.VANILLA.equals(name.getNamespace())) {
                 vanilla++;
                 continue;
             }

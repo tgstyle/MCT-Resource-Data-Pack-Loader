@@ -12,7 +12,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryModifiable;
 
 public final class RecipeOverrides {
+    private static final String KEPT = ", leaving the original in place";
     private static final String CONSTANTS = "_constants.json";
     private static final String CONDITIONS = "conditions";
     private static final String ITEM = "item";
@@ -103,7 +103,7 @@ public final class RecipeOverrides {
     }
 
     private static void logFailure(ResourceLocation key, String stage, Exception ex) {
-        ContentLog.LOGGER.error("Parsing error in recipe {} while {}, leaving the original in place: {}", key, stage, ex.getMessage());
+        ContentLog.LOGGER.error("Parsing error in recipe {} while {}" + KEPT + ": {}", key, stage, ex.getMessage());
         ContentLog.LOGGER.debug("Recipe {} failed while {}", key, stage, ex);
     }
 
@@ -119,8 +119,7 @@ public final class RecipeOverrides {
 
     @Nullable private static JsonObject read(Path file) {
         try {
-            String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-            return JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
+            return JsonUtils.gsonDeserialize(Json.GSON, Json.readText(file), JsonObject.class);
         }
         catch (IOException | IllegalArgumentException | JsonParseException ex) { return null; }
     }
@@ -193,15 +192,15 @@ public final class RecipeOverrides {
         try {
             JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
             if (json == null) {
-                ContentLog.LOGGER.error("Recipe {} is empty or null, leaving the original in place", key);
+                ContentLog.LOGGER.error("Recipe {} is empty or null" + KEPT, key);
                 return null;
             }
             if (!CraftingHelper.processConditions(json, CONDITIONS, ctx)) {
-                ContentLog.LOGGER.debug("Recipe {} was skipped by its own conditions, leaving the original in place", key);
+                ContentLog.LOGGER.debug("Recipe {} was skipped by its own conditions" + KEPT, key);
                 return null;
             }
             IRecipe recipe = CraftingHelper.getRecipe(json, ctx);
-            if (recipe == null) { ContentLog.LOGGER.error("Recipe {} produced no result, leaving the original in place", key); }
+            if (recipe == null) { ContentLog.LOGGER.error("Recipe {} produced no result" + KEPT, key); }
             return recipe;
         }
         catch (IllegalArgumentException | JsonParseException ex) {
@@ -223,8 +222,7 @@ public final class RecipeOverrides {
         Path file = root.resolve(CONSTANTS);
         if (!Files.isRegularFile(file)) { return; }
         try {
-            String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-            JsonObject[] json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject[].class);
+            JsonObject[] json = JsonUtils.gsonDeserialize(Json.GSON, Json.readText(file), JsonObject[].class);
             if (json != null) { ((IJsonContext) ctx).rdpl$loadConstants(json); }
         }
         catch (IOException | IllegalArgumentException | JsonParseException ex) {
@@ -252,7 +250,7 @@ public final class RecipeOverrides {
             if (recipe == null) { return; }
             boolean existing = registry.containsKey(key);
             if (existing && !remove(registry, key)) { return; }
-            ContentOwners.as(namespace, () -> registry.register(recipe.setRegistryName(key)));
+            RecipeRemovals.register(registry, key, recipe);
             if (existing) { replaced[0]++; }
             else { added[0]++; }
         });

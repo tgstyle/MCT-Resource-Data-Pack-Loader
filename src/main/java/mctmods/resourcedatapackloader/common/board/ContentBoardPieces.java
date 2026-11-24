@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.board;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -11,7 +12,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.SoundEvents;
@@ -30,6 +30,8 @@ final class ContentBoardPieces {
     private static final String KIND = "rdplKind";
     private static final String SPAWN = "rdplSpawn";
     private static final int STRIKE_TICKS = 10;
+    private static final double CENTER = 0.5D;
+    private static final double MATCH_RANGE_SQ = 0.01D;
     private static final Set<String> UNMADE = new HashSet<>();
 
     private ContentBoardPieces() {}
@@ -55,7 +57,7 @@ final class ContentBoardPieces {
         int file = pos.getX() - game.x;
         int rank = pos.getZ() - game.z;
         boolean level = pos.getY() == game.y || pos.getY() == game.y - 1;
-        return level && file >= 0 && rank >= 0 && file < rules.files && rank < rules.ranks ? rank * rules.files + file : -1;
+        return level ? rules.index(file, rank) : -1;
     }
 
     static void clear(World world, BoardGame game) { for (Entity piece : held(world, game)) { piece.setDead(); } }
@@ -76,10 +78,12 @@ final class ContentBoardPieces {
 
     @Nullable private static Entity standing(World world, BoardGame game, BoardRules rules, int square) {
         for (Entity piece : held(world, game)) {
-            if (piece.getDistanceSq(game.x + square % rules.files + 0.5D, game.y, game.z + Math.floorDiv(square, rules.files) + 0.5D) < 0.01D) { return piece; }
+            if (at(piece, game, rules.file(square), rules.rank(square))) { return piece; }
         }
         return null;
     }
+
+    private static boolean at(Entity piece, BoardGame game, double file, double rank) { return piece.getDistanceSq(game.x + file + CENTER, game.y, game.z + rank + CENTER) < MATCH_RANGE_SQ; }
 
     static void sync(World world, BoardGame game, BoardRules rules) {
         BoardState state = game.state;
@@ -89,7 +93,7 @@ final class ContentBoardPieces {
         List<double[]> wanted = new ArrayList<>();
         for (int square = 0; square < state.size(); square++) {
             int cell = state.at(square);
-            if (cell != 0) { wanted.add(new double[] {square % rules.files, Math.floorDiv(square, rules.files), BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
+            if (cell != 0) { wanted.add(new double[] {rules.file(square), rules.rank(square), BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
         }
         for (int side = 0; side < 2; side++) {
             List<Integer> taken = state.taken.get(side);
@@ -103,7 +107,7 @@ final class ContentBoardPieces {
         for (double[] spot : wanted) {
             Entity there = null;
             for (Entity piece : pool) {
-                if (key(piece) == (int) spot[2] && piece.getDistanceSq(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D) < 0.01D) { there = piece; }
+                if (key(piece) == (int) spot[2] && at(piece, game, spot[0], spot[1])) { there = piece; }
             }
             if (there == null) { open.add(spot); }
             else { pool.remove(there); }
@@ -116,7 +120,7 @@ final class ContentBoardPieces {
             if (moved == null) { spawn(world, game, rules, spot); }
             else {
                 pool.remove(moved);
-                moved.setPositionAndUpdate(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D);
+                moved.setPositionAndUpdate(game.x + spot[0] + CENTER, game.y, game.z + spot[1] + CENTER);
             }
         }
         for (Entity piece : pool) { piece.setDead(); }
@@ -144,13 +148,12 @@ final class ContentBoardPieces {
         int side = key & 1;
         BoardPiece piece = rules.pieces.get(key >> 1);
         String mob = piece.mob(side);
-        Entity made = EntityList.createEntityByIDFromName(new ResourceLocation(mob), world);
+        float yaw = side == 0 ? 0.0F : 180.0F;
+        Entity made = Spawns.placed(world, new ResourceLocation(mob), game.x + spot[0] + CENTER, game.y, game.z + spot[1] + CENTER, yaw, 0.0F, false);
         if (made == null) {
             ContentLog.LOGGER.errorOnce(UNMADE, rules.id + mob, "Game {} plays {} as {}, which nothing registers, so that piece is not shown; this is said once", rules.id, piece.name, mob);
             return;
         }
-        float yaw = side == 0 ? 0.0F : 180.0F;
-        made.setLocationAndAngles(game.x + spot[0] + 0.5D, game.y, game.z + spot[1] + 0.5D, yaw, 0.0F);
         made.setRotationYawHead(yaw);
         if (made instanceof EntityLiving) {
             EntityLiving living = (EntityLiving) made;

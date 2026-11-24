@@ -34,8 +34,8 @@ import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
 public final class ContentSleep {
     private static final String KIND = "sleeping";
@@ -78,10 +78,7 @@ public final class ContentSleep {
         onBar = false;
         SLEEPERS.clear();
         SKIPPED.clear();
-        Json.eachFile(PackManager.SLEEPING, "sleeping file", (key, contents) -> {
-            JsonObject json = Json.object(key, contents, "sleeping file");
-            if (json != null) { read("Sleeping file " + key, json); }
-        });
+        Json.eachObject(PackManager.SLEEPING, "sleeping file", (key, json) -> read("Sleeping file " + key, json));
         if (!bedSetsSpawn) {
             Summary.info(KIND, "Sleeping in a bed keeps a spawn point the player already has; the in-bed screen offers a Set spawn button");
             VanillaClients.clientDrawn("A sleeping file", BED_SETS_SPAWN);
@@ -104,20 +101,30 @@ public final class ContentSleep {
         if (json.has(SLEEP_SAYS)) { sleepSays = Json.text(json, SLEEP_SAYS, ""); }
         if (json.has(WAKE_SAYS)) { wakeSays = Json.text(json, WAKE_SAYS, ""); }
         if (json.has(MORNING_SAYS)) { morningSays = Json.text(json, MORNING_SAYS, ""); }
-        if (json.has(SAYS_IN)) { onBar = BAR.equals(Json.choice(json, SAYS_IN, CHAT, owner, PLACES)); }
+        if (json.has(SAYS_IN)) { onBar = Json.choiceIs(json, SAYS_IN, CHAT, owner, PLACES, BAR); }
     }
 
     public static boolean vanillaShare() { return sleepShare == WHOLE_SHARE && leavesOutBelow == NO_HEIGHT; }
 
     public static boolean enoughAsleep(WorldServer world) {
+        int[] tally = tally(world);
+        return tally[2] >= Math.max(1, (int) Math.ceil(tally[0] * sleepShare / (double) WHOLE_SHARE));
+    }
+
+    private static int[] tally(World world) {
         int counted = 0;
+        int left = 0;
         int asleep = 0;
         for (EntityPlayer player : world.playerEntities) {
-            if (player.isSpectator() || leftOut(player)) { continue; }
+            if (player.isSpectator()) { continue; }
+            if (leftOut(player)) {
+                left++;
+                continue;
+            }
             counted++;
             if (player.isPlayerFullyAsleep()) { asleep++; }
         }
-        return asleep >= Math.max(1, (int) Math.ceil(counted * sleepShare / (double) WHOLE_SHARE));
+        return new int[] {counted, left, asleep};
     }
 
     private static boolean leftOut(EntityPlayer player) { return !player.isPlayerSleeping() && player.posY < leavesOutBelow; }
@@ -194,7 +201,7 @@ public final class ContentSleep {
     }
 
     @SubscribeEvent public static void onTick(TickEvent.WorldTickEvent event) {
-        if (!says() || event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
+        if (!says() || !SideUtils.serverEnd(event)) { return; }
         World world = event.world;
         int dimension = world.provider.getDimension();
         Map<UUID, String> before = SLEEPERS.getOrDefault(dimension, Collections.emptyMap());
@@ -227,14 +234,8 @@ public final class ContentSleep {
 
     private static void say(World world, String line, String name, int asleep) {
         if (line.isEmpty()) { return; }
-        int players = 0;
-        int left = 0;
-        for (EntityPlayer player : world.playerEntities) {
-            if (player.isSpectator()) { continue; }
-            players++;
-            if (leftOut(player)) { left++; }
-        }
-        TextComponentTranslation said = new TextComponentTranslation(line, name, asleep, players - left, left);
+        int[] tally = tally(world);
+        TextComponentTranslation said = new TextComponentTranslation(line, name, asleep, tally[0], tally[1]);
         for (EntityPlayer player : world.playerEntities) { player.sendStatusMessage(said, onBar); }
     }
 }

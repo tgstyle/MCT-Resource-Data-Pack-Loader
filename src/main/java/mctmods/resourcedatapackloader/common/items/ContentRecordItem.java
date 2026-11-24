@@ -23,7 +23,7 @@ public class ContentRecordItem extends ItemRecord implements IContentItem {
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); } }
+    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { ItemVariants.subItems(this, def, tab, list); }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 

@@ -8,6 +8,9 @@ import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
 import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.worldgen.ChunkOrigin;
+import mctmods.resourcedatapackloader.common.util.world.TemplateBlocks;
+import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -21,9 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
@@ -36,11 +36,8 @@ import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.common.util.Constants;
 
 public final class ContentImprint implements IContentShape {
-    private static final int WORLDGEN_FLAGS = BlockFlags.UPDATE_CLIENTS;
-    private static final int OFFSET = 8;
     private static final Map<String, List<IBlockState>> PALETTES = new ConcurrentHashMap<>();
     private final ContentPlacer placer;
     private final ShapeDef shape;
@@ -63,6 +60,17 @@ public final class ContentImprint implements IContentShape {
 
     public static int backZ(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0; }
 
+    public static void place(World world, Template template, int cornerX, int cornerZ, int y, Rotation turn, Random random, StructureBoundingBox box, @Nullable ITemplateProcessor first, @Nullable ITemplateProcessor filter) {
+        BlockPos span = template.transformedSize(turn);
+        PlacementSettings settings = new PlacementSettings();
+        settings.setRotation(turn);
+        settings.setRandom(random);
+        settings.setBoundingBox(box);
+        BlockPos placeAt = new BlockPos(cornerX + backX(turn, span), y, cornerZ + backZ(turn, span));
+        ITemplateProcessor base = first != null ? first : new BlockRotationProcessor(placeAt, settings);
+        template.addBlocksToWorld(world, placeAt, TemplateFilters.chain(base, filter), settings, BlockFlags.UPDATE_CLIENTS);
+    }
+
     public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
 
     @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return places(world, wood, canopies, null); }
@@ -82,9 +90,7 @@ public final class ContentImprint implements IContentShape {
         if (states == null) {
             Template loaded = template(world, named);
             if (loaded == null) { return false; }
-            states = new ArrayList<>();
-            NBTTagList palette = loaded.writeToNBT(new NBTTagCompound()).getTagList("palette", Constants.NBT.TAG_COMPOUND);
-            for (int i = 0; i < palette.tagCount(); i++) { states.add(NBTUtil.readBlockState(palette.getCompoundTagAt(i))); }
+            states = TemplateBlocks.palette(loaded);
             PALETTES.put(named, states);
         }
         return holds(states, wood, canopies);
@@ -116,9 +122,9 @@ public final class ContentImprint implements IContentShape {
         Rotation rotation = Turns.turn(shape.turns, random);
         Turns.mirror(shape.mirrors, random);
         BlockPos span = loaded.transformedSize(rotation);
-        int cornerX = within(x, x - span.getX() / 2, span.getX());
-        int cornerZ = within(z, z - span.getZ() / 2, span.getZ());
-        Footprint box = new Footprint(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1, named);
+        int cornerX = corner(x, span.getX());
+        int cornerZ = corner(z, span.getZ());
+        Footprint box = new Footprint(cornerX, cornerZ, far(cornerX, span.getX()), far(cornerZ, span.getZ()), named);
         return refused.test(box) ? null : box;
     }
 
@@ -151,19 +157,21 @@ public final class ContentImprint implements IContentShape {
         long seed = shape.respawn == null ? 0L : random.nextLong();
         settings.setRandom(shape.respawn == null ? random : new Random(seed));
         BlockPos span = loaded.transformedSize(rotation);
-        int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
-        int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
-        if (ContentPlacer.keepsAny(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
+        int cornerX = corner(origin.getX(), span.getX());
+        int cornerZ = corner(origin.getZ(), span.getZ());
+        int farX = far(cornerX, span.getX());
+        int farZ = far(cornerZ, span.getZ());
+        if (ContentPlacer.keepsAny(cornerX, cornerZ, farX, farZ)) { return false; }
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
         if (span.getX() > 16 || span.getZ() > 16) {
             int reach = Math.max(span.getX(), span.getZ());
             if (!ContentPlacer.areaLoaded(world, fitted.getX() - reach, fitted.getZ() - reach, fitted.getX() + reach, fitted.getZ() + reach)) { return false; }
         }
-        if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(new BlockRotationProcessor(fitted, settings)), settings, WORLDGEN_FLAGS); }
-        else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
-        StructureLoot.stock(world, cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1, shape.lootTable, random);
+        if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(new BlockRotationProcessor(fitted, settings)), settings, BlockFlags.UPDATE_CLIENTS); }
+        else { loaded.addBlocksToWorld(world, fitted, settings, BlockFlags.UPDATE_CLIENTS); }
+        StructureLoot.stock(world, cornerX, origin.getY(), cornerZ, farX, origin.getY() + span.getY() - 1, farZ, shape.lootTable, random);
         if (shape.respawn != null) {
-            StructureBoundingBox area = new StructureBoundingBox(cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1);
+            StructureBoundingBox area = new StructureBoundingBox(cornerX, origin.getY(), cornerZ, farX, origin.getY() + span.getY() - 1, farZ);
             RespawnRecorder.record(world, shape.respawn, new RespawnInstance(RespawnInstance.IMPRINT, key.toString(), named, fitted, rotation, mirror, shape.integrity, seed, area), area);
         }
         if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
@@ -172,9 +180,13 @@ public final class ContentImprint implements IContentShape {
 
     private ITemplateProcessor onlyOverReplaceable(BlockRotationProcessor rotating) { return (holder, at, info) -> { Template.BlockInfo processed = rotating.processBlock(holder, at, info); return placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : processed; }; }
 
+    private static int corner(int at, int span) { return within(at, at - span / 2, span); }
+
+    private static int far(int corner, int span) { return corner + span - 1; }
+
     private static int within(int origin, int start, int span) {
         if (span >= 16) { return start; }
-        int corner = ((origin - OFFSET) >> 4) * 16 + OFFSET;
+        int corner = ChunkOrigin.baseOf(origin);
         return MathHelper.clamp(start, corner, corner + 16 - span);
     }
 }

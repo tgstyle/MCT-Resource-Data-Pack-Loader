@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.FireworkDef;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,7 +61,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
     private static void run(WorldServer world, double x, double y, double z, FireworkDef.Burst burst) {
         ContentLog.LOGGER.debug("FireworkBursts fired a {} burst at {} {} {} in dimension {}", burst.pattern, x, y, z, world.provider.getDimension());
         playSound(world, x, y, z, burst.sound);
-        Item item = burst.particle == null ? null : ForgeRegistries.ITEMS.getValue(burst.particle);
+        Item item = Registries.find(ForgeRegistries.ITEMS, burst.particle);
         if (item == null) { return; }
         List<Float> velocities = new ArrayList<>();
         if (FireworkDef.PATTERN_POINTS.equals(burst.pattern)) {
@@ -115,8 +116,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
     }
 
     private static void playSound(WorldServer world, double x, double y, double z, ResourceLocation id) {
-        if (id == null) { return; }
-        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(id);
+        SoundEvent sound = Registries.find(ForgeRegistries.SOUND_EVENTS, id);
         if (sound == null) { return; }
         world.playSound(null, x, y, z, sound, SoundCategory.AMBIENT, 4.0F, 1.0F);
     }

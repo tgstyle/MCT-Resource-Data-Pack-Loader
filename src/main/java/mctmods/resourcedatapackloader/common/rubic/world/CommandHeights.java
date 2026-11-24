@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.rubic.world;
 
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
-import mctmods.resourcedatapackloader.core.integration.CompatHandler;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import java.lang.ref.WeakReference;
 import javax.annotation.Nullable;
@@ -9,6 +9,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 
 public final class CommandHeights {
     private CommandHeights() {}
@@ -23,13 +24,17 @@ public final class CommandHeights {
         catch (CommandException e) { return null; }
     }
 
+    public static WeakReference<IRubicWorld> of(@Nullable World world) { return new WeakReference<>(world instanceof IRubicWorld ? (IRubicWorld) world : null); }
+
+    @Nullable private static IRubicWorld world(@Nullable WeakReference<IRubicWorld> held) { return held == null ? null : held.get(); }
+
     public static int minY(@Nullable WeakReference<IRubicWorld> held, int orig) {
-        IRubicWorld world = held == null ? null : held.get();
-        return world == null ? orig : world.rdpl$getMinHeight() + orig;
+        IRubicWorld world = world(held);
+        return world == null ? orig : GenHeights.floor((World) world, orig);
     }
 
     public static int maxY(@Nullable WeakReference<IRubicWorld> held, int orig) {
-        IRubicWorld world = held == null ? null : held.get();
-        return world == null ? orig : world.rdpl$getMaxHeight() + orig - CompatHandler.VANILLA_HEIGHT;
+        IRubicWorld world = world(held);
+        return world == null ? orig : GenHeights.ceilingOffset((World) world, orig);
     }
 }

@@ -1,18 +1,12 @@
 package mctmods.resourcedatapackloader.common.dimension;
 
-import mctmods.resourcedatapackloader.client.renderer.sky.ContentCloudRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionAmbience;
-import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderers;
-import mctmods.resourcedatapackloader.client.renderer.sky.ContentWindowLook;
-import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.environment.ContentWeatherCycle;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.AmbienceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
-import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,12 +22,10 @@ import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ContentWorldProvider extends WorldProviderSurface {
-    private static final float STILL_SUN = 0.25F;
     private final ContentWeatherCycle weatherCycle = new ContentWeatherCycle();
     @Nullable protected DimensionDef def;
 
@@ -41,7 +33,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         this.def = ContentDimensions.byId(getDimension());
         this.hasSkyLight = def == null || def.hasSkyLight;
         this.biomeProvider = provider();
-        if (def != null && FMLCommonHandler.instance().getSide().isClient()) { ContentSkyRenderers.apply(this, def); }
+        if (def != null && SideUtils.isClient()) { ContentSkyRenderers.apply(this, def); }
     }
 
     void refresh() {
@@ -51,69 +43,46 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     private BiomeProvider provider() { return def == null ? new BiomeProvider(world.getWorldInfo()) : ContentDimensionRules.biomes(world, def); }
 
-    @Override @Nonnull public IChunkGenerator createChunkGenerator() { return def == null ? super.createChunkGenerator() : ContentDimensionRules.generator(world, def); }
+    @Override @Nonnull public IChunkGenerator createChunkGenerator() { return ContentDimensionRules.generator(world, def, true, super::createChunkGenerator); }
 
     @Override @Nonnull public DimensionType getDimensionType() { return ContentDimensions.typeFor(getDimension()); }
 
     public boolean galacticraftPhysics() { return false; }
 
-    @Override public boolean isSurfaceWorld() { return def == null || def.surfaceWorld; }
+    @Override public boolean isSurfaceWorld() { return ContentDimensionRules.surface(def, true, true); }
 
     @Override public boolean isNether() { return def != null && def.nether; }
 
     @Override public boolean doesWaterVaporize() { return def == null ? super.doesWaterVaporize() : def.waterVaporizes; }
 
     @Override @Nonnull public WorldProvider.WorldSleepResult canSleepAt(@Nonnull EntityPlayer player, @Nonnull BlockPos pos) {
-        if (def != null && !def.beds) { return WorldProvider.WorldSleepResult.BED_EXPLODES; }
+        if (ContentDimensionRules.bedsExplode(def)) { return WorldProvider.WorldSleepResult.BED_EXPLODES; }
         return super.canSleepAt(player, pos);
     }
 
-    @Override public int getRespawnDimension(@Nonnull EntityPlayerMP player) {
-        if (def == null || def.respawnDimension == Integer.MIN_VALUE) { return super.getRespawnDimension(player); }
-        return def.respawnDimension;
-    }
+    @Override public int getRespawnDimension(@Nonnull EntityPlayerMP player) { return ContentDimensionRules.respawnDimension(def, super.getRespawnDimension(player)); }
 
-    @Override @SideOnly(Side.CLIENT) public boolean doesXZShowFog(int x, int z) { return def != null && def.showFog; }
+    @Override @SideOnly(Side.CLIENT) public boolean doesXZShowFog(int x, int z) { return ContentDimensionRules.showsFog(def, true, false); }
 
-    @Override @SideOnly(Side.CLIENT) public float getStarBrightness(float partialTicks) {
-        if (def == null || def.starBrightness < 0.0F) { return super.getStarBrightness(partialTicks); }
-        return def.starBrightness;
-    }
+    @Override @SideOnly(Side.CLIENT) public float getStarBrightness(float partialTicks) { return ContentDimensionRules.starBrightness(def, super.getStarBrightness(partialTicks)); }
 
-    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
-        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
-        if (layer != null && layer.color >= 0) { return ContentDimensionRules.color(layer.color); }
-        if (def == null || def.cloudColor < 0) { return super.getCloudColor(partialTicks); }
-        return ContentDimensionRules.color(def.cloudColor);
-    }
+    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) { return ContentDimensionRules.cloudColor(def, super.getCloudColor(partialTicks)); }
 
-    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, def.darkness != null, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
+    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { ContentDimensionRules.lightmap(def, partialTicks, sunBrightness, skyLight, blockLight, colors); }
 
     @Override @Nonnull public float[] getLightBrightnessTable() { return ContentDimensionRules.lightBrightness(def, super.getLightBrightnessTable()); }
 
-    @Override public boolean canRespawnHere() { return def != null && def.respawn; }
+    @Override public boolean canRespawnHere() { return ContentDimensionRules.respawns(def, true, false); }
 
-    @Override public int getAverageGroundLevel() { return def == null ? super.getAverageGroundLevel() : def.groundLevel; }
+    @Override public int getAverageGroundLevel() { return ContentDimensionRules.groundLevel(def, true, super.getAverageGroundLevel()); }
 
-    @Override public double getMovementFactor() { return def == null ? super.getMovementFactor() : def.movementFactor; }
+    @Override public double getMovementFactor() { return ContentDimensionRules.movementFactor(def, true, super.getMovementFactor()); }
 
-    @Override @SideOnly(Side.CLIENT) public float getCloudHeight() {
-        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
-        if (layer != null) { return layer.height; }
-        return def == null ? super.getCloudHeight() : def.cloudHeight;
-    }
+    @Override @SideOnly(Side.CLIENT) public float getCloudHeight() { return ContentDimensionRules.cloudHeight(def, true, super.getCloudHeight()); }
 
-    @Override public long getWorldTime() {
-        if (def == null || def.fixedTime < 0) { return super.getWorldTime(); }
-        return def.fixedTime;
-    }
+    @Override public long getWorldTime() { return ContentDimensionRules.worldTime(def, super.getWorldTime()); }
 
-    @Override public float calculateCelestialAngle(long worldTime, float partialTicks) {
-        long length = ContentRuleSwitch.dayLength(world, def);
-        if (def == null || length == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
-        if (length == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
-        return ContentDimensionRules.celestialAngle(length, worldTime, partialTicks);
-    }
+    @Override public float calculateCelestialAngle(long worldTime, float partialTicks) { return ContentDimensionRules.angle(world, def, worldTime, partialTicks, super.calculateCelestialAngle(worldTime, partialTicks)); }
 
     @Override public void updateWeather() {
         if (def == null) { super.updateWeather(); }
@@ -129,31 +98,17 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return ambience == null || ambience.music == null ? super.getMusicType() : ContentDimensionAmbience.music(ambience);
     }
 
-    @Override public boolean canDoLightning(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation && def.traits.lightning; }
+    @Override public boolean canDoLightning(@Nonnull Chunk chunk) { return ContentDimensionRules.lightning(def); }
 
-    @Override public boolean canDoRainSnowIce(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation; }
+    @Override public boolean canDoRainSnowIce(@Nonnull Chunk chunk) { return ContentDimensionRules.precipitation(def); }
 
-    @Override public boolean isDaytime() {
-        if (def != null && ContentRuleSwitch.dayLength(world, def) == DimensionTraitsDef.NO_DAY) { return true; }
-        if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
-        return ContentDimensionRules.daytime(def.fixedTime);
-    }
+    @Override public boolean isDaytime() { return ContentDimensionRules.daytime(world, def, super.isDaytime()); }
 
-    @Override @SideOnly(Side.CLIENT) @Nullable public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) {
-        if (def != null && !def.sunriseColors) { return null; }
-        return super.calcSunriseSunsetColors(celestialAngle, partialTicks);
-    }
+    @Override @SideOnly(Side.CLIENT) @Nullable public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) { return ContentDimensionRules.sunrise(def, super.calcSunriseSunsetColors(celestialAngle, partialTicks)); }
 
-    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) {
-        if (def == null || def.skyColor < 0) { return super.getSkyColor(camera, partialTicks); }
-        return ContentDimensionRules.skyColor(world, def.skyColor, partialTicks);
-    }
+    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) { return ContentDimensionRules.skyColor(world, def, partialTicks, super.getSkyColor(camera, partialTicks)); }
 
-    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
-        if (def != null && def.look != null && def.look.sampleFog) { return ContentWindowLook.fogColor(world, ContentFogSampler.color(super.getFogColor(celestialAngle, partialTicks)), celestialAngle); }
-        if (def == null || def.fogColor < 0) { return ContentWindowLook.fogColor(world, super.getFogColor(celestialAngle, partialTicks), celestialAngle); }
-        return ContentWindowLook.fogColor(world, ContentDimensionRules.fogColor(def.fogColor, celestialAngle), celestialAngle);
-    }
+    @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) { return ContentDimensionRules.fogColor(world, def, celestialAngle, super.getFogColor(celestialAngle, partialTicks)); }
 
     @Override @Nonnull public String getSaveFolder() { return def == null ? "DIM" + getDimension() : def.suffix; }
 }

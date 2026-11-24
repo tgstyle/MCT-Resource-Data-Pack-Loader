@@ -19,7 +19,6 @@ import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.server.MinecraftServer;
 
@@ -41,9 +40,9 @@ public final class ContentEntityPhases {
 
     @Nullable static BossBarDef bar(EntityLivingBase living, EntityVariantDef def) {
         State state = STATES.get(living.getUniqueID());
-        if (state == null || state.current < 0) { return def.bossBar; }
+        if (state == null || state.current < 0) { return def.combat.bossBar; }
         BossBarDef phased = def.phases.get(state.current).bossBar;
-        return phased == null ? def.bossBar : phased;
+        return phased == null ? def.combat.bossBar : phased;
     }
 
     public static void tick(EntityLiving living, EntityVariantDef def) {
@@ -54,7 +53,7 @@ public final class ContentEntityPhases {
             STATES.remove(id);
             return;
         }
-        float fraction = living.getHealth() / living.getMaxHealth();
+        float fraction = MobStats.health(living);
         int target = -1;
         for (int i = 0; i < def.phases.size(); i++) {
             if (fraction < def.phases.get(i).below) { target = i; }
@@ -80,19 +79,14 @@ public final class ContentEntityPhases {
 
     private static void enter(EntityLiving living, EntityVariantDef def, PhaseDef phase, State state) {
         for (Map.Entry<String, Double> entry : phase.attributes.entrySet()) {
-            IAttributeInstance instance = ContentAttributes.instance(living.getAttributeMap(), entry.getKey());
-            if (instance == null) {
-                ContentLog.LOGGER.error("Unknown attribute '{}' in a phase of {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.registryName, def.base);
-                continue;
-            }
-            UUID id = modifierId(instance);
-            instance.removeModifier(id);
-            instance.applyModifier(new AttributeModifier(id, MODIFIER, entry.getValue() - instance.getBaseValue(), 0).setSaved(false));
+            IAttributeInstance instance = ContentAttributes.instance(living.getAttributeMap(), entry.getKey(), "a phase of " + def.registryName + ", which " + def.base + " does not carry either");
+            if (instance == null) { continue; }
+            ContentAttributes.replace(instance, modifierId(instance), MODIFIER, entry.getValue() - instance.getBaseValue(), 0, false);
         }
         List<EntityAITasks.EntityAITaskEntry> tasksBefore = AiTasks.entries(living.tasks);
         List<EntityAITasks.EntityAITaskEntry> targetsBefore = AiTasks.entries(living.targetTasks);
         ContentTasks.apply(living, def, phase.tasks);
-        if (living instanceof EntityCreature) { ContentEntityBehavior.special((EntityCreature) living, phase.charges && !def.charges, phase.pounces && !def.pounces, phase.gusts && !def.gusts, phase.gustPower); }
+        if (living instanceof EntityCreature) { ContentEntityBehavior.special((EntityCreature) living, phase.charges && !def.combat.charges, phase.pounces && !def.combat.pounces, phase.gusts && !def.combat.gusts, phase.gustPower); }
         List<EntityAITasks.EntityAITaskEntry> tasksAfter = AiTasks.entries(living.tasks);
         List<EntityAITasks.EntityAITaskEntry> targetsAfter = AiTasks.entries(living.targetTasks);
         state.tasksAdded = AiTasks.missing(tasksAfter, tasksBefore);
@@ -120,7 +114,7 @@ public final class ContentEntityPhases {
             IAttributeInstance instance = ContentAttributes.instance(living.getAttributeMap(), name);
             if (instance != null) { values.append(' ').append(name).append('=').append(instance.getAttributeValue()); }
         }
-        ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} {}:{}, {} tasks, {} targets", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ,
+        ContentLog.LOGGER.debug("Entity variant {} at {} {}:{}, {} tasks, {} targets", def.registryName, ContentLog.at(living),
                 target >= 0 ? "enters phase " + (target + 1) + " of " + def.phases.size() : "returns to its base", values, living.tasks.taskEntries.size(), living.targetTasks.taskEntries.size());
     }
 }

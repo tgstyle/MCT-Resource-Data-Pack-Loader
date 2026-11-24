@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.recipes;
 
-import mctmods.resourcedatapackloader.common.pack.loading.ContentOwners;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.util.ItemSelection;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -37,6 +36,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryModifiable;
 
 public final class RecipeTransfer {
+    public static final String KEY = "transfer";
     private static final String ENCHANTMENTS = "enchantments";
     private static final String NAME = "name";
     private static final String DAMAGE = "damage";
@@ -45,6 +45,8 @@ public final class RecipeTransfer {
     private static final List<String> TRANSFER_KEYS = Collections.unmodifiableList(Arrays.asList("from", "source", "take"));
     private static final List<Entry> ENTRIES = new ArrayList<>();
 
+    private static final String KIND = "Recipe transfer";
+
     private RecipeTransfer() {}
 
     public static void apply(IForgeRegistry<IRecipe> registry) {
@@ -52,49 +54,32 @@ public final class RecipeTransfer {
         if (!Config.recipes.swaps) { return; }
         Json.eachObject(PackManager.RECIPE_SWAPS, "recipe transfer file", RecipeTransfer::read);
         if (ENTRIES.isEmpty()) { return; }
-        IForgeRegistryModifiable<IRecipe> modifiable = RecipeRemovals.modifiable(registry);
-        if (modifiable == null) {
-            ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipe was given a transfer");
-            return;
-        }
+        IForgeRegistryModifiable<IRecipe> modifiable = RecipeRemovals.modifiable(registry, "no recipe was given a transfer");
+        if (modifiable == null) { return; }
         Map<ResourceLocation, List<Transfer>> byRecipe = new LinkedHashMap<>();
-        for (ResourceLocation key : registry.getKeys()) {
-            IRecipe recipe = registry.getValue(key);
-            if (recipe == null) { continue; }
-            for (Entry entry : ENTRIES) {
-                if (entry.scope.matches(key, recipe)) { byRecipe.computeIfAbsent(key, k -> new ArrayList<>()).add(entry.transfer); }
-            }
-        }
+        RecipeSelector.byRecipe(registry, ENTRIES, entry -> entry.scope, (list, entry) -> list.add(entry.transfer), byRecipe);
         for (Map.Entry<ResourceLocation, List<Transfer>> each : byRecipe.entrySet()) {
             ResourceLocation key = each.getKey();
             IRecipe wrapped = new TransferRecipe(registry.getValue(key), each.getValue());
             modifiable.remove(key);
-            ContentOwners.as(key.getNamespace(), () -> registry.register(wrapped.setRegistryName(key)));
+            RecipeRemovals.register(registry, key, wrapped);
         }
         if (!byRecipe.isEmpty()) { Summary.info("recipes.transfer", "Gave " + byRecipe.size() + " crafting recipe(s) a transfer"); }
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!json.has("transfer")) { return; }
+        if (!json.has(KEY)) { return; }
         if (!json.has("swaps")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
-        if (!json.has("recipes") || !json.get("recipes").isJsonObject()) {
-            ContentLog.LOGGER.error("Recipe transfer file {} needs a recipes object saying which recipes it covers, ignoring it", key);
-            return;
-        }
-        if (json.get("transfer").isJsonObject()) { Json.unknownKeys(json.getAsJsonObject("transfer"), "transfer", TRANSFER_KEYS); }
-        Transfer transfer = json.get("transfer").isJsonObject() ? transfer(key, json.getAsJsonObject("transfer")) : null;
+        if (RecipeSelector.lacksRecipes(KIND, key, json)) { return; }
+        if (json.get(KEY).isJsonObject()) { Json.unknownKeys(json.getAsJsonObject(KEY), "transfer", TRANSFER_KEYS); }
+        Transfer transfer = json.get(KEY).isJsonObject() ? transfer(key, json.getAsJsonObject(KEY)) : null;
         if (transfer == null) {
             ContentLog.LOGGER.error("The transfer in {} needs a from, a source and a take list of enchantments, name, damage or nbt, ignoring it", key);
             return;
         }
-        RecipeSelector scope = new RecipeSelector();
         Json.unknownKeys(json.getAsJsonObject("recipes"), "recipes", RecipeSelector.KEYS);
-        scope.read(key, json.getAsJsonObject("recipes"));
-        if (scope.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe transfer file {} selects no recipes, ignoring it", key);
-            return;
-        }
-        ENTRIES.add(new Entry(scope, transfer));
+        RecipeSelector scope = RecipeSelector.scopeOf(KIND, key, json.getAsJsonObject("recipes"));
+        if (scope != null) { ENTRIES.add(new Entry(scope, transfer)); }
     }
 
     @Nullable private static Transfer transfer(ResourceLocation key, JsonObject json) {
@@ -118,7 +103,7 @@ public final class RecipeTransfer {
             case "book":
                 return stack -> stack.getItem() == Items.ENCHANTED_BOOK;
             default:
-                ItemSelection selection = RecipeRemainders.selection("Recipe transfer", key, text);
+                ItemSelection selection = ItemSelection.fromText(KIND, key, Collections.singletonList(text));
                 return selection.any() ? selection::matches : null;
         }
     }

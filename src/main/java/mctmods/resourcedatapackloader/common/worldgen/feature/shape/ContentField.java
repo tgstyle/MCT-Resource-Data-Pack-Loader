@@ -2,12 +2,14 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
 
 public final class ContentField {
     public static final int[] CHANCES = { 30, 30, 20, 20, 10, 10, 10, 10, 50 };
     public static final float SPREAD = 0.15F;
     public static final int CELL = 8;
+    private static final long LCG = 6364136223846793005L;
     public static final int SEEDS = 1;
     public static final float REACH = 3.0F;
     public static final int ARMS = 0;
@@ -104,10 +106,10 @@ public final class ContentField {
 
     private int speckle(long salt, int x, int y, int z) {
         int best = seedLevel(salt, x, y, z);
-        for (int face = 0; face < 6; face++) {
-            int offX = face == 0 ? 1 : face == 1 ? -1 : 0;
-            int offY = face == 2 ? 1 : face == 3 ? -1 : 0;
-            int offZ = face == 4 ? 1 : face == 5 ? -1 : 0;
+        for (EnumFacing face : EnumFacing.VALUES) {
+            int offX = face.getXOffset();
+            int offY = face.getYOffset();
+            int offZ = face.getZOffset();
             int level = seedLevel(salt, x + offX, y + offY, z + offZ);
             if (level <= 1) { continue; }
             long gate = mix(salt ^ MathUtil.GOLDEN_GAMMA, (x + offX) * 31 + offX, (y + offY) * 31 + offY, (z + offZ) * 31 + offZ);
@@ -173,9 +175,9 @@ public final class ContentField {
 
     private static long mix(long salt, int x, int y, int z) {
         long value = salt;
-        value = value * 6364136223846793005L + (x * 3129871L);
-        value = value * 6364136223846793005L + (y * 116129781L);
-        value = value * 6364136223846793005L + (z * 4295001919L);
+        value = value * LCG + (x * 3129871L);
+        value = value * LCG + (y * 116129781L);
+        value = value * LCG + (z * 4295001919L);
         value ^= value >>> 29;
         value *= MathUtil.GOLDEN_GAMMA;
         value ^= value >>> 32;

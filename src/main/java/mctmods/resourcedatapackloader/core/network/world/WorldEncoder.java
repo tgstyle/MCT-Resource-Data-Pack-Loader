@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core.network.world;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.core.util.address.AddressTools;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -14,14 +15,27 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 
 class WorldEncoder {
+    static void writeHeight(ByteBuf out, int address, int height) {
+        out.writeByte(address);
+        ByteBufUtils.writeVarInt(out, height, 5);
+    }
+
+    static int topY(IColumnInternal column, int localAddress) { return column.getTopYWithStaging(AddressTools.getLocalX(localAddress), AddressTools.getLocalZ(localAddress)); }
+
+    private static final int EMPTY = 1;
+    private static final int STORAGE = 2;
+    private static final int BIOMES = 4;
+    private static final int HEIGHTMAP_BYTES = Cube.SIZE * Cube.SIZE * Integer.BYTES;
+
     static void encodeCubes(PacketBuffer out, Collection<Cube> cubes) {
         cubes.forEach(cube -> {
             byte flags = 0;
-            if (cube.isEmpty()) { flags |= 1; }
-            if (cube.getStorage() != null) { flags |= 2; }
-            if (cube.getBiomeArray() != null) { flags |= 4; }
+            if (cube.isEmpty()) { flags |= EMPTY; }
+            if (cube.getStorage() != null) { flags |= STORAGE; }
+            if (cube.getBiomeArray() != null) { flags |= BIOMES; }
             out.writeByte(flags);
         });
 
@@ -66,9 +80,9 @@ class WorldEncoder {
         boolean[] hasCustomBiomeMap = new boolean[cubes.size()];
         for (int i = 0; i < cubes.size(); i++) {
             byte flags = in.readByte();
-            isEmpty[i] = (flags & 1) != 0 || cubes.get(i) == null;
-            hasStorage[i] = (flags & 2) != 0 && cubes.get(i) != null;
-            hasCustomBiomeMap[i] = (flags & 4) != 0 && cubes.get(i) != null;
+            isEmpty[i] = (flags & EMPTY) != 0 || cubes.get(i) == null;
+            hasStorage[i] = (flags & STORAGE) != 0 && cubes.get(i) != null;
+            hasCustomBiomeMap[i] = (flags & BIOMES) != 0 && cubes.get(i) != null;
         }
         for (int i = 0; i < cubes.size(); i++) {
             if (hasStorage[i]) {
@@ -110,14 +124,14 @@ class WorldEncoder {
         }
     }
 
-    static int getEncodedSize(Chunk column) { return column.getBiomeArray().length + Cube.SIZE * Cube.SIZE * Integer.BYTES; }
+    static int getEncodedSize(Chunk column) { return column.getBiomeArray().length + HEIGHTMAP_BYTES; }
 
     static int getEncodedSize(Cube cube, boolean countHeightmap) {
         int size = 1;
         ExtendedBlockStorage storage = cube.getStorage();
         if (!cube.isEmpty()) {
             size += Objects.requireNonNull(storage).getData().getSerializedSize();
-            if (countHeightmap) { size += Cube.SIZE * Cube.SIZE * Integer.BYTES; }
+            if (countHeightmap) { size += HEIGHTMAP_BYTES; }
         }
         if (storage != null) {
             size += storage.getBlockLight().getData().length;

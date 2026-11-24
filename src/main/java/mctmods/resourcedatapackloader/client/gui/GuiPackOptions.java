@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.client.gui;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.LangGates;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
+import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.client.FMLClientHandler;
 
@@ -75,8 +78,8 @@ public class GuiPackOptions extends GuiScreen {
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         list.drawScreen(mouseX, mouseY, partialTicks);
-        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.title"), width / 2, 12, 0xFFFFFF);
-        if (changed()) { drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.restart"), width / 2, height - 42, 0xFF5555); }
+        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.title"), width / 2, 12, Colors.WHITE_TEXT);
+        if (changed()) { drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.restart"), width / 2, height - 42, Says.rgb(TextFormatting.RED)); }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -132,16 +135,16 @@ public class GuiPackOptions extends GuiScreen {
                     return;
                 }
                 String about = PackOptions.about(file, name);
-                if (about == null) { held.fontRenderer.drawString(name, x + 2, y + slotHeight / 2 - 4, 0xFFFFFF); }
+                if (about == null) { held.fontRenderer.drawString(name, x + 2, y + slotHeight / 2 - 4, Colors.WHITE_TEXT); }
                 else {
-                    held.fontRenderer.drawString(name, x + 2, y + 5, 0xFFFFFF);
-                    held.fontRenderer.drawString(held.fontRenderer.trimStringToWidth(about, listWidth - 70), x + 2, y + 17, 0x808080);
+                    held.fontRenderer.drawString(name, x + 2, y + 5, Colors.WHITE_TEXT);
+                    held.fontRenderer.drawString(held.fontRenderer.trimStringToWidth(about, listWidth - 70), x + 2, y + 17, Colors.GREY_TEXT);
                 }
                 toggle.x = x + listWidth - 64;
                 toggle.y = y + 1;
                 boolean on = staged.get(file).get(name);
                 toggle.displayString = I18n.format(on ? "options.on" : "options.off");
-                toggle.packedFGColour = on ? 0x55FF55 : 0xFF5555;
+                toggle.packedFGColour = Says.rgb(on ? TextFormatting.GREEN : TextFormatting.RED);
                 toggle.drawButton(held, mouseX, mouseY, partialTicks);
             }
 

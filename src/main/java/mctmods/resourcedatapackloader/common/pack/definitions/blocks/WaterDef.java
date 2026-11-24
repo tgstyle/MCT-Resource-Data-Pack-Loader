@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
 
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidTouch;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,7 +27,6 @@ public final class WaterDef {
     public static final int DEFAULT_HEIGHT = 1;
     public static final int MAX_HEIGHT = 4;
     private static final String FLOWING = "flowing_";
-    private static final int WORLD_TOP = 255;
     private final int within;
     private final int height;
     public final float scale;
@@ -65,16 +66,9 @@ public final class WaterDef {
 
     public boolean hasBlocks() { return !this.blocks.isEmpty(); }
 
-    public boolean listed(Block block, World world, BlockPos pos) { return anyMatch(this.blocks, block, world, pos); }
+    public boolean listed(Block block, World world, BlockPos pos) { return BlockMatch.anyMatch(this.blocks, block, world, pos); }
 
-    public boolean excepted(Block block, World world, BlockPos pos) { return anyMatch(this.except, block, world, pos); }
-
-    private static boolean anyMatch(List<BlockMatch> matches, Block block, World world, BlockPos pos) {
-        for (BlockMatch match : matches) {
-            if (match.matches(block, world, pos)) { return true; }
-        }
-        return false;
-    }
+    public boolean excepted(Block block, World world, BlockPos pos) { return BlockMatch.anyMatch(this.except, block, world, pos); }
 
     public boolean rained(World world, BlockPos pos) { return this.rain && world.isRainingAt(pos.up()); }
 
@@ -96,7 +90,7 @@ public final class WaterDef {
     private Set<Fluid> resolve() {
         Set<Fluid> found = new HashSet<>();
         for (String id : this.fluids) {
-            String name = id.substring(id.indexOf(':') + 1);
+            String name = IdNames.path(id);
             Fluid fluid = FluidRegistry.getFluid(name.startsWith(FLOWING) ? name.substring(FLOWING.length()) : name);
             if (fluid == null) { ContentLog.LOGGER.error("growth.water.fluids names {}, which is not a registered fluid, ignoring it", id); }
             else { found.add(fluid); }
@@ -110,7 +104,7 @@ public final class WaterDef {
 
     public boolean found(World world, BlockPos pos) {
         int low = Math.max(pos.getY() - this.height, 0);
-        int high = Math.min(pos.getY() + this.height, WORLD_TOP);
+        int high = Math.min(pos.getY() + this.height, GenHeights.WORLD_TOP);
         if (!world.isAreaLoaded(new BlockPos(pos.getX() - this.within, low, pos.getZ() - this.within), new BlockPos(pos.getX() + this.within, high, pos.getZ() + this.within))) { return true; }
         Set<Fluid> wanted = fluids();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -131,7 +125,7 @@ public final class WaterDef {
         for (int layer = 0; layer <= this.height * 2; layer++) {
             int dy = (layer + 1) / 2 * (layer % 2 == 1 ? -1 : 1);
             int y = pos.getY() + dy;
-            if (y < 0 || y > WORLD_TOP) { continue; }
+            if (y < 0 || y > GenHeights.WORLD_TOP) { continue; }
             at.setPos(pos.getX() + dx, y, pos.getZ() + dz);
             if (fluidAt(world, at, wanted)) { return true; }
         }

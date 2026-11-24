@@ -21,7 +21,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -35,19 +34,13 @@ public final class Portways {
     private Portways() {}
 
     public static List<PortwayStop> stops(EntityPlayer player) {
-        NBTTagList tags = PlayerPersisted.read(player, SECTION).getTagList(STOPS, Constants.NBT.TAG_COMPOUND);
-        List<PortwayStop> stops = new ArrayList<>();
-        for (int index = 0; index < tags.tagCount(); index++) {
-            PortwayStop stop = PortwayStop.read(tags.getCompoundTagAt(index));
-            if (!stop.block.isEmpty()) { stops.add(stop); }
-        }
+        List<PortwayStop> stops = PortwayStop.readAll(PlayerPersisted.read(player, SECTION).getTagList(STOPS, Constants.NBT.TAG_COMPOUND));
+        stops.removeIf(stop -> stop.block.isEmpty());
         return stops;
     }
 
     private static void save(EntityPlayer player, List<PortwayStop> stops) {
-        NBTTagList tags = new NBTTagList();
-        for (PortwayStop stop : stops) { tags.appendTag(stop.write()); }
-        PlayerPersisted.section(player, SECTION).setTag(STOPS, tags);
+        PlayerPersisted.section(player, SECTION).setTag(STOPS, PortwayStop.writeAll(stops));
     }
 
     private static List<PortwayStop> shown(List<PortwayStop> stops, PortwayDef opening, int originDimension, Predicate<PortwayDef> scoped) {

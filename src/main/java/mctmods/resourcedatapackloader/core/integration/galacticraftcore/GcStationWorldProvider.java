@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderers;
 import mctmods.resourcedatapackloader.client.util.GcStationPlanetSky;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,10 +21,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class GcStationWorldProvider extends WorldProviderOverworldOrbit {
     @Nullable private GcStations.Station station;
 
-    private static Vector3 color(int rgb) { return new Vector3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
+    private static Vector3 color(int rgb) { return new Vector3(Colors.redD(rgb), Colors.greenD(rgb), Colors.blueD(rgb)); }
 
     @Override protected void init() {
-        DimensionType type = GcCelestial.registeredType(getDimension());
+        DimensionType type = GcDimensionTypes.of(getDimension(), null);
         station = type == null ? null : GcStations.byType(type.getId());
         super.init();
     }

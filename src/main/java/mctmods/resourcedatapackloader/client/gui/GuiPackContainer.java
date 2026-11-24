@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.gui.ContainerPack;
 import mctmods.resourcedatapackloader.common.gui.ContainerPouch;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -16,10 +17,12 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.input.Keyboard;
 
 public class GuiPackContainer extends GuiContainer {
     private static final ResourceLocation VANILLA = new ResourceLocation("textures/gui/container/generic_54.png");
+    private static final int TITLE_TEXT = 0x404040;
     protected static final int EDGE = 7;
     private static final int HEADER = ContainerPack.HEADER;
     private static final int SLOT = ContainerPack.SLOT;
@@ -72,8 +75,8 @@ public class GuiPackContainer extends GuiContainer {
             cutTitle = title;
             shown = fontRenderer.trimStringToWidth(title, titleWidth() - fontRenderer.getStringWidth(ELLIPSIS)) + ELLIPSIS;
         }
-        fontRenderer.drawString(shown, 8, 6, 0x404040);
-        fontRenderer.drawString(I18n.format("container.inventory"), 8, ySize - 94, 0x404040);
+        fontRenderer.drawString(shown, 8, 6, TITLE_TEXT);
+        fontRenderer.drawString(I18n.format("container.inventory"), 8, ySize - 94, TITLE_TEXT);
     }
 
     protected int titleWidth() { return xSize - 16; }
@@ -95,13 +98,13 @@ public class GuiPackContainer extends GuiContainer {
 
     private void head(int x, int y) {
         drawTexturedModalRect(x, y, 0, 0, EDGE, HEADER);
-        for (int across = EDGE; across < xSize - EDGE; across += SLOT) { drawTexturedModalRect(x + across, y, EDGE, 0, Math.min(SLOT, xSize - EDGE - across), HEADER); }
+        tile(x + EDGE, y, xSize - EDGE - EDGE, HEADER, EDGE, 0, SLOT, HEADER);
         drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
     }
 
     protected final void limitSlots(int count) { this.slots = count; }
 
-    private int cellsIn(int row) { return slots < 0 ? columns : Math.max(0, Math.min(columns, slots - row * columns)); }
+    private int cellsIn(int row) { return slots < 0 ? columns : MathHelper.clamp(slots - row * columns, 0, columns); }
 
     private void band(int x, int y, int count) {
         int cells = count * SLOT;
@@ -121,14 +124,14 @@ public class GuiPackContainer extends GuiContainer {
         drawTexturedModalRect(x + (xSize - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
     }
 
-    private void sill(int x, int y) {
-        for (int across = EDGE; across < xSize - EDGE; across += SLOT) { drawTexturedModalRect(x + across, y, EDGE, SILL_SOURCE, Math.min(SLOT, xSize - EDGE - across), SILL); }
-    }
+    private void sill(int x, int y) { tile(x + EDGE, y, xSize - EDGE - EDGE, SILL, EDGE, SILL_SOURCE, SLOT, SILL); }
 
-    private void plain(int x, int y, int wide, int tall) {
-        for (int down = 0; down < tall; down += PLAIN_H) {
-            int high = Math.min(PLAIN_H, tall - down);
-            for (int across = 0; across < wide; across += PLAIN_W) { drawTexturedModalRect(x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_W, wide - across), high); }
+    private void plain(int x, int y, int wide, int tall) { tile(x, y, wide, tall, PLAIN_X, PLAIN_Y, PLAIN_W, PLAIN_H); }
+
+    private void tile(int x, int y, int wide, int tall, int sourceX, int sourceY, int tileW, int tileH) {
+        for (int down = 0; down < tall; down += tileH) {
+            int high = Math.min(tileH, tall - down);
+            for (int across = 0; across < wide; across += tileW) { drawTexturedModalRect(x + across, y + down, sourceX, sourceY, Math.min(tileW, wide - across), high); }
         }
     }
 
@@ -138,6 +141,6 @@ public class GuiPackContainer extends GuiContainer {
         renderHoveredToolTip(mouseX, mouseY);
         int across = mouseX - guiLeft;
         int down = mouseY - guiTop;
-        if (cutTitle != null && across >= 8 && across < 8 + titleWidth() && down >= 6 && down < 6 + fontRenderer.FONT_HEIGHT) { drawHoveringText(cutTitle, mouseX, mouseY); }
+        if (cutTitle != null && MathUtil.inside(across, down, 8, 6, titleWidth(), fontRenderer.FONT_HEIGHT)) { drawHoveringText(cutTitle, mouseX, mouseY); }
     }
 }

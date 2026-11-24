@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.entities;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Particles;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
@@ -11,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
@@ -64,22 +64,14 @@ public final class HeartsDef {
     }
 
     @Nullable private Float hearts(JsonObject json, String name) {
-        if (!json.has(name)) { return null; }
-        try {
-            float value = Json.getFloat(json, name);
-            if (value >= 0.5F && HeartReward.halves(value)) { return value; }
-        }
-        catch (RuntimeException ignored) {}
-        ContentLog.LOGGER.error("Hearts file {} gives {} as something other than a number of 0.5 or more in steps of 0.5, ignoring it", file, name);
-        return null;
+        return Json.optional(json, name, owner(), "a number of 0.5 or more in steps of 0.5", element -> {
+            float value = Json.getFloat(element, name);
+            return value >= 0.5F && HeartReward.halves(value) ? value : null;
+        });
     }
 
     @Nullable private Boolean flag(JsonObject json, String name) {
-        try { return Json.getBoolean(json, name); }
-        catch (RuntimeException ex) {
-            ContentLog.LOGGER.error("Hearts file {} gives {} as something other than true or false, ignoring it", file, name);
-            return null;
-        }
+        return Json.optional(json, name, owner(), "true or false", element -> Json.getBoolean(element, name));
     }
 
     @Nullable private String sound(JsonObject json, String key) {
@@ -96,27 +88,25 @@ public final class HeartsDef {
         try {
             String name = Json.getString(json, key).trim();
             if (name.isEmpty()) { return name; }
-            EnumParticleTypes type = EnumParticleTypes.getByName(name);
-            if (type != null && type.getArgumentCount() == 0) { return name; }
+            if (Particles.simple(name) != null) { return name; }
             ContentLog.LOGGER.error("Hearts file {} names the particle '{}', which is not a simple particle Minecraft knows, so it shows none", file, name);
         }
         catch (RuntimeException ex) { ContentLog.LOGGER.error("Hearts file {} gives {} as something other than text, ignoring it", file, key); }
         return null;
     }
 
+    private String owner() { return "Hearts file " + file; }
+
     @Nullable private int[] colors(JsonObject json) {
-        try {
-            List<String> names = Json.texts(Json.getJsonArray(json, "heartColors"), "heartColors");
+        return Json.optional(json, "heartColors", owner(), "a list of #RRGGBB colors", element -> {
+            List<String> names = Json.texts(Json.getJsonArray(element, "heartColors"), "heartColors");
             int[] values = new int[names.size()];
             for (int i = 0; i < values.length; i++) {
                 if (!COLOR.matcher(names.get(i).trim()).matches()) { throw new IllegalArgumentException(names.get(i)); }
                 values[i] = Integer.parseInt(names.get(i).trim().substring(1), 16);
             }
-            if (values.length > 0) { return values; }
-        }
-        catch (RuntimeException ignored) {}
-        ContentLog.LOGGER.error("Hearts file {} gives heartColors as something other than a list of #RRGGBB colors, ignoring it", file);
-        return null;
+            return values.length > 0 ? values : null;
+        });
     }
 
     private List<HeartReward> rules(JsonObject json, String name, boolean loss) {

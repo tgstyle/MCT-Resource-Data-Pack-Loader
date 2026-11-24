@@ -8,9 +8,12 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.util.dimension.ExposurePlaces;
 import mctmods.resourcedatapackloader.common.util.dimension.ExposureSpread;
+import mctmods.resourcedatapackloader.common.util.entity.Players;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -37,6 +40,8 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 
 public final class ContentExposures {
     private static final Map<ExposureDef, Map<Block, Integer>> BLOCK_LEVELS = new IdentityHashMap<>();
@@ -65,15 +70,16 @@ public final class ContentExposures {
     }
 
     private static void tick(ExposureDef def, EntityPlayer player) {
+        EntityPlayerMP server = Players.serverPlayer(player);
         if (def.skipsCreative && (player.isCreative() || player.isSpectator())) {
             applyLevel(def, player, 0);
-            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def, 0); }
+            if (server != null) { CardEvents.exposureLevel(server, def, 0); }
             return;
         }
         if (player.ticksExisted % def.scanInterval == 0) {
             int level = scan(def, player);
             applyLevel(def, player, level);
-            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def, level); }
+            if (server != null) { CardEvents.exposureLevel(server, def, level); }
             spreadFrom(def, player, level);
         }
         damageTick(def, player);
@@ -83,7 +89,7 @@ public final class ContentExposures {
         boolean catches = ExposureSpread.catches(def, mob);
         if (!catches && ExposureSpread.carrierLevel(def, mob) <= 0) { return; }
         if (mob.ticksExisted % def.scanInterval == 0) {
-            int level = catches && !immune(def, mob) ? Math.min(def.levels.size(), ExposureSpread.caughtLevel(def, mob)) : 0;
+            int level = catches && !immune(def, mob) ? capped(def, ExposureSpread.caughtLevel(def, mob)) : 0;
             if (catches) { applyLevel(def, mob, level); }
             spreadFrom(def, mob, level);
         }
@@ -93,8 +99,10 @@ public final class ContentExposures {
     private static void spreadFrom(ExposureDef def, EntityLivingBase entity, int level) {
         if (!def.spreads()) { return; }
         int spreading = Math.max(ExposureSpread.carrierLevel(def, entity), def.contagious ? level : 0);
-        ExposureSpread.spread(def, entity, Math.min(def.levels.size(), spreading));
+        ExposureSpread.spread(def, entity, capped(def, spreading));
     }
+
+    private static int capped(ExposureDef def, int level) { return Math.min(def.levels.size(), level); }
 
     private static int scan(ExposureDef def, EntityPlayer player) {
         if (immune(def, player)) { return 0; }
@@ -208,7 +216,7 @@ public final class ContentExposures {
         for (PotionEffectDef extra : entry.extras) {
             Potion potion = extraPotion(extra);
             if (potion == null) { continue; }
-            living.addPotionEffect(new PotionEffect(potion, extra.duration > 0 ? extra.duration : duration, extra.amplifier, extra.ambient, extra.showParticles));
+            living.addPotionEffect(PotionEffects.build(potion, extra, extra.duration > 0 ? extra.duration : duration, extra.showParticles));
         }
     }
 
@@ -247,7 +255,7 @@ public final class ContentExposures {
         return BLOCK_LEVELS.computeIfAbsent(def, held -> {
             Map<Block, Integer> levels = new IdentityHashMap<>();
             for (Map.Entry<ResourceLocation, Integer> entry : held.blocks.entrySet()) {
-                Block block = resolveBlock(held, entry.getKey());
+                Block block = resolve(ForgeRegistries.BLOCKS, held, "block", entry.getKey());
                 if (block != null) { levels.put(block, entry.getValue()); }
             }
             return levels;
@@ -258,9 +266,8 @@ public final class ContentExposures {
         return ITEM_LEVELS.computeIfAbsent(def, held -> {
             Map<Item, Integer> levels = new IdentityHashMap<>();
             for (Map.Entry<ResourceLocation, Integer> entry : held.items.entrySet()) {
-                Item item = ForgeRegistries.ITEMS.getValue(entry.getKey());
-                if (item == null) { ContentLog.LOGGER.error("Exposure {} names item {}, which is not registered, so it is ignored", held.registryName, entry.getKey()); }
-                else { levels.put(item, entry.getValue()); }
+                Item item = resolve(ForgeRegistries.ITEMS, held, "item", entry.getKey());
+                if (item != null) { levels.put(item, entry.getValue()); }
             }
             return levels;
         });
@@ -270,20 +277,17 @@ public final class ContentExposures {
         return IMMUNE_ITEMS.computeIfAbsent(def, held -> {
             Set<Item> items = Collections.newSetFromMap(new IdentityHashMap<>());
             for (ResourceLocation name : held.immuneItems) {
-                Item item = ForgeRegistries.ITEMS.getValue(name);
-                if (item == null) { ContentLog.LOGGER.error("Exposure {} names immune item {}, which is not registered, so it is ignored", held.registryName, name); }
-                else { items.add(item); }
+                Item item = resolve(ForgeRegistries.ITEMS, held, "immune item", name);
+                if (item != null) { items.add(item); }
             }
             return items;
         });
     }
 
-    @Nullable private static Block resolveBlock(ExposureDef def, ResourceLocation name) {
-        if (!ForgeRegistries.BLOCKS.containsKey(name)) {
-            ContentLog.LOGGER.error("Exposure {} names block {}, which is not registered, so it is ignored", def.registryName, name);
-            return null;
-        }
-        return ForgeRegistries.BLOCKS.getValue(name);
+    @Nullable private static <T extends IForgeRegistryEntry<T>> T resolve(IForgeRegistry<T> registry, ExposureDef def, String kind, ResourceLocation name) {
+        T found = Registries.find(registry, name);
+        if (found == null) { ContentLog.LOGGER.error("Exposure {} names {} {}, which is not registered, so it is ignored", def.registryName, kind, name); }
+        return found;
     }
 
     public static final class Mobs {

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.io.IOException;
@@ -18,10 +20,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT) public final class CardFont {
-    public static final String RDPL = "resourcedatapackloader:rdpl";
-    public static final String RUNIC = "resourcedatapackloader:rdpl_runic";
+    public static final String RDPL = ResourceDataPackLoader.MOD_ID + ":rdpl";
+    public static final String RUNIC = ResourceDataPackLoader.MOD_ID + ":rdpl_runic";
     private static final String GAME = "minecraft:default";
-    private static final String OURS = "resourcedatapackloader:";
+    private static final String OURS = ResourceDataPackLoader.MOD_ID + ":";
     private static final Set<String> SHORT = new HashSet<>(Arrays.asList("rdpl", "rdpl_bold", "rdpl_italic", "rdpl_runic", "rdpl_runic_bold", "rdpl_runic_italic"));
     private static final Map<String, FontRenderer> FONTS = new HashMap<>();
     private static final Set<String> MISSING = new HashSet<>();
@@ -70,7 +72,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         }
     }
 
-    private static ResourceLocation sheet(ResourceLocation id) { return new ResourceLocation(id.getNamespace(), "textures/font/" + id.getPath() + ".png"); }
+    static ResourceLocation sheet(ResourceLocation id) { return new ResourceLocation(id.getNamespace(), CompressedAssets.texture("font/" + id.getPath())); }
 
     private static void listen(Minecraft mc) {
         if (listening) { return; }

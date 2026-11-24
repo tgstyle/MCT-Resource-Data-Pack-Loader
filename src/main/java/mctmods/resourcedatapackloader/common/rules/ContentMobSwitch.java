@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.MobSwitch
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
@@ -29,16 +29,19 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentMobSwitch {
-    private static final List<String> KEYS = Arrays.asList("entities", "health", "damage", "speed", "equipment");
+    private static final String ENTITIES_KEY = "entities";
+    private static final String HEALTH_KEY = "health";
+    private static final String DAMAGE_KEY = "damage";
+    private static final String SPEED_KEY = "speed";
+    private static final String EQUIPMENT_KEY = "equipment";
+    private static final List<String> KEYS = Arrays.asList(ENTITIES_KEY, HEALTH_KEY, DAMAGE_KEY, SPEED_KEY, EQUIPMENT_KEY);
     private static final List<String> SLOTS = Arrays.asList("mainhand", "offhand", "head", "chest", "legs", "feet");
     private static final String RECORD = "rdplMobSwitch";
     private static final String SET = "set";
@@ -56,66 +59,63 @@ public final class ContentMobSwitch {
 
     @Nullable public static MobSwitchDef parse(String owner, String name, @Nullable JsonElement element) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives mobs that is not an object of entities, health, damage, speed and equipment keys, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "mobs", element, "an object of entities, health, damage, speed and equipment keys");
+        if (json == null) { return null; }
         List<String> entities = Collections.singletonList(MobStats.MONSTER);
         float health = 1.0F;
         float damage = 1.0F;
         float speed = 1.0F;
-        Map<String, MobSwitchDef.Gear> equipment = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        Map<EntityEquipmentSlot, MobSwitchDef.Gear> equipment = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String key = entry.getKey();
             if (!KEYS.contains(key)) {
                 ContentLog.LOGGER.error("{} gives mobs.{}, which is not a mobs key, ignoring it", owner, key);
                 continue;
             }
-            if ("entities".equals(key)) {
+            if (ENTITIES_KEY.equals(key)) {
                 List<String> found = MobStats.entities(owner, "mobs.entities", entry.getValue());
                 if (found != null) { entities = found; }
             }
-            else if ("equipment".equals(key)) { equip(owner, entry.getValue(), equipment); }
+            else if (EQUIPMENT_KEY.equals(key)) { equip(owner, entry.getValue(), equipment); }
             else {
-                Float value = ContentSpawnSwitch.number(owner, "mobs." + key, entry.getValue(), false);
+                Float value = Json.number(owner, "mobs." + key, entry.getValue(), false);
                 if (value == null) { continue; }
-                if ("health".equals(key)) {
+                if (HEALTH_KEY.equals(key)) {
                     if (value > 0.0F) { health = value; }
                     else { ContentLog.LOGGER.error("{} gives mobs.health as {}, which is not above 0, ignoring it", owner, value); }
                 }
-                else if ("damage".equals(key)) { damage = value; }
+                else if (DAMAGE_KEY.equals(key)) { damage = value; }
                 else { speed = value; }
             }
         }
         return new MobSwitchDef(owner, name, entities, health, damage, speed, equipment);
     }
 
-    private static void equip(String owner, JsonElement value, Map<String, MobSwitchDef.Gear> into) {
-        if (!value.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives mobs.equipment that is not an object of slot to item, ignoring it", owner);
-            return;
-        }
-        for (Map.Entry<String, JsonElement> entry : value.getAsJsonObject().entrySet()) {
+    private static void equip(String owner, JsonElement value, Map<EntityEquipmentSlot, MobSwitchDef.Gear> into) {
+        JsonObject json = Json.object(owner, "mobs.equipment", value, "an object of slot to item");
+        if (json == null) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String slot = entry.getKey();
             if (!SLOTS.contains(slot)) {
                 ContentLog.LOGGER.error("{} gives mobs.equipment.{}, which is not one of mainhand, offhand, head, chest, legs or feet, ignoring it", owner, slot);
                 continue;
             }
+            EntityEquipmentSlot resolved = EntityEquipmentSlot.fromString(slot);
             JsonObject gear = entry.getValue().isJsonObject() ? entry.getValue().getAsJsonObject() : null;
             if (gear != null) {
                 for (Map.Entry<String, JsonElement> field : gear.entrySet()) {
                     if (!ITEM.equals(field.getKey()) && !"dropChance".equals(field.getKey())) { ContentLog.LOGGER.error("{} gives mobs.equipment.{}.{}, which is not an equipment key, ignoring it", owner, slot, field.getKey()); }
                 }
             }
-            JsonElement item = gear == null ? null : gear.get(ITEM);
-            if (item == null || !item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()) {
+            String item = gear == null || !gear.has(ITEM) ? null : Json.text(gear.get(ITEM));
+            if (item == null) {
                 ContentLog.LOGGER.error("{} gives mobs.equipment.{} without an item id, ignoring it", owner, slot);
                 continue;
             }
             float chance = VANILLA_CHANCE;
             JsonElement given = gear.get("dropChance");
             if (given != null) {
-                Float number = ContentSpawnSwitch.number(owner, "mobs.equipment." + slot + ".dropChance", given, false);
+                Float number = Json.number(owner, "mobs.equipment." + slot + ".dropChance", given, false);
                 if (number == null) { continue; }
                 if (number > 1.0F) {
                     ContentLog.LOGGER.error("{} gives mobs.equipment.{}.dropChance as {}, which is above 1, ignoring it", owner, slot, number);
@@ -123,7 +123,7 @@ public final class ContentMobSwitch {
                 }
                 chance = number;
             }
-            into.put(slot, new MobSwitchDef.Gear(Settings.lower(item.getAsString()), chance));
+            into.put(resolved, new MobSwitchDef.Gear(Settings.lower(item), chance));
         }
     }
 
@@ -150,14 +150,14 @@ public final class ContentMobSwitch {
         MobStats.scale(mob, SharedMonsterAttributes.ATTACK_DAMAGE, DAMAGE, def.damage, NAME);
         MobStats.scale(mob, SharedMonsterAttributes.MOVEMENT_SPEED, SPEED, def.speed, NAME);
         NBTTagCompound gear = new NBTTagCompound();
-        for (Map.Entry<String, MobSwitchDef.Gear> entry : def.equipment.entrySet()) {
-            Item item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(entry.getValue().item));
-            EntityEquipmentSlot slot = EntityEquipmentSlot.fromString(entry.getKey());
+        for (Map.Entry<EntityEquipmentSlot, MobSwitchDef.Gear> entry : def.equipment.entrySet()) {
+            Item item = Registries.itemNamed(entry.getValue().item);
+            EntityEquipmentSlot slot = entry.getKey();
             if (item == null || !mob.getItemStackFromSlot(slot).isEmpty()) { continue; }
             NBTTagCompound held = new NBTTagCompound();
             held.setString(ITEM, entry.getValue().item);
             held.setFloat(CHANCE, MobGear.chances(mob, slot)[slot.getIndex()]);
-            gear.setTag(entry.getKey(), held);
+            gear.setTag(slot.getName(), held);
             mob.setItemStackToSlot(slot, new ItemStack(item));
             MobGear.chances(mob, slot)[slot.getIndex()] = entry.getValue().chance;
         }
@@ -178,7 +178,7 @@ public final class ContentMobSwitch {
         NBTTagCompound gear = data.getCompoundTag(RECORD).getCompoundTag(GEAR);
         for (String name : gear.getKeySet()) {
             NBTTagCompound recorded = gear.getCompoundTag(name);
-            Item item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(recorded.getString(ITEM)));
+            Item item = Registries.itemNamed(recorded.getString(ITEM));
             EntityEquipmentSlot slot = EntityEquipmentSlot.fromString(name);
             if (item == null || mob.getItemStackFromSlot(slot).getItem() != item) { continue; }
             mob.setItemStackToSlot(slot, ItemStack.EMPTY);
@@ -201,10 +201,10 @@ public final class ContentMobSwitch {
     public static void serverStarted(MinecraftServer server) {
         for (MobSwitchDef def : ContentEnvironments.allMobs()) {
             for (String id : def.entities) {
-                if (!id.startsWith("#") && !EntityList.isRegistered(new ResourceLocation(id))) { ContentLog.LOGGER.error("{} gives mobs.entities for '{}', which is not an entity, so it changes nothing", def.owner, id); }
+                if (MobStats.unknownEntity(id)) { ContentLog.LOGGER.error("{} gives mobs.entities for '{}', which is not an entity, so it changes nothing", def.owner, id); }
             }
             for (MobSwitchDef.Gear gear : def.equipment.values()) {
-                if (Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(gear.item)) == null) { ContentLog.LOGGER.error("{} gives mobs.equipment for '{}', which is not an item, so it gives nothing", def.owner, gear.item); }
+                if (Registries.itemNamed(gear.item) == null) { ContentLog.LOGGER.error("{} gives mobs.equipment for '{}', which is not an item, so it gives nothing", def.owner, gear.item); }
             }
         }
         ready = true;

@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.core.util.Registries;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.IRangedAttackMob;
@@ -24,7 +23,7 @@ public final class MobGear {
 
     public static void fixed(EntityLiving mob, Map<String, String> equipment, float dropChance, String owner) {
         for (Map.Entry<String, String> entry : equipment.entrySet()) {
-            EntityEquipmentSlot slot = slot(entry.getKey());
+            EntityEquipmentSlot slot = Enums.byName(EntityEquipmentSlot.class, entry.getKey());
             if (slot == null) {
                 ContentLog.LOGGER.error("{} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", owner, entry.getKey());
                 continue;
@@ -64,6 +63,4 @@ public final class MobGear {
         mob.setItemStackToSlot(slot, stack);
         mob.setDropChance(slot, dropChance);
     }
-
-    @Nullable static EntityEquipmentSlot slot(String name) { return Enums.byName(EntityEquipmentSlot.class, name); }
 }

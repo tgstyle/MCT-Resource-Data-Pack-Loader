@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer;
 
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.core.integration.optifine.IVerticalRenderDistance;
 
 import javax.annotation.Nullable;
@@ -24,9 +25,9 @@ import org.spongepowered.asm.mixin.Shadow;
 
     @Overwrite @Nullable private RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, EnumFacing facing) {
         BlockPos blockpos = renderChunkBase.getBlockPosOffset16(facing);
-        if (MathHelper.abs(playerPos.getX() - blockpos.getX()) <= this.renderDistanceChunks * 16
-                && MathHelper.abs(playerPos.getY() - blockpos.getY()) <= ((IVerticalRenderDistance) this).rdpl$getVerticalRenderDistanceCubes() * 16
-                && MathHelper.abs(playerPos.getZ() - blockpos.getZ()) <= this.renderDistanceChunks * 16) { return this.viewFrustum.getRenderChunk(blockpos); }
+        if (MathHelper.abs(playerPos.getX() - blockpos.getX()) <= this.renderDistanceChunks * ICube.SIZE
+                && MathHelper.abs(playerPos.getY() - blockpos.getY()) <= ((IVerticalRenderDistance) this).rdpl$getVerticalRenderDistanceCubes() * ICube.SIZE
+                && MathHelper.abs(playerPos.getZ() - blockpos.getZ()) <= this.renderDistanceChunks * ICube.SIZE) { return this.viewFrustum.getRenderChunk(blockpos); }
         return null;
     }
 }

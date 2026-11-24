@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core.network.world;
 import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
@@ -27,16 +28,13 @@ public class ColumnMessage implements IMessage {
     }
 
     @Override public void fromBytes(ByteBuf buf) {
-        this.chunkPos = new ChunkPos(buf.readInt(), buf.readInt());
-        this.data = new byte[buf.readInt()];
-        buf.readBytes(this.data);
+        this.chunkPos = PacketUtils.readChunkPos(buf);
+        this.data = PacketUtils.readBytes(buf);
     }
 
     @Override public void toBytes(ByteBuf buf) {
-        buf.writeInt(chunkPos.x);
-        buf.writeInt(chunkPos.z);
-        buf.writeInt(this.data.length);
-        buf.writeBytes(this.data);
+        PacketUtils.write(buf, chunkPos);
+        PacketUtils.writeBytes(buf, this.data);
     }
 
     ChunkPos getChunkPos() { return chunkPos; }

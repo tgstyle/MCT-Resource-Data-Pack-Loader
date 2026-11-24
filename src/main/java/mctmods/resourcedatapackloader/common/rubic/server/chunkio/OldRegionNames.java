@@ -20,6 +20,7 @@ final class OldRegionNames {
     private static final Pattern COLUMNS = Pattern.compile("(-?\\d+\\.-?\\d+)\\.2dr(\\.ext)?");
     private static final Pattern CUBES = Pattern.compile("(-?\\d+\\.-?\\d+\\.-?\\d+)\\.3dr(\\.ext)?");
     static final String[] LEVEL_FILES ={"level.dat", "level.dat_old"};
+    static final String CUBIC_WORLD = "isCubicWorld";
 
     private OldRegionNames() {}
 
@@ -68,7 +69,7 @@ final class OldRegionNames {
         return false;
     }
 
-    static boolean cubicChunksMarked(NBTTagCompound data) { return data.getBoolean("isCubicWorld") && !data.getBoolean(WorldSavedRubicData.IS_RUBIC_WORLD); }
+    static boolean cubicChunksMarked(NBTTagCompound data) { return data.getBoolean(CUBIC_WORLD) && !data.getBoolean(WorldSavedRubicData.IS_RUBIC_WORLD); }
 
     static NBTTagCompound read(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) { return CompressedStreamTools.readCompressed(in); }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.orders;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -12,7 +13,6 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -233,14 +233,11 @@ public final class OrderBoard extends WorldSavedData {
         if (at == null) { return; }
         for (String taker : order.def.takers) {
             if (ContentOrders.grouped(taker)) { continue; }
-            Entity made = EntityList.createEntityByIDFromName(new ResourceLocation(taker), world);
+            Entity made = Spawns.placed(world, new ResourceLocation(taker), at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, world.rand.nextFloat() * 360.0F, 0.0F, true);
             if (!(made instanceof EntityLiving)) { continue; }
             EntityLiving living = (EntityLiving) made;
-            living.setLocationAndAngles(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, world.rand.nextFloat() * 360.0F, 0.0F);
-            living.onInitialSpawn(world.getDifficultyForLocation(at), null);
             living.enablePersistence();
-            if (!order.team.isEmpty() && world.getScoreboard().getTeamNames().contains(order.team)) { world.getScoreboard().addPlayerToTeam(living.getCachedUniqueIdString(), order.team); }
-            else if (order.owner != null) { ContentOrders.bind(living, order.owner); }
+            ContentOrders.enlist(living, order.team, order.owner);
             world.spawnEntity(living);
             order.spawned++;
             markDirty();

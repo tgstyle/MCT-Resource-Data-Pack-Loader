@@ -62,42 +62,33 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
 
     @Override public boolean containsKey(Object o) {
         if (!(o instanceof BlockPos)) { return false; }
-        BlockPos pos = (BlockPos) o;
-        int y = Coords.blockToCube(pos.getY());
-        ICube cube = column.getCube(y);
-        return cube.getTileEntityMap().containsKey(o);
+        return cubeAt((BlockPos) o).getTileEntityMap().containsKey(o);
     }
 
     @Override public boolean containsValue(Object o) {
         if (!(o instanceof TileEntity)) { return false; }
-        BlockPos pos = ((TileEntity) o).getPos();
-        int y = Coords.blockToCube(pos.getY());
-        ICube cube = column.getLoadedCube(y);
+        ICube cube = loadedAt(((TileEntity) o).getPos());
         if (cube == null) { return false; }
         return cube.getTileEntityMap().containsValue(o);
     }
 
     @Nullable @Override public TileEntity get(Object o) {
         if (!(o instanceof BlockPos)) { return null; }
-        BlockPos pos = (BlockPos) o;
-        int y = Coords.blockToCube(pos.getY());
-        ICube cube = column.getCube(y);
-        return cube.getTileEntityMap().get(o);
+        return cubeAt((BlockPos) o).getTileEntityMap().get(o);
     }
 
-    @Override @Nullable public TileEntity put(BlockPos blockPos, TileEntity tileEntity) {
-        int y = Coords.blockToCube(blockPos.getY());
-        ICube cube = column.getCube(y);
-        return cube.getTileEntityMap().put(blockPos, tileEntity);
-    }
+    @Override @Nullable public TileEntity put(BlockPos blockPos, TileEntity tileEntity) { return cubeAt(blockPos).getTileEntityMap().put(blockPos, tileEntity); }
 
     @Nullable @Override public TileEntity remove(Object o) {
         if (!(o instanceof BlockPos)) { return null; }
         BlockPos pos = (BlockPos) o;
-        int y = Coords.blockToCube(pos.getY());
-        ICube cube = column.getLoadedCube(y);
+        ICube cube = loadedAt(pos);
         return cube == null ? null : cube.getTileEntityMap().remove(pos);
     }
+
+    private ICube cubeAt(BlockPos pos) { return column.getCube(Coords.blockToCube(pos.getY())); }
+
+    @Nullable private ICube loadedAt(BlockPos pos) { return column.getLoadedCube(Coords.blockToCube(pos.getY())); }
 
     @Override public void putAll(Map<? extends BlockPos, ? extends TileEntity> map) { map.forEach(this::put); }
 

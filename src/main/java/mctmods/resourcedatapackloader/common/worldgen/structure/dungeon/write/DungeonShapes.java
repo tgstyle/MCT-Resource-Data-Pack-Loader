@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeightDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonThemes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonFeatures;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan;
@@ -30,9 +31,11 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockStoneSlab;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class DungeonShapes {
+    private static final int SLOT_SALT = 7;
     private static final int RANK_SHELL = 1;
     private static final int RANK_AIR = 2;
     private static final int RANK_LIQUID = 3;
@@ -41,7 +44,6 @@ public final class DungeonShapes {
     private static final int NOISE_CELL = 4;
     private static final int NOISE_RANGE = 201;
     private static final int VARIANT_SLOTS = 3;
-    private static final int SHAFT_SIDE = 3;
     private static final int ENTRANCE_KEEP = 3;
     private static final int STAND_AIR = 2;
     private static final int MIN_PILLAR_SIDE = 5;
@@ -113,15 +115,20 @@ public final class DungeonShapes {
     private static boolean notShape(Room room, String shape) { return unshaped(room) || !shape.equals(room.shape); }
 
     @Nullable public static int[] pillarRect(Room room) {
-        if (notShape(room, "pillared") || room.x1 - room.x0 - 1 < MIN_PILLAR_SIDE || room.z1 - room.z0 - 1 < MIN_PILLAR_SIDE) { return null; }
-        return new int[] {room.x0 + 1, room.z0 + 1, room.x1 - 1, room.z1 - 1};
+        return notShape(room, "pillared") ? null : inset(room, 1, MIN_PILLAR_SIDE);
+    }
+
+    @Nullable private static int[] inset(Room room, int walk, int minSide) {
+        if (room.x1 - room.x0 + 1 - 2 * walk < minSide || room.z1 - room.z0 + 1 - 2 * walk < minSide) { return null; }
+        return new int[] {room.x0 + walk, room.z0 + walk, room.x1 - walk, room.z1 - walk};
     }
 
     @Nullable public static int[] coreRect(Room room) {
         if (notShape(room, "ring") || room.entrance) { return null; }
         int[] walks = {2 + (int) ((room.seed >>> 1) & 1), 2};
         for (int walk : walks) {
-            if (room.x1 - room.x0 + 1 - 2 * walk >= MIN_CORE_SIDE && room.z1 - room.z0 + 1 - 2 * walk >= MIN_CORE_SIDE) { return new int[] {room.x0 + walk, room.z0 + walk, room.x1 - walk, room.z1 - walk}; }
+            int[] rect = inset(room, walk, MIN_CORE_SIDE);
+            if (rect != null) { return rect; }
         }
         return null;
     }
@@ -142,8 +149,7 @@ public final class DungeonShapes {
     }
 
     @Nullable public static int[] pitRect(Room room) {
-        if (notShape(room, "pit") || room.entrance || room.x1 - room.x0 + 1 - 4 < MIN_CORE_SIDE || room.z1 - room.z0 + 1 - 4 < MIN_CORE_SIDE) { return null; }
-        return new int[] {room.x0 + 2, room.z0 + 2, room.x1 - 2, room.z1 - 2};
+        return notShape(room, "pit") || room.entrance ? null : inset(room, 2, MIN_CORE_SIDE);
     }
 
     private static boolean has(@Nullable int[] rect, int x, int z) { return rect != null && x >= rect[0] && x <= rect[2] && z >= rect[1] && z <= rect[3]; }
@@ -218,28 +224,33 @@ public final class DungeonShapes {
         return y >= room.y0 - DungeonFeatures.PIT_DEPTH && y <= room.y0 - 1 && has(rect, x, z) && !kept(plan, bucket, room, x, z);
     }
 
-    private static boolean kept(DungeonPlan plan, DungeonPlan.Bucket bucket, Room room, int x, int z) {
-        for (Shaft s : bucket.shafts) {
-            if (s.bottomY <= room.y1 && s.topY >= room.y0 && x >= s.x - 1 && x <= s.x + SHAFT_SIDE && z >= s.z - 1 && z <= s.z + SHAFT_SIDE) { return true; }
-        }
-        if (room.entrance && plan.entrance != null) {
-            List<Entrance> all = new ArrayList<>(plan.entrance.extras);
-            all.add(plan.entrance);
-            for (Entrance e : all) {
-                if (Math.abs(x - e.x) <= ENTRANCE_KEEP && Math.abs(z - e.z) <= ENTRANCE_KEEP) { return true; }
-            }
-        }
-        for (int[] door : doors(plan, room, x, z)) {
-            int pad = 1 + door[2] / 2;
-            if (Math.abs(x - door[0]) <= pad && Math.abs(z - door[1]) <= pad) { return true; }
+    static boolean nearEntrance(DungeonPlan plan, int x, int z) {
+        for (Entrance e : plan.entrances()) {
+            if (Math.abs(x - e.x) <= ENTRANCE_KEEP && Math.abs(z - e.z) <= ENTRANCE_KEEP) { return true; }
         }
         return false;
     }
 
-    private static List<int[]> doors(DungeonPlan plan, Room room, int x, int z) {
+    private static boolean kept(DungeonPlan plan, DungeonPlan.Bucket bucket, Room room, int x, int z) {
+        for (Shaft s : bucket.shafts) {
+            if (s.bottomY <= room.y1 && s.topY >= room.y0 && s.covers(x, z, 1)) { return true; }
+        }
+        if (room.entrance && nearEntrance(plan, x, z)) { return true; }
+        for (int[] door : doors(plan, room, x, z)) {
+            if (nearDoor(door, x, z)) { return true; }
+        }
+        return false;
+    }
+
+    public static boolean nearDoor(int[] door, int x, int z) {
+        int pad = 1 + door[2] / 2;
+        return Math.abs(x - door[0]) <= pad && Math.abs(z - door[1]) <= pad;
+    }
+
+    public static List<int[]> doors(DungeonPlan plan, Room room, int x, int z) {
         List<int[]> doors = new ArrayList<>();
-        for (int cx = (x >> 4) - 1; cx <= (x >> 4) + 1; cx++) {
-            for (int cz = (z >> 4) - 1; cz <= (z >> 4) + 1; cz++) {
+        for (int cx = Coords.blockToCube(x) - 1; cx <= Coords.blockToCube(x) + 1; cx++) {
+            for (int cz = Coords.blockToCube(z) - 1; cz <= Coords.blockToCube(z) + 1; cz++) {
                 for (Link link : plan.bucket(cx, cz).links) {
                     if (link.roomA == room.index && link.floorYA == room.floorY) { doors.add(new int[] {link.doorAX, link.doorAZ, link.width, link.height}); }
                     if (link.roomB == room.index && link.floorYB == room.floorY) { doors.add(new int[] {link.doorBX, link.doorBZ, link.width, link.height}); }
@@ -252,8 +263,8 @@ public final class DungeonShapes {
     private static String surface(int y, int low, int high) { return y < low ? Palette.FLOORS : y > high ? Palette.CEILINGS : Palette.WALLS; }
 
     private static int roomSlot(DungeonPlan plan, Room room) {
-        long h = MathUtil.mix(room.seed, 7, 0, 0);
-        return Math.floorMod(h, 100L) < DungeonDef.Degree.CHANCES[plan.roll(VARIABILITY)] ? 1 + (int) Math.floorMod(h >>> 8, VARIANT_SLOTS) : 0;
+        long h = MathUtil.mix(room.seed, SLOT_SALT, 0, 0);
+        return MathUtil.percent(h) < DungeonDef.Degree.CHANCES[plan.roll(VARIABILITY)] ? 1 + (int) Math.floorMod(h >>> 8, VARIANT_SLOTS) : 0;
     }
 
     private static boolean isCave(Room room, List<Feature> features) {
@@ -329,7 +340,7 @@ public final class DungeonShapes {
         return depth >= 0 && depth <= TUNNEL_DEPTH && wide(lateral, door[2]);
     }
 
-    private static boolean wide(int delta, int width) { return delta >= -((width - 1) / 2) && delta <= width / 2; }
+    private static boolean wide(int delta, int width) { return delta >= Link.low(width) && delta <= Link.high(width); }
 
     private static void feature(Feature f, int x, int y, int z, Palette.Kit palette, Hit hit) {
         switch (f.type) {
@@ -373,19 +384,14 @@ public final class DungeonShapes {
     private static boolean inside(Feature f, int x, int y, int z) { return inRect(f, x, z) && y >= f.y0 && y <= f.y1; }
 
     private static void corridor(DungeonPlan.Bucket bucket, Link link, int x, int y, int z, Palette.Kit palette, Hit hit) {
-        int lo = -((link.width - 1) / 2);
-        int hi = link.width / 2;
         for (Segment s : link.segments) {
-            int minX = Math.min(s.x0, s.x1);
-            int maxX = Math.max(s.x0, s.x1);
-            int minZ = Math.min(s.z0, s.z1);
-            int maxZ = Math.max(s.z0, s.z1);
-            int fx0 = minX != maxX ? minX : minX + lo;
-            int fx1 = minX != maxX ? maxX : maxX + hi;
-            int fz0 = minZ != maxZ ? minZ : minZ + lo;
-            int fz1 = minZ != maxZ ? maxZ : maxZ + hi;
+            int[] foot = link.footprint(s);
+            int fx0 = foot[0];
+            int fz0 = foot[1];
+            int fx1 = foot[2];
+            int fz1 = foot[3];
             if (x < fx0 - 1 || x > fx1 + 1 || z < fz0 - 1 || z > fz1 + 1) { continue; }
-            int floor = s.floorAt(Math.max(minX, Math.min(maxX, x)), Math.max(minZ, Math.min(maxZ, z)));
+            int floor = s.floorClamped(x, z);
             if (y < floor - 1 || y > floor + link.height) { continue; }
             boolean inside = x >= fx0 && x <= fx1 && z >= fz0 && z <= fz1 && y >= floor && y < floor + link.height;
             if (inside) { hit.offer(RANK_AIR, palette.state(Palette.AIR, 0)); }
@@ -401,9 +407,8 @@ public final class DungeonShapes {
     }
 
     private static void shaft(Shaft shaft, int x, int y, int z, Palette.Kit palette, Hit hit) {
-        if (y < shaft.bottomY || y >= shaft.topY || x < shaft.x - 1 || x > shaft.x + SHAFT_SIDE || z < shaft.z - 1 || z > shaft.z + SHAFT_SIDE) { return; }
-        boolean inside = x >= shaft.x && x < shaft.x + SHAFT_SIDE && z >= shaft.z && z < shaft.z + SHAFT_SIDE;
-        if (inside) { hit.offer(RANK_AIR, palette.state(Palette.AIR, 0)); }
+        if (y < shaft.bottomY || y >= shaft.topY || !shaft.covers(x, z, 1)) { return; }
+        if (shaft.covers(x, z, 0)) { hit.offer(RANK_AIR, palette.state(Palette.AIR, 0)); }
         else { hit.offer(RANK_SHELL, palette.state(Palette.WALLS, 0)); }
     }
 
@@ -483,7 +488,7 @@ public final class DungeonShapes {
                 states.put(AIR, resolve(theme, AIR, seed, filled(Blocks.AIR.getDefaultState())));
             }
 
-            public IBlockState state(String family, int slot) { return states.get(family)[Math.max(0, Math.min(slot, SLOTS - 1))]; }
+            public IBlockState state(String family, int slot) { return states.get(family)[MathHelper.clamp(slot, 0, SLOTS - 1)]; }
         }
 
         private static IBlockState[] filled(IBlockState state) {
@@ -492,16 +497,21 @@ public final class DungeonShapes {
             return slots;
         }
 
-        private static IBlockState[] resolve(@Nullable DungeonThemeDef theme, String family, long seed, IBlockState[] fallback) {
-            if (theme == null) { return fallback; }
+        static List<IBlockState> found(DungeonThemeDef theme, String family, @Nullable List<Integer> weights) {
             List<IBlockState> found = new ArrayList<>();
-            List<Integer> weights = new ArrayList<>();
             for (BlockWeightDef entry : theme.blocks.getOrDefault(family, Collections.emptyList())) {
                 Block block = Registries.find(ForgeRegistries.BLOCKS, entry.block);
                 if (block == null) { continue; }
                 found.add(ContentStates.of(block, entry.meta, entry.properties, theme.key));
-                weights.add(entry.weight);
+                if (weights != null) { weights.add(entry.weight); }
             }
+            return found;
+        }
+
+        private static IBlockState[] resolve(@Nullable DungeonThemeDef theme, String family, long seed, IBlockState[] fallback) {
+            if (theme == null) { return fallback; }
+            List<Integer> weights = new ArrayList<>();
+            List<IBlockState> found = found(theme, family, weights);
             if (found.isEmpty()) { return fallback; }
             IBlockState[] slots = new IBlockState[SLOTS];
             int first = pick(weights, -1, MathUtil.mix(seed, family.hashCode(), 0, 0));

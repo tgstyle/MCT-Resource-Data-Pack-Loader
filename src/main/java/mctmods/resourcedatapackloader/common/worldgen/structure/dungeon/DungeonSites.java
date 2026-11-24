@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonSizeDef;
+import mctmods.resourcedatapackloader.common.util.BoundedLru;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
@@ -17,7 +18,6 @@ import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +37,7 @@ public final class DungeonSites {
     private static final int GAP = 8;
     private static final int TABLE_CELLS = 64;
     private static final int CANDIDATE_CELLS = 8192;
+    private static final int BIOME_SAMPLE_Y = 64;
     private static final int[] CORNER_X = {0, -1, 1, -1, 1};
     private static final int[] CORNER_Z = {0, -1, -1, 1, 1};
     private static final Map<String, Shape> SHAPES = new TreeMap<>();
@@ -69,6 +70,8 @@ public final class DungeonSites {
             this.radius = radius;
         }
 
+        public long distanceSq(int x, int z) { return DungeonSites.distanceSq(originX, originZ, x, z); }
+
         public boolean reaches(StructureBoundingBox window) { return originX + radius >= window.minX && originX - radius <= window.maxX && originZ + radius >= window.minZ && originZ - radius <= window.maxZ; }
     }
 
@@ -88,21 +91,9 @@ public final class DungeonSites {
         @Override public int hashCode() { return Objects.hash(id, x, z); }
     }
 
-    private static final class Lru<V> extends LinkedHashMap<Cell, V> {
-        private static final long serialVersionUID = 1L;
-        private final int capacity;
-
-        private Lru(int capacity) {
-            super(16, 0.75F, true);
-            this.capacity = capacity;
-        }
-
-        @Override protected boolean removeEldestEntry(Map.Entry<Cell, V> eldest) { return size() > capacity; }
-    }
-
     private static final class State {
-        private final Lru<Site> candidates = new Lru<>(CANDIDATE_CELLS);
-        private final Lru<List<Site>> table = new Lru<>(TABLE_CELLS);
+        private final BoundedLru<Cell, Site> candidates = new BoundedLru<>(CANDIDATE_CELLS);
+        private final BoundedLru<Cell, List<Site>> table = new BoundedLru<>(TABLE_CELLS);
         private final Set<String> logged = new HashSet<>();
     }
 
@@ -187,13 +178,15 @@ public final class DungeonSites {
 
     public static synchronized List<Site> sitesTouching(World world, StructureBoundingBox window) { return collect(world, window.minX, window.minZ, window.maxX, window.maxZ, site -> site.reaches(window)); }
 
+    private static long distanceSq(int fromX, int fromZ, int toX, int toZ) {
+        long dx = (long) fromX - toX;
+        long dz = (long) fromZ - toZ;
+        return dx * dx + dz * dz;
+    }
+
     public static synchronized List<Site> sitesNear(World world, BlockPos pos, int radius) {
         long limit = (long) radius * radius;
-        return collect(world, pos.getX() - radius, pos.getZ() - radius, pos.getX() + radius, pos.getZ() + radius, site -> {
-            long dx = site.originX - pos.getX();
-            long dz = site.originZ - pos.getZ();
-            return dx * dx + dz * dz <= limit;
-        });
+        return collect(world, pos.getX() - radius, pos.getZ() - radius, pos.getX() + radius, pos.getZ() + radius, site -> site.distanceSq(pos.getX(), pos.getZ()) <= limit);
     }
 
     private static List<Site> collect(World world, int minX, int minZ, int maxX, int maxZ, Predicate<Site> wanted) {
@@ -295,30 +288,30 @@ public final class DungeonSites {
 
     @Nullable private static Site grid(World world, Shape shape, int cellX, int cellZ) {
         DungeonDef def = shape.def;
-        long seed = MathUtil.mix(world.getSeed() ^ def.key.hashCode(), cellX, 1, cellZ);
-        if (Math.floorMod(seed >>> 16, 100) >= def.chance) { return null; }
+        long seed = SeedStreams.keyed(world.getSeed(), def.key, cellX, 1, cellZ);
+        if (MathUtil.percent(seed >>> 16) >= def.chance) { return null; }
         DungeonSizeDef size = pickSize(def, seed);
         long give = shape.pitch - 2L * shape.rMax - 2 * CLEAR + 1;
         int originX = cellX * shape.pitch + shape.rMax + CLEAR + (int) Math.floorMod(seed, give);
         int originZ = cellZ * shape.pitch + shape.rMax + CLEAR + (int) Math.floorMod(seed >>> 40, give);
         BlockPos spawn = world.getSpawnPoint();
-        if (def.minDistanceFromSpawn > 0 && Math.hypot(originX - spawn.getX(), originZ - spawn.getZ()) < def.minDistanceFromSpawn) { return null; }
+        if (def.minDistanceFromSpawn > 0 && distanceSq(originX, originZ, spawn.getX(), spawn.getZ()) < (long) def.minDistanceFromSpawn * def.minDistanceFromSpawn) { return null; }
         int radius = shape.radius(size);
-        Biome centre = world.getBiome(new BlockPos(originX, 64, originZ));
+        Biome centre = world.getBiome(new BlockPos(originX, BIOME_SAMPLE_Y, originZ));
         for (int i = 0; i < CORNER_X.length; i++) {
-            Biome biome = i == 0 ? centre : world.getBiome(new BlockPos(originX + CORNER_X[i] * radius, 64, originZ + CORNER_Z[i] * radius));
+            Biome biome = i == 0 ? centre : world.getBiome(new BlockPos(originX + CORNER_X[i] * radius, BIOME_SAMPLE_Y, originZ + CORNER_Z[i] * radius));
             if (shape.blocked(biome) || (def.noOceans && BiomeDictionary.hasType(biome, BiomeDictionary.Type.OCEAN))) { return null; }
         }
         int surface = surfaceAt(world, originX, originZ);
         List<PickDef> fitting = fitting(world, shape, size, centre, surface);
         if (fitting.isEmpty()) { return null; }
-        return new Site(def, originX, originZ, size, fitting, surface, centre, MathUtil.mix(world.getSeed() ^ def.key.hashCode(), cellX, 2, cellZ), radius);
+        return new Site(def, originX, originZ, size, fitting, surface, centre, SeedStreams.keyed(world.getSeed(), def.key, cellX, 2, cellZ), radius);
     }
 
     @Nullable private static Site pinned(World world, Shape shape, int originX, int originZ) {
         DungeonDef def = shape.def;
-        DungeonSizeDef size = pickSize(def, MathUtil.mix(world.getSeed() ^ def.key.hashCode(), originX, 0, originZ));
-        Biome centre = world.getBiome(new BlockPos(originX, 64, originZ));
+        DungeonSizeDef size = pickSize(def, SeedStreams.keyed(world.getSeed(), def.key, originX, 0, originZ));
+        Biome centre = world.getBiome(new BlockPos(originX, BIOME_SAMPLE_Y, originZ));
         int surface = surfaceAt(world, originX, originZ);
         List<PickDef> themes = ContentDungeonThemes.usable(def.themes, world.provider.getDimension(), centre, lowest(world, def), surface - def.surfaceBuffer);
         if (themes.isEmpty()) {

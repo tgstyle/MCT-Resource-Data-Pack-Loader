@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.villages;
 
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.util.world.Facings;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardGrade;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
@@ -11,6 +12,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardR
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.*;
 import javax.annotation.Nullable;
@@ -30,8 +32,8 @@ public final class CityCulDeSacs {
     public static void culDeSacs(StructureStart held, World world, Random rand) {
         if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
         List<StructureComponent> components = held.getComponents();
-        if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
-        StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
+        StructureVillagePieces.Start startPiece = CityGrowth.startOf(components);
+        if (startPiece == null) { return; }
         int wide = BeardRoads.pathFullWidth() + 8;
         int sea = world.getSeaLevel();
         int bulbs = 0;
@@ -39,15 +41,15 @@ public final class CityCulDeSacs {
             if (!(piece instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(piece) || CitySeams.reserved(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
-            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
-            int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+            if (BeardRoads.roadNarrow(piece)) { continue; }
+            int center = StructureBoxes.across(box, alongX);
             for (int side = 0; side < 2; side++) {
                 boolean outward = side == 1;
                 int dir = outward ? 1 : -1;
-                int end = alongX ? (outward ? box.maxX : box.minX) : (outward ? box.maxZ : box.minZ);
+                int end = outward ? BeardPlots.most(box, alongX) : BeardPlots.least(box, alongX);
                 int endX = alongX ? end : center;
                 int endZ = alongX ? center : end;
-                if (metAtEnd(world, held, piece, alongX, end, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX)) { continue; }
+                if (metAtEnd(world, held, piece, alongX, end, BeardPlots.acrossLeast(box, alongX), BeardPlots.acrossMost(box, alongX))) { continue; }
                 if (CitySeams.facesNeighbor(world, components, alongX, end, dir, center)) {
                     ContentLog.LOGGER.debug("The dead end at {}, {} faces a neighboring village's site, so it rolls no cul-de-sac and stays open for that village's streets", endX, endZ);
                     continue;
@@ -87,8 +89,8 @@ public final class CityCulDeSacs {
                 boolean dry = true;
                 for (int z = bulb.minZ; z <= bulb.maxZ && dry; z += 2) {
                     for (int x = bulb.minX; x <= bulb.maxX; x += 2) {
-                        int off = (x - discX) * (x - discX) + (z - discZ) * (z - discZ);
-                        if (off > half * half + half) { continue; }
+                        long off = MathUtil.dist2(x, z, discX, discZ);
+                        if (off > (long) half * half + half) { continue; }
                         if (BeardSurface.surfaceAt(world, x, z) < sea - 1) {
                             dry = false;
                             break;
@@ -101,10 +103,7 @@ public final class CityCulDeSacs {
                 StructureVillagePieces.Path bulbPiece = new StructureVillagePieces.Path(startPiece, 0, rand, bulb, facing);
                 components.add(bulbPiece);
                 CityGrowth.laying(true, () -> {
-                    if (!CityLayout.drawn()) {
-                        bulbPiece.buildComponent(startPiece, components, rand);
-                        CityGrowth.drain(startPiece, components, rand);
-                    }
+                    if (!CityLayout.drawn()) { CityGrowth.buildAndDrain(startPiece, bulbPiece, components, rand); }
                 });
                 bulbs++;
                 ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, {} across at {}, {}", endX, endZ, wide, bulb.minX, bulb.minZ);
@@ -120,10 +119,8 @@ public final class CityCulDeSacs {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
             if (BeardPlots.roadAlongX(road) == alongX) { continue; }
-            int least = alongX ? road.minX : road.minZ;
-            int most = alongX ? road.maxX : road.maxZ;
-            if (least - 1 > end || most + 1 < end) { continue; }
-            if ((alongX ? road.maxZ : road.maxX) + 1 < acrossLeast || (alongX ? road.minZ : road.minX) - 1 > acrossMost) { continue; }
+            if (BeardPlots.least(road, alongX) - 1 > end || BeardPlots.most(road, alongX) + 1 < end) { continue; }
+            if (BeardPlots.acrossMost(road, alongX) + 1 < acrossLeast || BeardPlots.acrossLeast(road, alongX) - 1 > acrossMost) { continue; }
             ContentLog.LOGGER.debug("The end of the road at {}, {} is a junction with the road at {}, {}, so it is no dead end and grows no cul-de-sac", piece.getBoundingBox().minX, piece.getBoundingBox().minZ, road.minX, road.minZ);
             return true;
         }
@@ -134,9 +131,7 @@ public final class CityCulDeSacs {
         int span = stem + 2 * half + 1;
         int lo = end + dir * (outward ? 1 : span);
         int hi = end + dir * (outward ? span : 1);
-        return new StructureBoundingBox(
-                alongX ? Math.min(lo, hi) : center - half, box.minY, alongX ? center - half : Math.min(lo, hi),
-                alongX ? Math.max(lo, hi) : center + half, box.maxY, alongX ? center + half : Math.max(lo, hi));
+        return ContentBeard.span(alongX, Math.min(lo, hi), Math.max(lo, hi), center - half, center + half, box.minY, box.maxY);
     }
 
     @Nullable private static List<StructureComponent> yielding(World world, StructureStart held, StructureComponent piece, StructureBoundingBox bulb) {
@@ -146,7 +141,7 @@ public final class CityCulDeSacs {
             if (other == piece || BeardRails.buriedUnder(other, bulb) || !other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { continue; }
             if (other instanceof StructureVillagePieces.Well || other instanceof RailPiece) { return null; }
             if (other instanceof StructureVillagePieces.Path) {
-                if (BeardRoads.roadNarrow(other.getBoundingBox(), BeardPlots.roadAlongX(other))) { continue; }
+                if (BeardRoads.roadNarrow(other)) { continue; }
                 return null;
             }
             plots.add(other);
@@ -186,7 +181,7 @@ public final class CityCulDeSacs {
         int reach = radius + CityGrowth.VERGE;
         for (int z = discZ - reach; z <= discZ + reach; z += 2) {
             for (int x = discX - reach; x <= discX + reach; x += 2) {
-                if ((x - discX) * (x - discX) + (z - discZ) * (z - discZ) > reach * reach + reach) { continue; }
+                if (MathUtil.dist2(x, z, discX, discZ) > (long) reach * reach + reach) { continue; }
                 int ground = BeardSurface.surfaceAt(world, x, z);
                 if (level - ground > BeardGrade.CAP || ground - level > DIG) { return true; }
             }
@@ -202,8 +197,8 @@ public final class CityCulDeSacs {
             StructureBoundingBox held = other.getBoundingBox();
             int nearX = MathHelper.clamp(discX, held.minX, held.maxX);
             int nearZ = MathHelper.clamp(discZ, held.minZ, held.maxZ);
-            int away = (nearX - discX) * (nearX - discX) + (nearZ - discZ) * (nearZ - discZ);
-            if (away <= (radius + 1) * (radius + 1)) { return true; }
+            long away = MathUtil.dist2(nearX, nearZ, discX, discZ);
+            if (away <= (long) (radius + 1) * (radius + 1)) { return true; }
         }
         return false;
     }

@@ -1,31 +1,27 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
+import mctmods.resourcedatapackloader.common.util.Nbts;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.common.util.Constants;
 
 public final class PlayerPersisted {
     private PlayerPersisted() {}
 
-    public static NBTTagCompound of(Entity entity) {
-        NBTTagCompound data = entity.getEntityData();
-        if (!data.hasKey(EntityPlayer.PERSISTED_NBT_TAG, Constants.NBT.TAG_COMPOUND)) { data.setTag(EntityPlayer.PERSISTED_NBT_TAG, new NBTTagCompound()); }
-        return data.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
-    }
+    public static NBTTagCompound of(Entity entity) { return Nbts.child(entity.getEntityData(), EntityPlayer.PERSISTED_NBT_TAG); }
 
     public static NBTTagCompound read(Entity entity, String key) { return entity.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG).getCompoundTag(key); }
 
-    public static NBTTagCompound section(Entity entity, String key) {
-        NBTTagCompound persisted = of(entity);
-        if (!persisted.hasKey(key, Constants.NBT.TAG_COMPOUND)) { persisted.setTag(key, new NBTTagCompound()); }
-        return persisted.getCompoundTag(key);
-    }
+    public static NBTTagCompound section(Entity entity, String key) { return Nbts.child(of(entity), key); }
 
     public static int tally(Entity entity, String section, String key) {
-        NBTTagCompound tally = section(entity, section);
-        int now = tally.getInteger(key) + 1;
-        tally.setInteger(key, now);
+        return bump(section(entity, section), key);
+    }
+
+    public static int bump(NBTTagCompound tag, String key) {
+        int now = tag.getInteger(key) + 1;
+        tag.setInteger(key, now);
         return now;
     }
 

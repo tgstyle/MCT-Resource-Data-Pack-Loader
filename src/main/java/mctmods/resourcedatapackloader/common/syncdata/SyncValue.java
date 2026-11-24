@@ -4,6 +4,9 @@ import mctmods.resourcedatapackloader.common.tooltips.TooltipText;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
@@ -14,6 +17,7 @@ public final class SyncValue {
     public static final int TEXT = 1;
     public static final int NUMBER = 2;
     public static final int BOOL = 3;
+    public static final List<String> KIND_NAMES = Collections.unmodifiableList(Arrays.asList("text", "number", "bool"));
     public final int kind;
     public final String text;
     public final double number;
@@ -48,7 +52,9 @@ public final class SyncValue {
         return primitive.isBoolean() ? (Object) primitive.getAsBoolean() : primitive.getAsString();
     }
 
-    public static String kindName(int kind) { return kind == NUMBER ? "number" : kind == BOOL ? "bool" : "text"; }
+    public static String kindName(int kind) { return KIND_NAMES.get(kind == NUMBER || kind == BOOL ? kind - 1 : 0); }
+
+    public static int kindOf(String type) { return KIND_NAMES.indexOf(type) + 1; }
 
     @Nullable public static SyncValue fromNbt(NBTTagCompound tag, String key) {
         if (!tag.hasKey(key)) { return null; }

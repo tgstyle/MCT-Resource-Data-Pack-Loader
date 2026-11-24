@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.blocks;
 
+import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.types.PropertyVariant;
@@ -13,6 +14,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 
 public final class BlockVariants {
@@ -20,6 +22,14 @@ public final class BlockVariants {
     private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
 
     private BlockVariants() {}
+
+    public static void breakDrops(World world, BlockPos pos, BlockVariant value) {
+        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, value); }
+    }
+
+    public static void gatedBreakDrops(World world, BlockPos pos, BlockDef def, BlockVariant value) {
+        if (!world.isRemote && def.opensWith == null && ContentContainerUpgrades.dropsAllowed()) { VariantDrops.spawnEntities(world, pos, value); }
+    }
 
     public static <T extends Block> T construct(BlockDef def, Function<BlockDef, T> factory) {
         CONSTRUCTING.set(def);

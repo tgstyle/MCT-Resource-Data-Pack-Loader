@@ -22,6 +22,7 @@ public final class PackListRules {
     private static final String TOP = "top";
     private static final String BOTTOM = "bottom";
     private static final String MARKER = "packlist.seen";
+    public static final Rule NO_RULE = new Rule();
     private static final Map<String, Rule> RULES = new HashMap<>();
     private static final List<String> DEFAULTS = new ArrayList<>();
     private static int allowedFailures;
@@ -46,9 +47,9 @@ public final class PackListRules {
     public static String id(String raw) { return raw.startsWith(FILE_PREFIX) ? raw.substring(FILE_PREFIX.length()) : raw; }
     public static boolean own(String raw) { return RDPLResourcePack.NORMAL_NAME.equals(id(raw)) || RDPLResourcePack.OVERRIDING_NAME.equals(id(raw)); }
 
-    @Nullable public static Rule rule(String raw) {
+    public static Rule rule(String raw) {
         load();
-        return RULES.get(id(raw));
+        return RULES.getOrDefault(id(raw), NO_RULE);
     }
 
     public static Map<String, Rule> rules() {
@@ -65,7 +66,7 @@ public final class PackListRules {
         load();
         Path root = PackManager.get().getRoot();
         if (root == null || DEFAULTS.isEmpty()) { return false; }
-        Path marker = root.resolve("config").resolve(MARKER);
+        Path marker = PackManager.config(root, MARKER);
         if (Files.exists(marker)) { return false; }
         try {
             Files.createDirectories(marker.getParent());
@@ -90,7 +91,7 @@ public final class PackListRules {
     private static synchronized void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEach(PackManager.PACKLIST, PackManager.JSON, (namespace, path, contents) -> read(namespace + ":" + path, contents));
+        PackManager.get().forEach(PackManager.PACKLIST, PackManager.JSON, (namespace, path, contents) -> read(RDPLPack.id(namespace, path), contents));
         if (!RULES.isEmpty() || !DEFAULTS.isEmpty()) { ContentLog.LOGGER.info("Pack list: {} rule(s), default packs {}, fall back after {} failed reload(s)", RULES.size(), DEFAULTS, allowedFailures); }
     }
 
@@ -111,7 +112,7 @@ public final class PackListRules {
                         for (Map.Entry<String, JsonElement> pack : entry.getValue().getAsJsonObject().entrySet()) { RULES.put(id(pack.getKey()), rule(file, pack.getKey(), pack.getValue().getAsJsonObject(), RULES.get(id(pack.getKey())))); }
                         break;
                     default:
-                        ContentLog.LOGGER.error("Pack list {} sets '{}', which is not a setting anything reads, so it does nothing", file, entry.getKey());
+                        ContentControl.unknownSetting("Pack list " + file, entry.getKey(), "", "");
                 }
             }
         }
@@ -148,7 +149,7 @@ public final class PackListRules {
                     else { rule.top = TOP.equals(place); }
                     break;
                 default:
-                    ContentLog.LOGGER.error("Pack list {} sets '{}' on {}, which is not a setting anything reads, so it does nothing", file, entry.getKey(), id);
+                    ContentControl.unknownSetting("Pack list " + file, entry.getKey(), " on " + id, "");
             }
         }
         return rule;

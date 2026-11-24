@@ -39,6 +39,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
             return block.getMethod("getAiPathNodeType", IBlockState.class, IBlockAccess.class, BlockPos.class, EntityLiving.class).getDeclaringClass() != Block.class
                     || block.getMethod("getAiPathNodeType", IBlockState.class, IBlockAccess.class, BlockPos.class).getDeclaringClass() != Block.class;
         }
-        catch (NoSuchMethodException ex) { return true; }
+        catch (NoSuchMethodException | LinkageError ex) { return true; }
     }
 }

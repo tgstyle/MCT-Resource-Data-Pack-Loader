@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.syncdata.DataText;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+import mctmods.resourcedatapackloader.common.util.dimension.DimensionNames;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
@@ -27,7 +29,7 @@ public final class CardSend {
     private static final int FADE_IN = 10;
     private static final int FADE_OUT = 20;
     private static final String TEXT = "{text}";
-    private static final Map<UUID, List<CardLook>> HELD = new HashMap<>();
+    private static final Map<UUID, List<CardLook>> HELD = PlayerLogout.track(new HashMap<>());
 
     private CardSend() {}
 
@@ -47,7 +49,7 @@ public final class CardSend {
             look.lines = lines;
         }
         if (rule.icon != null) { look.icon = rule.icon.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(new ResourceLocation(rule.key), rule.icon, 1); }
-        if (rule.color != null && !rule.color.isEmpty()) { look.background = ContentTypes.color(rule.color, "card rule " + rule.key) & 0xFFFFFF; }
+        if (rule.color != null && !rule.color.isEmpty()) { look.background = ContentTypes.rgb(rule.color, "card rule " + rule.key); }
         if (rule.image != null) { look.image = rule.image; }
         if (rule.background != null) { look.panel = rule.background; }
         if (rule.font != null) { look.font = rule.font; }
@@ -63,7 +65,7 @@ public final class CardSend {
         for (Map.Entry<String, String> arg : args.entrySet()) { given = given.replace("{" + arg.getKey() + "}", arg.getValue()); }
         String done = given.replace(TEXT, String.join(" ", said))
                 .replace("{player}", subject.getName())
-                .replace("{dim}", CardPlace.dimensionName(subject.dimension))
+                .replace("{dim}", DimensionNames.dimensionName(subject.dimension))
                 .replace("{biome}", CardPlace.biomeName(subject))
                 .replace("{day}", Long.toString(CardPlace.day(subject.world)));
         return done.contains(DataText.OPEN) ? DataText.fill(done, DataReader.server(subject)) : done;
@@ -126,6 +128,4 @@ public final class CardSend {
         if (held == null) { return; }
         for (CardLook look : held) { send(look, player); }
     }
-
-    static void forget(UUID player) { HELD.remove(player); }
 }

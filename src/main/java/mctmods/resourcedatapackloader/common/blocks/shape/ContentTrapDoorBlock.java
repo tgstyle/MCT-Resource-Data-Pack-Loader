@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.blocks.shape;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,13 +23,7 @@ public class ContentTrapDoorBlock extends BlockTrapDoor implements IContentBlock
     public ContentTrapDoorBlock(BlockDef def) {
         super(def.material);
         this.def = def;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyNamed(this, def);
     }
 
     @Override public BlockDef getDef() { return def; }

@@ -17,6 +17,8 @@ import javax.annotation.Nullable;
 import net.minecraft.util.math.MathHelper;
 
 final class ContentCofhFields {
+    static final int DEFAULT_WEIGHT = 100;
+    static final String DEFAULT_BLOCK = "minecraft:stone";
     private static final Map<String, String> TURN_NAMES = new HashMap<>();
 
     static {
@@ -49,44 +51,44 @@ final class ContentCofhFields {
         switch (distribution) {
             case "gaussian":
                 int center = integer(source, "center-height", 64);
-                int range = Math.max(1, integer(source, "spread", 16));
-                spread.addProperty("type", SpreadDef.CENTERED);
+                int range = Math.max(1, integer(source, CofhKeys.SOURCE_SPREAD, 16));
+                spread.addProperty(CofhKeys.TYPE, SpreadDef.CENTERED);
                 spread.addProperty("center", center);
                 spread.addProperty("range", range);
-                spread.addProperty("smoothness", integer(source, "smoothness", 2));
-                out.addProperty("minHeight", Math.max(0, center - range));
-                out.addProperty("maxHeight", center + range);
-                out.add("spread", spread);
+                spread.addProperty("smoothness", integer(source, CofhKeys.SOURCE_SMOOTHNESS, 2));
+                heights(out, Math.max(0, center - range), center + range);
+                out.add(CofhKeys.SPREAD, spread);
                 return;
             case "fractal":
-                int least = bound(source, "min-height", 0, true);
-                int veinHeight = integer(source, "vein-height", 64);
-                spread.addProperty("type", SpreadDef.SPRAWL);
+                int least = bound(source, CofhKeys.SOURCE_MIN_HEIGHT, 0, true);
+                int veinHeight = integer(source, CofhKeys.SOURCE_VEIN_HEIGHT, 64);
+                spread.addProperty(CofhKeys.TYPE, SpreadDef.SPRAWL);
                 spread.addProperty("veinHeight", veinHeight);
                 spread.addProperty("veinDiameter", integer(source, "vein-diameter", 12));
                 spread.addProperty("verticalDensity", integer(source, "vertical-density", 16));
                 spread.addProperty("horizontalDensity", integer(source, "horizontal-density", 32));
-                out.addProperty("minHeight", least);
-                out.addProperty("maxHeight", least + veinHeight);
-                out.add("spread", spread);
+                heights(out, least, least + veinHeight);
+                out.add(CofhKeys.SPREAD, spread);
                 return;
             case "custom":
-                out.addProperty("minHeight", bound(source, "y-offset", 0, true));
-                out.addProperty("maxHeight", bound(source, "y-offset", 64, false));
+                heights(out, bound(source, "y-offset", 0, true), bound(source, "y-offset", 64, false));
                 return;
         }
         String surface = surfaced(distribution);
         if (surface != null) {
-            spread.addProperty("type", surface);
-            if ("cave".equals(distribution) && "true".equalsIgnoreCase(Json.getString(source, "ceiling", "false"))) { spread.addProperty("ceiling", true); }
-            out.addProperty("minHeight", bound(source, "min-height", 0, true));
-            out.addProperty("maxHeight", bound(source, "max-height", 256, false) - 1);
-            out.add("spread", spread);
+            spread.addProperty(CofhKeys.TYPE, surface);
+            if ("cave".equals(distribution) && Json.getBoolean(source, "ceiling", false)) { spread.addProperty("ceiling", true); }
+            heights(out, bound(source, CofhKeys.SOURCE_MIN_HEIGHT, 0, true), bound(source, "max-height", 256, false) - 1);
+            out.add(CofhKeys.SPREAD, spread);
             return;
         }
         if (!"uniform".equals(distribution)) { ContentLog.LOGGER.warn("CoFH World entry '{}' uses the '{}' distribution, which has nothing to convert to, spreading it evenly instead", name, distribution); }
-        out.addProperty("minHeight", bound(source, "min-height", 0, true));
-        out.addProperty("maxHeight", bound(source, "max-height", 64, false) - 1);
+        heights(out, bound(source, CofhKeys.SOURCE_MIN_HEIGHT, 0, true), bound(source, "max-height", 64, false) - 1);
+    }
+
+    private static void heights(JsonObject out, int min, int max) {
+        out.addProperty(CofhKeys.MIN_HEIGHT, min);
+        out.addProperty(CofhKeys.MAX_HEIGHT, max);
     }
 
     @Nullable private static String surfaced(String distribution) {
@@ -118,7 +120,7 @@ final class ContentCofhFields {
     }
 
     static String raw(JsonObject generator) {
-        JsonElement element = generator.get("structure");
+        JsonElement element = generator.get(CofhKeys.SOURCE_STRUCTURE);
         if (element == null) { return ""; }
         if (element.isJsonArray()) { element = element.getAsJsonArray().size() == 0 ? null : element.getAsJsonArray().get(0); }
         if (element == null) { return ""; }
@@ -131,8 +133,8 @@ final class ContentCofhFields {
         JsonObject one = element.getAsJsonObject();
         String name = Json.getString(one, "name", "");
         if (name.isEmpty()) { return ""; }
-        int meta = integer(one, "data", integer(one, "metadata", -1));
-        return meta < 0 ? qualified(name) : qualified(name) + ":" + Math.min(15, meta);
+        int meta = meta(one, -1);
+        return meta < 0 ? qualified(name) : qualified(name) + ":" + meta;
     }
 
     static void amount(JsonObject source, String key, JsonObject out, String name, int fallback) {
@@ -183,6 +185,8 @@ final class ContentCofhFields {
         return fallback;
     }
 
+    private static int meta(JsonObject one, int fallback) { return Math.min(15, integer(one, "data", integer(one, "metadata", fallback))); }
+
     static int integer(JsonObject source, String key, int fallback) {
         JsonElement element = source.get(key);
         if (!number(element)) { return fallback; }
@@ -196,7 +200,7 @@ final class ContentCofhFields {
         if (block == null) { return null; }
         JsonArray out = new JsonArray();
         if (block.isJsonPrimitive()) {
-            out.add(weighted(qualified(block.getAsString()), 0, 100, new JsonObject()));
+            out.add(plain(qualified(block.getAsString())));
             return out;
         }
         if (block.isJsonObject()) {
@@ -204,7 +208,7 @@ final class ContentCofhFields {
             return out;
         }
         for (JsonElement element : block.getAsJsonArray()) {
-            if (element.isJsonPrimitive()) { out.add(weighted(qualified(element.getAsString()), 0, 100, new JsonObject())); }
+            if (element.isJsonPrimitive()) { out.add(plain(qualified(element.getAsString()))); }
             else if (element.isJsonObject()) { out.add(entry(element.getAsJsonObject())); }
         }
         return out.size() == 0 ? null : out;
@@ -212,8 +216,8 @@ final class ContentCofhFields {
 
     private static JsonObject entry(JsonObject one) {
         JsonObject properties = properties(one);
-        int meta = properties.entrySet().isEmpty() ? MathHelper.clamp(integer(one, "data", integer(one, "metadata", 0)), 0, 15) : 0;
-        return weighted(qualified(Json.getString(one, "name", "")), meta, MathHelper.clamp(integer(one, "weight", 100), 1, 1000000), properties);
+        int meta = properties.entrySet().isEmpty() ? Math.max(0, meta(one, 0)) : 0;
+        return weighted(qualified(Json.getString(one, "name", "")), meta, MathHelper.clamp(integer(one, "weight", DEFAULT_WEIGHT), 1, 1000000), properties);
     }
 
     private static JsonObject properties(JsonObject one) {
@@ -226,6 +230,8 @@ final class ContentCofhFields {
         }
         return out;
     }
+
+    static JsonObject plain(String block) { return weighted(block, 0, DEFAULT_WEIGHT, new JsonObject()); }
 
     static JsonObject weighted(String block, int meta, int weight, JsonObject properties) {
         JsonObject one = new JsonObject();
@@ -277,7 +283,7 @@ final class ContentCofhFields {
     static JsonArray material(JsonObject generator) {
         JsonArray out = new JsonArray();
         JsonElement material = generator.get("material");
-        if (material == null) { out.add("minecraft:stone"); return out; }
+        if (material == null) { out.add(DEFAULT_BLOCK); return out; }
         if (!material.isJsonArray()) { out.add(target(material)); return out; }
         for (JsonElement element : material.getAsJsonArray()) { out.add(target(element)); }
         return out;
@@ -287,16 +293,18 @@ final class ContentCofhFields {
         if (!material.isJsonObject()) { return new JsonPrimitive(qualified(material.getAsString())); }
         JsonObject one = material.getAsJsonObject();
         JsonObject out = new JsonObject();
-        out.addProperty("block", qualified(Json.getString(one, "name", "minecraft:stone")));
+        out.addProperty("block", qualified(Json.getString(one, "name", DEFAULT_BLOCK)));
         JsonObject properties = properties(one);
         if (!properties.entrySet().isEmpty()) {
             out.add("properties", properties);
             return out;
         }
-        int meta = integer(one, "data", integer(one, "metadata", -1));
-        if (meta >= 0) { out.addProperty("meta", Math.min(15, meta)); }
+        int meta = meta(one, -1);
+        if (meta >= 0) { out.addProperty("meta", meta); }
         return out;
     }
+
+    private static boolean blacklisted(JsonObject one) { return "blacklist".equalsIgnoreCase(Json.getString(one, "restriction", "whitelist")); }
 
     static void dimensions(JsonObject source, JsonObject out) {
         JsonElement dimension = source.get("dimension");
@@ -305,7 +313,7 @@ final class ContentCofhFields {
         JsonArray values = Json.getJsonArray(one, "value", new JsonArray());
         if (values.size() == 0) { return; }
         out.add("dimensions", values);
-        if ("blacklist".equalsIgnoreCase(Json.getString(one, "restriction", "whitelist"))) { out.addProperty("dimensionsAreBlacklist", true); }
+        if (blacklisted(one)) { out.addProperty("dimensionsAreBlacklist", true); }
     }
 
     static void biomes(JsonObject source, JsonObject out) {
@@ -318,11 +326,11 @@ final class ContentCofhFields {
             if (element.isJsonPrimitive()) { names.add(element.getAsString()); continue; }
             if (!element.isJsonObject()) { continue; }
             JsonObject value = element.getAsJsonObject();
-            if ("dictionary".equalsIgnoreCase(Json.getString(value, "type", ""))) { types.add(Json.getString(value, "entry", "").toUpperCase(Locale.ROOT)); }
+            if ("dictionary".equalsIgnoreCase(Json.getString(value, CofhKeys.SOURCE_TYPE, ""))) { types.add(Json.getString(value, "entry", "").toUpperCase(Locale.ROOT)); }
             else { names.add(Json.getString(value, "entry", Json.getString(value, "name", ""))); }
         }
         if (names.size() > 0) { out.add("biomes", names); }
         if (types.size() > 0) { out.add("biomeTypes", types); }
-        if ((names.size() > 0 || types.size() > 0) && "blacklist".equalsIgnoreCase(Json.getString(one, "restriction", "whitelist"))) { out.addProperty("biomesAreBlacklist", true); }
+        if ((names.size() > 0 || types.size() > 0) && blacklisted(one)) { out.addProperty("biomesAreBlacklist", true); }
     }
 }

@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CityMapDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorlds;
 import mctmods.resourcedatapackloader.common.villages.CityLayout;
-import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
@@ -13,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -33,13 +31,11 @@ public final class ContentCityMaps {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        Json.eachFile(PackManager.CITYMAPS, "city map", (key, contents) -> {
+        Json.loadDefs(DEFS, PackManager.CITYMAPS, "city map", (key, contents) -> {
             JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
             if (json != null) { Json.unknownKeys(json, "the top level", CITY_MAP_KEYS); }
-            CityMapDef def = ContentParserWorlds.cityMap(key, contents);
-            if (def != null) { DEFS.put(key.toString(), def); }
+            return ContentParserWorlds.cityMap(key, contents);
         });
-        if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} city map(s): {}", DEFS.size(), DEFS.keySet()); }
     }
 
     @Nullable public static JsonElement setting(String key) {
@@ -49,5 +45,5 @@ public final class ContentCityMaps {
         return def.settings.get(key);
     }
 
-    @Nullable public static CityMapDef byName(String name) { return name == null || name.isEmpty() ? null : DEFS.get(name.toLowerCase(Locale.ROOT)); }
+    @Nullable public static CityMapDef byName(String name) { return Json.byName(DEFS, name); }
 }

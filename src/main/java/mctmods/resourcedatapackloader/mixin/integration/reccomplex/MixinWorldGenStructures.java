@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.integration.reccomplex;
 
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
 import mctmods.resourcedatapackloader.core.integration.reccomplex.ISheddingData;
 
@@ -20,7 +21,7 @@ import net.minecraft.world.WorldServer;
 
 @Mixin(value = WorldGenStructures.class, remap = false) public abstract class MixinWorldGenStructures {
     @Inject(method = "decorate", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$holdTheStructures(WorldServer world, Random random, ChunkPos chunkPos, @Nullable Predicate<Structure<?>> structurePredicate, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentStructures.blocks(world, "reccomplex")) { cir.setReturnValue(Boolean.FALSE); }
+        if (ContentStructures.blocks(world, ContentStructurePlacement.RECCOMPLEX)) { cir.setReturnValue(Boolean.FALSE); }
     }
 
     @Inject(method = "complementStructuresInChunk", at = @At("RETURN"), remap = false) private static void rdpl$shedComplementedStructures(ChunkPos chunkPos, WorldServer world, List<WorldStructureGenerationData.StructureEntry> complement, CallbackInfo cbi) {

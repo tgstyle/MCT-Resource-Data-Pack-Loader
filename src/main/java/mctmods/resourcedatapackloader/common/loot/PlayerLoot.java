@@ -22,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootTable;
@@ -45,20 +46,15 @@ public final class PlayerLoot {
     private PlayerLoot() {}
 
     private static void reload() {
-        ENTRIES.clear();
-        GENERATION.stale();
-        if (!Config.data.playerLoot) { return; }
-        Json.eachObject(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
-        if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        GENERATION.load(Config.data.playerLoot, ENTRIES::clear, PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read, () -> {
+            if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", LOOT_KEYS);
-        String table = Json.getString(json, TABLE, "");
-        if (table.isEmpty()) {
-            ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
-            return;
-        }
+        String table = Json.required(json, TABLE, key, "Player loot {} has no table, ignoring it");
+        if (table.isEmpty()) { return; }
         String mode = Json.getString(json, MODE, ADD);
         if (!mode.equals(ADD) && !mode.equals(REPLACE)) {
             ContentLog.LOGGER.error("Player loot {} has mode '{}', which is neither '{}' nor '{}', ignoring it", key, mode, ADD, REPLACE);
@@ -78,7 +74,9 @@ public final class PlayerLoot {
         for (EntityItem drop : drops) { player.world.spawnEntity(drop); }
     }
 
-    public static boolean keeping(EntityPlayer player) { return player.world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator(); }
+    public static boolean keepInventory(World world) { return world.getGameRules().getBoolean(KEEP_INVENTORY_RULE); }
+
+    public static boolean keeping(EntityPlayer player) { return keepInventory(player.world) || player.isSpectator(); }
 
     private static void roll(EntityPlayer player, DamageSource source, boolean recentlyHit, List<EntityItem> drops) {
         if (!Config.data.playerLoot) { return; }

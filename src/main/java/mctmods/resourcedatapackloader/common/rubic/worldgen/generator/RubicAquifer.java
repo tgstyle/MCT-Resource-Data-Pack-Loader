@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.common.rubic.worldgen.generator;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentOceanFluid;
+import mctmods.resourcedatapackloader.core.util.Maps;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
@@ -103,7 +105,7 @@ public final class RubicAquifer {
         for (int x1 = 0; x1 <= 1; x1++) {
             for (int y1 = -1; y1 <= 1; y1++) {
                 for (int z1 = 0; z1 <= 1; z1++) {
-                    long cell = cellKey(xAnchor + x1, yAnchor + y1, zAnchor + z1);
+                    long cell = Longs.pack21(xAnchor + x1, yAnchor + y1, zAnchor + z1);
                     int[] location = location(cell, xAnchor + x1, yAnchor + y1, zAnchor + z1);
                     long dx = location[0] - x;
                     long dy = location[1] - y;
@@ -176,7 +178,7 @@ public final class RubicAquifer {
                 gridY * 12 + (int) Math.floorMod(hash >>> 20, 9),
                 (gridZ << 4) + (int) Math.floorMod(hash >>> 40, 10)
         };
-        if (locations.size() > CACHE_LIMIT) { locations.clear(); }
+        Maps.bound(locations, CACHE_LIMIT);
         locations.put(cell, made);
         return made;
     }
@@ -184,7 +186,7 @@ public final class RubicAquifer {
     private long status(long cell, int[] location) {
         if (statuses.containsKey(cell)) { return statuses.get(cell); }
         long made = computeFluid(location[0], location[1], location[2]);
-        if (statuses.size() > CACHE_LIMIT) { statuses.clear(); }
+        Maps.bound(statuses, CACHE_LIMIT);
         statuses.put(cell, made);
         return made;
     }
@@ -243,7 +245,7 @@ public final class RubicAquifer {
         if (surfaces.containsKey(key)) { return surfaces.get(key); }
         Biome biome = world.getBiomeProvider().getBiome(new BlockPos((x & ~15) + 8, 0, (z & ~15) + 8), Biomes.PLAINS);
         int estimate = SEA_LEVEL + Math.round(biome.getBaseHeight() * 17.0F + Math.max(0.0F, biome.getHeightVariation()) * 8.0F);
-        if (surfaces.size() > CACHE_LIMIT) { surfaces.clear(); }
+        Maps.bound(surfaces, CACHE_LIMIT);
         surfaces.put(key, estimate);
         return estimate;
     }
@@ -262,8 +264,6 @@ public final class RubicAquifer {
     private static int level(long status) { return (int) (status >> 2); }
 
     private static int kind(long status) { return (int) (status & 3L); }
-
-    private static long cellKey(int x, int y, int z) { return ((x & 0x1FFFFFL) << 42) | ((y & 0x1FFFFFL) << 21) | (z & 0x1FFFFFL); }
 
     private static int gridX(int block) { return block >> 4; }
 

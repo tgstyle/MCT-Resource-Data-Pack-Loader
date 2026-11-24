@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.util.ScreenEvents;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -16,8 +17,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private CreateWorldPack() {}
 
     @SubscribeEvent public static void showPackChoices(GuiScreenEvent.InitGuiEvent.Pre event) {
-        if (!(event.getGui() instanceof GuiCreateWorld)) { return; }
-        GuiCreateWorld screen = (GuiCreateWorld) event.getGui();
+        GuiCreateWorld screen = ScreenEvents.screen(event, GuiCreateWorld.class);
+        if (screen == null) { return; }
         String named = ContentTerrain.worldName();
         String seed = ContentTerrain.worldSeed();
         String fresh = I18n.format("selectWorld.newWorld");
@@ -35,8 +36,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     @SubscribeEvent public static void lockSeed(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (!(event.getGui() instanceof GuiCreateWorld)) { return; }
-        GuiCreateWorld screen = (GuiCreateWorld) event.getGui();
+        GuiCreateWorld screen = ScreenEvents.screen(event, GuiCreateWorld.class);
+        if (screen == null) { return; }
         if (ContentTerrain.worldSeed().isEmpty() || screen.worldSeedField == null) { return; }
         screen.worldSeedField.setEnabled(false);
     }

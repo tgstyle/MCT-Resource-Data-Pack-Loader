@@ -41,11 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true) private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
         World world = ((MapGenBase) (Object) this).world;
-        if (!ContentStructurePlacement.allows(ContentStructurePlacement.TEMPLES, world, chunkX, chunkZ)) {
-            cir.setReturnValue(false);
-            return;
-        }
-        if (ContentBeard.wanted() && ContentBeard.roughGround(world, chunkX * 16 + 8, chunkZ * 16 + 8, rdpl$reach(world, chunkX, chunkZ), 6)) { cir.setReturnValue(false); }
+        if (!ContentStructurePlacement.allows(ContentStructurePlacement.TEMPLES, world, chunkX, chunkZ) || (ContentBeard.wanted() && ContentBeard.roughGround(world, chunkX * 16 + 8, chunkZ * 16 + 8, rdpl$reach(world, chunkX, chunkZ), 6))) { cir.setReturnValue(false); }
     }
 
     @Unique private int rdpl$reach(World world, int chunkX, int chunkZ) {

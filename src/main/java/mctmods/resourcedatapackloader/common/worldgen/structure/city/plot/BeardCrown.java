@@ -60,9 +60,11 @@ public final class BeardCrown {
 
     private static boolean reaches(StructureBoundingBox box, StructureBoundingBox clip) { return box.intersectsWith(clip.minX - CROWN_REACH, clip.minZ - CROWN_REACH, clip.maxX + CROWN_REACH, clip.maxZ + CROWN_REACH); }
 
+    private static boolean crownsNear(StructureComponent piece, StructureBoundingBox clip) { return crownable(piece) && reaches(piece.getBoundingBox(), clip); }
+
     public static boolean crowns(StructureStart start, StructureBoundingBox clip) {
         for (StructureComponent piece : start.getComponents()) {
-            if (crownable(piece) && reaches(piece.getBoundingBox(), clip)) { return true; }
+            if (crownsNear(piece, clip)) { return true; }
         }
         return false;
     }
@@ -70,9 +72,8 @@ public final class BeardCrown {
     public static void crownWindow(StructureStart start, World world, StructureBoundingBox clip, Born born) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (StructureComponent piece : start.getComponents()) {
-            if (!crownable(piece)) { continue; }
+            if (!crownsNear(piece, clip)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
-            if (!reaches(box, clip)) { continue; }
             Crowning crowning = crown(start, piece, world, box, clip, at, born);
             if (crowning.crowned() + crowning.passed() > 0) { ContentLog.LOGGER.debug("Crowned {} block(s) around {} at {}, {} back with the surface the land was born with, passed over {}", crowning.crowned(), piece.getClass().getSimpleName(), box.minX, box.minZ, crowning.skips()); }
         }

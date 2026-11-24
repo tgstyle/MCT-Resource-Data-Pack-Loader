@@ -11,8 +11,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTr
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -41,10 +43,8 @@ public final class ContentRuleSwitch {
 
     @Nullable public static RuleSwitchDef parse(String owner, @Nullable JsonElement element, boolean local, boolean precipitation) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives rules that is not an object of dayLength, weather, weatherSpeed, difficulty, localDifficulty, sleep, wakeAt and snow keys, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "rules", element, "an object of dayLength, weather, weatherSpeed, difficulty, localDifficulty, sleep, wakeAt and snow keys");
+        if (json == null) { return null; }
         long dayLength = -1L;
         int weather = RuleSwitchDef.UNSET;
         float speed = 1.0F;
@@ -53,7 +53,7 @@ public final class ContentRuleSwitch {
         boolean sleep = true;
         int wakeAt = -1;
         SnowRuleDef snow = SnowRuleDef.NONE;
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
             if (!KEYS.contains(key)) {
@@ -70,16 +70,17 @@ public final class ContentRuleSwitch {
                 case "weatherSpeed": speed = speed(owner, value); break;
                 case "difficulty": difficulty = difficulty(owner, value); break;
                 case "localDifficulty": localDifficulty = hardness(owner, value); break;
-                case "sleep": sleep = flag(owner, "rules.sleep", value, true); break;
+                case "sleep": sleep = Json.flag(owner, "rules.sleep", value, true); break;
                 case "snow": snow = snow(owner, value); break;
-                default: wakeAt = wakeAt(owner, value); break;
+                case "wakeAt": wakeAt = wakeAt(owner, value); break;
+                default: ContentLog.LOGGER.error("{} gives rules.{}, which is not a rules key, ignoring it", owner, key); break;
             }
         }
         return new RuleSwitchDef(dayLength, weather, speed, difficulty, localDifficulty, sleep, wakeAt, snow);
     }
 
     private static long length(String owner, JsonElement value) {
-        Float number = ContentSpawnSwitch.number(owner, "rules.dayLength", value, true);
+        Float number = Json.number(owner, "rules.dayLength", value, true);
         if (number == null) { return -1L; }
         if (number < 1.0F) {
             ContentLog.LOGGER.error("{} gives rules.dayLength as {}, which is not above zero, ignoring it", owner, value);
@@ -89,9 +90,10 @@ public final class ContentRuleSwitch {
     }
 
     private static int weather(String owner, JsonElement value, boolean precipitation) {
-        String name = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? Settings.lower(value.getAsString()) : "";
+        String text = Json.text(value);
+        String name = text == null ? "" : Settings.lower(text);
         int kind = name.equals("clear") ? RuleSwitchDef.CLEAR : name.equals("rain") ? RuleSwitchDef.RAIN : name.equals("thunder") ? RuleSwitchDef.THUNDER : RuleSwitchDef.UNSET;
-        if (kind == RuleSwitchDef.UNSET) { ContentLog.LOGGER.error("{} gives rules.weather as {}, which is not one of clear, rain or thunder, ignoring it", owner, value); }
+        if (kind == RuleSwitchDef.UNSET) { Json.bad(owner, "rules.weather", value, "one of clear, rain or thunder"); }
         else if (kind != RuleSwitchDef.CLEAR && !precipitation) {
             ContentLog.LOGGER.error("{} gives rules.weather as {}, but the dimension has precipitation off, ignoring it", owner, value);
             return RuleSwitchDef.UNSET;
@@ -100,7 +102,7 @@ public final class ContentRuleSwitch {
     }
 
     private static float speed(String owner, JsonElement value) {
-        Float number = ContentSpawnSwitch.number(owner, "rules.weatherSpeed", value, false);
+        Float number = Json.number(owner, "rules.weatherSpeed", value, false);
         if (number == null) { return 1.0F; }
         if (number > ContentGrowSwitch.MOST) {
             ContentLog.LOGGER.error("{} gives rules.weatherSpeed as {}, which is above {}, ignoring it", owner, value, (int) ContentGrowSwitch.MOST);
@@ -110,13 +112,14 @@ public final class ContentRuleSwitch {
     }
 
     @Nullable private static EnumDifficulty difficulty(String owner, JsonElement value) {
-        EnumDifficulty found = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? ContentServer.difficultyFrom(value.getAsString()) : null;
-        if (found == null) { ContentLog.LOGGER.error("{} gives rules.difficulty as {}, which is not one of peaceful, easy, normal or hard, ignoring it", owner, value); }
+        String name = Json.text(value);
+        EnumDifficulty found = name == null ? null : ContentServer.difficultyFrom(name);
+        if (found == null) { Json.bad(owner, "rules.difficulty", value, "one of peaceful, easy, normal or hard"); }
         return found;
     }
 
     private static float hardness(String owner, JsonElement value) {
-        Float number = ContentSpawnSwitch.number(owner, "rules.localDifficulty", value, false);
+        Float number = Json.number(owner, "rules.localDifficulty", value, false);
         if (number == null) { return -1.0F; }
         if (number > HARDEST) {
             ContentLog.LOGGER.error("{} gives rules.localDifficulty as {}, which is above {}, ignoring it", owner, value, HARDEST);
@@ -125,29 +128,21 @@ public final class ContentRuleSwitch {
         return number;
     }
 
-    private static boolean flag(String owner, String key, JsonElement value, boolean fallback) {
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return value.getAsBoolean(); }
-        ContentLog.LOGGER.error("{} gives {} as {}, which is not true or false, ignoring it", owner, key, value);
-        return fallback;
-    }
-
     private static SnowRuleDef snow(String owner, JsonElement element) {
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives rules.snow that is not an object of place, freeze, whenDry, melt, meltChance and meltBlocks keys, ignoring it", owner);
-            return SnowRuleDef.NONE;
-        }
+        JsonObject json = Json.object(owner, "rules.snow", element, "an object of place, freeze, whenDry, melt, meltChance and meltBlocks keys");
+        if (json == null) { return SnowRuleDef.NONE; }
         int place = SnowRuleDef.DEFAULT;
         int freeze = SnowRuleDef.DEFAULT;
         boolean whenDry = false;
         boolean melt = false;
         float meltChance = SnowRuleDef.MELT_CHANCE;
         Set<Block> meltBlocks = SnowRuleDef.MELT_BLOCKS;
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             JsonElement value = entry.getValue();
             switch (entry.getKey()) {
                 case "place": place = snowMode(owner, "rules.snow.place", value); break;
                 case "freeze": freeze = snowMode(owner, "rules.snow.freeze", value); break;
-                case "whenDry": whenDry = flag(owner, "rules.snow.whenDry", value, false); break;
+                case "whenDry": whenDry = Json.flag(owner, "rules.snow.whenDry", value, false); break;
                 case "melt": melt = melt(owner, value); break;
                 case "meltChance": meltChance = meltChance(owner, value); break;
                 case "meltBlocks": meltBlocks = meltBlocks(owner, value); break;
@@ -158,48 +153,42 @@ public final class ContentRuleSwitch {
     }
 
     private static int snowMode(String owner, String key, JsonElement value) {
-        int mode = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? SnowRuleDef.MODES.indexOf(Settings.lower(value.getAsString())) : -1;
+        String name = Json.text(value);
+        int mode = name == null ? -1 : SnowRuleDef.MODES.indexOf(Settings.lower(name));
         if (mode >= 0) { return mode; }
-        ContentLog.LOGGER.error("{} gives {} as {}, which is not one of default, biome, any or never, ignoring it", owner, key, value);
+        Json.bad(owner, key, value, "one of default, biome, any or never");
         return SnowRuleDef.DEFAULT;
     }
 
     private static boolean melt(String owner, JsonElement value) {
-        String name = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? Settings.lower(value.getAsString()) : "";
+        String text = Json.text(value);
+        String name = text == null ? "" : Settings.lower(text);
         if (name.equals("always")) { return true; }
-        if (!name.equals("never")) { ContentLog.LOGGER.error("{} gives rules.snow.melt as {}, which is not never or always, ignoring it", owner, value); }
+        if (!name.equals("never")) { Json.bad(owner, "rules.snow.melt", value, "never or always"); }
         return false;
     }
 
     private static float meltChance(String owner, JsonElement value) {
-        Float number = ContentSpawnSwitch.number(owner, "rules.snow.meltChance", value, false);
+        Float number = Json.number(owner, "rules.snow.meltChance", value, false);
         if (number == null) { return SnowRuleDef.MELT_CHANCE; }
         if (number <= 0.0F || number > 1.0F) {
-            ContentLog.LOGGER.error("{} gives rules.snow.meltChance as {}, which is not above 0 and at most 1, ignoring it", owner, value);
+            Json.bad(owner, "rules.snow.meltChance", value, "above 0 and at most 1");
             return SnowRuleDef.MELT_CHANCE;
         }
         return number;
     }
 
     private static Set<Block> meltBlocks(String owner, JsonElement value) {
-        if (!value.isJsonArray()) {
-            ContentLog.LOGGER.error("{} gives rules.snow.meltBlocks that is not a list of block ids, ignoring it", owner);
-            return SnowRuleDef.MELT_BLOCKS;
-        }
         Set<Block> blocks = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (JsonElement entry : value.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
-                ContentLog.LOGGER.error("{} gives rules.snow.meltBlocks an entry {} that is not a block id, ignoring it", owner, entry);
-                continue;
-            }
-            Block block = ContentStates.block(entry.getAsString().trim(), owner + " rules.snow.meltBlocks");
+        Json.each(owner, "rules.snow.meltBlocks", value, "block id", name -> {
+            Block block = ContentStates.block(name.trim(), owner + " rules.snow.meltBlocks");
             if (block != null) { blocks.add(block); }
-        }
-        return blocks;
+        });
+        return value.isJsonArray() ? blocks : SnowRuleDef.MELT_BLOCKS;
     }
 
     private static int wakeAt(String owner, JsonElement value) {
-        Float number = ContentSpawnSwitch.number(owner, "rules.wakeAt", value, true);
+        Float number = Json.number(owner, "rules.wakeAt", value, true);
         if (number == null) { return -1; }
         if (number > LAST_TICK) {
             ContentLog.LOGGER.error("{} gives rules.wakeAt as {}, which is above {}, ignoring it", owner, value, LAST_TICK);

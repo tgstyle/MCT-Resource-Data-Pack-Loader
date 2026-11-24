@@ -5,9 +5,8 @@ import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
-import mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -23,15 +22,6 @@ public final class CarriedWeight {
     private static final String TILE = "BlockEntityTag";
 
     private CarriedWeight() {}
-
-    public static List<ItemStack> worn(EntityPlayer player) {
-        List<ItemStack> found = new ArrayList<>();
-        for (ItemStack stack : player.inventory.armorInventory) {
-            if (!stack.isEmpty()) { found.add(stack); }
-        }
-        if (ContentContainerItem.baubled()) { found.addAll(BaublesPouch.wornStacks(player)); }
-        return found;
-    }
 
     public static long total(EntityPlayer player, WeightDef settings, List<ItemStack> worn) {
         long sum = 0L;
@@ -60,11 +50,7 @@ public final class CarriedWeight {
         if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlock.holdsKept(stack)) { return tag == null ? 0L : listed(tag.getCompoundTag(PouchInventory.HELD).getTagList(ITEMS, Constants.NBT.TAG_COMPOUND), settings, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(settings.countContents)) { return 0L; }
         IItemHandler handler = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
-        if (handler != null) {
-            long sum = 0L;
-            for (int slot = 0; slot < handler.getSlots(); slot++) { sum += weigh(handler.getStackInSlot(slot), settings, depth + 1); }
-            return sum;
-        }
+        if (handler != null) { return ItemHandlers.sum(handler, held -> weigh(held, settings, depth + 1)); }
         if (tag == null) { return 0L; }
         return listed(tag.getCompoundTag(TILE).getTagList(ITEMS, Constants.NBT.TAG_COMPOUND), settings, depth) + listed(tag.getTagList(ITEMS, Constants.NBT.TAG_COMPOUND), settings, depth);
     }

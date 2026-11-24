@@ -57,8 +57,7 @@ public final class GsBodies {
 
     @SuppressWarnings("deprecation") public static void star(CelestialBody star, GalaxySpaceDef gs) {
         BodiesData data = new BodiesData(IAdvancedSpace.TypeBody.STAR);
-        if (gs.starType != null) { data.setStarType(IAdvancedSpace.StarType.valueOf(gs.starType)); }
-        if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
+        starFields(data, gs);
         data.setStarHabitableZone(gs.zoneDistance, gs.zoneSize);
         BodiesRegistry.registerBodyData(star, data);
         GsStarAura.register(star, gs.auraColor);
@@ -74,9 +73,13 @@ public final class GsBodies {
             data = new BodiesData(IAdvancedSpace.TypeBody.STAR);
             BodiesRegistry.registerBodyData(body, data);
         }
+        starFields(data, gs);
+        GsStarAura.register(body, gs.auraColor);
+    }
+
+    private static void starFields(BodiesData data, GalaxySpaceDef gs) {
         if (gs.starType != null) { data.setStarType(IAdvancedSpace.StarType.valueOf(gs.starType)); }
         if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
-        GsStarAura.register(body, gs.auraColor);
     }
 
     @SuppressWarnings("deprecation") public static void subsystem(CelestialBody body, @Nullable GalaxySpaceDef gs) {

@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin.world.gen.feature;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
@@ -21,10 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "generate", at = @At("HEAD")) private void rdpl$onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) { this.rdpl$minY = Coords.getMinCubePopulationPos(position.getY()); }
 
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 5, ordinal = 0)) private int rdpl$getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) {
-        if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return rdpl$minY; }
-        return orig;
-    }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 5, ordinal = 0)) private int rdpl$getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.rubicOr(worldIn, rdpl$minY, orig); }
 
     @ModifyConstant(method = "generate", constant = @Constant(intValue = 4, ordinal = 0)) private int rdpl$getMinWorldHeight(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.floor(worldIn, orig); }
 }

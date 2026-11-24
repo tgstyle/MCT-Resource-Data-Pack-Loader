@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.client.world;
 
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
@@ -27,9 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow public abstract int getLightFor(EnumSkyBlock type, BlockPos pos);
 
     @Inject(method = "getLightForExt", at = @At("HEAD"), cancellable = true) private void rdpl$lightForExtRubic(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        IRubicWorld rubic = (IRubicWorld) world;
-        if (!rubic.rdpl$isRubicWorld()) { return; }
-        cir.setReturnValue(rdpl$lightForExt(rubic, type, pos));
+        if (!GenHeights.rubic(world)) { return; }
+        cir.setReturnValue(rdpl$lightForExt((IRubicWorld) world, type, pos));
     }
 
     @Unique private int rdpl$lightForExt(IRubicWorld rubic, EnumSkyBlock type, BlockPos pos) {
@@ -43,8 +44,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
             }
             return most;
         }
-        int x = (pos.getX() >> 4) - chunkX;
-        int z = (pos.getZ() >> 4) - chunkZ;
+        int x = Coords.blockToCube(pos.getX()) - chunkX;
+        int z = Coords.blockToCube(pos.getZ()) - chunkZ;
         if (x < 0 || x >= chunkArray.length || z < 0 || z >= chunkArray[x].length || chunkArray[x][z] == null) { return type.defaultLightValue; }
         return chunkArray[x][z].getLightFor(type, pos);
     }

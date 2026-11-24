@@ -6,8 +6,10 @@ import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
 import mctmods.resourcedatapackloader.common.types.PropertyVariant;
+import mctmods.resourcedatapackloader.common.util.plant.CropStacks;
 import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.BlockSupport;
 
 import java.util.Random;
 import javax.annotation.Nonnull;
@@ -38,8 +40,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private final BlockDef def;
     private final int part;
     @Nullable private final PropertyVariant variant;
-    private ItemStack seed = new ItemStack(Items.WHEAT_SEEDS);
-    private ItemStack crop = new ItemStack(Items.WHEAT);
+    private final CropStacks stacks = new CropStacks();
 
     public ContentPlantPartBlock(BlockDef def, ResourceLocation baseName, int part) {
         super(BlockVariants.property() == null ? Material.PLANTS : def.material);
@@ -47,8 +48,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.part = part;
         this.variant = BlockVariants.property();
         setRegistryName(baseName.getNamespace(), baseName.getPath() + TallPlants.PART_SUFFIX + part);
-        setTranslationKey(def.registryName + "." + def.at(0).name);
-        if (def.soundType != null) { setSoundType(def.soundType); }
+        setTranslationKey(ContentSetup.singleKey(def));
         setDefaultState(variant == null ? blockState.getBaseState().withProperty(BlockCrops.AGE, 0) : blockState.getBaseState().withProperty(variant, def.at(0).name));
         ContentSetup.properties(this, def);
     }
@@ -57,10 +57,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Nullable public PropertyVariant variantProperty() { return variant; }
 
-    public void resolve(ItemStack seedStack, ItemStack cropStack) {
-        if (!seedStack.isEmpty()) { this.seed = seedStack.copy(); }
-        if (!cropStack.isEmpty()) { this.crop = cropStack.copy(); }
-    }
+    public CropStacks stacks() { return stacks; }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -92,14 +89,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos from) { checkAndDropBlock(world, pos, state); }
 
-    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return variant == null ? seed.copy() : baseStack(state); }
+    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return variant == null ? stacks.seed() : baseStack(state); }
 
     @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random random, int fortune) { return Items.AIR; }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
         TallDef tall = def.tall;
         if (variant != null || tall == null || !TallDef.FROM_ALL.equals(tall.produceFrom)) { return; }
-        if (state.getValue(BlockCrops.AGE) >= def.cropMaxAge) { drops.add(crop.copy()); }
+        if (state.getValue(BlockCrops.AGE) >= def.cropMaxAge) { drops.add(stacks.crop()); }
     }
 
     @Override public boolean removedByPlayer(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer player, boolean willHarvest) {
@@ -146,9 +143,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     private void checkAndDropBlock(World world, BlockPos pos, IBlockState state) {
-        if (world.isRemote || supported(world, pos)) { return; }
-        dropBlockAsItem(world, pos, state, 0);
-        world.setBlockToAir(pos);
+        if (!world.isRemote) { BlockSupport.dropUnless(this, world, pos, state, supported(world, pos)); }
     }
 
     private boolean supported(World world, BlockPos pos) {

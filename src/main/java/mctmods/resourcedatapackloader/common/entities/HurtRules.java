@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.HurtRuleD
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -82,13 +83,13 @@ public final class HurtRules {
             return;
         }
         boolean cancel = Json.getBoolean(json, "cancel", false);
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (!cancel && runs.isEmpty()) {
             ContentLog.LOGGER.error("Hurt rule file {} neither cancels nor runs a function, ignoring it", key);
             return;
         }
         HurtRuleDef rule = new HurtRuleDef(attackers, victims, cancel, runs);
-        if (victims.stream().anyMatch(victim -> victim.startsWith("#"))) {
+        if (victims.stream().anyMatch(IdNames::isTag)) {
             BY_KIND.add(rule);
             return;
         }

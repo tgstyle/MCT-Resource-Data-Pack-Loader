@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.sleeping;
 
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -12,13 +14,12 @@ import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.entity.player.SleepingLocationCheckEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public final class ContentSleepingBags {
-    private static final Map<UUID, BlockPos> SLEEPERS = new HashMap<>();
+    private static final Map<UUID, BlockPos> SLEEPERS = PlayerLogout.track(new HashMap<>());
 
     private ContentSleepingBags() {}
 
@@ -45,6 +46,4 @@ public final class ContentSleepingBags {
     }
 
     @SubscribeEvent public static void onWakeUp(PlayerWakeUpEvent event) { SLEEPERS.remove(event.getEntityPlayer().getUniqueID()); }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SLEEPERS.remove(event.player.getUniqueID()); }
 }

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.integration.cbmultipart;
 
-import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import codechicken.lib.packet.PacketCustom;
 import codechicken.multipart.handler.MultipartSaveLoad;
@@ -10,5 +10,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(MultipartSaveLoad.TileNBTContainer.class) public abstract class MixinMultipartPlaceholder {
-    @Redirect(method = "update()V", at = @At(value = "INVOKE", target = "Lcodechicken/lib/packet/PacketCustom;sendToChunk(Lnet/minecraft/world/World;II)V", remap = false)) private void rdpl$skipSelfConvertDesc(PacketCustom packet, World world, int chunkX, int chunkZ) { if (!CbmpRubicParts.rubic(world)) { packet.sendToChunk(world, chunkX, chunkZ); } }
+    @Redirect(method = "update()V", at = @At(value = "INVOKE", target = "Lcodechicken/lib/packet/PacketCustom;sendToChunk(Lnet/minecraft/world/World;II)V", remap = false)) private void rdpl$skipSelfConvertDesc(PacketCustom packet, World world, int chunkX, int chunkZ) { if (!GenHeights.rubic(world)) { packet.sendToChunk(world, chunkX, chunkZ); } }
 }

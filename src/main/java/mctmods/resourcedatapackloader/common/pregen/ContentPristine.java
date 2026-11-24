@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.common.pregen;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
+import mctmods.resourcedatapackloader.common.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +46,7 @@ public final class ContentPristine {
     }
 
     private static boolean hasRegion(Path save) {
-        Path region = save.resolve("region");
+        Path region = RegionNames.chunkFolder(save);
         if (!Files.isDirectory(region)) { return false; }
         try (Stream<Path> held = Files.list(region)) { return held.findAny().isPresent(); }
         catch (IOException unreadable) { return true; }
@@ -80,7 +82,7 @@ public final class ContentPristine {
     }
 
     private static boolean stamped(Path stamp) {
-        try { return Files.isRegularFile(stamp) && new String(Files.readAllBytes(stamp), StandardCharsets.UTF_8).equals(fingerprint()); }
+        try { return Files.isRegularFile(stamp) && Json.readText(stamp).equals(fingerprint()); }
         catch (IOException unreadable) { return false; }
     }
 

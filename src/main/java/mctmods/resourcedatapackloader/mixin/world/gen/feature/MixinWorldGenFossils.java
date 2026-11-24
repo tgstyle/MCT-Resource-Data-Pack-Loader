@@ -1,11 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.world.gen.feature;
 
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
-import mctmods.resourcedatapackloader.common.villages.RailPiece;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRails;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
-import java.util.List;
 import java.util.Random;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -46,19 +44,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
             maxZ = Math.min(maxZ, clip.maxZ);
         }
         if (maxX < minX || maxZ < minZ) { return false; }
-        List<RailPiece> subways = BeardRails.subways(world, new StructureBoundingBox(minX, 0, minZ, maxX, 0, maxZ));
-        if (subways.isEmpty()) { return false; }
-        int minY = Math.min(pos.getY(), far.getY());
-        int maxY = Math.max(pos.getY(), far.getY());
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                for (int y = minY; y <= maxY; y++) {
-                    if (!BeardRails.insideBore(world, subways, x, y, z)) { continue; }
-                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A fossil at {}, {}, {} would have written into a subway bore, so it is left out", pos.getX(), pos.getY(), pos.getZ()); }
-                    return true;
-                }
-            }
-        }
-        return false;
+        if (BeardRails.clearOfBore(world, minX, Math.min(pos.getY(), far.getY()), minZ, maxX, Math.max(pos.getY(), far.getY()), maxZ)) { return false; }
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A fossil at {}, {}, {} would have written into a subway bore, so it is left out", pos.getX(), pos.getY(), pos.getZ()); }
+        return true;
     }
 }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.rubic.world.cube;
 import mctmods.resourcedatapackloader.common.rubic.world.BlankEntityContainer;
 import mctmods.resourcedatapackloader.common.util.ticks.TicketList;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -16,6 +17,8 @@ import net.minecraft.world.chunk.Chunk;
 
 public class BlankCube extends Cube {
     public BlankCube(Chunk column) { super(new TicketList(null), column.getWorld(), column, new CubePos(0, 0, 0), new BlankEntityContainer(), new HashMap<>(), new ConcurrentLinkedQueue<>()); }
+
+    public static boolean loaded(@Nullable ICube cube, boolean allowEmpty) { return cube != null && (allowEmpty || !(cube instanceof BlankCube)); }
 
     @Override public boolean isEmpty() { return true; }
 

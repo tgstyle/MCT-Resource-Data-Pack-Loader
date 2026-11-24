@@ -1,10 +1,15 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.common.gui.ContainerPortway;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayMenu;
 import mctmods.resourcedatapackloader.common.portways.Portways;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.core.util.Registries;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,12 +20,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.math.BlockPos;
 import org.lwjgl.input.Keyboard;
 
 public class GuiPortway extends GuiPackContainer {
@@ -28,7 +31,6 @@ public class GuiPortway extends GuiPackContainer {
     private static final int FIELD_HIGH = 10;
     private static final int FIELD_TOP = 4;
     private static final int QUIET = 4;
-    private static final int HINT = 0x808080;
     @Nullable private GuiTextField search;
     private int quiet = -1;
 
@@ -76,7 +78,7 @@ public class GuiPortway extends GuiPackContainer {
 
     @Override protected void mouseClicked(int x, int y, int button) throws IOException {
         if (search != null) {
-            boolean inside = x >= search.x && x < search.x + search.width && y >= search.y && y < search.y + search.height;
+            boolean inside = MathUtil.inside(x, y, search.x, search.y, search.width, search.height);
             if (inside && button == 1) {
                 search.setText("");
                 quiet = 0;
@@ -93,7 +95,7 @@ public class GuiPortway extends GuiPackContainer {
 
     @Override protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         super.drawGuiContainerForegroundLayer(mouseX, mouseY);
-        if (search != null && search.getText().isEmpty() && !search.isFocused()) { fontRenderer.drawString(I18n.format("rdpl.portway.search"), xSize - 8 - FIELD_WIDE + 4, FIELD_TOP + (FIELD_HIGH - 8) / 2, HINT); }
+        if (search != null && search.getText().isEmpty() && !search.isFocused()) { fontRenderer.drawString(I18n.format("rdpl.portway.search"), xSize - 8 - FIELD_WIDE + 4, FIELD_TOP + (FIELD_HIGH - 8) / 2, Colors.GREY_TEXT); }
     }
 
     @Override protected int titleWidth() { return xSize - 16 - FIELD_WIDE - 4; }
@@ -105,14 +107,14 @@ public class GuiPortway extends GuiPackContainer {
             if ("sort".equals(kind)) {
                 String order = nav.getString(ContainerPortway.ORDER);
                 drawHoveringText(Arrays.asList(I18n.format("rdpl.portway.sort", I18n.format("rdpl.portway.order." + order)),
-                        TextFormatting.GRAY + I18n.format("rdpl.portway.sort.click", I18n.format("rdpl.portway.order." + PortwayMenu.after(order)))), x, y);
+                        PackTooltips.grey("rdpl.portway.sort.click", I18n.format("rdpl.portway.order." + PortwayMenu.after(order)))), x, y);
                 return;
             }
             if ("scope".equals(kind)) {
                 boolean global = nav.getBoolean(ContainerPortway.GLOBAL);
                 String own = nav.getString(ContainerPortway.OWN);
                 drawHoveringText(Arrays.asList(I18n.format("rdpl.portway.scope", I18n.format("rdpl.portway.scope." + (global ? GateDef.GLOBAL : own))),
-                        TextFormatting.GRAY + I18n.format("rdpl.portway.scope.click", I18n.format("rdpl.portway.scope." + (global ? own : GateDef.GLOBAL)))), x, y);
+                        PackTooltips.grey("rdpl.portway.scope.click", I18n.format("rdpl.portway.scope." + (global ? own : GateDef.GLOBAL)))), x, y);
                 return;
             }
             drawHoveringText(Collections.singletonList(I18n.format("rdpl.portway." + kind, nav.getInteger(ContainerPortway.PAGE), nav.getInteger(ContainerPortway.PAGES))), x, y);
@@ -125,7 +127,8 @@ public class GuiPortway extends GuiPackContainer {
         }
         List<String> lines = new ArrayList<>();
         if (!tag.getString(ContainerPortway.NAME).isEmpty()) { lines.add(tag.getString(ContainerPortway.NAME)); }
-        lines.add(I18n.format("rdpl.portway.stop", Portways.dimensionName(tag.getInteger(ContainerPortway.DIMENSION)), tag.getInteger("x"), tag.getInteger("y"), tag.getInteger("z")));
+        BlockPos stopAt = Coords.readPos(tag);
+        lines.add(I18n.format("rdpl.portway.stop", Portways.dimensionName(tag.getInteger(ContainerPortway.DIMENSION)), stopAt.getX(), stopAt.getY(), stopAt.getZ()));
         if (tag.getBoolean(ContainerPortway.HERE)) { lines.add(I18n.format("rdpl.portway.here")); }
         else if (tag.hasKey(ContainerPortway.AWAY)) { lines.add(I18n.format(Portways.counted("rdpl.portway.distance", tag.getInteger(ContainerPortway.AWAY)), tag.getInteger(ContainerPortway.AWAY))); }
         if (tag.getBoolean(ContainerPortway.LOCKED)) { lines.add(I18n.format("rdpl.portway.locked")); }
@@ -138,10 +141,10 @@ public class GuiPortway extends GuiPackContainer {
 
     private static void prices(NBTTagCompound tag, List<String> lines) {
         int levels = tag.getInteger(ContainerPortway.XP);
-        if (levels > 0) { lines.add(I18n.format(tag.getBoolean(ContainerPortway.POINTS) ? (levels == 1 ? "rdpl.portway.pays.point" : "rdpl.portway.pays.points") : levels == 1 ? "rdpl.portway.pays.level" : "rdpl.portway.pays.levels", levels)); }
+        if (levels > 0) { lines.add(I18n.format(Portways.counted(tag.getBoolean(ContainerPortway.POINTS) ? "rdpl.portway.pays.points" : "rdpl.portway.pays.levels", levels), levels)); }
         int count = tag.getInteger(ContainerPortway.ITEM);
-        Item item = count > 0 ? Item.REGISTRY.getObject(new ResourceLocation(tag.getString(ContainerPortway.ITEM_NAME))) : null;
-        if (item != null && item != Items.AIR) { lines.add(I18n.format("rdpl.portway.pays.item", count, new ItemStack(item).getDisplayName())); }
+        Item item = count > 0 ? Registries.item(tag.getString(ContainerPortway.ITEM_NAME)) : null;
+        if (item != null) { lines.add(I18n.format("rdpl.portway.pays.item", count, new ItemStack(item).getDisplayName())); }
         int health = tag.getInteger(ContainerPortway.HEALTH);
         if (health > 0) { lines.add(I18n.format("rdpl.portway.pays.health", health)); }
         int hunger = tag.getInteger(ContainerPortway.HUNGER);

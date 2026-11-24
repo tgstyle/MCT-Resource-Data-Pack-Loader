@@ -6,14 +6,16 @@ import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBl
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
+import mctmods.resourcedatapackloader.common.util.world.PlacedBlock;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import static mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades.CANNOT_MOVE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import net.minecraft.block.SoundType;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -30,7 +32,6 @@ import net.minecraft.tileentity.TileEntityLockableLoot;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
@@ -45,7 +46,6 @@ public final class ContentStorageSwap {
     private static final double NEAR = 256.0D;
     private static final String FACING = "facing";
     private static final String LOOT_TABLE = "LootTable";
-    private static final String CANNOT_MOVE = "cannot_move";
     private static final List<String> CARRIED = Arrays.asList(FACING, "axis", "rotation", "waterlogged");
     private static final List<String> NAME_KEYS = Arrays.asList("CustomName", "Lock");
     private static final List<String> LOOT_KEYS = Arrays.asList(LOOT_TABLE, "LootTableSeed");
@@ -81,13 +81,13 @@ public final class ContentStorageSwap {
     }
 
     static EnumActionResult use(ContainerUpgradeDef upgrade, ContainerUpgradeDef.Path path, Item kit, EntityPlayer player, EnumHand hand, World world, BlockPos pos, EnumFacing side, IBlockState state) {
-        if (player.getCooldownTracker().hasCooldown(kit)) { return EnumActionResult.FAIL; }
-        if (world.isRemote) { return EnumActionResult.SUCCESS; }
-        if (!(player instanceof EntityPlayerMP)) { return EnumActionResult.PASS; }
+        EnumActionResult early = ContentContainerUpgrades.early(player, kit, world);
+        if (early != null) { return early; }
         ContentStorageSwap swap = new ContentStorageSwap(upgrade, path, (EntityPlayerMP) player, world, pos, state);
         EnumActionResult refused = swap.preflight(kit);
         if (refused != null) { return refused; }
-        if (!player.canPlayerEdit(pos, side, player.getHeldItem(hand)) || !ContentCarry.asks((EntityPlayerMP) player, pos)) { return ContentContainerUpgrades.denied(player, pos, "not allowed to change it"); }
+        EnumActionResult barred = ContentContainerUpgrades.barred((EntityPlayerMP) player, hand, pos, side);
+        if (barred != null) { return barred; }
         return swap.move();
     }
 
@@ -112,16 +112,16 @@ public final class ContentStorageSwap {
         tile = world.getTileEntity(pos);
         if (tile == null) { return ContentContainerUpgrades.refuse(player, "it holds nothing", CANNOT_MOVE); }
         IBlockState named = ContentStates.parse(path.to, kit.getRegistryName());
-        if (named == null || !named.getBlock().hasTileEntity(named)) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+        if (named == null || !named.getBlock().hasTileEntity(named)) { return ContentContainerUpgrades.unavailable(player); }
         facing = heldFacing();
         target = carried(named);
-        if (target == state) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+        if (target == state) { return ContentContainerUpgrades.unavailable(player); }
         if (state.getBlockHardness(world, pos) < 0.0F) { return ContentContainerUpgrades.denied(player, pos, "unbreakable"); }
         if (ContentCarry.twoBlock(state) || ContentCarry.twoBlock(target)) { return ContentContainerUpgrades.denied(player, pos, "two blocks"); }
-        if (inUse()) { return ContentContainerUpgrades.refuse(player, "someone has it open", "in_use"); }
+        if (inUse(world, pos, tile)) { return ContentContainerUpgrades.open(player); }
         before = tile.writeToNBT(new NBTTagCompound());
         waitingLoot = before.hasKey(LOOT_TABLE, Constants.NBT.TAG_STRING) || tile instanceof TileEntityPackContainer && ((TileEntityPackContainer) tile).pendingLoot();
-        if (waitingLoot && !upgrade.carryLoot) { return ContentContainerUpgrades.refuse(player, "loot not rolled", "loot"); }
+        if (waitingLoot && !upgrade.carryLoot) { return ContentContainerUpgrades.unrolled(player); }
         linked = StorageContents.linked(tile);
         if (linked && (nbt || !path.linkedHalf)) { return ContentContainerUpgrades.refuse(player, "it shares storage with another block", "linked"); }
         EnumActionResult refused = nbt ? null : readable();
@@ -143,10 +143,10 @@ public final class ContentStorageSwap {
     @Nullable private EnumActionResult probed() {
         try {
             probe = target.getBlock().createTileEntity(world, target);
-            if (probe == null) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+            if (probe == null) { return ContentContainerUpgrades.unavailable(player); }
             probe.setWorld(world);
             probe.setPos(pos);
-            shaped(probe, target);
+            ContentContainerBlock.reshape(probe, target, true);
             if (nbt) { return roundTrips() ? null : ContentContainerUpgrades.refuse(player, "the target saves differently", CANNOT_MOVE); }
             if (waitingLoot) { return lootSurvives() ? null : ContentContainerUpgrades.refuse(player, "the target cannot hold waiting loot", CANNOT_MOVE); }
             return planned();
@@ -175,12 +175,12 @@ public final class ContentStorageSwap {
     @Nullable private EnumActionResult planned() {
         IItemHandler into = StorageContents.forProbe(probe);
         if (into == null) { return ContentContainerUpgrades.refuse(player, "the target has no inventory", CANNOT_MOVE); }
-        if (into.getSlots() < shown.size() && !path.fit) { return ContentContainerUpgrades.refuse(player, "target is smaller", "smaller"); }
+        if (into.getSlots() < shown.size() && !path.fit) { return ContentContainerUpgrades.smaller(player); }
         plan = StorageContents.plan(into, shown);
         return plan == null ? ContentContainerUpgrades.refuse(player, "the contents do not fit", CANNOT_MOVE) : null;
     }
 
-    private boolean inUse() {
+    static boolean inUse(World world, BlockPos pos, TileEntity tile) {
         if (tile instanceof TileEntityPackContainer && ((TileEntityPackContainer) tile).watched()) { return true; }
         for (EntityPlayer other : world.playerEntities) {
             if (other.openContainer == other.inventoryContainer) { continue; }
@@ -279,7 +279,7 @@ public final class ContentStorageSwap {
         TileEntity now = world.getTileEntity(pos);
         if (!set || now == null || probe != null && now.getClass() != probe.getClass()) { throw new IllegalStateException("the block became " + world.getBlockState(pos) + " holding " + now); }
         fill(now);
-        finish(now);
+        finish();
     }
 
     private void removed(Guard open) {
@@ -295,7 +295,7 @@ public final class ContentStorageSwap {
     }
 
     private void fill(TileEntity now) {
-        shaped(now, target);
+        ContentContainerBlock.reshape(now, target, true);
         if (nbt) { load(now, before); }
         else {
             merge(now, NAME_KEYS);
@@ -310,12 +310,8 @@ public final class ContentStorageSwap {
         now.markDirty();
     }
 
-    private void finish(TileEntity now) {
-        IBlockState placed = world.getBlockState(pos);
-        world.notifyBlockUpdate(pos, placed, placed, 3);
-        world.notifyNeighborsOfStateChange(pos, placed.getBlock(), false);
-        SoundType sound = placed.getBlock().getSoundType(placed, world, now.getPos(), null);
-        world.playSound(null, pos, sound.getPlaceSound(), SoundCategory.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F, sound.getPitch() * 0.8F);
+    private void finish() {
+        PlacedBlock.announce(world, pos, world.getBlockState(pos));
         if (linked) { ContentChests.parted(world, pos, state.getBlock()); }
     }
 
@@ -360,7 +356,7 @@ public final class ContentStorageSwap {
             if (back == null) { throw new IllegalStateException("no block entity at " + pos); }
             world.setTileEntity(pos, back);
         }
-        shaped(back, state);
+        ContentContainerBlock.reshape(back, state, true);
         return back;
     }
 
@@ -392,18 +388,9 @@ public final class ContentStorageSwap {
     }
 
     private void load(TileEntity into, NBTTagCompound tag) {
-        NBTTagCompound copy = tag.copy();
-        copy.setInteger("x", pos.getX());
-        copy.setInteger("y", pos.getY());
-        copy.setInteger("z", pos.getZ());
+        NBTTagCompound copy = TileData.at(tag, pos);
         if (into instanceof TileEntityPackContainer) { ((TileEntityPackContainer) into).adopt(copy); }
         else { into.readFromNBT(copy); }
-    }
-
-    private static void shaped(TileEntity into, IBlockState as) {
-        if (!(into instanceof TileEntityPackContainer) || !(as.getBlock() instanceof ContentContainerBlock)) { return; }
-        ((ContentContainerBlock) as.getBlock()).reshape((TileEntityPackContainer) into, as);
-        ((TileEntityPackContainer) into).unloot();
     }
 
     private static final class Guard {

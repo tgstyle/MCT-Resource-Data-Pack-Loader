@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -110,7 +112,7 @@ import org.lwjgl.opengl.GL14;
         if (viewer == null) { return 1.0F; }
         MODELVIEW.clear();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW);
-        float pitch = (float) Math.toRadians(viewer.prevRotationPitch + (viewer.rotationPitch - viewer.prevRotationPitch) * Minecraft.getMinecraft().getRenderPartialTicks());
+        float pitch = (float) Math.toRadians(MathUtil.lerp(Minecraft.getMinecraft().getRenderPartialTicks(), viewer.prevRotationPitch, viewer.rotationPitch));
         float x = MODELVIEW.get(4);
         float y = MODELVIEW.get(5);
         float z = MODELVIEW.get(6);
@@ -124,68 +126,66 @@ import org.lwjgl.opengl.GL14;
     }
 
     static void quad(float size, SkyPoseDef pose) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        double left = pose.flipU ? 1.0D : 0.0D;
-        double right = 1.0D - left;
-        double top = pose.flipV ? 1.0D : 0.0D;
-        double bottom = 1.0D - top;
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(-size, 100.0D, -size).tex(left, top).endVertex();
-        buffer.pos(size, 100.0D, -size).tex(right, top).endVertex();
-        buffer.pos(size, 100.0D, size).tex(right, bottom).endVertex();
-        buffer.pos(-size, 100.0D, size).tex(left, bottom).endVertex();
-        tessellator.draw();
+        float left = pose.u(0.0F);
+        float right = pose.u(1.0F);
+        float top = pose.v(0.0F);
+        float bottom = pose.v(1.0F);
+        BufferBuilder buffer = Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(-size, SkyOccluder.RADIUS, -size).tex(left, top).endVertex();
+        buffer.pos(size, SkyOccluder.RADIUS, -size).tex(right, top).endVertex();
+        buffer.pos(size, SkyOccluder.RADIUS, size).tex(right, bottom).endVertex();
+        buffer.pos(-size, SkyOccluder.RADIUS, size).tex(left, bottom).endVertex();
+        Tessellator.getInstance().draw();
     }
 
-    private static void aura(float[] aura, float alpha, float size) {
+    private static boolean flatBegin() {
         boolean alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
         if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glShadeModel(GL11.GL_SMOOTH);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(0.0D, 100.0D, 0.0D).color(aura[0], aura[1], aura[2], alpha).endVertex();
-        for (int step = 0; step <= AURA_SEGMENTS; step++) {
-            float at = step * (float) Math.PI * 2.0F / AURA_SEGMENTS;
-            buffer.pos(MathHelper.cos(at) * size, 100.0D, MathHelper.sin(at) * size).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
-        }
-        tessellator.draw();
+        return alphaTest;
+    }
+
+    private static void flatEnd(boolean alphaTest) {
         GL11.glShadeModel(GL11.GL_FLAT);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         if (alphaTest) { GL11.glEnable(GL11.GL_ALPHA_TEST); }
     }
 
+    private static void aura(float[] aura, float alpha, float size) {
+        boolean alphaTest = flatBegin();
+        BufferBuilder buffer = Draw.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(0.0D, SkyOccluder.RADIUS, 0.0D).color(aura[0], aura[1], aura[2], alpha).endVertex();
+        for (int step = 0; step <= AURA_SEGMENTS; step++) {
+            float at = MathUtil.turn(step / (float) AURA_SEGMENTS);
+            buffer.pos(MathHelper.cos(at) * size, SkyOccluder.RADIUS, MathHelper.sin(at) * size).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+        }
+        Tessellator.getInstance().draw();
+        flatEnd(alphaTest);
+    }
+
     private static void lines(SkyLookDef look, float alpha, float size) {
-        boolean alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
-        if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        float red = Colors.red(look.sunLineColor) / 255.0F;
-        float green = Colors.green(look.sunLineColor) / 255.0F;
-        float blue = Colors.blue(look.sunLineColor) / 255.0F;
+        boolean alphaTest = flatBegin();
+        float red = Colors.redF(look.sunLineColor);
+        float green = Colors.greenF(look.sunLineColor);
+        float blue = Colors.blueF(look.sunLineColor);
         float half = size * look.sunLineWidth / 2.0F;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        BufferBuilder buffer = Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         for (int line = 0; line < look.sunLineCount; line++) {
-            float at = line * (float) Math.PI * 2.0F / look.sunLineCount;
+            float at = MathUtil.turn(line / (float) look.sunLineCount);
             float dx = MathHelper.cos(at);
             float dz = MathHelper.sin(at);
             float near = size * look.sunLineStart / Math.max(Math.abs(dx), Math.abs(dz));
             float far = near + size * look.sunLineLength;
             float sideX = -dz * half;
             float sideZ = dx * half;
-            buffer.pos(dx * near + sideX, 100.0D, dz * near + sideZ).color(red, green, blue, alpha).endVertex();
-            buffer.pos(dx * near - sideX, 100.0D, dz * near - sideZ).color(red, green, blue, alpha).endVertex();
-            buffer.pos(dx * far - sideX, 100.0D, dz * far - sideZ).color(red, green, blue, 0.0F).endVertex();
-            buffer.pos(dx * far + sideX, 100.0D, dz * far + sideZ).color(red, green, blue, 0.0F).endVertex();
+            buffer.pos(dx * near + sideX, SkyOccluder.RADIUS, dz * near + sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * near - sideX, SkyOccluder.RADIUS, dz * near - sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * far - sideX, SkyOccluder.RADIUS, dz * far - sideZ).color(red, green, blue, 0.0F).endVertex();
+            buffer.pos(dx * far + sideX, SkyOccluder.RADIUS, dz * far + sideZ).color(red, green, blue, 0.0F).endVertex();
         }
-        tessellator.draw();
-        GL11.glShadeModel(GL11.GL_FLAT);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        if (alphaTest) { GL11.glEnable(GL11.GL_ALPHA_TEST); }
+        Tessellator.getInstance().draw();
+        flatEnd(alphaTest);
     }
 
     public static float moon(World world) {
@@ -196,7 +196,7 @@ import org.lwjgl.opengl.GL14;
     public static BufferBuilder bolt(BufferBuilder buffer, float red, float green, float blue, float alpha) {
         SkyLookDef look = ContentFogSampler.look(Minecraft.getMinecraft().world);
         if (look == null || look.lightningColor == SkyLookDef.UNSET) { return buffer.color(red, green, blue, alpha); }
-        return buffer.color(Colors.red(look.lightningColor) / 255.0F, Colors.green(look.lightningColor) / 255.0F, Colors.blue(look.lightningColor) / 255.0F, alpha);
+        return buffer.color(Colors.redF(look.lightningColor), Colors.greenF(look.lightningColor), Colors.blueF(look.lightningColor), alpha);
     }
 
     public static void apply(WorldProvider provider, DimensionDef def) {

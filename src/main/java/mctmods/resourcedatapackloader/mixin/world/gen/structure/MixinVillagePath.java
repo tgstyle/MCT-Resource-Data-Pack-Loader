@@ -18,7 +18,6 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardR
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.IDrawnRoad;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.IRoadLayout;
-import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonObject;
@@ -58,11 +57,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         }
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
-        List<StructureComponent> held = ContentBeard.laid();
-        int kept;
-        ContentBeard.laying(p_175848_1_);
-        try { kept = BeardRoadsGrade.roadReach(box, facing, BeardRoadsTunnels.throughRoom(p_175848_1_, box, facing)); }
-        finally { ContentBeard.laying(held); }
+        int kept = ContentBeard.layingOf(p_175848_1_, () -> BeardRoadsGrade.roadReach(box, facing, BeardRoadsTunnels.throughRoom(p_175848_1_, box, facing)));
         if (kept == Integer.MAX_VALUE) {
             if (BeardRails.blocks(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
             return;
@@ -97,12 +92,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private int[] rdpl$lifts = new int[0];
     @Unique @Nullable private JsonObject rdpl$keys;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL")) private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) { if (start instanceof IVillageBlock) { ((IVillageBlock) this).rdpl$block(((IVillageBlock) start).rdpl$block()); } }
+    @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL")) private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) { ((IVillageBlock) this).rdpl$inherit(start); }
 
     @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I")) private static int rdpl$longerRuns(Random random, int minimum, int maximum, StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing) {
         if (!ContentBeard.wanted()) { return MathHelper.getInt(random, minimum, maximum); }
         int least = Math.max(5, (ContentVillages.largestPlot() + 9) / 7);
-        int block = start instanceof IVillageBlock ? ((IVillageBlock) start).rdpl$block() : 0;
+        int block = IVillageBlock.rdpl$blockOf(start);
         if (block > 0 && !BeardLayout.fromWell(p_175848_1_, p_175848_3_ - facing.getXOffset(), p_175848_5_ - facing.getZOffset())) { least = Math.max(5, Math.min(least, (2 * block + BeardRoads.pathFullWidth() + 6) / 7)); }
         int rolled = MathHelper.getInt(random, least, least + 2);
         ContentLog.LOGGER.debug("A road rolls {} segments of 7, {} blocks", rolled, rolled * 7);
@@ -117,7 +112,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$widen(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox found = cir.getReturnValue();
-        ContentLog.LOGGER.debug("A road box comes back {} facing {}: {}", found == null ? "null" : (Math.max(found.maxX - found.minX, found.maxZ - found.minZ) + 1) + " long", facing, found);
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A road box comes back {} facing {}: {}", found == null ? "null" : (Math.max(found.maxX - found.minX, found.maxZ - found.minZ) + 1) + " long", facing, found); }
         if (found == null || !ContentBeard.wanted()) { return; }
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int[] lengths = BeardRails.lengths(p_175848_1_, found, facing);
@@ -147,7 +142,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!BeardLayout.lineUp(pieces, found, alongX, half, facing)) { return null; }
         if (half > 0) {
             StructureBoundingBox wide = new StructureBoundingBox(found);
-            if (facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {
+            if (!alongX) {
                 wide.minX -= half;
                 wide.maxX += half;
             }
@@ -214,9 +209,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         IBlockState deck = getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.PLANKS).getDefaultState());
         if (deck.getMaterial() != Material.WOOD) { deck = Objects.requireNonNull(Blocks.PLANKS).getDefaultState(); }
         BeardRoadsPaving.pave(this, world, clip,
-                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState())),
-                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRAVEL).getDefaultState())),
-                BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck),
+                BeardRoads.surfaceBlock(getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState())),
+                BeardRoads.supportBlock(getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRAVEL).getDefaultState())),
+                BeardRoads.bridgeBlock(deck),
                 BeardRoads.pathChosen());
     }
 

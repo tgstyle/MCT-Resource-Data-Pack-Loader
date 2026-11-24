@@ -11,10 +11,8 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
@@ -26,9 +24,7 @@ public final class PortwayTeam extends WorldSavedData {
     public PortwayTeam(String name) { super(name); }
 
     @Nullable private static PortwayTeam get(@Nullable MinecraftServer server) {
-        if (server == null) { return null; }
-        MapStorage storage = server.getWorld(0).getMapStorage();
-        return storage == null ? null : SavedData.get(storage, PortwayTeam.class, NAME, PortwayTeam::new);
+        return SavedData.overworld(server, PortwayTeam.class, NAME, PortwayTeam::new);
     }
 
     public static List<PortwayStop> list(@Nullable MinecraftServer server, String team) {
@@ -41,12 +37,8 @@ public final class PortwayTeam extends WorldSavedData {
         PortwayTeam data = get(server);
         if (data == null) { return false; }
         List<PortwayStop> stops = data.teams.computeIfAbsent(team, key -> new ArrayList<>());
-        int at = stops.indexOf(stop);
-        if (at >= 0) {
-            if (!stops.get(at).name.equals(stop.name) || !stops.get(at).block.equals(stop.block)) {
-                stops.set(at, stop.keeping(stops.get(at)));
-                data.markDirty();
-            }
+        if (stops.contains(stop)) {
+            if (stop.refreshIn(stops)) { data.markDirty(); }
             return false;
         }
         stops.add(stop.fresh());
@@ -59,11 +51,7 @@ public final class PortwayTeam extends WorldSavedData {
         if (data == null) { return; }
         boolean changed = false;
         for (List<PortwayStop> stops : data.teams.values()) {
-            int at = stops.indexOf(live);
-            if (at >= 0 && (!stops.get(at).name.equals(live.name) || !stops.get(at).block.equals(live.block))) {
-                stops.set(at, live.keeping(stops.get(at)));
-                changed = true;
-            }
+            if (live.refreshIn(stops)) { changed = true; }
         }
         if (changed) { data.markDirty(); }
     }
@@ -83,9 +71,7 @@ public final class PortwayTeam extends WorldSavedData {
         teams.clear();
         NBTTagCompound tags = compound.getCompoundTag(TEAMS);
         for (String team : tags.getKeySet()) {
-            NBTTagList tagged = tags.getTagList(team, Constants.NBT.TAG_COMPOUND);
-            List<PortwayStop> stops = new ArrayList<>();
-            for (int index = 0; index < tagged.tagCount(); index++) { stops.add(PortwayStop.read(tagged.getCompoundTagAt(index))); }
+            List<PortwayStop> stops = PortwayStop.readAll(tags.getTagList(team, Constants.NBT.TAG_COMPOUND));
             if (!stops.isEmpty()) { teams.put(team, stops); }
         }
     }
@@ -94,9 +80,7 @@ public final class PortwayTeam extends WorldSavedData {
         NBTTagCompound tags = new NBTTagCompound();
         for (Map.Entry<String, List<PortwayStop>> entry : teams.entrySet()) {
             if (entry.getValue().isEmpty()) { continue; }
-            NBTTagList tagged = new NBTTagList();
-            for (PortwayStop stop : entry.getValue()) { tagged.appendTag(stop.write()); }
-            tags.setTag(entry.getKey(), tagged);
+            tags.setTag(entry.getKey(), PortwayStop.writeAll(entry.getValue()));
         }
         compound.setTag(TEAMS, tags);
         return compound;

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -110,25 +111,26 @@ public final class ContentEnvironments {
             JsonObject layered = Json.object(key, contents, "dimension");
             if (layered == null) { continue; }
             layered.remove(ENVIRONMENTS);
-            layer(owner, layered, entry.getValue().getAsJsonObject());
+            JsonObject environment = entry.getValue().getAsJsonObject();
+            layer(owner, layered, environment);
             DimensionDef set = ContentParserWorlds.dimension(key, layered);
             sets.put(name, set);
             BASES.put(set, base);
-            List<String> biomes = Json.strings(entry.getValue().getAsJsonObject(), BIOMES);
+            List<String> biomes = Json.strings(environment, BIOMES);
             if (!biomes.isEmpty()) { PLACES.put(set, biomes); }
-            SpawnSwitchDef spawning = ContentSpawnSwitch.parse(owner, entry.getValue().getAsJsonObject().get(SPAWNING));
+            SpawnSwitchDef spawning = ContentSpawnSwitch.parse(owner, environment.get(SPAWNING));
             if (spawning != null) { SPAWNS.put(set, spawning); }
-            GrowSwitchDef growth = ContentGrowSwitch.parse(owner, entry.getValue().getAsJsonObject().get(GROWTH));
+            GrowSwitchDef growth = ContentGrowSwitch.parse(owner, environment.get(GROWTH));
             if (growth != null) { GROWS.put(set, growth); }
-            MobSwitchDef mobs = ContentMobSwitch.parse(owner, name, entry.getValue().getAsJsonObject().get(MOBS));
+            MobSwitchDef mobs = ContentMobSwitch.parse(owner, name, environment.get(MOBS));
             if (mobs != null) { MOBLINES.put(set, mobs); }
-            Map<ResourceLocation, ResourceLocation> loot = ContentLootSwitch.parse(owner, entry.getValue().getAsJsonObject().get(LOOT));
+            Map<ResourceLocation, ResourceLocation> loot = ContentLootSwitch.parse(owner, environment.get(LOOT));
             if (loot != null) { LOOTS.put(set, loot); }
-            TradeSwitchDef trades = ContentTradeSwitch.parse(key, owner, base.id + "/" + name, entry.getValue().getAsJsonObject().get(TRADES));
+            TradeSwitchDef trades = ContentTradeSwitch.parse(key, owner, base.id + "/" + name, environment.get(TRADES));
             if (trades != null) { TRADELINES.put(set, trades); }
-            RuleSwitchDef rules = ContentRuleSwitch.parse(owner, entry.getValue().getAsJsonObject().get(RULES), !biomes.isEmpty(), set.traits.precipitation);
+            RuleSwitchDef rules = ContentRuleSwitch.parse(owner, environment.get(RULES), !biomes.isEmpty(), set.traits.precipitation);
             if (rules != null) { RULESETS.put(set, rules); }
-            RaidSwitchDef raided = ContentRaidSwitch.parse(owner, entry.getValue().getAsJsonObject().get(RAIDS));
+            RaidSwitchDef raided = ContentRaidSwitch.parse(owner, environment.get(RAIDS));
             if (raided != null) { RAIDLINES.put(set, raided); }
         }
         if (!sets.isEmpty()) { SETS.put(base, Collections.unmodifiableMap(sets)); }
@@ -193,9 +195,10 @@ public final class ContentEnvironments {
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return blocks.getOrDefault(set, none); }
             }
         }
-        DimensionDef set = whole(dimension);
-        return set == null ? none : blocks.getOrDefault(set, none);
+        return pick(blocks, whole(dimension), none);
     }
+
+    private static <T> T pick(Map<DimensionDef, T> map, @Nullable DimensionDef set, T none) { return set == null ? none : map.getOrDefault(set, none); }
 
     @Nullable private static DimensionDef whole(int dimension) {
         List<String> active = ACTIVE.get(dimension);
@@ -203,10 +206,7 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.get(0));
     }
 
-    public static RuleSwitchDef wide(int dimension) {
-        DimensionDef set = whole(dimension);
-        return set == null ? RuleSwitchDef.NONE : RULESETS.getOrDefault(set, RuleSwitchDef.NONE);
-    }
+    public static RuleSwitchDef wide(int dimension) { return pick(RULESETS, whole(dimension), RuleSwitchDef.NONE); }
 
     public static RuleSwitchDef rules(World world, BlockPos pos) { return chosen(world, pos, RULESETS, RuleSwitchDef.NONE); }
 
@@ -216,8 +216,7 @@ public final class ContentEnvironments {
 
     public static GrowSwitchDef growthOf(int dimension, String environment) {
         Map<String, DimensionDef> sets = setsOf(dimension);
-        DimensionDef set = sets == null ? null : sets.get(environment);
-        return set == null ? GrowSwitchDef.NONE : GROWS.getOrDefault(set, GrowSwitchDef.NONE);
+        return pick(GROWS, sets == null ? null : sets.get(environment), GrowSwitchDef.NONE);
     }
 
     public static RaidSwitchDef raids(World world, BlockPos pos) { return chosen(world, pos, RAIDLINES, RaidSwitchDef.NONE); }
@@ -240,8 +239,7 @@ public final class ContentEnvironments {
         if (sets == null) { return Collections.emptyList(); }
         List<SpawnSwitchDef> found = new ArrayList<>(active.size());
         for (String name : active) {
-            DimensionDef set = sets.get(name);
-            found.add(set == null ? SpawnSwitchDef.NONE : SPAWNS.getOrDefault(set, SpawnSwitchDef.NONE));
+            found.add(pick(SPAWNS, sets.get(name), SpawnSwitchDef.NONE));
         }
         return found;
     }
@@ -307,6 +305,16 @@ public final class ContentEnvironments {
             }
         }
         return found;
+    }
+
+    public static boolean anyLook(Predicate<SkyLookDef> test) {
+        for (DimensionDef def : ContentDimensions.available().values()) {
+            if (def.look != null && test.test(def.look)) { return true; }
+        }
+        for (SkyLookDef look : looks()) {
+            if (test.test(look)) { return true; }
+        }
+        return false;
     }
 
     public static List<Integer> tints(int dimension) {

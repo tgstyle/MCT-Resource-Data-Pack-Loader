@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeons;
@@ -85,17 +86,16 @@ public final class RespawnRecorder {
             }
             return;
         }
-        for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
-            for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
-                if (!world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
-                Chunk chunk = world.getChunk(chunkX, chunkZ);
-                for (TileEntity tile : new ArrayList<>(chunk.getTileEntityMap().values())) {
-                    BlockPos at = tile.getPos();
-                    if (at.getX() < minX || at.getX() > maxX || at.getY() < minY || at.getY() > maxY || at.getZ() < minZ || at.getZ() > maxZ) { continue; }
-                    take(fresh, tile);
-                }
+        StructureBoundingBox overlap = new StructureBoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
+        ChunkSpan.forEachChunk(minX, minZ, maxX, maxZ, (chunkX, chunkZ) -> {
+            if (!world.isChunkGeneratedAt(chunkX, chunkZ)) { return; }
+            Chunk chunk = world.getChunk(chunkX, chunkZ);
+            for (TileEntity tile : new ArrayList<>(chunk.getTileEntityMap().values())) {
+                BlockPos at = tile.getPos();
+                if (!overlap.isVecInside(at)) { continue; }
+                take(fresh, tile);
             }
-        }
+        });
     }
 
     private static void take(RespawnInstance fresh, TileEntity tile) {

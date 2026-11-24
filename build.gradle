@@ -67,7 +67,7 @@ minecraft {
     mcpMappingVersion = common.mcp_mappings.toString().split('-')[0]
     username = 'TGstyle'
     extraRunJvmArguments.addAll(
-            '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
+            "-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin${companion('betweenlands') ? ',thebetweenlands.core.TheBetweenlandsLoadingPlugin' : ''}",
             '-Dforge.logging.console.level=debug',
             '-XX:+UseG1GC',
             '-Xmx4G',
@@ -87,11 +87,19 @@ repositories {
     }
     maven { url = 'https://maven.blamejared.com' }
     maven { url = 'https://maven.cleanroommc.com' }
+    maven {
+        url = 'https://maven.covers1624.net'
+        content { includeGroup 'codechicken' }
+    }
     mavenCentral()
 }
 
 configurations {
     clientRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+    betweenlandsSource {
         canBeConsumed = false
         canBeResolved = true
     }
@@ -113,6 +121,13 @@ if (bpJar == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp i
 String deobf(String notation) { return project.modUtils.deobfuscate(notation) as String }
 
 boolean companion(String key) { return (findProperty('companions') ?: '').toString().split(',').contains(key) }
+
+def betweenlandsCore = layout.buildDirectory.file('companions/TheBetweenlands-core.jar')
+def extractBetweenlandsCore = tasks.register('extractBetweenlandsCore', Copy) {
+    from({ zipTree(configurations.betweenlandsSource.singleFile).matching { include '**/*-core.jar' }.singleFile })
+    into(betweenlandsCore.get().asFile.parentFile)
+    rename { 'TheBetweenlands-core.jar' }
+}
 
 dependencies {
     if (bpJar != null) {
@@ -180,11 +195,52 @@ dependencies {
     if (companion('ftbutilities')) { runtimeOnly deobf("curse.maven:${common.ftbu_version}") }
     if (companion('galaxyspace')) { runtimeOnly deobf('curse.maven:galaxy-space-addon-for-galacticraft-238770:7005609') }
     if (companion('asmodeuscore')) { runtimeOnly deobf('curse.maven:asmodeuscore-303101:7180991') }
+    if (companion('paperfixes')) {
+        runtimeOnly deobf("curse.maven:${common.pfix_version}")
+    }
+    if (companion('configanytime')) {
+        runtimeOnly deobf("curse.maven:${common.cfga_version}")
+    }
+    if (companion('streams')) {
+        runtimeOnly deobf("curse.maven:${common.strm_version}")
+    }
+    if (companion('farseek')) {
+        runtimeOnly deobf("curse.maven:${common.fsek_version}")
+    }
+    if (companion('forgemultipart')) {
+        runtimeOnly deobf("curse.maven:${common.cbmp_version}")
+    }
+    if (companion('codechickenlib')) {
+        runtimeOnly deobf("curse.maven:${common.ccli_version}")
+        runtimeOnly 'codechicken:ChickenASM:1.12-1.0.2.9'
+    }
     if (companion('dynamictrees')) { runtimeOnly deobf("curse.maven:${common.dytr_version}") }
     if (companion('biomesoplenty')) { runtimeOnly deobf("curse.maven:${common.bopl_version}") }
     if (companion('grue')) {
         runtimeOnly deobf('curse.maven:grue-235133:3425511')
         runtimeOnly deobf('curse.maven:darknesslib-349174:3672570')
+    }
+    if (companion('aether')) { runtimeOnly deobf("curse.maven:${common.aeth_version}") }
+    if (companion('betweenlands')) {
+        runtimeOnly deobf("curse.maven:${common.btwl_version}")
+        betweenlandsSource deobf("curse.maven:${common.btwl_version}")
+        runtimeOnly files(betweenlandsCore) { builtBy extractBetweenlandsCore }
+    }
+    if (companion('twilightforest')) { runtimeOnly deobf("curse.maven:${common.twfo_version}") }
+    if (companion('rtg')) { runtimeOnly deobf("curse.maven:${common.rtgn_version}") }
+    if (companion('lostcities')) { runtimeOnly deobf("curse.maven:${common.lstc_version}") }
+    if (companion('customspawner')) { runtimeOnly deobf("curse.maven:${common.cmsp_version}") }
+    if (companion('quark')) {
+        runtimeOnly deobf("curse.maven:${common.quar_version}")
+    }
+    if (companion('autoreglib')) {
+        runtimeOnly deobf("curse.maven:${common.arlb_version}")
+    }
+    if (companion('reccomplex')) {
+        runtimeOnly deobf("curse.maven:${common.rcmp_version}")
+    }
+    if (companion('ivtoolkit')) {
+        runtimeOnly deobf("curse.maven:${common.ivtk_version}")
     }
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'

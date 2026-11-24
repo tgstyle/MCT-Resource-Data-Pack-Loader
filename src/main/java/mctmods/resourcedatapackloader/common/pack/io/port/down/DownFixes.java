@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.core.util.IdNames.isTag;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
@@ -10,13 +12,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
 final class DownFixes {
@@ -41,13 +43,21 @@ final class DownFixes {
             "prismarine_brick_slab_from_prismarine_bricks_stonecutting", "prismarine_brick_slab_from_prismarine_stonecutting",
             "prismarine_brick_stairs_from_prismarine_bricks_stonecutting", "prismarine_brick_stairs_from_prismarine_stonecutting",
             "quartz_slab_from_quartz_block_stonecutting", "quartz_slab_from_stonecutting", "stone_brick_wall_from_stone_stonecutting", "stone_brick_walls_from_stone_stonecutting");
-    private static final Set<String> TOOLTIP_SHOWN = new HashSet<>(Arrays.asList("minecraft:trim", "minecraft:unbreakable", "minecraft:dyed_color", "minecraft:attribute_modifiers", "minecraft:enchantments",
-            "minecraft:stored_enchantments", "minecraft:jukebox_playable", "minecraft:can_place_on", "minecraft:can_break"));
+    private static final String TRIM = "minecraft:trim";
+    private static final String UNBREAKABLE = "minecraft:unbreakable";
     private static final Map<String, String> WRAPPED = pairs("minecraft:dyed_color", "rgb", "minecraft:attribute_modifiers", "modifiers", "minecraft:enchantments", "levels",
             "minecraft:stored_enchantments", "levels", "minecraft:jukebox_playable", "song", "minecraft:can_place_on", "predicates", "minecraft:can_break", "predicates");
+    private static final Set<String> TOOLTIP_SHOWN = tooltipShown();
     private static final Map<String, String> CLICKS = pairs("open_url", "url", "run_command", "command", "suggest_command", "command", "change_page", "page", "open_file", "path", "copy_to_clipboard", "value");
 
     private DownFixes() {}
+
+    private static Set<String> tooltipShown() {
+        Set<String> shown = new HashSet<>(WRAPPED.keySet());
+        shown.add(TRIM);
+        shown.add(UNBREAKABLE);
+        return shown;
+    }
 
     static Map<String, String> pairs(String... flat) {
         Map<String, String> out = new HashMap<>();
@@ -73,7 +83,8 @@ final class DownFixes {
 
     static String recipe(String id) {
         String named = namespaced(id);
-        String old = named.startsWith(MINECRAFT) ? RECIPES.get(named.substring(MINECRAFT.length())) : null;
+        String bare = IdNames.bare(named);
+        String old = bare.equals(named) ? null : RECIPES.get(bare);
         return old == null ? id : MINECRAFT + old;
     }
 
@@ -92,9 +103,9 @@ final class DownFixes {
             for (Map.Entry<String, JsonElement> entry : held.entrySet()) { out.add(entry.getKey(), names(entry.getValue(), modifies && ("attribute".equals(entry.getKey()) || "type".equals(entry.getKey())))); }
             return out;
         }
-        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { return element; }
+        if (!Json.isString(element)) { return element; }
         String text = element.getAsString();
-        if (text.indexOf(':') <= 0 || text.startsWith("#") || text.indexOf(' ') >= 0) { return element; }
+        if (text.indexOf(':') <= 0 || isTag(text) || text.indexOf(' ') >= 0) { return element; }
         String renamed = name(text);
         if (renamed.equals(text) && (modifier || !LUCK.equals(namespaced(text)))) { renamed = attribute(text); }
         return renamed.equals(text) ? element : new JsonPrimitive(renamed);
@@ -158,7 +169,8 @@ final class DownFixes {
                 JsonObject item = new JsonObject();
                 if (event.has("id")) { item.add("id", event.get("id")); }
                 if (event.has("count")) { item.add("count", event.get("count")); }
-                if (event.has(COMPONENTS) && event.get(COMPONENTS).isJsonObject()) { item.add(COMPONENTS, event.get(COMPONENTS)); }
+                JsonObject itemComponents = Json.objectOrNull(event, COMPONENTS);
+                if (itemComponents != null) { item.add(COMPONENTS, itemComponents); }
                 out.add("contents", item);
                 break;
             }
@@ -175,9 +187,12 @@ final class DownFixes {
         return out;
     }
 
-    static void stack(JsonObject stack, String file, Consumer<String> note) { if (stack.has(COMPONENTS) && stack.get(COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(COMPONENTS), file, note); } }
+    static void stack(JsonObject stack, Consumer<String> note) {
+        JsonObject held = Json.objectOrNull(stack, COMPONENTS);
+        if (held != null) { components(held, note); }
+    }
 
-    static void components(JsonObject components, String file, Consumer<String> note) {
+    static void components(JsonObject components, Consumer<String> note) {
         List<String> lost = new ArrayList<>();
         Set<String> hidden = new HashSet<>();
         JsonElement display = components.remove(MINECRAFT + "tooltip_display");
@@ -202,7 +217,7 @@ final class DownFixes {
         }
         hidden.removeAll(TOOLTIP_SHOWN);
         if (!hidden.isEmpty()) { components.add(MINECRAFT + "hide_additional_tooltip", new JsonObject()); }
-        if (!lost.isEmpty()) { note.accept("'" + file + "' sets the item component(s) " + String.join(", ", lost) + ", which " + TARGET + " does not have in that form, so they are left out"); }
+        if (!lost.isEmpty()) { note.accept("sets the item component(s) " + String.join(", ", lost) + ", which " + TARGET + " does not have in that form, so they are left out"); }
     }
 
     private static JsonElement component(String named, JsonElement value) {
@@ -219,15 +234,15 @@ final class DownFixes {
                 if (value.isJsonPrimitive()) { return value; }
                 JsonObject data = value.getAsJsonObject();
                 JsonArray floats = JsonUtils.isJsonArray(data, "floats") ? data.getAsJsonArray("floats") : null;
-                return floats == null || floats.size() == 0 ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
+                return modelNumber(floats);
             }
             case "minecraft:damage_resistant": {
                 boolean fire = value.isJsonObject() && "#minecraft:is_fire".equals(Json.text(value.getAsJsonObject(), "types"));
                 return fire ? new JsonObject() : null;
             }
             case "minecraft:lock": return lock(value);
-            case "minecraft:trim":
-            case "minecraft:unbreakable": return value;
+            case TRIM:
+            case UNBREAKABLE: return value;
             default: return WRAPPED.containsKey(named) ? wrapped(named, value) : value;
         }
     }
@@ -237,16 +252,20 @@ final class DownFixes {
         if (value.isJsonObject() && (value.getAsJsonObject().has(field) || named.endsWith("can_break") || named.endsWith("can_place_on"))) { return value; }
         JsonElement inner = value;
         if ("modifiers".equals(field) && value.isJsonArray()) { inner = names(value); }
-        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(color(value)); }
+        if ("rgb".equals(field) && Json.isString(value)) { inner = new JsonPrimitive(color(value)); }
         JsonObject out = new JsonObject();
         out.add(field, inner);
         return out;
     }
 
+    @Nullable static JsonElement modelNumber(@Nullable JsonArray floats) {
+        return floats == null || floats.size() == 0 ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
+    }
+
     private static JsonElement lock(JsonElement value) {
         if (value.isJsonPrimitive()) { return value; }
         JsonObject predicate = value.getAsJsonObject();
-        JsonObject held = predicate.has(COMPONENTS) && predicate.get(COMPONENTS).isJsonObject() ? predicate.getAsJsonObject(COMPONENTS) : new JsonObject();
+        JsonObject held = Json.object(predicate, COMPONENTS);
         JsonElement name = held.get(MINECRAFT + "custom_name");
         if (name == null) { return null; }
         if (name.isJsonPrimitive()) { return name; }
@@ -271,7 +290,7 @@ final class DownFixes {
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();
-            if (!"minecraft:apply_effects".equals(namespaced(Json.text(applied, "type"))) || !applied.has("effects")) {
+            if (!"minecraft:apply_effects".equals(Json.id(applied, "type")) || !applied.has("effects")) {
                 lost.add(MINECRAFT + "consumable/" + Json.text(applied, "type"));
                 continue;
             }
@@ -292,4 +311,6 @@ final class DownFixes {
         try { return (int) (Long.parseLong(text, 16) & 0xFFFFFF); }
         catch (NumberFormatException unreadable) { return 0; }
     }
+
+    static void rename(JsonObject json) { JsonTree.replace(json, names(json).getAsJsonObject()); }
 }

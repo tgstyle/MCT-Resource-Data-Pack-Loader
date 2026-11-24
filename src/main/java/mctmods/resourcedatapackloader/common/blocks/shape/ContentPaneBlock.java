@@ -36,13 +36,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         super(def.material, true);
         this.def = def;
         this.variant = property;
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName.toString());
-        ContentSetup.harvest(this, def);
+        ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setDefaultSlipperiness(def.slipperiness);
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
         setDefaultState(this.blockState.getBaseState()
                 .withProperty(this.variant, def.at(0).name)
                 .withProperty(NORTH, Boolean.FALSE).withProperty(EAST, Boolean.FALSE)
@@ -67,13 +62,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).light; }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).light; }
 
-    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
+    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return ContentSetup.variantOf(def, variant, state).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return ContentSetup.variantOf(def, variant, state).hardness; }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, ContentSetup.variantOf(def, variant, world.getBlockState(pos))); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }
 }

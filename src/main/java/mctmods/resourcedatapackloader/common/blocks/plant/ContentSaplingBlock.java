@@ -6,9 +6,10 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentTreeRules;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGenerator;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGrowth;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeRecorder;
@@ -38,7 +39,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SuppressWarnings("deprecation") public class ContentSaplingBlock extends BlockBush implements IGrowable, IContentBlock, IContentSoil {
     public static final int MAX_VARIANTS = 1;
-    private static final int GROWTH_FLAGS = 3;
+    private static final String STAGE = "stage";
     private final BlockDef def;
     private final SaplingDef sapling;
     private final ContentSoil soil;
@@ -51,20 +52,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.def = def;
         this.sapling = sapling;
         this.soil = new ContentSoil(sapling.soil, def.registryName);
-        this.stage = (PropertyInteger) Objects.requireNonNull(this.blockState.getProperty("stage"));
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        if (def.soundType != null) { setSoundType(def.soundType); }
+        this.stage = (PropertyInteger) Objects.requireNonNull(this.blockState.getProperty(STAGE));
         setTickRandomly(true);
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyPlantNamed(this, def);
         setDefaultState(this.blockState.getBaseState().withProperty(stage, 0));
     }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
         SaplingDef growing = Objects.requireNonNull(Objects.requireNonNull(BlockVariants.def()).sapling);
-        return new BlockStateContainer(this, PropertyInteger.create("stage", 0, Math.max(1, growing.stages) - 1));
+        return new BlockStateContainer(this, PropertyInteger.create(STAGE, 0, Math.max(1, growing.stages) - 1));
     }
 
     @Override public BlockDef getDef() { return def; }
@@ -85,7 +81,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (world.isRemote || ContentGrowSwitch.skips(world, pos, this, rand)) { return; }
         super.updateTick(world, pos, state, rand);
         if (clocked()) {
-            ContentTreeGrowth.plant((WorldServer) world, pos, state, String.valueOf(getRegistryName()));
+            ContentTreeGrowth.plant((WorldServer) world, pos, state, ContentTreeRules.saplingId(this));
             return;
         }
         if (!world.isAreaLoaded(pos, 1)) { return; }
@@ -97,7 +93,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public void onBlockAdded(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         super.onBlockAdded(world, pos, state);
-        if (world instanceof WorldServer && clocked() && !TreeRecorder.recording()) { ContentTreeGrowth.plant((WorldServer) world, pos, state, String.valueOf(getRegistryName())); }
+        if (world instanceof WorldServer && clocked() && !TreeRecorder.recording()) { ContentTreeGrowth.plant((WorldServer) world, pos, state, ContentTreeRules.saplingId(this)); }
     }
 
     private boolean clocked() { return sapling.growth.growing() && sapling.growth.timed(); }
@@ -111,7 +107,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private void advance(World world, BlockPos pos, IBlockState state, Random rand) {
         int current = state.getValue(stage);
         if (current < stage.getAllowedValues().size() - 1) {
-            world.setBlockState(pos, state.withProperty(stage, current + 1), 4);
+            world.setBlockState(pos, state.withProperty(stage, current + 1), BlockFlags.NO_RERENDER);
             return;
         }
         generate(world, pos, state, rand);
@@ -119,7 +115,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private void generate(World world, BlockPos pos, IBlockState state, Random rand) {
         if (sapling.growth.growing() && !TreeRecorder.recording() && world instanceof WorldServer) {
-            ContentTreeGrowth.start((WorldServer) world, pos, state, String.valueOf(getRegistryName()), sapling.growth, random -> place(world, pos, random));
+            ContentTreeGrowth.start((WorldServer) world, pos, state, ContentTreeRules.saplingId(this), sapling.growth, random -> place(world, pos, random));
             return;
         }
         place(world, pos, rand);
@@ -135,7 +131,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (log == null || leaves == null) { return; }
         world.setBlockToAir(pos);
         ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, sapling.height), log, leaves, soil.blocks());
-        if (!tree.generate(world, rand, pos)) { world.setBlockState(pos, getDefaultState(), 4); }
+        if (!tree.generate(world, rand, pos)) { world.setBlockState(pos, getDefaultState(), BlockFlags.NO_RERENDER); }
     }
 
     private void placeStructure(World world, BlockPos pos, Random rand) {
@@ -152,7 +148,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         BlockPos size = template.getSize();
         BlockPos origin = pos.add(-(size.getX() / 2), 0, -(size.getZ() / 2));
         world.setBlockToAir(pos);
-        template.addBlocksToWorld(world, origin, new PlacementSettings(), GROWTH_FLAGS);
+        template.addBlocksToWorld(world, origin, new PlacementSettings(), BlockFlags.UPDATE_ALL);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }

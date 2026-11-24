@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
 import mctmods.resourcedatapackloader.core.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.text.Listing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,24 +43,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow private boolean hardcore;
     @Shadow private boolean mapFeaturesEnabled;
 
-    @Override public boolean rdpl$voidRecorded() { return rdpl$voidMade.hasKey("enabled"); }
+    @Override public boolean rdpl$voidRecorded() { return rdpl$voidMade.hasKey(VOID_ENABLED); }
 
     @Override public boolean rdpl$voidAppliesTo(int dimension) {
-        if (!rdpl$voidMade.getBoolean("enabled")) { return false; }
-        boolean listed = false;
-        for (int held : rdpl$voidMade.getIntArray("dimensions")) {
-            if (held == dimension) {
-                listed = true;
-                break;
-            }
-        }
-        return listed != rdpl$voidMade.getBoolean("areBlacklist");
+        if (!rdpl$voidMade.getBoolean(VOID_ENABLED)) { return false; }
+        return Listing.allows(rdpl$voidMade.getIntArray(VOID_DIMENSIONS), dimension, rdpl$voidMade.getBoolean(VOID_ARE_BLACKLIST), false);
     }
 
     @Override public void rdpl$recordVoid(boolean enabled, int[] dimensions, boolean areBlacklist) {
-        rdpl$voidMade.setBoolean("enabled", enabled);
-        rdpl$voidMade.setIntArray("dimensions", dimensions);
-        rdpl$voidMade.setBoolean("areBlacklist", areBlacklist);
+        rdpl$voidMade.setBoolean(VOID_ENABLED, enabled);
+        rdpl$voidMade.setIntArray(VOID_DIMENSIONS, dimensions);
+        rdpl$voidMade.setBoolean(VOID_ARE_BLACKLIST, areBlacklist);
     }
 
     @Override public NBTTagCompound rdpl$pregenRun() { return rdpl$pregenRun; }
@@ -109,7 +103,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         String seed = ContentTerrain.worldSeed();
         if (!seed.isEmpty()) {
             randomSeed = ContentTerrain.seedFrom(seed);
-            Summary.info("terrain.seed", "Making every new world with the seed " + seed + ", which is what a pack asks for");
+            Summary.packAsks("terrain.seed", "Making every new world with the seed " + seed);
         }
         String mode = ContentServer.worldGameMode();
         if (!mode.isEmpty()) {
@@ -119,13 +113,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
                 gameType = asked;
                 if (asked == GameType.CREATIVE) { allowCommands = true; }
                 if (ContentServer.hardcoreAsked()) { hardcore = true; }
-                Summary.info("terrain.gamemode", "Starting every new world in " + (ContentServer.hardcoreAsked() ? "hardcore" : asked.getName()) + ", which is what a pack asks for");
+                Summary.packAsks("terrain.gamemode", "Starting every new world in " + (ContentServer.hardcoreAsked() ? "hardcore" : asked.getName()));
             }
         }
         Boolean structures = ContentServer.structures();
         if (structures != null) {
             mapFeaturesEnabled = structures;
-            Summary.info("server.structures", "Making every new world " + (structures ? "with" : "without") + " structures, which is what a pack asks for");
+            Summary.packAsks("server.structures", "Making every new world " + (structures ? "with" : "without") + " structures");
         }
         String wanted = ContentTerrain.worldType();
         boolean asked = !wanted.isEmpty() && (terrainType == null || !wanted.equalsIgnoreCase(terrainType.getName()));
@@ -140,7 +134,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
                 terrainType = type;
                 generatorOptions = "";
                 made = true;
-                Summary.info("terrain.worldtype", "Making every new world a " + type.getName() + " world, which is what a pack asks for");
+                Summary.packAsks("terrain.worldtype", "Making every new world a " + type.getName() + " world");
                 break;
             }
             if (!made) { ContentLog.LOGGER.error("A pack asks for the world type '{}', which nothing here provides, so '{}' is made the way it was chosen", wanted, name); }

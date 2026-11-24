@@ -2,14 +2,21 @@ package mctmods.resourcedatapackloader.common.worldgen.placement;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.Random;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 public final class ContentCascade {
+    public static final int SAFE_OFFSET = 8;
+
     private ContentCascade() {}
+
+    public static int offset(Random random, int bound) { return random.nextInt(bound) + SAFE_OFFSET; }
 
     public static boolean loaded(World world, BlockPos pos) { return world.isBlockLoaded(pos); }
 
@@ -19,6 +26,11 @@ public final class ContentCascade {
     }
 
     public static boolean loaded(World world, BlockPos pos, int reach) { return ContentPlacer.areaLoaded(world, pos.getX() - reach, pos.getZ() - reach, pos.getX() + reach, pos.getZ() + reach); }
+
+    public static int templateReach(WorldServer world, ResourceLocation id) {
+        BlockPos size = world.getStructureTemplateManager().getTemplate(world.getMinecraftServer(), id).getSize();
+        return Math.max(size.getX(), size.getZ());
+    }
 
     public static void report(ChunkPos parent, ChunkPos provided) {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }

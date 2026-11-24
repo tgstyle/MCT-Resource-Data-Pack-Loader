@@ -3,9 +3,12 @@ package mctmods.resourcedatapackloader.common.portways;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayDef;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 
@@ -45,9 +48,28 @@ public final class PortwayStop {
         return tag;
     }
 
+    static List<PortwayStop> readAll(NBTTagList tags) {
+        List<PortwayStop> stops = new ArrayList<>();
+        for (int index = 0; index < tags.tagCount(); index++) { stops.add(read(tags.getCompoundTagAt(index))); }
+        return stops;
+    }
+
+    static NBTTagList writeAll(List<PortwayStop> stops) {
+        NBTTagList tags = new NBTTagList();
+        for (PortwayStop stop : stops) { tags.appendTag(stop.write()); }
+        return tags;
+    }
+
     PortwayStop fresh() { return new PortwayStop(dimension, pos, name, block, System.currentTimeMillis()); }
 
     PortwayStop keeping(PortwayStop old) { return new PortwayStop(dimension, pos, name, block, old.found); }
+
+    boolean refreshIn(List<PortwayStop> stops) {
+        int at = stops.indexOf(this);
+        if (at < 0 || stops.get(at).name.equals(name) && stops.get(at).block.equals(block)) { return false; }
+        stops.set(at, keeping(stops.get(at)));
+        return true;
+    }
 
     @Nullable public PortwayDef def() {
         if (block.isEmpty()) { return null; }

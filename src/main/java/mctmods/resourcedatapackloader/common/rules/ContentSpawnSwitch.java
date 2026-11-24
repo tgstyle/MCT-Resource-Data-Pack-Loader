@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnSwit
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,8 +29,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class ContentSpawnSwitch {
     private static final String WEIGHTS = "weights";
-    private static final List<String> RATES = Arrays.asList("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
-    private static final List<String> CAPS = Arrays.asList("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
+    static final List<String> RATES = Arrays.asList("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
+    static final List<String> CAPS = Arrays.asList("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
     private static final int VANILLA_DIV = 289;
     private static final Map<Integer, Gate[]> GATES = new ConcurrentHashMap<>();
     private static int pendingUnits;
@@ -47,23 +48,21 @@ public final class ContentSpawnSwitch {
 
     @Nullable public static SpawnSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
-        if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives spawning that is not an object of rate, cap and weights keys, ignoring it", owner);
-            return null;
-        }
+        JsonObject json = Json.object(owner, "spawning", element, "an object of rate, cap and weights keys");
+        if (json == null) { return null; }
         float[] rates = SpawnSwitchDef.filled(-1.0F);
         int[] caps = SpawnSwitchDef.filled(-1);
         Map<String, Float> weights = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String key = entry.getKey();
             int rate = RATES.indexOf(key);
             int cap = CAPS.indexOf(key);
             if (rate >= 0) {
-                Float value = number(owner, "spawning." + key, entry.getValue(), false);
+                Float value = Json.number(owner, "spawning." + key, entry.getValue(), false);
                 if (value != null) { rates[rate] = value; }
             }
             else if (cap >= 0) {
-                Float value = number(owner, "spawning." + key, entry.getValue(), true);
+                Float value = Json.number(owner, "spawning." + key, entry.getValue(), true);
                 if (value != null) { caps[cap] = value.intValue(); }
             }
             else if (WEIGHTS.equals(key)) { weigh(owner, entry.getValue(), weights); }
@@ -73,25 +72,14 @@ public final class ContentSpawnSwitch {
     }
 
     private static void weigh(String owner, JsonElement value, Map<String, Float> into) {
-        if (!value.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives spawning.weights that is not an object of entity id to multiplier, ignoring it", owner);
-            return;
-        }
-        for (Map.Entry<String, JsonElement> entry : ((JsonObject) value).entrySet()) {
-            Float multiplier = number(owner, "spawning.weights." + entry.getKey(), entry.getValue(), false);
+        JsonObject json = Json.object(owner, "spawning.weights", value, "an object of entity id to multiplier");
+        if (json == null) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            Float multiplier = Json.number(owner, "spawning.weights." + entry.getKey(), entry.getValue(), false);
             if (multiplier == null) { continue; }
             String id = Settings.lower(entry.getKey());
             into.put(id.indexOf(':') < 0 ? "minecraft:" + id : id, multiplier);
         }
-    }
-
-    @Nullable static Float number(String owner, String key, JsonElement value, boolean whole) {
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-            float number = value.getAsFloat();
-            if (number >= 0.0F && number < Float.POSITIVE_INFINITY && (!whole || number == Math.floor(number))) { return number; }
-        }
-        ContentLog.LOGGER.error("{} gives {} as {}, which is not {} of 0 or more, ignoring it", owner, key, value, whole ? "a whole number" : "a number");
-        return null;
     }
 
     private static int slot(EnumCreatureType type) {
@@ -119,7 +107,7 @@ public final class ContentSpawnSwitch {
         int slot = slot(type);
         if (slot < 0 || !ContentControl.packDecides(ContentControl.SPAWNING)) { return normal; }
         int most = -1;
-        for (SpawnSwitchDef def : ContentEnvironments.spawnings(dimension)) { most = Math.max(most, def.cap(slot) < 0 ? normal : def.cap(slot)); }
+        for (SpawnSwitchDef def : ContentEnvironments.spawnings(dimension)) { most = Math.max(most, capOr(def, slot, normal)); }
         return most < 0 ? normal : most;
     }
 
@@ -129,8 +117,10 @@ public final class ContentSpawnSwitch {
         int normal = type.getMaxNumberOfCreature();
         int slot = slot(type);
         SpawnSwitchDef def = slot < 0 ? null : at(world, pos);
-        return def == null || def.cap(slot) < 0 ? normal : def.cap(slot);
+        return def == null ? normal : capOr(def, slot, normal);
     }
+
+    private static int capOr(SpawnSwitchDef def, int slot, int normal) { return def.cap(slot) < 0 ? normal : def.cap(slot); }
 
     public static int units(int units) {
         pendingUnits = units;

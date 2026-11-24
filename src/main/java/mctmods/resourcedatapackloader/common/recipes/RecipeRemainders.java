@@ -30,6 +30,9 @@ public final class RecipeRemainders {
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<ResourceLocation, List<Remainder>> BY_RECIPE = new HashMap<>();
 
+    public static final String KEY = "remainder";
+    private static final String KIND = "Recipe remainder";
+
     private RecipeRemainders() {}
 
     public static void apply(IForgeRegistry<IRecipe> registry) {
@@ -38,13 +41,7 @@ public final class RecipeRemainders {
         if (!Config.recipes.swaps) { return; }
         Json.eachObject(PackManager.RECIPE_SWAPS, "recipe remainder file", RecipeRemainders::read);
         if (ENTRIES.isEmpty()) { return; }
-        for (ResourceLocation key : registry.getKeys()) {
-            IRecipe recipe = registry.getValue(key);
-            if (recipe == null) { continue; }
-            for (Entry entry : ENTRIES) {
-                if (entry.scope.matches(key, recipe)) { BY_RECIPE.computeIfAbsent(key, k -> new ArrayList<>()).addAll(entry.remainders); }
-            }
-        }
+        RecipeSelector.byRecipe(registry, ENTRIES, entry -> entry.scope, (list, entry) -> list.addAll(entry.remainders), BY_RECIPE);
         if (!BY_RECIPE.isEmpty()) { Summary.info("recipes.remainders", "Gave " + BY_RECIPE.size() + " crafting recipe(s) their own remainders"); }
     }
 
@@ -64,28 +61,20 @@ public final class RecipeRemainders {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (!json.has("remainder")) { return; }
+        if (!json.has(KEY)) { return; }
         if (!json.has("swaps") && !json.has("transfer")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
-        if (!json.has("recipes") || !json.get("recipes").isJsonObject()) {
-            ContentLog.LOGGER.error("Recipe remainder file {} needs a recipes object saying which recipes it covers, ignoring it", key);
-            return;
-        }
+        if (RecipeSelector.lacksRecipes(KIND, key, json)) { return; }
         List<Remainder> remainders = new ArrayList<>();
-        JsonArray array = Json.getJsonArray(json, "remainder");
+        JsonArray array = Json.getJsonArray(json, KEY);
         for (JsonElement element : array) {
             Remainder remainder = element.isJsonObject() ? remainder(key, element.getAsJsonObject()) : null;
             if (remainder == null) { ContentLog.LOGGER.error("A remainder in {} needs an ingredient and a returns item, skipping it", key); }
             else { remainders.add(remainder); }
         }
         if (remainders.isEmpty()) { return; }
-        RecipeSelector scope = new RecipeSelector();
         Json.unknownKeys(json.getAsJsonObject("recipes"), "recipes", RecipeSelector.KEYS);
-        scope.read(key, json.getAsJsonObject("recipes"));
-        if (scope.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe remainder file {} selects no recipes, ignoring it", key);
-            return;
-        }
-        ENTRIES.add(new Entry(scope, remainders));
+        RecipeSelector scope = RecipeSelector.scopeOf(KIND, key, json.getAsJsonObject("recipes"));
+        if (scope != null) { ENTRIES.add(new Entry(scope, remainders)); }
     }
 
     @Nullable private static Remainder remainder(ResourceLocation key, JsonObject json) {
@@ -93,19 +82,8 @@ public final class RecipeRemainders {
         String ingredient = Json.getString(json, "ingredient", "");
         ItemStack returns = ContentStacks.parse(key, Json.getString(json, "returns", ""), 1);
         if (ingredient.isEmpty() || returns.isEmpty()) { return null; }
-        ItemSelection selection = selection("Recipe remainder", key, ingredient);
+        ItemSelection selection = ItemSelection.fromText(KIND, key, Collections.singletonList(ingredient));
         return selection.any() ? new Remainder(selection, returns) : null;
-    }
-
-    static ItemSelection selection(String kind, ResourceLocation key, String ingredient) {
-        JsonObject named = new JsonObject();
-        JsonArray names = new JsonArray();
-        names.add(ingredient.startsWith("#") ? ingredient.substring(1) : ingredient);
-        named.add(ingredient.startsWith("#") ? "oreDict" : "names", names);
-        ItemSelection selection = new ItemSelection(kind, "matches");
-        selection.read(named, key);
-        selection.resolve();
-        return selection;
     }
 
     private static final class Entry {

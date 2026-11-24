@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.common.entities.orders;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
+import mctmods.resourcedatapackloader.common.util.Lists;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -18,6 +20,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.init.Enchantments;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -165,12 +168,10 @@ public final class OrderItems {
         return items != null ? items : new RangedWrapper(new EntityHandsInvWrapper(mob), 1, 2);
     }
 
+    public static void keepHeld(EntityLiving mob, EntityEquipmentSlot slot) { mob.setDropChance(slot, 2.0F); }
+
     public static boolean carriesAny(EntityLiving mob) {
-        IItemHandler carried = carried(mob);
-        for (int slot = 0; slot < carried.getSlots(); slot++) {
-            if (!carried.getStackInSlot(slot).isEmpty()) { return true; }
-        }
-        return false;
+        return ItemHandlers.any(carried(mob), stack -> !stack.isEmpty());
     }
 
     public static int spilled(EntityLiving mob, ItemStack stack) {
@@ -181,12 +182,7 @@ public final class OrderItems {
     }
 
     public static int count(OrderDef def, IItemHandler handler) {
-        int count = 0;
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            ItemStack stack = handler.getStackInSlot(slot);
-            if (counts(def, stack)) { count += stack.getCount(); }
-        }
-        return count;
+        return (int) ItemHandlers.sum(handler, stack -> counts(def, stack) ? stack.getCount() : 0L);
     }
 
     public static int move(IItemHandler from, IItemHandler into, Predicate<ItemStack> which, @Nullable List<ItemStack> only, int cap, EntityLiving spill) {
@@ -211,18 +207,15 @@ public final class OrderItems {
         return moved;
     }
 
+    @Nullable private static ItemStack wanted(List<ItemStack> wants, ItemStack held) { return Lists.first(wants, want -> ItemHandlerHelper.canItemStacksStack(want, held)); }
+
     private static int room(List<ItemStack> wants, ItemStack held) {
-        for (ItemStack want : wants) {
-            if (ItemHandlerHelper.canItemStacksStack(want, held)) { return want.getCount(); }
-        }
-        return 0;
+        ItemStack want = wanted(wants, held);
+        return want == null ? 0 : want.getCount();
     }
 
     private static void spend(List<ItemStack> wants, ItemStack held, int moved) {
-        for (ItemStack want : wants) {
-            if (!ItemHandlerHelper.canItemStacksStack(want, held)) { continue; }
-            want.shrink(moved);
-            return;
-        }
+        ItemStack want = wanted(wants, held);
+        if (want != null) { want.shrink(moved); }
     }
 }

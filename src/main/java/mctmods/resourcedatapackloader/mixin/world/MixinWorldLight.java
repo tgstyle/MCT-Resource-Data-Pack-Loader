@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.environment.ILightAreaHolder;
 import mctmods.resourcedatapackloader.common.leafdecay.DecayWatch;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.List;
@@ -104,7 +105,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         Chunk chunk = ContentLightArea.at(world, pos);
         if (chunk == null) { return world.getLightFor(type, pos); }
         if (pos.getY() < 0) { return chunk.getLightFor(type, rdpl$floor.setPos(pos.getX(), 0, pos.getZ())); }
-        if (pos.getY() >= 256) { return type.defaultLightValue; }
+        if (pos.getY() >= CompatHandler.VANILLA_HEIGHT) { return type.defaultLightValue; }
         return chunk.getLightFor(type, pos);
     }
 
@@ -125,7 +126,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Unique private static Chunk rdpl$nearby(World world, BlockPos pos) {
-        if (pos.getY() < 0 || pos.getY() >= 256) { return null; }
+        if (pos.getY() < 0 || pos.getY() >= CompatHandler.VANILLA_HEIGHT) { return null; }
         return ContentLightArea.at(world, pos);
     }
 

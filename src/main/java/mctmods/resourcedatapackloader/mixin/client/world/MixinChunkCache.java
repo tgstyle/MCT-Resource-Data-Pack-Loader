@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.mixin.client.world;
 
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.init.Biomes;
@@ -25,14 +25,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow protected int chunkZ;
     @Shadow protected Chunk[][] chunkArray;
 
-    @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void rubic$getBiome(BlockPos pos, CallbackInfoReturnable<Biome> cir) {
-        IRubicWorld rubic = (IRubicWorld) this.world;
-        if (!rubic.rdpl$isRubicWorld()) { return; }
-        int x = (pos.getX() >> 4) - this.chunkX;
-        int z = (pos.getZ() >> 4) - this.chunkZ;
+    @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void rdpl$getBiome(BlockPos pos, CallbackInfoReturnable<Biome> cir) {
+        if (!GenHeights.rubic(this.world)) { return; }
+        int x = Coords.blockToCube(pos.getX()) - this.chunkX;
+        int z = Coords.blockToCube(pos.getZ()) - this.chunkZ;
         if (x < 0 || x >= this.chunkArray.length || z < 0 || z >= this.chunkArray[x].length || this.chunkArray[x][z] == null) { cir.setReturnValue(Biomes.PLAINS); return; }
         Chunk chunk = this.chunkArray[x][z];
-        ICube cube = ((IColumn) chunk).getLoadedCube(pos.getY() >> 4);
+        ICube cube = ((IColumn) chunk).getLoadedCube(Coords.blockToCube(pos.getY()));
         cir.setReturnValue(cube != null ? cube.getBiome(pos) : chunk.getBiome(pos, this.world.getBiomeProvider()));
     }
 

@@ -50,7 +50,7 @@ public final class SyncDataRules {
         GENERATION.stale();
         if (!Config.content.load) { return; }
         Json.eachObject(PackManager.SYNCDATA, "synced value file", SyncDataRules::read);
-        if (!DECLARED.isEmpty()) { Summary.info("syncdata", "Loaded " + DECLARED.size() + " synced value declaration(s)"); }
+        Summary.loaded("syncdata", DECLARED.size(), "synced value declaration(s)");
     }
 
     private static void ensure() {
@@ -59,11 +59,7 @@ public final class SyncDataRules {
 
     private static void read(ResourceLocation file, JsonObject json) {
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        JsonArray values = Json.getJsonArray(json, "values", new JsonArray());
-        for (JsonElement element : values) {
-            if (element.isJsonObject()) { declare(file, element.getAsJsonObject()); }
-            else { ContentLog.LOGGER.error("A synced value entry in {} is not an object, skipping it", file); }
-        }
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "values", new JsonArray()), "A synced value entry in {} is not an object, skipping it", file)) { declare(file, element); }
     }
 
     private static void declare(ResourceLocation file, JsonObject json) {
@@ -74,7 +70,7 @@ public final class SyncDataRules {
             return;
         }
         String type = Json.text(json, "type", "text");
-        int kind = type.equals("number") ? SyncValue.NUMBER : type.equals("bool") ? SyncValue.BOOL : type.equals("text") ? SyncValue.TEXT : 0;
+        int kind = SyncValue.kindOf(type);
         if (kind == 0) {
             ContentLog.LOGGER.error("The synced value {} in {} has the type '{}', which is not text, number or bool, skipping it", name, file, type);
             return;

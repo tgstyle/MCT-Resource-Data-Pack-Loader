@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.item;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.OverrideDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
+import mctmods.resourcedatapackloader.common.util.entity.PotionEffects;
 
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.EntityLivingBase;
@@ -12,17 +13,14 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.stats.StatBase;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -56,9 +54,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         worldIn.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 0.5F, worldIn.rand.nextFloat() * 0.1F + 0.9F);
         if (!worldIn.isRemote) {
             for (PotionEffectDef effect : food.effects) {
-                Potion potion = ForgeRegistries.POTIONS.getValue(new ResourceLocation(effect.potion));
-                if (potion == null) { continue; }
-                player.addPotionEffect(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles));
+                PotionEffect built = PotionEffects.resolve(effect, effect.duration, effect.showParticles);
+                if (built != null) { player.addPotionEffect(built); }
             }
         }
         StatBase used = StatList.getObjectUseStats(stack.getItem());

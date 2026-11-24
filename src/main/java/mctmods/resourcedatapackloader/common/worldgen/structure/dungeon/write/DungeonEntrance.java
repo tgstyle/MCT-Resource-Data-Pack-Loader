@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonDef;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.Box;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeedStreams;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan;
@@ -12,6 +13,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Pla
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Entrance;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Shaft;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+import mctmods.resourcedatapackloader.core.util.math.Turns;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,12 +29,12 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
-import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 
 public final class DungeonEntrance {
     private static final int FLAGS = BlockFlags.UPDATE_CLIENTS;
+    private static final int PLACE_SALT = 5;
+    private static final int TOP_SALT = 6;
     private static final int CLEAR_ABOVE = 2;
     private static final int DOOR_HEIGHT = 2;
     private static final int MIN_SIDE = 6;
@@ -119,8 +121,9 @@ public final class DungeonEntrance {
         int sample = plan.site.surfaceY;
         Shaft spiral = spiralOf(plan, entrance, room);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(box.minX, entrance.x - 1); x <= Math.min(box.maxX, entrance.x + 1); x++) {
-            for (int z = Math.max(box.minZ, entrance.z - 1); z <= Math.min(box.maxZ, entrance.z + 1); z++) {
+        StructureBoundingBox clip = Box.clip(box, entrance.x, box.minY, entrance.z, entrance.x, box.maxY, entrance.z, 1);
+        for (int x = clip.minX; x <= clip.maxX; x++) {
+            for (int z = clip.minZ; z <= clip.maxZ; z++) {
                 int top = housed ? sample : DungeonWriter.broken() ? Math.max(sample, ground(world, pos, x, z, sample)) : ground(world, pos, x, z, sample);
                 for (int y = Math.max(box.minY, room.y0); y <= Math.min(box.maxY, top + CLEAR_ABOVE); y++) {
                     IBlockState state = y > top ? kit.state(DungeonShapes.Palette.AIR, 0) : entrance.type == PlanRecords.ENTRANCE_SPIRAL ? stairs(spiral, room, kit, x, y, z, sample) : ladder(entrance, room, kit, x, y, z, sample, housed);
@@ -152,10 +155,10 @@ public final class DungeonEntrance {
     }
 
     private static Top top(World world, DungeonPlan plan, Entrance entrance) {
-        Random random = new Random(MathUtil.mix(plan.site.siteSeed, entrance.x, 5, entrance.z));
+        Random random = new Random(MathUtil.mix(plan.site.siteSeed, entrance.x, PLACE_SALT, entrance.z));
         Template template = entrance.toproomTemplate == null ? null : ContentImprint.template(world, entrance.toproomTemplate);
         if (template != null) {
-            Rotation rotation = Rotation.values()[random.nextInt(Rotation.values().length)];
+            Rotation rotation = Turns.pick(random);
             BlockPos span = template.transformedSize(rotation);
             int x0 = entrance.x - span.getX() / 2;
             int z0 = entrance.z - span.getZ() / 2;
@@ -173,8 +176,9 @@ public final class DungeonEntrance {
         int clearTop = floorY + (top.template == null ? top.height + 1 : top.span.getY() - 1) + CLEAR_ABOVE;
         IBlockState support = kit.state(DungeonShapes.Palette.SUPPORT, 0);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(box.minX, top.x0 - 1); x <= Math.min(box.maxX, top.x1 + 1); x++) {
-            for (int z = Math.max(box.minZ, top.z0 - 1); z <= Math.min(box.maxZ, top.z1 + 1); z++) {
+        StructureBoundingBox clip = Box.clip(box, top.x0, box.minY, top.z0, top.x1, box.maxY, top.z1, 1);
+        for (int x = clip.minX; x <= clip.maxX; x++) {
+            for (int z = clip.minZ; z <= clip.maxZ; z++) {
                 if (top.outside(x, z) && !top.apron(x, z)) { continue; }
                 DungeonSupport.fill(world, pos, x, floorY, z, PlanRecords.ENTRANCE_DOWN, box.minY, support);
                 for (int y = Math.max(box.minY, floorY); y <= Math.min(box.maxY, clearTop); y++) {
@@ -184,16 +188,11 @@ public final class DungeonEntrance {
             }
         }
         Template template = top.template;
-        if (template != null && top.x1 >= box.minX && top.x0 <= box.maxX && top.z1 >= box.minZ && top.z0 <= box.maxZ) { place(world, plan, box, top, template); }
+        if (template != null && box.intersectsWith(top.x0, top.z0, top.x1, top.z1)) { place(world, plan, box, top, template); }
     }
 
     private static void place(World world, DungeonPlan plan, StructureBoundingBox box, Top top, Template template) {
-        PlacementSettings settings = new PlacementSettings();
-        settings.setRotation(top.rotation);
-        settings.setRandom(new Random(MathUtil.mix(plan.site.siteSeed, top.x0, 6, top.z0)));
-        settings.setBoundingBox(box);
-        BlockPos at = new BlockPos(top.x0 + ContentImprint.backX(top.rotation, top.span), plan.site.surfaceY, top.z0 + ContentImprint.backZ(top.rotation, top.span));
-        template.addBlocksToWorld(world, at, DungeonWriter.gated(new BlockRotationProcessor(at, settings)), settings, FLAGS);
+        ContentImprint.place(world, template, top.x0, top.z0, plan.site.surfaceY, top.rotation, new Random(MathUtil.mix(plan.site.siteSeed, top.x0, TOP_SALT, top.z0)), box, null, DungeonWriter.gate());
     }
 
     @Nullable private static IBlockState hall(Top top, DungeonShapes.Palette.Kit kit, int x, int z, int dy) {

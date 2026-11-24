@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.Registered;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -11,14 +12,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
 public final class FluidReactionQueue {
     public static final int RECHECK = 1;
@@ -29,9 +29,8 @@ public final class FluidReactionQueue {
 
     public static boolean wanted() {
         if (VanillaFluidRules.wanted()) { return true; }
-        for (Map.Entry<ResourceLocation, ContentFluidBlock> entry : ContentRegistry.registeredFluidBlocks()) {
-            FluidDef def = ContentRegistry.fluidDef(entry.getKey());
-            if (def != null && !def.behavior.reactions.isEmpty()) { return true; }
+        for (Registered<ContentFluidBlock, FluidDef> entry : ContentRegistry.definedFluidBlocks()) {
+            if (!entry.def.behavior.reactions.isEmpty()) { return true; }
         }
         return false;
     }
@@ -78,7 +77,7 @@ public final class FluidReactionQueue {
     }
 
     @SubscribeEvent public static void onTick(TickEvent.WorldTickEvent event) {
-        if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
+        if (!SideUtils.serverEnd(event)) { return; }
         Dimension dimension = DIMENSIONS.get(event.world.provider.getDimension());
         if (dimension == null) { return; }
         dimension.spent = 0;

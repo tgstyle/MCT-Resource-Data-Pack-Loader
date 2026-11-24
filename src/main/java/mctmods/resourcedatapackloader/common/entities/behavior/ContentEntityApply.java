@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityLiving;
@@ -31,6 +32,7 @@ import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.pathfinding.PathNavigate;
 import net.minecraft.pathfinding.PathNavigateClimber;
 import net.minecraft.pathfinding.PathNavigateFlying;
 import net.minecraft.pathfinding.PathNavigateGround;
@@ -96,12 +98,9 @@ public final class ContentEntityApply {
         boolean first = !data.getBoolean(DRESSED);
         data.setBoolean(DRESSED, true);
         AbstractAttributeMap map = living.getAttributeMap();
-        for (Map.Entry<String, Double> entry : def.attributes.entrySet()) {
-            IAttributeInstance instance = ContentAttributes.instance(map, entry.getKey());
-            if (instance == null) {
-                ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.registryName, def.base);
-                continue;
-            }
+        for (Map.Entry<String, Double> entry : def.combat.attributes.entrySet()) {
+            IAttributeInstance instance = ContentAttributes.instance(map, entry.getKey(), def.registryName + ", which " + def.base + " does not carry either");
+            if (instance == null) { continue; }
             instance.setBaseValue(entry.getValue());
             if (first && instance.getAttribute() == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth(living.getMaxHealth()); }
         }
@@ -110,7 +109,7 @@ public final class ContentEntityApply {
     private static void body(EntityLivingBase alive, EntityVariantDef def) {
         if (def.hurtResistance >= 0) { alive.maxHurtResistantTime = def.hurtResistance; }
         if (def.stepHeight >= 0.0F) { alive.stepHeight = def.stepHeight; }
-        if (ContentLog.LOGGER.debugEnabled() && (def.hurtResistance >= 0 || def.stepHeight >= 0.0F || def.climbs != null || def.attackReach > 0.0F || def.knockback >= 0.0F || def.teleports)) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} stands with step height {}, hurt resistance {}, attack reach {}, knockback {}, climbs {}, teleports {}", def.registryName, (int) alive.posX, (int) alive.posY, (int) alive.posZ, alive.stepHeight, alive.maxHurtResistantTime, def.attackReach, def.knockback, def.climbs, def.teleports); }
+        if (ContentLog.LOGGER.debugEnabled() && (def.hurtResistance >= 0 || def.stepHeight >= 0.0F || def.climbs != null || def.attackReach > 0.0F || def.knockback >= 0.0F || def.teleports)) { ContentLog.LOGGER.debug("Entity variant {} at {} stands with step height {}, hurt resistance {}, attack reach {}, knockback {}, climbs {}, teleports {}", def.registryName, ContentLog.at(alive), alive.stepHeight, alive.maxHurtResistantTime, def.attackReach, def.knockback, def.climbs, def.teleports); }
         if (!def.ownBlast) { return; }
         if (alive instanceof EntityCreeper) {
             ((EntityCreeper) alive).fuseTime = def.explosionFuse;
@@ -120,8 +119,13 @@ public final class ContentEntityApply {
     }
 
     private static void climber(EntityLiving living, boolean climbs) {
-        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { living.navigator = new PathNavigateClimber(living, living.world); }
-        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { living.navigator = new PathNavigateGround(living, living.world); }
+        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { steer(living, new PathNavigateClimber(living, living.world), null); }
+        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { steer(living, new PathNavigateGround(living, living.world), null); }
+    }
+
+    private static void steer(EntityLiving living, @Nullable PathNavigate navigator, @Nullable EntityMoveHelper move) {
+        if (navigator != null) { living.navigator = navigator; }
+        if (move != null) { living.moveHelper = move; }
     }
 
     private static boolean rolledYoung(EntityLiving living, EntityVariantDef def) {
@@ -181,8 +185,7 @@ public final class ContentEntityApply {
     private static void flyer(EntityLiving living) {
         AbstractAttributeMap map = living.getAttributeMap();
         if (map.getAttributeInstanceByName(SharedMonsterAttributes.FLYING_SPEED.getName()) == null) { map.registerAttribute(SharedMonsterAttributes.FLYING_SPEED); }
-        living.navigator = new PathNavigateFlying(living, living.world);
-        living.moveHelper = new EntityFlyHelper(living);
+        steer(living, new PathNavigateFlying(living, living.world), new EntityFlyHelper(living));
     }
 
     private static void walker(EntityLiving living, EntityVariantDef def) {
@@ -190,13 +193,10 @@ public final class ContentEntityApply {
             ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.registryName, def.base);
             return;
         }
-        living.moveHelper = new EntityMoveHelper(living);
+        steer(living, null, new EntityMoveHelper(living));
     }
 
-    private static void swimmer(EntityLiving living) {
-        living.navigator = new PathNavigateSwimmer(living, living.world);
-        living.moveHelper = new SwimmingMoveHelper(living);
-    }
+    private static void swimmer(EntityLiving living) { steer(living, new PathNavigateSwimmer(living, living.world), new SwimmingMoveHelper(living)); }
 
     public static void amphibious(EntityLiving living) {
         boolean wet = living.isInWater();
@@ -208,8 +208,7 @@ public final class ContentEntityApply {
         }
         PathNavigateGround ground = new PathNavigateGround(living, living.world);
         ground.setCanSwim(true);
-        living.navigator = ground;
-        living.moveHelper = new EntityMoveHelper(living);
+        steer(living, ground, new EntityMoveHelper(living));
     }
 
     static void effects(EntityLivingBase living, Map<String, Integer> effects, ResourceLocation owner) {

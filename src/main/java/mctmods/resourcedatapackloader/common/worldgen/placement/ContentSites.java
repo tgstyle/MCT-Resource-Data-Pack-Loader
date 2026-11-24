@@ -21,17 +21,18 @@ public class ContentSites extends WorldSavedData {
 
     public static ContentSites of(World world, int spacing) {
         ContentSites held = SavedData.get(world.getPerWorldStorage(), ContentSites.class, NAME, ContentSites::new);
-        int wanted = Math.max(9, spacing);
+        int wanted = Math.max(ContentStructurePlacement.MIN_SPACING, spacing);
         if (held.spacing == 0) {
             held.spacing = wanted;
             held.markDirty();
             return held;
         }
         int stated = ContentStructurePlacement.spacing(ContentStructurePlacement.VILLAGES, -1);
-        if (stated > 0 && Math.max(9, stated) != held.spacing) {
-            ContentLog.LOGGER.info("The pack now asks for villages every {} chunk(s) where this world founded on every {}, so the founding record starts over on the new grid", Math.max(9, stated), held.spacing);
+        int floored = Math.max(ContentStructurePlacement.MIN_SPACING, stated);
+        if (stated > 0 && floored != held.spacing) {
+            ContentLog.LOGGER.info("The pack now asks for villages every {} chunk(s) where this world founded on every {}, so the founding record starts over on the new grid", floored, held.spacing);
             held.chosen.clear();
-            held.spacing = Math.max(9, stated);
+            held.spacing = floored;
             held.markDirty();
             return held;
         }

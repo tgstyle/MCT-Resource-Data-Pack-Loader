@@ -2,8 +2,10 @@ package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
+import mctmods.resourcedatapackloader.core.util.text.NumberDown;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,31 +30,30 @@ final class DownLoot {
 
     private DownLoot() {}
 
-    static void loot(JsonObject json, String file, Consumer<String> note) {
-        walk(json, file, note);
-        JsonTree.replace(json, DownFixes.names(json).getAsJsonObject());
+    static void loot(JsonObject json, Consumer<String> note) {
+        walk(json, note);
+        DownFixes.rename(json);
     }
 
-    static void advancement(JsonObject json, String file, Consumer<String> note) {
-        JsonObject display = json.has("display") && json.get("display").isJsonObject() ? json.getAsJsonObject("display") : null;
-        if (display != null) {
-            if (display.has("icon") && display.get("icon").isJsonObject()) { DownFixes.stack(display.getAsJsonObject("icon"), file, note); }
-            for (String key : TEXTS) {
-                if (display.has(key)) { display.add(key, DownFixes.text(display.get(key))); }
-            }
+    static void advancement(JsonObject json, Consumer<String> note) {
+        JsonObject display = Json.object(json, "display");
+        JsonObject icon = Json.objectOrNull(display, "icon");
+        if (icon != null) { DownFixes.stack(icon, note); }
+        for (String key : TEXTS) {
+            if (display.has(key)) { display.add(key, DownFixes.text(display.get(key))); }
         }
-        JsonObject rewards = json.has("rewards") && json.get("rewards").isJsonObject() ? json.getAsJsonObject("rewards") : null;
-        if (rewards != null && JsonUtils.isJsonArray(rewards, "recipes")) {
+        JsonObject rewards = Json.object(json, "rewards");
+        if (JsonUtils.isJsonArray(rewards, "recipes")) {
             JsonArray recipes = new JsonArray();
             for (JsonElement recipe : rewards.getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? new JsonPrimitive(DownFixes.recipe(recipe.getAsString())) : recipe); }
             rewards.add("recipes", recipes);
         }
-        loot(json, file, note);
+        loot(json, note);
     }
 
-    private static void walk(JsonElement element, String file, Consumer<String> note) {
+    private static void walk(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            for (JsonElement inner : element.getAsJsonArray()) { walk(inner, file, note); }
+            for (JsonElement inner : element.getAsJsonArray()) { walk(inner, note); }
             return;
         }
         if (!element.isJsonObject()) { return; }
@@ -60,26 +61,26 @@ final class DownLoot {
         for (String key : TARGET_KEYS) {
             if (JsonUtils.isJsonPrimitive(json, key) && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
-        String condition = namespaced(Json.text(json, "condition"));
+        String condition = Json.id(json, "condition");
         if ("minecraft:time_check".equals(condition)) { json.remove("clock"); }
         if (JsonUtils.isJsonPrimitive(json, "recipe")) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
         String function = Json.text(json, "function");
-        if (!function.isEmpty()) { function(json, namespaced(function), file, note); }
-        else if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) {
+        if (!function.isEmpty()) { function(json, namespaced(function), note); }
+        else if (Json.objectOrNull(json, COMPONENTS) != null) {
             variant(json);
-            DownFixes.components(json.getAsJsonObject(COMPONENTS), file, note);
+            DownFixes.components(json.getAsJsonObject(COMPONENTS), note);
             if (json.getAsJsonObject(COMPONENTS).size() == 0) { json.remove(COMPONENTS); }
         }
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) { walk(entry.getValue(), file, note); }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) { walk(entry.getValue(), note); }
     }
 
-    private static void function(JsonObject json, String function, String file, Consumer<String> note) {
+    private static void function(JsonObject json, String function, Consumer<String> note) {
         switch (function) {
             case "minecraft:set_components":
-                if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) { DownFixes.components(json.getAsJsonObject(COMPONENTS), file, note); }
+                DownFixes.stack(json, note);
                 break;
             case "minecraft:set_custom_model_data":
-                modelData(json, file, note);
+                modelData(json, note);
                 break;
             case "minecraft:set_name":
                 if (json.has("name")) { json.add("name", DownFixes.text(json.get("name"))); }
@@ -95,26 +96,26 @@ final class DownLoot {
         }
     }
 
-    private static void modelData(JsonObject json, String file, Consumer<String> note) {
-        if (json.has("value")) { return; }
+    private static void modelData(JsonObject json, Consumer<String> note) {
+        if (json.has(NumberDown.VALUE)) { return; }
         JsonElement floats = json.remove("floats");
         List<String> lost = new ArrayList<>();
         for (String other : MODEL_LISTS) {
             if (json.remove(other) != null) { lost.add(other); }
         }
         JsonArray values = floats != null && floats.isJsonObject() && JsonUtils.isJsonArray(floats.getAsJsonObject(), "values") ? floats.getAsJsonObject().getAsJsonArray("values") : null;
-        if (values != null && values.size() > 0) { json.add("value", values.get(0)); }
-        else { json.addProperty("value", 0); }
+        if (values != null && values.size() > 0) { json.add(NumberDown.VALUE, values.get(0)); }
+        else { json.addProperty(NumberDown.VALUE, 0); }
         if (values != null && values.size() > 1) { lost.add("floats after the first"); }
-        if (!lost.isEmpty()) { note.accept("'" + file + "' sets custom model data " + String.join(", ", lost) + ", which " + DownFixes.TARGET + " cannot hold (one whole number only), so they are left out"); }
+        if (!lost.isEmpty()) { note.accept("sets custom model data " + String.join(", ", lost) + ", which " + DownFixes.TARGET + " cannot hold (one whole number only), so they are left out"); }
     }
 
     private static void variant(JsonObject json) {
         JsonObject components = json.getAsJsonObject(COMPONENTS);
         for (String key : JsonTree.keys(components)) {
             String named = namespaced(key);
-            if (!named.startsWith(MINECRAFT)) { continue; }
-            String bare = named.substring(MINECRAFT.length());
+            String bare = IdNames.bare(named);
+            if (bare.equals(named)) { continue; }
             String owner = bare.endsWith(VARIANT) ? bare.substring(0, bare.length() - VARIANT.length()) : "";
             String entity = VARIANTS.contains(owner) ? owner : "tropical_fish/pattern".equals(bare) ? "tropical_fish" : null;
             if (entity == null || json.has(TYPE_SPECIFIC)) { continue; }

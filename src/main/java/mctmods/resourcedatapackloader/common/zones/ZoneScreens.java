@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.zones;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.zones.ZoneDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,11 +15,10 @@ import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ZoneScreens {
-    private static final Map<UUID, Click> CLICKED = new HashMap<>();
+    private static final Map<UUID, Click> CLICKED = PlayerLogout.track(new HashMap<>());
 
     private ZoneScreens() {}
 
@@ -51,8 +51,6 @@ public final class ZoneScreens {
         player.closeScreen();
         ZoneGuard.tell(player, zone);
     }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { CLICKED.remove(event.player.getUniqueID()); }
 
     private static final class Click {
         private long time;

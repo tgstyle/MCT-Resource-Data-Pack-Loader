@@ -45,7 +45,7 @@ public final class DerivedItems {
                     Item item = build(def, registry);
                     if (item != null) { made.add(item); }
                 }
-                catch (RuntimeException e) { ContentLog.LOGGER.error("Derived item {} could not be made, leaving it out", key, e); }
+                catch (RuntimeException e) { DerivedLog.skip(key, "could not be made", e); }
             });
         }
         if (!made.isEmpty()) { Summary.info("items.derived", "Registered " + made.size() + " derived item(s) from packs"); }
@@ -61,17 +61,16 @@ public final class DerivedItems {
         DerivedDef derived = Objects.requireNonNull(def.derived);
         Item base = Registries.find(ForgeRegistries.ITEMS, derived.base);
         if (base == null) {
-            ContentLog.LOGGER.error("Derived item {} is based on {}, which nothing registers, leaving it out", key, derived.base);
+            DerivedLog.skip(key, "is based on {}, which nothing registers", derived.base);
             return null;
         }
         if (base instanceof ItemBlock) {
-            ContentLog.LOGGER.error("Derived item {} is based on {}, a block item, and derived blocks are not supported, leaving it out", key, derived.base);
+            DerivedLog.skip(key, "is based on {}, a block item, and derived blocks are not supported", derived.base);
             return null;
         }
         List<ItemClassMaker.Override> overrides = ItemOverrides.plan(base.getClass(), key, returns(derived, key), base);
-        Class<?> type = ItemClassMaker.make(base.getClass(), key, overrides);
+        Class<?> type = ItemOverrides.makeStored(base.getClass(), key, overrides);
         if (type == null) { return null; }
-        ItemOverrides.store(key, overrides);
         Item item = ItemCopier.copy(base, type, key);
         ObjectPatch.apply(item, derived.set, derived.addTo, key, "");
         ContentSetup.apply(item, def.creativeTab);

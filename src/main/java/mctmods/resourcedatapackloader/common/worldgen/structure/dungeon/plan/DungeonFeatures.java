@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.Dun
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Feature;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.PlanRecords.Shaft;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write.DungeonShapes;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +32,6 @@ public final class DungeonFeatures {
     private static final int MAX_FEATURES = 5;
     private static final int FULL_AREA = 100;
     public static final int PIT_DEPTH = 2;
-    private static final int SHAFT_SIDE = 3;
     private static final int ANCHOR_REACH = 2;
     private static final int VARIANT_SLOTS = 3;
     private static final int TRIES = 4;
@@ -60,24 +60,8 @@ public final class DungeonFeatures {
     private static int[] rollsOf(Level.Builder level, Room room, RoomKindDef kind) {
         int[] rolls = level.rolls();
         if (kind == null) { return rolls; }
-        for (int i = 0; i < rolls.length; i++) {
-            Degree degree = kind.rolls.get(DungeonDef.ROLLS.get(i));
-            if (degree != null && degree.valid()) { rolls[i] = draw(degree, SeedStreams.random(room.seed, "kindrolls", i)); }
-        }
+        Degree.apply(rolls, kind.rolls, room.seed, "kindrolls", 0);
         return rolls;
-    }
-
-    private static int draw(Degree degree, Random random) {
-        int total = 0;
-        for (int weight : degree.weights) {
-            total += Math.max(0, weight);
-        }
-        int roll = random.nextInt(total);
-        for (int i = 0; i < degree.weights.length; i++) {
-            roll -= Math.max(0, degree.weights[i]);
-            if (roll < 0) { return i; }
-        }
-        return 0;
     }
 
     private static final class Placer {
@@ -99,13 +83,13 @@ public final class DungeonFeatures {
             this.base = room.y0;
         }
 
-        private boolean hit(int roll) { return random.nextInt(100) < Degree.CHANCES[rolls[roll]]; }
+        private boolean hit(int roll) { return Degree.chance(random, Degree.CHANCES[rolls[roll]]); }
 
         private int slot() { return hit(VARIABILITY) ? 1 + random.nextInt(VARIANT_SLOTS) : 0; }
 
         private void zones(Level.Builder level) {
             Shaft shaft = level.shaft();
-            if (shaft != null) { zones.add(new int[] {shaft.x - 1, shaft.z - 1, shaft.x + SHAFT_SIDE, shaft.z + SHAFT_SIDE}); }
+            if (shaft != null) { zones.add(new int[] {shaft.minX(1), shaft.minZ(1), shaft.maxX(1), shaft.maxZ(1)}); }
             if (room.start) { zones.add(new int[] {level.anchorX() - ANCHOR_REACH, level.anchorZ() - ANCHOR_REACH, level.anchorX() + ANCHOR_REACH, level.anchorZ() + ANCHOR_REACH}); }
             for (Link link : level.links()) {
                 int pad = 1 + link.width / 2;
@@ -137,8 +121,8 @@ public final class DungeonFeatures {
             int id = bounds[3] - bounds[1] + 1 - 2 * inset;
             if (iw < minSide || id < minSide) { return null; }
             for (int t = 0; t < TRIES; t++) {
-                int w = minSide + random.nextInt(Math.max(minSide, iw / 2) - minSide + 1);
-                int d = minSide + random.nextInt(Math.max(minSide, id / 2) - minSide + 1);
+                int w = MathUtil.randomIn(random, minSide, Math.max(minSide, iw / 2));
+                int d = MathUtil.randomIn(random, minSide, Math.max(minSide, id / 2));
                 int x = bounds[0] + inset + random.nextInt(iw - w + 1);
                 int z = bounds[1] + inset + random.nextInt(id - d + 1);
                 int[] rect = {x, z, x + w - 1, z + d - 1};
@@ -151,7 +135,7 @@ public final class DungeonFeatures {
 
         private void shapeFeatures(RoomKindDef kind) {
             String shape = room.shape;
-            boolean plainHall = kind != null && RoomKindDef.HALL.equals(kind.kind) && "box".equals(shape);
+            boolean plainHall = kind != null && RoomKindDef.HALL.equals(kind.kind) && RoomKindDef.BOX.equals(shape);
             if (plainHall && hit(NATURALS)) {
                 add(PlanRecords.FEATURE_CAVE, interior(), room.y0, room.y1, slot(), false);
                 return;
@@ -180,7 +164,7 @@ public final class DungeonFeatures {
         }
 
         private void extras() {
-            if ("cave".equals(room.shape)) { return; }
+            if (DungeonDef.CAVE.equals(room.shape)) { return; }
             int n = count();
             for (int k = 0; k < n; k++) {
                 switch (random.nextInt(3)) {
@@ -243,7 +227,7 @@ public final class DungeonFeatures {
 
         private void sinkhole() {
             if (!hit(OUTSIDE)) { return; }
-            int[] rect = sub(interior(), SHAFT_SIDE, true);
+            int[] rect = sub(interior(), Shaft.SIDE, true);
             if (rect == null) { return; }
             int slot = slot();
             add(PlanRecords.FEATURE_SINKHOLE, rect, room.y1, surfaceY, slot, true);

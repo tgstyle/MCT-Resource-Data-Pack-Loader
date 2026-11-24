@@ -34,6 +34,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         return ContentTypes.color(tint, context.toString());
     }
 
+    public static int color(int fixed, String mode, @Nullable IBlockAccess world, @Nullable BlockPos pos) { return fixed == ContentTypes.NO_COLOR ? biome(mode, world, pos) : fixed; }
+
     public static int biome(String tint, @Nullable IBlockAccess world, @Nullable BlockPos pos) {
         String value = mode(tint);
         if (GRASS.equals(value)) { return grass(world, pos); }

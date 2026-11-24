@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.fireworks;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.items.ContentItem;
+import mctmods.resourcedatapackloader.common.items.ItemVariants;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.FireworkDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -76,8 +77,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         EntityPlayer player = event.getEntityPlayer();
         Entry entry = fires(player, event.getItemStack());
         if (entry == null || !entry.def.onBlock()) { return; }
-        Vec3d at = blockPoint(event.getHitVec(), event.getPos(), event.getFace());
-        if (!player.isSneaking() && !player.world.isRemote && activates(event, at)) {
+        EnumFacing face = event.getFace() == null ? EnumFacing.UP : event.getFace();
+        Vec3d at = blockPoint(event.getHitVec(), event.getPos(), face);
+        if (!player.isSneaking() && !player.world.isRemote && activates(event, face, at)) {
             event.setCanceled(true);
             event.setCancellationResult(EnumActionResult.SUCCESS);
             return;
@@ -100,10 +102,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         launch(event, entry, player, event.getItemStack(), at);
     }
 
-    private static boolean activates(PlayerInteractEvent.RightClickBlock event, Vec3d at) {
+    private static boolean activates(PlayerInteractEvent.RightClickBlock event, EnumFacing face, Vec3d at) {
         EntityPlayer player = event.getEntityPlayer();
         BlockPos pos = event.getPos();
-        EnumFacing face = event.getFace() == null ? EnumFacing.UP : event.getFace();
         IBlockState state = player.world.getBlockState(pos);
         return state.getBlock().onBlockActivated(player.world, pos, state, player, event.getHand(), face, (float) (at.x - pos.getX()), (float) (at.y - pos.getY()), (float) (at.z - pos.getZ()));
     }
@@ -116,10 +117,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         return entry;
     }
 
-    private static Vec3d blockPoint(@Nullable Vec3d hit, BlockPos pos, @Nullable EnumFacing face) {
+    private static Vec3d blockPoint(@Nullable Vec3d hit, BlockPos pos, EnumFacing face) {
         if (hit != null) { return hit; }
-        EnumFacing side = face == null ? EnumFacing.UP : face;
-        return new Vec3d(pos.getX() + 0.5D + side.getXOffset() * 0.5D, pos.getY() + 0.5D + side.getYOffset() * 0.5D, pos.getZ() + 0.5D + side.getZOffset() * 0.5D);
+        return new Vec3d(pos.getX() + 0.5D + face.getXOffset() * 0.5D, pos.getY() + 0.5D + face.getYOffset() * 0.5D, pos.getZ() + 0.5D + face.getZOffset() * 0.5D);
     }
 
     private static void launch(PlayerInteractEvent event, Entry entry, EntityPlayer player, ItemStack held, Vec3d at) {
@@ -128,8 +128,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         if (player.world.isRemote) { return; }
         Item item = held.getItem();
         ItemStack rocket = FireworkRockets.stack(item, entry.def);
-        FireworkRockets.spawn(player.world, at.x, at.y, at.z, rocket, FireworkDef.MODE_BURST.equals(entry.def.mode));
+        FireworkRockets.spawn(player.world, at.x, at.y, at.z, rocket, entry.def.bursts());
         if (entry.def.consume && !player.capabilities.isCreativeMode) { held.shrink(1); }
-        if (entry.cooldown > 0) { player.getCooldownTracker().setCooldown(item, entry.cooldown); }
+        ItemVariants.cooldown(player, item, entry.cooldown);
     }
 }

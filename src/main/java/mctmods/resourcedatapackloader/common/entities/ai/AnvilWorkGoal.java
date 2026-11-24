@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperie
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.AnvilDef;
 import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
@@ -37,17 +39,11 @@ public final class AnvilWorkGoal extends EntityAIBase {
 
     @Nullable private BlockPos nearestAnvil() {
         BlockPos feet = new BlockPos(mob);
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
+        List<BlockPos> anvils = new ArrayList<>();
         for (BlockPos.MutableBlockPos at : BlockPos.getAllInBoxMutable(feet.add(-REACH, -RISE, -REACH), feet.add(REACH, RISE, REACH))) {
-            if (mob.world.getBlockState(at).getBlock() != Blocks.ANVIL) { continue; }
-            double distance = at.distanceSq(feet);
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = at.toImmutable();
-            }
+            if (mob.world.getBlockState(at).getBlock() == Blocks.ANVIL) { anvils.add(at.toImmutable()); }
         }
-        return best;
+        return Walking.nearest(anvils, at -> at.distanceSq(feet), Double.MAX_VALUE);
     }
 
     @Override public boolean shouldContinueExecuting() { return anvil != null && walked < GIVE_UP && mob.world.getBlockState(anvil).getBlock() == Blocks.ANVIL; }
@@ -73,7 +69,7 @@ public final class AnvilWorkGoal extends EntityAIBase {
         if (at == null || task == null) { return; }
         walked++;
         BlockBreak.look(mob, at);
-        if (mob.getDistanceSq(at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D) <= USE_DISTANCE_SQ) {
+        if (mob.getDistanceSqToCenter(at) <= USE_DISTANCE_SQ) {
             ContentAnvils.work(mob, task, at);
             anvil = null;
             return;

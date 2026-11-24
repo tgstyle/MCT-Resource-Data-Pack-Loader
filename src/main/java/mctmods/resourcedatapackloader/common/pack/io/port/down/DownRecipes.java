@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
-import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
@@ -22,34 +22,36 @@ final class DownRecipes {
 
     private DownRecipes() {}
 
-    static void recipe(JsonObject json, String file, Consumer<String> note) {
+    static void recipe(JsonObject json, Consumer<String> note) {
         if (!json.has(TYPE)) { return; }
-        if ("minecraft:smithing_trim".equals(namespaced(Json.text(json, TYPE)))) { json.remove("pattern"); }
+        if ("minecraft:smithing_trim".equals(Json.id(json, TYPE))) { json.remove("pattern"); }
         for (String key : SINGLE) {
-            if (json.has(key)) { json.add(key, ingredient(json.get(key), file, note)); }
+            if (json.has(key)) { json.add(key, ingredient(json.get(key), note)); }
         }
         if (JsonUtils.isJsonArray(json, "ingredients")) {
             JsonArray out = new JsonArray();
-            for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, file, note)); }
+            for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, note)); }
             json.add("ingredients", out);
         }
-        if (json.has("key") && json.get("key").isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), file, note)); }
+        JsonObject keys = Json.objectOrNull(json, "key");
+        if (keys != null) {
+            for (Map.Entry<String, JsonElement> entry : keys.entrySet()) { entry.setValue(ingredient(entry.getValue(), note)); }
         }
-        if (json.has("result") && json.get("result").isJsonObject()) { DownFixes.stack(json.getAsJsonObject("result"), file, note); }
-        JsonTree.replace(json, DownFixes.names(json).getAsJsonObject());
+        JsonObject result = Json.objectOrNull(json, "result");
+        if (result != null) { DownFixes.stack(result, note); }
+        DownFixes.rename(json);
     }
 
-    private static JsonElement ingredient(JsonElement held, String file, Consumer<String> note) {
+    private static JsonElement ingredient(JsonElement held, Consumer<String> note) {
         if (held.isJsonArray()) {
             JsonArray out = new JsonArray();
-            for (JsonElement one : held.getAsJsonArray()) { out.add(ingredient(one, file, note)); }
+            for (JsonElement one : held.getAsJsonArray()) { out.add(ingredient(one, note)); }
             return out;
         }
         if (held.isJsonPrimitive()) {
             String named = held.getAsString();
             JsonObject out = new JsonObject();
-            if (named.startsWith("#")) { out.addProperty("tag", named.substring(1)); }
+            if (IdNames.isTag(named)) { out.addProperty("tag", IdNames.tagPath(named)); }
             else { out.addProperty("item", named); }
             return out;
         }
@@ -61,10 +63,10 @@ final class DownRecipes {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
             if (CUSTOM_TYPE.equals(key)) { continue; }
-            if (NESTED.contains(key)) { out.add(key, ingredient(value, file, note)); }
+            if (NESTED.contains(key)) { out.add(key, ingredient(value, note)); }
             else if (COMPONENTS.equals(key) && value.isJsonObject()) {
                 JsonObject components = JsonTree.copy(value.getAsJsonObject());
-                DownFixes.components(components, file, note);
+                DownFixes.components(components, note);
                 out.add(key, components);
             }
             else { out.add(key, value); }

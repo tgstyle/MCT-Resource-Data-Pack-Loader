@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.environment.ContentTimeWindows;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
@@ -27,7 +28,7 @@ public final class CardScan {
     private static final int EVERY = 20;
     private static final long MINUTE_TICKS = 1200L;
     private static final String PLAY_FROM = "rdplPlayFrom";
-    private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
+    private static final Map<UUID, Map<String, Boolean>> INSIDE = PlayerLogout.track(new HashMap<>());
     private static final Map<Integer, Long> CLOCKS = new HashMap<>();
     private static final Map<Integer, Long> SCALED = new HashMap<>();
     private static int ticks;
@@ -91,8 +92,8 @@ public final class CardScan {
                 if (one instanceof EntityPlayerMP) { here.add((EntityPlayerMP) one); }
             }
             if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, scaledBefore, scaled); }
-            long day = now / DimensionTraitsDef.VANILLA_DAY;
-            if (day == before / DimensionTraitsDef.VANILLA_DAY) { continue; }
+            long day = CardPlace.day(now);
+            if (day == CardPlace.day(before)) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
                 if (rule.day < 0L || rule.day == day) { fireAll(rule, here); }
             }
@@ -120,6 +121,4 @@ public final class CardScan {
         NBTTagCompound persisted = PlayerPersisted.of(player);
         if (!persisted.hasKey(PLAY_FROM)) { persisted.setInteger(PLAY_FROM, played(player)); }
     }
-
-    static void forget(UUID player) { INSIDE.remove(player); }
 }

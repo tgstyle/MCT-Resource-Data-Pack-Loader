@@ -65,6 +65,13 @@ public final class ContentBeardEnds {
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The village at {}, {} settled every road box before any chunk was built, so no road is extended into ground that is already made", start.getBoundingBox().minX, start.getBoundingBox().minZ); }
     }
 
+    private static void clearWay(List<StructureComponent> pieces, List<StructureComponent> plots, String why) {
+        for (StructureComponent plot : plots) {
+            ContentLog.LOGGER.debug("{} at {}, {} makes way for {}", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ, why);
+            pieces.remove(plot);
+        }
+    }
+
     private static void elbows(StructureStart start, StructureComponent piece, List<StructureComponent> everyone, Random rand) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
         StructureBoundingBox box = piece.boundingBox;
@@ -144,10 +151,7 @@ public final class ContentBeardEnds {
                 ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the facing street at {}, {}: it would run beside the road at {}, {}", endX, endZ, bestMet.minX, bestMet.minZ, beside.minX, beside.minZ);
                 return;
             }
-            for (StructureComponent plot : joining) {
-                ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
-                pieces.remove(plot);
-            }
+            clearWay(pieces, joining, "the road closing its dead end");
             BeardPlots.setEnd(box, alongX, outward, outward ? metNear - 1 : metNear + 1);
             BeardRoads.clearLayout(piece);
             ContentLog.LOGGER.debug("The dead end at {}, {} reaches the facing street at {}, {} and joins it, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, joining.size());
@@ -192,21 +196,9 @@ public final class ContentBeardEnds {
                 for (StructureComponent plot : metMaking) { if (!making.contains(plot)) { making.add(plot); } }
             }
         }
-        for (StructureComponent plot : making) {
-            ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
-            pieces.remove(plot);
-        }
+        clearWay(pieces, making, "the road closing its dead end");
         BeardPlots.setEnd(box, alongX, outward, outward ? (overlaps ? metAcrossLo - 1 : metAcrossHi) : (overlaps ? metAcrossHi + 1 : metAcrossLo));
-        if (!overlaps) {
-            if (alongX) {
-                if (metAlongLo > acrossHi) { bestMet.minZ = box.maxZ + 1; }
-                else { bestMet.maxZ = box.minZ - 1; }
-            }
-            else {
-                if (metAlongLo > acrossHi) { bestMet.minX = box.maxX + 1; }
-                else { bestMet.maxX = box.minX - 1; }
-            }
-        }
+        if (!overlaps) { BeardPlots.setEnd(bestMet, !alongX, metAlongLo <= acrossHi, metAlongLo > acrossHi ? acrossHi + 1 : acrossLo - 1); }
         BeardRoads.clearLayout(piece);
         BeardRoads.clearLayout(bestOther);
         ContentLog.LOGGER.debug("The dead end at {}, {} reaches the road at {}, {} and closes into a {}, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, overlaps ? "junction" : "corner", making.size());
@@ -256,10 +248,7 @@ public final class ContentBeardEnds {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would run beside the road at {}, {}", endX, endZ, met.minX, met.minZ, beside.minX, beside.minZ);
             return false;
         }
-        for (StructureComponent plot : making) {
-            ContentLog.LOGGER.debug("{} at {}, {} makes way for the street merging into its neighbor", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
-            pieces.remove(plot);
-        }
+        clearWay(pieces, making, "the street merging into its neighbor");
         int ownCenter = (acrossLo + acrossHi) / 2;
         int metCenter = (metSideLo + metSideHi) / 2;
         MergePiece lane = new MergePiece((StructureVillagePieces.Start) pieces.get(0), merge, alongX, outward ? ownCenter : metCenter, outward ? metCenter : ownCenter);
@@ -318,10 +307,7 @@ public final class ContentBeardEnds {
             return;
         }
         for (StructureComponent plot : more) { if (!making.contains(plot)) { making.add(plot); } }
-        for (StructureComponent plot : making) {
-            ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
-            pieces.remove(plot);
-        }
+        clearWay(pieces, making, "the road closing its dead end");
         StructureVillagePieces.Path lane = new StructureVillagePieces.Path((StructureVillagePieces.Start) pieces.get(0), 0, rand, avenue, alongX ? EnumFacing.SOUTH : EnumFacing.EAST);
         pieces.add(lane);
         everyone.add(lane);

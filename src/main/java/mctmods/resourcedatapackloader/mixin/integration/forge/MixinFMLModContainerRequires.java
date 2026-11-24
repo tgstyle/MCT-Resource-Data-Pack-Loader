@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,17 +25,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (rdpl$notLoader()) { return; }
         Set<String> wanted = PackRequirements.required();
         if (wanted.isEmpty()) { return; }
-        Set<ArtifactVersion> requirements = new LinkedHashSet<>(cir.getReturnValue() == null ? Collections.emptySet() : cir.getReturnValue());
-        for (String modid : wanted) { requirements.add(VersionParser.parseVersionReference(modid)); }
-        cir.setReturnValue(requirements);
+        cir.setReturnValue(rdpl$withPackRequirements(new LinkedHashSet<>(cir.getReturnValue() == null ? Collections.emptySet() : cir.getReturnValue()), wanted));
     }
 
     @Inject(method = "getDependencies", at = @At("RETURN"), cancellable = true) private void rdpl$addPackDependencies(CallbackInfoReturnable<List<ArtifactVersion>> cir) {
         if (rdpl$notLoader()) { return; }
         Set<String> wanted = PackRequirements.required();
         if (wanted.isEmpty()) { return; }
-        List<ArtifactVersion> dependencies = new ArrayList<>(cir.getReturnValue() == null ? Collections.emptyList() : cir.getReturnValue());
-        for (String modid : wanted) { dependencies.add(VersionParser.parseVersionReference(modid)); }
-        cir.setReturnValue(dependencies);
+        cir.setReturnValue(rdpl$withPackRequirements(new ArrayList<>(cir.getReturnValue() == null ? Collections.emptyList() : cir.getReturnValue()), wanted));
+    }
+
+    @Unique private static <C extends Collection<ArtifactVersion>> C rdpl$withPackRequirements(C copy, Set<String> wanted) {
+        for (String modid : wanted) { copy.add(VersionParser.parseVersionReference(modid)); }
+        return copy;
     }
 }

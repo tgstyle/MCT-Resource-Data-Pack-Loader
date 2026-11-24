@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks.portal;
 
 import mctmods.resourcedatapackloader.common.blocks.BlockVariants;
 import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
+import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
 import mctmods.resourcedatapackloader.common.gates.ContentTeleporter;
 import mctmods.resourcedatapackloader.common.gates.PortalStorage;
@@ -11,7 +12,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
 import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.portals.PortalFit;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +32,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -42,7 +44,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 @SuppressWarnings("deprecation") public class ContentPortalBlock extends ContentBlock {
     public static final int MAX_VARIANTS = 16;
-    private static final Map<UUID, Long> RECENT = new HashMap<>();
+    private static final Map<UUID, Long> RECENT = PlayerLogout.track(new HashMap<>());
     private final PortalDef portal;
 
     public static ContentPortalBlock create(BlockDef def) {
@@ -102,7 +104,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
     }
 
     private PortalDef portalFor(IBlockState state) {
-        BlockVariant variant = getDef().at(getMetaFromState(state));
+        BlockVariant variant = ContentSetup.variantOf(getDef(), getVariantProperty(), state);
         return variant.portal == null ? portal : variant.portal;
     }
 
@@ -177,8 +179,6 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
         return false;
     }
 
-    public static void forget(UUID player) { RECENT.remove(player); }
-
     private boolean recently(EntityPlayer player, PortalDef shown) {
         Long last = RECENT.get(player.getUniqueID());
         if (last == null) { return false; }
@@ -188,7 +188,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
     private void sound(World world, EntityPlayer player, PortalDef shown) {
         if (shown.sound.isEmpty()) { return; }
-        SoundEvent event = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(shown.sound));
+        SoundEvent event = Registries.find(ForgeRegistries.SOUND_EVENTS, shown.sound);
         if (event == null) { return; }
         world.playSound(null, player.getPosition(), event, SoundCategory.BLOCKS, 1.0F, 1.0F);
     }

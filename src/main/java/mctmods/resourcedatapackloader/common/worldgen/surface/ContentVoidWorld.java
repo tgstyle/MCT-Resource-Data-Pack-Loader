@@ -39,8 +39,7 @@ public final class ContentVoidWorld {
         return ContentControl.flag(ContentControl.VOID, "voidWorld", Config.worldgen.voidWorld) || ContentBiomeControl.everythingBlocked();
     }
 
-    @Nullable public static Chunk emptyChunk(@Nullable World world, int chunkX, int chunkZ) {
-        if (!appliesTo(world)) { return null; }
+    public static Chunk emptyChunk(World world, int chunkX, int chunkZ) {
         Chunk chunk = new Chunk(world, new ChunkPrimer(), chunkX, chunkZ);
         chunk.generateSkylightMap();
         return chunk;
@@ -51,22 +50,14 @@ public final class ContentVoidWorld {
         IVoidMemory memory = memory();
         if (memory != null && memory.rdpl$voidRecorded()) { return memory.rdpl$voidAppliesTo(world.provider.getDimension()); }
         if (!enabled()) { return false; }
-        int[] wanted = ContentControl.numbers(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions);
-        boolean listed = false;
-        for (int dimension : wanted) {
-            if (dimension == world.provider.getDimension()) {
-                listed = true;
-                break;
-            }
-        }
-        return Listing.allows(listed, ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist));
+        return Listing.allows(dimensions(), world.provider.getDimension(), blacklist(), false);
     }
 
-    public static void record(IVoidMemory memory) {
-        memory.rdpl$recordVoid(enabled(),
-                ContentControl.numbers(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions),
-                ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist));
-    }
+    public static void record(IVoidMemory memory) { memory.rdpl$recordVoid(enabled(), dimensions(), blacklist()); }
+
+    private static int[] dimensions() { return ContentControl.numbers(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions); }
+
+    private static boolean blacklist() { return ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist); }
 
     @Nullable private static IVoidMemory memory() {
         WorldServer overworld = DimensionManager.getWorld(0);
@@ -85,9 +76,10 @@ public final class ContentVoidWorld {
     }
 
     private static void platform(World world, BlockPos center) {
-        IBlockState state = ContentStates.parse(ContentControl.text(ContentControl.VOID, "voidPlatformBlock", Config.worldgen.voidPlatformBlock), "voidPlatformBlock");
+        String block = ContentControl.text(ContentControl.VOID, "voidPlatformBlock", Config.worldgen.voidPlatformBlock);
+        IBlockState state = ContentStates.parse(block, "voidPlatformBlock");
         if (state == null) {
-            ContentLog.LOGGER.error("voidPlatformBlock '{}' is not a registered block, using stone", ContentControl.text(ContentControl.VOID, "voidPlatformBlock", Config.worldgen.voidPlatformBlock));
+            ContentLog.LOGGER.error("voidPlatformBlock '{}' is not a registered block, using stone", block);
             state = Blocks.STONE.getDefaultState();
         }
         int reach = Math.max(0, (ContentControl.number(ContentControl.VOID, "voidPlatformSize", Config.worldgen.voidPlatformSize) - 1) / 2);

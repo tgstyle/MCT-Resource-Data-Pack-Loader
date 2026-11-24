@@ -16,13 +16,16 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
 public final class OwnerTable extends WorldSavedData {
     private static final String NAME = "rdpl_owners";
     private static final String FTB_MIRROR_PREFIX = "ftbteams-";
+    private static final String NEXT = "next";
+    private static final String EPOCH = "epoch";
+    private static final String SWEEP = "sweep";
+    private static final String RECORDS = "records";
     private final Map<Integer, OwnerRecord> records = new LinkedHashMap<>();
     private final Map<String, Integer> liveByKey = new HashMap<>();
     private NBTTagCompound sweep = new NBTTagCompound();
@@ -32,9 +35,7 @@ public final class OwnerTable extends WorldSavedData {
     public OwnerTable(String name) { super(name); }
 
     @Nullable public static OwnerTable get(@Nullable MinecraftServer server) {
-        if (server == null) { return null; }
-        MapStorage storage = server.getWorld(0).getMapStorage();
-        return storage == null ? null : SavedData.get(storage, OwnerTable.class, NAME, OwnerTable::new);
+        return SavedData.overworld(server, OwnerTable.class, NAME, OwnerTable::new);
     }
 
     public static int handleForTeam(@Nullable MinecraftServer server, String name) {
@@ -223,10 +224,10 @@ public final class OwnerTable extends WorldSavedData {
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
         records.clear();
         liveByKey.clear();
-        next = Math.max(1, compound.getInteger("next"));
-        epoch = compound.getInteger("epoch");
-        sweep = compound.getCompoundTag("sweep");
-        NBTTagList tagged = compound.getTagList("records", Constants.NBT.TAG_COMPOUND);
+        next = Math.max(1, compound.getInteger(NEXT));
+        epoch = compound.getInteger(EPOCH);
+        sweep = compound.getCompoundTag(SWEEP);
+        NBTTagList tagged = compound.getTagList(RECORDS, Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < tagged.tagCount(); index++) {
             OwnerRecord record = OwnerRecord.read(tagged.getCompoundTagAt(index));
             records.put(record.h, record);
@@ -238,10 +239,10 @@ public final class OwnerTable extends WorldSavedData {
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
         NBTTagList tagged = new NBTTagList();
         for (OwnerRecord record : records.values()) { tagged.appendTag(record.write()); }
-        compound.setInteger("next", next);
-        compound.setInteger("epoch", epoch);
-        compound.setTag("records", tagged);
-        compound.setTag("sweep", sweep.copy());
+        compound.setInteger(NEXT, next);
+        compound.setInteger(EPOCH, epoch);
+        compound.setTag(RECORDS, tagged);
+        compound.setTag(SWEEP, sweep.copy());
         return compound;
     }
 }

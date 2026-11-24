@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin.network;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -34,8 +33,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayerMP;markPlayerActive()V", shift = At.Shift.AFTER), cancellable = true) private void rdpl$buildFloor(CPacketPlayerTryUseItemOnBlock packetIn, CallbackInfo ci) {
         World world = player.world;
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
-        int floor = ((IRubicWorld) world).rdpl$getMinHeight();
+        if (!GenHeights.rubic(world)) { return; }
+        int floor = GenHeights.floor(world, 0);
         BlockPos at = packetIn.getPos();
         if (at.getY() > floor || (packetIn.getDirection() != EnumFacing.DOWN && at.getY() >= floor)) { return; }
         TextComponentTranslation said = new TextComponentTranslation("rdpl.build.toolow", floor);

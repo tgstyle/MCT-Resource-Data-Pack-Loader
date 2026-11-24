@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.ServerTicks;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.PredictedChunk;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -12,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.entity.Entity;
@@ -30,14 +30,16 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentEntityTicks {
     private static int TICKS = 1;
     private static final int VANILLA_THINK = 3;
-    private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList("items", "experience", "projectiles"));
+    private static final String ITEMS = "items";
+    private static final String EXPERIENCE = "experience";
+    private static final String PROJECTILES = "projectiles";
+    private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(ITEMS, EXPERIENCE, PROJECTILES));
     private static final Map<World, Long2BooleanOpenHashMap> FAR = new HashMap<>();
     private static final Map<World, Long> CHECKED = new HashMap<>();
     private static final int SNAPSHOT = 100;
@@ -69,8 +71,8 @@ public final class ContentEntityTicks {
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
         TICKS++;
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null || server.getTickCounter() % SNAPSHOT != 0) { return; }
+        MinecraftServer server = ServerTicks.every(SNAPSHOT);
+        if (server == null) { return; }
         long asked = considered;
         long paced = slowed;
         considered = 0L;
@@ -181,9 +183,9 @@ public final class ContentEntityTicks {
 
     private static boolean kindSlowed(Entity entity) {
         Set<String> kinds = slowedKinds();
-        if (entity instanceof EntityItem) { return kinds.contains("items"); }
-        if (entity instanceof EntityXPOrb) { return kinds.contains("experience"); }
-        if (entity instanceof IProjectile) { return kinds.contains("projectiles"); }
+        if (entity instanceof EntityItem) { return kinds.contains(ITEMS); }
+        if (entity instanceof EntityXPOrb) { return kinds.contains(EXPERIENCE); }
+        if (entity instanceof IProjectile) { return kinds.contains(PROJECTILES); }
         return false;
     }
 
@@ -198,6 +200,6 @@ public final class ContentEntityTicks {
         Set<String> spared = SPARED.get(() -> Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)));
         if (spared.isEmpty()) { return false; }
         ResourceLocation name = EntityList.getKey(entity);
-        return name != null && spared.contains(name.toString().toLowerCase(Locale.ROOT));
+        return name != null && spared.contains(name.toString());
     }
 }

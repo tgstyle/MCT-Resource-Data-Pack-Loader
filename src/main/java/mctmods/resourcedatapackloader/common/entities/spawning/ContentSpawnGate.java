@@ -10,7 +10,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 
 public final class ContentSpawnGate {
-    private static final double REACH = 128.0D * 128.0D;
+    private static final double REACH_SQ = 128.0D * 128.0D;
 
     private ContentSpawnGate() {}
 
@@ -34,7 +34,7 @@ public final class ContentSpawnGate {
 
     private static boolean playerNear(SpawnGateDef gate, Entity entity) {
         for (EntityPlayer player : entity.world.playerEntities) {
-            if (player.isSpectator() || player.getDistanceSq(entity) > REACH) { continue; }
+            if (player.isSpectator() || player.getDistanceSq(entity) > REACH_SQ) { continue; }
             if (!gate.advancement.isEmpty() && !Advancements.has(player, gate.advancement)) { continue; }
             if (gate.standing.met(player)) { return true; }
         }

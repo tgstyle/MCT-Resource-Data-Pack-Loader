@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.pregen;
 
 import mctmods.resourcedatapackloader.common.environment.ContentEndDragon;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.rubic.regionlib.impl.RegionNames;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.cubicchunks.CubicChunksWorlds;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -33,9 +35,9 @@ public final class ContentPregenDimensions {
     static int wantedRadius;
     static boolean chaining;
 
-    public static int[] wantedDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensions", Config.chunks.pregenDimensions); }
+    public static int[] wantedDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, ContentControl.PREGEN_DIMENSIONS, Config.chunks.pregenDimensions); }
 
-    public static boolean makesEveryDimension() { return ContentControl.flag(ContentControl.CHUNKS, "pregenAllDimensions", Config.chunks.pregenAllDimensions); }
+    public static boolean makesEveryDimension() { return ContentControl.flag(ContentControl.CHUNKS, ContentControl.PREGEN_ALL_DIMENSIONS, Config.chunks.pregenAllDimensions); }
 
     private static int[] chosenDimensions() {
         if (!makesEveryDimension()) { return wantedDimensions(); }
@@ -50,7 +52,7 @@ public final class ContentPregenDimensions {
         return chosen;
     }
 
-    public static int[] enteredDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensionsWhenEntered", Config.chunks.pregenDimensionsWhenEntered); }
+    public static int[] enteredDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, ContentControl.PREGEN_DIMENSIONS_WHEN_ENTERED, Config.chunks.pregenDimensionsWhenEntered); }
 
     private static boolean madeUpFront(int dimension) {
         for (int later : enteredDimensions()) {
@@ -81,12 +83,12 @@ public final class ContentPregenDimensions {
         if (ContentPregenHold.greetingFor(event.toDim, false) != null) { ContentPregenHold.welcome((EntityPlayerMP) event.player); }
     }
 
-    public static boolean reachesTheBorder() { return ContentControl.flag(ContentControl.CHUNKS, "pregenToBorder", Config.chunks.pregenToBorder); }
+    public static boolean reachesTheBorder() { return ContentControl.flag(ContentControl.CHUNKS, ContentControl.PREGEN_TO_BORDER, Config.chunks.pregenToBorder); }
 
-    public static boolean picksUpAgain() { return ContentControl.flag(ContentControl.CHUNKS, "pregenResume", Config.chunks.pregenResume); }
+    public static boolean picksUpAgain() { return ContentControl.flag(ContentControl.CHUNKS, ContentControl.PREGEN_RESUME, Config.chunks.pregenResume); }
 
     public static int wantedOnNewWorld() {
-        int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
+        int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, ContentControl.PREGEN_ON_NEW_WORLD, Config.chunks.pregenOnNewWorld));
         return Math.max(asked, VANILLA_SPAWN_REACH);
     }
 
@@ -166,7 +168,7 @@ public final class ContentPregenDimensions {
                     continue;
                 }
                 reach = (int) Math.ceil(border.getDiameter() / 2.0D / 16.0D);
-                int limit = ContentControl.number(ContentControl.CHUNKS, "pregenBorderLimit", Config.chunks.pregenBorderLimit);
+                int limit = ContentControl.number(ContentControl.CHUNKS, ContentControl.PREGEN_BORDER_LIMIT, Config.chunks.pregenBorderLimit);
                 if (reach > limit) {
                     ContentLog.LOGGER.error("The border of dimension {} stands {} block(s) across, which is {} chunk(s) either way and past the {} allowed by pregenBorderLimit, so no land is made out to it", dimension, (long) border.getDiameter(), reach, limit);
                     continue;
@@ -193,10 +195,10 @@ public final class ContentPregenDimensions {
         if (region == null) { return true; }
         int expected = 0;
         int missing = 0;
-        for (int rx = (centerX - reach) >> 5; rx <= (centerX + reach) >> 5; rx++) {
-            for (int rz = (centerZ - reach) >> 5; rz <= (centerZ + reach) >> 5; rz++) {
+        for (int rx = Coords.chunkToRegion(centerX - reach); rx <= Coords.chunkToRegion(centerX + reach); rx++) {
+            for (int rz = Coords.chunkToRegion(centerZ - reach); rz <= Coords.chunkToRegion(centerZ + reach); rz++) {
                 expected++;
-                if (!new File(region, "r." + rx + "." + rz + ".mca").isFile()) { missing++; }
+                if (!new File(region, RegionNames.chunkRegion(rx, rz)).isFile()) { missing++; }
             }
         }
         if (missing == 0) { return true; }
@@ -218,6 +220,6 @@ public final class ContentPregenDimensions {
 
     public static File regionFolder(WorldServer world) {
         if (!(world.getChunkProvider().chunkLoader instanceof AnvilChunkLoader)) { return null; }
-        return new File(((AnvilChunkLoader) world.getChunkProvider().chunkLoader).chunkSaveLocation, "region");
+        return RegionNames.chunkFolder(((AnvilChunkLoader) world.getChunkProvider().chunkLoader).chunkSaveLocation.toPath()).toFile();
     }
 }

@@ -34,8 +34,14 @@ public final class CompressedSet {
 
     public int blockCount() { return (layers - low() + BlockDef.MAX_META) / BlockDef.MAX_META; }
 
+    public int group(int layer) { return (layer - low()) / BlockDef.MAX_META; }
+
+    public int first(int index) { return index * BlockDef.MAX_META + low(); }
+
+    public int last(int index) { return Math.min(layers, first(index) + BlockDef.MAX_META - 1); }
+
     public ResourceLocation blockName(int layer) {
-        int index = (layer - low()) / BlockDef.MAX_META;
+        int index = group(layer);
         return new ResourceLocation(def.key.getNamespace(), name + "_compressed" + (index == 0 ? "" : "_" + (index + 1)));
     }
 
@@ -47,7 +53,7 @@ public final class CompressedSet {
 
     public int layerOf(ResourceLocation block, int meta) {
         for (int index = 0; index < blockCount(); index++) {
-            if (blockName(index * BlockDef.MAX_META + low()).equals(block)) { return Math.min(layers, index * BlockDef.MAX_META + Math.max(0, meta) + low()); }
+            if (blockName(first(index)).equals(block)) { return Math.min(layers, first(index) + Math.max(0, meta)); }
         }
         return low() - 1;
     }

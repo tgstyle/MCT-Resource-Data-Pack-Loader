@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.dimension;
 
+import mctmods.resourcedatapackloader.common.util.NbtStrings;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 
 import java.util.ArrayList;
@@ -10,10 +11,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
@@ -24,9 +22,7 @@ public final class EnvironmentStorage extends WorldSavedData {
     public EnvironmentStorage(String name) { super(name); }
 
     @Nullable static EnvironmentStorage get(MinecraftServer server) {
-        MapStorage storage = server.getWorld(0).getMapStorage();
-        if (storage == null) { return null; }
-        return SavedData.get(storage, EnvironmentStorage.class, NAME, EnvironmentStorage::new);
+        return SavedData.overworld(server, EnvironmentStorage.class, NAME, EnvironmentStorage::new);
     }
 
     Map<Integer, List<String>> kept() { return Collections.unmodifiableMap(new LinkedHashMap<>(active)); }
@@ -41,9 +37,8 @@ public final class EnvironmentStorage extends WorldSavedData {
     @Override public void readFromNBT(@Nonnull NBTTagCompound tag) {
         active.clear();
         for (String key : tag.getKeySet()) {
-            NBTTagList list = tag.getTagList(key, Constants.NBT.TAG_STRING);
             List<String> names = new ArrayList<>();
-            for (int index = 0; index < list.tagCount(); index++) { names.add(list.getStringTagAt(index)); }
+            NbtStrings.read(tag.getTagList(key, Constants.NBT.TAG_STRING), names);
             if (names.isEmpty()) { continue; }
             try { active.put(Integer.parseInt(key), names); }
             catch (NumberFormatException ignored) { markDirty(); }
@@ -52,9 +47,7 @@ public final class EnvironmentStorage extends WorldSavedData {
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound tag) {
         for (Map.Entry<Integer, List<String>> entry : active.entrySet()) {
-            NBTTagList list = new NBTTagList();
-            for (String name : entry.getValue()) { list.appendTag(new NBTTagString(name)); }
-            tag.setTag(String.valueOf(entry.getKey()), list);
+            tag.setTag(String.valueOf(entry.getKey()), NbtStrings.write(entry.getValue()));
         }
         return tag;
     }

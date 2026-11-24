@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+
 import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -27,21 +28,19 @@ public final class FollowPlayerGoal extends EntityAIBase {
 
     @Nullable public EntityPlayer getPlayer() { return player; }
 
-    private double range() { return creature.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue(); }
-
     private boolean dark(EntityPlayer found) { return lightLevel <= 0 || creature.world.getLightFromNeighbors(new BlockPos(found)) < lightLevel; }
 
     @Override public boolean shouldExecute() {
         if (creature.getAttackTarget() != null || ++wait < CHECK_TICKS) { return false; }
         wait = 0;
-        EntityPlayer found = creature.world.getNearestAttackablePlayer(creature, range(), range());
+        EntityPlayer found = creature.world.getNearestAttackablePlayer(creature, ContentAttributes.followRange(creature), ContentAttributes.followRange(creature));
         if (found == null || !dark(found)) { return false; }
         player = found;
         return true;
     }
 
     @Override public boolean shouldContinueExecuting() {
-        return player != null && player.isEntityAlive() && creature.getAttackTarget() == null && creature.getDistanceSq(player) <= range() * range() && dark(player);
+        return player != null && player.isEntityAlive() && creature.getAttackTarget() == null && creature.getDistanceSq(player) <= ContentAttributes.followRange(creature) * ContentAttributes.followRange(creature) && dark(player);
     }
 
     @Override public void startExecuting() { wait = 0; }

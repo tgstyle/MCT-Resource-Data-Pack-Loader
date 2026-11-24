@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
+import mctmods.resourcedatapackloader.common.util.entity.Worn;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.HashMap;
@@ -27,7 +29,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public final class PlayerWeights {
     private static final int SCAN = 10;
     private static final long REPORT = 60_000_000_000L;
-    private static final Map<UUID, Entry> CACHE = new HashMap<>();
+    private static final Map<UUID, Entry> CACHE = PlayerLogout.track(new HashMap<>());
     private static long scans;
     private static long nanos;
     private static long reported = System.nanoTime();
@@ -44,17 +46,25 @@ public final class PlayerWeights {
         boolean heavy;
         long refused;
         double exhaustion;
+
+        boolean stale() { return dirty || generation != ContentWeights.generation(); }
+
+        public long room(double hardLimit) { return (long) (hardLimit * limit) - total; }
     }
 
+    private static boolean ignored(Entity entity) { return !(entity instanceof EntityPlayer) || entity.world.isRemote || !ContentWeights.any(); }
+
+    private static Entry entryOf(EntityPlayer player) { return CACHE.computeIfAbsent(player.getUniqueID(), id -> new Entry()); }
+
     public static Entry current(EntityPlayer player) {
-        Entry entry = CACHE.computeIfAbsent(player.getUniqueID(), id -> new Entry());
-        if (entry.dirty || entry.generation != ContentWeights.generation()) { refresh(player, entry); }
+        Entry entry = entryOf(player);
+        if (entry.stale()) { refresh(player, entry); }
         return entry;
     }
 
     static void mark(Entity entity) {
-        if (!(entity instanceof EntityPlayer) || entity.world.isRemote || !ContentWeights.any()) { return; }
-        CACHE.computeIfAbsent(entity.getUniqueID(), id -> new Entry()).dirty = true;
+        if (ignored(entity)) { return; }
+        entryOf((EntityPlayer) entity).dirty = true;
     }
 
     static boolean counted(EntityPlayer player, WeightDef settings) { return !player.isSpectator() && (!player.isCreative() || settings.creative); }
@@ -84,7 +94,7 @@ public final class PlayerWeights {
         entry.dirty = false;
         entry.generation = ContentWeights.generation();
         if (counted(player, settings)) {
-            List<ItemStack> worn = CarriedWeight.worn(player);
+            List<ItemStack> worn = Worn.worn(player);
             entry.total = (int) Math.min(Integer.MAX_VALUE, CarriedWeight.total(player, settings, worn));
             entry.limit = limitOf(player, settings, worn);
         }
@@ -114,14 +124,14 @@ public final class PlayerWeights {
             if (!CACHE.isEmpty() && CACHE.remove(player.getUniqueID()) != null) { WeightTiers.clear(player); }
             return;
         }
-        Entry entry = CACHE.computeIfAbsent(player.getUniqueID(), id -> new Entry());
-        if (entry.dirty || entry.generation != ContentWeights.generation() || (player.ticksExisted + player.getEntityId()) % SCAN == 0) { refresh(player, entry); }
+        Entry entry = entryOf(player);
+        if (entry.stale() || (player.ticksExisted + player.getEntityId()) % SCAN == 0) { refresh(player, entry); }
         if (entry.heavy) { WeightTiers.hold(player, entry); }
     }
 
     @SubscribeEvent public static void onJump(LivingEvent.LivingJumpEvent event) {
         Entity entity = event.getEntity();
-        if (!(entity instanceof EntityPlayer) || entity.world.isRemote || !ContentWeights.any()) { return; }
+        if (ignored(entity)) { return; }
         Entry entry = CACHE.get(entity.getUniqueID());
         if (entry != null && !WeightTiers.jumps(ContentWeights.settings(), entry.tier)) { entity.motionY = 0.0D; }
     }
@@ -151,6 +161,4 @@ public final class PlayerWeights {
     @SubscribeEvent public static void onClone(Clone event) { mark(event.getEntityPlayer()); }
 
     @SubscribeEvent public static void onAdvancement(AdvancementEvent event) { mark(event.getEntityPlayer()); }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { CACHE.remove(event.player.getUniqueID()); }
 }

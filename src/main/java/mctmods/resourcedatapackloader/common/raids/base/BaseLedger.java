@@ -4,9 +4,11 @@ import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimGuard;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimOwners;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -178,12 +180,8 @@ public final class BaseLedger extends WorldSavedData {
         NBTTagList bedList = compound.getTagList("Beds", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < bedList.tagCount(); i++) {
             NBTTagCompound one = bedList.getCompoundTagAt(i);
-            UUID id;
-            try {
-                id = UUID.fromString(one.getString("u"));
-            } catch (IllegalArgumentException bad) {
-                continue;
-            }
+            UUID id = Nbts.uuid(one.getString("u"));
+            if (id == null) { continue; }
             beds.put(id, BlockPos.fromLong(one.getLong("p")));
         }
         NBTTagList raidList = compound.getTagList("Raided", Constants.NBT.TAG_COMPOUND);
@@ -270,7 +268,9 @@ public final class BaseLedger extends WorldSavedData {
             return false;
         }
 
-        private double raw() { return boxCount * BaseDef.CHEST_WEIGHT + placed * BaseDef.PLACED_WEIGHT + Math.min(ticks / 1200, 60) * BaseDef.MINUTES_WEIGHT; }
+        public double minutes() { return Math.min(ticks / MathUtil.TICKS_PER_MINUTE, BaseDef.MINUTE_CAP); }
+
+        private double raw() { return boxCount * BaseDef.CHEST_WEIGHT + placed * BaseDef.PLACED_WEIGHT + minutes() * BaseDef.MINUTES_WEIGHT; }
 
         private void credit(int handle, int amount) {
             int at = indexOf(handle);

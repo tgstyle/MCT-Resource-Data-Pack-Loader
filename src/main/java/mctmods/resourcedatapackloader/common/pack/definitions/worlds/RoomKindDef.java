@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 public final class RoomKindDef {
     public static final String HALL = "hall";
+    public static final String BOX = "box";
     public static final String DEFAULT_MOBS = "common";
     public static final String DEFAULT_LOOT = "basic";
     public static final int DEFAULT_WEIGHT = 1;
@@ -61,7 +62,7 @@ public final class RoomKindDef {
     }
 
     public static RoomKindDef hall() {
-        return new RoomKindDef(HALL, DEFAULT_WEIGHT, ANY, ANY, NO_CAP, NO_CAP, null, null, Collections.singletonList(new PickDef("box", 1)), Collections.emptyList(), 0, Collections.emptyList(), Collections.emptyList(), DEFAULT_MOBS, DEFAULT_LOOT, null, null, Collections.emptyMap(), 0, false, false);
+        return new RoomKindDef(HALL, DEFAULT_WEIGHT, ANY, ANY, NO_CAP, NO_CAP, null, null, Collections.singletonList(new PickDef(BOX, 1)), Collections.emptyList(), 0, Collections.emptyList(), Collections.emptyList(), DEFAULT_MOBS, DEFAULT_LOOT, null, null, Collections.emptyMap(), 0, false, false);
     }
 
     public boolean templated() { return !templates.isEmpty(); }

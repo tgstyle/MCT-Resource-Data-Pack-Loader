@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.tree;
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TreeGrowthDef;
@@ -9,11 +8,18 @@ import mctmods.resourcedatapackloader.common.rules.ContentTreeRules;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.plant.LeafDecay;
 import mctmods.resourcedatapackloader.common.util.plant.PlantWater;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.common.util.world.TileData;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Turns;
 
 import java.util.ArrayList;
@@ -29,9 +35,7 @@ import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.IGrowable;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
@@ -62,7 +66,7 @@ public final class ContentTreeGrowth {
         TreePickDef pick = WeightedPicks.pick(growth.trees, def -> def.weight, random);
         if (pick == null) { return false; }
         Block block = sapling.getBlock();
-        boolean foreign = !(block instanceof ContentSaplingBlock) && (block.getRegistryName() == null || !"minecraft".equals(block.getRegistryName().getNamespace()));
+        boolean foreign = !(block instanceof ContentSaplingBlock) && (block.getRegistryName() == null || !IdNames.VANILLA.equals(block.getRegistryName().getNamespace()));
         boolean inSteps = pick.growsInSteps(foreign);
         int index = growth.trees.indexOf(pick);
         TreeEntry entry;
@@ -107,9 +111,9 @@ public final class ContentTreeGrowth {
         }
         ContentTreeStore.put(world, entry);
         for (int packed : entry.saplings.keySet()) {
-            long other = pos.add(TreeEntry.unpackX(packed), TreeEntry.unpackY(packed), TreeEntry.unpackZ(packed)).toLong();
+            long other = TreeEntry.at(pos, packed).toLong();
             TreeEntry waiting = other == entry.pos ? null : ContentTreeStore.get(world, other);
-            if (waiting != null && waiting.phase == 0) { ContentTreeStore.remove(world, other); }
+            if (waiting != null && waiting.phase == TreeEntry.PHASE_SAPLING) { ContentTreeStore.remove(world, other); }
         }
         step(world, entry, growth, growth.timed());
         return true;
@@ -132,15 +136,13 @@ public final class ContentTreeGrowth {
             world.captureBlockSnapshots = prior;
             return;
         }
-        boolean stage = true;
-        for (int i = saved; i < list.size(); i++) { stage &= list.get(i).getPos().equals(pos); }
-        if (stage) {
+        if (TreeRecorder.onlyStart(list, saved, pos)) {
             TreeRecorder.commitWhole(world, saved, prior);
             return;
         }
         TreeRecorder.restore(world, saved, prior);
-        TreeGrowthDef growth = ContentTreeRules.growth(state);
-        if (growth != null && growth.growing()) { start(world, pos, state, ContentTreeRules.ruleId(state), growth, null); }
+        TreeGrowthDef growth = ContentTreeRules.growing(state);
+        if (growth != null) { start(world, pos, state, ContentTreeRules.ruleId(state), growth, null); }
     }
 
     @Nullable public static String step(WorldServer world, TreeEntry entry, TreeGrowthDef growth, boolean timed) {
@@ -168,7 +170,7 @@ public final class ContentTreeGrowth {
         BlockPos start = BlockPos.fromLong(entry.pos);
         BlockPos base = start;
         BlockPos tip = start;
-        if (entry.phase != 0) {
+        if (entry.phase != TreeEntry.PHASE_SAPLING) {
             TreeShape shape = shape(world, entry);
             if (shape == null || shape.base() == null) { return "template missing"; }
             BlockPos column = shape.base();
@@ -187,11 +189,11 @@ public final class ContentTreeGrowth {
     public static void plant(WorldServer world, BlockPos pos, IBlockState sapling, String rule) {
         if (ContentTreeStore.get(world, pos.toLong()) != null) { return; }
         long now = world.getTotalWorldTime();
-        ContentTreeStore.put(world, new TreeEntry(pos.toLong(), rule, (byte) 0, new int[0], -1, (byte) 0, "", (byte) 0, (byte) 0, 0L, 0, 0, now, now, 0L, single(sapling), new IntOpenHashSet(), new IntOpenHashSet(), 0, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>()));
+        ContentTreeStore.put(world, TreeEntry.fresh(pos.toLong(), rule, TreeEntry.PHASE_SAPLING, -1, (byte) 0, "", (byte) 0, (byte) 0, 0L, 0, now, single(sapling), 0, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>()));
     }
 
     @Nullable private static String blockedAt(WorldServer world, BlockPos base, BlockPos tip, TreeGrowthDef growth) {
-        boolean above = tip.getY() >= maxY(world);
+        boolean above = tip.getY() >= GenHeights.ceiling(world, world.getHeight());
         if (!world.isBlockLoaded(base) || !above && !world.isBlockLoaded(tip)) { return "chunk not loaded"; }
         if (!BiomeNames.matches(growth.biomes, world.getBiome(base))) { return "biome"; }
         if (growth.needsWater && !PlantWater.near(world, base.down(), growth.waterRange)) { return "no water"; }
@@ -200,12 +202,16 @@ public final class ContentTreeGrowth {
         return null;
     }
 
+    private static Cached cached(TreeEntry entry) {
+        return CACHE.computeIfAbsent(entry, key -> new Cached());
+    }
+
     @Nullable public static TreeShape shape(WorldServer world, TreeEntry entry) {
         if (entry.kind == TreeEntry.KIND_STRUCTURE) {
-            TreeTemplates.Built built = TreeTemplates.get(world, entry.source, Rotation.values()[entry.turn], Mirror.values()[entry.mirror], entry.steps);
+            TreeTemplates.Built built = TreeTemplates.get(world, entry.source, Turns.ALL[entry.turn], Mirror.values()[entry.mirror], entry.steps);
             return built == null ? null : built.shape;
         }
-        Cached cached = CACHE.computeIfAbsent(entry, key -> new Cached());
+        Cached cached = cached(entry);
         if (cached.shape == null) { cached.shape = rebuild(entry); }
         return cached.shape;
     }
@@ -213,7 +219,7 @@ public final class ContentTreeGrowth {
     public static Map<BlockPos, IBlockState> current(WorldServer world, TreeEntry entry) {
         TreeShape shape = shape(world, entry);
         if (entry.step <= 0 || shape == null) { return Collections.emptyMap(); }
-        Cached cached = CACHE.computeIfAbsent(entry, key -> new Cached());
+        Cached cached = cached(entry);
         if (cached.step != entry.step || cached.gone != entry.gone.size() || cached.built != shape) {
             cached.current = shape.stepAt(entry.step, goneSet(entry));
             cached.step = entry.step;
@@ -224,15 +230,11 @@ public final class ContentTreeGrowth {
     }
 
     private static long mix(long worldSeed, long pos, long time) {
-        long h = worldSeed * 0x9E3779B97F4A7C15L + pos;
+        long h = worldSeed * MathUtil.GOLDEN_GAMMA + pos;
         h = (h ^ (h >>> 31)) * 0xBF58476D1CE4E5B9L + time;
         h = (h ^ (h >>> 29)) * 0x94D049BB133111EBL;
         return h ^ (h >>> 32);
     }
-
-    private static BlockPos rel(int packed) { return new BlockPos(TreeEntry.unpackX(packed), TreeEntry.unpackY(packed), TreeEntry.unpackZ(packed)); }
-
-    private static int pack(BlockPos rel) { return TreeEntry.pack(rel.getX(), rel.getY(), rel.getZ()); }
 
     private static boolean anyLog(Map<BlockPos, IBlockState> blocks) {
         for (Map.Entry<BlockPos, IBlockState> entry : blocks.entrySet()) {
@@ -241,21 +243,17 @@ public final class ContentTreeGrowth {
         return false;
     }
 
-    private static boolean rubic(World world) { return world instanceof IRubicWorld && ((IRubicWorld) world).rdpl$isRubicWorld(); }
-
-    private static int maxY(World world) { return rubic(world) ? ((IRubicWorld) world).rdpl$getMaxHeight() : world.getHeight(); }
-
-    private static boolean outOfHeight(World world, BlockPos at) { return at.getY() < (rubic(world) ? ((IRubicWorld) world).rdpl$getMinHeight() : 0) || at.getY() >= maxY(world); }
+    private static boolean outOfHeight(World world, BlockPos at) { return at.getY() < GenHeights.floor(world, 0) || at.getY() >= GenHeights.ceiling(world, world.getHeight()); }
 
     private static Map<Integer, IBlockState> single(IBlockState sapling) {
         Map<Integer, IBlockState> saplings = new LinkedHashMap<>();
-        saplings.put(TreeEntry.pack(0, 0, 0), sapling);
+        saplings.put(TreeEntry.ORIGIN, sapling);
         return saplings;
     }
 
     private static Set<BlockPos> goneSet(TreeEntry entry) {
         Set<BlockPos> gone = new HashSet<>();
-        for (int packed : entry.gone) { gone.add(rel(packed)); }
+        for (int packed : entry.gone) { gone.add(TreeEntry.unpack(packed)); }
         return gone;
     }
 
@@ -263,7 +261,7 @@ public final class ContentTreeGrowth {
         Map<BlockPos, IBlockState> blocks = new LinkedHashMap<>();
         Map<BlockPos, NBTTagCompound> tiles = new HashMap<>();
         for (int i = 0; i < result.offsets.size(); i++) {
-            BlockPos at = rel(result.offsets.get(i));
+            BlockPos at = TreeEntry.unpack(result.offsets.get(i));
             blocks.put(at, result.states.get(i));
             if (result.tiles.get(i) != null) { tiles.put(at, result.tiles.get(i)); }
         }
@@ -274,7 +272,7 @@ public final class ContentTreeGrowth {
         Map<BlockPos, IBlockState> blocks = new LinkedHashMap<>();
         Map<BlockPos, NBTTagCompound> tiles = new HashMap<>();
         for (int i = 0; i < entry.blocks.length; i++) {
-            BlockPos at = rel(entry.blocks[i]);
+            BlockPos at = TreeEntry.unpack(entry.blocks[i]);
             blocks.put(at, entry.palette.get(entry.states[i]));
             NBTTagCompound tile = entry.blockEntities.get(i);
             if (tile != null) { tiles.put(at, tile); }
@@ -284,7 +282,7 @@ public final class ContentTreeGrowth {
 
     private static TreeEntry entryOf(WorldServer world, BlockPos pos, String rule, int pick, TreePickDef def, byte turn, byte mirror, long seed, int steps, Map<Integer, IBlockState> saplings, int hash) {
         long now = world.getTotalWorldTime();
-        return new TreeEntry(pos.toLong(), rule, (byte) 1, new int[0], pick, (byte) def.kind.ordinal(), def.source, turn, mirror, seed, 0, steps, now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), hash, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>());
+        return TreeEntry.fresh(pos.toLong(), rule, TreeEntry.PHASE_GROWING, pick, (byte) def.kind.ordinal(), def.source, turn, mirror, seed, steps, now, saplings, hash, new ArrayList<>(), new int[0], new int[0], new int[0], new LinkedHashMap<>());
     }
 
     private static TreeEntry recorded(WorldServer world, BlockPos pos, String rule, int pick, TreePickDef def, long seed, TreeShape shape, TreeRecorder.Result result) {
@@ -303,7 +301,7 @@ public final class ContentTreeGrowth {
         Map<Integer, IBlockState> saplings = new LinkedHashMap<>();
         for (int i = 0; i < result.saplingOffsets.size(); i++) { saplings.put(result.saplingOffsets.get(i), result.saplingStates.get(i)); }
         long now = world.getTotalWorldTime();
-        return new TreeEntry(pos.toLong(), rule, (byte) 1, new int[0], pick, (byte) def.kind.ordinal(), def.source, (byte) 0, (byte) 0, seed, 0, shape.steps(), now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), 0, palette, blocks, states, under, tiles);
+        return TreeEntry.fresh(pos.toLong(), rule, TreeEntry.PHASE_GROWING, pick, (byte) def.kind.ordinal(), def.source, (byte) 0, (byte) 0, seed, shape.steps(), now, saplings, 0, palette, blocks, states, under, tiles);
     }
 
     private static int paletteIndex(List<IBlockState> palette, IBlockState state) {
@@ -314,19 +312,15 @@ public final class ContentTreeGrowth {
     }
 
     private static void placeWhole(WorldServer world, BlockPos start, TreeTemplates.Built built, Rotation rotation, Mirror mirror) {
-        if (!built.blocks.containsKey(BlockPos.ORIGIN)) { TreeRecorder.write(world, start, Blocks.AIR.getDefaultState(), 3); }
-        for (Map.Entry<BlockPos, IBlockState> block : built.blocks.entrySet()) { TreeRecorder.write(world, start.add(block.getKey()), block.getValue(), 3); }
+        if (!built.blocks.containsKey(BlockPos.ORIGIN)) { TreeRecorder.clear(world, start); }
+        for (Map.Entry<BlockPos, IBlockState> block : built.blocks.entrySet()) { TreeRecorder.write(world, start.add(block.getKey()), block.getValue(), BlockFlags.UPDATE_ALL); }
         for (Map.Entry<BlockPos, NBTTagCompound> tile : built.blockEntities.entrySet()) { placeTile(world, start.add(tile.getKey()), tile.getValue(), rotation, mirror); }
     }
 
     private static void placeTile(World world, BlockPos pos, @Nullable NBTTagCompound data, Rotation rotation, Mirror mirror) {
         TileEntity tile = data == null ? null : world.getTileEntity(pos);
         if (tile == null) { return; }
-        NBTTagCompound copy = data.copy();
-        copy.setInteger("x", pos.getX());
-        copy.setInteger("y", pos.getY());
-        copy.setInteger("z", pos.getZ());
-        tile.readFromNBT(copy);
+        tile.readFromNBT(TileData.at(data, pos));
         tile.mirror(mirror);
         tile.rotate(rotation);
         tile.markDirty();
@@ -335,7 +329,7 @@ public final class ContentTreeGrowth {
     @Nullable private static String stale(WorldServer world, TreeEntry entry, TreeGrowthDef growth) {
         if (entry.pick < 0 || entry.pick >= growth.trees.size() || !growth.trees.get(entry.pick).source.equals(entry.source)) { return drop(world, entry, "template changed"); }
         if (entry.kind != TreeEntry.KIND_STRUCTURE) { return null; }
-        TreeTemplates.Built built = TreeTemplates.get(world, entry.source, Rotation.values()[entry.turn], Mirror.values()[entry.mirror], entry.steps);
+        TreeTemplates.Built built = TreeTemplates.get(world, entry.source, Turns.ALL[entry.turn], Mirror.values()[entry.mirror], entry.steps);
         if (built == null) { return drop(world, entry, "template missing"); }
         return built.hash == entry.hash ? null : drop(world, entry, "template changed");
     }
@@ -366,7 +360,7 @@ public final class ContentTreeGrowth {
             this.next = next;
             this.full = full;
             this.start = BlockPos.fromLong(entry.pos);
-            this.rubic = rubic(world);
+            this.rubic = GenHeights.rubic(world);
             for (int i = 0; i < entry.under.length; i++) { unders.put(entry.blocks[i], entry.palette.get(entry.under[i])); }
         }
 
@@ -376,7 +370,7 @@ public final class ContentTreeGrowth {
             touched.addAll(previous.keySet());
             for (BlockPos rel : touched) {
                 BlockPos at = start.add(rel);
-                if (outOfHeight(world, at) || !seen.add(new BlockPos(at.getX() >> 4, rubic ? at.getY() >> 4 : 0, at.getZ() >> 4).toLong())) { continue; }
+                if (outOfHeight(world, at) || !seen.add(new BlockPos(Coords.blockToCube(at.getX()), rubic ? Coords.blockToCube(at.getY()) : 0, Coords.blockToCube(at.getZ())).toLong())) { continue; }
                 if (!world.isBlockLoaded(at) || !populated(at)) { return true; }
             }
             return false;
@@ -384,7 +378,7 @@ public final class ContentTreeGrowth {
 
         private boolean populated(BlockPos at) {
             if (!rubic) { return world.getChunk(at).isPopulated(); }
-            ICube cube = ((IRubicWorld) world).rdpl$getCubeCache().getLoadedCube(at.getX() >> 4, at.getY() >> 4, at.getZ() >> 4);
+            ICube cube = ((IRubicWorld) world).rdpl$getCubeCache().getLoadedCube(Coords.blockToCube(at.getX()), Coords.blockToCube(at.getY()), Coords.blockToCube(at.getZ()));
             return cube instanceof Cube && ((Cube) cube).isPopulated();
         }
 
@@ -404,7 +398,7 @@ public final class ContentTreeGrowth {
             if (other != null && other != entry) { return true; }
             IBlockState now = world.getBlockState(at);
             Block block = now.getBlock();
-            int packed = pack(rel);
+            int packed = TreeEntry.pack(rel);
             IBlockState was = previous.get(rel);
             if (block == wanted.getBlock()) { return false; }
             if (entry.owned.contains(packed) && was != null && block == was.getBlock()) { return false; }
@@ -414,12 +408,11 @@ public final class ContentTreeGrowth {
             IBlockState under = unders.get(packed);
             if (under != null && block == under.getBlock()) { return false; }
             if (entry.kind == TreeEntry.KIND_STRUCTURE && (block == Blocks.GRASS || block == Blocks.DIRT || block == Blocks.MYCELIUM)) { return false; }
-            return !(block.isAir(now, world, at) || block.isReplaceable(world, at) || block.isLeaves(now, world, at) || now.getMaterial() == Material.VINE);
+            return !(ContentTreeGenerator.open(world, at, now) || block.isReplaceable(world, at));
         }
 
         private IBlockState target(BlockPos rel, IBlockState wanted) {
-            if (!full || TreeShape.isLog(rel, wanted) || !wanted.getPropertyKeys().contains(BlockLeaves.DECAYABLE) || !wanted.getValue(BlockLeaves.DECAYABLE) || !wanted.getPropertyKeys().contains(BlockLeaves.CHECK_DECAY)) { return wanted; }
-            return wanted.withProperty(BlockLeaves.CHECK_DECAY, true);
+            return !full || TreeShape.isLog(rel, wanted) ? wanted : LeafDecay.checking(wanted);
         }
 
         private void apply() {
@@ -430,8 +423,8 @@ public final class ContentTreeGrowth {
             });
             for (BlockPos rel : order) { place(rel, next.get(rel)); }
             if (entry.step == 0 && !next.containsKey(BlockPos.ORIGIN)) {
-                IBlockState sapling = entry.saplings.get(pack(BlockPos.ORIGIN));
-                if (sapling != null && world.getBlockState(start).getBlock() == sapling.getBlock()) { TreeRecorder.write(world, start, Blocks.AIR.getDefaultState(), 3); }
+                IBlockState sapling = entry.originSapling();
+                if (sapling != null && world.getBlockState(start).getBlock() == sapling.getBlock()) { TreeRecorder.clear(world, start); }
             }
             for (Map.Entry<BlockPos, IBlockState> old : previous.entrySet()) { shed(old.getKey(), old.getValue()); }
             entry.step++;
@@ -449,17 +442,17 @@ public final class ContentTreeGrowth {
             if (blocked(rel, wanted, TreeShape.isLog(rel, wanted))) { return; }
             BlockPos at = start.add(rel);
             IBlockState goal = target(rel, wanted);
-            if (world.getBlockState(at) != goal) { TreeRecorder.write(world, at, goal, 3); }
-            int packed = pack(rel);
+            if (world.getBlockState(at) != goal) { TreeRecorder.write(world, at, goal, BlockFlags.UPDATE_ALL); }
+            int packed = TreeEntry.pack(rel);
             if (!entry.owned.contains(packed)) { ContentTreeStore.addOwned(world, entry, packed); }
-            if (full) { placeTile(world, at, shape.entity(rel), Rotation.values()[entry.turn], Mirror.values()[entry.mirror]); }
+            if (full) { placeTile(world, at, shape.entity(rel), Turns.ALL[entry.turn], Mirror.values()[entry.mirror]); }
         }
 
         private void shed(BlockPos rel, IBlockState old) {
-            int packed = pack(rel);
+            int packed = TreeEntry.pack(rel);
             if (next.containsKey(rel) || !entry.owned.contains(packed)) { return; }
             BlockPos at = start.add(rel);
-            if (world.getBlockState(at).getBlock() == old.getBlock()) { TreeRecorder.write(world, at, Blocks.AIR.getDefaultState(), 3); }
+            if (world.getBlockState(at).getBlock() == old.getBlock()) { TreeRecorder.clear(world, at); }
             ContentTreeStore.removeOwned(world, entry, packed);
         }
     }

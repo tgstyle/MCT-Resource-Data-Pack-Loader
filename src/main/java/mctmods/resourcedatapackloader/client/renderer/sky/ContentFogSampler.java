@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -18,7 +19,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
@@ -53,13 +53,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         Block block = state.getBlock();
         if (look.waterFogColor != SkyLookDef.UNSET && (block == Blocks.WATER || block == Blocks.FLOWING_WATER)) {
             double breath = vanilla.x - WATER_RED;
-            return rgb(look.waterFogColor).add(breath, breath, breath);
+            return Colors.vec(look.waterFogColor).add(breath, breath, breath);
         }
-        if (look.lavaFogColor != SkyLookDef.UNSET && (block == Blocks.LAVA || block == Blocks.FLOWING_LAVA)) { return rgb(look.lavaFogColor); }
+        if (look.lavaFogColor != SkyLookDef.UNSET && (block == Blocks.LAVA || block == Blocks.FLOWING_LAVA)) { return Colors.vec(look.lavaFogColor); }
         return vanilla;
     }
-
-    private static Vec3d rgb(int color) { return new Vec3d(Colors.red(color) / 255.0D, Colors.green(color) / 255.0D, Colors.blue(color) / 255.0D); }
 
     @SubscribeEvent public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
@@ -78,8 +76,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     private static Vec3d sample(World world, Entity camera, float weight) {
-        int x = MathHelper.floor(camera.posX);
-        int z = MathHelper.floor(camera.posZ);
+        BlockPos feet = new BlockPos(camera);
+        int x = feet.getX();
+        int z = feet.getZ();
         double red = 0.0D;
         double green = 0.0D;
         double blue = 0.0D;
@@ -89,9 +88,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
                 BlockPos top = world.getHeight(new BlockPos(x + dx, 0, z + dz)).down();
                 MapColor map = world.getBlockState(top).getMapColor(world, top);
                 if (map == MapColor.AIR) { continue; }
-                red += Colors.red(map.colorValue) / 255.0D;
-                green += Colors.green(map.colorValue) / 255.0D;
-                blue += Colors.blue(map.colorValue) / 255.0D;
+                red += Colors.redD(map.colorValue);
+                green += Colors.greenD(map.colorValue);
+                blue += Colors.blueD(map.colorValue);
                 count++;
             }
         }
@@ -110,7 +109,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         Entity entity = event.getEntity();
         if (entity instanceof EntityLivingBase && ((EntityLivingBase) entity).isPotionActive(MobEffects.BLINDNESS)) { return; }
         float far = event.getFarPlaneDistance();
-        float end = far + (NEAR - far) * density;
+        float end = MathUtil.lerp(density, far, NEAR);
         GlStateManager.setFog(GlStateManager.FogMode.LINEAR);
         GlStateManager.setFogStart(event.getFogMode() == -1 ? 0.0F : end * START);
         GlStateManager.setFogEnd(end);

@@ -22,8 +22,6 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 
 public final class ContentParserDimensionTraits {
-    private static final String SUN = "minecraft:textures/environment/sun.png";
-    private static final String MOON = "minecraft:textures/environment/moon_phases.png";
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
     private static final int CYCLE_LOW = 1000;
@@ -120,7 +118,7 @@ public final class ContentParserDimensionTraits {
 
     private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {
         Json.unknownKeys(moon, "moon", MOON_KEYS);
-        return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", MOON).trim()), Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)),
+        return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", DimensionTraitsDef.VANILLA_MOON_TEXTURE.toString()).trim()), Json.atLeast(moon, "size", DimensionTraitsDef.VANILLA_MOON, 0.0F),
                 ContentParserSkyLook.finite(key, moon, "sky.moon", "tilt"), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
@@ -132,17 +130,12 @@ public final class ContentParserDimensionTraits {
             ContentLog.LOGGER.error("Dimension {} names the ambience particle '{}', which is no particle Minecraft knows, so it shows none", key, particle);
             particle = "";
         }
-        return new AmbienceDef(sound(json, "music"), delay[0], delay[1], sound(json, "loopSound"),
+        return new AmbienceDef(Json.location(json, "music"), delay[0], delay[1], Json.location(json, "loopSound"),
                 Json.getString(json, "ambientSound", "").trim(),
                 chance(key, json, "soundChance", SOUND_CHANCE),
                 particle,
                 chance(key, json, "particleChance", PARTICLE_CHANCE),
-                json.has("particleColor") ? ContentTypes.color(Json.getString(json, "particleColor").trim(), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
-    }
-
-    @Nullable private static ResourceLocation sound(JsonObject json, String member) {
-        String name = Json.getString(json, member, "").trim();
-        return name.isEmpty() ? null : new ResourceLocation(name);
+                json.has("particleColor") ? ContentTypes.rgb(Json.getString(json, "particleColor").trim(), key + " ambience particleColor") : AmbienceDef.NO_COLOR);
     }
 
     private static float chance(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " ambience"); }
@@ -157,12 +150,12 @@ public final class ContentParserDimensionTraits {
         float angle = Json.ranged(json, "angle", 0.0F, 0.0F, MAX_ANGLE, "Dimension " + key + " rain");
         return new RainDef(particle,
                 new ResourceLocation(Json.getString(json, "sound", RAIN_SOUND).trim()),
-                Math.max(0.0F, Json.getFloat(json, "volume", 0.2F)),
-                Math.max(0, Json.getInt(json, "interval", 3)),
-                ContentTypes.color(Json.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
-                ContentTypes.color(Json.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
-                json.has("splashColor") ? ContentTypes.color(Json.getString(json, "splashColor", WHITE).trim(), key + " rain splashColor") & 0xFFFFFF : -1,
-                "solid".equals(Json.choice(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES)),
+                Json.atLeast(json, "volume", 0.2F, 0.0F),
+                Json.atLeast(json, "interval", 3, 0),
+                ContentTypes.rgb(Json.getString(json, "color", WHITE).trim(), key + " rain color"),
+                ContentTypes.rgb(Json.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor"),
+                json.has("splashColor") ? ContentTypes.rgb(Json.getString(json, "splashColor", WHITE).trim(), key + " rain splashColor") : -1,
+                Json.choiceIs(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES, "solid"),
                 angle,
                 Json.getFloat(json, "heading", 0.0F),
                 Json.getBoolean(json, "splashUpward", false),
@@ -207,9 +200,10 @@ public final class ContentParserDimensionTraits {
         JsonElement value = json.get(member);
         int min;
         int max;
-        if (value.isJsonArray() && value.getAsJsonArray().size() == 2) {
-            min = Json.asInt(value.getAsJsonArray().get(0), member, 0);
-            max = Json.asInt(value.getAsJsonArray().get(1), member, 0);
+        int[] both = Json.intPair(value, member, 0);
+        if (both != null) {
+            min = both[0];
+            max = both[1];
         }
         else if (value.isJsonPrimitive()) {
             min = Json.asInt(value, member, 0);
@@ -246,7 +240,7 @@ public final class ContentParserDimensionTraits {
                 String gate = Json.getString(body, "gate", "").trim();
                 if (!gate.isEmpty()) { GateSync.watch(gate); }
                 found.add(new DimensionTraitsDef.Body(new ResourceLocation(Json.getString(body, "texture").trim()),
-                        Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
+                        Json.atLeast(body, "size", 20.0F, 0.0F),
                         Json.getFloat(body, "angle", 180.0F),
                         Json.getFloat(body, "tilt", 0.0F),
                         Json.getBoolean(body, "followsTime", true),
@@ -256,12 +250,12 @@ public final class ContentParserDimensionTraits {
             }
             bodies = Collections.unmodifiableList(found);
         }
-        return new DimensionTraitsDef.Sky(new ResourceLocation(Json.getString(sun, "texture", SUN).trim()),
-                Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
+        return new DimensionTraitsDef.Sky(new ResourceLocation(Json.getString(sun, "texture", DimensionTraitsDef.VANILLA_SUN_TEXTURE.toString()).trim()),
+                Json.atLeast(sun, "size", DimensionTraitsDef.VANILLA_SUN, 0.0F),
                 ContentParserSkyLook.finite(key, sun, "sky.sun", "tilt"),
                 ContentParserSkyLook.pose(key, sun, "sky.sun"),
                 bodies,
-                Math.max(0, Json.getInt(stars, "count", STARS)),
-                Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
+                Json.atLeast(stars, "count", STARS, 0),
+                Json.atLeast(stars, "size", STAR_SIZE, 0.0F));
     }
 }

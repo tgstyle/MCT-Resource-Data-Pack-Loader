@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 
+import mctmods.resourcedatapackloader.common.util.world.Box;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Level;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Room;
@@ -19,7 +20,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 
 public final class DungeonShafts {
-    private static final int SIDE = 3;
+    private static final int SIDE = Shaft.SIDE;
     private static final int RING = 8;
     private static final int SPIRAL_CLEAR = 4;
     private static final int STAIRS_CLEAR = 2;
@@ -38,12 +39,10 @@ public final class DungeonShafts {
         for (Shaft shaft : bucket.shafts) {
             int bottom = bottomOf(plan, shaft);
             DungeonShapes.Palette.Kit kit = palette.of(shaft);
-            int x1 = Math.min(box.maxX, shaft.x + SIDE);
-            int z1 = Math.min(box.maxZ, shaft.z + SIDE);
-            int y1 = Math.min(box.maxY, shaft.topY - 1);
-            for (int x = Math.max(box.minX, shaft.x - 1); x <= x1; x++) {
-                for (int z = Math.max(box.minZ, shaft.z - 1); z <= z1; z++) {
-                    for (int y = Math.max(box.minY, bottom); y <= y1; y++) {
+            StructureBoundingBox clip = Box.clip(box, shaft.minX(1), bottom, shaft.minZ(1), shaft.maxX(1), shaft.topY - 1, shaft.maxZ(1), 0);
+            for (int x = clip.minX; x <= clip.maxX; x++) {
+                for (int z = clip.minZ; z <= clip.maxZ; z++) {
+                    for (int y = clip.minY; y <= clip.maxY; y++) {
                         IBlockState state = at(shaft, bottom, x, y, z, kit);
                         if (state != null) { DungeonWriter.set(world, pos.setPos(x, y, z), state); }
                     }
@@ -55,7 +54,7 @@ public final class DungeonShafts {
     public static int bottomOf(DungeonPlan plan, Shaft shaft) {
         for (Level level : plan.levels) {
             for (Room room : level.rooms) {
-                if (room.templateId == null && room.contains(shaft.x + 1, shaft.z + 1) && room.y0 <= shaft.bottomY && room.y1 >= shaft.bottomY) { return room.y0; }
+                if (room.templateId == null && room.contains(shaft.centreX(), shaft.centreZ()) && room.y0 <= shaft.bottomY && room.y1 >= shaft.bottomY) { return room.y0; }
             }
         }
         return shaft.bottomY;
@@ -64,10 +63,10 @@ public final class DungeonShafts {
     @Nullable public static IBlockState at(Shaft shaft, int bottom, int x, int y, int z, DungeonShapes.Palette.Kit kit) {
         int dx = x - shaft.x;
         int dz = z - shaft.z;
-        if (y < bottom || y >= shaft.topY || dx < -1 || dx > SIDE || dz < -1 || dz > SIDE) { return null; }
+        if (y < bottom || y >= shaft.topY || !shaft.covers(x, z, 1)) { return null; }
         long hash = MathUtil.mix(shaft.bottomY, shaft.x, shaft.topY, shaft.z);
         int face = (int) Math.floorMod(hash >>> 8, 4L);
-        if (dx < 0 || dx == SIDE || dz < 0 || dz == SIDE) {
+        if (!shaft.covers(x, z, 0)) {
             boolean backing = shaft.type == PlanRecords.SHAFT_LADDER && dx == BACKING_DX[face] && dz == BACKING_DZ[face];
             return backing ? kit.state(DungeonShapes.Palette.WALLS, 0) : null;
         }
@@ -84,7 +83,7 @@ public final class DungeonShafts {
                 if (RING_OF[dx][dz] == cell) { return new BlockPos(shaft.x + dx, shaft.topY - 1, shaft.z + dz); }
             }
         }
-        return new BlockPos(shaft.x + 1, shaft.topY - 1, shaft.z + 1);
+        return new BlockPos(shaft.centreX(), shaft.topY - 1, shaft.centreZ());
     }
 
     private static IBlockState ladder(int face, int dx, int dz, boolean floorLayer, DungeonShapes.Palette.Kit kit) {

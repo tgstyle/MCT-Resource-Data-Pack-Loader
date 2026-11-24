@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -28,6 +29,13 @@ public final class BlockMatch {
     public static BlockMatch group(String oreName) { return new BlockMatch(null, oreName); }
 
     public boolean group() { return this.oreName != null; }
+
+    public static boolean anyMatch(List<BlockMatch> matches, Block block, World world, BlockPos pos) {
+        for (BlockMatch match : matches) {
+            if (match.matches(block, world, pos)) { return true; }
+        }
+        return false;
+    }
 
     public boolean matches(Block candidate, World world, BlockPos pos) {
         if (this.oreName == null) { return this.block == candidate; }

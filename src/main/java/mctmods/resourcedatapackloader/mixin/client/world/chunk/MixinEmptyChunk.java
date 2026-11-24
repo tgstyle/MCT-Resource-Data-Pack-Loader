@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private Cube rdpl$blankCube;
 
     @Inject(method = "<init>", at = @At(value = "RETURN")) private void rdpl$onConstruct(World worldIn, int x, int z, CallbackInfo cbi) {
-        if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { rdpl$blankCube = new BlankCube((Chunk) (Object) this); }
+        if (GenHeights.rubic(worldIn)) { rdpl$blankCube = new BlankCube((Chunk) (Object) this); }
     }
 
     public ICube chunk$getCube(int cubeY) { return rdpl$blankCube; }

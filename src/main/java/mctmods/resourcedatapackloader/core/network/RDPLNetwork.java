@@ -30,6 +30,7 @@ import mctmods.resourcedatapackloader.core.network.world.MultipartDescMessage;
 import mctmods.resourcedatapackloader.core.network.world.RubicWorldDataMessage;
 import mctmods.resourcedatapackloader.core.network.world.UnloadColumnMessage;
 import mctmods.resourcedatapackloader.core.network.world.UnloadCubeMessage;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -39,7 +40,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -93,7 +93,7 @@ public final class RDPLNetwork {
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
-        Class<? extends IMessageHandler<REQ, IMessage>> handlerClass = FMLCommonHandler.instance().getSide().isClient() ? client.get() : idle();
+        Class<? extends IMessageHandler<REQ, IMessage>> handlerClass = SideUtils.isClient() ? client.get() : idle();
         channel.registerMessage(handlerClass, messageClass, packetId++, Side.CLIENT);
     }
 
@@ -101,8 +101,6 @@ public final class RDPLNetwork {
         Class<?> idle = IdleHandler.class;
         return (Class<? extends IMessageHandler<REQ, IMessage>>) idle;
     }
-
-    private static boolean unreachable(EntityPlayerMP player) { return channel == null || vanilla(player); }
 
     private static <REQ extends IMessage, REPLY extends IMessage> void registerMessage(Class<? extends IMessageHandler<REQ, REPLY>> handlerClass, Class<REQ> messageClass) {
         Side side = AbstractClientMessageHandler.class.isAssignableFrom(handlerClass) ? Side.CLIENT : Side.SERVER;
@@ -117,26 +115,23 @@ public final class RDPLNetwork {
         return marked == null || !marked;
     }
 
-    public static void sendTo(IMessage message, EntityPlayerMP player) {
-        if (unreachable(player)) { return; }
-        channel.sendTo(message, player);
-    }
-
-    public static boolean sendSyncData(EntityPlayerMP player, SyncDataMessage message) {
-        if (Config.content.vanillaClients || unreachable(player)) { return false; }
+    private static boolean reached(EntityPlayerMP player, IMessage message) {
+        if (channel == null || vanilla(player)) { return false; }
         channel.sendTo(message, player);
         return true;
     }
+
+    private static void toServer(IMessage message) { if (channel != null) { channel.sendToServer(message); } }
+
+    public static void sendTo(IMessage message, EntityPlayerMP player) { reached(player, message); }
+
+    public static boolean sendSyncData(EntityPlayerMP player, SyncDataMessage message) { return !Config.content.vanillaClients && reached(player, message); }
 
     public static void playIntro(EntityPlayerMP player) { sendTo(new IntroPlayMessage(ContentPregen.busy()), player); }
 
     public static void introLandMade(EntityPlayerMP player) { sendTo(new IntroLandMadeMessage(), player); }
 
-    public static boolean sendNote(EntityPlayerMP player, String said) {
-        if (unreachable(player)) { return false; }
-        channel.sendTo(new NoteMessage(said, Says.panel(), Says.font()), player);
-        return true;
-    }
+    public static boolean sendNote(EntityPlayerMP player, String said) { return reached(player, new NoteMessage(said, Says.panel(), Says.font())); }
 
     public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) { sendTo(new HoldMessage(held, warning, fog, Says.panel(), Says.font()), player); }
 
@@ -168,34 +163,17 @@ public final class RDPLNetwork {
 
     public static void sendEaten(EntityPlayerMP player, Collection<String> eaten) { sendTo(new EatenMessage(eaten), player); }
 
-    public static boolean sendUnlocks(EntityPlayerMP player, Collection<String> open) {
-        if (unreachable(player)) { return false; }
-        channel.sendTo(new UnlocksMessage(open), player);
-        return true;
-    }
+    public static boolean sendUnlocks(EntityPlayerMP player, Collection<String> open) { return reached(player, new UnlocksMessage(open)); }
 
-    public static boolean sendWeight(EntityPlayerMP player, int total, int limit, int tier, boolean exempt) {
-        if (unreachable(player)) { return false; }
-        channel.sendTo(new WeightMessage(total, limit, tier, exempt), player);
-        return true;
-    }
+    public static boolean sendWeight(EntityPlayerMP player, int total, int limit, int tier, boolean exempt) { return reached(player, new WeightMessage(total, limit, tier, exempt)); }
 
-    public static void introDone() {
-        if (channel == null) { return; }
-        channel.sendToServer(new IntroDoneMessage());
-    }
+    public static void introDone() { toServer(new IntroDoneMessage()); }
 
     public static void openWornPouch() { channel.sendToServer(new PouchKeyMessage()); }
 
     public static void portwayFilter(String text) { channel.sendToServer(new PortwayFilterMessage(text)); }
 
-    public static void sendTalkPick(int index) {
-        if (channel == null) { return; }
-        channel.sendToServer(new TalkPickMessage(index));
-    }
+    public static void sendTalkPick(int index) { toServer(new TalkPickMessage(index)); }
 
-    public static void setSpawnHere() {
-        if (channel == null) { return; }
-        channel.sendToServer(new SetSpawnMessage());
-    }
+    public static void setSpawnHere() { toServer(new SetSpawnMessage()); }
 }

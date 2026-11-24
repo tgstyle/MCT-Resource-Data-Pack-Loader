@@ -19,10 +19,6 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderers;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
-import mctmods.resourcedatapackloader.client.util.ClientDiet;
-import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
-import mctmods.resourcedatapackloader.client.util.ClientSyncData;
-import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.PackListClient;
 import mctmods.resourcedatapackloader.client.util.PouchKey;
@@ -39,7 +35,7 @@ public class ClientProxy {
             MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
             ContentHardnessCheck.watching();
         }
-        MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
+        MinecraftForge.EVENT_BUS.register(PackOptionsButton.Handler.class);
         MinecraftForge.EVENT_BUS.register(SleepScreen.class);
         MinecraftForge.EVENT_BUS.register(GammaLock.class);
         MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
@@ -54,12 +50,8 @@ public class ClientProxy {
         MinecraftForge.EVENT_BUS.register(ContentDimensionAmbience.class);
         MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
         MinecraftForge.EVENT_BUS.register(PackTooltips.class);
-        MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
+        MinecraftForge.EVENT_BUS.register(PackListEntries.Handler.class);
         MinecraftForge.EVENT_BUS.register(PackListClient.class);
-        MinecraftForge.EVENT_BUS.register(ClientItemLocks.class);
-        MinecraftForge.EVENT_BUS.register(ClientDiet.class);
-        MinecraftForge.EVENT_BUS.register(ClientWeights.class);
-        MinecraftForge.EVENT_BUS.register(ClientSyncData.class);
         MinecraftForge.EVENT_BUS.register(WeightHud.class);
         if (ContentContainerItem.baubled()) { PouchKey.register(); }
     }

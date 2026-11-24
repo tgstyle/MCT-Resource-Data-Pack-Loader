@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.PacketUtils;
@@ -20,7 +21,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
@@ -80,8 +80,7 @@ public class CubesMessage implements IMessage {
         int cubeCount = buf.readUnsignedShort();
         cubePos = new CubePos[cubeCount];
         for (int i = 0; i < this.cubePos.length; i++) { cubePos[i] = PacketUtils.readCubePos(buf); }
-        this.data = new byte[buf.readInt()];
-        buf.readBytes(this.data);
+        this.data = PacketUtils.readBytes(buf);
         this.tileEntityTags = new ArrayList<>();
         for (int i = 0; i < cubeCount; i++) {
             int numTiles = buf.readInt();
@@ -94,8 +93,7 @@ public class CubesMessage implements IMessage {
     @Override public void toBytes(ByteBuf buf) {
         buf.writeShort(cubePos.length);
         for (CubePos pos : cubePos) { PacketUtils.write(buf, pos); }
-        buf.writeInt(this.data.length);
-        buf.writeBytes(this.data);
+        PacketUtils.writeBytes(buf, this.data);
         this.tileEntityTags.forEach(tags -> {
             buf.writeInt(tags.size());
             tags.forEach(tag -> ByteBufUtils.writeTag(buf, tag));
@@ -110,12 +108,8 @@ public class CubesMessage implements IMessage {
 
     public static class Handler extends AbstractClientMessageHandler<CubesMessage> {
         @Override public void handleClientMessage(World world, EntityPlayer player, CubesMessage message, MessageContext ctx) {
-            World worldClient = player.getEntityWorld();
-            if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
-                ContentLog.LOGGER.warn("Ignored cubes sent for a world the client no longer sees as rubic");
-                return;
-            }
-            CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
+            CubeProviderClient cubeCache = cubeCache(world, "cubes sent");
+            if (cubeCache == null) { return; }
             CubePos[] cubePos = message.getCubePos();
             List<Cube> cubes = new ArrayList<>();
             for (CubePos pos : cubePos) {
@@ -128,15 +122,11 @@ public class CubesMessage implements IMessage {
             ByteBuf buf = WorldEncoder.createByteBufForRead(data);
             WorldEncoder.decodeCube(new PacketBuffer(buf), cubes);
 
-            cubes.stream().filter(Objects::nonNull).forEach(cube -> ShieldIndexes.scanCube(worldClient, cube));
+            cubes.stream().filter(Objects::nonNull).forEach(cube -> ShieldIndexes.scanCube(world, cube));
             cubes.stream().filter(Objects::nonNull).forEach(Cube::markForRenderUpdate);
 
             message.getTileEntityTags().forEach(tags -> tags.forEach(tag -> {
-                int blockX = tag.getInteger("x");
-                int blockY = tag.getInteger("y");
-                int blockZ = tag.getInteger("z");
-                BlockPos pos = new BlockPos(blockX, blockY, blockZ);
-                TileEntity tileEntity = worldClient.getTileEntity(pos);
+                TileEntity tileEntity = world.getTileEntity(Coords.readPos(tag));
                 if (tileEntity != null) { tileEntity.handleUpdateTag(tag); }
             }));
         }

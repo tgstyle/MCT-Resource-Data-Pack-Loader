@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.ownership.claims.ClaimOwners;
 import mctmods.resourcedatapackloader.common.ownership.claims.ForeignClaimsHolder;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.BaseDef;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -23,12 +24,10 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.WorldServer;
 
 public final class BaseFinder {
-    private static final int TTL = 1200;
+    private static final int TTL = MathUtil.TICKS_PER_MINUTE;
     private static final int CLUSTER_CAP = 64;
     private static final int CLAIM_CAP = 100;
     private static final int CHEST_CAP = 8;
-    private static final int MINUTE_CAP = 60;
-    private static final int TICKS_PER_MINUTE = 1200;
     private static final int TICKS_PER_DAY = 24000;
     private static final int CELL = 16;
     private static final Map<WorldServer, Cache> caches = new WeakHashMap<>();
@@ -135,7 +134,7 @@ public final class BaseFinder {
 
         private LongArrayList candidates() {
             BlockPos bed = ledger.bed(player.getUniqueID());
-            BlockPos at = bed != null ? bed : player.getPosition();
+            BlockPos at = bed != null ? bed : new BlockPos(player);
             int reach = bed != null ? (def.radius + CELL - 1) / CELL : 1;
             int cx = Coords.blockToCube(at.getX());
             int cz = Coords.blockToCube(at.getZ());
@@ -172,8 +171,8 @@ public final class BaseFinder {
             BaseDef.Weights w = def.weights;
             double score = beds * (w.bed + w.spawn);
             if (cell != null) {
-                boolean real = cell.ticks() >= TICKS_PER_MINUTE || beds > 0 || cell.chest() > 0;
-                double raw = Math.min(cell.chest(), CHEST_CAP) * w.chest + (real ? cell.placed() * w.placed : 0) + Math.min(cell.ticks() / TICKS_PER_MINUTE, MINUTE_CAP) * w.minutes;
+                boolean real = cell.ticks() >= MathUtil.TICKS_PER_MINUTE || beds > 0 || cell.chest() > 0;
+                double raw = Math.min(cell.chest(), CHEST_CAP) * w.chest + (real ? cell.placed() * w.placed : 0) + cell.minutes() * w.minutes;
                 score += raw * decay(cell);
             }
             return score;
@@ -211,7 +210,7 @@ public final class BaseFinder {
 
         @Nullable private Base claimOnly() {
             ClaimIndex index = ClaimIndex.obtain(world);
-            if (index == null || index.claimCountOf(mine) == 0) { return null; }
+            if (index.claimCountOf(mine) == 0) { return null; }
             Cluster cluster = new Cluster();
             for (ChunkPos chunk : index.chunksOf(mine)) {
                 if (cluster.keys.size() >= CLUSTER_CAP) { break; }
@@ -221,8 +220,7 @@ public final class BaseFinder {
         }
 
         private double claimWeight(int owner) {
-            ClaimIndex index = ClaimIndex.obtain(world);
-            return index == null ? 0 : Math.min(index.claimCountOf(owner), CLAIM_CAP) * def.weights.claim;
+            return Math.min(ClaimIndex.obtain(world).claimCountOf(owner), CLAIM_CAP) * def.weights.claim;
         }
 
         private int topOwner(Cluster cluster) {

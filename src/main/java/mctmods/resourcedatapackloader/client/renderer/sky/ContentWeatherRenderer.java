@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.client.renderer.Blends;
 import mctmods.resourcedatapackloader.client.renderer.WhitenedTexture;
+import mctmods.resourcedatapackloader.client.util.CameraPos;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.client.util.WindGust;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
@@ -17,6 +19,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -54,12 +57,12 @@ import org.lwjgl.opengl.GL11;
                 sizeZ[row << 5 | column] = dx / length;
             }
         }
-        red = Colors.red(rain.color) / 255.0F;
-        green = Colors.green(rain.color) / 255.0F;
-        blue = Colors.blue(rain.color) / 255.0F;
-        snowRed = Colors.red(rain.snowColor) / 255.0F;
-        snowGreen = Colors.green(rain.snowColor) / 255.0F;
-        snowBlue = Colors.blue(rain.snowColor) / 255.0F;
+        red = Colors.redF(rain.color);
+        green = Colors.greenF(rain.color);
+        blue = Colors.blueF(rain.color);
+        snowRed = Colors.redF(rain.snowColor);
+        snowGreen = Colors.greenF(rain.snowColor);
+        snowBlue = Colors.blueF(rain.snowColor);
         this.rain = rain;
         upward = rain.upward();
     }
@@ -82,19 +85,18 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.enableBlend();
         Blends.translucent();
         GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
-        double camX = view.lastTickPosX + (view.posX - view.lastTickPosX) * partialTicks;
-        double camY = view.lastTickPosY + (view.posY - view.lastTickPosY) * partialTicks;
-        double camZ = view.lastTickPosZ + (view.posZ - view.lastTickPosZ) * partialTicks;
+        Vec3d cam = CameraPos.viewAt(view, partialTicks);
         int radius = mc.gameSettings.fancyGraphics ? 10 : 5;
-        int blockX = MathHelper.floor(view.posX);
-        int blockY = MathHelper.floor(view.posY);
-        int blockZ = MathHelper.floor(view.posZ);
+        BlockPos feet = new BlockPos(view);
+        int blockX = feet.getX();
+        int blockY = feet.getY();
+        int blockZ = feet.getZ();
         drawing = NONE;
-        buffer.setTranslation(-camX, -camY, -camZ);
+        buffer.setTranslation(-cam.x, -cam.y, -cam.z);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int z = blockZ - radius; z <= blockZ + radius; z++) {
-            for (int x = blockX - radius; x <= blockX + radius; x++) { column(mc, world, view, pos, x, z, blockX, blockY, blockZ, MathHelper.floor(camY), radius, ticks, partialTicks, strength); }
+            for (int x = blockX - radius; x <= blockX + radius; x++) { column(mc, world, view, pos, x, z, blockX, blockY, blockZ, MathHelper.floor(cam.y), radius, ticks, partialTicks, strength); }
         }
         if (drawing != NONE) { tessellator.draw(); }
         buffer.setTranslation(0.0D, 0.0D, 0.0D);
@@ -166,6 +168,6 @@ import org.lwjgl.opengl.GL11;
         if (drawing != NONE) { Tessellator.getInstance().draw(); }
         drawing = kind;
         mc.getTextureManager().bindTexture(kind == RAINING ? rain.solid ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN : SNOW);
-        Tessellator.getInstance().getBuffer().begin(GL11.GL_QUADS,DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+        Draw.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
     }
 }

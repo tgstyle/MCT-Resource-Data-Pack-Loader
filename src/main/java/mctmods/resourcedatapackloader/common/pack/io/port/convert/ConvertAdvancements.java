@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.pack.io.port.convert;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,24 +15,16 @@ public final class ConvertAdvancements {
     private ConvertAdvancements() {}
 
     public static String advancement(JsonObject json, String from, Ported pack) {
-        if (json.has("display") && json.get("display").isJsonObject()) {
-            JsonObject display = json.getAsJsonObject("display");
-            if (display.has("icon") && display.get("icon").isJsonObject()) { display.add("icon", ConvertRecipes.stack(display.get("icon"), from, pack)); }
-            if (JsonUtils.isJsonPrimitive(display, "background")) { display.addProperty("background", ConvertAssets.textureRef(display.get("background").getAsString())); }
-        }
+        JsonObject display = Json.object(json, "display");
+        if (display.has("icon") && display.get("icon").isJsonObject()) { display.add("icon", ConvertRecipes.stack(display.get("icon"), from, pack)); }
+        Json.rewriteText(display, "background", ConvertAssets::textureRef);
         json.remove("sends_telemetry_event");
-        if (json.has("criteria") && json.get("criteria").isJsonObject()) {
-            for (Map.Entry<String, JsonElement> criterion : json.getAsJsonObject("criteria").entrySet()) {
-                if (!criterion.getValue().isJsonObject()) { continue; }
-                JsonObject held = criterion.getValue().getAsJsonObject();
-                if (!held.has("conditions") || !held.get("conditions").isJsonObject()) { continue; }
-                JsonObject conditions = held.getAsJsonObject("conditions");
-                if (conditions.has("player")) {
-                    conditions.remove("player");
-                    pack.note("'" + from + "' checks the player in its criterion '" + criterion.getKey() + "', which 1.12.2 cannot, so that check is left out");
-                }
-                predicates(conditions, from, pack);
-            }
+        for (Map.Entry<String, JsonElement> criterion : Json.object(json, "criteria").entrySet()) {
+            if (!criterion.getValue().isJsonObject()) { continue; }
+            JsonObject conditions = Json.object(criterion.getValue().getAsJsonObject(), "conditions");
+            if (conditions.size() == 0) { continue; }
+            pack.dropMember(conditions, "player", Ported.where(from) + " checks the player in its criterion '" + criterion.getKey() + "', which 1.12.2 cannot, so that check is left out");
+            predicates(conditions, from, pack);
         }
         return Ported.GSON.toJson(json);
     }
@@ -46,25 +40,22 @@ public final class ConvertAdvancements {
         boolean names = listed != null && (listed.isJsonPrimitive() || listed.isJsonArray() && listed.getAsJsonArray().size() > 0 && listed.getAsJsonArray().get(0).isJsonPrimitive());
         if (names) {
             JsonElement items = held.remove("items");
-            String first = items.isJsonArray() ? (items.getAsJsonArray().size() > 0 ? items.getAsJsonArray().get(0).getAsString() : "") : items.getAsString();
-            if (items.isJsonArray() && items.getAsJsonArray().size() > 1) { pack.note("'" + from + "' accepts any of " + items + ", and a 1.12.2 item predicate names one, so only " + first + " is kept"); }
-            if (first.startsWith("#")) { held.addProperty("tag", first.substring(1)); }
+            JsonElement head = Json.first(items);
+            String first = head == null ? "" : head.getAsString();
+            if (items.isJsonArray() && items.getAsJsonArray().size() > 1) { pack.note(Ported.where(from) + " accepts any of " + items + ", and a 1.12.2 item predicate names one, so only " + first + " is kept"); }
+            if (IdNames.isTag(first)) { held.addProperty("tag", IdNames.tagPath(first)); }
             else if (!first.isEmpty()) {
-                Convert.Ref ref = Convert.item(first, pack, "'" + from + "'");
-                held.addProperty("item", ref == null ? first : ref.id);
+                Convert.Ref ref = Convert.item(first, pack, Ported.where(from));
+                held.addProperty("item", Convert.idOr(ref, first));
                 if (ref != null && ref.specific) { held.addProperty("data", ref.meta); }
             }
         }
         if (JsonUtils.isJsonPrimitive(held, "tag")) {
             String tag = held.remove("tag").getAsString();
-            String ore = Ids.oreName(tag);
-            held.addProperty("type", "forge:ore_dict");
-            held.addProperty("ore", ore == null ? Ids.camel(Ids.namespaced(tag).replace(':', '_').replace('/', '_'), false) : ore);
+            held.addProperty("type", Ids.ORE_DICT);
+            held.addProperty("ore", Ids.oreKey(tag));
         }
-        if (held.has("components")) {
-            held.remove("components");
-            pack.note("'" + from + "' matches item components, which have no twin on 1.12.2, so that part of the match is left out");
-        }
+        pack.dropMember(held, "components", Ported.where(from) + " matches item components, which have no twin on 1.12.2, so that part of the match is left out");
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(held.entrySet())) { predicates(entry.getValue(), from, pack); }
     }
 }

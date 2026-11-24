@@ -2,8 +2,12 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.client.renderer.Blends;
 import mctmods.resourcedatapackloader.client.util.Crisp;
+import mctmods.resourcedatapackloader.client.util.Draw;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
+import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,6 +35,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final int MOST = 5;
     private static final int SLIDE = 8;
     private static final int FADE = 20;
+    private static final float MIN_ALPHA = 0.05F;
     private static final int MARGIN = 6;
     private static final int GAP = 4;
     private static final int PAD = 5;
@@ -43,7 +48,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private CardOverlay() {}
 
-    private static final class Card {
+    static final class Card {
         final List<MarkText.Piece> title;
         final List<List<MarkText.Piece>> lines = new ArrayList<>();
         final ItemStack icon;
@@ -55,15 +60,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int age;
         int measured;
 
-        Card(CardMessage message) {
+        Card(CardMessage message, int leastLife) {
             this.title = message.title.isEmpty() ? new ArrayList<>() : MarkText.pieces(message.font, message.title);
             for (String line : message.lines) { lines.add(MarkText.pieces(message.font, line)); }
             this.icon = message.icon;
-            this.image = message.image.isEmpty() ? null : new ResourceLocation(message.image);
+            this.image = IdNames.optional(message.image);
             this.background = message.background;
             this.panel = message.panel;
             this.text = message.text;
-            this.life = Math.max(SLIDE + FADE, message.ticks);
+            this.life = Math.max(leastLife, message.ticks);
         }
 
         int height() { return PAD * 2 + (title.isEmpty() ? 0 : LINE) + lines.size() * LINE; }
@@ -78,18 +83,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         }
 
         float alpha() {
-            int left = life - age;
-            if (left < FADE) { return Math.max(0.05F, left / (float) FADE); }
-            return 1.0F;
+            return Math.max(MIN_ALPHA, MathUtil.ramp(life - age, FADE));
         }
 
-        float slide() { return age < SLIDE ? 1.0F - age / (float) SLIDE : 0.0F; }
+        float slide() { return MathUtil.drain(age, SLIDE); }
     }
 
     public static void show(CardMessage message) {
         while (CARDS.size() >= MOST) { CARDS.remove(0); }
-        CARDS.add(new Card(message));
+        CARDS.add(new Card(message, SLIDE + FADE));
     }
+
 
     @SubscribeEvent public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END || CARDS.isEmpty()) { return; }
@@ -101,8 +105,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     @SubscribeEvent public static void onHud(RenderGameOverlayEvent.Post event) {
-        if (event.getType() != RenderGameOverlayEvent.ElementType.ALL || CARDS.isEmpty()) { return; }
-        if (Minecraft.getMinecraft().currentScreen != null) { return; }
+        if (CARDS.isEmpty() || Crisp.hudBlocked(event)) { return; }
         draw(event.getResolution());
     }
 
@@ -116,8 +119,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int screenWidth = Crisp.fit(resolution.getScaledWidth());
         int bottom = Crisp.fit(resolution.getScaledHeight()) - MARGIN;
         Crisp.raise();
-        GlStateManager.enableBlend();
-        Blends.translucent();
+        Blends.on();
         for (int i = CARDS.size() - 1; i >= 0; i--) {
             Card card = CARDS.get(i);
             int width = card.width();
@@ -128,11 +130,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
             float alpha = card.alpha();
             if (card.panel) { panel(left, top, width, height, card.background, alpha); }
             else { GlStateManager.enableBlend(); }
-            if (card.image != null) {
-                GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
-                mc.getTextureManager().bindTexture(card.image);
-                Gui.drawModalRectWithCustomSizedTexture(left, top, 0.0F, 0.0F, width, height, width, height);
-            }
+            if (card.image != null) { Draw.blitTinted(card.image, left, top, width, height, alpha); }
             if (card.panel) { Gui.drawRect(left, top, left + STRIPE, top + height, withAlpha(card.text, alpha)); }
             int x = left + STRIPE + PAD;
             int y = top + PAD;
@@ -167,9 +165,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         Gui.drawRect(left, top, left + width, top + height, withAlpha(background, 0.85F * alpha));
     }
 
-    public static int withAlpha(int rgb, float alpha) { return (Math.round(MathHelper.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    public static int withAlpha(int rgb, float alpha) { return Colors.withAlpha(rgb, MathHelper.clamp(alpha, MIN_ALPHA, 1.0F)); }
 
-    static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
+    static int darker(int rgb) { return Colors.rgb(Colors.red(rgb) / 2, Colors.green(rgb) / 2, Colors.blue(rgb) / 2); }
 
     public static class Handler extends AbstractClientMessageHandler<CardMessage> {
         @Override public void handleClientMessage(World world, EntityPlayer player, CardMessage message, MessageContext ctx) {

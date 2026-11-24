@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemGiveDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserGames;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.entity.Spawns;
+import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -42,8 +44,8 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import mctmods.resourcedatapackloader.core.util.SideUtils;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
 public final class ContentTeams {
     private static boolean armed;
@@ -163,7 +165,7 @@ public final class ContentTeams {
             }
         }
         for (TeamDef def : BY_NAME.values()) {
-            if (def.picksFrom.contains("players")) { ContentTeamsPicks.fill(def, event.player); }
+            if (def.picksFrom.contains(TeamDef.PICKS_PLAYERS)) { ContentTeamsPicks.fill(def, event.player); }
         }
     }
 
@@ -197,8 +199,7 @@ public final class ContentTeams {
         Set<String> gone = ContentTeamsPicks.LEFT.get(def.name);
         if (gone != null) { gone.remove(member); }
         board.addPlayerToTeam(member, def.name);
-        MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
-        EntityPlayerMP player = server == null ? null : server.getPlayerList().getPlayerByUsername(member);
+        EntityPlayerMP player = online(member);
         if (player == null) { return; }
         give(player, def);
         seated(member, def);
@@ -211,9 +212,13 @@ public final class ContentTeams {
         if (!arrivals.contains(member)) { arrivals.add(member); }
     }
 
-    static void tellLead(World world, TeamDef def, String member) {
+    @Nullable private static EntityPlayerMP online(String member) {
         MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
-        EntityPlayerMP player = server == null ? null : server.getPlayerList().getPlayerByUsername(member);
+        return server == null ? null : server.getPlayerList().getPlayerByUsername(member);
+    }
+
+    static void tellLead(World world, TeamDef def, String member) {
+        EntityPlayerMP player = online(member);
         if (player == null || !TeamDef.LEAD_FIRST.equals(def.lead) || !member.equals(leadOf(world, def))) { return; }
         if (mctmods.resourcedatapackloader.common.pregen.ContentPregenHold.arrived(player)) { leadTold(player, def, ""); }
     }
@@ -321,7 +326,7 @@ public final class ContentTeams {
     @Nullable public static ScorePlayerTeam teamOf(World world, String member) { return world.getScoreboard().getPlayersTeam(member); }
 
     @Nullable public static TeamDef defOf(EntityPlayer player) {
-        ScorePlayerTeam held = teamOf(player.world, player.getName());
+        ScorePlayerTeam held = Standing.team(player);
         return held == null ? null : BY_NAME.get(held.getName());
     }
 
@@ -396,7 +401,7 @@ public final class ContentTeams {
     }
 
     @Nullable public static String standingOf(EntityPlayer player) {
-        ScorePlayerTeam held = teamOf(player.world, player.getName());
+        ScorePlayerTeam held = Standing.team(player);
         return held == null ? null : held.getName();
     }
 
@@ -438,7 +443,7 @@ public final class ContentTeams {
 
     public static boolean stand(EntityPlayer player) {
         Scoreboard board = player.world.getScoreboard();
-        ScorePlayerTeam held = teamOf(player.world, player.getName());
+        ScorePlayerTeam held = Standing.team(player);
         if (held == null) { return false; }
         board.removePlayerFromTeam(player.getName(), held);
         TeamDef def = BY_NAME.get(held.getName());
@@ -447,7 +452,7 @@ public final class ContentTeams {
     }
 
     @SubscribeEvent public static void onTick(TickEvent.WorldTickEvent event) {
-        if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END || event.world.provider.getDimension() != 0) { return; }
+        if (!SideUtils.serverEnd(event) || event.world.provider.getDimension() != 0) { return; }
         MinecraftServer server = event.world.getMinecraftServer();
         if (server == null) { return; }
         if (event.world.getTotalWorldTime() % DECIDED_EVERY == 0) { decided(server, event.world); }
@@ -500,13 +505,11 @@ public final class ContentTeams {
         if (!standing.isEmpty() || ContentScoring.standInWaits() && !now) { return; }
         int[] at = def.standInAt;
         if (at == null || !world.isBlockLoaded(new net.minecraft.util.math.BlockPos(at[0], at[1], at[2]))) { return; }
-        Entity made = EntityList.createEntityByIDFromName(id, world);
+        Entity made = Spawns.placed(world, id, at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F, true);
         if (made == null) {
             ContentLog.LOGGER.errorOnce(UNMADE, def.name, "Team {} names {} as its stand-in, which nothing registers, so the side has none; this is said once", def.name, def.standIn);
             return;
         }
-        made.setLocationAndAngles(at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F);
-        if (made instanceof net.minecraft.entity.EntityLiving) { ((net.minecraft.entity.EntityLiving) made).onInitialSpawn(world.getDifficultyForLocation(new net.minecraft.util.math.BlockPos(made)), null); }
         world.spawnEntity(made);
         join(world, made.getCachedUniqueIdString(), def);
         ContentLog.LOGGER.info("No player stands on {}, so a {} stands in at {}, {}, {}", def.displayName, def.standIn, at[0], at[1], at[2]);

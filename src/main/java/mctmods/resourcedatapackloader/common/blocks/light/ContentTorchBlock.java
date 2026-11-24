@@ -3,8 +3,7 @@ package mctmods.resourcedatapackloader.common.blocks.light;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
-import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.Objects;
 import java.util.Random;
@@ -28,13 +27,7 @@ public class ContentTorchBlock extends BlockTorch implements IContentBlock {
 
     public ContentTorchBlock(BlockDef def) {
         this.def = def;
-        BlockVariant variant = def.at(0);
-        setRegistryName(def.registryName);
-        setTranslationKey(def.registryName + "." + variant.name);
-        ContentSetup.harvest(this, def);
-        if (def.soundType != null) { setSoundType(def.soundType); }
-        ContentSetup.apply(this, def.creativeTab);
-        ContentSetup.properties(this, def);
+        ContentSetup.applyNamed(this, def);
     }
 
     @Override public BlockDef getDef() { return def; }
@@ -58,7 +51,7 @@ public class ContentTorchBlock extends BlockTorch implements IContentBlock {
         if (def.torchSmoke) { world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0, 0.0, 0.0); }
         if (Objects.equals(def.torchParticle, BlockDef.PARTICLE_COLORED)) {
             world.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z,
-                    Math.max(MIN_RED, ContentTypes.red(def.torchColor)), ContentTypes.green(def.torchColor), ContentTypes.blue(def.torchColor));
+                    Math.max(MIN_RED, Colors.redD(def.torchColor)), Colors.greenD(def.torchColor), Colors.blueD(def.torchColor));
             return;
         }
         world.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0, 0.0, 0.0);

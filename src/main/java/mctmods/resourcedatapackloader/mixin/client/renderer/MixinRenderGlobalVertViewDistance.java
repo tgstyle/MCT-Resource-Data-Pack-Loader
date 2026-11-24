@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer;
 
-import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.optifine.IVerticalRenderDistance;
 
@@ -32,13 +32,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "loadRenderers", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I", opcode = Opcodes.PUTFIELD)) private void rdpl$onUpdateRenderDistance(CallbackInfo cbi) { this.rdpl$verticalRenderDistanceCubes = Config.client.verticalCubeLoadDistance; }
 
     @Inject(method = "setupTerrain", at = @At("HEAD")) private void rdpl$onSetupTerrain(CallbackInfo cbi) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+        if (!GenHeights.rubic(world)) { return; }
         if (mc.gameSettings.renderDistanceChunks == renderDistanceChunks
                 && Config.client.verticalCubeLoadDistance != rdpl$verticalRenderDistanceCubes) { this.loadRenderers(); }
     }
 
     @Redirect(method = "setupTerrain", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I", opcode = Opcodes.GETFIELD), slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;loadRenderers()V"))) private int rdpl$onGetRenderDistance(RenderGlobal _this) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return mc.gameSettings.renderDistanceChunks; }
+        if (!GenHeights.rubic(world)) { return mc.gameSettings.renderDistanceChunks; }
         return Math.max(mc.gameSettings.renderDistanceChunks, Config.client.verticalCubeLoadDistance);
     }
 }

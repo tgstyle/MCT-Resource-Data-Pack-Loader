@@ -24,8 +24,7 @@ import vazkii.quark.world.feature.VariedDungeons;
     @Inject(method = "placeDungeonAt", at = @At("HEAD"), cancellable = true) private void rdpl$requireLoaded(WorldServer world, Random rand, BlockPos position, CallbackInfo ci) {
         int reach = 0;
         for (int kind = 0; kind < rdpl$DUNGEON_KINDS; kind++) {
-            BlockPos size = world.getStructureTemplateManager().getTemplate(world.getMinecraftServer(), new ResourceLocation("quark", "dungeon_" + kind)).getSize();
-            reach = Math.max(reach, Math.max(size.getX(), size.getZ()));
+            reach = Math.max(reach, ContentCascade.templateReach(world, new ResourceLocation("quark", "dungeon_" + kind)));
         }
         if (ContentCascade.loaded(world, position, reach)) { return; }
         rand.nextInt(rdpl$DUNGEON_KINDS);

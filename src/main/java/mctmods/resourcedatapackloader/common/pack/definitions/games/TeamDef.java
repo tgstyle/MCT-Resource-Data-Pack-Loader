@@ -15,6 +15,7 @@ public final class TeamDef {
     public static final String LEAD_APPOINTED = "appointed";
     public static final String LEAD_VOTE = "vote";
     public static final String LEAD_CLAIM = "claim";
+    public static final String PICKS_PLAYERS = "players";
     public final String name;
     public final String displayName;
     public final TextFormatting color;

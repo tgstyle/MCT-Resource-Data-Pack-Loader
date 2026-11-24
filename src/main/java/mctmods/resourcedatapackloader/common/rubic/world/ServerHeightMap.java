@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 
 public class ServerHeightMap implements IHeightMap {
     private static final int NONE_SEGMENT = 0x7fffffff;
+    private static final String SEGMENTS_WRONG = "The number of segments was wrong!";
     @Nonnull private final int[] ymin;
     @Nonnull private final HeightMap ymax;
     @Nonnull private final int[][] segments;
@@ -55,18 +56,7 @@ public class ServerHeightMap implements IHeightMap {
         if (blockY <= this.ymin[i]) { return Coords.NO_HEIGHT; }
         int[] segments = this.segments[i];
         if (segments == null) { return blockY - 1; }
-        int mini = 0;
-        int maxi = getLastSegmentIndex(segments);
-        while (mini <= maxi) {
-            int midi = (mini + maxi) >>> 1;
-            int midPos = segments[midi];
-            if (midPos < blockY) { mini = midi + 1; }
-            else if (midPos > blockY) { maxi = midi - 1; }
-            else {
-                mini = midi + 1;
-                break;
-            }
-        }
+        int mini = searchSegments(segments, blockY);
         assert (mini > 0) : String.format("can't find %d in %s", blockY, dump(localX, localZ));
         int segmentIndex = mini - 1;
         int blockYSegment = segments[segmentIndex];
@@ -151,21 +141,25 @@ public class ServerHeightMap implements IHeightMap {
         };
     }
 
-    private void setOpacityWithSegments(int xzIndex, int blockY, boolean isOpaque) {
-        int[] segments = this.segments[xzIndex];
-        int minj = 0;
-        int maxj = getLastSegmentIndex(segments);
-        while (minj <= maxj) {
-            int midj = (minj + maxj) >>> 1;
-            int midPos = segments[midj];
-            if (midPos < blockY) { minj = midj + 1; }
-            else if (midPos > blockY) { maxj = midj - 1; }
+    private static int searchSegments(int[] segments, int blockY) {
+        int mini = 0;
+        int maxi = getLastSegmentIndex(segments);
+        while (mini <= maxi) {
+            int midi = (mini + maxi) >>> 1;
+            int midPos = segments[midi];
+            if (midPos < blockY) { mini = midi + 1; }
+            else if (midPos > blockY) { maxi = midi - 1; }
             else {
-                minj = midj + 1;
+                mini = midi + 1;
                 break;
             }
         }
-        int j = minj - 1;
+        return mini;
+    }
+
+    private void setOpacityWithSegments(int xzIndex, int blockY, boolean isOpaque) {
+        int[] segments = this.segments[xzIndex];
+        int j = searchSegments(segments, blockY) - 1;
         if (j < 0) { setOpacityWithSegmentsBelowBottom(xzIndex, blockY, isOpaque); }
         else if (blockY > this.ymax.get(xzIndex)) { setOpacityWithSegmentsAboveTop(xzIndex, blockY, isOpaque); }
         else { setOpacityWithSegmentsFor(xzIndex, blockY, j, isOpaque); }
@@ -236,7 +230,7 @@ public class ServerHeightMap implements IHeightMap {
             }
             segments[segmentIndexWithBlockY] = NONE_SEGMENT;
             segments[segmentIndexWithBlockY - 1] = NONE_SEGMENT;
-            assert parityCheck(xzIndex) : "The number of segments was wrong!";
+            assert parityCheck(xzIndex) : SEGMENTS_WRONG;
             return;
         }
         if (segmentIndexWithBlockY == 0) {
@@ -268,7 +262,7 @@ public class ServerHeightMap implements IHeightMap {
         System.arraycopy(segments, firstSegmentToRemove + 2, segments, firstSegmentToRemove, jmax - 1 - firstSegmentToRemove);
         segments[jmax] = NONE_SEGMENT;
         segments[jmax - 1] = NONE_SEGMENT;
-        assert parityCheck(xzIndex) : "The number of segments was wrong!";
+        assert parityCheck(xzIndex) : SEGMENTS_WRONG;
         if (segments[0] == NONE_SEGMENT) { this.segments[xzIndex] = null; }
     }
 
@@ -299,7 +293,7 @@ public class ServerHeightMap implements IHeightMap {
             }
             this.segments[xzIndex] = newSegmentArr;
         }
-        assert parityCheck(xzIndex) : "The number of segments was wrong!";
+        assert parityCheck(xzIndex) : SEGMENTS_WRONG;
     }
 
     private int getSegmentTopBlockY(int xzIndex, int segmentIndex) {
@@ -331,7 +325,7 @@ public class ServerHeightMap implements IHeightMap {
             if (segments.length == 0) { continue; }
             for (int j = 0; j < segments.length; j++) { segments[j] = buffer.getInt(); }
             this.segments[i] = segments;
-            assert parityCheck(i) : "The number of segments was wrong!";
+            assert parityCheck(i) : SEGMENTS_WRONG;
         }
     }
 

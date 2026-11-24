@@ -5,6 +5,7 @@ import static mctmods.resourcedatapackloader.core.util.json.Json.text;
 import mctmods.resourcedatapackloader.common.util.loot.LootDown;
 import mctmods.resourcedatapackloader.common.util.worldgen.FeatureForms;
 import mctmods.resourcedatapackloader.common.util.worldgen.WorldgenDown;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
 import mctmods.resourcedatapackloader.core.util.text.FormatDown;
 import mctmods.resourcedatapackloader.core.util.text.NumberDown;
@@ -15,11 +16,13 @@ import com.google.gson.JsonObject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class LinePort {
     private static final String[][] FOLDERS = {{"worldgen/feature/", "worldgen/configured_feature/"}, {"worldgen/carver/", "worldgen/configured_carver/"}, {"tags/worldgen/feature/", "tags/worldgen/configured_feature/"}, {"tags/worldgen/carver/", "tags/worldgen/configured_carver/"}, {"recipe/brewing/", "brewing/"}};
     private static final List<String> LOOT = Arrays.asList("loot_table/", "loot_modifiers/", "villager_trade/");
-    private static final List<String> NUMBERS = Arrays.asList("loot_table/", "loot_modifiers/", "villager_trade/", "trade_set/", "predicate/", "item_modifier/", "advancement/", "enchantment/");
+    private static final List<String> NUMBERS = Stream.concat(LOOT.stream(), Stream.of("trade_set/", "predicate/", "item_modifier/", "advancement/", "enchantment/")).collect(Collectors.toList());
     private static final String POTION_CONTENTS = "potion_contents";
     private static final String ITEM = "item";
 
@@ -82,7 +85,7 @@ public final class LinePort {
             if (components.size() > 0) { note.accept("sets components on its brewed item, which a 26.2 brewing recipe cannot, so they are dropped"); }
         }
         JsonArray brewing = new JsonArray();
-        if (reagent.isEmpty() || reagent.startsWith("#") || entry.has("input") && (text(input, ITEM).isEmpty() || text(input, ITEM).startsWith("#"))) { note.accept("brews from a tag or a list of items, which a 26.2 brewing recipe cannot name, so it is dropped"); }
+        if (reagent.isEmpty() || IdNames.isTag(reagent) || entry.has("input") && (text(input, ITEM).isEmpty() || IdNames.isTag(text(input, ITEM)))) { note.accept("brews from a tag or a list of items, which a 26.2 brewing recipe cannot name, so it is dropped"); }
         else { brewing.add(entry); }
         JsonObject out = new JsonObject();
         out.add("brewing", brewing);

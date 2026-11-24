@@ -3,9 +3,12 @@ package mctmods.resourcedatapackloader.common.blocks.shield;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SpawnShieldDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.Registered;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,9 +38,9 @@ public final class ShieldIndexes {
         TABLE.clear();
         maxSpawnRadius = 0;
         maxWeatherRadius = 0;
-        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
-            BlockDef def = ContentRegistry.blockDef(entry.getKey());
-            if (def == null || def.blocksSpawns == null && def.blocksWeather == null) { continue; }
+        for (Registered<Block, BlockDef> entry : ContentRegistry.definedBlocks()) {
+            BlockDef def = entry.def;
+            if (def.blocksSpawns == null && def.blocksWeather == null) { continue; }
             int spawnRadius = 0;
             SpawnShieldDef spawns = def.blocksSpawns;
             Set<ResourceLocation> entities = new HashSet<>();
@@ -79,10 +82,9 @@ public final class ShieldIndexes {
         ShieldIndex index = of(world);
         long key = ChunkPos.asLong(chunk.x, chunk.z);
         index.drop(key);
-        for (ExtendedBlockStorage storage : chunk.getBlockStorageArray()) { addStorage(index, key, storage, chunk.x << 4, storage == null ? 0 : storage.getYLocation(), chunk.z << 4); }
+        for (ExtendedBlockStorage storage : chunk.getBlockStorageArray()) { addStorage(index, key, storage, Coords.cubeToMinBlock(chunk.x), storage == null ? 0 : storage.getYLocation(), Coords.cubeToMinBlock(chunk.z)); }
     }
 
-    private static long column(int x, int z) { return (x & 0x3FFFFFFL) << 38 | (z & 0x3FFFFFFL); }
 
     private static void addStorage(ShieldIndex index, long key, @Nullable ExtendedBlockStorage storage, int baseX, int baseY, int baseZ) {
         if (storage == null || storage.isEmpty()) { return; }
@@ -90,7 +92,7 @@ public final class ShieldIndexes {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     BlockShield shield = TABLE.get(storage.get(x, y, z).getBlock());
-                    if (shield != null) { index.add(key, column(baseX + x, baseZ + z), baseY + y, shield); }
+                    if (shield != null) { index.add(key, Longs.packPos(baseX + x, 0, baseZ + z), baseY + y, shield); }
                 }
             }
         }
@@ -119,8 +121,8 @@ public final class ShieldIndexes {
         BlockShield now = TABLE.get(newState.getBlock());
         if (was == now) { return; }
         ShieldIndex index = of(world);
-        long key = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
-        long column = column(pos.getX(), pos.getZ());
+        long key = ChunkPos.asLong(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getZ()));
+        long column = Longs.packPos(pos.getX(), 0, pos.getZ());
         if (was != null) { index.remove(key, column, pos.getY()); }
         if (now != null) { index.add(key, column, pos.getY(), now); }
     }

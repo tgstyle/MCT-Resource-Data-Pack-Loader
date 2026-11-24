@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 
 import java.util.List;
@@ -70,7 +71,7 @@ public final class SkyDecoration {
         int cubeY = cube.getY();
         int cubeZ = cube.getZ();
         Random random = SeededRandom.at(world, cubeX, cubeY, cubeZ);
-        BlockPos middle = new BlockPos((cubeX << 4) + 8, (cubeY << 4) + 8, (cubeZ << 4) + 8);
+        BlockPos middle = new BlockPos(Coords.cubeToMinBlock(cubeX) + 8, Coords.cubeToMinBlock(cubeY) + 8, Coords.cubeToMinBlock(cubeZ) + 8);
         ChunkPos column = new ChunkPos(cubeX, cubeZ);
         Biome biome = world.getBiome(middle);
         MinecraftForge.EVENT_BUS.post(new DecorateBiomeEvent.Pre(world, random, column));
@@ -164,8 +165,8 @@ public final class SkyDecoration {
     private static void canopy(World world, Random random, int cubeX, int cubeY, int cubeZ, Biome biome) {
         for (int gridX = 0; gridX < Cube.SIZE / GRID; gridX++) {
             for (int gridZ = 0; gridZ < Cube.SIZE / GRID; gridZ++) {
-                int x = (cubeX << 4) + gridX * GRID + 1 + SPREAD + random.nextInt(GRID / 2 + 1);
-                int z = (cubeZ << 4) + gridZ * GRID + 1 + SPREAD + random.nextInt(GRID / 2 + 1);
+                int x = Coords.cubeToMinBlock(cubeX) + gridX * GRID + 1 + SPREAD + random.nextInt(GRID / 2 + 1);
+                int z = Coords.cubeToMinBlock(cubeZ) + gridZ * GRID + 1 + SPREAD + random.nextInt(GRID / 2 + 1);
                 BlockPos top = surfaceAt(world, x, z, cubeY, true);
                 if (top == null) { continue; }
                 if (random.nextInt(20) == 0) { BIG_MUSHROOM.generate(world, random, top); }
@@ -198,7 +199,7 @@ public final class SkyDecoration {
         }
     }
 
-    private static boolean sparsePlains(int cubeX, int cubeZ) { return GRASS_COLOR_NOISE.getValue(((cubeX << 4) + 8) / 200.0D, ((cubeZ << 4) + 8) / 200.0D) < SPARSE_PLAINS; }
+    private static boolean sparsePlains(int cubeX, int cubeZ) { return GRASS_COLOR_NOISE.getValue((Coords.cubeToMinBlock(cubeX) + 8) / 200.0D, (Coords.cubeToMinBlock(cubeZ) + 8) / 200.0D) < SPARSE_PLAINS; }
 
     private static void herds(WorldServer world, Random random, int cubeX, int cubeY, int cubeZ, Biome biome) {
         List<Biome.SpawnListEntry> spawnable = biome.getSpawnableList(EnumCreatureType.CREATURE);
@@ -230,11 +231,11 @@ public final class SkyDecoration {
         }
     }
 
-    @Nullable private static BlockPos surface(World world, Random random, int cubeX, int cubeY, int cubeZ, boolean opaque) { return surfaceAt(world, (cubeX << 4) + random.nextInt(Cube.SIZE) + SPREAD, (cubeZ << 4) + random.nextInt(Cube.SIZE) + SPREAD, cubeY, opaque); }
+    @Nullable private static BlockPos surface(World world, Random random, int cubeX, int cubeY, int cubeZ, boolean opaque) { return surfaceAt(world, Coords.cubeToMinBlock(cubeX) + random.nextInt(Cube.SIZE) + SPREAD, Coords.cubeToMinBlock(cubeZ) + random.nextInt(Cube.SIZE) + SPREAD, cubeY, opaque); }
 
     @Nullable private static BlockPos surfaceAt(World world, int x, int z, int cubeY, boolean opaque) {
-        int highest = (cubeY << 4) + Cube.SIZE - 1;
-        int lowest = cubeY << 4;
+        int highest = Coords.cubeToMinBlock(cubeY) + Cube.SIZE - 1;
+        int lowest = Coords.cubeToMinBlock(cubeY);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         boolean openAbove = world.isAirBlock(at.setPos(x, highest + 1, z));
         for (int y = highest; y >= lowest; y--) {

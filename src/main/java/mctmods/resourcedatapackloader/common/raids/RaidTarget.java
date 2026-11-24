@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.raids;
 
+import java.util.Collection;
 import java.util.Locale;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -11,6 +12,19 @@ public final class RaidTarget {
 
         public String key() {
             return name().toLowerCase(Locale.ROOT);
+        }
+
+        public boolean guarded() {
+            return this == BASE || this == PLAYER;
+        }
+
+        public static boolean anyGuarded(Collection<Kind> kinds) {
+            for (Kind kind : kinds) {
+                if (kind.guarded()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static Kind parse(@Nullable String value) {
@@ -31,16 +45,14 @@ public final class RaidTarget {
     private final int radius;
     private final int ownerHandle;
     @Nullable private final UUID targetUuid;
-    private final boolean free;
     private final int score;
 
-    public RaidTarget(Kind kind, BlockPos center, int radius, int ownerHandle, @Nullable UUID targetUuid, boolean free, int score) {
+    public RaidTarget(Kind kind, BlockPos center, int radius, int ownerHandle, @Nullable UUID targetUuid, int score) {
         this.kind = kind;
         this.center = center;
         this.radius = radius;
         this.ownerHandle = ownerHandle;
         this.targetUuid = targetUuid;
-        this.free = free;
         this.score = score;
     }
 
@@ -63,10 +75,6 @@ public final class RaidTarget {
     @Nullable
     public UUID targetUuid() {
         return targetUuid;
-    }
-
-    public boolean free() {
-        return free;
     }
 
     public int score() { return score; }

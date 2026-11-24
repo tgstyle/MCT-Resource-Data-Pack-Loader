@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -44,7 +45,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public final class ContentPregenHold {
     private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
     private static final String HELD_MODE = "rdplPregenHeldMode";
-    private static final Set<UUID> ARRIVED = new HashSet<>();
+    private static final Set<UUID> ARRIVED = PlayerLogout.track(new HashSet<>());
     private static ScheduledExecutorService flasher;
     private static long beats;
     private static String lastSaid = "";
@@ -58,13 +59,13 @@ public final class ContentPregenHold {
     }
 
     private static boolean welcomeAtDefault() {
-        String[] entries = ContentControl.list(ContentControl.CHUNKS, "welcomeSays", Config.chunks.welcomeSays);
+        String[] entries = ContentControl.list(ContentControl.CHUNKS, ContentControl.WELCOME_SAYS, Config.chunks.welcomeSays);
         return entries.length == ContentPregenProgress.SHIPPED.welcomeSays.length && entries.length == 1 && entries[0].trim().equals(ContentPregenProgress.SHIPPED.welcomeSays[0]);
     }
 
     static String greetingFor(int dimension, boolean fallBack) {
         String everywhere = null;
-        for (String entry : ContentControl.list(ContentControl.CHUNKS, "welcomeSays", Config.chunks.welcomeSays)) {
+        for (String entry : ContentControl.list(ContentControl.CHUNKS, ContentControl.WELCOME_SAYS, Config.chunks.welcomeSays)) {
             String[] parts = Settings.split(entry);
             Integer named = null;
             if (parts != null) {
@@ -93,7 +94,7 @@ public final class ContentPregenHold {
         private Held(EntityPlayerMP player, GameType before) {
             this.before = before;
             this.connection = player.connection;
-            this.warning = ContentPregenProgress.defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays, ContentPregenProgress.SHIPPED.pregenSpectatingSays, "rdpl.pregen.spectating", player);
+            this.warning = ContentPregenProgress.defaulted(ContentControl.PREGEN_SPECTATING_SAYS, Config.chunks.pregenSpectatingSays, ContentPregenProgress.SHIPPED.pregenSpectatingSays, "rdpl.pregen.spectating", player);
             rebase(player);
         }
 
@@ -249,7 +250,6 @@ public final class ContentPregenHold {
     }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        ARRIVED.remove(event.player.getUniqueID());
         Held held = HELD.remove(event.player.getUniqueID());
         if (HELD.isEmpty()) { stopFlashing(); }
         if (held == null || !(event.player instanceof EntityPlayerMP)) { return; }
@@ -293,13 +293,14 @@ public final class ContentPregenHold {
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ContentPregenDimensions.startWhenEntered(event.player.dimension);
         ContentPregen worker = ContentPregen.running;
+        EntityPlayerMP joined = event.player instanceof EntityPlayerMP ? (EntityPlayerMP) event.player : null;
         if (worker == null) {
-            if (event.player instanceof EntityPlayerMP && !ContentIntroPlay.willPlay((EntityPlayerMP) event.player)) { welcome((EntityPlayerMP) event.player); }
+            if (joined != null && !ContentIntroPlay.willPlay(joined)) { welcome(joined); }
             return;
         }
-        if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player, true); }
+        if (joined != null) { hold(joined, true); }
         String said = ContentPregenProgress.sofar(worker);
-        if (said.isEmpty()) { return; }
-        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, CardIds.PREGEN_RUNNING, TextFormatting.YELLOW, said); }
+        if (said.isEmpty() || joined == null) { return; }
+        Says.tell(joined, CardIds.PREGEN_RUNNING, TextFormatting.YELLOW, said);
     }
 }

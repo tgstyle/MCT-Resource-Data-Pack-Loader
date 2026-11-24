@@ -35,10 +35,10 @@ public final class BeardRoadsHolds {
             if (!wetStrip(world, ns.minX, ns.maxX, z, z)) { return false; }
         }
         int reach = BeardRoadsSurface.arms(ew, ns, mine, roads);
-        if ((reach & 1) != 0 && !wetStrip(world, ns.minX - 1, ns.minX - 1, ew.minZ, ew.maxZ)) { return false; }
-        if ((reach & 2) != 0 && !wetStrip(world, ns.maxX + 1, ns.maxX + 1, ew.minZ, ew.maxZ)) { return false; }
-        if ((reach & 4) != 0 && !wetStrip(world, ns.minX, ns.maxX, ew.minZ - 1, ew.minZ - 1)) { return false; }
-        return (reach & 8) == 0 || wetStrip(world, ns.minX, ns.maxX, ew.maxZ + 1, ew.maxZ + 1);
+        if (BeardRoadsSurface.arm(reach, BeardRoadsSurface.WEST) && !wetStrip(world, ns.minX - 1, ns.minX - 1, ew.minZ, ew.maxZ)) { return false; }
+        if (BeardRoadsSurface.arm(reach, BeardRoadsSurface.EAST) && !wetStrip(world, ns.maxX + 1, ns.maxX + 1, ew.minZ, ew.maxZ)) { return false; }
+        if (BeardRoadsSurface.arm(reach, BeardRoadsSurface.NORTH) && !wetStrip(world, ns.minX, ns.maxX, ew.minZ - 1, ew.minZ - 1)) { return false; }
+        return !BeardRoadsSurface.arm(reach, BeardRoadsSurface.SOUTH) || wetStrip(world, ns.minX, ns.maxX, ew.maxZ + 1, ew.maxZ + 1);
     }
 
     private static boolean wetStrip(World world, int minX, int maxX, int minZ, int maxZ) {
@@ -100,7 +100,7 @@ public final class BeardRoadsHolds {
                 BeardRoads.Grade next = BeardRoadsGrade.chainGrade(world, other, otherAlongX);
                 int met = next == null ? Integer.MIN_VALUE : next.at(onward ? otherLeast : otherMost);
                 if (met == Integer.MIN_VALUE) { continue; }
-                int seam = 1 + BeardRoads.pathExtraWidth() + 3;
+                int seam = BeardRoads.junctionReach();
                 int seamLeast = Math.max(start, onward ? rowMost - seam + 1 : start);
                 int seamMost = Math.min(rowMost, onward ? rowMost : start + seam - 1);
                 boolean decked = next.bridgedAt(onward ? otherLeast : otherMost);
@@ -134,7 +134,7 @@ public final class BeardRoadsHolds {
                     if (pad != null) { crossed = pad.level; }
                 }
                 int ownGrade = profile[center - start];
-                int reach = 1 + BeardRoads.pathExtraWidth() + 3;
+                int reach = BeardRoads.junctionReach();
                 int grade = plazaLevel(world, alongX, Math.max(start, center - reach), Math.min(rowMost, center + reach), acrossLeast, acrossMost);
                 if (grade != Integer.MIN_VALUE) {
                     wet = false;

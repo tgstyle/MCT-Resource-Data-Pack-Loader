@@ -4,10 +4,12 @@ import mctmods.resourcedatapackloader.common.cards.CardFire;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.cards.CardLook;
 import mctmods.resourcedatapackloader.common.cards.CardRules;
+import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +54,7 @@ public final class ContentBoardPlay {
     private static Set<EntityPlayerMP> hearers(MinecraftServer server, BoardGame game) {
         Set<EntityPlayerMP> hearers = new LinkedHashSet<>();
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            boolean near = Integer.toString(player.dimension).equals(game.dimension) && player.getDistanceSq(game.x, game.y, game.z) <= HEARD * HEARD;
+            boolean near = game.in(player.dimension) && player.getDistanceSq(game.x, game.y, game.z) <= HEARD * HEARD;
             if (near || side(player, game) >= 0) { hearers.add(player); }
         }
         return hearers;
@@ -95,7 +97,7 @@ public final class ContentBoardPlay {
     public static String start(MinecraftServer server, @Nullable EntityPlayer viewer, String gameName, String name, World world, BlockPos at) {
         ContentBoardData data = ContentBoardData.get(server);
         BoardRules rules = ContentBoards.rules(gameName);
-        if (rules == null || data == null) { return say(viewer, "nogame", "game", gameName); }
+        if (rules == null || data == null) { return noGame(viewer, gameName); }
         if (data.boards.containsKey(name)) { return say(viewer, "exists", "board", name); }
         BoardGame game = new BoardGame(name, gameName, Integer.toString(world.provider.getDimension()), at.getX(), at.getY(), at.getZ());
         game.clock[0] = rules.clockTicks;
@@ -131,7 +133,7 @@ public final class ContentBoardPlay {
         BoardState state = game.state;
         if (rules == null || state == null) { return; }
         if (!game.running()) {
-            Says.chat(player, TextFormatting.GRAY, say(player, "over", "board", game.name));
+            Says.chat(player, TextFormatting.GRAY, over(player, game));
             return;
         }
         int square = ContentBoardPieces.square(game, rules, new BlockPos(piece));
@@ -161,7 +163,7 @@ public final class ContentBoardPlay {
         BoardState state = game.state;
         if (state == null || state.at(square) == 0 || barred(player, game, rules, side)) { return; }
         if (side != state.turn) {
-            Says.chat(player, TextFormatting.GRAY, say(player, "notturn", "side", sideName(rules, state.turn)));
+            Says.chat(player, TextFormatting.GRAY, notTurn(player, rules, state));
             return;
         }
         String piece = rules.pieces.get(BoardState.kind(state.at(square))).name;
@@ -182,12 +184,12 @@ public final class ContentBoardPlay {
         Choice waiting = CHOOSING.remove(player.getUniqueID());
         if (waiting != null && (promotion < 0 || !waiting.board.equals(game.name) || BoardState.from(waiting.move) != from || BoardState.to(waiting.move) != to)) { settle(player.server, waiting); }
         if (state == null || !game.running()) {
-            refuse(player, say(player, "over", "board", game.name));
+            refuse(player, over(player, game));
             return;
         }
         int held = state.at(from);
         if (held == 0 || BoardState.side(held) != state.turn) {
-            refuse(player, say(player, "notturn", "side", sideName(rules, state.turn)));
+            refuse(player, notTurn(player, rules, state));
             return;
         }
         if (barred(player, game, rules, state.turn)) { return; }
@@ -214,7 +216,7 @@ public final class ContentBoardPlay {
         Map<String, String> commands = new LinkedHashMap<>();
         for (int option : options) {
             String into = rules.pieces.get(BoardState.promotion(option)).name;
-            commands.put(into, "/rdplserver game board move " + game.name + " " + from + " " + to + " " + into);
+            commands.put(into, "/" + CommandShared.NAME + " game board move " + game.name + " " + from + " " + to + " " + into);
         }
         CHOOSING.put(player.getUniqueID(), new Choice(game.name, move, game.version, player.server.getTickCounter() + CHOOSE_TICKS));
         Says.options(player, TextFormatting.YELLOW, say(player, "choose", "piece", piece, "square", to, "first", rules.pieces.get(BoardState.promotion(move)).name), commands);
@@ -302,11 +304,23 @@ public final class ContentBoardPlay {
         }
     }
 
+    private static String over(@Nullable EntityPlayer viewer, BoardGame game) { return say(viewer, "over", "board", game.name); }
+
+    private static String noGame(@Nullable EntityPlayer viewer, String gameName) { return say(viewer, "nogame", "game", gameName); }
+
+    private static String notTurn(EntityPlayer player, BoardRules rules, BoardState state) { return say(player, "notturn", "side", sideName(rules, state.turn)); }
+
+    @Nullable private static String unseated(EntityPlayerMP player, BoardGame game, int side) {
+        if (!game.running()) { return over(player, game); }
+        return side < 0 ? say(player, "notseated", "board", game.name) : null;
+    }
+
     public static String resign(EntityPlayerMP player, BoardGame game) {
         BoardRules rules = ContentBoards.rules(game.game);
         int side = side(player, game);
-        if (rules == null || !game.running()) { return say(player, "over", "board", game.name); }
-        if (side < 0) { return say(player, "notseated", "board", game.name); }
+        if (rules == null) { return over(player, game); }
+        String refused = unseated(player, game, side);
+        if (refused != null) { return refused; }
         finish(player.server, game, rules, 1 - side, "resign");
         return "";
     }
@@ -315,8 +329,9 @@ public final class ContentBoardPlay {
         BoardRules rules = ContentBoards.rules(game.game);
         BoardState state = game.state;
         int side = side(player, game);
-        if (rules == null || state == null || !game.running()) { return say(player, "over", "board", game.name); }
-        if (side < 0) { return say(player, "notseated", "board", game.name); }
+        if (rules == null || state == null) { return over(player, game); }
+        String refused = unseated(player, game, side);
+        if (refused != null) { return refused; }
         int other = 1 - side;
         boolean agreed = game.offer == other || game.owners[other].equals(game.owners[side]);
         if (!agreed && game.computer(other)) {
@@ -335,8 +350,9 @@ public final class ContentBoardPlay {
     public static String takeback(EntityPlayerMP player, BoardGame game) {
         BoardRules rules = ContentBoards.rules(game.game);
         int side = side(player, game);
-        if (rules == null || !game.running()) { return say(player, "over", "board", game.name); }
-        if (side < 0) { return say(player, "notseated", "board", game.name); }
+        if (rules == null) { return over(player, game); }
+        String refused = unseated(player, game, side);
+        if (refused != null) { return refused; }
         int other = 1 - side;
         int asker = game.takeback == other ? other : side;
         int back = lastBy(game, rules, asker);
@@ -372,7 +388,7 @@ public final class ContentBoardPlay {
 
     public static String computer(MinecraftServer server, @Nullable EntityPlayer viewer, BoardGame game, String sideName, int level) {
         BoardRules rules = ContentBoards.rules(game.game);
-        if (rules == null) { return say(viewer, "nogame", "game", game.game); }
+        if (rules == null) { return noGame(viewer, game.game); }
         int side = rules.sides[0].equalsIgnoreCase(sideName) ? 0 : rules.sides[1].equalsIgnoreCase(sideName) ? 1 : -1;
         if (side < 0) { return say(viewer, "noside", "side", sideName, "board", game.name); }
         game.levels[side] = MathHelper.clamp(level, 0, BoardRules.MOST_LEVEL);
@@ -390,33 +406,33 @@ public final class ContentBoardPlay {
         BoardRules rules = ContentBoards.rules(game.game);
         BoardState state = game.state;
         if (rules == null || state == null) {
-            lines.add(say(viewer, "nogame", "game", game.game));
+            lines.add(noGame(viewer, game.game));
             return lines;
         }
         for (int rank = rules.ranks - 1; rank >= 0; rank--) {
             StringBuilder row = new StringBuilder(String.format("%2d ", rank + 1));
             for (int file = 0; file < rules.files; file++) {
-                int held = state.at(rank * rules.files + file);
+                int held = state.at(rules.index(file, rank));
                 char letter = held == 0 ? '.' : rules.pieces.get(BoardState.kind(held)).letter;
                 row.append(BoardState.side(held) == 0 && held != 0 ? Character.toUpperCase(letter) : letter).append(' ');
             }
             lines.add(row.toString());
         }
         StringBuilder files = new StringBuilder("   ");
-        for (int file = 0; file < rules.files; file++) { files.append((char) ('a' + file)).append(' '); }
+        for (int file = 0; file < rules.files; file++) { files.append(rules.fileLetter(file)).append(' '); }
         lines.add(files.toString());
         for (int side = 0; side < 2; side++) {
             String holder = game.owners[side].isEmpty() ? game.computer(side) ? say(viewer, "ai") : say(viewer, "open") : game.owners[side];
-            String clock = rules.clockTicks > 0 ? String.format(" %d:%02d", game.clock[side] / 1200, game.clock[side] / 20 % 60) : "";
+            String clock = rules.clockTicks > 0 ? String.format(" %d:%02d", game.clock[side] / MathUtil.TICKS_PER_MINUTE, game.clock[side] / MathUtil.TICKS_PER_SECOND % 60) : "";
             lines.add(say(viewer, "seat", "side", sideName(rules, side), "player", holder) + clock);
         }
-        lines.add(game.running() ? say(viewer, "turn", "side", sideName(rules, state.turn), "ply", game.moves.size()) : say(viewer, "over", "board", game.name));
+        lines.add(game.running() ? say(viewer, "turn", "side", sideName(rules, state.turn), "ply", game.moves.size()) : over(viewer, game));
         return lines;
     }
 
     public static String state(@Nullable EntityPlayer viewer, BoardGame game) {
         BoardRules rules = ContentBoards.rules(game.game);
-        if (rules == null || game.state == null) { return say(viewer, "nogame", "game", game.game); }
+        if (rules == null || game.state == null) { return noGame(viewer, game.game); }
         return game.running() ? say(viewer, "turn", "side", sideName(rules, game.state.turn), "ply", game.moves.size()) : result(viewer, game, rules);
     }
 

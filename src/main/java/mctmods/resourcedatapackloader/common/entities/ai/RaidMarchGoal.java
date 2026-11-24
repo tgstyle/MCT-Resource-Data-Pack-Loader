@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.raids.ActiveRaid;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -23,10 +23,11 @@ public final class RaidMarchGoal extends EntityAIBase {
     }
 
     @Override public boolean shouldExecute() {
-        if (mob.getAttackTarget() != null || mob.ticksExisted % LOOK_EVERY != 0 || !mob.getEntityData().hasKey(ActiveRaid.RAIDER)) { return false; }
-        BlockPos center = NBTUtil.getPosFromTag(mob.getEntityData().getCompoundTag(ActiveRaid.RAIDER));
+        if (mob.getAttackTarget() != null || mob.ticksExisted % LOOK_EVERY != 0) { return false; }
+        BlockPos center = ActiveRaid.home(mob);
+        if (center == null) { return false; }
         if (mob.getDistanceSq(center) <= ARRIVED_SQ) { return false; }
-        toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 15, 4, new Vec3d(center.getX() + 0.5D, center.getY(), center.getZ() + 0.5D));
+        toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 15, 4, Walking.feet(center));
         return toward != null;
     }
 

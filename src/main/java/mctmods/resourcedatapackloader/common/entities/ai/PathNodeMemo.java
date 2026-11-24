@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import net.minecraft.pathfinding.PathNodeType;
@@ -21,19 +22,17 @@ public final class PathNodeMemo {
 
     public static PathNodeMemo held() { return HELD.get(); }
 
-    private static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (long) (z & 0x3FFFFFF); }
-
     private static int slot(long key, int world, int owner) { return (int) (((key ^ (world * SPREAD) ^ (owner * SPREAD)) * SPREAD) >>> (64 - BITS)) & MASK; }
 
     public PathNodeType known(int owner, int world, int tick, int x, int y, int z) {
-        long key = packed(x, y, z);
+        long key = Longs.packPos(x, y, z);
         int slot = slot(key, world, owner);
         if (when[slot] != tick || worlds[slot] != world || owners[slot] != owner || where[slot] != key) { return null; }
         return KINDS[kinds[slot]];
     }
 
     public void remember(int owner, int world, int tick, int x, int y, int z, PathNodeType kind) {
-        long key = packed(x, y, z);
+        long key = Longs.packPos(x, y, z);
         int slot = slot(key, world, owner);
         where[slot] = key;
         when[slot] = tick;

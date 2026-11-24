@@ -3,10 +3,10 @@ package mctmods.resourcedatapackloader.common.pack.io.port.convert;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,8 +42,7 @@ public final class ConvertAssets {
 
     private ConvertAssets() {}
 
-    public static String lang(String contents, Ported pack) {
-        JsonObject json = new JsonParser().parse(contents).getAsJsonObject();
+    public static String lang(JsonObject json, Ported pack) {
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (!entry.getValue().isJsonPrimitive()) { continue; }
@@ -83,9 +82,8 @@ public final class ConvertAssets {
 
     static String textureRef(String held) {
         if (held.startsWith("#")) { return held; }
-        int colon = held.indexOf(':');
-        String namespace = colon < 0 ? "" : held.substring(0, colon + 1);
-        String rest = colon < 0 ? held : held.substring(colon + 1);
+        String namespace = held.indexOf(':') < 0 ? "" : IdNames.namespace(held) + ":";
+        String rest = IdNames.path(held);
         if (rest.startsWith("block/")) { return namespace + "blocks/" + rest.substring("block/".length()); }
         if (rest.startsWith("item/")) { return namespace + "items/" + rest.substring("item/".length()); }
         if (rest.startsWith("textures/block/")) { return namespace + "textures/blocks/" + rest.substring("textures/block/".length()); }
@@ -93,36 +91,33 @@ public final class ConvertAssets {
         return held;
     }
 
+    private static String legacyModel(String name) { return MODELS.getOrDefault(name, name); }
+
     static String modelRef(String held) {
         String bare = IdNames.bare(held);
         if (bare.startsWith("block/")) {
             String name = bare.substring("block/".length());
-            return "block/" + MODELS.getOrDefault(name, name);
+            return "block/" + legacyModel(name);
         }
         if (bare.startsWith("item/") || bare.startsWith("builtin/")) { return bare; }
         return held;
     }
 
     public static String model(JsonObject json, Ported pack) {
-        if (json.has("textures") && json.get("textures").isJsonObject()) {
-            JsonObject textures = json.getAsJsonObject("textures");
-            for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
-                if (texture.getValue().isJsonPrimitive()) { textures.addProperty(texture.getKey(), textureRef(texture.getValue().getAsString())); }
-            }
+        JsonObject textures = Json.object(json, "textures");
+        for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
+            Json.rewriteText(textures, texture.getKey(), ConvertAssets::textureRef);
         }
-        if (JsonUtils.isJsonPrimitive(json, "parent")) { json.addProperty("parent", modelRef(json.get("parent").getAsString())); }
+        Json.rewriteText(json, "parent", ConvertAssets::modelRef);
         json.remove("render_type");
         json.remove("gui_light");
-        if (json.has("loader")) {
-            pack.note("A model uses the loader " + json.get("loader") + ", which 1.12.2 Forge does not have, so it is served without it");
-            json.remove("loader");
-        }
+        pack.dropMember(json, "loader", "A model uses the loader " + json.get("loader") + ", which 1.12.2 Forge does not have, so it is served without it");
         return Ported.GSON.toJson(json);
     }
 
     public static String blockstate(JsonObject json) {
-        if (json.has("variants") && json.get("variants").isJsonObject()) {
-            JsonObject variants = json.getAsJsonObject("variants");
+        JsonObject variants = Json.object(json, "variants");
+        if (variants.size() > 0) {
             JsonObject out = new JsonObject();
             for (Map.Entry<String, JsonElement> variant : variants.entrySet()) {
                 stateModels(variant.getValue());
@@ -146,18 +141,17 @@ public final class ConvertAssets {
         if (!element.isJsonObject() || !element.getAsJsonObject().has("model")) { return; }
         JsonObject held = element.getAsJsonObject();
         String model = held.get("model").getAsString();
-        int colon = model.indexOf(':');
-        String namespace = colon < 0 ? Ids.MINECRAFT : model.substring(0, colon);
-        String rest = colon < 0 ? model : model.substring(colon + 1);
+        String namespace = IdNames.namespace(model);
+        String rest = IdNames.path(model);
         if (rest.startsWith("block/")) {
             String name = rest.substring("block/".length());
-            name = MODELS.containsKey(name) && Ids.MINECRAFT.equals(namespace) ? MODELS.get(name) : name;
+            name = Ids.MINECRAFT.equals(namespace) ? legacyModel(name) : name;
             held.addProperty("model", Ids.MINECRAFT.equals(namespace) ? name : namespace + ":" + name);
         }
     }
 
     public static String pixelMap(JsonObject json) {
-        if (JsonUtils.isJsonPrimitive(json, "extends")) { json.addProperty("extends", textureRef(json.get("extends").getAsString())); }
+        Json.rewriteText(json, "extends", ConvertAssets::textureRef);
         return Ported.GSON.toJson(json);
     }
 }

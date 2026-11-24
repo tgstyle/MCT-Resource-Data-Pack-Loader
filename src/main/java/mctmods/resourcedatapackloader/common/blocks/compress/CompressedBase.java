@@ -2,8 +2,11 @@ package mctmods.resourcedatapackloader.common.blocks.compress;
 
 import mctmods.resourcedatapackloader.client.util.ContentPixelImages;
 import mctmods.resourcedatapackloader.client.util.ContentResourceText;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -50,7 +53,7 @@ import net.minecraftforge.fml.relauncher.Side;
     @Nullable private static int[][] read(CompressedSet set) {
         ResourceLocation texture = texture(set);
         if (texture == null) { return null; }
-        int[][] image = ContentPixelImages.read(texture.getNamespace(), "textures/" + texture.getPath() + ".png");
+        int[][] image = ContentPixelImages.read(texture.getNamespace(), CompressedAssets.texture(texture.getPath()));
         if (image == null) { ContentLog.LOGGER.error("The compressable {} builds on the texture {}, which no pack or the game provides, so its layers are drawn grey", set.def.key, texture); }
         return image == null || !set.source.fromItem ? image : opaque(image);
     }
@@ -62,21 +65,22 @@ import net.minecraftforge.fml.relauncher.Side;
         ResourceLocation name = set.source.base;
         Block block = Registries.find(ForgeRegistries.BLOCKS, name);
         if (block == null) { return missing(set, "its block is not registered"); }
-        JsonObject state = ContentResourceText.json(name.getNamespace(), "blockstates/" + name.getPath() + ".json");
-        if (state == null) { return missing(set, "the blockstate " + name.getNamespace() + ":blockstates/" + name.getPath() + ".json cannot be read"); }
+        String statePath = PackManager.STATE_FOLDER + name.getPath() + PackManager.JSON_SUFFIX;
+        JsonObject state = ContentResourceText.json(name.getNamespace(), statePath);
+        if (state == null) { return missing(set, "the blockstate " + name.getNamespace() + ":" + statePath + " cannot be read"); }
         JsonObject entry = entry(state, key(block.getStateFromMeta(set.source.baseMeta)));
         if (entry == null) { return missing(set, "its blockstate names no model for meta " + set.source.baseMeta); }
         Map<String, String> textures = new HashMap<>();
-        JsonObject defaults = state.has("defaults") && state.get("defaults").isJsonObject() ? state.getAsJsonObject("defaults") : new JsonObject();
-        String model = text(entry, "model");
-        if (model == null) { model = text(defaults, "model"); }
+        JsonObject defaults = Json.object(state, "defaults");
+        String model = Json.rawOrNull(entry, CompressedKeys.MODEL);
+        if (model == null) { model = Json.rawOrNull(defaults, CompressedKeys.MODEL); }
         merge(textures, defaults);
         merge(textures, entry);
         if (model == null) { return missing(set, "its blockstate names no model"); }
         ResourceLocation at = new ResourceLocation(model);
         String namespace = at.getNamespace();
         follow(textures, namespace, at.getPath().indexOf('/') < 0 ? "block/" + at.getPath() : at.getPath());
-        String value = resolved(textures, "all");
+        String value = resolved(textures, CompressedKeys.ALL);
         if (value == null) { value = resolved(textures, "particle"); }
         if (value == null) { return missing(set, "its model has no 'all' or 'particle' texture"); }
         return new ResourceLocation(value);
@@ -100,7 +104,7 @@ import net.minecraftforge.fml.relauncher.Side;
             JsonObject json = ContentResourceText.json(namespace, "models/" + path + ".json");
             if (json == null) { break; }
             merge(textures, json);
-            String parent = text(json, "parent");
+            String parent = Json.rawOrNull(json, CompressedKeys.PARENT);
             if (parent == null) { break; }
             ResourceLocation next = new ResourceLocation(parent);
             namespace = next.getNamespace();
@@ -116,12 +120,12 @@ import net.minecraftforge.fml.relauncher.Side;
         int count = 0;
         for (int pixel : pixels) {
             if ((pixel >>> 24) == 0) { continue; }
-            red += (pixel >> 16) & 0xFF;
-            green += (pixel >> 8) & 0xFF;
-            blue += pixel & 0xFF;
+            red += Colors.red(pixel);
+            green += Colors.green(pixel);
+            blue += Colors.blue(pixel);
             count++;
         }
-        int fill = count == 0 ? 0 : (int) (red / count / 2) << 16 | (int) (green / count / 2) << 8 | (int) (blue / count / 2);
+        int fill = count == 0 ? 0 : Colors.rgb((int) (red / count / 2), (int) (green / count / 2), (int) (blue / count / 2));
         int[] made = new int[pixels.length];
         for (int index = 0; index < pixels.length; index++) { made[index] = (pixels[index] >>> 24) == 0 ? 0xFF000000 | fill : pixels[index] | 0xFF000000; }
         return new int[][] {image[0], made};
@@ -139,13 +143,10 @@ import net.minecraftforge.fml.relauncher.Side;
     }
 
     private static void merge(Map<String, String> textures, JsonObject json) {
-        if (!json.has("textures") || !json.get("textures").isJsonObject()) { return; }
-        for (Map.Entry<String, JsonElement> one : json.getAsJsonObject("textures").entrySet()) {
+        for (Map.Entry<String, JsonElement> one : Json.object(json, CompressedKeys.TEXTURES).entrySet()) {
             if (one.getValue().isJsonPrimitive()) { textures.putIfAbsent(one.getKey(), one.getValue().getAsString()); }
         }
     }
-
-    @Nullable private static String text(JsonObject json, String member) { return json.has(member) && json.get(member).isJsonPrimitive() ? json.get(member).getAsString() : null; }
 
     private static String key(IBlockState state) {
         List<String> parts = new ArrayList<>();
@@ -157,8 +158,8 @@ import net.minecraftforge.fml.relauncher.Side;
     @SuppressWarnings("unchecked") private static <T extends Comparable<T>> String name(IProperty<T> property, Comparable<?> value) { return property.getName((T) value); }
 
     @Nullable private static JsonObject entry(JsonObject state, String key) {
-        if (state.has("variants") && state.get("variants").isJsonObject()) {
-            JsonObject variants = state.getAsJsonObject("variants");
+        JsonObject variants = Json.optionalObject(state, CompressedKeys.VARIANTS);
+        if (variants != null) {
             JsonObject found = object(variants.get(key));
             if (found == null) { found = object(variants.get("normal")); }
             if (found == null) {

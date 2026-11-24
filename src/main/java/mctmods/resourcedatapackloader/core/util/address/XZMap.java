@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 public class XZMap<T extends IXZAddressable> extends AbstractAddressMap implements Iterable<T> {
     private IXZAddressable[] buckets;
 
+    public XZMap(int capacity) { this(XYZMap.DEFAULT_LOAD_FACTOR, capacity); }
+
     public XZMap(float loadFactor, int capacity) {
         super(loadFactor, capacity);
         this.buckets = new IXZAddressable[this.tableLength];
@@ -63,7 +65,7 @@ public class XZMap<T extends IXZAddressable> extends AbstractAddressMap implemen
         int index = hash(x, z) & wrap;
         for (IXZAddressable bucket = slots[index]; bucket != null; bucket = slots[index]) {
             if (bucket.getX() == x && bucket.getZ() == z) { return (T) bucket; }
-            index = ++index & wrap;
+            index = next(index, wrap);
         }
         return null;
     }

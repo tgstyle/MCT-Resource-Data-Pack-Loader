@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.AmbienceDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyStone;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.generator.DeepGeneration;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeFilter;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.ArrayList;
@@ -113,7 +114,7 @@ public final class CaveRegionDef {
         return floorState != null || ceilingState != null;
     }
 
-    public boolean inDimension(int dimension) { return dimensions.isEmpty() || dimensions.contains(dimension); }
+    public boolean inDimension(int dimension) { return BiomeFilter.allowsDimension(dimensions, false, dimension); }
 
     @Nullable public IBlockState floorState() {
         resolve();

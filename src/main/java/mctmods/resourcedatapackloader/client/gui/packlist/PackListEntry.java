@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.gui.packlist;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.client.util.ClientText;
 import mctmods.resourcedatapackloader.client.util.RDPLResourcePack;
 import mctmods.resourcedatapackloader.common.pack.loading.PackListRules;
 
@@ -27,8 +28,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         this.pack = pack;
         this.overriding = overriding;
         PackListRules.Rule rule = PackListRules.rule(pack.getPackName());
-        this.name = rule == null || rule.title == null ? I18n.format(overriding ? "rdpl.gui.packList.override.title" : "rdpl.gui.packList.normal.title") : PackListText.shown(rule.title);
-        this.description = rule == null || rule.description == null ? I18n.format(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal") : PackListText.shown(rule.description);
+        this.name = ClientText.or(rule.title, I18n.format(overriding ? "rdpl.gui.packList.override.title" : "rdpl.gui.packList.normal.title"));
+        this.description = ClientText.or(rule.description, I18n.format(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal"));
     }
 
     @Override @Nonnull protected String getResourcePackName() { return name; }

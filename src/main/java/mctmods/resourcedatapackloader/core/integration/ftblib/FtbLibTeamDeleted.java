@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.core.integration.ftblib;
 
 import mctmods.resourcedatapackloader.common.ownership.OwnerRecord;
-import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
 import mctmods.resourcedatapackloader.common.ownership.TeamDissolve;
 
 import com.feed_the_beast.ftblib.events.team.ForgeTeamDeletedEvent;
@@ -14,7 +13,7 @@ public final class FtbLibTeamDeleted {
 
     @SubscribeEvent public static void onDeleted(ForgeTeamDeletedEvent event) {
         ForgeTeam team = event.getTeam();
-        if (OwnershipSettings.teamSource() != OwnershipSettings.TeamSource.FTB || !team.type.isPlayer) { return; }
+        if (FtbLibTeams.ignored(team)) { return; }
         TeamDissolve.dissolveForeign(FMLCommonHandler.instance().getMinecraftServerInstance(), OwnerRecord.SOURCE_FTB, team.getUIDCode());
     }
 }

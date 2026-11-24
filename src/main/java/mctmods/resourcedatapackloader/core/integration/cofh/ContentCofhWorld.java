@@ -28,6 +28,7 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
+import org.apache.commons.io.IOUtils;
 
 public final class ContentCofhWorld {
     private static final String WORLD = "world";
@@ -63,23 +64,12 @@ public final class ContentCofhWorld {
                     source = jar;
                     owner = modid;
                     folder = entry.getName().substring(0, entry.getName().lastIndexOf('/') + 1);
-                    convert(modid, entry.getName(), new String(bytes(stream, (int) entry.getSize()), StandardCharsets.UTF_8), found);
+                    convert(modid, entry.getName(), new String(IOUtils.toByteArray(stream), StandardCharsets.UTF_8), found);
                 }
                 catch (RuntimeException ex) { ContentLog.LOGGER.error("CoFH World file {} in {} is malformed, leaving it out: {}", entry.getName(), jar.getName(), ex.toString()); }
             }
         }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read CoFH World files from {}: {}", jar.getName(), ex.getMessage()); }
-    }
-
-    private static byte[] bytes(InputStream stream, int length) throws IOException {
-        byte[] out = new byte[Math.max(0, length)];
-        int read = 0;
-        while (read < out.length) {
-            int step = stream.read(out, read, out.length - read);
-            if (step < 0) { break; }
-            read += step;
-        }
-        return out;
     }
 
     @Nullable public static InputStream openTemplate(ResourceLocation id) {
@@ -89,7 +79,7 @@ public final class ContentCofhWorld {
         try (ZipFile zip = new ZipFile(jar)) {
             ZipEntry found = zip.getEntry(entry);
             if (found == null) { return null; }
-            try (InputStream stream = zip.getInputStream(found)) { return new ByteArrayInputStream(bytes(stream, (int) found.getSize())); }
+            try (InputStream stream = zip.getInputStream(found)) { return new ByteArrayInputStream(IOUtils.toByteArray(stream)); }
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Could not read structure {} out of {}: {}", id, jar.getName(), ex.getMessage());
@@ -168,7 +158,7 @@ public final class ContentCofhWorld {
         return Collections.unmodifiableMap(values);
     }
 
-    private static String type(JsonObject generator) { return Settings.lower(Json.getString(generator, "type", "")); }
+    private static String type(JsonObject generator) { return Settings.lower(Json.getString(generator, CofhKeys.SOURCE_TYPE, "")); }
 
     @Nullable private static JsonObject translate(String name, JsonObject config, JsonObject generator) {
         String type = type(generator);
@@ -180,7 +170,7 @@ public final class ContentCofhWorld {
         JsonArray weighted = ContentCofhFields.blocks(generator);
         if (weighted == null && ShapeDef.IMPRINT.equals(shape)) {
             weighted = new JsonArray();
-            weighted.add(ContentCofhFields.weighted("minecraft:stone", 0, 100, new JsonObject()));
+            weighted.add(ContentCofhFields.plain(ContentCofhFields.DEFAULT_BLOCK));
         }
         if (weighted == null) { return null; }
         JsonObject out = new JsonObject();
@@ -190,13 +180,17 @@ public final class ContentCofhWorld {
         if (weighted.size() > 1 || first.has("properties")) { out.add("blocks", weighted); }
         ContentCofhFields.amount(config, "cluster-count", out, "attempts", 1);
         out.add("replace", ShapeDef.IMPRINT.equals(shape) && generator.has("ignored-block") ? ContentCofhFields.ignored(generator) : ContentCofhFields.material(generator));
-        out.addProperty("retrogen", "true".equalsIgnoreCase(Json.getString(config, "retrogen", "false")));
+        out.addProperty("retrogen", Json.getBoolean(config, "retrogen", false));
         if ("sparse-cluster".equals(type) || sparse(generator, type)) { out.addProperty("sparse", true); }
         if (!shaped(name, generator, type, shape, out)) { return null; }
         ContentCofhFields.spread(name, config, out);
         ContentCofhFields.dimensions(config, out);
         ContentCofhFields.biomes(config, out);
         return out;
+    }
+
+    private static JsonObject swing(JsonObject generator, int least, String varianceKey, int varianceFallback) {
+        return ContentCofhFields.range(least, least + Math.max(0, ContentCofhFields.integer(generator, varianceKey, varianceFallback)));
     }
 
     private static boolean sparse(JsonObject generator, String type) {
@@ -206,17 +200,17 @@ public final class ContentCofhWorld {
 
     private static boolean shaped(String name, JsonObject generator, String type, String value, JsonObject out) {
         JsonObject shape = new JsonObject();
-        shape.addProperty("type", value);
+        shape.addProperty(CofhKeys.TYPE, value);
         if (ShapeDef.PLATE.equals(value)) {
             ContentCofhFields.amount(generator, "radius", shape, "radius", 6);
             ContentCofhFields.amount(generator, "height", shape, "height", 1);
-            shape.addProperty("slim", "true".equalsIgnoreCase(Json.getString(generator, "slim", "false")));
+            shape.addProperty("slim", Json.getBoolean(generator, "slim", false));
             shape.addProperty("plane", "square".equalsIgnoreCase(Json.getString(generator, "shape", "circle")) ? ShapeDef.SQUARE : ShapeDef.CIRCLE);
         }
         else if (ShapeDef.GEODE.equals(value)) {
             String crust = ContentCofhFields.single(generator, "crust");
             String filler = ContentCofhFields.single(generator, "filler");
-            shape.addProperty("outline", crust.isEmpty() ? "minecraft:stone" : crust);
+            shape.addProperty("outline", crust.isEmpty() ? ContentCofhFields.DEFAULT_BLOCK : crust);
             if (!filler.isEmpty()) { shape.addProperty("fill", filler); }
         }
         else if (ShapeDef.DECORATION.equals(value)) {
@@ -238,28 +232,25 @@ public final class ContentCofhWorld {
             shape.addProperty("log", ContentCofhFields.single(generator, "block"));
             shape.addProperty("leaves", leaves);
             shape.add("surface", ContentCofhFields.names(generator, "surface"));
-            int least = ContentCofhFields.integer(generator, "min-height", 5);
-            JsonObject height = new JsonObject();
-            height.addProperty("min", least);
-            height.addProperty("max", least + Math.max(0, ContentCofhFields.integer(generator, "height-variance", 0)));
-            shape.add("height", height);
+            int least = ContentCofhFields.integer(generator, CofhKeys.SOURCE_MIN_HEIGHT, 5);
+            shape.add("height", swing(generator, least, "height-variance", 0));
         }
         else if (ShapeDef.BASIN.equals(value)) {
             shape.addProperty("radius", 8);
             shape.addProperty("height", 4);
         }
         else if (ShapeDef.SPIRE.equals(value)) {
-            int least = ContentCofhFields.integer(generator, "min-height", 4);
-            shape.add("height", ContentCofhFields.range(least, least + Math.max(0, ContentCofhFields.integer(generator, "height-variance", 3))));
+            int least = ContentCofhFields.integer(generator, CofhKeys.SOURCE_MIN_HEIGHT, 4);
+            shape.add("height", swing(generator, least, "height-variance", 3));
             int reach = ContentCofhFields.integer(generator, "gen-size", 2);
-            shape.add("radius", ContentCofhFields.range(reach, reach + Math.max(0, ContentCofhFields.integer(generator, "size-variance", 1))));
+            shape.add("radius", swing(generator, reach, "size-variance", 1));
             shape.addProperty("hanging", "stalactite".equals(type));
             shape.addProperty("taper", "false".equalsIgnoreCase(Json.getString(generator, "fat", "true")) ? ShapeDef.NEEDLE : ShapeDef.BELL);
         }
         else if (ShapeDef.NODULE.equals(value)) {
             int across = Math.max(1, Math.max(1, ContentCofhFields.integer(generator, "diameter", 4)) / 2);
-            shape.add("radius", ContentCofhFields.range(across, across + Math.max(0, ContentCofhFields.integer(generator, "size-variance", 1))));
-            shape.addProperty("slim", "true".equalsIgnoreCase(Json.getString(generator, "hollow", "false")));
+            shape.add("radius", swing(generator, across, "size-variance", 1));
+            shape.addProperty("slim", Json.getBoolean(generator, "hollow", false));
         }
         else if (ShapeDef.VENT.equals(value)) {
             ContentCofhFields.amount(generator, "height", shape, "height", 4);
@@ -275,21 +266,21 @@ public final class ContentCofhWorld {
             ResourceLocation id = new ResourceLocation(owner, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
             TEMPLATE_JARS.put(id, source);
             TEMPLATE_ENTRIES.put(id, folder + file);
-            shape.addProperty("structure", id.toString());
+            shape.addProperty(CofhKeys.STRUCTURE, id.toString());
             shape.addProperty("integrity", (int) Math.round(100.0D * ContentCofhFields.doubled(generator)));
             ContentCofhFields.addTurns(shape, generator);
             addStructures(shape, generator, owner, folder, source);
         }
         else {
             ContentCofhFields.amount(generator, "cluster-size", out, "size", 8);
-            if (ShapeDef.LARGEVEIN.equals(value)) { shape.addProperty("slim", "true".equalsIgnoreCase(Json.getString(generator, "spindly", "false"))); }
+            if (ShapeDef.LARGEVEIN.equals(value)) { shape.addProperty("slim", Json.getBoolean(generator, "spindly", false)); }
         }
         out.add("shape", shape);
         return true;
     }
 
     private static void addStructures(JsonObject shape, JsonObject generator, String modid, String prefix, File jar) {
-        JsonElement held = generator.get("structure");
+        JsonElement held = generator.get(CofhKeys.SOURCE_STRUCTURE);
         if (held == null || !held.isJsonArray() || held.getAsJsonArray().size() < 2) { return; }
         JsonArray out = new JsonArray();
         for (JsonElement element : held.getAsJsonArray()) {
@@ -300,7 +291,7 @@ public final class ContentCofhWorld {
             TEMPLATE_JARS.put(id, jar);
             TEMPLATE_ENTRIES.put(id, prefix + file);
             JsonObject pick = new JsonObject();
-            pick.addProperty("structure", id.toString());
+            pick.addProperty(CofhKeys.STRUCTURE, id.toString());
             if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", Json.getInt(element.getAsJsonObject(), "weight", 1)); }
             out.add(pick);
         }

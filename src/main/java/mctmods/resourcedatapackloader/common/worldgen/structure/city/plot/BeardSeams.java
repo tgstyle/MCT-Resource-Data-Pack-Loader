@@ -10,7 +10,6 @@ import java.util.List;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -52,7 +51,7 @@ public final class BeardSeams {
                 if (upTo == Integer.MIN_VALUE || upTo - here != 1) { continue; }
                 for (int y = here + 1; y <= upTo; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardKeep.holds(x, y, z) || BeardRails.insideBore(world, bores, x, y, z)) { break; }
+                    if (!clip.isVecInside(at) || blocked(world, bores, x, y, z)) { break; }
                     if (doorBeside(world, at, x, y, z)) { break; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getMaterial().isSolid()) { break; }
@@ -79,6 +78,8 @@ public final class BeardSeams {
         return filled;
     }
 
+    private static boolean blocked(World world, List<RailPiece> bores, int x, int y, int z) { return BeardKeep.holds(x, y, z) || BeardRails.insideBore(world, bores, x, y, z); }
+
     private static int fillPit(World world, StructureBoundingBox box, BlockPos.MutableBlockPos at, int x, int z) {
         int from = box.maxY + 16;
         int floor = box.minY - 8;
@@ -101,9 +102,7 @@ public final class BeardSeams {
             if (doorBeside(world, at, x, y, z) || BeardKeep.holds(x, y, z) || BeardRails.insideBore(world, x, y, z)) { break; }
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
             at.setPos(x, y, z);
-            IBlockState laid = BeardBlocks.fillGround(world, x, z);
-            if (y == low && laid.getBlock() == Blocks.DIRT) { laid = Blocks.GRASS.getDefaultState(); }
-            world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
+            world.setBlockState(at, BeardBlocks.grassed(BeardBlocks.fillGround(world, x, z), y == low), BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;

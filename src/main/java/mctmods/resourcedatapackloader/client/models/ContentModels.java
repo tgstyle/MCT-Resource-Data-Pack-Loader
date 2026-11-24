@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.models;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.renderer.PackBellRenderer;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.blocks.IVariantBlock;
@@ -16,9 +17,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.Registered;
 import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.tints.ContentBiomeTints;
-import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.types.PropertyVariant;
 
 import java.util.Collections;
@@ -52,7 +53,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT) public final class ContentModels {
-    private static final String PORTAL_MODEL = "resourcedatapackloader:portal_tinted";
+    private static final String PORTAL_MODEL = ResourceDataPackLoader.MOD_ID + ":portal_tinted";
     private static final ModelResourceLocation PORTAL_ITEM = new ModelResourceLocation(PORTAL_MODEL, "axis=x");
     private static final String INVENTORY = "inventory";
     private static final String FLUID = "fluid";
@@ -60,10 +61,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private ContentModels() {}
 
     @SubscribeEvent public static void registerModels(ModelRegistryEvent event) {
-        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
+        for (Registered<Block, BlockDef> entry : ContentRegistry.definedBlocks()) {
             Block block = entry.getValue();
-            BlockDef def = ContentRegistry.blockDef(entry.getKey());
-            if (def == null) { continue; }
+            BlockDef def = entry.def;
             Item item = Item.getItemFromBlock(block);
             PropertyVariant property = property(block);
             if (block instanceof ContentDoorBlock) {
@@ -105,9 +105,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
                 @Override @Nonnull protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState state) { return location; }
             });
         }
-        for (Map.Entry<ResourceLocation, Item> entry : ContentRegistry.registeredItems()) {
-            ItemDef def = ContentRegistry.itemDef(entry.getKey());
-            if (def == null) { continue; }
+        for (Registered<Item, ItemDef> entry : ContentRegistry.definedItems()) {
+            ItemDef def = entry.def;
             Item item = entry.getValue();
             if (def.derived != null) {
                 ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(entry.getKey(), INVENTORY));
@@ -126,30 +125,29 @@ import net.minecraftforge.fml.relauncher.SideOnly;
             if (!(entry.getValue() instanceof ContentPotionItem)) { continue; }
             event.getItemColors().registerItemColorHandler((stack, layer) -> layer > 0 ? -1 : PotionUtils.getColor(stack), entry.getValue());
         }
-        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
-            BlockDef def = ContentRegistry.blockDef(entry.getKey());
-            if (def == null || def.tint.isEmpty()) { continue; }
+        for (Registered<Block, BlockDef> entry : ContentRegistry.definedBlocks()) {
+            BlockDef def = entry.def;
+            if (def.tint.isEmpty()) { continue; }
             Item item = Item.getItemFromBlock(entry.getValue());
             if (item == Items.AIR) { continue; }
             int fixed = ContentBiomeTints.fixed(def.tint, entry.getKey());
             String mode = ContentBiomeTints.mode(def.tint);
-            event.getItemColors().registerItemColorHandler((stack, layer) -> fixed == ContentTypes.NO_COLOR ? ContentBiomeTints.biome(mode, null, null) : fixed, item);
+            event.getItemColors().registerItemColorHandler((stack, layer) -> ContentBiomeTints.color(fixed, mode, null, null), item);
         }
     }
 
     @SubscribeEvent public static void registerFluidSprites(TextureStitchEvent.Pre event) {
-        for (Map.Entry<ResourceLocation, ContentFluidBlock> entry : ContentRegistry.registeredFluidBlocks()) {
-            FluidDef def = ContentRegistry.fluidDef(entry.getKey());
-            if (def == null) { continue; }
+        for (Registered<ContentFluidBlock, FluidDef> entry : ContentRegistry.definedFluidBlocks()) {
+            FluidDef def = entry.def;
             event.getMap().registerSprite(def.still);
             event.getMap().registerSprite(def.flowing);
         }
     }
 
     @SubscribeEvent public static void bakeFluidModels(ModelBakeEvent event) {
-        for (Map.Entry<ResourceLocation, ContentFluidBlock> entry : ContentRegistry.registeredFluidBlocks()) {
-            FluidDef def = ContentRegistry.fluidDef(entry.getKey());
-            if (def == null || def.getResolved() == null) { continue; }
+        for (Registered<ContentFluidBlock, FluidDef> entry : ContentRegistry.definedFluidBlocks()) {
+            FluidDef def = entry.def;
+            if (def.getResolved() == null) { continue; }
             IBakedModel baked = new ModelFluid(def.getResolved()).bake(TRSRTransformation.identity(), Attributes.DEFAULT_BAKED_FORMAT, ModelLoader.defaultTextureGetter());
             event.getModelRegistry().putObject(fluidLocation(entry.getKey()), baked);
         }
@@ -164,14 +162,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     }
 
     @SubscribeEvent public static void registerBlockColors(ColorHandlerEvent.Block event) {
-        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
-            BlockDef def = ContentRegistry.blockDef(entry.getKey());
-            if (def == null || def.tint.isEmpty()) { continue; }
+        for (Registered<Block, BlockDef> entry : ContentRegistry.definedBlocks()) {
+            BlockDef def = entry.def;
+            if (def.tint.isEmpty()) { continue; }
             int fixed = ContentBiomeTints.fixed(def.tint, entry.getKey());
             String mode = ContentBiomeTints.mode(def.tint);
             event.getBlockColors().registerBlockColorHandler(
-                    (state, world, pos, layer) -> fixed == ContentTypes.NO_COLOR ? ContentBiomeTints.biome(mode, world, pos) : fixed,
-                    entry.getValue());
+                    (state, world, pos, layer) -> ContentBiomeTints.color(fixed, mode, world, pos), entry.getValue());
         }
     }
 

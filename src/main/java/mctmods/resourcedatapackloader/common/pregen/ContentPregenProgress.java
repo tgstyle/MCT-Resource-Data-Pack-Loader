@@ -25,7 +25,7 @@ public final class ContentPregenProgress {
 
     static String sofar(ContentPregen worker) {
         if (!worker.lightOnly && worker.made == 0L && worker.done > 0L && worker.order.hasNext()) { return checking(worker); }
-        String wording = worker.lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
+        String wording = worker.lightOnly ? defaulted(ContentControl.PREGEN_RELIGHT_SAYS, Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted(ContentControl.PREGEN_RUNNING_SAYS, Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
         long stepped = Math.min(100L, worker.done * 100L / Math.max(1L, worker.order.total()));
         try { return String.format(wording, worker.order.hasNext() ? stepped : 100L, dimensionName(worker)) + eta(worker); }

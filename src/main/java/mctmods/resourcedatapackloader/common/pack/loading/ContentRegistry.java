@@ -40,6 +40,7 @@ import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.common.util.ContentMaterials;
 import mctmods.resourcedatapackloader.common.util.ContentOreDict;
+import mctmods.resourcedatapackloader.common.util.plant.CropStacks;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -51,6 +52,7 @@ import mctmods.resourcedatapackloader.core.util.Registries;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
@@ -71,9 +73,9 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentRegistry {
+    public static final String REQUIRES = "requires";
     private static final Map<ResourceLocation, BlockDef> BLOCK_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
@@ -84,6 +86,8 @@ public final class ContentRegistry {
     private static final Map<ResourceLocation, Item> ITEMS_BY_NAME = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ContentFluidBlock> FLUID_BLOCKS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, BlockDef> DEF_BY_BLOCK = new LinkedHashMap<>();
+    public static final String CONFIG_PREFIX = "config:";
+    public static final String FILE_PREFIX = "file:";
     private static final Set<String> WARNED = new HashSet<>();
     private static boolean loaded;
 
@@ -127,7 +131,7 @@ public final class ContentRegistry {
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
             if (key.getPath().indexOf('/') >= 0) {
-                ContentLog.LOGGER.error("Worldgen definition {} sits in a subfolder of worldgen, which is not read. Move it to {}:worldgen/{}.json, with a name of its own", key, key.getNamespace(), key.getPath().substring(key.getPath().lastIndexOf('/') + 1));
+                ContentLog.LOGGER.error("Worldgen definition {} sits in a subfolder of worldgen, which is not read. Move it to {}:worldgen/{}.json, with a name of its own", key, key.getNamespace(), ContentInherits.tail(key));
                 return;
             }
             WorldgenDef def = ContentParserWorldgen.worldgen(key, contents);
@@ -168,17 +172,21 @@ public final class ContentRegistry {
         }
     }
 
+    public static boolean available(JsonObject json, ResourceLocation key) {
+        return available(Json.strings(json, REQUIRES), key);
+    }
+
     public static boolean available(List<String> requires, ResourceLocation key) {
         for (String modid : requires) {
-            if (modid.startsWith("config:")) { PackOptions.gating(modid.substring("config:".length())); }
+            if (modid.startsWith(CONFIG_PREFIX)) { PackOptions.gating(modid.substring(CONFIG_PREFIX.length())); }
         }
         return holds(requires, key);
     }
 
     public static boolean holds(List<String> requires, ResourceLocation key) {
         for (String modid : requires) {
-            if (modid.startsWith("file:")) {
-                String asked = modid.substring("file:".length()).replace('\\', '/');
+            if (modid.startsWith(FILE_PREFIX)) {
+                String asked = modid.substring(FILE_PREFIX.length()).replace('\\', '/');
                 if (asked.contains("..") || asked.startsWith("/") || asked.contains(":")) {
                     if (WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, whose path must be relative to the game folder, without '..'", modid); }
                     return false;
@@ -188,8 +196,8 @@ public final class ContentRegistry {
                 ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
                 return false;
             }
-            if (modid.startsWith("config:")) {
-                String asked = modid.substring("config:".length());
+            if (modid.startsWith(CONFIG_PREFIX)) {
+                String asked = modid.substring(CONFIG_PREFIX.length());
                 int split = asked.indexOf(':');
                 Boolean held = split < 0 ? PackOptions.anywhere(asked) : PackOptions.option(asked.substring(0, split), asked.substring(split + 1));
                 if (Boolean.TRUE.equals(held)) { continue; }
@@ -322,39 +330,37 @@ public final class ContentRegistry {
         ContentOreDict.apply();
     }
 
+    private static void sortMatches(ResourceLocation key, List<BlockMatchDef> names, String role, Set<Block> blocks, Set<IBlockState> states) {
+        for (BlockMatchDef name : names) {
+            Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
+            if (target == null) {
+                ContentLog.LOGGER.error("Worldgen {} names {} block {}, which is not registered, leaving it out", key, role, name.block);
+                continue;
+            }
+            ContentStates.sort(name, target, blocks::add, states::add, key);
+        }
+    }
+
     public static List<WorldgenDef> resolveWorldgen() {
         List<WorldgenDef> active = new ArrayList<>();
         for (Map.Entry<ResourceLocation, WorldgenDef> entry : WORLDGEN_DEFS.entrySet()) {
             WorldgenDef def = entry.getValue();
             if (!available(def.requires, entry.getKey())) { continue; }
-            if (def.blocks.isEmpty() && !ForgeRegistries.BLOCKS.containsKey(def.block)) {
+            Block single = def.blocks.isEmpty() ? Registries.find(ForgeRegistries.BLOCKS, def.block) : null;
+            if (def.blocks.isEmpty() && single == null) {
                 ContentLog.LOGGER.error("Worldgen {} names block {}, which is not registered, skipping it", entry.getKey(), def.block);
                 continue;
             }
             Set<Block> targets = new LinkedHashSet<>();
             Set<IBlockState> exact = new LinkedHashSet<>();
-            for (BlockMatchDef name : def.replaces) {
-                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
-                if (target == null) {
-                    ContentLog.LOGGER.error("Worldgen {} names replace block {}, which is not registered, leaving it out", entry.getKey(), name.block);
-                    continue;
-                }
-                ContentStates.sort(name, target, targets::add, exact::add, entry.getKey());
-            }
+            sortMatches(entry.getKey(), def.replaces, "replace", targets, exact);
             if (targets.isEmpty() && exact.isEmpty()) {
                 ContentLog.LOGGER.error("Worldgen {} has no registered block to replace, skipping it", entry.getKey());
                 continue;
             }
             Set<Block> nearby = new LinkedHashSet<>();
             Set<IBlockState> nearbyExact = new LinkedHashSet<>();
-            for (BlockMatchDef name : def.adjacent) {
-                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
-                if (target == null) {
-                    ContentLog.LOGGER.error("Worldgen {} names adjacent block {}, which is not registered, leaving it out", entry.getKey(), name.block);
-                    continue;
-                }
-                ContentStates.sort(name, target, nearby::add, nearbyExact::add, entry.getKey());
-            }
+            sortMatches(entry.getKey(), def.adjacent, "adjacent", nearby, nearbyExact);
             if (!def.adjacent.isEmpty() && nearby.isEmpty() && nearbyExact.isEmpty()) {
                 ContentLog.LOGGER.error("Worldgen {} has no registered adjacent block, skipping it so it does not generate everywhere", entry.getKey());
                 continue;
@@ -380,9 +386,7 @@ public final class ContentRegistry {
             List<IBlockState> states = new ArrayList<>();
             List<Integer> weights = new ArrayList<>();
             if (def.blocks.isEmpty()) {
-                Block block = ForgeRegistries.BLOCKS.getValue(def.block);
-                if (block == null) { continue; }
-                states.add(ContentStates.of(block, def.meta));
+                states.add(ContentStates.of(single, def.meta));
                 weights.add(1);
             }
             else {
@@ -433,8 +437,8 @@ public final class ContentRegistry {
             if (def == null) { continue; }
             ItemStack seed = ContentStacks.parse(def.registryName, def.cropSeed, 1);
             ItemStack produce = ContentStacks.parse(def.registryName, def.cropProduce, 1);
-            if (base) { ((ContentCropBlock) entry.getValue()).resolve(seed, produce); }
-            else { ((ContentPlantPartBlock) entry.getValue()).resolve(seed, produce); }
+            CropStacks stacks = base ? ((ContentCropBlock) entry.getValue()).stacks() : ((ContentPlantPartBlock) entry.getValue()).stacks();
+            stacks.resolve(seed, produce);
         }
     }
 
@@ -448,11 +452,12 @@ public final class ContentRegistry {
                         if (!EntityList.isRegistered(entity)) { ContentLog.LOGGER.error("Drop entity {} for {} '{}' is not registered, that drop is skipped", entity, def.registryName, variant.name); }
                         continue;
                     }
-                    if (!ForgeRegistries.ITEMS.containsKey(drop.block)) {
+                    Item dropped = Registries.find(ForgeRegistries.ITEMS, drop.block);
+                    if (dropped == null) {
                         ContentLog.LOGGER.error("Drop {} for {} '{}' is not registered, that drop is skipped", drop.block, def.registryName, variant.name);
                         continue;
                     }
-                    drop.resolve(ForgeRegistries.ITEMS.getValue(drop.block));
+                    drop.resolve(dropped);
                 }
             }
         }
@@ -505,12 +510,10 @@ public final class ContentRegistry {
             String tree = entry.getValue() instanceof ContentLogBlock ? ContentBlockTypes.logTag(def) : entry.getValue() instanceof ContentLeavesBlock ? "treeLeaves" : null;
             for (BlockVariant variant : def.visible) {
                 for (String name : variant.oreDict) {
-                    OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
-                    count++;
+                    count += ContentOreDict.register(name, new ItemStack(entry.getValue(), 1, variant.meta));
                 }
                 if (tree != null && !variant.oreDict.contains(tree)) {
-                    OreDictionary.registerOre(tree, new ItemStack(entry.getValue(), 1, variant.meta));
-                    count++;
+                    count += ContentOreDict.register(tree, new ItemStack(entry.getValue(), 1, variant.meta));
                 }
             }
         }
@@ -518,8 +521,7 @@ public final class ContentRegistry {
             ItemDef def = ITEM_DEFS.get(entry.getKey());
             for (ItemVariant variant : def.visible) {
                 for (String name : variant.oreDict) {
-                    OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
-                    count++;
+                    count += ContentOreDict.register(name, new ItemStack(entry.getValue(), 1, variant.meta));
                 }
             }
         }
@@ -536,9 +538,27 @@ public final class ContentRegistry {
 
     public static Set<Map.Entry<ResourceLocation, ContentFluidBlock>> registeredFluidBlocks() { return FLUID_BLOCKS.entrySet(); }
 
+    public static List<Registered<Block, BlockDef>> definedBlocks() { return defined(BLOCKS_BY_NAME, DEF_BY_BLOCK); }
+
+    public static List<Registered<Item, ItemDef>> definedItems() { return defined(ITEMS_BY_NAME, ITEM_DEFS); }
+
+    public static List<Registered<ContentFluidBlock, FluidDef>> definedFluidBlocks() { return defined(FLUID_BLOCKS, FLUID_DEFS); }
+
+    private static <T, D> List<Registered<T, D>> defined(Map<ResourceLocation, T> registered, Map<ResourceLocation, D> defs) {
+        List<Registered<T, D>> found = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, T> entry : registered.entrySet()) {
+            D def = defs.get(entry.getKey());
+            if (def != null) { found.add(new Registered<>(entry.getKey(), entry.getValue(), def)); }
+        }
+        return found;
+    }
+
     @Nullable public static FluidDef fluidDef(ResourceLocation key) { return FLUID_DEFS.get(key); }
 
-    @Nullable public static BlockDef blockDef(ResourceLocation key) { return DEF_BY_BLOCK.get(key); }
-
     @Nullable public static ItemDef itemDef(ResourceLocation key) { return ITEM_DEFS.get(key); }
+
+    @Nullable public static ItemDef itemDef(Item item) {
+        ResourceLocation key = item.getRegistryName();
+        return key == null ? null : ITEM_DEFS.get(key);
+    }
 }

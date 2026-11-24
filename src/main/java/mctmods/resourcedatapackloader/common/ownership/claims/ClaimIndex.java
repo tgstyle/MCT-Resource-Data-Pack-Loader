@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.SavedData;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
 
@@ -18,6 +19,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -30,6 +32,16 @@ public final class ClaimIndex extends WorldSavedData {
     public static final String MODE_REMOVE = "remove";
     private static final String NAME = "rdpl_claims";
     private static final int VERSION = 1;
+    private static final String HANDLE = "h";
+    private static final String PENDING_POS = "pos";
+    private static final String MODE = "mode";
+    private static final String YDONE = "ydone";
+    private static final String GROUP_POS = "pos";
+    private static final String VIA = "via";
+    private static final String NEXT = "next";
+    private static final String OWNERS = "owners";
+    private static final String ANCHORS = "anchors";
+    private static final String PENDING = "pending";
 
     public static final class Anchor {
         public final int id;
@@ -48,19 +60,20 @@ public final class ClaimIndex extends WorldSavedData {
             this.r = r;
         }
 
+        public BlockPos pos() { return new BlockPos(x, y, z); }
+
         NBTTagCompound write() {
             NBTTagCompound tag = new NBTTagCompound();
             tag.setInteger("id", id);
             tag.setInteger("h", h);
-            tag.setInteger("x", x);
-            tag.setInteger("y", y);
-            tag.setInteger("z", z);
+            Coords.writePos(tag, x, y, z);
             tag.setInteger("r", r);
             return tag;
         }
 
         static Anchor read(NBTTagCompound tag) {
-            return new Anchor(tag.getInteger("id"), tag.getInteger("h"), tag.getInteger("x"), tag.getInteger("y"), tag.getInteger("z"), tag.getInteger("r"));
+            BlockPos at = Coords.readPos(tag);
+            return new Anchor(tag.getInteger("id"), tag.getInteger("h"), at.getX(), at.getY(), at.getZ(), tag.getInteger("r"));
         }
     }
 
@@ -82,16 +95,16 @@ public final class ClaimIndex extends WorldSavedData {
 
         NBTTagCompound write() {
             NBTTagCompound tag = new NBTTagCompound();
-            tag.setLong("pos", pos);
-            tag.setInteger("h", h);
-            tag.setString("mode", mode);
-            tag.setIntArray("ydone", ydone.toIntArray());
+            tag.setLong(PENDING_POS, pos);
+            tag.setInteger(HANDLE, h);
+            tag.setString(MODE, mode);
+            tag.setIntArray(YDONE, ydone.toIntArray());
             return tag;
         }
 
         static Pending read(NBTTagCompound tag) {
-            Pending pending = new Pending(tag.getLong("pos"), tag.getInteger("h"), tag.getString("mode"));
-            for (int index : tag.getIntArray("ydone")) { pending.ydone.add(index); }
+            Pending pending = new Pending(tag.getLong(PENDING_POS), tag.getInteger(HANDLE), tag.getString(MODE));
+            for (int index : tag.getIntArray(YDONE)) { pending.ydone.add(index); }
             return pending;
         }
     }
@@ -110,8 +123,7 @@ public final class ClaimIndex extends WorldSavedData {
         viaAt.defaultReturnValue(0);
     }
 
-    @Nullable public static ClaimIndex obtain(@Nullable World world) {
-        if (world == null) { return null; }
+    public static ClaimIndex obtain(World world) {
         MapStorage storage = world.getPerWorldStorage();
         ClaimIndex index = SavedData.get(storage, ClaimIndex.class, NAME, ClaimIndex::new);
         index.attach(OwnerTable.get(world.getMinecraftServer()));
@@ -135,8 +147,7 @@ public final class ClaimIndex extends WorldSavedData {
 
     public static void moveAll(int from, int to) {
         for (WorldServer world : DimensionManager.getWorlds()) {
-            ClaimIndex index = obtain(world);
-            if (index != null) { index.moveHandle(from, to); }
+            obtain(world).moveHandle(from, to);
         }
     }
 
@@ -149,10 +160,19 @@ public final class ClaimIndex extends WorldSavedData {
         if (handle == 0 || handleAt.containsKey(pos)) { return false; }
         handleAt.put(pos, handle);
         if (via != 0) { viaAt.put(pos, via); }
-        chunks.computeIfAbsent(handle, ignored -> new LongLinkedOpenHashSet()).add(pos);
-        if (table != null) { table.claimAdded(handle); }
-        markDirty();
+        groupOf(handle).add(pos);
+        counted(handle, true);
         return true;
+    }
+
+    private LongLinkedOpenHashSet groupOf(int handle) { return chunks.computeIfAbsent(handle, ignored -> new LongLinkedOpenHashSet()); }
+
+    private void counted(int handle, boolean added) {
+        if (table != null) {
+            if (added) { table.claimAdded(handle); }
+            else { table.claimRemoved(handle); }
+        }
+        markDirty();
     }
 
     public int release(int chunkX, int chunkZ) {
@@ -165,8 +185,7 @@ public final class ClaimIndex extends WorldSavedData {
             group.remove(pos);
             if (group.isEmpty()) { chunks.remove(handle); }
         }
-        if (table != null) { table.claimRemoved(handle); }
-        markDirty();
+        counted(handle, false);
         return handle;
     }
 
@@ -190,7 +209,7 @@ public final class ClaimIndex extends WorldSavedData {
         int moved = 0;
         LongLinkedOpenHashSet group = chunks.remove(from);
         if (group != null) {
-            LongLinkedOpenHashSet target = chunks.computeIfAbsent(to, ignored -> new LongLinkedOpenHashSet());
+            LongLinkedOpenHashSet target = groupOf(to);
             for (long pos : group) {
                 handleAt.put(pos, to);
                 target.add(pos);
@@ -250,8 +269,7 @@ public final class ClaimIndex extends WorldSavedData {
         long pos = key(chunkX, chunkZ);
         if (handle == 0 || pending.containsKey(pos)) { return false; }
         pending.put(pos, new Pending(pos, handle, mode));
-        if (table != null) { table.claimAdded(handle); }
-        markDirty();
+        counted(handle, true);
         return true;
     }
 
@@ -267,8 +285,7 @@ public final class ClaimIndex extends WorldSavedData {
     public void removePending(int chunkX, int chunkZ) {
         Pending one = pending.remove(key(chunkX, chunkZ));
         if (one == null) { return; }
-        if (table != null) { table.claimRemoved(one.h); }
-        markDirty();
+        counted(one.h, false);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
@@ -277,27 +294,27 @@ public final class ClaimIndex extends WorldSavedData {
         chunks.clear();
         anchors.clear();
         pending.clear();
-        next = Math.max(1, compound.getInteger("next"));
-        NBTTagList owners = compound.getTagList("owners", Constants.NBT.TAG_COMPOUND);
+        next = Math.max(1, compound.getInteger(NEXT));
+        NBTTagList owners = compound.getTagList(OWNERS, Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < owners.tagCount(); index++) {
             NBTTagCompound one = owners.getCompoundTagAt(index);
-            int handle = one.getInteger("h");
-            long[] positions = Longs.fromInts(one.getIntArray("pos"));
-            int[] via = one.getIntArray("via");
-            LongLinkedOpenHashSet group = chunks.computeIfAbsent(handle, ignored -> new LongLinkedOpenHashSet());
+            int handle = one.getInteger(HANDLE);
+            long[] positions = Longs.fromInts(one.getIntArray(GROUP_POS));
+            int[] via = one.getIntArray(VIA);
+            LongLinkedOpenHashSet group = groupOf(handle);
             for (int at = 0; at < positions.length; at++) {
                 handleAt.put(positions[at], handle);
                 group.add(positions[at]);
                 if (at < via.length && via[at] != 0) { viaAt.put(positions[at], via[at]); }
             }
         }
-        NBTTagList anchored = compound.getTagList("anchors", Constants.NBT.TAG_COMPOUND);
+        NBTTagList anchored = compound.getTagList(ANCHORS, Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < anchored.tagCount(); index++) {
             Anchor anchor = Anchor.read(anchored.getCompoundTagAt(index));
             anchors.put(anchor.id, anchor);
             if (anchor.id >= next) { next = anchor.id + 1; }
         }
-        NBTTagList queued = compound.getTagList("pending", Constants.NBT.TAG_COMPOUND);
+        NBTTagList queued = compound.getTagList(PENDING, Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < queued.tagCount(); index++) {
             Pending one = Pending.read(queued.getCompoundTagAt(index));
             pending.put(one.pos, one);
@@ -311,9 +328,9 @@ public final class ClaimIndex extends WorldSavedData {
             int[] via = new int[positions.size()];
             for (int at = 0; at < via.length; at++) { via[at] = viaAt.get(positions.getLong(at)); }
             NBTTagCompound one = new NBTTagCompound();
-            one.setInteger("h", entry.getKey());
-            one.setIntArray("pos", Longs.toInts(positions.toLongArray()));
-            one.setIntArray("via", via);
+            one.setInteger(HANDLE, entry.getKey());
+            one.setIntArray(GROUP_POS, Longs.toInts(positions.toLongArray()));
+            one.setIntArray(VIA, via);
             owners.appendTag(one);
         }
         NBTTagList anchored = new NBTTagList();
@@ -321,10 +338,10 @@ public final class ClaimIndex extends WorldSavedData {
         NBTTagList queued = new NBTTagList();
         for (Pending one : pending.values()) { queued.appendTag(one.write()); }
         compound.setInteger("v", VERSION);
-        compound.setInteger("next", next);
-        compound.setTag("owners", owners);
-        compound.setTag("anchors", anchored);
-        compound.setTag("pending", queued);
+        compound.setInteger(NEXT, next);
+        compound.setTag(OWNERS, owners);
+        compound.setTag(ANCHORS, anchored);
+        compound.setTag(PENDING, queued);
         return compound;
     }
 }

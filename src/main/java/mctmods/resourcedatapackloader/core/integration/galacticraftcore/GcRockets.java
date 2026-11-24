@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.core.integration.galacticraft.IPackRocket;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.List;
+import java.util.function.ToIntFunction;
 import javax.annotation.Nullable;
 import micdoodle8.mods.galacticraft.api.entity.IRocketType.EnumRocketType;
 import micdoodle8.mods.galacticraft.api.prefab.entity.EntitySpaceshipBase;
@@ -42,14 +43,15 @@ public final class GcRockets {
 
     private GcRockets() {}
 
-    public static int tier(Entity rocket, int base) {
-        RocketDef def = RocketCargo.def(rocket);
-        return def == null || def.tier < 0 ? base : def.tier;
-    }
+    public static int tier(Entity rocket, int base) { return orBase(rocket, def -> def.tier, base); }
 
-    public static int fuelTank(Entity rocket, int base) {
+    public static int fuelTank(Entity rocket, int base) { return orBase(rocket, def -> def.fuelTank, base); }
+
+    private static int orBase(Entity rocket, ToIntFunction<RocketDef> field, int base) {
         RocketDef def = RocketCargo.def(rocket);
-        return def == null || def.fuelTank < 0 ? base : def.fuelTank;
+        if (def == null) { return base; }
+        int value = field.applyAsInt(def);
+        return value < 0 ? base : value;
     }
 
     public static ItemStack picked(Entity rocket) {
@@ -89,7 +91,7 @@ public final class GcRockets {
 
     public static EnumActionResult place(ItemStack stack, World world, BlockPos pos, boolean keeps, ResourceLocation variant) {
         Class<? extends Entity> type = EntityList.getClass(variant);
-        boolean electric = type != null && IPackRocket.class.isAssignableFrom(type) && !EntitySpaceshipBase.class.isAssignableFrom(type);
+        boolean electric = electric(type);
         for (int x = -1; x < 2; x++) {
             for (int z = -1; z < 2; z++) {
                 BlockPos pad = pos.add(x, 0, z);
@@ -101,6 +103,8 @@ public final class GcRockets {
         }
         return EnumActionResult.PASS;
     }
+
+    private static boolean electric(@Nullable Class<?> type) { return type != null && IPackRocket.class.isAssignableFrom(type) && !EntitySpaceshipBase.class.isAssignableFrom(type); }
 
     private static boolean pad(IBlockState state, boolean electric) {
         if (electric) { return EpRockets.pad(state); }

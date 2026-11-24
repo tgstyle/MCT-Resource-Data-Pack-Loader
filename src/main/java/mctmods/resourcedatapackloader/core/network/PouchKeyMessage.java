@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractServerMessageHandler;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
@@ -18,7 +18,7 @@ public class PouchKeyMessage implements IMessage {
     @Override public void toBytes(ByteBuf buf) {}
 
     public static class Handler extends AbstractServerMessageHandler<PouchKeyMessage> {
-        @Override public void handleServerMessage(EntityPlayer player, PouchKeyMessage message, MessageContext ctx) {
+        @Override public void handleServerMessage(EntityPlayerMP player, PouchKeyMessage message, MessageContext ctx) {
             if (!ContentContainerItem.baubled()) { return; }
             int from = player.openContainer instanceof ContainerPouch ? ((ContainerPouch) player.openContainer).worn() : -1;
             int slot = BaublesPouch.nextWorn(player, from);

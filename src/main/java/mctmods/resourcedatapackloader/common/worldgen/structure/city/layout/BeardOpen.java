@@ -94,7 +94,7 @@ public final class BeardOpen {
                 int seat = box.minY + ContentBeard.footingSink(piece) + (piece instanceof StructureVillagePieces.Road ? 2 : 1);
                 for (int y = seat; y <= box.maxY; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() == Blocks.STONE && !held.getValue(BlockStone.VARIANT).isNatural()) { continue; }
                     if (BeardBlocks.terrainBlock(held.getBlock()) || held.getMaterial() == Material.VINE) { eaves += BeardBlocks.clearAt(world, at); }
@@ -126,7 +126,7 @@ public final class BeardOpen {
                 froms[spot] = from;
                 for (int y = from; y >= box.minY - 24; y--) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                     if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
                     tops[spot] = y;
                     break;
@@ -152,13 +152,10 @@ public final class BeardOpen {
                     if (!bores.isEmpty()) { floor = Math.max(floor, BeardRails.boreFloor(world, bores, x, z)); }
                     for (int y = from; y >= floor; y--) {
                         at.setPos(x, y, z);
-                        if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                        if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                         if (world.getBlockState(at).getMaterial().isSolid()) { break; }
                         boolean exposed = !world.getBlockState(at.up()).getMaterial().isSolid();
-                        IBlockState laidAs = ground;
-                        if (exposed && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
-                        else if (!exposed && ground.getBlock() == Blocks.GRASS) { laidAs = Blocks.DIRT.getDefaultState(); }
-                        world.setBlockState(at, laidAs, BlockFlags.UPDATE_CLIENTS);
+                        world.setBlockState(at, BeardBlocks.laidAs(ground, exposed), BlockFlags.UPDATE_CLIENTS);
                         stood++;
                     }
                     grounded += stood;
@@ -185,8 +182,7 @@ public final class BeardOpen {
                     boolean floored = false;
                     if (reach.isVecInside(at) && !BeardPlots.underRoad(start, piece, x + outX, z + outZ) && !BeardPlots.insideAnother(start, piece, at) && !world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
                         if (BeardKeep.holds(x + outX, y - 1, z + outZ)) { break; }
-                        IBlockState floor = BeardBlocks.fillGround(world, x + outX, z + outZ);
-                        if (floor.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { floor = Blocks.GRASS.getDefaultState(); }
+                        IBlockState floor = BeardBlocks.grassed(BeardBlocks.fillGround(world, x + outX, z + outZ), !world.getBlockState(at.up()).getMaterial().isSolid());
                         world.setBlockState(at, floor, BlockFlags.UPDATE_CLIENTS);
                         doorways++;
                         floored = true;
@@ -196,7 +192,7 @@ public final class BeardOpen {
                         if (BeardPlots.underRoad(start, piece, x + outX * step, z + outZ * step)) { break; }
                         for (int up = 0; up <= 3; up++) {
                             at.setPos(x + outX * step, y + up, z + outZ * step);
-                            if (!reach.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                            if (BeardPlots.blocked(start, piece, reach, at)) { continue; }
                             Block held = world.getBlockState(at).getBlock();
                             if (!BeardRoads.clearable(world.getBlockState(at)) && held != Blocks.GRASS_PATH) { continue; }
                             BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
@@ -225,7 +221,7 @@ public final class BeardOpen {
                     if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
                     for (int y = box.minY + 1; y <= box.minY + 4; y++) {
                         at.setPos(x, y, z);
-                        if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                        if (BeardPlots.blocked(start, piece, clip, at)) { continue; }
                         if (BeardRoads.clearable(world.getBlockState(at))) { doorways += BeardBlocks.clearAt(world, at); }
                     }
                 }

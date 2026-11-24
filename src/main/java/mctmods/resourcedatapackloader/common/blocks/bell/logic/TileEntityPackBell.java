@@ -133,7 +133,7 @@ public class TileEntityPackBell extends TileEntity implements ITickable {
             double z = pos.getZ() + 0.5D + dz / distance;
             for (int i = 0; i < per; i++) {
                 color += 5;
-                server.spawnParticle(EnumParticleTypes.SPELL_MOB, x, pos.getY() + 0.5D, z, 0, Colors.red(color) / 255.0D, Colors.green(color) / 255.0D, Colors.blue(color) / 255.0D, 1.0D);
+                server.spawnParticle(EnumParticleTypes.SPELL_MOB, x, pos.getY() + 0.5D, z, 0, Colors.redD(color), Colors.greenD(color), Colors.blueD(color), 1.0D);
             }
         }
     }

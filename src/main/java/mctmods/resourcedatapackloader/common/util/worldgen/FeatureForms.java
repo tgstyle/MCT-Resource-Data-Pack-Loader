@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util.worldgen;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -40,6 +41,16 @@ public final class FeatureForms {
     private static final String WIDTH = "spread_width";
     private static final String HEIGHT = "spread_height";
     private static final String PROVIDER = "state_provider";
+    private static final String CAUGHT_HEIGHT = "height";
+    private static final String CAUGHT_REACH = "reach";
+    private static final String CAUGHT_WIDE = "wide";
+    private static final String CAUGHT_HIGH = "high";
+    private static final String CAUGHT_TALL = "tall";
+    private static final String CAUGHT_SHORT = "short";
+    private static final String CAUGHT_COUNT = "count";
+    private static final String CAUGHT_W = "w";
+    private static final String CAUGHT_H = "h";
+    private static final String CAUGHT_MAX1 = "max1";
     private static final Set<String> ADDED = new HashSet<>(Arrays.asList("minecraft:end_podium", "minecraft:projected_random_patchy_square", "minecraft:random_neighbor_spread", "minecraft:single_block_pillar", "minecraft:stepped_column_cluster"));
     private static final List<String> CORALS = Arrays.asList("minecraft:coral_tree", "minecraft:coral_claw", "minecraft:coral_mushroom");
     private static final Map<String, JsonObject> FORMS = new LinkedHashMap<>();
@@ -112,8 +123,9 @@ public final class FeatureForms {
     }
 
     private static boolean differs(JsonElement form, JsonElement held, Map<String, JsonElement> caught) {
-        if (form.isJsonPrimitive() && form.getAsJsonPrimitive().isString() && form.getAsString().startsWith("$")) {
-            JsonElement seen = caught.putIfAbsent(form.getAsString().substring(1), held);
+        String name = placeholder(form);
+        if (name != null) {
+            JsonElement seen = caught.putIfAbsent(name, held);
             return seen != null && !seen.equals(held);
         }
         if (form.isJsonArray() && held.isJsonArray()) {
@@ -142,27 +154,27 @@ public final class FeatureForms {
         base.addProperty(TYPE, type);
         switch (type) {
             case "minecraft:basalt_columns":
-                base.add("height", caught.get("height"));
-                base.add("reach", caught.get("reach"));
+                base.add("height", caught.get(CAUGHT_HEIGHT));
+                base.add("reach", caught.get(CAUGHT_REACH));
                 break;
             case NETHER:
-                if (unfit(caught.get("wide")) || unfit(caught.get("high"))) { return null; }
+                if (unfit(caught.get(CAUGHT_WIDE)) || unfit(caught.get(CAUGHT_HIGH))) { return null; }
                 base.add(PROVIDER, caught.get(PROVIDER));
-                base.addProperty(WIDTH, caught.get("wide").getAsInt() + 1);
-                base.addProperty(HEIGHT, caught.get("high").getAsInt() + 1);
+                base.addProperty(WIDTH, caught.get(CAUGHT_WIDE).getAsInt() + 1);
+                base.addProperty(HEIGHT, caught.get(CAUGHT_HIGH).getAsInt() + 1);
                 break;
             case SEAGRASS:
-                if (unfit(caught.get("tall")) || unfit(caught.get("short")) || caught.get("tall").getAsInt() + caught.get("short").getAsInt() <= 0) { return null; }
-                base.addProperty("probability", caught.get("tall").getAsDouble() / (caught.get("tall").getAsInt() + caught.get("short").getAsInt()));
+                if (unfit(caught.get(CAUGHT_TALL)) || unfit(caught.get(CAUGHT_SHORT)) || caught.get(CAUGHT_TALL).getAsInt() + caught.get(CAUGHT_SHORT).getAsInt() <= 0) { return null; }
+                base.addProperty("probability", caught.get(CAUGHT_TALL).getAsDouble() / (caught.get(CAUGHT_TALL).getAsInt() + caught.get(CAUGHT_SHORT).getAsInt()));
                 break;
             case "minecraft:sea_pickle":
-                base.add("count", caught.get("count"));
+                base.add("count", caught.get(CAUGHT_COUNT));
                 break;
             case TWISTING:
-                if (unfit(caught.get("w")) || unfit(caught.get("h")) || unfit(caught.get("max1"))) { return null; }
-                base.add(WIDTH, caught.get("w"));
-                base.add(HEIGHT, caught.get("h"));
-                base.addProperty("max_height", caught.get("max1").getAsInt() + 1);
+                if (unfit(caught.get(CAUGHT_W)) || unfit(caught.get(CAUGHT_H)) || unfit(caught.get(CAUGHT_MAX1))) { return null; }
+                base.add(WIDTH, caught.get(CAUGHT_W));
+                base.add(HEIGHT, caught.get(CAUGHT_H));
+                base.addProperty("max_height", caught.get(CAUGHT_MAX1).getAsInt() + 1);
                 break;
             default: break;
         }
@@ -174,8 +186,8 @@ public final class FeatureForms {
         switch (type) {
             case "minecraft:basalt_columns":
                 if (!config.has("height") || !config.has("reach")) { return null; }
-                out.put("height", config.get("height"));
-                out.put("reach", config.get("reach"));
+                out.put(CAUGHT_HEIGHT, config.get("height"));
+                out.put(CAUGHT_REACH, config.get("reach"));
                 break;
             case NETHER: {
                 if (unfit(config.get(WIDTH)) || unfit(config.get(HEIGHT)) || !config.has(PROVIDER)) { return null; }
@@ -183,9 +195,9 @@ public final class FeatureForms {
                 int height = config.get(HEIGHT).getAsInt();
                 out.put(PROVIDER, config.get(PROVIDER));
                 out.put("area", new JsonPrimitive(width * width));
-                out.put("wide", new JsonPrimitive(width - 1));
+                out.put(CAUGHT_WIDE, new JsonPrimitive(width - 1));
                 out.put("-wide", new JsonPrimitive(1 - width));
-                out.put("high", new JsonPrimitive(height - 1));
+                out.put(CAUGHT_HIGH, new JsonPrimitive(height - 1));
                 out.put("-high", new JsonPrimitive(1 - height));
                 break;
             }
@@ -196,13 +208,13 @@ public final class FeatureForms {
                 while (scale < 10000 && Math.abs(chance * scale - Math.round(chance * scale)) > 1.0E-6) { scale *= 10; }
                 if (Math.abs(chance * scale - Math.round(chance * scale)) > 1.0E-6) { note.accept("grows tall seagrass at a chance of " + chance + ", which 26.3 weighs in parts of " + scale + ", so it is rounded"); }
                 long tall = Math.round(chance * scale);
-                out.put("tall", new JsonPrimitive(tall));
-                out.put("short", new JsonPrimitive(scale - tall));
+                out.put(CAUGHT_TALL, new JsonPrimitive(tall));
+                out.put(CAUGHT_SHORT, new JsonPrimitive(scale - tall));
                 break;
             }
             case "minecraft:sea_pickle":
                 if (!config.has("count")) { return null; }
-                out.put("count", config.get("count"));
+                out.put(CAUGHT_COUNT, config.get("count"));
                 break;
             case TWISTING: {
                 if (unfit(config.get(WIDTH)) || unfit(config.get(HEIGHT)) || unfit(config.get("max_height"))) { return null; }
@@ -210,11 +222,11 @@ public final class FeatureForms {
                 int height = config.get(HEIGHT).getAsInt();
                 int tallest = config.get("max_height").getAsInt();
                 out.put("area", new JsonPrimitive(width * width));
-                out.put("w", new JsonPrimitive(width));
+                out.put(CAUGHT_W, new JsonPrimitive(width));
                 out.put("-w", new JsonPrimitive(-width));
-                out.put("h", new JsonPrimitive(height));
+                out.put(CAUGHT_H, new JsonPrimitive(height));
                 out.put("-h", new JsonPrimitive(-height));
-                out.put("max1", new JsonPrimitive(tallest - 1));
+                out.put(CAUGHT_MAX1, new JsonPrimitive(tallest - 1));
                 out.put("max2", new JsonPrimitive(2 * tallest - 1));
                 break;
             }
@@ -223,8 +235,11 @@ public final class FeatureForms {
         return out;
     }
 
+    @Nullable private static String placeholder(JsonElement form) { return Json.isString(form) && form.getAsString().startsWith("$") ? form.getAsString().substring(1) : null; }
+
     private static JsonElement filled(JsonElement form, Map<String, JsonElement> params) {
-        if (form.isJsonPrimitive() && form.getAsJsonPrimitive().isString() && form.getAsString().startsWith("$")) { return JsonTree.copy(params.get(form.getAsString().substring(1))); }
+        String name = placeholder(form);
+        if (name != null) { return JsonTree.copy(params.get(name)); }
         if (form.isJsonArray()) { return JsonTree.map(form.getAsJsonArray(), item -> filled(item, params)); }
         if (!form.isJsonObject()) { return JsonTree.copy(form); }
         return JsonTree.map(form.getAsJsonObject(), (key, value) -> filled(value, params));
@@ -279,10 +294,10 @@ public final class FeatureForms {
     @Nullable private static String referenced(JsonObject placed) {
         if (!JsonUtils.isJsonArray(placed, PLACEMENT)) { return null; }
         String feature = Json.text(placed, FEATURE);
-        return feature.isEmpty() || feature.startsWith("#") ? null : id(feature);
+        return feature.isEmpty() || IdNames.isTag(feature) ? null : id(feature);
     }
 
-    private static boolean unfit(@Nullable JsonElement value) { return value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber() || value.getAsDouble() != Math.rint(value.getAsDouble()); }
+    private static boolean unfit(@Nullable JsonElement value) { return value == null || !JsonUtils.isNumber(value) || value.getAsDouble() != Math.rint(value.getAsDouble()); }
 
     private static String id(String id) { return id.isEmpty() ? id : namespaced(id); }
 

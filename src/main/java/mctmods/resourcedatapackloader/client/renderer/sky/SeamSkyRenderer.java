@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.client.util.CameraPos;
 import mctmods.resourcedatapackloader.common.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
@@ -34,7 +35,7 @@ import org.lwjgl.opengl.GL11;
         Integer over = ContentSeams.above(dimension);
         if (under == null && over == null) { return; }
         int floor = GenHeights.floor(world, 0);
-        double eyeY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks + viewer.getEyeHeight();
+        double eyeY = CameraPos.viewAt(viewer, partialTicks).y + viewer.getEyeHeight();
         if (under != null) { plane(mc, under, floor - 1 - eyeY, partialTicks); }
         if (over != null) { plane(mc, over, RubicWorldControl.generatedCeiling(world) + 1 - eyeY, partialTicks); }
     }

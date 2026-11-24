@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.util.dimension.Travel;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GroundLevel;
 
@@ -37,7 +38,7 @@ public final class ClaimPlayers {
         int minX = Coords.cubeToMinBlock(chunkX);
         int minY = Coords.cubeToMinBlock(sectionY);
         int minZ = Coords.cubeToMinBlock(chunkZ);
-        AxisAlignedBB box = new AxisAlignedBB(minX, minY, minZ, minX + 16, minY + 16, minZ + 16);
+        AxisAlignedBB box = new AxisAlignedBB(minX, minY, minZ, minX + ICube.SIZE, minY + ICube.SIZE, minZ + ICube.SIZE);
         for (Entity entity : world.getEntitiesWithinAABB(Entity.class, box, other -> other != null && !(other instanceof EntityPlayer) && inside(other, chunkX, chunkZ))) { entity.setDead(); }
     }
 
@@ -50,7 +51,7 @@ public final class ClaimPlayers {
             double best = Double.MAX_VALUE;
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring || index.pendingAt(chunkX + dx, chunkZ + dz) != null) { continue; }
+                    if (Coords.chebyshev(dx, dz) != ring || index.pendingAt(chunkX + dx, chunkZ + dz) != null) { continue; }
                     double gap = player.getDistanceSq(Coords.localToBlock(chunkX + dx, 8), player.posY, Coords.localToBlock(chunkZ + dz, 8));
                     if (gap < best) {
                         best = gap;

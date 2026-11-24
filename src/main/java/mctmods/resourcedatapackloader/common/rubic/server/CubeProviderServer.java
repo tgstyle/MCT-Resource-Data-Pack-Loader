@@ -16,12 +16,14 @@ import mctmods.resourcedatapackloader.common.rubic.world.storage.StorageFormatPr
 import mctmods.resourcedatapackloader.common.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.common.rubic.worldgen.interfaces.ICubeGenerator;
 import mctmods.resourcedatapackloader.common.util.world.Box;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.util.address.XYZMap;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,11 +50,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     @Nonnull private final BlankCube emptyCube;
     @Nonnull private final WorldServer worldServer;
     @Nonnull private final ICubeIO cubeIO;
-    @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(0.7f, 8000);
+    @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(8000);
     @Nonnull private final CubePrimer cubePrimer;
     @Nonnull private final ICubeGenerator cubeGen;
     @Nonnull private final Profiler profiler;
-    @Nonnull private final XYZMap<Cube> loadingCubes = new XYZMap<>(0.7f, 16);
+    @Nonnull private final XYZMap<Cube> loadingCubes = new XYZMap<>(16);
     @Nonnull private final Set<CubePos> generatingCubes = new HashSet<>();
     private boolean primerInUse;
     private Chunk currentlyLoadingColumn;
@@ -224,7 +226,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     }
 
     private void generateSkyAbove(int cubeX, int cubeY, int cubeZ) {
-        int highest = (((IMinMaxHeight) worldServer).rdpl$getMaxHeight() >> 4) - 1;
+        int highest = Coords.topCubeY((IMinMaxHeight) worldServer);
         for (int above = highest; above > cubeY; above--) { getCube(cubeX, above, cubeZ, Requirement.GENERATE); }
     }
 
@@ -341,14 +343,15 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     Iterator<Chunk> columnsIterator() { return loadedChunks.values().iterator(); }
 
     public void unloadColumnCubes(Chunk column) {
-        for (Object each : ((IColumn) column).getLoadedCubes().toArray()) {
-            Cube cube = (Cube) each;
+        for (Cube cube : new ArrayList<>(((IColumn) column).loadedCubes())) {
             if (tryUnloadCube(cube)) { cubeMap.remove(cube.getX(), cube.getY(), cube.getZ()); }
         }
     }
 
+    private boolean isPersistent(ChunkPos pos) { return ForgeChunkManager.getPersistentChunksFor(world).containsKey(pos); }
+
     boolean tryUnloadCube(Cube cube) {
-        if (ForgeChunkManager.getPersistentChunksFor(world).containsKey(cube.getColumn().getPos())) { return false; }
+        if (isPersistent(cube.getColumn().getPos())) { return false; }
         if (!cube.getTickets().canUnload()) { return false; }
         cube.onUnload();
         if (cube.needsSaving()) { this.cubeIO.saveCube(cube); }
@@ -357,7 +360,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     }
 
     boolean tryUnloadColumn(Chunk column) {
-        if (ForgeChunkManager.getPersistentChunksFor(world).containsKey(column.getPos())) { return false; }
+        if (isPersistent(column.getPos())) { return false; }
         if (((IColumn) column).hasLoadedCubes()) { return false; }
         if (world.getPlayerChunkMap().contains(column.x, column.z)) { return false; }
         if (CubeIoQueue.holdsReads(worldServer, column.x, column.z)) { return false; }

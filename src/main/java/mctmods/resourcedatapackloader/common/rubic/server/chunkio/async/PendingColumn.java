@@ -31,8 +31,7 @@ final class PendingColumn extends PendingLoad<Chunk> {
     @Override void readOffThread() throws Exception { data = io.loadColumnAsyncPart(columnX, columnZ); }
 
     @Override void applyOnServerThread() {
-        ICubeIO.PartialData<Chunk> held = data;
-        if (held == null) { throw new IllegalStateException("Nothing was read for " + describe()); }
+        ICubeIO.PartialData<Chunk> held = readOrThrow(data);
         if (held.getObject() == null) { return; }
         io.loadColumnSyncPart(held);
         Chunk column = held.getObject();

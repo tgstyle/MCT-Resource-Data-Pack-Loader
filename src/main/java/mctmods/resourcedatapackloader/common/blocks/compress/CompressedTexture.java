@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.compress;
 
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.awt.image.BufferedImage;
 import javax.annotation.Nullable;
@@ -33,13 +34,13 @@ public final class CompressedTexture {
                 image.setRGB(x, y, color);
             }
         }
-        return ContentPixelMaps.written(set.def.key.getNamespace(), "textures/blocks/" + set.assetName(layer) + ContentPixelMaps.PNG, image);
+        return ContentPixelMaps.written(set.def.key.getNamespace(), CompressedAssets.texturePath(set, layer), image);
     }
 
     private static int scale(int color, float factor) {
-        int red = MathHelper.clamp(Math.round(((color >> 16) & 0xFF) * factor), 0, 255);
-        int green = MathHelper.clamp(Math.round(((color >> 8) & 0xFF) * factor), 0, 255);
-        int blue = MathHelper.clamp(Math.round((color & 0xFF) * factor), 0, 255);
-        return (color & 0xFF000000) | (red << 16) | (green << 8) | blue;
+        int red = MathHelper.clamp(Math.round(Colors.red(color) * factor), 0, 255);
+        int green = MathHelper.clamp(Math.round(Colors.green(color) * factor), 0, 255);
+        int blue = MathHelper.clamp(Math.round(Colors.blue(color) * factor), 0, 255);
+        return (color & 0xFF000000) | Colors.rgb(red, green, blue);
     }
 }

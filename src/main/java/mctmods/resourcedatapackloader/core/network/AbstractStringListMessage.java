@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.core.util.PacketUtils;
+
 import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,12 +19,12 @@ public abstract class AbstractStringListMessage implements IMessage {
     @Override public void fromBytes(ByteBuf buf) {
         int count = Math.min(buf.readShort(), MOST);
         values.clear();
-        for (int i = 0; i < count; i++) { values.add(ByteBufUtils.readUTF8String(buf)); }
+        values.addAll(PacketUtils.readStrings(buf, count));
     }
 
     @Override public void toBytes(ByteBuf buf) {
         int count = Math.min(values.size(), MOST);
         buf.writeShort(count);
-        for (int i = 0; i < count; i++) { ByteBufUtils.writeUTF8String(buf, values.get(i)); }
+        PacketUtils.writeStrings(buf, values, count);
     }
 }

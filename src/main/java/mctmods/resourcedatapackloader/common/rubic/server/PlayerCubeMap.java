@@ -62,8 +62,8 @@ public class PlayerCubeMap extends PlayerChunkMap {
     private static final Predicate<EntityPlayerMP> NOT_SPECTATOR = player -> player != null && !player.isSpectator();
     private final CubeSelector cubeSelector = new CuboidalCubeSelector();
     private final TIntObjectMap<PlayerWrapper> players = new TIntObjectHashMap<>();
-    final XYZMap<CubeWatcher> cubeWatchers = new XYZMap<>(0.7f, 25 * 25 * 25);
-    final XZMap<ColumnWatcher> columnWatchers = new XZMap<>(0.7f, 25 * 25);
+    final XYZMap<CubeWatcher> cubeWatchers = new XYZMap<>(25 * 25 * 25);
+    final XZMap<ColumnWatcher> columnWatchers = new XZMap<>(25 * 25);
     private final Set<CubeWatcher> cubeWatchersToUpdate = new HashSet<>();
     private final Set<ColumnWatcher> columnWatchersToUpdate = new HashSet<>();
     private final Supplier<Collection<EntityPlayer>> everyone = () -> playerStream().collect(Collectors.toList());
@@ -212,7 +212,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
                 }
                 if (success) {
                     CubeWatcher.SendToPlayersResult state = watcher.sendToPlayers();
-                    if (state == CubeWatcher.SendToPlayersResult.CUBE_SENT || state == CubeWatcher.SendToPlayersResult.ALREADY_DONE) {
+                    if (state.isDone()) {
                         iterator.remove();
                         this.cubesToSendToClients.remove(watcher);
                     }
@@ -231,14 +231,15 @@ public class PlayerCubeMap extends PlayerChunkMap {
             }
             getWorldServer().profiler.endSection();
         }
+        int perTick = this.cubesToSendToClients.occupied() || watchersToAddPlayersTo.occupied() ? cubesSentPerTick() : 0;
         if (this.cubesToSendToClients.occupied()) {
             getWorldServer().profiler.startSection("cubes");
-            int toSend = cubesSentPerTick();
+            int toSend = perTick;
             Iterator<CubeWatcher> it = this.cubesToSendToClients.iterator();
             while (it.hasNext() && toSend > 0) {
                 CubeWatcher playerInstance = it.next();
                 CubeWatcher.SendToPlayersResult state = playerInstance.sendToPlayers();
-                if (state == CubeWatcher.SendToPlayersResult.ALREADY_DONE || state == CubeWatcher.SendToPlayersResult.CUBE_SENT) {
+                if (state.isDone()) {
                     it.remove();
                     --toSend;
                 }
@@ -246,7 +247,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             getWorldServer().profiler.endSection();
         }
         if (watchersToAddPlayersTo.occupied()) {
-            int toSend = cubesSentPerTick();
+            int toSend = perTick;
             for (Iterator<CubeWatcher> iter = watchersToAddPlayersTo.iterator(); toSend > 0 && iter.hasNext(); ) {
                 CubeWatcher watcher = iter.next();
                 watcher.addScheduledPlayers();
@@ -355,16 +356,25 @@ public class PlayerCubeMap extends PlayerChunkMap {
         CubePos playerCubePos = CubePos.fromEntityCoords(player.managedPosX, playerWrapper.managedPosY, player.managedPosZ);
         ObjectSet<ColumnWatcher> toSendUnload = new ObjectOpenHashSet<>((horizontalViewDistance*2+1) * (horizontalViewDistance*2+1) * 6);
         this.cubeSelector.forAllVisibleFrom(playerCubePos, horizontalViewDistance, verticalViewDistance, (cubePos) -> {
-            CubeWatcher watcher = getCubeWatcher(cubePos);
-            if (watcher != null) { watcher.removePlayer(player); }
+            removePlayerFromCube(cubePos, player);
             ColumnWatcher columnWatcher = getColumnWatcher(cubePos.chunkPos());
             if (columnWatcher == null) { return; }
             toSendUnload.add(columnWatcher);
         });
-        toSendUnload.stream()
-                .filter(watcher->watcher.containsPlayer(player))
-                .forEach(watcher->watcher.removePlayer(player));
+        toSendUnload.stream().filter(watcher -> watcher.containsPlayer(player)).forEach(watcher -> watcher.removePlayer(player));
         this.players.remove(player.getEntityId());
+    }
+
+    private boolean removePlayerFromCube(CubePos pos, EntityPlayerMP player) {
+        CubeWatcher watcher = this.getCubeWatcher(pos);
+        if (watcher == null) { return false; }
+        watcher.removePlayer(player);
+        return true;
+    }
+
+    private void removePlayerFromColumn(ChunkPos pos, EntityPlayerMP player) {
+        ColumnWatcher watcher = this.getColumnWatcher(pos);
+        if (watcher != null) { watcher.removePlayer(player); }
     }
 
     @Override public void updateMovingPlayer(EntityPlayerMP player) {
@@ -398,21 +408,9 @@ public class PlayerCubeMap extends PlayerChunkMap {
             scheduleAddPlayerToWatcher(cubeWatcher, entry.playerEntity);
         });
         getWorldServer().profiler.endStartSection("removeCubes");
-        cubesToRemove.forEach(pos -> {
-            CubeWatcher cubeWatcher = this.getCubeWatcher(pos);
-            if (cubeWatcher != null) {
-                assert cubeWatcher.getCubePos().equals(pos);
-                cubeWatcher.removePlayer(entry.playerEntity);
-            }
-        });
+        cubesToRemove.forEach(pos -> removePlayerFromCube(pos, entry.playerEntity));
         getWorldServer().profiler.endStartSection("removeColumns");
-        columnsToRemove.forEach(pos -> {
-            ColumnWatcher columnWatcher = this.getColumnWatcher(pos);
-            if (columnWatcher != null) {
-                assert columnWatcher.getPos().equals(pos);
-                columnWatcher.removePlayer(entry.playerEntity);
-            }
-        });
+        columnsToRemove.forEach(pos -> removePlayerFromColumn(pos, entry.playerEntity));
         getWorldServer().profiler.endSection();
         getWorldServer().profiler.endSection();
     }
@@ -469,9 +467,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
                         oldHorizontalViewDistance, newHorizontalViewDistance,
                         oldVerticalViewDistance, newVerticalViewDistance, cubesToUnload, columnsToUnload);
                 cubesToUnload.forEach(pos -> {
-                    CubeWatcher cubeWatcher = this.getCubeWatcher(pos);
-                    if (cubeWatcher != null) { cubeWatcher.removePlayer(player); }
-                    else { ContentLog.LOGGER.warn("cubeWatcher null on render distance change"); }
+                    if (!removePlayerFromCube(pos, player)) { ContentLog.LOGGER.warn("cubeWatcher null on render distance change"); }
                 });
                 columnsToUnload.forEach(pos -> {
                     ColumnWatcher columnWatcher = this.getColumnWatcher(pos);
@@ -538,9 +534,9 @@ public class PlayerCubeMap extends PlayerChunkMap {
         final Iterator<CubeWatcher> iterator = this.tickableCubeTracker.iterator();
         ImmutableSetMultimap<ChunkPos, Ticket> persistentChunksFor = ForgeChunkManager.getPersistentChunksFor(world);
         world.profiler.startSection("forcedChunkLoading");
-        @SuppressWarnings("unchecked") final Iterator<Cube> persistentCubesIterator = persistentChunksFor.keys().stream()
+        final Iterator<Cube> persistentCubesIterator = persistentChunksFor.keys().stream()
                 .filter(Objects::nonNull)
-                .map(input -> (Collection<Cube>) ((IColumn) world.getChunk(input.x, input.z)).getLoadedCubes())
+                .map(input -> ((IColumn) world.getChunk(input.x, input.z)).loadedCubes())
                 .collect(ArrayList<Cube>::new, ArrayList::addAll, ArrayList::addAll)
                 .iterator();
         world.profiler.endSection();

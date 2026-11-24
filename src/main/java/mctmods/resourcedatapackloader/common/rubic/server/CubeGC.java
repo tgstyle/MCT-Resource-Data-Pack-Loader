@@ -39,7 +39,7 @@ public class CubeGC {
         int totalCubes = 0;
         while (columnIt.hasNext()) {
             Chunk storedCol = columnIt.next();
-            @SuppressWarnings("unchecked") Collection<Cube> storedColumnCubes = (Collection<Cube>) ((IColumn) storedCol).getLoadedCubes();
+            Collection<Cube> storedColumnCubes = ((IColumn) storedCol).loadedCubes();
             for (Cube c : storedColumnCubes) {
                 if (cubeCache.getLoadedCube(c.getCoords()) != c) { ContentLog.LOGGER.error("Cube {} in its column is not the same as the stored cube!", c.getCoords()); }
             }

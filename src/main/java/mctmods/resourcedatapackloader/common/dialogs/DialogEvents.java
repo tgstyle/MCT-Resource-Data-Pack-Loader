@@ -10,7 +10,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 public final class DialogEvents {
     private DialogEvents() {}
@@ -25,6 +24,4 @@ public final class DialogEvents {
         event.setCanceled(true);
         event.setCancellationResult(EnumActionResult.SUCCESS);
     }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DialogTalk.forget(event.player.getUniqueID()); }
 }

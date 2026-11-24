@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.write;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThemeDef;
+import mctmods.resourcedatapackloader.common.util.world.Box;
 import mctmods.resourcedatapackloader.common.util.worldgen.FillRules;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonThemes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.DungeonSites;
@@ -45,9 +46,10 @@ public final class DungeonDecor {
     private static final String BANNER_LINE = "bannerLine";
     private static final String TORCH_LINE = "torchLine";
     private static final String FILL = "fill";
+    private static final String HEIGHT = "height";
+    private static final String GAP = "gap";
     private static final String ON_CEILING = "ceiling";
     private static final String ON_WALL = "wall";
-    private static final int SHAFT_SIDE = 3;
     private static final int WALL_RUN = 4;
     private static final int DEFAULT_HEIGHT = 1;
     private static final int DEFAULT_GAP = 1;
@@ -173,8 +175,8 @@ public final class DungeonDecor {
         private int number(String key, int otherwise) { return decorator.numbers.getOrDefault(key, otherwise); }
 
         private void wallLine() {
-            int height = Math.max(1, number("height", DEFAULT_HEIGHT));
-            int span = WALL_RUN + Math.max(0, number("gap", DEFAULT_GAP));
+            int height = Math.max(1, number(HEIGHT, DEFAULT_HEIGHT));
+            int span = WALL_RUN + Math.max(0, number(GAP, DEFAULT_GAP));
             walls((x, z, index, away) -> {
                 if (index % span >= WALL_RUN) { return; }
                 for (int row = 0; row < height; row++) {
@@ -213,8 +215,8 @@ public final class DungeonDecor {
         }
 
         private void pillarsRow() {
-            int height = Math.max(1, number("height", DEFAULT_PILLAR_HEIGHT));
-            int step = Math.max(0, number("gap", DEFAULT_PILLAR_GAP)) + 1;
+            int height = Math.max(1, number(HEIGHT, DEFAULT_PILLAR_HEIGHT));
+            int step = Math.max(0, number(GAP, DEFAULT_PILLAR_GAP)) + 1;
             boolean alongX = room.x1 - room.x0 >= room.z1 - room.z0;
             int line = alongX ? room.z0 + room.z1 >> 1 : room.x0 + room.x1 >> 1;
             int length = alongX ? room.x1 - room.x0 : room.z1 - room.z0;
@@ -229,8 +231,8 @@ public final class DungeonDecor {
         }
 
         private void hung() {
-            int spacing = Math.max(1, number("gap", DEFAULT_SPACING));
-            int y = room.floorY + number("height", EYE_ROW);
+            int spacing = Math.max(1, number(GAP, DEFAULT_SPACING));
+            int y = room.floorY + number(HEIGHT, EYE_ROW);
             walls((x, z, index, away) -> {
                 if (index % spacing == 0) { put(x, y, z, away); }
             });
@@ -270,7 +272,7 @@ public final class DungeonDecor {
             return false;
         }
 
-        private int roll(int x, int y, int z) { return (int) Math.floorMod(MathUtil.mix(seed ^ ROLL_SALT, x, y, z), 100L); }
+        private int roll(int x, int y, int z) { return MathUtil.percent(MathUtil.mix(seed ^ ROLL_SALT, x, y, z)); }
 
         private ContentStates.Spec pick(int x, int y, int z) { return specs.get((int) Math.floorMod(MathUtil.mix(seed, x, y, z), specs.size())); }
 
@@ -292,21 +294,23 @@ public final class DungeonDecor {
                 if (Math.abs(x - door[0]) <= door[2] && Math.abs(z - door[1]) <= door[2]) { return false; }
             }
             Shaft shaft = level.shaft;
-            return shaft == null || x < shaft.x - 1 || x > shaft.x + SHAFT_SIDE || z < shaft.z - 1 || z > shaft.z + SHAFT_SIDE;
+            return shaft == null || !shaft.covers(x, z, 1);
         }
 
         private void floors(Visit visit) {
-            for (int x = Math.max(room.x0, box.minX); x <= Math.min(room.x1, box.maxX); x++) {
-                for (int z = Math.max(room.z0, box.minZ); z <= Math.min(room.z1, box.maxZ); z++) {
-                    if (usable(x, z)) { visit.at(x, z, 0, awayFrom(x, z)); }
+            StructureBoundingBox clip = Box.clip(box, room.x0, box.minY, room.z0, room.x1, box.maxY, room.z1, 0);
+            for (int x = clip.minX; x <= clip.maxX; x++) {
+                for (int z = clip.minZ; z <= clip.maxZ; z++) {
+                    if (usable(x, z)) { visit.at(x, z, 0, room.away(x, z)); }
                 }
             }
         }
 
         private void walls(Visit visit) {
-            for (int x = Math.max(room.x0, box.minX); x <= Math.min(room.x1, box.maxX); x++) {
-                for (int z = Math.max(room.z0, box.minZ); z <= Math.min(room.z1, box.maxZ); z++) {
-                    if ((x == room.x0 || x == room.x1 || z == room.z0 || z == room.z1) && usable(x, z)) { visit.at(x, z, ring(x, z), awayFrom(x, z)); }
+            StructureBoundingBox clip = Box.clip(box, room.x0, box.minY, room.z0, room.x1, box.maxY, room.z1, 0);
+            for (int x = clip.minX; x <= clip.maxX; x++) {
+                for (int z = clip.minZ; z <= clip.maxZ; z++) {
+                    if ((x == room.x0 || x == room.x1 || z == room.z0 || z == room.z1) && usable(x, z)) { visit.at(x, z, ring(x, z), room.away(x, z)); }
                 }
             }
         }
@@ -318,13 +322,6 @@ public final class DungeonDecor {
             if (x == room.x1) { return width + z - room.z0; }
             if (z == room.z1) { return width + depth + room.x1 - x; }
             return 2 * width + depth + room.z1 - z;
-        }
-
-        private EnumFacing awayFrom(int x, int z) {
-            if (x == room.x0) { return EnumFacing.EAST; }
-            if (x == room.x1) { return EnumFacing.WEST; }
-            if (z == room.z0) { return EnumFacing.SOUTH; }
-            return EnumFacing.NORTH;
         }
     }
 }

@@ -66,7 +66,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).light; }
+    @Override public int getLightValue(@Nonnull IBlockState state) { return ContentSetup.variantOf(def, variant, state).light; }
 
     @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return ContentSetup.placeable(this, world, pos) && TallPlants.canPlaceTall(world, pos, this); }
 

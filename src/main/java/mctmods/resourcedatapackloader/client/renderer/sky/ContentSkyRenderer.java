@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,6 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
@@ -28,19 +28,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 @SideOnly(Side.CLIENT) public final class ContentSkyRenderer extends IRenderHandler {
-    private static final ResourceLocation MOON_PHASES = new ResourceLocation("textures/environment/moon_phases.png");
+    private static final float PLANE_Y = 16.0F;
     private final DimensionTraitsDef.Sky sky;
     private final ResourceLocation moonTexture;
     private final float moonSize;
     private final ContentStars starField;
-    private int lists = -1;
+    private final DisplayLists lists = new DisplayLists(2);
     private boolean floor = true;
     private final float moonTilt;
     private final SkyPoseDef moonPose;
 
     ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
-        moonTexture = moon == null ? MOON_PHASES : moon.texture;
+        moonTexture = moon == null ? DimensionTraitsDef.VANILLA_MOON_TEXTURE : moon.texture;
         moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size;
         moonTilt = moon == null ? 0.0F : moon.tilt;
         moonPose = moon == null ? SkyPoseDef.NONE : moon.pose;
@@ -69,7 +69,7 @@ import org.lwjgl.opengl.GL11;
     @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {
         Entity viewer = mc.getRenderViewEntity();
         if (viewer == null) { return; }
-        if (lists < 0) { build(); }
+        if (lists.empty()) { build(); }
         GlStateManager.disableTexture2D();
         Vec3d color = ContentDimensionRulesClient.vision(world, partialTicks, world.getSkyColor(viewer, partialTicks));
         float[] tint = anaglyph(mc, (float) color.x, (float) color.y, (float) color.z);
@@ -81,7 +81,7 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.depthMask(false);
         GlStateManager.enableFog();
         GlStateManager.color(red, green, blue);
-        GlStateManager.callList(lists);
+        GlStateManager.callList(lists.base());
         GlStateManager.disableFog();
         GlStateManager.disableAlpha();
         GlStateManager.enableBlend();
@@ -153,12 +153,12 @@ import org.lwjgl.opengl.GL11;
         if (floor) {
             GlStateManager.color(0.0F, 0.0F, 0.0F);
             double below = viewer.getPositionEyes(partialTicks).y - world.getHorizon();
-            if (below < 0.0D) { voidBox(buffer, tessellator, lists, below); }
+            if (below < 0.0D) { voidBox(buffer, tessellator, lists.base(), below); }
             if (world.provider.isSkyColored()) { GlStateManager.color(red * 0.2F + 0.04F, green * 0.2F + 0.04F, blue * 0.6F + 0.1F); }
             else { GlStateManager.color(red, green, blue); }
             GlStateManager.pushMatrix();
-            GlStateManager.translate(0.0F, -((float) (below - 16.0D)), 0.0F);
-            GlStateManager.callList(lists + 1);
+            GlStateManager.translate(0.0F, -((float) (below - PLANE_Y)), 0.0F);
+            GlStateManager.callList(lists.base() + 1);
             GlStateManager.popMatrix();
         }
         GlStateManager.enableTexture2D();
@@ -181,9 +181,9 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
         float[] tint = anaglyph(mc, glow[0], glow[1], glow[2]);
         buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(0.0D, 100.0D, 0.0D).color(tint[0], tint[1], tint[2], glow[3]).endVertex();
+        buffer.pos(0.0D, SkyOccluder.RADIUS, 0.0D).color(tint[0], tint[1], tint[2], glow[3]).endVertex();
         for (int step = 0; step <= 16; ++step) {
-            float at = step * ((float) Math.PI * 2.0F) / 16.0F;
+            float at = MathUtil.turn(step / 16.0F);
             float sin = MathHelper.sin(at);
             float cos = MathHelper.cos(at);
             buffer.pos(sin * 120.0F, cos * 120.0F, -cos * 40.0F * glow[3]).color(glow[0], glow[1], glow[2], 0.0F).endVertex();
@@ -199,18 +199,18 @@ import org.lwjgl.opengl.GL11;
         int phase = world.getMoonPhase();
         int column = phase % 4;
         int row = phase / 4 % 2;
-        float left = (column + (moonPose.flipU ? 1 : 0)) / 4.0F;
-        float top = (row + (moonPose.flipV ? 1 : 0)) / 2.0F;
-        float right = (column + (moonPose.flipU ? 0 : 1)) / 4.0F;
-        float bottom = (row + (moonPose.flipV ? 0 : 1)) / 2.0F;
+        float left = (column + moonPose.u(0.0F)) / 4.0F;
+        float top = (row + moonPose.v(0.0F)) / 2.0F;
+        float right = (column + moonPose.u(1.0F)) / 4.0F;
+        float bottom = (row + moonPose.v(1.0F)) / 2.0F;
         GlStateManager.pushMatrix();
         GlStateManager.rotate(-moonTilt, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(-moonPose.degrees(ticks), 0.0F, 1.0F, 0.0F);
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(-size, -100.0D, size).tex(right, bottom).endVertex();
-        buffer.pos(size, -100.0D, size).tex(left, bottom).endVertex();
-        buffer.pos(size, -100.0D, -size).tex(left, top).endVertex();
-        buffer.pos(-size, -100.0D, -size).tex(right, top).endVertex();
+        buffer.pos(-size, -SkyOccluder.RADIUS, size).tex(right, bottom).endVertex();
+        buffer.pos(size, -SkyOccluder.RADIUS, size).tex(left, bottom).endVertex();
+        buffer.pos(size, -SkyOccluder.RADIUS, -size).tex(left, top).endVertex();
+        buffer.pos(-size, -SkyOccluder.RADIUS, -size).tex(right, top).endVertex();
         tessellator.draw();
         GlStateManager.popMatrix();
     }
@@ -229,21 +229,19 @@ import org.lwjgl.opengl.GL11;
 
     void release() {
         starField.release();
-        if (lists < 0) { return; }
-        GLAllocation.deleteDisplayLists(lists, 2);
-        lists = -1;
+        lists.release();
     }
 
     private void build() {
-        lists = GLAllocation.generateDisplayLists(2);
+        int base = lists.generate();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        GlStateManager.glNewList(lists, GL11.GL_COMPILE);
-        plane(buffer, 16.0F, false);
+        GlStateManager.glNewList(base, GL11.GL_COMPILE);
+        plane(buffer, PLANE_Y, false);
         tessellator.draw();
         GlStateManager.glEndList();
-        GlStateManager.glNewList(lists + 1, GL11.GL_COMPILE);
-        plane(buffer, -16.0F, true);
+        GlStateManager.glNewList(base + 1, GL11.GL_COMPILE);
+        plane(buffer, -PLANE_Y, true);
         tessellator.draw();
         GlStateManager.glEndList();
     }

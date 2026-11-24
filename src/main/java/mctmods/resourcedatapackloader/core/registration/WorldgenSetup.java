@@ -45,19 +45,19 @@ public class WorldgenSetup {
     }
 
     public static void caveAmbience() {
-        if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, ContentCaveAmbience.wanted(), ContentCaveAmbience.class);
     }
 
     public static void seams() {
-        if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, ContentSeams.enabled(), ContentSeams.class);
     }
 
     public static void biomeListeners() {
-        if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, ContentBiomeControl.enabled(), ContentBiomeControl.class);
     }
 
     public static void worldTypeListeners() {
-        if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty(), ContentTerrain.class);
     }
 
     public static void planets() {
@@ -66,9 +66,9 @@ public class WorldgenSetup {
 
     public static void generators() {
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
-        if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
+        ModSetup.registerIf(MinecraftForge.ORE_GEN_BUS, ContentOreControl.enabled(), ContentOreControl.class);
         MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
-        if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, ContentBedrock.enabled(), ContentBedrock.class);
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
         if (veins.isEmpty() && ContentStructureMaps.none() && ContentDungeons.none() && !ContentCaveRegions.any()) { ContentRetrogen.setup(veins, null); }
         else {
@@ -81,7 +81,7 @@ public class WorldgenSetup {
 
     public static void replacements() {
         ContentReplacements.reload();
-        if (ContentRetrogen.wanted() || ContentHardness.anySwaps()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
+        ModSetup.registerIf(MinecraftForge.EVENT_BUS, ContentRetrogen.wanted() || ContentHardness.anySwaps(), ContentRetrogen.class);
     }
 
     public static void pregenListeners() {

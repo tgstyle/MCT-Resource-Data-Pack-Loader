@@ -18,6 +18,10 @@ import net.minecraftforge.common.util.Constants;
 
 public final class SeamMemory extends WorldSavedData {
     private static final String ID = "rdpl_world_seams";
+    private static final String ENTRIES = "entries";
+    private static final String COLUMN = "column";
+    private static final String LANDINGS = "landings";
+    private static final String SPOT = "spot";
     private final Set<Long> entries = new HashSet<>();
     private final Map<Long, BlockPos> landings = new HashMap<>();
 
@@ -56,12 +60,12 @@ public final class SeamMemory extends WorldSavedData {
     @Override public void readFromNBT(NBTTagCompound nbt) {
         entries.clear();
         landings.clear();
-        NBTTagList holes = nbt.getTagList("entries", Constants.NBT.TAG_COMPOUND);
-        for (int index = 0; index < holes.tagCount(); index++) { entries.add(holes.getCompoundTagAt(index).getLong("column")); }
-        NBTTagList stored = nbt.getTagList("landings", Constants.NBT.TAG_COMPOUND);
+        NBTTagList holes = nbt.getTagList(ENTRIES, Constants.NBT.TAG_COMPOUND);
+        for (int index = 0; index < holes.tagCount(); index++) { entries.add(holes.getCompoundTagAt(index).getLong(COLUMN)); }
+        NBTTagList stored = nbt.getTagList(LANDINGS, Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < stored.tagCount(); index++) {
             NBTTagCompound entry = stored.getCompoundTagAt(index);
-            landings.put(entry.getLong("column"), BlockPos.fromLong(entry.getLong("spot")));
+            landings.put(entry.getLong(COLUMN), BlockPos.fromLong(entry.getLong(SPOT)));
         }
     }
 
@@ -69,18 +73,18 @@ public final class SeamMemory extends WorldSavedData {
         NBTTagList holes = new NBTTagList();
         for (long key : entries) {
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setLong("column", key);
+            entry.setLong(COLUMN, key);
             holes.appendTag(entry);
         }
-        nbt.setTag("entries", holes);
+        nbt.setTag(ENTRIES, holes);
         NBTTagList spots = new NBTTagList();
         for (Map.Entry<Long, BlockPos> landing : landings.entrySet()) {
             NBTTagCompound entry = new NBTTagCompound();
-            entry.setLong("column", landing.getKey());
-            entry.setLong("spot", landing.getValue().toLong());
+            entry.setLong(COLUMN, landing.getKey());
+            entry.setLong(SPOT, landing.getValue().toLong());
             spots.appendTag(entry);
         }
-        nbt.setTag("landings", spots);
+        nbt.setTag(LANDINGS, spots);
         return nbt;
     }
 }

@@ -3,9 +3,10 @@ package mctmods.resourcedatapackloader.common.worldgen.surface;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,9 +40,9 @@ public final class ContentOceanFluid {
 
     @Nullable private static IBlockState resolve(@Nullable String options) {
         if (options == null || options.isEmpty()) { return null; }
-        JsonElement asked;
-        try { asked = new JsonParser().parse(options).getAsJsonObject().get("oceanFluid"); }
-        catch (RuntimeException notJson) { return null; }
+        JsonObject json = Json.parseObject(options);
+        if (json == null) { return null; }
+        JsonElement asked = json.get("oceanFluid");
         if (asked == null || !asked.isJsonPrimitive()) { return null; }
         String id = asked.getAsString().trim();
         if (id.isEmpty()) { return null; }

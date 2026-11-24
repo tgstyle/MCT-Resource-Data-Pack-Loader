@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -39,7 +40,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         this.rdpl$verticalViewDistance = dist;
         if (this.server.worlds != null) {
             for (WorldServer worldserver : this.server.worlds) {
-                if (worldserver != null && ((IRubicWorld) worldserver).rdpl$isRubicWorld()) {
+                if (GenHeights.rubic(worldserver)) {
                     ((PlayerCubeMap) worldserver.getPlayerChunkMap()).setPlayerViewDistance(viewDistance, dist);
                     ((IRubicEntityTracker) worldserver.getEntityTracker()).setVertViewDistance(dist);
                 }
@@ -54,12 +55,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "recreatePlayerEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/ChunkProviderServer;provideChunk(II)Lnet/minecraft/world/chunk/Chunk;")) private void rdpl$createPlayerChunk(EntityPlayerMP playerIn, int dimension, boolean conqueredEnd, CallbackInfoReturnable<EntityPlayerMP> cir) {
-        if (!((IRubicWorld) playerIn.world).rdpl$isRubicWorld()) { return; }
+        if (!GenHeights.rubic(playerIn.world)) { return; }
         for (int dCubeY = -8; dCubeY <= 8; dCubeY++) { ((IRubicWorld) playerIn.world).rdpl$getCubeFromBlockCoords(playerIn.getPosition().up(Coords.cubeToMinBlock(dCubeY))); }
     }
 
     @ModifyConstant(method = "recreatePlayerEntity", constant = @Constant(doubleValue = 256)) private double rdpl$getMaxHeight(double _256, EntityPlayerMP playerIn, int dimension, boolean conqueredEnd) {
         if (!playerIn.world.isBlockLoaded(new BlockPos(playerIn))) { return Double.NEGATIVE_INFINITY; }
-        return GenHeights.ceiling(playerIn.world, 256);
+        return GenHeights.ceiling(playerIn.world, CompatHandler.VANILLA_HEIGHT);
     }
 }

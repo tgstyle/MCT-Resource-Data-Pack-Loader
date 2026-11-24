@@ -263,14 +263,15 @@ public class Cube implements ICube {
         ContentOrders.plotSigns(this.world, this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
-        if (!this.world.isRemote) {
+        boolean server = !world.isRemote;
+        if (server) {
             ContentOwnership.onCubeLoad(this);
             ShieldIndexes.scanCube(this.world, this);
             RespawnEvents.onCubeLoad(this.world, this);
         }
         boolean raised = false;
         ExtendedBlockStorage blocks = storage == null || storage.isEmpty() ? null : storage;
-        boolean stale = isSurfaceTracked && !world.isRemote && surfaceIsStale(blocks);
+        boolean stale = isSurfaceTracked && server && surfaceIsStale(blocks);
         if (!isSurfaceTracked || stale) {
             IColumnInternal held = getColumn();
             int[] before = new int[256];
@@ -286,15 +287,13 @@ public class Cube implements ICube {
         CompatHandler.onCubeLoad(new ChunkEvent.Load(getColumn()));
     }
 
-    @SuppressWarnings("deprecation") private boolean surfaceIsStale(@Nullable ExtendedBlockStorage blocks) {
+    private boolean surfaceIsStale(@Nullable ExtendedBlockStorage blocks) {
         IHeightMap opindex = ((IColumn) column).getOpacityIndex();
         int miny = getCoords().getMinBlockY();
         for (int x = 0; x < Cube.SIZE; x++) {
             for (int z = 0; z < Cube.SIZE; z++) {
-                int own = miny - 1;
-                for (int y = Cube.SIZE - 1; blocks != null && y >= 0 && own < miny; y--) {
-                    if (blocks.get(x, y, z).getLightOpacity() != 0) { own = miny + y; }
-                }
+                int top = blocks == null ? -1 : Coords.topOpaqueLocalY(blocks, x, z);
+                int own = top < 0 ? miny - 1 : miny + top;
                 if (Math.max(opindex.getTopBlockYBelow(x, z, miny + Cube.SIZE), miny - 1) != own) { return true; }
             }
         }

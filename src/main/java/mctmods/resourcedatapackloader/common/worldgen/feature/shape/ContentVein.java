@@ -1,31 +1,26 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
-import java.util.List;
 import java.util.Random;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-public final class ContentVein implements IContentShape {
+public final class ContentVein extends ContentPlacedShape {
     private static final int MOST_BLOCKS = 42;
     private static final int SCATTER_BELOW = 4;
     private static final float HALF_TURN = (float) Math.PI;
-    private final ContentPlacer placer;
     private final AmountDef size;
     private final boolean sparse;
 
     public ContentVein(ContentPlacer placer, AmountDef size, boolean sparse) {
-        this.placer = placer;
+        super(placer);
         this.size = size;
         this.sparse = sparse;
     }
-
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         float turn = random.nextFloat() * HALF_TURN;
@@ -45,9 +40,9 @@ public final class ContentVein implements IContentShape {
             double along = (double) step / blocks;
             double girth = (MathHelper.sin(HALF_TURN * (float) along) + 1.0D) * (random.nextDouble() * blocks / 16.0D) + 1.0D;
             placed |= blob(world, random,
-                    lowX + (highX - lowX) * along,
-                    lowY + (highY - lowY) * along,
-                    lowZ + (highZ - lowZ) * along,
+                    MathUtil.lerp(along, lowX, highX),
+                    MathUtil.lerp(along, lowY, highY),
+                    MathUtil.lerp(along, lowZ, highZ),
                     girth * 0.5D);
         }
         return placed;
@@ -77,10 +72,7 @@ public final class ContentVein implements IContentShape {
         return placed;
     }
 
-    private static double away(int block, double center, double radius) {
-        double offset = (block + 0.5D - center) / radius;
-        return offset * offset;
-    }
+    private static double away(int block, double center, double radius) { return MathUtil.away(block, center, radius, 0.5D); }
 
     private boolean scatter(World world, Random random, int blocks, BlockPos origin) {
         boolean placed = placer.place(world, random, origin.getX(), origin.getY(), origin.getZ());

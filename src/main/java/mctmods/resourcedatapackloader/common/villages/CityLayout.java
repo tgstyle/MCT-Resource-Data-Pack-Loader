@@ -4,13 +4,17 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CityMapDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.world.Facings;
+import mctmods.resourcedatapackloader.common.util.world.StructureBoxes;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardGrade;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.IDrawnRoad;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityMaps;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Turns;
@@ -37,7 +41,7 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 
 public final class CityLayout {
-    private static final int WELL = 6;
+    static final int WELL = 6;
     private static final int ALLEY = 3;
     private static final int ENDS_HINTED = 1;
     private static final int LOW_END = 2;
@@ -55,7 +59,7 @@ public final class CityLayout {
 
     public static boolean drawn() { return drawn; }
 
-    public static String named() { return ContentControl.text(ContentControl.VILLAGES, "villageLayout", Config.worldgen.villageLayout).trim(); }
+    public static String named() { return ContentControl.text(ContentControl.VILLAGES, ContentControl.LAYOUT, Config.worldgen.villageLayout).trim(); }
 
     public static boolean wanted() { return !named().isEmpty(); }
 
@@ -69,8 +73,8 @@ public final class CityLayout {
             return false;
         }
         List<StructureComponent> components = held.getComponents();
-        if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return false; }
-        StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
+        StructureVillagePieces.Start startPiece = CityGrowth.startOf(components);
+        if (startPiece == null) { return false; }
         StructureBoundingBox well = startPiece.getBoundingBox();
         Rotation turn = turn(world, well);
         CityMapDef.Kind[][] grid = def.turned(turn);
@@ -185,7 +189,7 @@ public final class CityLayout {
                 EnumFacing facing = facingFor(grid, x, z);
                 BlockPos size = ContentVillages.plotSize(plot);
                 StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(0, roadY, 0, 0, 0, 0, size.getX(), size.getY(), size.getZ(), facing);
-                box.offset(cellX + cell / 2 - (box.minX + box.maxX) / 2, 0, cellZ + cell / 2 - (box.minZ + box.maxZ) / 2);
+                box.offset(cellX + cell / 2 - StructureBoxes.centerX(box), 0, cellZ + cell / 2 - StructureBoxes.centerZ(box));
                 if (BeardPlots.collides(components, box)) {
                     ContentLog.LOGGER.debug("City map {} cell {}, {} plot {} would overlap what is already laid, so the cell stays open", def.key, x, z, picked);
                     continue;
@@ -226,7 +230,7 @@ public final class CityLayout {
         for (int[] at : plazaCells) {
             int x = well.minX + (at[0] - anchor[0]) * cell;
             int z = well.minZ + (at[1] - anchor[1]) * cell;
-            boxes.add(new StructureBoundingBox(x, 0, z, x + WELL - 1, 255, z + WELL - 1));
+            boxes.add(new StructureBoundingBox(x, 0, z, x + WELL - 1, GenHeights.WORLD_TOP, z + WELL - 1));
         }
         return boxes;
     }
@@ -327,7 +331,7 @@ public final class CityLayout {
     public static int lift(World world, StructureComponent road, boolean alongX, int rowLeast, int acrossLeast, int acrossMost, int[] profile, boolean[] bridged, boolean[] held) {
         int[] lifts = road instanceof IDrawnRoad ? ((IDrawnRoad) road).rdpl$lifts() : new int[0];
         int lifted = 0;
-        int across = (acrossLeast + acrossMost) / 2;
+        int across = MathUtil.mid(acrossLeast, acrossMost);
         for (int g = 0; g + 4 < lifts.length; g += 5) {
             if (alongX ? across < lifts[g + 1] || across > lifts[g + 3] : across < lifts[g] || across > lifts[g + 2]) { continue; }
             int[] ground = BeardGrade.noiseProfile(world, true, lifts[g], lifts[g + 2], lifts[g + 1], lifts[g + 3]);
@@ -390,10 +394,8 @@ public final class CityLayout {
 
     private static StructureComponent road(List<StructureComponent> components, StructureVillagePieces.Start startPiece, Random rand, int from, int to, int center, int y, int width, boolean alongX) {
         int half = (width - 1) / 2;
-        StructureBoundingBox box = alongX
-                ? new StructureBoundingBox(from, y, center - half, to, y + 2, center + half)
-                : new StructureBoundingBox(center - half, y, from, center + half, y + 2, to);
-        StructureVillagePieces.Path road = new StructureVillagePieces.Path(startPiece, 0, rand, box, alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
+        StructureBoundingBox box = ContentBeard.span(alongX, from, to, center - half, center + half, y, y + 2);
+        StructureVillagePieces.Path road = new StructureVillagePieces.Path(startPiece, 0, rand, box, Facings.along(alongX, true));
         components.add(road);
         return road;
     }

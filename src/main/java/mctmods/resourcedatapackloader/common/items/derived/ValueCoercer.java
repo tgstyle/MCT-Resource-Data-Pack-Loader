@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.items.derived;
 
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 
+import com.google.common.primitives.Primitives;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -40,7 +41,7 @@ public final class ValueCoercer {
         if (element.isJsonArray()) { return array(element.getAsJsonArray(), type, generic, owner); }
         if (!element.isJsonPrimitive()) { return no(type); }
         JsonPrimitive primitive = element.getAsJsonPrimitive();
-        if (type.isPrimitive() || isBox(type)) { return number(primitive, type); }
+        if (Primitives.unwrap(type).isPrimitive()) { return number(primitive, type); }
         if (type == String.class) { return primitive.isString() ? yes(primitive.getAsString()) : no(type); }
         if (!primitive.isString()) { return no(type); }
         String text = primitive.getAsString();
@@ -90,11 +91,16 @@ public final class ValueCoercer {
     }
 
     private static Result entry(Class<?> type, String text) {
+        Object found = entryOf(type, text);
+        return found == null ? no(type) : yes(found);
+    }
+
+    @Nullable static Object entryOf(Class<?> type, String text) {
         IForgeRegistry<?> registry = registry(type);
-        ResourceLocation name = new ResourceLocation(text);
-        if (registry == null || !registry.containsKey(name)) { return no(type); }
-        Object found = registry.getValue(name);
-        return type.isInstance(found) ? yes(found) : no(type);
+        if (registry == null) { return null; }
+        ResourceLocation location = new ResourceLocation(text);
+        Object found = registry.containsKey(location) ? registry.getValue(location) : null;
+        return type.isInstance(found) ? found : null;
     }
 
     @Nullable @SuppressWarnings({"unchecked", "rawtypes"}) static IForgeRegistry<?> registry(Class<?> type) {
@@ -103,10 +109,6 @@ public final class ValueCoercer {
             if (found != null) { return found; }
         }
         return null;
-    }
-
-    private static boolean isBox(Class<?> type) {
-        return type == Boolean.class || type == Character.class || type == Byte.class || type == Short.class || type == Integer.class || type == Long.class || type == Float.class || type == Double.class;
     }
 
     private static Result number(JsonPrimitive json, Class<?> type) {

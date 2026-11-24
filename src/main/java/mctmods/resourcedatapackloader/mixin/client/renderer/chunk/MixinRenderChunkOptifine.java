@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.client.renderer.chunk;
 
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.core.integration.optifine.IOptifineRenderChunk;
 
 import net.minecraft.client.renderer.RenderGlobal;
@@ -34,11 +35,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private ICube rdpl$cube;
     @Unique private boolean rdpl$isRubic;
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo cbi) { this.rdpl$isRubic = ((IRubicWorld) worldIn).rdpl$isRubicWorld(); }
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo cbi) { this.rdpl$isRubic = GenHeights.rubic(worldIn); }
 
     @Dynamic @Inject(method = "setPosition", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;chunk:Lnet/minecraft/world/chunk/Chunk;", opcode = Opcodes.PUTFIELD, remap = false)) private void rdpl$onSetChunk(int x, int y, int z, CallbackInfo cbi) {
         this.rdpl$cube = null;
-        this.rdpl$isRubic = ((IRubicWorld) world).rdpl$isRubicWorld();
+        this.rdpl$isRubic = GenHeights.rubic(world);
         this.rdpl$regionY = y & ~255;
     }
 
@@ -49,8 +50,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         int down = EnumFacing.DOWN.ordinal();
         RenderChunk upNeighbor = this.renderChunkNeighbours[up];
         RenderChunk downNeighbor = this.renderChunkNeighbours[down];
-        this.renderChunkNeighboursValid[up] = upNeighbor.getPosition().getY() == y + 16 ? upNeighbor : null;
-        this.renderChunkNeighboursValid[down] = downNeighbor.getPosition().getY() == y - 16 ? downNeighbor : null;
+        this.renderChunkNeighboursValid[up] = upNeighbor.getPosition().getY() == y + ICube.SIZE ? upNeighbor : null;
+        this.renderChunkNeighboursValid[down] = downNeighbor.getPosition().getY() == y - ICube.SIZE ? downNeighbor : null;
     }
 
     public ICube rubic$getCube() { return this.rdpl$getCube(this.position); }

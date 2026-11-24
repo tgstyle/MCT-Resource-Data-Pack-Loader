@@ -41,7 +41,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
@@ -113,7 +112,7 @@ public final class ContentRaids {
 
     public static boolean isBell(IBlockState state) { return state.getBlock() instanceof ContentBellBlock || BELLS.contains(state.getBlock()); }
 
-    public static boolean answersBell(EntityLivingBase living) { return living.getEntityData().hasKey(ActiveRaid.RAIDER) || living instanceof AbstractIllager || living instanceof EntityWitch; }
+    public static boolean answersBell(EntityLivingBase living) { return ActiveRaid.isRaider(living) || living instanceof AbstractIllager || living instanceof EntityWitch; }
 
     public static void glow(EntityLivingBase raider) { raider.addPotionEffect(new PotionEffect(MobEffects.GLOWING, GLOW_TICKS)); }
 
@@ -168,7 +167,7 @@ public final class ContentRaids {
 
     private static boolean rolled(WorldServer world, EntityPlayer player, RaidDef def) {
         BaseDef base = def.base();
-        if (base == null || base.chance >= 1.0D || !def.target().contains(RaidTarget.Kind.BASE) && !def.target().contains(RaidTarget.Kind.PLAYER)) { return true; }
+        if (base == null || base.chance >= 1.0D || !def.guarded()) { return true; }
         return ContentRaidSwitch.roll(world, player, def);
     }
 
@@ -196,7 +195,7 @@ public final class ContentRaids {
         living.setAttackTarget(null);
     }
 
-    private static boolean raider(@Nullable Entity entity) { return entity != null && !entity.world.isRemote && entity.getEntityData().hasKey(ActiveRaid.RAIDER); }
+    private static boolean raider(@Nullable Entity entity) { return entity != null && !entity.world.isRemote && ActiveRaid.isRaider(entity); }
 
     @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
         if (event.getWorld().isRemote || DEFS.isEmpty() && !belled) { return; }
@@ -205,18 +204,16 @@ public final class ContentRaids {
             ((EntityVillager) entity).tasks.addTask(1, new HideIndoorsGoal((EntityVillager) entity));
             return;
         }
-        if (DEFS.isEmpty() || !(entity instanceof EntityCreature) || !entity.getEntityData().hasKey(ActiveRaid.RAIDER)) { return; }
+        if (DEFS.isEmpty() || !(entity instanceof EntityCreature) || !ActiveRaid.isRaider(entity)) { return; }
         EntityCreature raider = (EntityCreature) entity;
-        NBTTagCompound tag = raider.getEntityData();
-        ActiveRaid raid = RaidStorage.get((WorldServer) event.getWorld()).raidOf(NBTUtil.getPosFromTag(tag.getCompoundTag(ActiveRaid.RAIDER)));
+        ActiveRaid raid = ActiveRaid.of(raider);
         if (raid == null) {
-            tag.removeTag(ActiveRaid.RAIDER);
+            ActiveRaid.untagRaider(raider);
             return;
         }
         raider.tasks.addTask(1, new RaidBreakDoorGoal(raider));
         raider.tasks.addTask(4, new RaidMarchGoal(raider));
-        boolean guarded = raid.kind() == RaidTarget.Kind.BASE || raid.kind() == RaidTarget.Kind.PLAYER;
-        raider.targetTasks.addTask(3, guarded ? new RaidTargetGoal(raider) : new EntityAINearestAttackableTarget<>(raider, EntityPlayer.class, true));
+        raider.targetTasks.addTask(3, raid.kind().guarded() ? new RaidTargetGoal(raider) : new EntityAINearestAttackableTarget<>(raider, EntityPlayer.class, true));
         raider.targetTasks.addTask(4, new EntityAINearestAttackableTarget<>(raider, EntityVillager.class, false));
         raider.targetTasks.addTask(4, new EntityAINearestAttackableTarget<>(raider, EntityIronGolem.class, true));
     }

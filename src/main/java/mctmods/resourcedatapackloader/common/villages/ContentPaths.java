@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.villages;
 
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
+import mctmods.resourcedatapackloader.common.util.ToolUse;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import javax.annotation.Nullable;
@@ -9,8 +10,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemHoe;
-import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
@@ -38,26 +37,22 @@ public final class ContentPaths {
         EntityPlayer player = event.getEntityPlayer();
         IBlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (shovel(held)) {
+        if (ToolUse.isShovel(held)) {
             if (!Config.content.shovelPaths) { return; }
             if (player.isSneaking() && block == Blocks.GRASS_PATH) {
                 apply(event, world, pos, face, player, held, named(Config.content.shovelPathReverts, Blocks.DIRT), SoundEvents.ITEM_SHOVEL_FLATTEN);
                 return;
             }
-            if (ContentSpawning.lacks("path", block) || blocked(world, pos)) { return; }
+            if (ContentSpawning.lacks(ContentSpawning.PATH, block) || blocked(world, pos)) { return; }
             apply(event, world, pos, face, player, held, named(Config.content.shovelPathBecomes, Blocks.GRASS_PATH), SoundEvents.ITEM_SHOVEL_FLATTEN);
             return;
         }
-        if (!hoe(held) || !Config.content.hoeTilling) { return; }
-        if (ContentSpawning.lacks("till", block) || blocked(world, pos)) { return; }
+        if (!ToolUse.isHoe(held) || !Config.content.hoeTilling) { return; }
+        if (ContentSpawning.lacks(ContentSpawning.TILL, block) || blocked(world, pos)) { return; }
         apply(event, world, pos, face, player, held, named(Config.content.hoeTillsInto, Blocks.FARMLAND), SoundEvents.ITEM_HOE_TILL);
     }
 
     private static boolean blocked(World world, BlockPos pos) { return !Config.tweaks.lenientPaths && !world.isAirBlock(pos.up()); }
-
-    private static boolean shovel(ItemStack held) { return held.getItem() instanceof ItemSpade || held.getItem().getToolClasses(held).contains("shovel"); }
-
-    private static boolean hoe(ItemStack held) { return held.getItem() instanceof ItemHoe || held.getItem().getToolClasses(held).contains("hoe"); }
 
     private static void apply(PlayerInteractEvent.RightClickBlock event, World world, BlockPos pos, EnumFacing face, EntityPlayer player, ItemStack held, @Nullable Block result, SoundEvent sound) {
         if (result == null) { return; }

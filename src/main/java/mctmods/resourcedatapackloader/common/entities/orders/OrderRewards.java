@@ -40,7 +40,7 @@ final class OrderRewards {
                 continue;
             }
             ScorePlayerTeam side = ContentOrders.teamOf(player);
-            if (side != null && side.getName().equals(order.team)) { earners.add(player); }
+            if (ContentOrders.onTeam(side, order.team)) { earners.add(player); }
         }
         return earners;
     }
