@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -30,9 +31,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.animal.rabbit.Rabbit;
@@ -169,8 +172,13 @@ public final class ContentEntityApply {
     }
 
     private static void climber(Mob mob, boolean climbs) {
-        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { mob.navigation = new WallClimberNavigation(mob, mob.level()); }
-        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { mob.navigation = new GroundPathNavigation(mob, mob.level()); }
+        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { steer(mob, new WallClimberNavigation(mob, mob.level()), null); }
+        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { steer(mob, new GroundPathNavigation(mob, mob.level()), null); }
+    }
+
+    private static void steer(Mob mob, @Nullable PathNavigation navigation, @Nullable MoveControl move) {
+        if (navigation != null) { mob.navigation = navigation; }
+        if (move != null) { mob.moveControl = move; }
     }
 
     private static void walker(Mob mob, EntityVariantDef def) {
@@ -178,7 +186,7 @@ public final class ContentEntityApply {
             ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.key(), def.base());
             return;
         }
-        mob.moveControl = Compat.moveControl(mob);
+        steer(mob, null, Compat.moveControl(mob));
     }
 
     private static void navigation(Mob mob, EntityVariantDef def) {
@@ -188,17 +196,13 @@ public final class ContentEntityApply {
         }
         else if (def.physics().amphibious() && mob.getNavigation() instanceof GroundPathNavigation ground) { ground.setCanFloat(true); }
         if (def.combat().swoops()) {
-            mob.navigation = new FlyingPathNavigation(mob, mob.level());
-            mob.moveControl = Compat.swoopMoveControl(mob);
+            steer(mob, new FlyingPathNavigation(mob, mob.level()), Compat.swoopMoveControl(mob));
         }
         if (def.physics().walks()) { walker(mob, def); }
         if (def.physics().breathesUnderwater() || def.physics().swims()) { ContentTasks.drop(mob.goalSelector, FloatGoal.class); }
     }
 
-    private static void swimmer(Mob mob) {
-        mob.navigation = new WaterBoundPathNavigation(mob, mob.level());
-        mob.moveControl = new SwimmingMoveControl(mob);
-    }
+    private static void swimmer(Mob mob) { steer(mob, new WaterBoundPathNavigation(mob, mob.level()), new SwimmingMoveControl(mob)); }
 
     public static void amphibious(Mob mob) {
         boolean wet = mob.isInWater();
@@ -209,7 +213,6 @@ public final class ContentEntityApply {
         }
         GroundPathNavigation ground = new GroundPathNavigation(mob, mob.level());
         ground.setCanFloat(true);
-        mob.navigation = ground;
-        mob.moveControl = Compat.moveControl(mob);
+        steer(mob, ground, Compat.moveControl(mob));
     }
 }

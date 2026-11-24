@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.plant;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 
 import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
@@ -27,9 +28,7 @@ public final class ContentVineBlock extends VineBlock {
         if (growth.maxHeight() <= 1) { return; }
         BlockPos below = pos.below();
         if (!level.isEmptyBlock(below)) { return; }
-        int hanging = 1;
-        while (level.getBlockState(pos.above(hanging)).is(this)) { hanging++; }
-        if (hanging >= growth.maxHeight()) { return; }
+        if (TallPlants.run(level, pos, this, Direction.UP) >= growth.maxHeight()) { return; }
         level.setBlock(below, state, Block.UPDATE_CLIENTS);
     }
 

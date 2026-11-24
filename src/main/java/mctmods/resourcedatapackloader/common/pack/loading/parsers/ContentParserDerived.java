@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
 public final class ContentParserDerived {
-    private static final List<String> NEEDS_RDPL_CLASS = List.of("type", "variants", "runs", "script", "cooldown", "rolls", "rollStore", "locates", "sleepingBag", "firework", "container", "upgrade", "portway", "eat", "alwaysEdible", "useDuration", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "passesTurn", "record", "seasonClock");
+    private static final List<String> NEEDS_RDPL_CLASS = List.of("type", "variants", Json.RUNS, "script", "cooldown", "rolls", "rollStore", "locates", "sleepingBag", "firework", "container", "upgrade", "portway", "eat", "alwaysEdible", "useDuration", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "passesTurn", "record", "seasonClock");
 
     private ContentParserDerived() {}
 

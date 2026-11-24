@@ -8,15 +8,14 @@ import java.util.List;
 public final class NoiseParity {
     private static final double LAYER_DEVIATION = 0.2702247831245211;
     private static final double THIRD = 0.3333333333333333;
-    private static final String END_ISLANDS = "{\"type\":\"minecraft:cache\",\"input\":{\"type\":\"minecraft:max\",\"left\":{\"type\":\"minecraft:slice\",\"axis\":\"y\",\"coordinate\":0,\"input\":{\"type\":\"minecraft:mul\",\"left\":{\"type\":\"minecraft:sub\",\"left\":{\"type\":\"minecraft:clamp\",\"input\":{\"type\":\"minecraft:sub\",\"left\":100.0,\"right\":{\"type\":\"minecraft:distance_to_point\",\"metric\":\"euclidean\",\"point\":[0,0,0]}},\"max\":80.0,\"min\":-100.0},\"right\":8.0},\"right\":0.0078125}},\"right\":{\"type\":\"minecraft:end_outer_islands\"}}}";
+    private static final JsonObject END_ISLANDS_FORM = JsonParser.parseString("{\"type\":\"minecraft:cache\",\"input\":{\"type\":\"minecraft:max\",\"left\":{\"type\":\"minecraft:slice\",\"axis\":\"y\",\"coordinate\":0,\"input\":{\"type\":\"minecraft:mul\",\"left\":{\"type\":\"minecraft:sub\",\"left\":{\"type\":\"minecraft:clamp\",\"input\":{\"type\":\"minecraft:sub\",\"left\":100.0,\"right\":{\"type\":\"minecraft:distance_to_point\",\"metric\":\"euclidean\",\"point\":[0,0,0]}},\"max\":80.0,\"min\":-100.0},\"right\":8.0},\"right\":0.0078125}},\"right\":{\"type\":\"minecraft:end_outer_islands\"}}}").getAsJsonObject();
 
     private NoiseParity() {}
 
-    public static JsonObject endIslands() { return JsonParser.parseString(END_ISLANDS).getAsJsonObject(); }
+    public static JsonObject endIslands() { return END_ISLANDS_FORM.deepCopy(); }
 
     public static boolean isEndIslands(JsonElement element) {
-        JsonObject form = endIslands();
-        return element.equals(form) || element.equals(form.get("input")) || element.isJsonPrimitive() && "minecraft:end/islands".equals(element.getAsString());
+        return element.equals(END_ISLANDS_FORM) || element.equals(END_ISLANDS_FORM.get("input")) || element.isJsonPrimitive() && "minecraft:end/islands".equals(element.getAsString());
     }
 
     public static double baseAmplitude(List<Double> modifiers) {

@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTr
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import java.util.HashSet;
@@ -108,7 +109,7 @@ public final class ContentRuleSwitch {
         return new RuleSwitchDef(dayLength, weather, speed, difficulty, localDifficulty, sleep, wakeAt, snow);
     }
 
-    private static String text(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? Settings.lower(value.getAsString()) : ""; }
+    private static String text(JsonElement value) { return Json.isString(value) ? Settings.lower(value.getAsString()) : ""; }
 
     @Nullable private static Boolean flag(String owner, String key, JsonElement value) {
         if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return value.getAsBoolean(); }
@@ -170,7 +171,7 @@ public final class ContentRuleSwitch {
         }
         Set<Identifier> blocks = new HashSet<>();
         for (JsonElement entry : value.getAsJsonArray()) {
-            Identifier id = entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString() ? Identifier.tryParse(Settings.lower(entry.getAsString())) : null;
+            Identifier id = Json.isString(entry) ? Identifier.tryParse(Settings.lower(entry.getAsString())) : null;
             if (id == null) {
                 ContentLog.LOGGER.error("{} gives rules.snow.meltBlocks an entry {} that is not a block id, ignoring it", owner, entry);
                 continue;

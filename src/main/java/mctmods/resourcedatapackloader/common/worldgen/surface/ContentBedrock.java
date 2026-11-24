@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
 import mctmods.resourcedatapackloader.common.util.worldgen.WorldgenJson;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -151,7 +152,7 @@ public final class ContentBedrock {
         return named != null ? named : rules.configured();
     }
 
-    public static String bedrockToken() { return "bedrock:" + layers() + (roofWanted() ? ":roof" : "") + "#" + Config.worldgen.flatBedrockRetrogenKey(); }
+    public static String bedrockToken() { return ContentRetrogen.BEDROCK_PREFIX + layers() + (roofWanted() ? ":roof" : "") + "#" + Config.worldgen.flatBedrockRetrogenKey(); }
 
     public static boolean bedrockRetrogen() { return bedrockAsked() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen()); }
 

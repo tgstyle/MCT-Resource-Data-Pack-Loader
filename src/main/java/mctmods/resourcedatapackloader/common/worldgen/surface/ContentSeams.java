@@ -165,14 +165,15 @@ public final class ContentSeams {
         for (int y = floor + 1; y <= highest; y++) {
             int feet = y;
             BlockPos found = ring(x, feet, z, 0, RESCUE_REACH, (atX, atZ) -> {
-                BlockState below = level.getBlockState(at.set(atX, feet - 1, atZ));
-                if (below.isAir() || !below.getFluidState().isEmpty()) { return false; }
+                if (!ground(level.getBlockState(at.set(atX, feet - 1, atZ)))) { return false; }
                 return level.isEmptyBlock(at.set(atX, feet, atZ)) && level.isEmptyBlock(at.set(atX, feet + 1, atZ));
             });
             if (found != null) { return found; }
         }
         return null;
     }
+
+    private static boolean ground(BlockState under) { return !under.isAir() && under.getFluidState().isEmpty(); }
 
     @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, ISpot spot) {
         for (int reach = least; reach <= most; reach++) {
@@ -295,8 +296,7 @@ public final class ContentSeams {
 
         private boolean grounded(ServerLevel level, BlockPos.MutableBlockPos at, int blockX, int feet, int blockZ) {
             if (feet < floor + 1 || feet > ceiling - 1) { return false; }
-            BlockState under = level.getBlockState(at.set(blockX, feet - 1, blockZ));
-            return !under.isAir() && under.getFluidState().isEmpty();
+            return ground(level.getBlockState(at.set(blockX, feet - 1, blockZ)));
         }
     }
 

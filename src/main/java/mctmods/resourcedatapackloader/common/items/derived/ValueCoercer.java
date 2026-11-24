@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -19,12 +21,15 @@ import javax.annotation.Nullable;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
@@ -55,6 +60,7 @@ public final class ValueCoercer {
         if (!primitive.isString()) { return no(type); }
         String text = primitive.getAsString();
         if (type.isEnum()) { return named(type, text); }
+        if (type == ToolMaterial.class && text.indexOf(':') < 0) { return tool(text); }
         if (type == Identifier.class) {
             Identifier id = Identifier.tryParse(text);
             return id == null ? no(type) : yes(id);
@@ -102,12 +108,35 @@ public final class ValueCoercer {
         return no(type);
     }
 
+    private static Result tool(String text) {
+        for (Field field : ToolMaterial.class.getFields()) {
+            if (field.getType() == ToolMaterial.class && Modifier.isStatic(field.getModifiers()) && field.getName().equalsIgnoreCase(text.trim())) {
+                try { return yes(field.get(null)); }
+                catch (IllegalAccessException e) { return no(ToolMaterial.class); }
+            }
+        }
+        return no(ToolMaterial.class);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"}) @Nullable static TagKey<?> tag(@Nullable Type generic, @Nullable Object current, Identifier id) {
+        if (generic instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments()[0] instanceof Class<?> element) {
+            Registry<?> registry = registry(element);
+            if (registry != null) { return TagKey.create((ResourceKey) registry.key(), id); }
+        }
+        return current instanceof TagKey<?> key ? TagKey.create((ResourceKey) key.registry(), id) : null;
+    }
+
     private static Result entry(Class<?> type, String text) {
+        Object found = entryOf(type, text);
+        return found == null ? no(type) : yes(found);
+    }
+
+    @Nullable static Object entryOf(Class<?> type, String text) {
         Registry<?> registry = registry(type);
         Identifier name = Identifier.tryParse(text);
-        if (registry == null || name == null) { return no(type); }
+        if (registry == null || name == null) { return null; }
         Object found = registry.getOptional(name).orElse(null);
-        return type.isInstance(found) ? yes(found) : no(type);
+        return type.isInstance(found) ? found : null;
     }
 
     @Nullable static Registry<?> registry(Class<?> type) {

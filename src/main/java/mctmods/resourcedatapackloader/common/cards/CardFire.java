@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.cards;
 
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -13,7 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class CardFire {
-    private static final Map<UUID, Set<String>> SESSION = new HashMap<>();
+    private static final Map<UUID, Set<String>> SESSION = PlayerLogout.track(new HashMap<>());
 
     private CardFire() {}
 
@@ -30,16 +31,14 @@ public final class CardFire {
     public static void builtin(String key, ServerPlayer subject, CardLook look) {
         CardRule rule = CardRules.builtin(key);
         if (rule == null || blocked(rule, subject)) { return; }
-        sets(rule, subject);
-        CardSend.dress(look, rule, subject);
-        CardSend.send(look, subject);
-        runs(rule, subject);
+        present(rule, subject, look, Map.of());
     }
 
     public static void show(CardRule rule, ServerPlayer subject) { show(rule, subject, Map.of()); }
 
-    public static void show(CardRule rule, ServerPlayer subject, Map<String, String> args) {
-        CardLook look = CardLook.plain();
+    public static void show(CardRule rule, ServerPlayer subject, Map<String, String> args) { present(rule, subject, CardLook.plain(), args); }
+
+    private static void present(CardRule rule, ServerPlayer subject, CardLook look, Map<String, String> args) {
         sets(rule, subject);
         CardSend.dress(look, rule, subject, args);
         CardSend.send(look, subject);
@@ -79,6 +78,4 @@ public final class CardFire {
         CardScan.startClock(player);
         CardSend.release(player);
     }
-
-    static void forget(UUID player) { SESSION.remove(player); }
 }

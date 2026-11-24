@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city;
 
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.CityRuns;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Runs;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
@@ -16,7 +16,6 @@ public final class CityGrade {
     private static final int CUT_REACH = 2;
     private static final int SPAN_MOST = 12;
     private static final int DECK_LEAST = 4;
-    private static final int ROAD_GAP = 12;
 
     private CityGrade() {}
 
@@ -67,7 +66,7 @@ public final class CityGrade {
             }
             int gapEnd = gap;
             while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
-            if (gap > 0 && gapEnd < rows && gapEnd - gap <= ROAD_GAP) {
+            if (gap > 0 && gapEnd < rows && gapEnd - gap <= SPAN_MOST) {
                 int fromY = profile[gap - 1];
                 int toY = profile[gapEnd];
                 for (int row = gap; row < gapEnd; row++) { profile[row] = fromY + (toY - fromY) * (row - gap + 1) / (gapEnd - gap + 1); }
@@ -130,7 +129,7 @@ public final class CityGrade {
                 at++;
                 continue;
             }
-            int end = CityRuns.end(under, at);
+            int end = Runs.end(k -> under[k], at, under.length);
             boolean spanned = at > 0 && end < rows - 1 && end - at < SPAN_MOST;
             for (int row = at; row <= end; row++) { open[row] = !spanned && !valued[row]; }
             at = end + 1;
@@ -211,7 +210,7 @@ public final class CityGrade {
                 at++;
                 continue;
             }
-            int end = CityRuns.end(bridged, at);
+            int end = Runs.end(k -> bridged[k], at, bridged.length);
             int mine = 0;
             for (int row = at; row <= end; row++) { mine += own[row] ? 1 : 0; }
             if (mine > 0 && end - at + 1 < DECK_LEAST) {
@@ -493,7 +492,7 @@ public final class CityGrade {
                 i++;
                 continue;
             }
-            int end = CityRuns.end(bridged, i);
+            int end = Runs.end(k -> bridged[k], i, bridged.length);
             int first = i;
             for (; first <= end && landed[first]; first++) {
                 bridged[first] = false;
@@ -528,16 +527,9 @@ public final class CityGrade {
     }
 
     public static void dropShortRuns(boolean[] tunnels) {
-        int from = 0;
-        while (from < tunnels.length) {
-            if (!tunnels[from]) {
-                from++;
-                continue;
-            }
-            int to = CityRuns.end(tunnels, from);
+        Runs.each(tunnels, (from, to) -> {
             if (to - from + 1 < TUNNEL_LEAST) { Arrays.fill(tunnels, from, to + 1, false); }
-            from = to + 1;
-        }
+        });
     }
 
     public static boolean[] frameRows(boolean[] decking, int least, int run) {
@@ -545,7 +537,7 @@ public final class CityGrade {
         boolean[] frames = new boolean[rows];
         for (int i = 0; i < rows; i++) {
             if (!decking[i]) { continue; }
-            int end = CityRuns.end(decking, i);
+            int end = Runs.end(k -> decking[k], i, decking.length);
             int span = end - i + 1;
             if (span >= least) {
                 int count = Math.max(1, span / run);

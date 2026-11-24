@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.board;
 
+import mctmods.resourcedatapackloader.core.util.math.Bits;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,11 +45,11 @@ public final class BoardState {
 
     public BoardState copy() { return new BoardState(this); }
 
-    static int cell(int kind, int side, boolean moved) { return kind + 1 | side << 8 | (moved ? MOVED : 0); }
+    static int cell(int kind, int side, boolean moved) { return Bits.packUnsignedToInt(kind + 1, 8, 0) | Bits.packUnsignedToInt(side, 1, 8) | (moved ? MOVED : 0); }
 
-    public static int kind(int cell) { return (cell & 0xFF) - 1; }
+    public static int kind(int cell) { return Bits.unpackUnsigned(cell, 8, 0) - 1; }
 
-    public static int side(int cell) { return cell >> 8 & 1; }
+    public static int side(int cell) { return Bits.unpackUnsigned(cell, 1, 8); }
 
     private static boolean moved(int cell) { return (cell & MOVED) != 0; }
 
@@ -55,15 +57,17 @@ public final class BoardState {
 
     public int size() { return cells.length; }
 
-    public static int from(int move) { return move & 0xFF; }
+    public static int from(int move) { return Bits.unpackUnsigned(move, 8, 0); }
 
-    public static int to(int move) { return move >> 8 & 0xFF; }
+    public static int to(int move) { return Bits.unpackUnsigned(move, 8, 8); }
 
-    public static int promotion(int move) { return (move >> 16 & 0xFF) - 1; }
+    public static int promotion(int move) { return Bits.unpackUnsigned(move, 8, 16) - 1; }
 
-    private static int flags(int move) { return move >>> 24; }
+    private static int flags(int move) { return Bits.unpackUnsigned(move, 8, 24); }
 
-    private static int move(int from, int to, int promotion, int flags) { return from | to << 8 | promotion + 1 << 16 | flags << 24; }
+    private static int move(int from, int to, int promotion, int flags) {
+        return Bits.packUnsignedToInt(from, 8, 0) | Bits.packUnsignedToInt(to, 8, 8) | Bits.packUnsignedToInt(promotion + 1, 8, 16) | Bits.packUnsignedToInt(flags, 8, 24);
+    }
 
     public static boolean captures(int move) { return (flags(move) & CAPTURE) != 0; }
 
@@ -140,7 +144,7 @@ public final class BoardState {
 
     private void add(List<Integer> found, int from, int to, int held, BoardPiece piece, int flags) {
         int rank = to / rules.files;
-        boolean last = side(held) == 0 ? rank == rules.ranks - 1 : rank == 0;
+        boolean last = rules.advance(side(held), rank) == rules.ranks - 1;
         if (!last || piece.promotes.length == 0) {
             found.add(move(from, to, -1, flags));
             return;

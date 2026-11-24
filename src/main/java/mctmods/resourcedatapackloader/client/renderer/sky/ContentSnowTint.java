@@ -1,10 +1,8 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
-import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.BiomeDef;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 
 import java.util.List;
@@ -33,9 +31,7 @@ public final class ContentSnowTint {
     public static boolean tints(BlockState state) { return wanted && (state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK)); }
 
     static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.available()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
-        for (SkyLookDef look : ContentEnvironments.looks()) { if (look.snowColor() != SkyLookDef.UNSET) { return true; } }
-        return ContentBiomes.tintsSnow();
+        return ContentEnvironments.anyLook(look -> look.snowColor() != SkyLookDef.UNSET) || ContentBiomes.tintsSnow();
     }
 
     public static void resolvers(RegisterColorHandlersEvent.ColorResolvers event) {

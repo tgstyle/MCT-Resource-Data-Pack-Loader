@@ -54,13 +54,7 @@ public final class ContentSeasonTint {
     }
 
     private static boolean compute() {
-        for (DimensionDef def : ContentDimensions.available()) {
-            if (def.look() != null && def.look().tintsPlants()) { return true; }
-        }
-        for (SkyLookDef look : ContentEnvironments.looks()) {
-            if (look.tintsPlants()) { return true; }
-        }
-        return false;
+        return ContentEnvironments.anyLook(SkyLookDef::tintsPlants);
     }
 
     public static void changed() { dirty = true; }
@@ -124,9 +118,9 @@ public final class ContentSeasonTint {
     }
 
     private static int multiply(int color, int tint) {
-        int red = (color >> 16 & 255) * (tint >> 16 & 255) / 255;
-        int green = (color >> 8 & 255) * (tint >> 8 & 255) / 255;
-        int blue = (color & 255) * (tint & 255) / 255;
+        int red = ARGB.red(color) * ARGB.red(tint) / 255;
+        int green = ARGB.green(color) * ARGB.green(tint) / 255;
+        int blue = ARGB.blue(color) * ARGB.blue(tint) / 255;
         return color & 0xFF000000 | red << 16 | green << 8 | blue;
     }
 

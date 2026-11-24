@@ -18,17 +18,19 @@ public record FilterDef(List<Entry> entries) {
         if (entries.isEmpty()) { return Integer.MAX_VALUE; }
         for (Entry entry : entries) {
             if (!entry.matches(stack)) { continue; }
-            return entry.amount <= 0 ? Integer.MAX_VALUE : Math.max(0, entry.amount - entry.held(held));
+            return roomFor(entry, entry.held(held));
         }
         return 0;
     }
+
+    private static int roomFor(Entry entry, int held) { return entry.amount <= 0 ? Integer.MAX_VALUE : Math.max(0, entry.amount - held); }
 
     public int room(Fluid fluid, int held) {
         if (entries.isEmpty()) { return Integer.MAX_VALUE; }
         Identifier name = BuiltInRegistries.FLUID.getKey(fluid);
         for (Entry entry : entries) {
             if (entry.fluid == null || !entry.fluid.equals(name)) { continue; }
-            return entry.amount <= 0 ? Integer.MAX_VALUE : Math.max(0, entry.amount - held);
+            return roomFor(entry, held);
         }
         return 0;
     }

@@ -20,6 +20,22 @@ public final class RespawnInstance {
     public static final int PLOT = 3;
     public static final int DUNGEON = 4;
     private static final String[] KINDS = {"imprint", "map", "cave", "plot", "dungeon"};
+    private static final String ID_KEY = "id";
+    private static final String KIND_KEY = "kind";
+    private static final String DEF_KEY = "def";
+    private static final String TPL_KEY = "tpl";
+    private static final String POS_KEY = "pos";
+    private static final String ROW_POS_KEY = "pos";
+    private static final String ROT_KEY = "rot";
+    private static final String MIR_KEY = "mir";
+    private static final String INTEG_KEY = "integ";
+    private static final String SEED_KEY = "seed";
+    private static final String BOX_KEY = "box";
+    private static final String LAST_KEY = "last";
+    private static final String LOOT_KEY = "loot";
+    private static final String TABLE_KEY = "table";
+    private static final String SPAWN_KEY = "spawn";
+    private static final String NBT_KEY = "nbt";
     public final String id;
     public final int kind;
     public final String def;
@@ -66,51 +82,51 @@ public final class RespawnInstance {
 
     public CompoundTag write() {
         CompoundTag tag = new CompoundTag();
-        tag.putString("id", id);
-        tag.putByte("kind", (byte) kind);
-        tag.putString("def", def);
-        tag.putString("tpl", tpl);
-        tag.putIntArray("pos", new int[] {pos.getX(), pos.getY(), pos.getZ()});
-        tag.putByte("rot", (byte) rotation.ordinal());
-        tag.putByte("mir", (byte) mirror.ordinal());
-        tag.putByte("integ", (byte) integrity);
-        tag.putLong("seed", seed);
-        tag.putIntArray("box", box.clone());
-        tag.putLong("last", last);
+        tag.putString(ID_KEY, id);
+        tag.putByte(KIND_KEY, (byte) kind);
+        tag.putString(DEF_KEY, def);
+        tag.putString(TPL_KEY, tpl);
+        tag.putIntArray(POS_KEY, new int[] {pos.getX(), pos.getY(), pos.getZ()});
+        tag.putByte(ROT_KEY, (byte) rotation.ordinal());
+        tag.putByte(MIR_KEY, (byte) mirror.ordinal());
+        tag.putByte(INTEG_KEY, (byte) integrity);
+        tag.putLong(SEED_KEY, seed);
+        tag.putIntArray(BOX_KEY, box.clone());
+        tag.putLong(LAST_KEY, last);
         ListTag lootRows = new ListTag();
         for (Map.Entry<Long, String> row : loot.entrySet()) {
             CompoundTag entry = new CompoundTag();
-            entry.putLong("pos", row.getKey());
-            entry.putString("table", row.getValue());
+            entry.putLong(ROW_POS_KEY, row.getKey());
+            entry.putString(TABLE_KEY, row.getValue());
             lootRows.add(entry);
         }
-        tag.put("loot", lootRows);
+        tag.put(LOOT_KEY, lootRows);
         ListTag spawnRows = new ListTag();
         for (Map.Entry<Long, CompoundTag> row : spawn.entrySet()) {
             CompoundTag entry = new CompoundTag();
-            entry.putLong("pos", row.getKey());
-            entry.put("nbt", row.getValue().copy());
+            entry.putLong(ROW_POS_KEY, row.getKey());
+            entry.put(NBT_KEY, row.getValue().copy());
             spawnRows.add(entry);
         }
-        tag.put("spawn", spawnRows);
+        tag.put(SPAWN_KEY, spawnRows);
         return tag;
     }
 
     @Nullable public static RespawnInstance read(CompoundTag tag) {
-        int kind = tag.getByteOr("kind", (byte) 0);
-        int[] at = tag.getIntArray("pos").orElse(new int[0]);
-        int[] area = tag.getIntArray("box").orElse(new int[0]);
+        int kind = tag.getByteOr(KIND_KEY, (byte) 0);
+        int[] at = tag.getIntArray(POS_KEY).orElse(new int[0]);
+        int[] area = tag.getIntArray(BOX_KEY).orElse(new int[0]);
         if (kind < 0 || kind >= KINDS.length || at.length != 3 || area.length != 6) { return null; }
         Rotation[] turns = Rotation.values();
         Mirror[] flips = Mirror.values();
-        Rotation rotation = turns[Mth.clamp(tag.getByteOr("rot", (byte) 0), 0, turns.length - 1)];
-        Mirror mirror = flips[Mth.clamp(tag.getByteOr("mir", (byte) 0), 0, flips.length - 1)];
-        RespawnInstance made = new RespawnInstance(kind, tag.getStringOr("def", ""), tag.getStringOr("tpl", ""), new BlockPos(at[0], at[1], at[2]), rotation, mirror, tag.getByteOr("integ", (byte) 0), tag.getLongOr("seed", 0L), area);
-        made.last = tag.getLongOr("last", 0L);
-        ListTag lootRows = tag.getListOrEmpty("loot");
-        for (int i = 0; i < lootRows.size(); i++) { made.loot.put(lootRows.getCompoundOrEmpty(i).getLongOr("pos", 0L), lootRows.getCompoundOrEmpty(i).getStringOr("table", "")); }
-        ListTag spawnRows = tag.getListOrEmpty("spawn");
-        for (int i = 0; i < spawnRows.size(); i++) { made.spawn.put(spawnRows.getCompoundOrEmpty(i).getLongOr("pos", 0L), spawnRows.getCompoundOrEmpty(i).getCompoundOrEmpty("nbt")); }
+        Rotation rotation = turns[Mth.clamp(tag.getByteOr(ROT_KEY, (byte) 0), 0, turns.length - 1)];
+        Mirror mirror = flips[Mth.clamp(tag.getByteOr(MIR_KEY, (byte) 0), 0, flips.length - 1)];
+        RespawnInstance made = new RespawnInstance(kind, tag.getStringOr(DEF_KEY, ""), tag.getStringOr(TPL_KEY, ""), new BlockPos(at[0], at[1], at[2]), rotation, mirror, tag.getByteOr(INTEG_KEY, (byte) 0), tag.getLongOr(SEED_KEY, 0L), area);
+        made.last = tag.getLongOr(LAST_KEY, 0L);
+        ListTag lootRows = tag.getListOrEmpty(LOOT_KEY);
+        for (int i = 0; i < lootRows.size(); i++) { made.loot.put(lootRows.getCompoundOrEmpty(i).getLongOr(ROW_POS_KEY, 0L), lootRows.getCompoundOrEmpty(i).getStringOr(TABLE_KEY, "")); }
+        ListTag spawnRows = tag.getListOrEmpty(SPAWN_KEY);
+        for (int i = 0; i < spawnRows.size(); i++) { made.spawn.put(spawnRows.getCompoundOrEmpty(i).getLongOr(ROW_POS_KEY, 0L), spawnRows.getCompoundOrEmpty(i).getCompoundOrEmpty(NBT_KEY)); }
         return made;
     }
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.portways.Portways;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,25 +55,32 @@ public final class ClaimActions {
         if (ClaimSettings.dimensionBarred(level.dimension())) { return Result.no(ClaimRules.DIMENSION); }
         ClaimIndex index = ClaimIndex.obtain(level);
         List<ChunkPos> open = new ArrayList<>();
-        int taken = 0;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                if (index.ownerAt(chunkX + dx, chunkZ + dz) != 0 || index.pendingAt(chunkX + dx, chunkZ + dz) != null) { taken++; }
-                else { open.add(new ChunkPos(chunkX + dx, chunkZ + dz)); }
-            }
-        }
+        ChunkSpan.forEachWithin(chunkX, chunkZ, radius, (x, z) -> {
+            if (index.ownerAt(x, z) == 0 && index.pendingAt(x, z) == null) { open.add(new ChunkPos(x, z)); }
+            return true;
+        });
+        int taken = (radius * 2 + 1) * (radius * 2 + 1) - open.size();
         MinecraftServer server = level.getServer();
         String owner = ClaimOwners.labelOf(server, handle);
         if (open.isEmpty()) { return Result.no(RADIUS_NONE); }
         int room = ClaimRules.limitFor(server, handle) - index.claimCountOf(handle);
         if (open.size() > room) { return Result.no(RADIUS_LIMIT, open.size(), owner, Math.max(room, 0)); }
-        open.sort(Comparator.comparingInt(pos -> Math.max(Math.abs(pos.x() - chunkX), Math.abs(pos.z() - chunkZ))));
-        int claimed = claimOpen(level, index, open, handle, 0);
-        if (claimed == 0) {
-            String why = ClaimRules.canClaim(level, open.getFirst().x(), open.getFirst().z(), handle, false);
-            return Result.no(why == null ? ClaimRules.TAKEN : why);
-        }
-        return Result.yes(RADIUS_DONE, claimed, owner, taken, open.size(), index.claimCountOf(handle), ClaimRules.limitFor(server, handle));
+        int claimed = claimOpen(level, index, open, handle, 0, chunkX, chunkZ);
+        if (claimed == 0) { return Result.no(noneClaimed(level, open, handle)); }
+        return radiusDone(server, claimed, handle, taken, open.size(), index);
+    }
+
+    static Result radiusDone(MinecraftServer server, int claimed, int handle, int taken, int open, ClaimIndex index) {
+        return Result.yes(RADIUS_DONE, claimed, ClaimOwners.labelOf(server, handle), taken, open, index.claimCountOf(handle), ClaimRules.limitFor(server, handle));
+    }
+
+    static Result done(MinecraftServer server, int chunkX, int chunkZ, int handle, ClaimIndex index) {
+        return Result.yes(DONE, chunkX, chunkZ, ClaimOwners.labelOf(server, handle), index.claimCountOf(handle), ClaimRules.limitFor(server, handle));
+    }
+
+    private static String noneClaimed(ServerLevel level, List<ChunkPos> open, int handle) {
+        String why = ClaimRules.canClaim(level, open.getFirst().x(), open.getFirst().z(), handle, false);
+        return why == null ? ClaimRules.TAKEN : why;
     }
 
     public static Result unclaim(ServerPlayer player, ServerLevel level, int chunkX, int chunkZ) {
@@ -90,16 +98,15 @@ public final class ClaimActions {
         if (handle == 0) { return Result.no(NO_CLAIMANT); }
         String label = ClaimOwners.labelOf(level.getServer(), handle);
         ClaimIndex index = ClaimIndex.obtain(level);
-        int released = 0;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                if (index.ownerAt(chunkX + dx, chunkZ + dz) == handle) {
-                    index.release(chunkX + dx, chunkZ + dz);
-                    released++;
-                }
+        int[] released = {0};
+        ChunkSpan.forEachWithin(chunkX, chunkZ, radius, (x, z) -> {
+            if (index.ownerAt(x, z) == handle) {
+                index.release(x, z);
+                released[0]++;
             }
-        }
-        return released == 0 ? Result.no(UNCLAIM_RADIUS_NONE, label) : Result.yes(UNCLAIM_RADIUS, released, label);
+            return true;
+        });
+        return released[0] == 0 ? Result.no(UNCLAIM_RADIUS_NONE, label) : Result.yes(UNCLAIM_RADIUS, released[0], label);
     }
 
     public static Result unclaimAll(ServerPlayer player) {
@@ -138,11 +145,11 @@ public final class ClaimActions {
         if (denied != null) { return Result.no(denied); }
         ClaimIndex index = ClaimIndex.obtain(level);
         if (!index.claim(chunkX, chunkZ, handle, via)) { return Result.no(ClaimRules.TAKEN); }
-        MinecraftServer server = level.getServer();
-        return Result.yes(DONE, chunkX, chunkZ, ClaimOwners.labelOf(server, handle), index.claimCountOf(handle), ClaimRules.limitFor(server, handle));
+        return done(level.getServer(), chunkX, chunkZ, handle, index);
     }
 
-    public static int claimOpen(ServerLevel level, ClaimIndex index, List<ChunkPos> open, int handle, int via) {
+    public static int claimOpen(ServerLevel level, ClaimIndex index, List<ChunkPos> open, int handle, int via, int chunkX, int chunkZ) {
+        open.sort(Comparator.comparingInt(pos -> ChunkSpan.chebyshev(pos.x() - chunkX, pos.z() - chunkZ)));
         int claimed = 0;
         boolean progress = true;
         while (progress && !open.isEmpty()) {

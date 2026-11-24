@@ -19,11 +19,11 @@ final class ContentParserRecords {
 
     @Nullable static RecordDef record(Identifier key, String type, JsonObject json) {
         if (!TYPE.equals(type)) { return null; }
-        if (!json.has("jukebox") || !json.get("jukebox").isJsonObject()) {
+        JsonObject jukebox = Json.objectOrNull(json, "jukebox");
+        if (jukebox == null) {
             ContentLog.LOGGER.error("Record item {} has no jukebox section, so it registers nothing", key);
             return null;
         }
-        JsonObject jukebox = Json.getJsonObject(json, "jukebox");
         Json.unknownKeys(jukebox, "jukebox", JUKEBOX_KEYS);
         Identifier sound = ContentParser.location(Json.getString(jukebox, "sound", ""));
         if (sound == null) {

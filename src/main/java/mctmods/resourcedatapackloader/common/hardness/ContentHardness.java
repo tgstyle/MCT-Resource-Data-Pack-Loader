@@ -70,6 +70,7 @@ import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public final class ContentHardness {
+    public static final String SWAP_PREFIX = "swap:";
     private static final List<String> HARDNESS_KEYS = List.of("blocks", "except", "miningTime", "blastResistance", "buckets", "minHeight", "maxHeight", "requires", "field", "keeps", "adventure", "advancement", "becomes");
     private static final List<String> ADVENTURE_KEYS = List.of("tools", "teams", "players", "entities");
     private static final List<String> BECOMES_KEYS = List.of("advancement", "block");
@@ -157,7 +158,7 @@ public final class ContentHardness {
         if (denied(state)) { return null; }
         HardnessDef open = null;
         for (int side = 0; side < 2; side++) {
-            List<HardnessDef> defs = side == 0 ? WHOLE.get(state.getBlock()) : EXACT.isEmpty() ? null : EXACT.get(state);
+            List<HardnessDef> defs = side == 0 ? WHOLE.get(state.getBlock()) : exactFor(state);
             if (defs == null) { continue; }
             for (HardnessDef def : defs) {
                 if (def.advancement().isEmpty()) {
@@ -266,7 +267,7 @@ public final class ContentHardness {
         return seeds;
     }
 
-    private static String swapToken(HardnessDef def) { return "swap:" + def.key(); }
+    private static String swapToken(HardnessDef def) { return SWAP_PREFIX + def.key(); }
 
     private static String swapKey(HardnessDef def) { return "hardness:" + def.key(); }
 
@@ -278,9 +279,11 @@ public final class ContentHardness {
         if (denied(state)) { return true; }
         List<HardnessDef> whole = WHOLE.get(state.getBlock());
         if (whole != null && whole.contains(def)) { return false; }
-        List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
+        List<HardnessDef> exact = exactFor(state);
         return exact == null || !exact.contains(def);
     }
+
+    @Nullable private static List<HardnessDef> exactFor(BlockState state) { return EXACT.isEmpty() ? null : EXACT.get(state); }
 
     private static int swap(ServerLevel level, LevelChunk chunk, HardnessDef def) {
         BlockState target = BECOMES.get(def);

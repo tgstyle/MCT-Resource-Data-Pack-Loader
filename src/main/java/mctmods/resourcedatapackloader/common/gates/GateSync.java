@@ -46,6 +46,4 @@ public final class GateSync {
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) { SYNC.fresh(player); }
     }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.getEntity()); }
 }

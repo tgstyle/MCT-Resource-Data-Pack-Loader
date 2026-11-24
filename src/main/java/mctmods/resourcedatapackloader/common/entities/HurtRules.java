@@ -94,7 +94,7 @@ public final class HurtRules {
             return;
         }
         boolean cancel = Json.getBoolean(json, "cancel", false);
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (!cancel && runs.isEmpty()) {
             ContentLog.LOGGER.error("Hurt rule file {} neither cancels nor runs a function, ignoring it", key);
             return;

@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
-import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.StealContainerGoal;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankRandomDef;
@@ -37,7 +36,6 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -142,10 +140,7 @@ public final class ContentRanks {
 
     private static void arm(Mob mob, RankDef def) {
         if (def.digs()) {
-            if (mob instanceof PathfinderMob walker) {
-                mob.goalSelector.addGoal(1, new DigGoal(walker));
-                MobAbilities.sightlessTarget(walker, Player.class, 2);
-            }
+            if (mob instanceof PathfinderMob creature) { MobAbilities.dig(creature, true); }
             else if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Rank {} digs, but {} is not a walking creature, skipping it", def.key(), BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType())); }
         }
         if (def.breaksDoors()) {

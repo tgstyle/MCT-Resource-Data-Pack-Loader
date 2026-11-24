@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
 import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.portals.PortalFit;
 import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public final class ContentPortalBlock extends ContentBlock {
     private static final VoxelShape ALONG_X = Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 10.0D);
     private static final VoxelShape ALONG_Z = Block.box(6.0D, 0.0D, 0.0D, 10.0D, 16.0D, 16.0D);
     private static final VoxelShape FLAT = Block.box(0.0D, 6.0D, 0.0D, 16.0D, 10.0D, 16.0D);
-    private static final Map<UUID, Long> RECENT = new HashMap<>();
+    private static final Map<UUID, Long> RECENT = PlayerLogout.track(new HashMap<>());
     private final PortalDef portal;
 
     public ContentPortalBlock(BlockDef def, PortalDef portal, Properties properties) {
@@ -173,8 +174,6 @@ public final class ContentPortalBlock extends ContentBlock {
         }
         return false;
     }
-
-    public static void forget(UUID player) { RECENT.remove(player); }
 
     private boolean recently(ServerPlayer player) {
         Long last = RECENT.get(player.getUUID());

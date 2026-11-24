@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.HeartsDef
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -61,7 +63,7 @@ public final class ContentHearts {
     private static final String CHAT = "chat";
     private static final List<HeartReward> REWARDS = new ArrayList<>();
     private static final Map<String, Identifier> OWNERS = new LinkedHashMap<>();
-    private static final Map<UUID, Set<String>> MET = new HashMap<>();
+    private static final Map<UUID, Set<String>> MET = PlayerLogout.track(new HashMap<>());
     private static float start = HeartsDef.VANILLA;
     @Nullable private static Float cap;
     private static float floor = 0.5F;
@@ -116,28 +118,32 @@ public final class ContentHearts {
 
     private static void read(Identifier key, JsonObject json) {
         HeartsDef def = HeartsDef.parse(key, json);
-        if (def.startHearts != null && first("startHearts", key)) { start = def.startHearts; }
-        if (def.cap != null && first("cap", key)) { cap = def.cap; }
-        if (def.floor != null && first("floor", key)) { floor = def.floor; }
-        if (def.keepOnDeath != null && first("keepOnDeath", key)) { keep = def.keepOnDeath; }
-        if (def.floorDebt != null && first("floorDebt", key)) { debt = def.floorDebt; }
-        if (def.floorKills != null && first("floorKills", key)) { kills = def.floorKills; }
-        if (def.lossHealth != null && first("lossHealth", key)) { scale = "scale".equals(def.lossHealth); }
-        if (def.style != null && first("style", key)) { style = def.style; }
-        if (def.sound != null && first("sound", key)) { sound = def.sound; }
-        if (def.particle != null && first("particle", key)) { particle = def.particle; }
-        if (def.lossSound != null && first("lossSound", key)) { lossSound = def.lossSound; }
-        if (def.lossParticle != null && first("lossParticle", key)) { lossParticle = def.lossParticle; }
-        if (def.colors != null && first("heartColors", key)) {
-            colors = def.colors;
+        take("startHearts", key, def.startHearts, value -> start = value);
+        take("cap", key, def.cap, value -> cap = value);
+        take("floor", key, def.floor, value -> floor = value);
+        take("keepOnDeath", key, def.keepOnDeath, value -> keep = value);
+        take("floorDebt", key, def.floorDebt, value -> debt = value);
+        take("floorKills", key, def.floorKills, value -> kills = value);
+        take("lossHealth", key, def.lossHealth, value -> scale = "scale".equals(value));
+        take("style", key, def.style, value -> style = value);
+        take("sound", key, def.sound, value -> sound = value);
+        take("particle", key, def.particle, value -> particle = value);
+        take("lossSound", key, def.lossSound, value -> lossSound = value);
+        take("lossParticle", key, def.lossParticle, value -> lossParticle = value);
+        take("heartColors", key, def.colors, value -> {
+            colors = value;
             VanillaClients.clientDrawn("Hearts file " + key, "heartColors");
-        }
+        });
         for (HeartReward reward : def.rewards) {
             if (ContentRegistry.available(reward.requires, key)) { REWARDS.add(reward); }
         }
         for (HeartReward reward : def.losses) {
             if (ContentRegistry.available(reward.requires, key)) { REWARDS.add(reward); }
         }
+    }
+
+    private static <T> void take(String name, Identifier key, @Nullable T value, Consumer<T> set) {
+        if (value != null && first(name, key)) { set.accept(value); }
     }
 
     private static boolean first(String name, Identifier file) {
@@ -160,8 +166,6 @@ public final class ContentHearts {
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player) { sync(player); } }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { MET.remove(event.getEntity().getUUID()); }
 
     public static void onClone(PlayerEvent.Clone event) {
         if (!(event.getEntity() instanceof ServerPlayer next)) { return; }

@@ -18,7 +18,11 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 public final class FtbOwnerSource implements OwnerSource {
     @Override public int teamOf(ServerPlayer player) {
         String key = FtbPartyTeams.partyKeyOf(player.getUUID());
-        return key.isEmpty() ? 0 : OwnerTable.handleForSource(player.level().getServer(), OwnerRecord.SOURCE_FTB, key, FtbPartyTeams.partyLabel(key));
+        return handleOf(player.level().getServer(), key);
+    }
+
+    private static int handleOf(MinecraftServer server, String key) {
+        return key.isEmpty() ? 0 : OwnerTable.handleForSource(server, OwnerRecord.SOURCE_FTB, key, FtbPartyTeams.partyLabel(key));
     }
 
     @Override public boolean allies(ServerPlayer player, int handle) {
@@ -38,7 +42,7 @@ public final class FtbOwnerSource implements OwnerSource {
     @Override @Nullable public Integer byName(MinecraftServer server, String name) {
         String key = FtbPartyTeams.keyNamed(name);
         if (key.isEmpty()) { return ScoreboardOwnerSource.INSTANCE.byName(server, name); }
-        return OwnerTable.handleForSource(server, OwnerRecord.SOURCE_FTB, key, FtbPartyTeams.partyLabel(key));
+        return handleOf(server, key);
     }
 
     @Override public List<String> names(MinecraftServer server) {

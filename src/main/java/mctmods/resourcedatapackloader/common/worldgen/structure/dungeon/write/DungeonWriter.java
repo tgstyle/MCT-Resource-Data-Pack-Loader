@@ -133,17 +133,21 @@ public final class DungeonWriter {
 
     private static void spawner(WorldGenLevel level, FillRules rules, Spawner spawner) {
         BlockPos at = new BlockPos(spawner.x(), spawner.y(), spawner.z());
-        int brace = spawner.mobId().indexOf('{');
-        String id = brace < 0 ? spawner.mobId() : spawner.mobId().substring(0, brace);
         BlockState state = Blocks.SPAWNER.defaultBlockState();
         if (!set(level, at, state)) { return; }
-        CompoundTag tag = ContentMapFill.fill(rules, spawner.seed(), new StructureTemplate.StructureBlockInfo(at, state, null), id, null).nbt();
+        CompoundTag tag = spawner(rules, spawner.seed(), new StructureTemplate.StructureBlockInfo(at, state, null), spawner.mobId()).nbt();
         if (tag == null) { return; }
-        if (brace >= 0) { merge(tag, spawner.mobId().substring(brace), spawner.mobId()); }
         load(level, at, tag);
     }
 
-    static void merge(CompoundTag tag, String written, String whole) {
+    static StructureTemplate.StructureBlockInfo spawner(FillRules rules, long seed, StructureTemplate.StructureBlockInfo info, String mob) {
+        int brace = mob.indexOf('{');
+        StructureTemplate.StructureBlockInfo filled = ContentMapFill.fill(rules, seed, info, brace < 0 ? mob : mob.substring(0, brace), null);
+        if (filled != info && brace >= 0 && filled.nbt() != null) { merge(filled.nbt(), mob.substring(brace), mob); }
+        return filled;
+    }
+
+    private static void merge(CompoundTag tag, String written, String whole) {
         try {
             CompoundTag extra = TagParser.parseCompoundFully(written);
             CompoundTag data = tag.getCompoundOrEmpty("SpawnData");

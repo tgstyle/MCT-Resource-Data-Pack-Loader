@@ -79,9 +79,8 @@ public final class DerivedItems {
             return false;
         }
         List<ItemClassMaker.Override> overrides = ItemOverrides.plan(base.getClass(), key, derived.returns(), base);
-        Class<?> type = ItemClassMaker.make(base.getClass(), key, overrides);
+        Class<?> type = ItemOverrides.makeStored(base.getClass(), key, overrides);
         if (type == null) { return false; }
-        ItemOverrides.store(key, overrides);
         Item item = ItemCopier.copy(base, type, key, def);
         ObjectPatch.apply(item, derived.set(), derived.addTo(), key, "");
         helper.register(key, item);

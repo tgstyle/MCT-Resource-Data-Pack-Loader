@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import javax.annotation.Nullable;
 import net.minecraft.SharedConstants;
@@ -37,7 +38,7 @@ public final class ContentStarField {
         float time = level == null ? 0.0F : (level.getGameTime() % SharedConstants.TICKS_PER_GAME_DAY + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) / SharedConstants.TICKS_PER_SECOND;
         Vector4f[] colors = new Vector4f[GROUPS];
         for (int group = 0; group < GROUPS; ++group) {
-            float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
+            float shown = brightness * (1.0F - twinkle * MathUtil.wave(time * SPEED[group] + group * PHASE, 0.5F, 0.5F));
             colors[group] = new Vector4f(red * shown, green * shown, blue * shown, shown);
         }
         return colors;

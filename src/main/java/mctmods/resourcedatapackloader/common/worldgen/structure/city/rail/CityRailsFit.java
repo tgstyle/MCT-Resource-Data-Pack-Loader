@@ -73,8 +73,7 @@ public final class CityRailsFit {
         int mouth = CityRails.halfWidth(CityPlan.fullWidth()) + 1 + CityPlan.mouthReach();
         int low = Math.min(least - CityPlan.plazaReach(), middle - mouth) - CityRails.MARGIN;
         int high = Math.max(most + CityPlan.plazaReach(), middle + mouth) + CityRails.MARGIN;
-        if (center + half < low || center - half > high) { return center; }
-        return side >= 0 ? high + half + 1 : low - half - 1;
+        return CityRails.pushOff(center, half, low, high, side);
     }
 
     static int seekRoad(CityGround ground, CityPlan.Town town, List<CityPlan.Rail> mine, CityPlan.Rail rail, int reach) {

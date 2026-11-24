@@ -52,8 +52,7 @@ public final class PortwayTravel {
         }
         GateDef gate = gateOf(def);
         if (gate != null && !ContentGates.admits(player, gate)) {
-            ContentGates.refuse(player, gate);
-            PortwayFx.card(player, CardRule.PORTWAY_REFUSED, block, def.network(), "gate");
+            gateRefused(player, gate, block, def.network());
             return false;
         }
         return true;
@@ -65,8 +64,7 @@ public final class PortwayTravel {
         if (stop == null || def == null || !def.network().equals(item.network()) || !def.global() && Portways.unknown(player, stop)) { return; }
         GateDef gate = lockOf(player, def, stop.dimension(), stop.dimension(), true);
         if (gate != null) {
-            ContentGates.refuse(player, gate);
-            PortwayFx.card(player, CardRule.PORTWAY_REFUSED, stop.block(), def.network(), "gate");
+            gateRefused(player, gate, stop.block(), def.network());
             return;
         }
         PortwayBinding.write(stack, stop);
@@ -109,8 +107,7 @@ public final class PortwayTravel {
         if (!held.network().equals(opening.network())) { return refused(player, target, opening, "network", "rdpl.portway.network"); }
         GateDef gate = lockOf(player, held, target.dimension(), origin, true);
         if (gate != null) {
-            ContentGates.refuse(player, gate);
-            PortwayFx.card(player, CardRule.PORTWAY_REFUSED, live.block(), opening.network(), "gate");
+            gateRefused(player, gate, live.block(), opening.network());
             return Result.REFUSED;
         }
         boolean cross = !target.dimension().equals(origin);
@@ -173,6 +170,11 @@ public final class PortwayTravel {
         PortwayFx.card(player, CardRule.PORTWAY_ARRIVE, live.block(), opening.network(), "");
         if (paid) { PortwayFx.card(player, CardRule.PORTWAY_PAID, live.block(), opening.network(), ""); }
         return true;
+    }
+
+    private static void gateRefused(ServerPlayer player, GateDef gate, String block, String network) {
+        ContentGates.refuse(player, gate);
+        PortwayFx.card(player, CardRule.PORTWAY_REFUSED, block, network, "gate");
     }
 
     private static Result refused(ServerPlayer player, PortwayStop target, PortwayDef opening, String reason, String key) {

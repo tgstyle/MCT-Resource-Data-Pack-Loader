@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core.util.json;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentInherits;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,23 +13,34 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 
 public final class Json {
     public static final Gson GSON = new GsonBuilder().create();
     public static final Gson PRETTY = new GsonBuilder().setPrettyPrinting().create();
+    public static final String RUNS = "runs";
     private static final String NO_CONTEXT = "pack content";
+    private static final String EMPTY_FILE = "{} {} is empty, ignoring it";
+    private static final String BAD_VALUE = "{}: key '{}' has bad value {}, using {}";
+    private static final String BAD_ENTRY = "{}: key '{}' has bad value {}, using no entry";
     private static final ThreadLocal<String> WHERE = new ThreadLocal<>();
 
     private Json() {}
@@ -52,7 +64,7 @@ public final class Json {
         if (!object.has(key)) { return fallback; }
         try { return read.get(); }
         catch (RuntimeException bad) {
-            ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using {}", where(), key, object.get(key), fallback);
+            ContentLog.LOGGER.error(BAD_VALUE, where(), key, object.get(key), fallback);
             return fallback;
         }
     }
@@ -97,15 +109,35 @@ public final class Json {
 
     public static JsonArray getJsonArray(JsonObject object, String key) { return GsonHelper.getAsJsonArray(object, key); }
 
+    @Nullable public static JsonElement first(JsonElement value) {
+        if (!value.isJsonArray()) { return value; }
+        JsonArray array = value.getAsJsonArray();
+        return array.isEmpty() ? null : array.get(0);
+    }
+
     private static <T> T guarded(JsonElement element, String key, T fallback, Supplier<T> read) {
         try { return read.get(); }
         catch (RuntimeException bad) {
-            ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using {}", where(), key, element, fallback);
+            ContentLog.LOGGER.error(BAD_VALUE, where(), key, element, fallback);
             return fallback;
         }
     }
 
     public static int asInt(JsonElement element, String key, int fallback) { return guarded(element, key, fallback, element::getAsInt); }
+
+    @Nullable public static int[] intPair(JsonElement element, String key, int sentinel) {
+        if (!element.isJsonArray() || element.getAsJsonArray().size() != 2) { return null; }
+        JsonArray pair = element.getAsJsonArray();
+        return new int[] { asInt(pair.get(0), key, sentinel), asInt(pair.get(1), key, sentinel) };
+    }
+
+    public static int[] pair(Object owner, JsonObject json, String key, @Nullable int[] fallback, int low, int high) {
+        if (!json.has(key)) { return fallback; }
+        int[] both = intPair(json.get(key), key, low - 1);
+        if (both != null && both[0] >= low && both[1] <= high && both[0] <= both[1]) { return both; }
+        ContentLog.LOGGER.error("{} sets '{}' to something other than [min, max] with {} <= min <= max <= {}, so {} instead", owner, key, low, high, fallback == null ? "it is ignored" : Arrays.toString(fallback) + " is used");
+        return fallback;
+    }
 
     public static float asFloat(JsonElement element, String key, float fallback) { return guarded(element, key, fallback, element::getAsFloat); }
 
@@ -118,7 +150,7 @@ public final class Json {
         for (JsonElement entry : array) {
             if (unusable(entry, key)) { continue; }
             try { values.add(entry.getAsInt()); }
-            catch (RuntimeException bad) { ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using no entry", where(), key, entry); }
+            catch (RuntimeException bad) { ContentLog.LOGGER.error(BAD_ENTRY, where(), key, entry); }
         }
         return values;
     }
@@ -133,7 +165,7 @@ public final class Json {
 
     private static boolean unusable(JsonElement element, String member) {
         if (element.isJsonPrimitive()) { return false; }
-        ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using no entry", where(), member, element);
+        ContentLog.LOGGER.error(BAD_ENTRY, where(), member, element);
         return true;
     }
 
@@ -159,9 +191,75 @@ public final class Json {
 
     public static JsonObject object(JsonObject parent, String key) { return GsonHelper.isObjectNode(parent, key) ? parent.getAsJsonObject(key) : new JsonObject(); }
 
+    @Nullable public static JsonObject optionalObject(JsonObject parent, String key) { return GsonHelper.isObjectNode(parent, key) ? parent.getAsJsonObject(key) : null; }
+
+    @Nullable public static JsonObject objectOrNull(JsonObject parent, String member) { return optionalObject(parent, member); }
+
+    public static int atLeast(JsonObject json, String key, int fallback, int min) { return Math.max(min, getInt(json, key, fallback)); }
+
+    public static float atLeast(JsonObject json, String key, float fallback, float min) { return Math.max(min, getFloat(json, key, fallback)); }
+
+    public static int clamped(JsonObject json, String key, int fallback, int min, int max) { return Mth.clamp(getInt(json, key, fallback), min, max); }
+
+    public static float clamped(JsonObject json, String key, float fallback, float min, float max) { return Mth.clamp(getFloat(json, key, fallback), min, max); }
+
+    public interface VariantReader<V> { V read(String name, int meta, JsonObject json); }
+
+    public static <V> Map<Integer, V> variants(JsonObject variants, Identifier key, String kind, int maxMeta, String rangeAdvice, VariantReader<V> read) {
+        Map<Integer, V> byMeta = new LinkedHashMap<>();
+        Map<Integer, String> names = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : variants.entrySet()) {
+            String name = entry.getKey();
+            if (!entry.getValue().isJsonObject()) {
+                ContentLog.LOGGER.error("{} variant '{}' in {} is not an object, skipping it", kind, name, key);
+                continue;
+            }
+            JsonObject variant = entry.getValue().getAsJsonObject();
+            int meta = getInt(variant, "meta", -1);
+            if (meta < 0 || meta > maxMeta) {
+                ContentLog.LOGGER.error("{} variant '{}' in {} has meta {}, which is outside 0-{}, skipping it{}", kind, name, key, meta, maxMeta, rangeAdvice.isEmpty() ? "" : ". " + rangeAdvice);
+                continue;
+            }
+            if (names.containsKey(meta)) {
+                ContentLog.LOGGER.error("{} variants '{}' and '{}' in {} both claim meta {}, skipping '{}'", kind, names.get(meta), name, key, meta, name);
+                continue;
+            }
+            names.put(meta, name);
+            byMeta.put(meta, read.read(name, meta, variant));
+        }
+        return byMeta;
+    }
+
+    public static boolean isString(JsonElement value) { return value.isJsonPrimitive() && value.getAsJsonPrimitive().isString(); }
+
+    public static boolean isBoolean(JsonElement element) { return element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean(); }
+
+    public static String id(JsonObject object, String key) { return IdNames.namespaced(text(object, key)); }
+
+    public static <T> void eachCapped(Iterable<T> items, int cap, Predicate<T> kind, Predicate<T> keep, Consumer<T> wrongKind, Consumer<T> overCap) {
+        int kept = 0;
+        for (T item : items) {
+            if (!kind.test(item)) { wrongKind.accept(item); }
+            else if (kept >= cap) { overCap.accept(item); }
+            else if (keep.test(item)) { kept++; }
+        }
+    }
+
+    public static List<Integer> dimensions(JsonObject json) {
+        if (!json.has("dimensions")) { return Collections.emptyList(); }
+        return Collections.unmodifiableList(ints(getJsonArray(json, "dimensions"), "dimensions"));
+    }
+
+    @Nullable public static JsonObject objectOrFlag(JsonObject json, String member) {
+        JsonElement value = json.get(member);
+        if (value == null) { return null; }
+        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) { return value.getAsBoolean() ? new JsonObject() : null; }
+        return getJsonObject(json, member, new JsonObject());
+    }
+
     @Nullable public static JsonObject object(Identifier key, String contents, String kind) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) { ContentLog.LOGGER.error("{} {} is empty, ignoring it", label(kind), key); }
+        if (json == null) { ContentLog.LOGGER.error(EMPTY_FILE, label(kind), key); }
         return json;
     }
 
@@ -191,6 +289,51 @@ public final class Json {
     }
 
     public static boolean flag(JsonObject object, String key) { return GsonHelper.isValidPrimitive(object, key) && object.get(key).getAsBoolean(); }
+
+    @Nullable public static Integer whole(JsonElement held, int least, int most) {
+        if (!held.isJsonPrimitive() || !held.getAsJsonPrimitive().isNumber()) { return null; }
+        double value = held.getAsDouble();
+        return value == Math.rint(value) && value >= least && value <= most ? (int) value : null;
+    }
+
+    public static Iterable<JsonObject> objectsOrSkip(JsonArray array, String skipped, Object owner) {
+        return () -> {
+            Iterator<JsonElement> source = array.iterator();
+            return new Iterator<>() {
+                private JsonObject ahead;
+
+                @Override
+                public boolean hasNext() {
+                    while (ahead == null && source.hasNext()) {
+                        JsonElement entry = source.next();
+                        if (entry.isJsonObject()) { ahead = entry.getAsJsonObject(); }
+                        else { ContentLog.LOGGER.error(skipped, owner); }
+                    }
+                    return ahead != null;
+                }
+
+                @Override
+                public JsonObject next() {
+                    if (!hasNext()) { throw new NoSuchElementException(); }
+                    JsonObject held = ahead;
+                    ahead = null;
+                    return held;
+                }
+            };
+        };
+    }
+
+    public static String required(JsonObject json, String member, Identifier key, String message) {
+        String value = getString(json, member, "");
+        if (value.isEmpty()) { ContentLog.LOGGER.error(message, key); }
+        return value;
+    }
+
+    public static boolean missing(JsonObject json, String member, Identifier key, String message) {
+        if (json.has(member)) { return false; }
+        ContentLog.LOGGER.error(message, key);
+        return true;
+    }
 
     public static float bounded(JsonObject json, String member, float low, float high, Object owner) {
         if (!json.has(member)) { return Float.NaN; }
@@ -248,14 +391,18 @@ public final class Json {
 
     public static Map<String, String> map(JsonObject json, String member) {
         if (!json.has(member)) { return Collections.emptyMap(); }
-        JsonObject object = getJsonObject(json, member, new JsonObject());
+        return Collections.unmodifiableMap(primitives(getJsonObject(json, member, new JsonObject())));
+    }
+
+    public static Map<String, String> primitives(JsonObject object) {
         Map<String, String> values = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (!entry.getValue().isJsonPrimitive()) { continue; }
-            values.put(entry.getKey(), entry.getValue().getAsString());
+            if (entry.getValue().isJsonPrimitive()) { values.put(entry.getKey(), entry.getValue().getAsString()); }
         }
-        return Collections.unmodifiableMap(values);
+        return values;
     }
+
+    @Nullable public static <T> T byName(Map<String, T> defs, @Nullable String name) { return name == null || name.isEmpty() ? null : defs.get(name.toLowerCase(Locale.ROOT)); }
 
     public static void unknownKeys(JsonObject json, String path, Collection<String> read) {
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {

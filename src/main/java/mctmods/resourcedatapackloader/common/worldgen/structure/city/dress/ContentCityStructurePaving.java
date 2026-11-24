@@ -11,8 +11,8 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.city.piece.Conte
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.CityRails;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.ContentCityStructureSewers;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.CityLines;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.CityRuns;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Runs;
 
 import java.util.Arrays;
 import java.util.List;
@@ -117,7 +117,7 @@ public final class ContentCityStructurePaving {
                 from++;
                 continue;
             }
-            int to = CityRuns.end(tunnels, from);
+            int to = Runs.end(k -> tunnels[k], from, tunnels.length);
             boolean any = false;
             for (int at = from; at <= to && !any; at++) { any = Math.floorMod(start + at, run) == 0; }
             if (!any) { Arrays.fill(lamps, from, to + 1, start + (from + to) / 2); }

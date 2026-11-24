@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,12 +42,7 @@ public final class ContentFuels {
         JsonObject json = Json.object(key, contents, "fuel file");
         if (json == null) { return; }
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, FUELS)) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, FUELS), "A fuel in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, FUELS, FUEL_KEYS);
             int burnTime = Json.getInt(entry, "burnTime", 0);
             if (burnTime <= 0) {

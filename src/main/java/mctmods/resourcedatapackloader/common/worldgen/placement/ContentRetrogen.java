@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.placement;
 
+import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentShapeFeature;
@@ -32,6 +33,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public final class ContentRetrogen {
+    public static final String BEDROCK_PREFIX = "bedrock:";
     private static final Map<ResourceKey<Level>, Deque<Pending>> QUEUES = new HashMap<>();
     private static final List<ContentWorldgen.Entry> ARMED = new ArrayList<>();
     private static final Set<String> STAMP = new LinkedHashSet<>();
@@ -182,7 +184,7 @@ public final class ContentRetrogen {
 
     private static boolean adoptable(Set<String> already) {
         for (String token : already) {
-            if (!token.startsWith("bedrock:") && !token.startsWith("replace:") && !token.startsWith("swap:")) { return false; }
+            if (!token.startsWith(BEDROCK_PREFIX) && !token.startsWith(ContentReplacements.REPLACE_PREFIX) && !token.startsWith(ContentHardness.SWAP_PREFIX)) { return false; }
         }
         return true;
     }

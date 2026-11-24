@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -22,7 +23,6 @@ public final class WeightHud {
     private static final int BAR_OFFSET = 126;
     private static final int BAR_BOTTOM = 12;
     private static final int BACK = 0xB0000000;
-    private static final int OPAQUE = 0xFF000000;
     private static final int LABEL_GAP = 4;
 
     private WeightHud() {}
@@ -36,7 +36,7 @@ public final class WeightHud {
         int bottom = top + BAR_HEIGHT;
         int filled = Math.round(ClientWeights.fill() * (BAR_WIDTH - 2));
         graphics.fill(left, top, left + BAR_WIDTH, bottom, BACK);
-        graphics.fill(left + 1, top + 1, left + 1 + filled, bottom - 1, OPAQUE | ClientWeights.color());
+        graphics.fill(left + 1, top + 1, left + 1 + filled, bottom - 1, Colors.overlay(ClientWeights.color(), 0xFF));
     }
 
     private static int leftEdge(String anchor, int width) {
@@ -62,7 +62,7 @@ public final class WeightHud {
         if (!inventory(screen) || !ClientWeights.active() || !ContentWeights.settings().hudInventory) { return; }
         AbstractContainerScreen<?> container = (AbstractContainerScreen<?>) screen;
         Component line = Component.translatable("rdpl.weight.inventory", ClientWeights.format(ClientWeights.total()), ClientWeights.format(ClientWeights.limit()));
-        event.getGuiGraphics().text(Minecraft.getInstance().font, line, container.getLeftPos(), container.getTopPos() + container.getImageHeight() + LABEL_GAP, OPAQUE | ClientWeights.color(), true);
+        event.getGuiGraphics().text(Minecraft.getInstance().font, line, container.getLeftPos(), container.getTopPos() + container.getImageHeight() + LABEL_GAP, Colors.overlay(ClientWeights.color(), 0xFF), true);
     }
 
     private static boolean inventory(Screen screen) {

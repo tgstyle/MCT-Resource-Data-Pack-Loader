@@ -3,9 +3,7 @@ package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 
-import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -13,12 +11,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentBelt implements IContentChunkShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentBelt extends ContentPlacedShape implements IContentChunkShape {
     private final int radius;
     private final int rarity;
     private final boolean perChunk;

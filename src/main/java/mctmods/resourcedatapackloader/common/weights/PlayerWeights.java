@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
+import mctmods.resourcedatapackloader.common.util.entity.Worn;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.HashMap;
@@ -25,7 +27,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class PlayerWeights {
     private static final int SCAN = 10;
     private static final long REPORT = 60_000_000_000L;
-    private static final Map<UUID, Entry> CACHE = new HashMap<>();
+    private static final Map<UUID, Entry> CACHE = PlayerLogout.track(new HashMap<>());
     private static long scans;
     private static long nanos;
     private static long reported = System.nanoTime();
@@ -42,17 +44,25 @@ public final class PlayerWeights {
         boolean heavy;
         long refused;
         double exhaustion;
+
+        boolean stale() { return dirty || generation != ContentWeights.generation(); }
+
+        public long room(double hardLimit) { return (long) (hardLimit * limit) - total; }
     }
 
+    private static boolean ignored(Entity entity) { return !(entity instanceof Player) || entity.level().isClientSide() || !ContentWeights.any(); }
+
+    private static Entry entryOf(Player player) { return CACHE.computeIfAbsent(player.getUUID(), _ -> new Entry()); }
+
     public static Entry current(Player player) {
-        Entry entry = CACHE.computeIfAbsent(player.getUUID(), _ -> new Entry());
-        if (entry.dirty || entry.generation != ContentWeights.generation()) { refresh(player, entry); }
+        Entry entry = entryOf(player);
+        if (entry.stale()) { refresh(player, entry); }
         return entry;
     }
 
     static void mark(Entity entity) {
-        if (!(entity instanceof Player) || entity.level().isClientSide() || !ContentWeights.any()) { return; }
-        CACHE.computeIfAbsent(entity.getUUID(), _ -> new Entry()).dirty = true;
+        if (ignored(entity)) { return; }
+        entryOf((Player) entity).dirty = true;
     }
 
     static boolean counted(Player player, WeightDef settings) { return !player.isSpectator() && (!player.isCreative() || settings.creative); }
@@ -82,7 +92,7 @@ public final class PlayerWeights {
         entry.dirty = false;
         entry.generation = ContentWeights.generation();
         if (counted(player, settings)) {
-            List<ItemStack> worn = CarriedWeight.worn(player);
+            List<ItemStack> worn = Worn.humanoid(player);
             entry.total = (int) Math.min(Integer.MAX_VALUE, CarriedWeight.total(player, settings, worn));
             entry.limit = limitOf(player, settings, worn);
         }
@@ -112,8 +122,8 @@ public final class PlayerWeights {
             if (!CACHE.isEmpty() && CACHE.remove(player.getUUID()) != null) { WeightTiers.clear(player); }
             return;
         }
-        Entry entry = CACHE.computeIfAbsent(player.getUUID(), _ -> new Entry());
-        if (entry.dirty || entry.generation != ContentWeights.generation() || (player.tickCount + player.getId()) % SCAN == 0) { refresh(player, entry); }
+        Entry entry = entryOf(player);
+        if (entry.stale() || (player.tickCount + player.getId()) % SCAN == 0) { refresh(player, entry); }
         if (entry.heavy) { WeightTiers.hold(player, entry); }
     }
 
@@ -142,6 +152,4 @@ public final class PlayerWeights {
     public static void onClone(PlayerEvent.Clone event) { mark(event.getEntity()); }
 
     public static void onAdvancement(AdvancementEvent.AdvancementEarnEvent event) { mark(event.getEntity()); }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { CACHE.remove(event.getEntity().getUUID()); }
 }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.world.SavedTypes;
 
 import javax.annotation.Nullable;
@@ -26,14 +27,9 @@ public final class ScriptData extends SavedData {
 
     public View world() { return new View(this, world); }
 
-    public View player(Player player) { return new View(this, scope(players, player.getUUID().toString())); }
+    public View player(Player player) { return new View(this, Nbts.child(players, player.getUUID().toString())); }
 
-    public View team(String name) { return new View(this, scope(teams, name)); }
-
-    private static CompoundTag scope(CompoundTag parent, String key) {
-        if (!(parent.get(key) instanceof CompoundTag)) { parent.put(key, new CompoundTag()); }
-        return parent.getCompoundOrEmpty(key);
-    }
+    public View team(String name) { return new View(this, Nbts.child(teams, name)); }
 
     private static ScriptData read(CompoundTag tag) {
         ScriptData data = new ScriptData();

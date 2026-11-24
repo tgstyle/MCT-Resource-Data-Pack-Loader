@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
 import javax.annotation.Nonnull;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -27,6 +29,8 @@ public final class StrikeGoal extends MeleeAttackGoal {
         AttributeInstance held = mob.getAttribute(Attributes.ATTACK_DAMAGE);
         return held == null ? 0.0F : (float) held.getValue();
     }
+
+    public static void knockAlongYaw(Mob mob, LivingEntity target, double power) { Compat.knockback(target, power, Mth.sin(mob.getYRot() * Mth.DEG_TO_RAD), -Mth.cos(mob.getYRot() * Mth.DEG_TO_RAD), mob.damageSources().mobAttack(mob), damage(mob)); }
 
     public static void hit(Mob mob, LivingEntity target) {
         if (!(mob.level() instanceof ServerLevel level)) { return; }

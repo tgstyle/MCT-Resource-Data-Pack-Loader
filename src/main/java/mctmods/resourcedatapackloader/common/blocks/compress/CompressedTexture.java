@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.compress;
 
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.awt.image.BufferedImage;
 import javax.annotation.Nullable;
@@ -37,9 +38,9 @@ public final class CompressedTexture {
     }
 
     private static int scale(int color, float factor) {
-        int red = Mth.clamp(Math.round(((color >> 16) & 0xFF) * factor), 0, 255);
-        int green = Mth.clamp(Math.round(((color >> 8) & 0xFF) * factor), 0, 255);
-        int blue = Mth.clamp(Math.round((color & 0xFF) * factor), 0, 255);
+        int red = Mth.clamp(Math.round(Colors.red(color) * factor), 0, 255);
+        int green = Mth.clamp(Math.round(Colors.green(color) * factor), 0, 255);
+        int blue = Mth.clamp(Math.round(Colors.blue(color) * factor), 0, 255);
         return (color & 0xFF000000) | (red << 16) | (green << 8) | blue;
     }
 }

@@ -33,7 +33,7 @@ public final class GateStay {
     private static final String SECTION = "rdplGateStay";
     private static final String USED = "used";
     private static final String DAY_KEY = "day";
-    private static final int STEP = 20;
+    private static final int TICKS_PER_SECOND = 20;
     private static final int TICKS_PER_MINUTE = 1200;
     private static final int SECONDS_PER_MINUTE = 60;
 
@@ -57,10 +57,7 @@ public final class GateStay {
 
     public static GateStay parse(JsonObject json, Identifier key, @Nullable Identifier dimension) {
         if (!json.has("stayMinutes")) { return NONE; }
-        if (dimension == null) {
-            ContentLog.LOGGER.error("Gate {} sets stayMinutes without dimension, so it has no time budget", key);
-            return NONE;
-        }
+        if (GateDef.dimensionMissing(dimension, key, "stayMinutes", "it has no time budget")) { return NONE; }
         int minutes = Json.getInt(json, "stayMinutes", 0);
         if (minutes <= 0) {
             ContentLog.LOGGER.error("Gate {} sets stayMinutes {}, which is not above 0, so it has no time budget", key, minutes);
@@ -93,21 +90,21 @@ public final class GateStay {
         return entry.getIntOr(USED, 0) >= stay.limit();
     }
 
-    static void refused(ServerPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, ChatFormatting.RED, def.stay().expired.replace("%dim%", def.name())); }
+    static void refused(ServerPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, ChatFormatting.RED, Says.fill(def.stay().expired, "%dim%", def.name())); }
 
-    static void tick(MinecraftServer server) {
+    static void tick(MinecraftServer server, int step) {
         List<GateDef> gates = ContentGates.staying();
         if (gates.isEmpty()) { return; }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Identifier here = player.level().dimension().identifier();
             for (GateDef def : gates) {
-                if (Objects.equals(here, def.dimension())) { count(server, player, def); }
+                if (Objects.equals(here, def.dimension())) { count(server, player, def, step); }
                 else if (VISIT.equals(def.stay().reset)) { forget(player, def); }
             }
         }
     }
 
-    private static void count(MinecraftServer server, ServerPlayer player, GateDef def) {
+    private static void count(MinecraftServer server, ServerPlayer player, GateDef def, int step) {
         GateStay stay = def.stay();
         CompoundTag entry = entry(player, def);
         long today = CardPlace.day(player.level());
@@ -118,16 +115,16 @@ public final class GateStay {
         int limit = stay.limit();
         int used = entry.getIntOr(USED, 0);
         if (used >= limit) { return; }
-        used = Math.min(limit, used + STEP);
+        used = Math.min(limit, used + step);
         entry.putInt(USED, used);
         if (used >= limit) {
             expire(server, player, def);
             return;
         }
-        int seconds = (limit - used) / STEP;
+        int seconds = (limit - used) / TICKS_PER_SECOND;
         if (stay.warn.contains(seconds)) {
             String time = String.format("%d:%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE);
-            Says.bar(player, CardIds.GATE_STAY, ChatFormatting.GOLD, stay.message.replace("%dim%", def.name()).replace("%time%", time));
+            Says.bar(player, CardIds.GATE_STAY, ChatFormatting.GOLD, Says.fill(stay.message, "%dim%", def.name(), "%time%", time));
         }
     }
 

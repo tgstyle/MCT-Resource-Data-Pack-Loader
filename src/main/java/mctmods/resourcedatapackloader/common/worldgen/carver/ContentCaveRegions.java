@@ -26,6 +26,7 @@ import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.GameData;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
+import mctmods.resourcedatapackloader.core.util.Maps;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -315,7 +316,7 @@ public final class ContentCaveRegions {
         Object held = memo.get(memoKey);
         if (held != null) { return clampBand(held == NONE ? null : (CaveRegionDef) held, qy << 2); }
         CaveRegionDef found = resolve(bound.seed(), bound.regions(), qx, qy, qz, spanXZ(), spanY());
-        if (memo.size() > MEMO_LIMIT) { memo.clear(); }
+        Maps.bound(memo, MEMO_LIMIT);
         memo.put(memoKey, found == null ? NONE : found);
         return clampBand(found, qy << 2);
     }

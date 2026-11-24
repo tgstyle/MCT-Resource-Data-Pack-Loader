@@ -29,8 +29,8 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ContentSpawnSwitch {
-    private static final List<String> RATES = List.of("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
-    private static final List<String> CAPS = List.of("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
+    static final List<String> RATE_KEYS = List.of("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
+    static final List<String> CAP_KEYS = List.of("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
     private static final String WEIGHTS = "weights";
     private static final int CHUNK_DIVISOR = 289;
     @Nullable private static NaturalSpawner.SpawnState heldState;
@@ -47,8 +47,8 @@ public final class ContentSpawnSwitch {
         SpawnSwitchDef def = new SpawnSwitchDef(owner);
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             String key = entry.getKey();
-            int rate = RATES.indexOf(key);
-            int cap = CAPS.indexOf(key);
+            int rate = RATE_KEYS.indexOf(key);
+            int cap = CAP_KEYS.indexOf(key);
             if (rate >= 0) {
                 Double value = number(entry.getValue());
                 if (value == null || value < 0.0D) { ContentLog.LOGGER.error("{} gives spawning.{} that is not a number of 0 or more, ignoring it", owner, key); }
@@ -120,7 +120,7 @@ public final class ContentSpawnSwitch {
         int slot = index(category);
         if (slot < 0 || !ContentControl.packDecides(ContentControl.SPAWNING)) { return normal; }
         int best = -1;
-        for (SpawnSwitchDef def : ContentEnvironments.spawnings(level.dimension().identifier())) { best = Math.max(best, def.caps[slot] >= 0 ? def.caps[slot] : normal); }
+        for (SpawnSwitchDef def : ContentEnvironments.spawnings(level.dimension().identifier())) { best = Math.max(best, capOr(def, slot, normal)); }
         return best < 0 ? normal : best;
     }
 
@@ -154,8 +154,11 @@ public final class ContentSpawnSwitch {
     static int capAt(ServerLevel level, BlockPos pos, MobCategory category) {
         int slot = index(category);
         SpawnSwitchDef def = slot < 0 ? null : at(level, pos);
-        return def != null && def.caps[slot] >= 0 ? def.caps[slot] : category.getMaxInstancesPerChunk();
+        int normal = category.getMaxInstancesPerChunk();
+        return def == null ? normal : capOr(def, slot, normal);
     }
+
+    private static int capOr(SpawnSwitchDef def, int slot, int normal) { return def.caps[slot] >= 0 ? def.caps[slot] : normal; }
 
     public static boolean overCap(ServerLevel level, Mob mob, BlockPos pos) {
         MobCategory category = mob.getType().getCategory();

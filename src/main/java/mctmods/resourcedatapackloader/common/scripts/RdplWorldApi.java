@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.core.rhino.Context;
 import mctmods.resourcedatapackloader.core.rhino.Function;
@@ -9,12 +10,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -32,7 +35,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public final class RdplWorldApi {
     private static final Identifier SCRIPT_KEY = Identifier.fromNamespaceAndPath("resourcedatapackloader", "script");
@@ -50,15 +53,13 @@ public final class RdplWorldApi {
 
     public int scanAt(double x, double y, double z, Object match) {
         Predicate<ItemStack> test = predicate(match);
-        ResourceHandler<ItemResource> handler = at(x, y, z, Capabilities.Item.BLOCK);
+        ResourceHandler<ItemResource> handler = items(x, y, z);
         if (test == null || handler == null) { return 0; }
-        int total = 0;
-        for (int slot = 0; slot < handler.size(); slot++) { total += count(ItemUtil.getStack(handler, slot), test); }
-        return total;
+        return (int) ItemHandlers.sum(handler, stack -> count(stack, test));
     }
 
     @Nullable public Object capability(double x, double y, double z, String type) {
-        if ("items".equals(type)) { return at(x, y, z, Capabilities.Item.BLOCK); }
+        if ("items".equals(type)) { return items(x, y, z); }
         if ("fluids".equals(type)) { return at(x, y, z, Capabilities.Fluid.BLOCK); }
         if ("energy".equals(type)) { return at(x, y, z, Capabilities.Energy.BLOCK); }
         return null;
@@ -88,9 +89,22 @@ public final class RdplWorldApi {
         return world.tryAddFreshEntityWithPassengers(entity);
     }
 
-    @Nullable private <T, C> T at(double x, double y, double z, BlockCapability<T, C> capability) {
+    @Nullable private <T> T at(double x, double y, double z, BlockCapability<T, @org.jspecify.annotations.Nullable Direction> capability) {
         BlockPos pos = BlockPos.containing(x, y, z);
-        return world.isLoaded(pos) ? world.getCapability(capability, pos, null) : null;
+        if (!world.isLoaded(pos)) { return null; }
+        T handler = world.getCapability(capability, pos, null);
+        if (handler != null) { return handler; }
+        for (Direction side : Direction.values()) {
+            handler = world.getCapability(capability, pos, side);
+            if (handler != null) { return handler; }
+        }
+        return null;
+    }
+
+    @Nullable private ResourceHandler<ItemResource> items(double x, double y, double z) {
+        ResourceHandler<ItemResource> handler = at(x, y, z, Capabilities.Item.BLOCK);
+        BlockPos pos = BlockPos.containing(x, y, z);
+        return handler == null && world.isLoaded(pos) && world.getBlockEntity(pos) instanceof Container container ? VanillaContainerWrapper.of(container) : handler;
     }
 
     @Nullable private static Predicate<ItemStack> predicate(Object match) {

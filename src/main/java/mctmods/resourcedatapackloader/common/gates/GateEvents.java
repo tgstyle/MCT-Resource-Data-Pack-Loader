@@ -4,7 +4,9 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.dimension.Travel;
+import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -12,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -31,6 +32,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
@@ -39,11 +41,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 public final class GateEvents {
     private static final long QUIET_MILLIS = 2000L;
-    private static final Map<UUID, Long> SPOKEN = new HashMap<>();
+    private static final int DROP_DELAY = 10;
+    private static final Map<UUID, Long> SPOKEN = PlayerLogout.track(new HashMap<>());
 
     private GateEvents() {}
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SPOKEN.remove(event.getEntity().getUUID()); }
 
     public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
@@ -62,8 +63,8 @@ public final class GateEvents {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) { return; }
         Identifier fallen = EntityType.getKey(event.getEntity().getType());
         for (GateDef def : ContentGates.all()) {
-            if (def.killed().isEmpty() || ContentGates.unlocked(player, def)) { continue; }
-            if (!Objects.equals(fallen, Identifier.tryParse(def.killed()))) { continue; }
+            if (def.killed() == null || ContentGates.unlocked(player, def)) { continue; }
+            if (!fallen.equals(def.killed())) { continue; }
             if (!def.killedRank().isEmpty() && !def.killedRank().equals(ContentRanks.rankOf(event.getEntity()))) { continue; }
             int slain = GateStorage.tally(player, def);
             if (slain < def.killedCount()) { continue; }
@@ -79,9 +80,7 @@ public final class GateEvents {
     private static void reward(ServerPlayer player, GateDef def) {
         ItemStack key = ContentStacks.parse(def.key(), def.killedDrops(), 1);
         if (key.isEmpty()) { return; }
-        ItemEntity drop = new ItemEntity(player.level(), player.getX(), player.getY(), player.getZ(), key);
-        drop.setDefaultPickUpDelay();
-        player.level().addFreshEntity(drop);
+        Stacks.dropAt(player.level(), player.getX(), player.getY(), player.getZ(), key, DROP_DELAY);
     }
 
     public static void onCraft(PlayerEvent.ItemCraftedEvent event) {
@@ -131,10 +130,10 @@ public final class GateEvents {
             }
         }
         player.stopRiding();
-        if (!Travel.to(player, level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot())) {
+        if (!Travel.to(player, level, feet, player.getYRot(), player.getXRot())) {
             ServerLevel overworld = player.level().getServer().overworld();
             BlockPos home = ContentDimensions.landing(overworld, overworld.getRespawnData().pos(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
-            Travel.to(player, overworld, home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, player.getYRot(), player.getXRot());
+            Travel.to(player, overworld, home, player.getYRot(), player.getXRot());
         }
         for (ItemStack stack : returned) {
             if (!player.getInventory().add(stack)) { player.level().addFreshEntity(new ItemEntity(player.level(), player.getX(), player.getY(), player.getZ(), stack)); }
@@ -149,7 +148,8 @@ public final class GateEvents {
     private static void retreat(ServerPlayer player) {
         ServerLevel level = player.level();
         BlockPos feet = landing(player, level);
-        player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
+        Vec3 stand = Vec3.atBottomCenterOf(feet);
+        player.teleportTo(level, stand.x, stand.y, stand.z, Set.of(), player.getYRot(), player.getXRot(), true);
     }
 
     @Nullable private static BlockPos safeBed(ServerPlayer player, ServerLevel level) {

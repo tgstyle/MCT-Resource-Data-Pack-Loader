@@ -36,12 +36,6 @@ public final class ContentParserFluids {
 
     static void fluidKeys(JsonObject json) { Json.unknownKeys(json, "the top level", FLUID_KEYS); }
 
-    static boolean blockWanted(JsonObject json) { return json.has("block") && !(isFlag(json) && !json.get("block").getAsBoolean()); }
-
-    static JsonObject blockObject(JsonObject json) { return isFlag(json) ? new JsonObject() : Json.getJsonObject(json, "block", new JsonObject()); }
-
-    private static boolean isFlag(JsonObject json) { return json.has("block") && json.get("block").isJsonPrimitive() && json.get("block").getAsJsonPrimitive().isBoolean(); }
-
     public static FluidBehaviorDef behavior(Identifier key, JsonObject block) {
         Json.unknownKeys(block, "block", BLOCK_KEYS);
         FluidBehaviorDef.Creatures creatures = creatures(key, Json.object(block, "creatures"));
@@ -167,7 +161,7 @@ public final class ContentParserFluids {
         Json.unknownKeys(json, "creatures", CREATURES_KEYS);
         String label = key + " creatures";
         return new FluidBehaviorDef.Creatures(decimal(json, "damage", 0.0F, LARGE, label), whole(json, "damageEvery", DAMAGE_EVERY, label),
-                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Math.max(0, Json.getInt(json, "fireSeconds", 0)) : null,
+                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Json.atLeast(json, "fireSeconds", 0, 0) : null,
                 flag(json, "drown"), flag(json, "swim"), decimal(json, "push", 0.0F, LARGE, label), decimal(json, "drag", 0.0F, 1.0F, label));
     }
 
@@ -178,8 +172,6 @@ public final class ContentParserFluids {
         return new FluidBehaviorDef.Items(flag(json, "burn"), Json.ranged(json, "dissolve", 0.0F, 0.0F, 1.0F, label), Json.names(json, "immune"),
                 decimal(json, "drift", -LARGE, LARGE, label), decimal(json, "buoyancy", -LARGE, LARGE, label));
     }
-
-    @Nullable private static Boolean flag(JsonObject json, String member) { return json.has(member) ? Json.getBoolean(json, member, false) : null; }
 
     @Nullable private static Float decimal(JsonObject json, String member, float low, float high, Object owner) {
         float value = Json.bounded(json, member, low, high, owner);
@@ -197,6 +189,8 @@ public final class ContentParserFluids {
     }
 
     private static int whole(JsonObject json, String member, int fallback, Object owner) { return whole(json, member, fallback, owner, Integer.MAX_VALUE); }
+
+    @Nullable private static Boolean flag(JsonObject json, String member) { return json.has(member) ? Json.getBoolean(json, member, false) : null; }
 
     private static int whole(JsonObject json, String member, int fallback, Object owner, int high) {
         if (!json.has(member)) { return fallback; }

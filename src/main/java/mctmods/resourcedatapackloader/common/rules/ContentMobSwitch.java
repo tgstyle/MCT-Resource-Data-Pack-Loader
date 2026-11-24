@@ -32,7 +32,12 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 public final class ContentMobSwitch {
-    private static final List<String> KEYS = List.of("entities", "health", "damage", "speed", "equipment");
+    private static final String ENTITIES_KEY = "entities";
+    private static final String HEALTH_KEY = "health";
+    private static final String DAMAGE_KEY = "damage";
+    private static final String SPEED_KEY = "speed";
+    private static final String EQUIPMENT_KEY = "equipment";
+    private static final List<String> KEYS = List.of(ENTITIES_KEY, HEALTH_KEY, DAMAGE_KEY, SPEED_KEY, EQUIPMENT_KEY);
     private static final List<String> SLOTS = List.of("mainhand", "offhand", "head", "chest", "legs", "feet");
     private static final String RECORD = "rdplMobSwitch";
     private static final String SET = "set";
@@ -61,15 +66,15 @@ public final class ContentMobSwitch {
                 ContentLog.LOGGER.error("{} gives mobs.{}, which is not a mobs key, ignoring it", owner, key);
                 continue;
             }
-            Double number = "entities".equals(key) || "equipment".equals(key) ? null : ContentSpawnSwitch.number(value);
+            Double number = ENTITIES_KEY.equals(key) || EQUIPMENT_KEY.equals(key) ? null : ContentSpawnSwitch.number(value);
             switch (key) {
-                case "entities" -> named = MobStats.entities(owner, "mobs.entities", value, def.ids, def.kinds);
-                case "equipment" -> equipment(owner, def, value);
-                case "health" -> {
+                case ENTITIES_KEY -> named = MobStats.entities(owner, "mobs.entities", value, def.ids, def.kinds);
+                case EQUIPMENT_KEY -> equipment(owner, def, value);
+                case HEALTH_KEY -> {
                     if (number == null || number <= 0.0D) { ContentLog.LOGGER.error("{} gives mobs.health that is not a number above 0, ignoring it", owner); }
                     else { def.health = number.floatValue(); }
                 }
-                case "damage" -> {
+                case DAMAGE_KEY -> {
                     if (number == null || number < 0.0D) { ContentLog.LOGGER.error("{} gives mobs.damage that is not a number of 0 or more, ignoring it", owner); }
                     else { def.damage = number.floatValue(); }
                 }

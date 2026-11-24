@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
@@ -29,9 +30,13 @@ public final class TallPlants {
 
     @Nullable public static Block partBlock(Block base, int part) {
         Identifier name = BuiltInRegistries.BLOCK.getKey(base);
-        Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.fromNamespaceAndPath(name.getNamespace(), name.getPath() + PART_SUFFIX + part)).orElse(null);
+        Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.fromNamespaceAndPath(name.getNamespace(), partPath(name.getPath(), part))).orElse(null);
         return block == Blocks.AIR ? null : block;
     }
+
+    private static String partPath(String path, int part) { return path + PART_SUFFIX + part; }
+
+    private static String basePath(String path) { return path.substring(0, path.lastIndexOf(PART_SUFFIX)); }
 
     public static int partNumber(Block block) {
         String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
@@ -44,8 +49,7 @@ public final class TallPlants {
     @Nullable public static Block baseBlockOf(Block part) {
         if (partNumber(part) <= 0) { return null; }
         Identifier name = BuiltInRegistries.BLOCK.getKey(part);
-        String path = name.getPath();
-        Block base = BuiltInRegistries.BLOCK.getOptional(Identifier.fromNamespaceAndPath(name.getNamespace(), path.substring(0, path.lastIndexOf(PART_SUFFIX)))).orElse(null);
+        Block base = BuiltInRegistries.BLOCK.getOptional(Identifier.fromNamespaceAndPath(name.getNamespace(), basePath(name.getPath()))).orElse(null);
         return base == null || tallOf(base) == null ? null : base;
     }
 
@@ -58,6 +62,12 @@ public final class TallPlants {
         BlockPos below = pos.below(number);
         if (expected == null || level.getBlockState(below).getBlock() != expected) { return null; }
         return below;
+    }
+
+    public static int run(Level level, BlockPos pos, Block block, Direction direction) {
+        int length = 1;
+        while (level.getBlockState(pos.relative(direction, length)).getBlock() == block) { length++; }
+        return length;
     }
 
     public static int regrowAge(TallDef tall, int part) { return tall.rise()[part - 1] - 1; }

@@ -20,13 +20,13 @@ public final class ContentSkyGates {
     public static void receive(List<String> ids) {
         Set<String> next = Set.copyOf(ids);
         if (next.equals(open)) { return; }
-        open = next;
-        MEMO.clear();
-        SkyOccluder.invalidate();
+        open(next);
     }
 
-    public static void clear() {
-        open = Set.of();
+    public static void clear() { open(Set.of()); }
+
+    private static void open(Set<String> gates) {
+        open = gates;
         MEMO.clear();
         SkyOccluder.invalidate();
     }

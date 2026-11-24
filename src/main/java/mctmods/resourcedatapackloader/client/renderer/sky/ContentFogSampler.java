@@ -162,7 +162,7 @@ public final class ContentFogSampler {
         if (event.getCamera().entity() instanceof LivingEntity living && (living.hasEffect(MobEffects.BLINDNESS) || living.hasEffect(MobEffects.DARKNESS))) { return; }
         FogData fog = event.getFogData();
         float far = Math.min(fog.environmentalEnd, fog.renderDistanceEnd);
-        float end = far + (NEAR - far) * density;
+        float end = Mth.lerp(density, far, NEAR);
         event.setNearPlaneDistance(end * START);
         event.setFarPlaneDistance(end);
         fog.skyEnd = Math.min(fog.skyEnd, end);

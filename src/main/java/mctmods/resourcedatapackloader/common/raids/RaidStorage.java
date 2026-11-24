@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.util.world.SavedTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -26,7 +27,7 @@ public final class RaidStorage extends SavedData {
         RaidStorage held = new RaidStorage();
         for (Tag element : tag.getListOrEmpty(RAIDS)) {
             CompoundTag one = (CompoundTag) element;
-            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(Identifier.tryParse(one.getStringOr("Raid", ""))));
+            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(Identifier.tryParse(one.getStringOr(ActiveRaid.DEF_KEY, ""))));
             if (raid != null) { held.raids.add(raid); }
         }
         return held;
@@ -42,34 +43,23 @@ public final class RaidStorage extends SavedData {
         return tag;
     }
 
-    public boolean raided(BlockPos center, int within) {
+    @Nullable private ActiveRaid first(Predicate<ActiveRaid> match) {
         for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.center().distSqr(center) <= (double) within * within) { return true; }
+            if (!raid.stopped() && match.test(raid)) { return raid; }
         }
-        return false;
+        return null;
     }
+
+    public boolean raided(BlockPos center, int within) { return first(raid -> raid.center().distSqr(center) <= (double) within * within) != null; }
 
     @Nullable public ActiveRaid ownerRaid(int handle) {
         if (handle == 0) { return null; }
-        for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.owner() == handle) { return raid; }
-        }
-        return null;
+        return first(raid -> raid.owner() == handle);
     }
 
-    @Nullable public ActiveRaid raidOf(BlockPos center) {
-        for (ActiveRaid raid : raids) {
-            if (!raid.stopped() && raid.center().equals(center)) { return raid; }
-        }
-        return null;
-    }
+    @Nullable public ActiveRaid raidOf(BlockPos center) { return first(raid -> raid.center().equals(center)); }
 
-    boolean crowds(ActiveRaid raid, int within) {
-        for (ActiveRaid other : raids) {
-            if (other != raid && !other.stopped() && other.center().distSqr(raid.center()) <= (double) within * within) { return true; }
-        }
-        return false;
-    }
+    boolean crowds(ActiveRaid raid, int within) { return first(other -> other != raid && other.center().distSqr(raid.center()) <= (double) within * within) != null; }
 
     public boolean underway(BlockPos at) {
         for (ActiveRaid raid : raids) {

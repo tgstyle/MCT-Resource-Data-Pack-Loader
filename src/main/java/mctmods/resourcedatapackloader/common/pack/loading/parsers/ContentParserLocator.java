@@ -9,6 +9,6 @@ final class ContentParserLocator {
     private ContentParserLocator() {}
 
     static LocatorDef parse(JsonObject json) {
-        return new LocatorDef(Json.getString(json, "locates", "").trim(), Json.getBoolean(json, "locatesEye", false), Json.getString(json, "locatesSound", "").trim(), Math.max(0, Json.getInt(json, "locatesRange", 0)));
+        return new LocatorDef(Json.getString(json, "locates", "").trim(), Json.getBoolean(json, "locatesEye", false), Json.getString(json, "locatesSound", "").trim(), Json.atLeast(json, "locatesRange", 0, 0));
     }
 }

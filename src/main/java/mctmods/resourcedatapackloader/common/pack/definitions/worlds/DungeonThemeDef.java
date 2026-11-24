@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeightDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.core.util.Fallbacks;
 
 import java.util.List;
 import java.util.Map;
@@ -17,11 +18,11 @@ public record DungeonThemeDef(Identifier key, String name, @Nullable Integer wei
 
     public boolean appends() { return !append.isEmpty(); }
 
-    public int weightOrDefault() { return weight == null ? DEFAULT_WEIGHT : weight; }
+    public int weightOrDefault() { return Fallbacks.orDefault(weight, DEFAULT_WEIGHT); }
 
-    public int lootLevelsOrDefault() { return lootLevels == null ? DEFAULT_LOOT_LEVELS : lootLevels; }
+    public int lootLevelsOrDefault() { return Fallbacks.orDefault(lootLevels, DEFAULT_LOOT_LEVELS); }
 
-    public int lootBonusOrDefault() { return lootBonus == null ? DEFAULT_LOOT_BONUS : lootBonus; }
+    public int lootBonusOrDefault() { return Fallbacks.orDefault(lootBonus, DEFAULT_LOOT_BONUS); }
 
     public boolean allowsDimension(String dimension) { return dimensions.isEmpty() || dimensions.contains(dimension) != dimensionsAreBlacklist; }
 

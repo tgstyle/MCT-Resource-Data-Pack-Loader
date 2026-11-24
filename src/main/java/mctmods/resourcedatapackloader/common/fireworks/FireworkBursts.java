@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.fireworks;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.items.FireworkDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,8 +58,8 @@ public final class FireworkBursts {
     private static void run(ServerLevel level, double x, double y, double z, FireworkDef.Burst burst) {
         ContentLog.LOGGER.debug("FireworkBursts fired a {} burst at {} {} {} in dimension {}", burst.pattern(), x, y, z, level.dimension().identifier());
         playSound(level, x, y, z, burst.sound());
-        Item item = burst.particle() == null ? Items.AIR : BuiltInRegistries.ITEM.getOptional(burst.particle()).orElse(Items.AIR);
-        if (item == Items.AIR) { return; }
+        Item item = Registered.find(BuiltInRegistries.ITEM, burst.particle());
+        if (item == null || item == Items.AIR) { return; }
         ItemParticleOption option = FireworkDef.PATTERN_FOUNTAIN.equals(burst.pattern()) ? new ItemParticleOption(ParticleTypes.ITEM, item) : new ItemParticleOption(FireworkParticles.BURST_ITEM.get(), item);
         if (FireworkDef.PATTERN_POINTS.equals(burst.pattern())) {
             for (float[] point : burst.points()) {
@@ -100,8 +101,7 @@ public final class FireworkBursts {
     }
 
     private static void playSound(ServerLevel level, double x, double y, double z, Identifier id) {
-        if (id == null) { return; }
-        SoundEvent sound = BuiltInRegistries.SOUND_EVENT.getOptional(id).orElse(null);
+        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, id);
         if (sound == null) { return; }
         level.playSound(null, x, y, z, sound, SoundSource.AMBIENT, SOUND_VOLUME, 1.0F);
     }

@@ -85,7 +85,7 @@ public final class CardParser {
         rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
         rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
         rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
-        rule.runs = Json.getString(json, "runs", "").trim();
+        rule.runs = Json.getString(json, Json.RUNS, "").trim();
         rule.sets = DataSets.parse(json, "Card rule", key, id);
         if (CardRule.WORN.equals(rule.trigger)) { meter(rule, json); }
         rule.requires = Json.strings(json, "requires");

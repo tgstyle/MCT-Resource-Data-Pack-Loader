@@ -24,7 +24,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class EventFilter {
-    private static final Set<String> KEYS = Set.of("dimension", "block", "entity", "item");
+    public static final String DIMENSION = "dimension";
+    public static final String BLOCK = "block";
+    public static final String ENTITY = "entity";
+    public static final String ITEM = "item";
+    private static final Set<String> KEYS = Set.of(DIMENSION, BLOCK, ENTITY, ITEM);
     public static final EventFilter ALL = new EventFilter(Collections.emptyList(), null, null, null, null);
     private final List<String> dimensions;
     @Nullable private final BlockMatch block;
@@ -54,22 +58,22 @@ public final class EventFilter {
         }
         String ownerName = owner.toString();
         List<String> dimensions = new ArrayList<>();
-        if (json.has("dimension")) {
-            for (String name : names(json.get("dimension"), "dimension")) { dimensions.add(CardPlace.dimensionId(name)); }
+        if (json.has(DIMENSION)) {
+            for (String name : names(json.get(DIMENSION), DIMENSION)) { dimensions.add(CardPlace.dimensionId(name)); }
         }
-        BlockMatch block = json.has("block") ? BlockMatches.parse(ownerName, Json.text(json, "block"), "filter block") : null;
-        if (json.has("block") && block == null) { return skipped(owner); }
+        BlockMatch block = json.has(BLOCK) ? BlockMatches.parse(ownerName, Json.text(json, BLOCK), "filter block") : null;
+        if (json.has(BLOCK) && block == null) { return skipped(owner); }
         List<Identifier> entityIds = null;
         List<String> entityKinds = null;
-        if (json.has("entity")) {
+        if (json.has(ENTITY)) {
             entityIds = new ArrayList<>();
             entityKinds = new ArrayList<>();
             JsonArray listed = new JsonArray();
-            for (String name : names(json.get("entity"), "entity")) { listed.add(name); }
+            for (String name : names(json.get(ENTITY), ENTITY)) { listed.add(name); }
             if (!MobStats.entities(ownerName, "filter entity", listed, entityIds, entityKinds) || (entityIds.isEmpty() && entityKinds.isEmpty())) { return skipped(owner); }
         }
-        ItemMatch item = json.has("item") ? ItemMatch.parse(owner, Json.text(json, "item")) : null;
-        if (json.has("item") && item == null) { return skipped(owner); }
+        ItemMatch item = json.has(ITEM) ? ItemMatch.parse(owner, Json.text(json, ITEM)) : null;
+        if (json.has(ITEM) && item == null) { return skipped(owner); }
         return new EventFilter(Collections.unmodifiableList(dimensions), block, entityIds, entityKinds, item);
     }
 

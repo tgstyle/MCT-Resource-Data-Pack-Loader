@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.ReloadGroups;
 import mctmods.resourcedatapackloader.common.pack.definitions.LangGates;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
+import mctmods.resourcedatapackloader.common.util.messages.Says;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -31,9 +33,9 @@ public final class PackOptionsScreen extends Screen {
     private static final int TOGGLE_WIDTH = 60;
     private static final int TOGGLE_HEIGHT = 20;
     private static final int HEADING = 0xFFFFD080;
-    private static final int PLAIN = 0xFFFFFFFF;
-    private static final int DIM = 0xFF808080;
-    private static final int WARNING = 0xFFFF5555;
+    private static final int PLAIN = Colors.withAlpha(Colors.WHITE_TEXT, 0xFF);
+    private static final int DIM = Colors.withAlpha(Colors.GREY_TEXT, 0xFF);
+    private static final int WARNING = Colors.withAlpha(Says.rgb(ChatFormatting.RED), 0xFF);
     private static final int RULE = 0x30FFFFFF;
     private final Screen parent;
     private final Map<String, Map<String, Boolean>> staged = new LinkedHashMap<>();

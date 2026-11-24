@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Parallel;
 import mctmods.resourcedatapackloader.core.util.math.Longs;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -157,9 +158,7 @@ public final class CityDistricts {
         int least = villageNumber("structureMinDistanceFromSpawn");
         if (least > 0) {
             int[] spawn = ContentStructureControl.spawnAt();
-            long awayX = at[0] - spawn[0];
-            long awayZ = at[1] - spawn[1];
-            if (awayX * awayX + awayZ * awayZ < (long) least * least) {
+            if (MathUtil.dist2(at[0], at[1], spawn[0], spawn[1]) < (long) least * least) {
                 ContentLog.LOGGER.debug("City region {}, {} would found within {} blocks of the spawn, so nothing is founded there", regionX, regionZ, least);
                 return null;
             }

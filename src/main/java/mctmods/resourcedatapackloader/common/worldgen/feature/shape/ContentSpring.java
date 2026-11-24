@@ -1,20 +1,14 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 
-public final class ContentSpring implements IContentShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentSpring extends ContentPlacedShape {
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
         int x = origin.getX();
         int y = origin.getY();

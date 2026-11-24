@@ -39,7 +39,7 @@ public final class ContentWindowLook {
         }
         for (int index = 0; index < weights.length; index++) {
             float aim = def.windows().get(index) == active ? 1.0F : 0.0F;
-            weights[index] = arrived ? aim : weights[index] + (aim - weights[index]) * EASE;
+            weights[index] = arrived ? aim : Mth.lerp(EASE, weights[index], aim);
         }
     }
 
@@ -50,12 +50,9 @@ public final class ContentWindowLook {
     static float fogDensity(@Nullable Level level, float base) {
         DimensionDef def = current(level);
         if (def == null) { return base; }
-        float density = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (window.gives(TimeWindowDef.FOG_DENSITY)) { density += (window.fogDensity() - density) * weights[index]; }
-        }
-        return density;
+        float[] density = {base};
+        each(def, TimeWindowDef.FOG_DENSITY, (window, weight) -> density[0] = Mth.lerp(weight, density[0], window.fogDensity()));
+        return density[0];
     }
 
     static boolean colorsFog(@Nullable Level level) {
@@ -71,14 +68,13 @@ public final class ContentWindowLook {
         DimensionDef def = current(level);
         if (def == null) { return base; }
         float daylight = Mth.clamp(Mth.cos(sunAngle * Mth.DEG_TO_RAD) * 2.0F + 0.5F, 0.0F, 1.0F);
-        Vec3 color = base;
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (weights[index] <= 0.0F || !window.gives(TimeWindowDef.FOG_COLOR)) { continue; }
+        Vec3[] color = {base};
+        each(def, TimeWindowDef.FOG_COLOR, (window, weight) -> {
+            if (weight <= 0.0F) { return; }
             Vec3 aim = window.sampleFog() ? sampled : lit(window.fogColor(), daylight);
-            color = color.add(aim.subtract(color).scale(weights[index]));
-        }
-        return color;
+            color[0] = color[0].add(aim.subtract(color[0]).scale(weight));
+        });
+        return color[0];
     }
 
     private static Vec3 lit(int rgb, float daylight) { return new Vec3(ARGB.redFloat(rgb) * (daylight * 0.94F + 0.06F), ARGB.greenFloat(rgb) * (daylight * 0.94F + 0.06F), ARGB.blueFloat(rgb) * (daylight * 0.91F + 0.09F)); }
@@ -127,15 +123,21 @@ public final class ContentWindowLook {
     private static void blendWindows(@Nullable Level level, float[] color, String key, ToIntFunction<TimeWindowDef> read) {
         DimensionDef def = current(level);
         if (def == null) { return; }
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows().get(index);
-            if (window.gives(key)) { blend(color, rgba(read.applyAsInt(window), 1.0F), weights[index]); }
-        }
+        each(def, key, (window, weight) -> blend(color, rgba(read.applyAsInt(window), 1.0F), weight));
     }
 
     private static float[] rgba(int rgb, float alpha) { return new float[] {ARGB.redFloat(rgb), ARGB.greenFloat(rgb), ARGB.blueFloat(rgb), alpha}; }
 
+    private static void each(DimensionDef def, String key, WindowStep step) {
+        for (int index = 0; index < weights.length; index++) {
+            TimeWindowDef window = def.windows().get(index);
+            if (window.gives(key)) { step.apply(window, weights[index]); }
+        }
+    }
+
+    private interface WindowStep { void apply(TimeWindowDef window, float weight); }
+
     private static void blend(float[] color, float[] aim, float weight) {
-        for (int channel = 0; channel < color.length; channel++) { color[channel] += (aim[channel] - color[channel]) * weight; }
+        for (int channel = 0; channel < color.length; channel++) { color[channel] = Mth.lerp(weight, color[channel], aim[channel]); }
     }
 }

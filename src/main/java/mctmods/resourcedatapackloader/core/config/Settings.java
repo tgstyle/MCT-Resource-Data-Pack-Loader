@@ -40,8 +40,13 @@ public final class Settings {
         int split = entry.lastIndexOf('=');
         if (split < 0) { return new Weighted(entry.trim(), fallback, false); }
         String name = entry.substring(0, split).trim();
-        try { return new Weighted(name, Integer.parseInt(entry.substring(split + 1).trim()), false); }
-        catch (NumberFormatException held) { return new Weighted(name, fallback, true); }
+        Integer weight = integer(entry.substring(split + 1));
+        return weight == null ? new Weighted(name, fallback, true) : new Weighted(name, weight, false);
+    }
+
+    @Nullable public static Integer integer(String text) {
+        try { return Integer.parseInt(text.trim()); }
+        catch (NumberFormatException notNumber) { return null; }
     }
 
     @Nullable public static String[] pair(String entry, String setting, String shape) {
@@ -54,8 +59,8 @@ public final class Settings {
     }
 
     @Nullable public static Integer clamped(String text, int least, int most) {
-        try { return Mth.clamp(Integer.parseInt(text.trim()), least, most); }
-        catch (NumberFormatException notNumber) { return null; }
+        Integer value = integer(text);
+        return value == null ? null : Mth.clamp(value, least, most);
     }
 
     public static List<String> lowered(List<String> values) { return List.copyOf(lower(values)); }

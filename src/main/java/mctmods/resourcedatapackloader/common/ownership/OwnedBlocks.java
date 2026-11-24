@@ -14,14 +14,19 @@ import java.util.stream.IntStream;
 public final class OwnedBlocks {
     public static final String TAG = "rdpl_owned";
     private static final int VERSION = 1;
+    private static final String BLOCKS = "blocks";
+    private static final String POS = "pos";
+    private static final String BLOCK = "block";
+    private static final String OWNER = "owner";
+    private static final String EPOCH = "epoch";
     private static final Codec<int[]> INTS = Codec.INT_STREAM.xmap(IntStream::toArray, Arrays::stream);
     private static final Codec<OwnedBlocks> BODY = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("v").orElse(VERSION).forGetter(_ -> VERSION),
-            Codec.STRING.listOf().fieldOf("blocks").forGetter(held -> held.palette),
-            INTS.fieldOf("pos").forGetter(OwnedBlocks::positions),
-            INTS.fieldOf("block").forGetter(OwnedBlocks::blocks),
-            INTS.fieldOf("owner").forGetter(OwnedBlocks::owners),
-            Codec.INT.fieldOf("epoch").orElse(0).forGetter(OwnedBlocks::epoch)).apply(instance, (_, names, pos, block, owner, epoch) -> restored(names, pos, block, owner, epoch)));
+            Codec.STRING.listOf().fieldOf(BLOCKS).forGetter(held -> held.palette),
+            INTS.fieldOf(POS).forGetter(OwnedBlocks::positions),
+            INTS.fieldOf(BLOCK).forGetter(OwnedBlocks::blocks),
+            INTS.fieldOf(OWNER).forGetter(OwnedBlocks::owners),
+            Codec.INT.fieldOf(EPOCH).orElse(0).forGetter(OwnedBlocks::epoch)).apply(instance, (_, names, pos, block, owner, epoch) -> restored(names, pos, block, owner, epoch)));
     public static final MapCodec<OwnedBlocks> CODEC = BODY.fieldOf(TAG);
     private final List<String> palette = new ArrayList<>();
     private final Map<Integer, Entry> entries = new HashMap<>();

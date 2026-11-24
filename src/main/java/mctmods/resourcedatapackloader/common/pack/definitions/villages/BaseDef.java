@@ -11,6 +11,8 @@ public record BaseDef(String claims, double minScore, double fullScore, int radi
     public static final double PLACED_WEIGHT = 0.05;
     public static final double MINUTES_WEIGHT = 0.5;
     public static final double CLAIM_WEIGHT = 10;
+    public static final int TICKS_PER_MINUTE = 1200;
+    public static final int MINUTE_CAP = 60;
     public static final int DEFAULT_CELL_CAP = 20000;
     public static final int MIN_CELL_CAP = 100;
 

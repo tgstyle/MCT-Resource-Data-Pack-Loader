@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.common.stacks;
 
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
@@ -28,6 +30,15 @@ public final class StackModifiers {
         }
         ContentLog.LOGGER.error("Unknown slot '{}' in {}, which takes mainhand, offhand, head, chest, legs, feet or {}", text, key, ANY);
         return null;
+    }
+
+    public static int operation(Identifier key, JsonObject json, String file, String skipped) {
+        int operation = Json.getInt(json, "operation", 0);
+        if (operation < 0 || operation > 2) {
+            ContentLog.LOGGER.error("{} file {} sets operation to {}, which is not 0, 1 or 2, skipping {}", file, key, operation, skipped);
+            return -1;
+        }
+        return operation;
     }
 
     public static void add(ItemStack stack, String kind, int index, Holder<Attribute> attribute, double amount, int operation, List<EquipmentSlot> slots) {

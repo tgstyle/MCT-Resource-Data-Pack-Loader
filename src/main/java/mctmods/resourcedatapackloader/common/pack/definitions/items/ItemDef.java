@@ -23,5 +23,7 @@ public record ItemDef(Identifier key, String type, String creativeTab, boolean a
 
     public boolean slotted() { return !curioSlot.isEmpty(); }
 
-    public boolean worn() { return slotted() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }
+    public boolean hasWornEffects() { return !wornEffects.isEmpty() || !wornAttributes.isEmpty(); }
+
+    public boolean worn() { return slotted() && hasWornEffects(); }
 }

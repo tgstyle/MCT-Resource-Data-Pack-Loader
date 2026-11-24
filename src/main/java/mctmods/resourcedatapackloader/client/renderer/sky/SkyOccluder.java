@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public final class SkyOccluder {
 
     boolean sweeps(double x, double reach) {
         if (ContentSkyGates.hides(gate)) { return false; }
-        double gap = Math.abs(Math.asin(Mth.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
+        double gap = Math.abs(MathUtil.asinClamped(x) - Math.asin(-Math.sin(tilt)));
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
 

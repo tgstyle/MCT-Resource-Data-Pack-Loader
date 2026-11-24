@@ -134,12 +134,7 @@ public final class ContentParserContainers {
     static List<AttributeDef> wornAttributes(Identifier key, JsonObject json) {
         List<AttributeDef> found = new ArrayList<>();
         if (!json.has("wornAttributes")) { return found; }
-        for (JsonElement element : Json.getJsonArray(json, "wornAttributes")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A worn attribute in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "wornAttributes"), "A worn attribute in {} is not an object, skipping it", key)) {
             Json.unknownKeys(entry, "wornAttributes", ATTRIBUTE_KEYS);
             String attribute = Json.getString(entry, "attribute", "");
             int operation = Json.getInt(entry, "operation", 0);

@@ -77,7 +77,7 @@ public final class SoulboundDeath {
 
     private static void rollStashed(ServerPlayer player) {
         HolderLookup.Provider access = player.registryAccess();
-        ListTag stash = player.getPersistentData().getListOrEmpty(STASH);
+        ListTag stash = stash(player);
         ListTag kept = new ListTag();
         for (int at = 0; at < stash.size(); at++) {
             CompoundTag saved = stash.getCompoundOrEmpty(at);
@@ -104,7 +104,7 @@ public final class SoulboundDeath {
         List<Held> recorded = RECORDS.remove(player.getUUID());
         if (recorded == null || event.isCanceled()) { return; }
         HolderLookup.Provider access = player.registryAccess();
-        ListTag stash = player.getPersistentData().getListOrEmpty(STASH);
+        ListTag stash = stash(player);
         Iterator<ItemEntity> drops = event.getDrops().iterator();
         while (drops.hasNext()) {
             ItemStack stack = drops.next().getItem();
@@ -152,16 +152,21 @@ public final class SoulboundDeath {
 
     private static ItemStack stack(HolderLookup.Provider access, CompoundTag entry) { return entry.read(STACK, ItemStack.OPTIONAL_CODEC, access.createSerializationContext(NbtOps.INSTANCE)).orElse(ItemStack.EMPTY); }
 
+    private static ListTag stash(Player player) { return player.getPersistentData().getListOrEmpty(STASH); }
+
+    private static ItemStack loaded(HolderLookup.Provider access, CompoundTag entry, Player player) {
+        ItemStack stack = stack(access, entry);
+        if (stack.isEmpty()) { ContentLog.LOGGER.error("A soulbound stack of {} no longer loads, skipping it", player.getName().getString()); }
+        return stack;
+    }
+
     private static void restore(Player from, Player to) {
         HolderLookup.Provider access = to.registryAccess();
-        ListTag stash = from.getPersistentData().getListOrEmpty(STASH);
+        ListTag stash = stash(from);
         for (int at = 0; at < stash.size(); at++) {
             CompoundTag entry = stash.getCompoundOrEmpty(at);
-            ItemStack stack = stack(access, entry);
-            if (stack.isEmpty()) {
-                ContentLog.LOGGER.error("A soulbound stack of {} no longer loads, skipping it", to.getName().getString());
-                continue;
-            }
+            ItemStack stack = loaded(access, entry, to);
+            if (stack.isEmpty()) { continue; }
             give(to, entry.getIntOr(SLOT, -1), stack);
         }
         from.getPersistentData().remove(STASH);

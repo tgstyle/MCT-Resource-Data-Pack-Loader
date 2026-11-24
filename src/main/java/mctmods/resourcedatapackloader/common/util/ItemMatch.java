@@ -18,6 +18,12 @@ public record ItemMatch(@Nullable Item item, @Nullable TagKey<Item> tag, int ran
     private static final int TAG_RANK = 1;
     private static final int ITEM_RANK = 2;
 
+    public static ItemMatch parseOrThrow(Identifier key, String text, String what) {
+        ItemMatch match = parse(key, text);
+        if (match == null) { throw new IllegalArgumentException(what + " '" + text + "' matches nothing"); }
+        return match;
+    }
+
     @Nullable public static ItemMatch parse(Identifier key, String text) {
         String held = text.trim();
         if (held.isEmpty()) {

@@ -27,7 +27,6 @@ import net.minecraft.resources.Identifier;
 
 public final class ContentParserDungeons {
     private static final List<String> SHAPES = List.of("box", "pillared", "ring", "pit", "cross", "cave");
-    private static final List<String> SHAFTS = List.of("ladder", "spiral", "stairs");
     private static final List<String> ENTRANCES = List.of("simple", "spiral", "toproom");
     private static final Set<String> DUNGEON_KEYS = keys("name", "themes", "dimensions", "dimensionsAreBlacklist", "chance", "minDistance", "group", "minDistanceFromSpawn", "noOceans", "biomes", "biomeTypes", "biomesAreBlacklist", "at", "locateAs", "sizes", "shrink", "surfaceBuffer", "minY", "levelHeight", "roomSize", "corridor", "loops", "rolls", "roomKinds", "entrance", "boss", "shafts", "difficulty", "support", "decay", "levelRules", "respawn");
     private static final Set<String> SIZE_KEYS = keys("name", "weight", "footprint", "levels", "rooms");
@@ -38,6 +37,8 @@ public final class ContentParserDungeons {
     private static final Set<String> DIFFICULTY_KEYS = keys("preset", "spawners", "promote", "maxTier", "nodeTier", "bossTier", "blocksPerSpawner", "entranceMobs");
     private static final Set<String> DECAY_KEYS = keys("base", "perDepth");
     private static final int TOP_TIER = 4;
+    private static final int PERCENT_MAX = 100;
+    private static final int OPEN_MAX = 100000;
 
     private ContentParserDungeons() {}
 
@@ -47,20 +48,20 @@ public final class ContentParserDungeons {
         String owner = "Dungeon " + key;
         unknown(owner, json, DUNGEON_KEYS);
         List<String> dimensions = json.has("dimensions") ? Json.strings(json, "dimensions") : List.of(ContentBiomes.OVERWORLD);
-        int[] levelHeight = pair(owner, json, "levelHeight", DungeonDef.DEFAULT_LEVEL_HEIGHT, 4, 64);
+        int[] levelHeight = Json.pair(owner, json, "levelHeight", DungeonDef.DEFAULT_LEVEL_HEIGHT, 4, 64);
         DungeonDef.Corridor corridor = corridor(owner, json, levelHeight[0]);
-        int[] roomSize = pair(owner, json, "roomSize", DungeonDef.DEFAULT_ROOM_SIZE, 3, 64);
+        int[] roomSize = Json.pair(owner, json, "roomSize", DungeonDef.DEFAULT_ROOM_SIZE, 3, 64);
         if (roomSize[0] < corridor.width() + 2) {
             ContentLog.LOGGER.error("{} gives a roomSize minimum of {}, too small for a corridor {} wide, so it is raised to {}", owner, roomSize[0], corridor.width(), corridor.width() + 2);
             roomSize = new int[] { corridor.width() + 2, Math.max(roomSize[1], corridor.width() + 2) };
         }
-        List<PickDef> shafts = picks(owner, json, "shafts", SHAFTS);
+        List<PickDef> shafts = picks(owner, json, "shafts", DungeonDef.SHAFTS);
         if (shafts.isEmpty()) { shafts = List.of(new PickDef("ladder", 1)); }
         return new DungeonDef(key, Json.getString(json, "name", key.getPath()), picks(owner, json, "themes", null), dimensions, Json.getBoolean(json, "dimensionsAreBlacklist", false),
-                number(owner, json, "chance", DungeonDef.DEFAULT_CHANCE, 1, 100), number(owner, json, "minDistance", DungeonDef.DEFAULT_MIN_DISTANCE, 0, 100000),
-                Json.getString(json, "group", key.toString()), number(owner, json, "minDistanceFromSpawn", 0, 0, 100000), Json.getBoolean(json, "noOceans", true),
+                number(owner, json, "chance", DungeonDef.DEFAULT_CHANCE, 1, PERCENT_MAX), number(owner, json, "minDistance", DungeonDef.DEFAULT_MIN_DISTANCE, 0, OPEN_MAX),
+                Json.getString(json, "group", key.toString()), number(owner, json, "minDistanceFromSpawn", 0, 0, OPEN_MAX), Json.getBoolean(json, "noOceans", true),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.getBoolean(json, "biomesAreBlacklist", false),
-                at(owner, json), json.has("locateAs") ? Json.getString(json, "locateAs", "") : null, sizes(owner, json), number(owner, json, "shrink", 0, 0, 100),
+                at(owner, json), json.has("locateAs") ? Json.getString(json, "locateAs", "") : null, sizes(owner, json), number(owner, json, "shrink", 0, 0, PERCENT_MAX),
                 number(owner, json, "surfaceBuffer", DungeonDef.DEFAULT_SURFACE_BUFFER, 0, 64), json.has("minY") ? Json.getInt(json, "minY", 0) : null,
                 levelHeight, roomSize, corridor, number(owner, json, "loops", DungeonDef.DEFAULT_LOOPS, 0, 100), rolls(owner, json), roomKinds(owner, json, true),
                 entrance(owner, json), boss(owner, json), shafts, json.has("difficulty") ? difficulty(owner, json.get("difficulty")) : null,
@@ -79,8 +80,8 @@ public final class ContentParserDungeons {
         unknown(owner + " difficulty", json, DIFFICULTY_KEYS);
         String where = owner + " difficulty";
         return new DungeonDef.Difficulty(json.has("preset") ? preset(owner, Json.getString(json, "preset", "")) : DungeonDef.DEFAULT_DIFFICULTY,
-                optional(where, json, "spawners", 0, 100), optional(where, json, "promote", 0, 100), optional(where, json, "maxTier", 0, TOP_TIER), optional(where, json, "nodeTier", 0, TOP_TIER),
-                optional(where, json, "bossTier", 0, TOP_TIER), optional(where, json, "blocksPerSpawner", 1, 100000), json.has("entranceMobs") ? Json.getBoolean(json, "entranceMobs", false) : null);
+                optional(where, json, "spawners", 0, PERCENT_MAX), optional(where, json, "promote", 0, PERCENT_MAX), optional(where, json, "maxTier", 0, TOP_TIER), optional(where, json, "nodeTier", 0, TOP_TIER),
+                optional(where, json, "bossTier", 0, TOP_TIER), optional(where, json, "blocksPerSpawner", 1, OPEN_MAX), json.has("entranceMobs") ? Json.getBoolean(json, "entranceMobs", false) : null);
     }
 
     public static DungeonDef.Decay decay(String owner, JsonElement held) {
@@ -91,7 +92,7 @@ public final class ContentParserDungeons {
         }
         JsonObject json = held.getAsJsonObject();
         unknown(owner + " decay", json, DECAY_KEYS);
-        return new DungeonDef.Decay(number(owner + " decay", json, "base", fallback.base(), 0, 100), number(owner + " decay", json, "perDepth", fallback.perDepth(), 0, 100));
+        return new DungeonDef.Decay(number(owner + " decay", json, "base", fallback.base(), 0, PERCENT_MAX), number(owner + " decay", json, "perDepth", fallback.perDepth(), 0, PERCENT_MAX));
     }
 
     public static Map<String, DungeonDef.Degree> rolls(String owner, JsonObject json) {
@@ -180,19 +181,7 @@ public final class ContentParserDungeons {
         return null;
     }
 
-    private static int[] pair(String owner, JsonObject json, String key, int[] fallback, int low, int high) {
-        if (!json.has(key)) { return fallback; }
-        JsonElement held = json.get(key);
-        if (held.isJsonArray() && held.getAsJsonArray().size() == 2) {
-            int least = Json.asInt(held.getAsJsonArray().get(0), key, low - 1);
-            int most = Json.asInt(held.getAsJsonArray().get(1), key, low - 1);
-            if (least >= low && most <= high && least <= most) { return new int[] { least, most }; }
-        }
-        ContentLog.LOGGER.error("{} sets '{}' to something other than [min, max] with {} <= min <= max <= {}, so {} instead", owner, key, low, high, fallback == null ? "it is ignored" : Arrays.toString(fallback) + " is used");
-        return fallback;
-    }
-
-    @Nullable private static int[] optionalPair(String owner, JsonObject json, String key, int low) { return json.has(key) ? pair(owner, json, key, null, low, 64) : null; }
+    @Nullable private static int[] optionalPair(String owner, JsonObject json, String key, int low) { return Json.pair(owner, json, key, null, low, 64); }
 
     private static String preset(String owner, String named) {
         String name = named.trim().toLowerCase(Locale.ROOT);
@@ -218,17 +207,12 @@ public final class ContentParserDungeons {
     private static List<DungeonSizeDef> sizes(String owner, JsonObject json) {
         if (!json.has("sizes")) { return DungeonSizeDef.BUILT_IN; }
         List<DungeonSizeDef> sizes = new ArrayList<>();
-        for (JsonElement held : Json.getJsonArray(json, "sizes", new JsonArray())) {
-            if (!held.isJsonObject()) {
-                ContentLog.LOGGER.error("{} lists a size that is not an object, so it is left out", owner);
-                continue;
-            }
-            JsonObject size = held.getAsJsonObject();
+        for (JsonObject size : Json.objectsOrSkip(Json.getJsonArray(json, "sizes", new JsonArray()), "{} lists a size that is not an object, so it is left out", owner)) {
             String where = owner + " size " + sizes.size();
             unknown(where, size, SIZE_KEYS);
             sizes.add(new DungeonSizeDef(Json.getString(size, "name", "size" + sizes.size()), number(where, size, "weight", DungeonSizeDef.DEFAULT_WEIGHT, 1, 1000000),
                     number(where, size, "footprint", DungeonSizeDef.DEFAULT_FOOTPRINT, DungeonSizeDef.MIN_FOOTPRINT, DungeonSizeDef.MAX_FOOTPRINT),
-                    pair(where, size, "levels", DungeonSizeDef.DEFAULT_LEVELS, 1, 64), pair(where, size, "rooms", DungeonSizeDef.DEFAULT_ROOMS, 1, 400)));
+                    Json.pair(where, size, "levels", DungeonSizeDef.DEFAULT_LEVELS, 1, 64), Json.pair(where, size, "rooms", DungeonSizeDef.DEFAULT_ROOMS, 1, 400)));
         }
         if (sizes.isEmpty()) {
             ContentLog.LOGGER.error("{} gives no usable size, so the built in sizes are used", owner);
@@ -327,11 +311,11 @@ public final class ContentParserDungeons {
         int decay = 0;
         boolean decayTemplate = false;
         if (json.has("decay") && json.get("decay").isJsonPrimitive() && json.get("decay").getAsJsonPrimitive().isBoolean()) { decayTemplate = json.get("decay").getAsBoolean(); }
-        else { decay = number(where, json, "decay", 0, 0, 100); }
+        else { decay = number(where, json, "decay", 0, 0, PERCENT_MAX); }
         List<PickDef> shapes = picks(where, json, "shapes", SHAPES);
         return new RoomKindDef(Json.text(json, "kind", "").toLowerCase(Locale.ROOT), number(where, json, "weight", RoomKindDef.DEFAULT_WEIGHT, 1, 1000000),
                 number(where, json, "minLevel", RoomKindDef.ANY, 0, 64), number(where, json, "maxLevel", RoomKindDef.ANY, 0, 64),
-                number(where, json, "maxPerDungeon", RoomKindDef.NO_CAP, 0, 100000), number(where, json, "maxPerLevel", RoomKindDef.NO_CAP, 0, 100000),
+                number(where, json, "maxPerDungeon", RoomKindDef.NO_CAP, 0, OPEN_MAX), number(where, json, "maxPerLevel", RoomKindDef.NO_CAP, 0, OPEN_MAX),
                 optionalPair(where, json, "minSize", 1), optionalPair(where, json, "height", 3), shapes.isEmpty() ? List.of(new PickDef("box", 1)) : shapes,
                 picks(where, json, "templates", null), number(where, json, "yOffset", 0, -64, 64), picks(where, json, "turns", null), Json.strings(json, "decor"),
                 Json.getString(json, "mobs", RoomKindDef.DEFAULT_MOBS), Json.getString(json, "loot", RoomKindDef.DEFAULT_LOOT), amount(where, json, "spawners"), amount(where, json, "chests"),

@@ -31,7 +31,7 @@ public final class CityPlotClearing {
                     at.set(x, y, z);
                     BlockState state = level.getBlockState(at);
                     if (!CityPlotGround.opening(state) && !state.is(Blocks.VINE)) { continue; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    clearBlock(level, at);
                     opened++;
                 }
             }
@@ -92,7 +92,7 @@ public final class CityPlotClearing {
                         for (int up = 0; up <= DOOR_HEIGHT; up++) {
                             at.set(stepX, y + up, stepZ);
                             if (!box.isInside(at) || (!CityPlotGround.clearable(level.getBlockState(at)) && !level.getBlockState(at).is(Blocks.DIRT_PATH))) { continue; }
-                            level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                            clearBlock(level, at);
                             freed++;
                         }
                     }
@@ -102,6 +102,8 @@ public final class CityPlotClearing {
         }
         return freed;
     }
+
+    private static void clearBlock(WorldGenLevel level, BlockPos at) { level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
 
     private static boolean lacksDoorwayAt(WorldGenLevel level, int x, int y, int z) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();

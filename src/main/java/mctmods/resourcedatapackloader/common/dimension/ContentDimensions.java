@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentInherits;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentDimensionParser;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.dimension.DimensionValues;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -76,7 +77,7 @@ public final class ContentDimensions {
     private static final String TERRAIN_TYPE = "terrain.type";
     private static final Map<Identifier, DimensionDef> DEFS = new LinkedHashMap<>();
     private static final Set<Identifier> EXISTING = new HashSet<>();
-    private static final Map<UUID, Identifier> DIED_IN = new HashMap<>();
+    private static final Map<UUID, Identifier> DIED_IN = PlayerLogout.track(new HashMap<>());
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
     private static final String VISUAL = "minecraft:visual/";
     private static final String GAMEPLAY = "minecraft:gameplay/";
@@ -481,8 +482,6 @@ public final class ContentDimensions {
         player.teleportTo(target, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), target.getRespawnData().yaw(), 0.0F, true);
         ContentLog.LOGGER.debug("Player {} died in {}, which {}, and respawns in {} at {}", player.getName().getString(), diedIn, def.respawn() ? "sends respawns on" : "allows no respawn", sentTo, feet);
     }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DIED_IN.remove(event.getEntity().getUUID()); }
 
     public static boolean structuresOff(ServerLevel level) {
         DimensionDef def = def(level);

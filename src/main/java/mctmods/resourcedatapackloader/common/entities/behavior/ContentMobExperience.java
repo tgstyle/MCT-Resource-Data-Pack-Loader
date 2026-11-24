@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -17,7 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantedItemInUse;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -142,7 +142,7 @@ public final class ContentMobExperience {
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity died = event.getEntity();
         if (event.isCanceled() || !(died.level() instanceof ServerLevel level) || !(died instanceof Mob) || ContentEntities.ignoresExperience(died)) { return; }
-        int dropped = level.getGameRules().get(GameRules.KEEP_INVENTORY) ? 0 : Math.min(level(died) * 7, 100);
+        int dropped = PlayerLoot.keepInventory(level) ? 0 : Math.min(level(died) * 7, 100);
         CompoundTag data = died.getPersistentData();
         data.remove(LEVEL);
         data.remove(PROGRESS);

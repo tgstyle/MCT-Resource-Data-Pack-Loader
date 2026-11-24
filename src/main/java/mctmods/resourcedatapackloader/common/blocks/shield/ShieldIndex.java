@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 
@@ -53,8 +54,8 @@ public final class ShieldIndex {
 
     private void gather(int x, int z, int reachChunks) {
         gathered.clear();
-        int chunkX = x >> 4;
-        int chunkZ = z >> 4;
+        int chunkX = SectionPos.blockToSectionCoord(x);
+        int chunkZ = SectionPos.blockToSectionCoord(z);
         int side = reachChunks * 2 + 1;
         if (cells.size() < side * side) {
             for (Long2ObjectMap.Entry<Cell> entry : cells.long2ObjectEntrySet()) {

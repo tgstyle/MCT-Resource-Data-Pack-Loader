@@ -21,7 +21,6 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -136,22 +135,12 @@ public final class ContentVillagers {
         JsonObject json = Json.object(key, contents, "trade file");
         if (json == null) { return; }
         Json.unknownKeys(json, "the top level", TRADE_FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "trades", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
-                continue;
-            }
-            Json.unknownKeys(element.getAsJsonObject(), "trades", TRADE_KEYS);
-            TradeDef def = trade(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "trades", new JsonArray()), "A trade in {} is not an object, skipping it", key)) {
+            Json.unknownKeys(element, "trades", TRADE_KEYS);
+            TradeDef def = trade(key, element);
             if (def != null) { TRADES.add(def); }
         }
-        for (JsonElement element : Json.getJsonArray(json, "clear", new JsonArray())) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A clear entry in {} is not an object, skipping it", key);
-                continue;
-            }
-            readClear(key, element.getAsJsonObject());
-        }
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "clear", new JsonArray()), "A clear entry in {} is not an object, skipping it", key)) { readClear(key, element); }
     }
 
     private static void readClear(Identifier key, JsonObject entry) {

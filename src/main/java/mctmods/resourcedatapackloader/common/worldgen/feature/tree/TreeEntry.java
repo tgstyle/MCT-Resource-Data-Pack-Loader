@@ -7,10 +7,12 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -70,6 +72,10 @@ public final class TreeEntry {
         this.blockEntities = blockEntities;
     }
 
+    public static TreeEntry fresh(long pos, String rule, byte phase, int pick, byte kind, String source, byte turn, byte mirror, long seed, int steps, long now, Map<Integer, BlockState> saplings, int hash, List<BlockState> palette, int[] blocks, int[] states, int[] under, Map<Integer, CompoundTag> blockEntities) {
+        return new TreeEntry(pos, rule, phase, new int[0], pick, kind, source, turn, mirror, seed, 0, steps, now, now, 0L, saplings, new IntOpenHashSet(), new IntOpenHashSet(), hash, palette, blocks, states, under, blockEntities);
+    }
+
     public static int pack(int dx, int dy, int dz) { return (dx + 24) | ((dz + 24) << 6) | ((dy + 16) << 12); }
 
     public static int unpackX(int packed) { return (packed & 63) - 24; }
@@ -114,14 +120,27 @@ public final class TreeEntry {
         return tag;
     }
 
-    private static Map<Integer, BlockState> readSaplings(HolderGetter<Block> blocks, ListTag list) {
-        Map<Integer, BlockState> saplings = new LinkedHashMap<>();
+    private static <V> Map<Integer, V> readKeyed(ListTag list, String key, String value, Function<CompoundTag, V> decode) {
+        Map<Integer, V> keyed = new LinkedHashMap<>();
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag sapling = list.getCompoundOrEmpty(i);
-            saplings.put(sapling.getIntOr("P", 0), NbtUtils.readBlockState(blocks, sapling.getCompoundOrEmpty("S")));
+            CompoundTag entry = list.getCompoundOrEmpty(i);
+            keyed.put(entry.getIntOr(key, 0), decode.apply(entry.getCompoundOrEmpty(value)));
         }
-        return saplings;
+        return keyed;
     }
+
+    private static <V> ListTag writeKeyed(Map<Integer, V> map, String key, String value, Function<V, Tag> encode) {
+        ListTag list = new ListTag();
+        for (Map.Entry<Integer, V> entry : map.entrySet()) {
+            CompoundTag tag = new CompoundTag();
+            tag.putInt(key, entry.getKey());
+            tag.put(value, encode.apply(entry.getValue()));
+            list.add(tag);
+        }
+        return list;
+    }
+
+    private static Map<Integer, BlockState> readSaplings(HolderGetter<Block> blocks, ListTag list) { return readKeyed(list, "P", "S", state -> NbtUtils.readBlockState(blocks, state)); }
 
     private static List<BlockState> readPalette(HolderGetter<Block> blocks, ListTag list) {
         List<BlockState> palette = new ArrayList<>();
@@ -129,25 +148,9 @@ public final class TreeEntry {
         return palette;
     }
 
-    private static Map<Integer, CompoundTag> readBlockEntities(ListTag list) {
-        Map<Integer, CompoundTag> blockEntities = new LinkedHashMap<>();
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompoundOrEmpty(i);
-            blockEntities.put(entry.getIntOr("I", 0), entry.getCompoundOrEmpty("Data"));
-        }
-        return blockEntities;
-    }
+    private static Map<Integer, CompoundTag> readBlockEntities(ListTag list) { return readKeyed(list, "I", "Data", data -> data); }
 
-    private ListTag writeSaplings() {
-        ListTag list = new ListTag();
-        for (Map.Entry<Integer, BlockState> sapling : saplings.entrySet()) {
-            CompoundTag tag = new CompoundTag();
-            tag.putInt("P", sapling.getKey());
-            tag.put("S", NbtUtils.writeBlockState(sapling.getValue()));
-            list.add(tag);
-        }
-        return list;
-    }
+    private ListTag writeSaplings() { return writeKeyed(saplings, "P", "S", NbtUtils::writeBlockState); }
 
     private ListTag writePalette() {
         ListTag list = new ListTag();
@@ -155,16 +158,7 @@ public final class TreeEntry {
         return list;
     }
 
-    private ListTag writeBlockEntities() {
-        ListTag list = new ListTag();
-        for (Map.Entry<Integer, CompoundTag> entry : blockEntities.entrySet()) {
-            CompoundTag tag = new CompoundTag();
-            tag.putInt("I", entry.getKey());
-            tag.put("Data", entry.getValue());
-            list.add(tag);
-        }
-        return list;
-    }
+    private ListTag writeBlockEntities() { return writeKeyed(blockEntities, "I", "Data", data -> data); }
 
     private static int[] sorted(IntSet set) {
         int[] array = set.toIntArray();

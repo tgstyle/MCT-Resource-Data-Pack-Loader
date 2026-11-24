@@ -148,7 +148,8 @@ public final class ContentEnchanting {
     private static int whole(Identifier key, JsonObject json, String name, int least) {
         if (!json.has(name)) { return -1; }
         JsonElement held = json.get(name);
-        if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber() && held.getAsDouble() == Math.rint(held.getAsDouble()) && held.getAsDouble() >= least && held.getAsDouble() <= AnvilCosts.HIGHEST) { return held.getAsInt(); }
+        Integer value = Json.whole(held, least, AnvilCosts.HIGHEST);
+        if (value != null) { return value; }
         ContentLog.LOGGER.error("Enchanting file {} gives {} the value {}, which is not a whole number from {} to {}, ignoring it", key, name, held, least, AnvilCosts.HIGHEST);
         return -1;
     }

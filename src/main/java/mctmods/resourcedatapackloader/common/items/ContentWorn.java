@@ -75,7 +75,7 @@ public final class ContentWorn {
         Set<String> told = new HashSet<>();
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
             ItemDef def = entry.def();
-            if (def == null || (def.wornEffects().isEmpty() && def.wornAttributes().isEmpty())) { continue; }
+            if (def == null || !def.hasWornEffects()) { continue; }
             if (!def.slotted()) {
                 if (told.add(def.key().toString())) { ContentLog.LOGGER.info("{} has worn effects or attributes but no curioSlot, so they are ignored", def.key()); }
                 continue;

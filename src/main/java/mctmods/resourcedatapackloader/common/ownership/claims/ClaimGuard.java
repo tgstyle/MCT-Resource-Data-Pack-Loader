@@ -16,7 +16,7 @@ public final class ClaimGuard {
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
         int owner = ClaimIndex.obtain(served).ownerAt(chunkX, chunkZ);
-        return owner != 0 && ClaimSettings.yieldsToForeign() && (ClaimSettings.ftbPolicy() == ClaimSettings.FtbPolicy.EXCLUSIVE || ForeignClaimsHolder.get().isClaimed(served, chunkX, chunkZ)) ? 0 : owner;
+        return owner != 0 && ClaimSettings.yieldsAt(served, chunkX, chunkZ) ? 0 : owner;
     }
 
     public static boolean passes(ServerPlayer player, Level level, BlockPos pos) {

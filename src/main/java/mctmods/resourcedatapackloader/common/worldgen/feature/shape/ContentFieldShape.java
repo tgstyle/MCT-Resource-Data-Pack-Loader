@@ -4,21 +4,15 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
 
-import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentFieldShape implements IContentChunkShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentFieldShape extends ContentPlacedShape implements IContentChunkShape {
     private final ContentField field;
     private final float threshold;
     private final int minHeight;

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.PullingHand;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
 import mctmods.resourcedatapackloader.common.util.entity.Stalking;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
@@ -63,7 +64,7 @@ public final class PullGoal extends Goal {
         if (cooldown > 0) { cooldown--; }
         if (cooldown > 0 || target == null) { return; }
         cooldown = reload;
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         PullingHand hand = new PullingHand(mob.level(), mob, stack, power, Stalking.range(mob));
         hand.aim(target.getX() - hand.getX(), target.getEyeY() - hand.getY(), target.getZ() - hand.getZ(), SPEED);
         mob.level().addFreshEntity(hand);

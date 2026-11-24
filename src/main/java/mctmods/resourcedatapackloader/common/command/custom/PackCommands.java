@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.command.custom;
 import mctmods.resourcedatapackloader.common.pack.definitions.scripts.ScriptRef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.scripts.ScriptEvents;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -34,7 +35,7 @@ public final class PackCommands {
     private static void read(CommandDispatcher<CommandSourceStack> dispatcher, Identifier key, JsonObject json) {
         Json.unknownKeys(json, "the top level", COMMAND_KEYS);
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
-        String runs = Json.getString(json, "runs", "").trim();
+        String runs = Json.getString(json, Json.RUNS, "").trim();
         boolean inline = !Json.getString(json, "script", "").trim().isEmpty();
         boolean file = !Json.getString(json, "scriptFile", "").trim().isEmpty();
         boolean hasScript = inline || file;
@@ -82,7 +83,7 @@ public final class PackCommands {
                 ContentLog.LOGGER.error("Command file {} has an argument with no usable name, ignoring that argument", key);
                 continue;
             }
-            if (script && ("rdpl".equals(name) || "sender".equals(name))) {
+            if (script && (ScriptEvents.RDPL.equals(name) || ScriptEvents.SENDER.equals(name))) {
                 ContentLog.LOGGER.error("Command file {} has an argument named {}, which a script command uses itself, ignoring that argument", key, name);
                 continue;
             }

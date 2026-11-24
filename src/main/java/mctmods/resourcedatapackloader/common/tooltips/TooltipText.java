@@ -69,7 +69,7 @@ public final class TooltipText {
             boolean isNbt = start == nbt;
             String open = isData ? DataText.OPEN : isNbt ? NBT_OPEN : ITEM_OPEN;
             int begin = start + open.length();
-            int end = raw.indexOf('}', begin);
+            int end = DataText.close(raw, start, open);
             if (end < 0) { break; }
             String body = raw.substring(begin, end);
             if (isData ? DataText.name(body).isEmpty() : end == begin) {

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
 import mctmods.resourcedatapackloader.common.types.ContentToolTypes;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -180,12 +181,7 @@ public final class OrderItems {
     }
 
     public static int count(OrderDef def, ResourceHandler<ItemResource> handler) {
-        int count = 0;
-        for (int slot = 0; slot < handler.size(); slot++) {
-            ItemStack stack = ItemUtil.getStack(handler, slot);
-            if (counts(def, stack)) { count += stack.getCount(); }
-        }
-        return count;
+        return (int) ItemHandlers.sum(handler, stack -> counts(def, stack) ? stack.getCount() : 0L);
     }
 
     public static ItemStack takeOne(ResourceHandler<ItemResource> from, int slot) {

@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -114,30 +115,31 @@ public final class ContentEnvironments {
             JsonObject layered = Json.object(key, contents, "dimension");
             if (layered == null) { continue; }
             layered.remove(ENVIRONMENTS);
-            layer(owner, layered, entry.getValue().getAsJsonObject());
+            JsonObject environment = entry.getValue().getAsJsonObject();
+            layer(owner, layered, environment);
             DimensionDef set = ContentDimensionParser.parse(key, layered);
             sets.put(name, set);
-            List<String> biomes = Json.strings(entry.getValue().getAsJsonObject(), BIOMES);
+            List<String> biomes = Json.strings(environment, BIOMES);
             if (!biomes.isEmpty()) { PLACES.put(set, biomes); }
-            JsonElement spawning = entry.getValue().getAsJsonObject().get(SPAWNING);
+            JsonElement spawning = environment.get(SPAWNING);
             SpawnSwitchDef switched = spawning == null ? null : ContentSpawnSwitch.parse(owner, spawning);
             if (switched != null) { SPAWNS.put(set, switched); }
-            JsonElement growth = entry.getValue().getAsJsonObject().get(GROWTH);
+            JsonElement growth = environment.get(GROWTH);
             GrowSwitchDef grown = growth == null ? null : ContentGrowSwitch.parse(owner, growth);
             if (grown != null) { GROWS.put(set, grown); }
-            JsonElement mobs = entry.getValue().getAsJsonObject().get(MOBS);
+            JsonElement mobs = environment.get(MOBS);
             MobSwitchDef moved = mobs == null ? null : ContentMobSwitch.parse(owner, name, mobs);
             if (moved != null) { MOBLINES.put(set, moved); }
-            JsonElement loot = entry.getValue().getAsJsonObject().get(LOOT);
+            JsonElement loot = environment.get(LOOT);
             Map<Identifier, Identifier> swapped = loot == null ? null : ContentLootSwitch.parse(owner, loot);
             if (swapped != null) { LOOTS.put(set, swapped); }
-            JsonElement trades = entry.getValue().getAsJsonObject().get(TRADES);
+            JsonElement trades = environment.get(TRADES);
             TradeSwitchDef traded = trades == null ? null : ContentTradeSwitch.parse(key, owner, key + "/" + name, trades);
             if (traded != null) { TRADELINES.put(set, traded); }
-            JsonElement rules = entry.getValue().getAsJsonObject().get(RULES);
+            JsonElement rules = environment.get(RULES);
             RuleSwitchDef ruled = rules == null ? null : ContentRuleSwitch.parse(owner, rules, !biomes.isEmpty(), set.traits().precipitation());
             if (ruled != null) { RULESETS.put(set, ruled); }
-            JsonElement raids = entry.getValue().getAsJsonObject().get(RAIDS);
+            JsonElement raids = environment.get(RAIDS);
             RaidSwitchDef raided = raids == null ? null : ContentRaidSwitch.parse(owner, raids);
             if (raided != null) { RAIDLINES.put(set, raided); }
         }
@@ -202,8 +204,12 @@ public final class ContentEnvironments {
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return blocks.getOrDefault(set, none); }
             }
         }
-        DimensionDef whole = whole(dimension);
-        return whole == null ? none : blocks.getOrDefault(whole, none);
+        return pick(blocks, whole(dimension), none);
+    }
+
+    private static <T> T pick(Map<DimensionDef, T> map, @Nullable DimensionDef set, T none) {
+        T held = set == null ? null : map.get(set);
+        return held == null ? none : held;
     }
 
     @Nullable private static DimensionDef whole(Identifier dimension) {
@@ -212,10 +218,7 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.getFirst());
     }
 
-    public static RuleSwitchDef wide(Identifier dimension) {
-        DimensionDef whole = whole(dimension);
-        return whole == null ? RuleSwitchDef.NONE : RULESETS.getOrDefault(whole, RuleSwitchDef.NONE);
-    }
+    public static RuleSwitchDef wide(Identifier dimension) { return pick(RULESETS, whole(dimension), RuleSwitchDef.NONE); }
 
     public static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
 
@@ -223,8 +226,7 @@ public final class ContentEnvironments {
 
     public static GrowSwitchDef growthOf(Identifier dimension, String environment) {
         Map<String, DimensionDef> sets = SETS.get(dimension);
-        DimensionDef set = sets == null ? null : sets.get(environment);
-        return set == null ? GrowSwitchDef.NONE : GROWS.getOrDefault(set, GrowSwitchDef.NONE);
+        return pick(GROWS, sets == null ? null : sets.get(environment), GrowSwitchDef.NONE);
     }
 
     public static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
@@ -249,8 +251,7 @@ public final class ContentEnvironments {
         if (sets == null) { return List.of(); }
         List<SpawnSwitchDef> found = new ArrayList<>();
         for (String name : active) {
-            DimensionDef set = sets.get(name);
-            found.add(set == null ? SpawnSwitchDef.NONE : SPAWNS.getOrDefault(set, SpawnSwitchDef.NONE));
+            found.add(pick(SPAWNS, sets.get(name), SpawnSwitchDef.NONE));
         }
         return found;
     }
@@ -346,6 +347,16 @@ public final class ContentEnvironments {
     }
 
     public static void view(Holder<Biome> biome) { viewed = biome; }
+
+    public static boolean anyLook(Predicate<SkyLookDef> test) {
+        for (DimensionDef def : ContentDimensions.available()) {
+            if (def.look() != null && test.test(def.look())) { return true; }
+        }
+        for (SkyLookDef look : looks()) {
+            if (test.test(look)) { return true; }
+        }
+        return false;
+    }
 
     public static List<SkyLookDef> looks() {
         List<SkyLookDef> found = new ArrayList<>();

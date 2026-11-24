@@ -55,7 +55,7 @@ public final class ContentEntityPhases {
             drop(mob);
             return;
         }
-        float fraction = mob.getHealth() / mob.getMaxHealth();
+        float fraction = MobStats.health(mob);
         int target = -1;
         for (int i = 0; i < def.phases().size(); i++) {
             if (fraction < def.phases().get(i).below()) { target = i; }

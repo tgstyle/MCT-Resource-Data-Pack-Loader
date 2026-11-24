@@ -141,10 +141,12 @@ public final class CityPlotGround {
     }
 
     public static BlockState exposed(WorldGenLevel level, BlockPos.MutableBlockPos at, BlockState laid) {
-        if (!laid.is(Blocks.DIRT)) { return laid; }
-        BlockState over = level.getBlockState(at.above());
-        return solid(over) ? laid : Blocks.GRASS_BLOCK.defaultBlockState();
+        return grassed(laid, !solid(level.getBlockState(at.above())));
     }
+
+    public static BlockState grassed(BlockState laid, boolean open) { return open && laid.is(Blocks.DIRT) ? Blocks.GRASS_BLOCK.defaultBlockState() : laid; }
+
+    public static BlockState laidAs(BlockState ground, boolean exposed) { return !exposed && ground.is(Blocks.GRASS_BLOCK) ? Blocks.DIRT.defaultBlockState() : grassed(ground, exposed); }
 
     static BlockState overWater(WorldGenLevel level, int x, int y, int z) {
         CityPalette wet = CityPalette.mixed(ContentCity.vergeWaterBlock());
@@ -395,10 +397,7 @@ public final class CityPlotGround {
                     if (!box.isInside(at)) { continue; }
                     if (solid(level.getBlockState(at))) { break; }
                     boolean exposed = !solid(level.getBlockState(above.set(x, y + 1, z)));
-                    BlockState placed = laid;
-                    if (exposed && laid.is(Blocks.DIRT)) { placed = Blocks.GRASS_BLOCK.defaultBlockState(); }
-                    else if (!exposed && laid.is(Blocks.GRASS_BLOCK)) { placed = Blocks.DIRT.defaultBlockState(); }
-                    level.setBlock(at, placed, Block.UPDATE_CLIENTS);
+                    level.setBlock(at, laidAs(laid, exposed), Block.UPDATE_CLIENTS);
                     stood++;
                 }
             }

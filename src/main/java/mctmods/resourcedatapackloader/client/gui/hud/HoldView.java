@@ -6,10 +6,14 @@ import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.Crisp;
 import mctmods.resourcedatapackloader.client.util.LineClientCompat;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -44,9 +48,9 @@ public final class HoldView {
     private static CardFont.Face face = new CardFont.Face(FontDescription.DEFAULT.id(), null);
     private static boolean fogging;
     private static boolean shaded = true;
-    private static final int NOTE_COLOR = 0x55FF55;
+    private static final int NOTE_COLOR = Colors.GREEN_TEXT;
     private static final float NOTE_SCALE = 2.0F;
-    private static final int WARNING_COLOR = 0xFF5555;
+    private static final int WARNING_COLOR = Says.rgb(ChatFormatting.RED);
     private static final int BACKDROP_ALPHA = 0x99;
     private static final int BACKDROP_PAD = 4;
     private static boolean held;
@@ -80,14 +84,14 @@ public final class HoldView {
     private static float strength(float partialTicks) {
         if (held || showing > FADE) { return 1.0F; }
         if (showing <= 0) { return 0.0F; }
-        return Math.max(0.0F, (showing - partialTicks) / FADE);
+        return Math.max(0.0F, MathUtil.ramp(showing - partialTicks, FADE));
     }
 
     public static void onFog(ViewportEvent.RenderFog event) {
         if (!held && !fogging) { return; }
         float strength = strength(LineClientCompat.partialTick(event));
         if (strength <= 0.0F) { return; }
-        float eased = strength * strength * (3.0F - 2.0F * strength);
+        float eased = MathUtil.smoothstep(strength);
         FogData fog = event.getFogData();
         float reach = Math.min(fog.environmentalEnd, fog.renderDistanceEnd);
         float near = reach * VANILLA_START * (1.0F - eased);
@@ -128,8 +132,7 @@ public final class HoldView {
     private static float pulse() {
         long at = System.currentTimeMillis() % PULSE_CYCLE;
         if (at < PULSE_HELD) { return 1.0F; }
-        if (at < PULSE_HELD + PULSE_FADE) { return 1.0F - (at - PULSE_HELD) / (float) PULSE_FADE; }
-        return 0.0F;
+        return MathUtil.drain(at - PULSE_HELD, PULSE_FADE);
     }
 
     private static void greet(GuiGraphicsExtractor graphics, float strength) {
@@ -155,13 +158,13 @@ public final class HoldView {
         graphics.pose().pushMatrix();
         graphics.pose().scale(scale, scale);
         graphics.pose().translate(x / scale, y / scale);
-        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(strength * 0xFF) << 24 | color, true);
+        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Colors.overlay(color, Math.round(strength * 0xFF)), true);
         graphics.pose().popMatrix();
     }
 
     private static void backdrop(GuiGraphicsExtractor graphics, float x, float y, int width, int height, float strength) {
         if (!shaded) { return; }
-        graphics.fill(Math.round(x) - BACKDROP_PAD, Math.round(y) - BACKDROP_PAD, Math.round(x) + width + BACKDROP_PAD, Math.round(y) + height + BACKDROP_PAD, Math.round(strength * BACKDROP_ALPHA) << 24);
+        graphics.fill(Math.round(x) - BACKDROP_PAD, Math.round(y) - BACKDROP_PAD, Math.round(x) + width + BACKDROP_PAD, Math.round(y) + height + BACKDROP_PAD, Colors.withAlpha(0, Math.round(strength * BACKDROP_ALPHA)));
     }
 
     private static int leftFor(int screenWidth, int width, int margin) {

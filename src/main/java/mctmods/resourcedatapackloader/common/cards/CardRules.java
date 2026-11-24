@@ -57,14 +57,7 @@ public final class CardRules {
 
     static boolean timed() { return BY_TRIGGER.containsKey(CardRule.TIME_OF_DAY) || BY_TRIGGER.containsKey(CardRule.DAY); }
 
-    @Nullable public static CardRule find(String asked) {
-        CardRule exact = BY_KEY.get(asked);
-        if (exact != null) { return exact; }
-        for (CardRule rule : BY_KEY.values()) {
-            if (IdNames.path(rule.key).equals(asked)) { return rule; }
-        }
-        return null;
-    }
+    @Nullable public static CardRule find(String asked) { return IdNames.byName(BY_KEY, asked); }
 
     public static List<String> keys() { return new ArrayList<>(BY_KEY.keySet()); }
 }

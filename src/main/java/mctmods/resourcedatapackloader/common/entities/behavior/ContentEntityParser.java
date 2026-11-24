@@ -152,12 +152,7 @@ public final class ContentEntityParser {
         List<PhaseDef> phases = new ArrayList<>();
         if (!json.has("phases")) { return phases; }
         boolean hostile = Json.getBoolean(json, "hostile", false) && !Json.getBoolean(json, "passive", false);
-        for (JsonElement element : Json.getJsonArray(json, "phases")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("Entity variant {} has a phases entry that is not an object, ignoring it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "phases"), "Entity variant {} has a phases entry that is not an object, ignoring it", key)) {
             for (Map.Entry<String, JsonElement> member : entry.entrySet()) {
                 if (!PHASE_KEYS.contains(member.getKey())) { ContentLog.LOGGER.error("Entity variant {} has a phase key '{}', which is not one of {}, so it is ignored", key, member.getKey(), PHASE_KEYS); }
             }
@@ -275,12 +270,7 @@ public final class ContentEntityParser {
     static Map<String, Integer> effects(Identifier key, JsonObject json) {
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (!json.has("effects")) { return effects; }
-        for (JsonElement element : Json.getJsonArray(json, "effects")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject effect = element.getAsJsonObject();
+        for (JsonObject effect : Json.objectsOrSkip(Json.getJsonArray(json, "effects"), "An effect in {} is not an object, skipping it", key)) {
             Json.unknownKeys(effect, "effects", EFFECT_KEYS);
             effects.put(Json.getString(effect, "potion", "").trim(), Math.max(0, Json.getInt(effect, "amplifier", 0)));
         }
@@ -290,12 +280,7 @@ public final class ContentEntityParser {
     private static List<SpawnEntryDef> spawns(Identifier key, JsonObject json) {
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (!json.has("spawns")) { return spawns; }
-        for (JsonElement element : Json.getJsonArray(json, "spawns")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "spawns"), "A spawn entry in {} is not an object, skipping it", key)) {
             int least = Math.max(1, Json.getInt(entry, "min", 1));
             spawns.add(new SpawnEntryDef(Settings.lower(Json.getString(entry, "creatureType", "creature")),
                     Math.max(1, Json.getInt(entry, "weight", 8)), least, Math.max(least, Json.getInt(entry, "max", 4))));

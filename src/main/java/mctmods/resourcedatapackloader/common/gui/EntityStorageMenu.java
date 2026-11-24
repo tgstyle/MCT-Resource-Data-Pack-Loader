@@ -36,7 +36,6 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
     private static final int SHOWN = 5;
     private static final int HALF = 16;
     private static final int LOW = 0xFFFF;
-    private static final int TOP = 18;
     private static final double REACH = 64.0D;
     private final StorageDef def;
     private final ContainerData shown = new SimpleContainerData(SHOWN);
@@ -60,8 +59,7 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
         ContainerDef shape = shape(def);
         int wide = ContentContainerMenu.width(shape);
         int tall = ContentContainerMenu.height(shape);
-        int left = (wide - StorageDef.PER_ROW * ContentContainerMenu.SLOT) / 2 + 1;
-        for (int slot = 0; slot < def.slots(); slot++) { addSlot(new ResourceHandlerSlot(items, items::set, slot, left + slot % StorageDef.PER_ROW * ContentContainerMenu.SLOT, TOP + slot / StorageDef.PER_ROW * ContentContainerMenu.SLOT)); }
+        for (Slot slot : ContentContainerMenu.gridSlots(wide, StorageDef.PER_ROW, def.slots(), (index, x, y) -> new ResourceHandlerSlot(items, items::set, index, x, y))) { addSlot(slot); }
         for (Slot slot : ContentContainerMenu.playerSlots(inventory, wide, tall, Slot::new)) { addSlot(slot); }
         addDataSlots(shown);
         read();

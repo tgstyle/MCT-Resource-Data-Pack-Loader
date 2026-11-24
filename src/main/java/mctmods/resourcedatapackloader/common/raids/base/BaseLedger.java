@@ -267,7 +267,9 @@ public final class BaseLedger extends SavedData {
             return false;
         }
 
-        private double raw() { return boxCount * BaseDef.CHEST_WEIGHT + placed * BaseDef.PLACED_WEIGHT + Math.min(ticks / 1200, 60) * BaseDef.MINUTES_WEIGHT; }
+        public double minutes() { return Math.min(ticks / BaseDef.TICKS_PER_MINUTE, BaseDef.MINUTE_CAP); }
+
+        private double raw() { return boxCount * BaseDef.CHEST_WEIGHT + placed * BaseDef.PLACED_WEIGHT + minutes() * BaseDef.MINUTES_WEIGHT; }
 
         private void credit(int handle, int amount) {
             int at = indexOf(handle);

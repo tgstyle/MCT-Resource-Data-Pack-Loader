@@ -36,8 +36,6 @@ public final class WeightSync {
         sendFloors(player);
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.getEntity()); }
-
     public static void onDatapackSync(OnDatapackSyncEvent event) { event.getRelevantPlayers().forEach(WeightSync::sendFloors); }
 
     private static void sendFloors(ServerPlayer player) {

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
@@ -36,7 +37,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -45,8 +45,8 @@ public final class ContentWeapons {
     private static final float FULL_STRENGTH = 0.9F;
     private static final float SWEEP_KNOCKBACK = 0.4F;
     private static final double VERTICAL_SLACK = 1.0D;
-    private static final Map<UUID, Progress> COMBOS = new HashMap<>();
-    private static final Map<UUID, Blow> BLOWS = new HashMap<>();
+    private static final Map<UUID, Progress> COMBOS = PlayerLogout.track(new HashMap<>());
+    private static final Map<UUID, Blow> BLOWS = PlayerLogout.track(new HashMap<>());
     private static final List<Finish> FINISHES = new ArrayList<>();
     private static boolean sweeping;
 
@@ -114,17 +114,16 @@ public final class ContentWeapons {
         if (FINISHES.isEmpty() || !event.getServer().isRunning()) { return; }
         List<Finish> queued = new ArrayList<>(FINISHES);
         FINISHES.clear();
+        sweeping(() -> { for (Finish finish : queued) { finish(finish.target(), finish.finisher()); } });
+    }
+
+    private static void sweeping(Runnable work) {
         sweeping = true;
-        try {
-            for (Finish finish : queued) { finish(finish.target(), finish.finisher()); }
-        }
+        try { work.run(); }
         finally { sweeping = false; }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        COMBOS.remove(event.getEntity().getUUID());
-        BLOWS.remove(event.getEntity().getUUID());
-    }
+    private static float yaw(ServerPlayer player) { return player.getYRot() * Mth.DEG_TO_RAD; }
 
     private static void onLanded(LivingEntity target, WeaponDef weapon) {
         if (weapon.fireSeconds() > 0) { target.igniteForSeconds(weapon.fireSeconds()); }
@@ -155,20 +154,18 @@ public final class ContentWeapons {
 
     private static void strike(ServerPlayer player, LivingEntity target, WeaponDef weapon, WeaponDef.Sweep sweep, float damage) {
         ServerLevel level = player.level();
-        sweeping = true;
-        try {
-            float yaw = player.getYRot() * Mth.DEG_TO_RAD;
+        sweeping(() -> {
+            float yaw = yaw(player);
             for (LivingEntity victim : gather(player, target, weapon, sweep)) {
                 if (damage <= 0.0F) { break; }
                 DamageSource blow = player.damageSources().playerAttack(player);
                 Compat.knockback(victim, SWEEP_KNOCKBACK, Mth.sin(yaw), -Mth.cos(yaw), blow, damage);
                 victim.hurtServer(level, blow, damage);
             }
-        }
-        finally { sweeping = false; }
+        });
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, player.getSoundSource(), 1.0F, 1.0F);
-        double dx = -Mth.sin(player.getYRot() * Mth.DEG_TO_RAD);
-        double dz = Mth.cos(player.getYRot() * Mth.DEG_TO_RAD);
+        double dx = -Mth.sin(yaw(player));
+        double dz = Mth.cos(yaw(player));
         level.sendParticles(ParticleTypes.SWEEP_ATTACK, player.getX() + dx, player.getY(0.5D), player.getZ() + dz, 0, dx, 0.0D, dz, 0.0D);
     }
 
@@ -206,7 +203,7 @@ public final class ContentWeapons {
         double toZ = (box.minZ + box.maxZ) / 2.0D - player.getZ();
         double length = Math.sqrt(toX * toX + toZ * toZ);
         if (length < 1.0E-6D) { return true; }
-        float yaw = player.getYRot() * Mth.DEG_TO_RAD;
+        float yaw = yaw(player);
         double facing = (toX * -Mth.sin(yaw) + toZ * Mth.cos(yaw)) / length;
         return facing >= Math.cos(Math.toRadians(sweep.angle() / 2.0D));
     }

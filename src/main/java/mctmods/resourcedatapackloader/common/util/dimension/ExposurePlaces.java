@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -42,18 +43,18 @@ public final class ExposurePlaces {
     private static int biomeLevel(ExposureDef def, ServerLevel level, BlockPos feet) {
         if (def.biomes().isEmpty()) { return 0; }
         Holder<Biome> biome = level.getBiome(feet);
-        int reached = 0;
-        for (Map.Entry<String, Integer> entry : def.biomes().entrySet()) {
-            if (entry.getValue() > reached && BiomeNames.matches(List.of(entry.getKey()), biome)) { reached = entry.getValue(); }
-        }
-        return reached;
+        return best(def.biomes(), name -> BiomeNames.matches(List.of(name), biome));
     }
 
     private static int structureLevel(ExposureDef def, ServerLevel level, BlockPos feet) {
         if (def.structures().isEmpty()) { return 0; }
+        return best(def.structures(), name -> CardPlace.inStructure(level, feet, List.of(name), def.range()));
+    }
+
+    private static int best(Map<String, Integer> levels, Predicate<String> match) {
         int reached = 0;
-        for (Map.Entry<String, Integer> entry : def.structures().entrySet()) {
-            if (entry.getValue() > reached && CardPlace.inStructure(level, feet, List.of(entry.getKey()), def.range())) { reached = entry.getValue(); }
+        for (Map.Entry<String, Integer> entry : levels.entrySet()) {
+            if (entry.getValue() > reached && match.test(entry.getKey())) { reached = entry.getValue(); }
         }
         return reached;
     }

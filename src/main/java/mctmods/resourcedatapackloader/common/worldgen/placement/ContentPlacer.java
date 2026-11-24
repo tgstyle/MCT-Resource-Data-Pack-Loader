@@ -80,6 +80,8 @@ public final class ContentPlacer {
 
     public int ceilingY() { return level.getMaxY() + 1; }
 
+    private boolean outsideBuild(int y, int floorMargin) { return y < floorY() - floorMargin || y >= ceilingY(); }
+
     public boolean unwritable(int x, int z) { return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) > reach || Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) > reach; }
 
     public boolean unreadable(BlockPos pos) { return !loaded(level, pos); }
@@ -113,7 +115,7 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(BlockState state, int x, int y, int z) {
-        if (y < floorY() || y >= ceilingY() || unwritable(x, z) || keeps(x, z)) { return false; }
+        if (outsideBuild(y, 0) || unwritable(x, z) || keeps(x, z)) { return false; }
         return level.setBlock(scratch.set(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
@@ -123,7 +125,7 @@ public final class ContentPlacer {
     }
 
     public boolean replaces(int x, int y, int z) {
-        if (y < floorY() || y >= ceilingY() || unwritable(x, z)) { return false; }
+        if (outsideBuild(y, 0) || unwritable(x, z)) { return false; }
         return palette.replaceable(level.getBlockState(scratch.set(x, y, z)));
     }
 
@@ -131,7 +133,7 @@ public final class ContentPlacer {
         for (int offX = -1; offX <= 1; offX++) {
             for (int offY = -1; offY <= 1; offY++) {
                 int nearY = y + offY;
-                if (nearY < floorY() - 1 || nearY >= ceilingY()) { continue; }
+                if (outsideBuild(nearY, 1)) { continue; }
                 for (int offZ = -1; offZ <= 1; offZ++) {
                     if (offX == 0 && offY == 0 && offZ == 0) { continue; }
                     beside.set(x + offX, nearY, z + offZ);

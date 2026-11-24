@@ -32,30 +32,22 @@ public final class LootInjections {
     private LootInjections() {}
 
     private static void reload() {
-        BY_TABLE.clear();
-        GENERATION.stale();
-        if (Config.data.lootInjectionsOff()) { return; }
         int[] count = new int[1];
-        Json.eachObject(PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count));
-        if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
+        GENERATION.load(!Config.data.lootInjectionsOff(), BY_TABLE::clear, PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count), () -> {
+            if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
+        });
     }
 
     private static void read(Identifier key, JsonObject json, int[] count) {
         Json.unknownKeys(json, "the top level", INJECTION_KEYS);
-        String target = Json.getString(json, TARGET, "");
-        if (target.isEmpty()) {
-            ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
-            return;
-        }
+        String target = Json.required(json, TARGET, key, "Loot injection {} has no target table, ignoring it");
+        if (target.isEmpty()) { return; }
         Identifier table = ContentParser.location(target);
         if (table == null) {
             ContentLog.LOGGER.error("Loot injection {} names the table '{}', which is not a valid id, ignoring it", key, target);
             return;
         }
-        if (!json.has(POOLS)) {
-            ContentLog.LOGGER.error("Loot injection {} has no pools, ignoring it", key);
-            return;
-        }
+        if (Json.missing(json, POOLS, key, "Loot injection {} has no pools, ignoring it")) { return; }
         List<JsonElement> pools = BY_TABLE.computeIfAbsent(table, _ -> new ArrayList<>());
         for (JsonElement element : Json.getJsonArray(json, POOLS)) {
             pools.add(element);

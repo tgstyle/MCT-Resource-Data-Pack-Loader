@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentWorldgenParser;
+import mctmods.resourcedatapackloader.common.util.Lists;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.core.util.Compat;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -85,10 +86,7 @@ public final class SpawnSwaps {
     public static void onJoinRuns(EntityJoinLevelEvent event) {
         if (SWAPS.isEmpty() || event.getLevel().isClientSide()) { return; }
         Entity entity = event.getEntity();
-        List<String> functions = new ArrayList<>();
-        for (SpawnSwapDef swap : SWAPS) {
-            if (!swap.runs().isEmpty() && MobStats.targets(swap.ids(), swap.kinds(), entity)) { functions.add(swap.runs()); }
-        }
+        List<String> functions = Lists.collect(SWAPS, swap -> !swap.runs().isEmpty() && MobStats.targets(swap.ids(), swap.kinds(), entity), SpawnSwapDef::runs);
         if (functions.isEmpty() || entity.getPersistentData().getBooleanOr(RAN, false)) { return; }
         entity.getPersistentData().putBoolean(RAN, true);
         for (String function : functions) { Functions.runAs(entity, function, "A spawn swap for " + entity.getName().getString()); }
@@ -153,7 +151,7 @@ public final class SpawnSwaps {
             if (Compat.entityType(pick.name()) == null) { ContentLog.LOGGER.error("{} can become {}, which nothing registers, leaving it out", owner, pick.name()); }
             else { becomes.add(pick); }
         }
-        String runs = Json.getString(json, "runs", "");
+        String runs = Json.getString(json, Json.RUNS, "");
         if (becomes.isEmpty() && runs.isEmpty()) {
             ContentLog.LOGGER.error("{} has no becomes entry that can be made and no function it runs, ignoring it", owner);
             return;
@@ -166,7 +164,7 @@ public final class SpawnSwaps {
         }
         SpawnGateDef gate = SpawnGateDef.read(key, json, "Spawn swap file");
         SWAPS.add(new SpawnSwapDef(ids, kinds, gate, List.copyOf(becomes), Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), blocks, Json.getBoolean(json, "requireAll", false),
-                elsewhere(owner, json), Mth.clamp(Json.getInt(json, "extra", 0), 0, MAX_EXTRA), Json.getBoolean(json, "fromSpawners", false), runs));
+                elsewhere(owner, json), Json.clamped(json, "extra", 0, 0, MAX_EXTRA), Json.getBoolean(json, "fromSpawners", false), runs));
     }
 
     @Nullable private static SpawnSwapDef.Elsewhere elsewhere(String owner, JsonObject json) {

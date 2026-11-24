@@ -24,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class ContentContainerMenu extends AbstractContainerMenu {
     public static final int SLOT = 18;
+    public static final int TOP = 18;
 
     public interface IMerge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
 
@@ -47,16 +48,19 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         this.source = source;
         this.worn = worn;
         held.startOpen(inventory.player);
-        int left = left(def);
-        int top = 18;
-        for (int row = 0; row < def.rows(); row++) {
-            for (int column = 0; column < def.columns(); column++) {
-                addSlot(new Slot(held, row * def.columns() + column, left + column * SLOT, top + row * SLOT) {
-                    @Override public boolean mayPlace(@Nonnull ItemStack stack) { return storable(stack); }
-                });
-            }
-        }
+        for (Slot slot : gridSlots(width(def), def.columns(), def.rows() * def.columns(), (index, x, y) -> new Slot(held, index, x, y) {
+            @Override public boolean mayPlace(@Nonnull ItemStack stack) { return storable(stack); }
+        })) { addSlot(slot); }
         for (Slot slot : playerSlots(inventory, width(def), height(def), this::locking)) { addSlot(slot); }
+    }
+
+    public interface IGridSlot { Slot create(int index, int x, int y); }
+
+    public static List<Slot> gridSlots(int wide, int columns, int count, IGridSlot factory) {
+        List<Slot> slots = new ArrayList<>();
+        int left = (wide - columns * SLOT) / 2 + 1;
+        for (int index = 0; index < count; index++) { slots.add(factory.create(index, left + index % columns * SLOT, TOP + index / columns * SLOT)); }
+        return slots;
     }
 
     public interface IPlayerSlot { Slot create(Inventory inventory, int index, int x, int y); }
@@ -109,8 +113,6 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
     public static int width(ContainerDef def) { return Math.max(176, def.columns() * SLOT + 14); }
 
     public static int height(ContainerDef def) { return 114 + def.rows() * SLOT; }
-
-    private static int left(ContainerDef def) { return (width(def) - def.columns() * SLOT) / 2 + 1; }
 
     public ContainerDef def() { return def; }
 

@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.entities.ai.AnvilWorkGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.ChargeGoal;
-import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.FleeWhenHurtGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.FleeLightGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.FollowPlayerGoal;
@@ -45,7 +44,6 @@ import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
@@ -112,14 +110,7 @@ public final class ContentEntityBehavior {
             ContentLog.LOGGER.debug("Entity variant {} asks for an attack damage of {}, which {} never reads when it strikes, so the blow is dealt by the pack's own reckoning instead", def.key(), mob.getAttributeValue(Attributes.ATTACK_DAMAGE), def.base());
         }
         else {
-            boolean already = false;
-            for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
-                if (wrapped.getGoal() instanceof MeleeAttackGoal) {
-                    already = true;
-                    break;
-                }
-            }
-            if (!already) { mob.goalSelector.addGoal(2, new MeleeAttackGoal(creature, 1.2D, false)); }
+            if (Goals.first(mob.goalSelector, MeleeAttackGoal.class) == null) { mob.goalSelector.addGoal(2, new MeleeAttackGoal(creature, 1.2D, false)); }
         }
         if (combat.explodes()) { mob.goalSelector.addGoal(0, new KamikazeGoal(creature, combat.explosionPower(), combat.explosionFuse(), combat.explosionFire())); }
         if (combat.throwsItems()) { mob.goalSelector.addGoal(0, new ThrowerGoal(creature, carrying(def), combat.explosionFuse(), combat.throwReload() > 0 ? combat.throwReload() : combat.explosionFuse(), combat.throwRetreat() > 0 ? combat.throwRetreat() : combat.explosionFuse(), combat.throwAmmo(), combat.throwPower(), combat.throwArc(), mob.getAttributeValue(Attributes.FOLLOW_RANGE), combat.throwReturns())); }
@@ -127,7 +118,7 @@ public final class ContentEntityBehavior {
         if (combat.fleesWhenHurt() > 0.0F) { mob.goalSelector.addGoal(0, new FleeWhenHurtGoal(creature, combat.fleesWhenHurt(), 1.4D)); }
         if (combat.sniffs() > 0) { mob.goalSelector.addGoal(3, new SniffGoal(creature, combat.sniffs())); }
         if (combat.swoops()) { mob.goalSelector.addGoal(1, new SwoopGoal(creature)); }
-        if (combat.digs()) { mob.goalSelector.addGoal(1, new DigGoal(creature)); }
+        if (combat.digs()) { MobAbilities.dig(creature, false); }
         if (combat.patrols()) { mob.goalSelector.addGoal(4, new PatrolGoal(creature)); }
         mob.targetSelector.addGoal(1, new HurtByTargetGoal(creature).setAlertOthers());
         int priority = 2;

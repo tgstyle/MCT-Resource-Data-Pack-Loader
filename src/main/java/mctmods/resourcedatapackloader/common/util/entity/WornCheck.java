@@ -1,15 +1,12 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
-import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
-import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -50,11 +47,9 @@ public final class WornCheck {
 
     public ItemStack found(Player player) {
         if (wanted == null) { return ItemStack.EMPTY; }
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            ItemStack stack = player.getItemBySlot(slot);
-            if (slot.isArmor() && stack.is(wanted)) { return stack; }
+        for (ItemStack stack : Worn.worn(player)) {
+            if (stack.is(wanted)) { return stack; }
         }
-        List<ItemStack> curios = ContentCurios.worn(player, stack -> stack.is(wanted));
-        return curios.isEmpty() ? ItemStack.EMPTY : curios.getFirst();
+        return ItemStack.EMPTY;
     }
 }

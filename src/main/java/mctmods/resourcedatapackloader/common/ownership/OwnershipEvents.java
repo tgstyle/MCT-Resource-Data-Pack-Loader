@@ -34,7 +34,6 @@ public final class OwnershipEvents {
         Compat.refuseSpecificInteractWith(ClaimProtection::refusesUse);
         NeoForge.EVENT_BUS.addListener(ClaimProtection::onHurt);
         NeoForge.EVENT_BUS.addListener(ClaimMessages::onTick);
-        NeoForge.EVENT_BUS.addListener(ClaimMessages::onLogout);
         NeoForge.EVENT_BUS.addListener(ClaimWorldProtection::onDetonate);
         NeoForge.EVENT_BUS.addListener(ClaimWorldProtection::onMobGriefing);
         NeoForge.EVENT_BUS.addListener(ClaimWorldProtection::onFluidPlace);

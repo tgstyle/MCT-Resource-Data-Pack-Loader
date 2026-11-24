@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.blocks.container.logic.ContentConta
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import static mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades.CANNOT_MOVE;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,7 +47,6 @@ public final class ContentStorageSwap {
     private static final double GUARD_RANGE = 4.0D;
     private static final double NEAR = 256.0D;
     private static final String LOOT_TABLE = "LootTable";
-    private static final String CANNOT_MOVE = "cannot_move";
     private static final List<String> CARRIED = List.of("facing", "axis", "rotation", "waterlogged");
     private static final List<String> NAME_KEYS = List.of("CustomName", "lock");
     private static final List<String> LOOT_KEYS = List.of(LOOT_TABLE, "LootTableSeed");
@@ -83,14 +83,14 @@ public final class ContentStorageSwap {
     }
 
     static InteractionResult use(ContainerUpgradeDef upgrade, ContainerUpgradeDef.Path path, Item kit, Player player, UseOnContext context, BlockState state) {
-        if (player.getCooldowns().isOnCooldown(kit.getDefaultInstance())) { return InteractionResult.FAIL; }
-        if (context.getLevel().isClientSide()) { return InteractionResult.SUCCESS; }
-        if (!(context.getLevel() instanceof ServerLevel server) || !(player instanceof ServerPlayer serverPlayer)) { return InteractionResult.PASS; }
-        BlockPos pos = context.getClickedPos();
-        ContentStorageSwap swap = new ContentStorageSwap(upgrade, path, serverPlayer, server, pos, state);
+        InteractionResult early = ContentContainerUpgrades.early(player, kit, context.getLevel());
+        if (early != null) { return early; }
+        ServerPlayer serverPlayer = (ServerPlayer) player;
+        ContentStorageSwap swap = new ContentStorageSwap(upgrade, path, serverPlayer, (ServerLevel) context.getLevel(), context.getClickedPos(), state);
         InteractionResult refused = swap.preflight(kit);
         if (refused != null) { return refused; }
-        if (!player.mayUseItemAt(pos, context.getClickedFace(), context.getItemInHand()) || !ContentCarry.asks(serverPlayer, pos)) { return ContentContainerUpgrades.denied(serverPlayer, pos, "not allowed to change it"); }
+        InteractionResult barred = ContentContainerUpgrades.barred(serverPlayer, context);
+        if (barred != null) { return barred; }
         return swap.move();
     }
 
@@ -115,16 +115,16 @@ public final class ContentStorageSwap {
         tile = level.getBlockEntity(pos);
         if (tile == null) { return ContentContainerUpgrades.refuse(player, "it holds nothing", CANNOT_MOVE); }
         BlockState named = ContentStates.known(path.to(), BuiltInRegistries.ITEM.getKey(kit));
-        if (named == null || !named.hasBlockEntity()) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+        if (named == null || !named.hasBlockEntity()) { return ContentContainerUpgrades.unavailable(player); }
         target = carried(named);
-        if (target == state) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+        if (target == state) { return ContentContainerUpgrades.unavailable(player); }
         if (state.getDestroySpeed(level, pos) < 0.0F) { return ContentContainerUpgrades.denied(player, pos, "unbreakable"); }
         if (ContentCarry.twoBlock(state) || ContentCarry.twoBlock(target)) { return ContentContainerUpgrades.denied(player, pos, "two blocks"); }
-        if (inUse()) { return ContentContainerUpgrades.refuse(player, "someone has it open", "in_use"); }
+        if (inUse()) { return ContentContainerUpgrades.open(player); }
         before = tile.saveWithFullMetadata(registries);
         if (tile instanceof ContentContainerBlockEntity pack && pack.pendingLoot() && !before.contains(LOOT_TABLE)) { before.putString(LOOT_TABLE, pack.def().lootTable()); }
         waitingLoot = before.getString(LOOT_TABLE).isPresent();
-        if (waitingLoot && !upgrade.carryLoot()) { return ContentContainerUpgrades.refuse(player, "loot not rolled", "loot"); }
+        if (waitingLoot && !upgrade.carryLoot()) { return ContentContainerUpgrades.unrolled(player); }
         linked = StorageContents.linked(level, tile);
         if (linked && (nbt || !path.linkedHalf())) { return ContentContainerUpgrades.refuse(player, "it shares storage with another block", "linked"); }
         InteractionResult refused = nbt ? null : readable();
@@ -146,7 +146,7 @@ public final class ContentStorageSwap {
     @Nullable private InteractionResult probed() {
         try {
             probe = target.getBlock() instanceof EntityBlock entity ? entity.newBlockEntity(pos, target) : null;
-            if (probe == null) { return ContentContainerUpgrades.refuse(player, "nothing to become", "unavailable"); }
+            if (probe == null) { return ContentContainerUpgrades.unavailable(player); }
             probe.setLevel(level);
             shaped(probe, target);
             if (nbt) { return roundTrips() ? null : ContentContainerUpgrades.refuse(player, "the target saves differently", CANNOT_MOVE); }
@@ -180,7 +180,7 @@ public final class ContentStorageSwap {
         if (probe == null) { return null; }
         ResourceHandler<ItemResource> into = StorageContents.forProbe(level, probe);
         if (into == null) { return ContentContainerUpgrades.refuse(player, "the target has no inventory", CANNOT_MOVE); }
-        if (into.size() < shown.size() && !path.fit()) { return ContentContainerUpgrades.refuse(player, "target is smaller", "smaller"); }
+        if (into.size() < shown.size() && !path.fit()) { return ContentContainerUpgrades.smaller(player); }
         plan = StorageContents.plan(into, shown);
         return plan == null ? ContentContainerUpgrades.refuse(player, "the contents do not fit", CANNOT_MOVE) : null;
     }

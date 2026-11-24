@@ -63,7 +63,7 @@ public final class RaidTargets {
     @Nullable private static RaidTarget village(ServerLevel level, ServerPlayer player) {
         RaidVillage village = lived(level, player.blockPosition());
         if (village == null || RaidStorage.get(level).raided(village.center(), VILLAGE_SEARCH + village.radius())) { return null; }
-        return new RaidTarget(RaidTarget.Kind.VILLAGE, village.center(), village.radius(), 0, null, false, 0);
+        return new RaidTarget(RaidTarget.Kind.VILLAGE, village.center(), village.radius(), 0, null, 0);
     }
 
     @Nullable private static RaidTarget base(ServerLevel level, ServerPlayer player, RaidDef def) {
@@ -71,7 +71,7 @@ public final class RaidTargets {
         if (rules == null) { return null; }
         Base base = BaseFinder.find(level, player, rules);
         if (base == null || refused(level, rules, base.ownerHandle(), base.center(), base.radius())) { return null; }
-        return new RaidTarget(RaidTarget.Kind.BASE, base.center(), base.radius(), base.ownerHandle(), player.getUUID(), false, (int) Math.round(base.score()));
+        return new RaidTarget(RaidTarget.Kind.BASE, base.center(), base.radius(), base.ownerHandle(), player.getUUID(), (int) Math.round(base.score()));
     }
 
     @Nullable private static RaidTarget player(ServerLevel level, ServerPlayer player, RaidDef def) {
@@ -80,13 +80,13 @@ public final class RaidTargets {
         int owner = RaidOwner.of(player);
         BlockPos at = player.blockPosition();
         if (refused(level, rules, owner, at, rules.radius())) { return null; }
-        return new RaidTarget(RaidTarget.Kind.PLAYER, at, rules.radius(), owner, player.getUUID(), false, 0);
+        return new RaidTarget(RaidTarget.Kind.PLAYER, at, rules.radius(), owner, player.getUUID(), 0);
     }
 
     @Nullable private static RaidTarget free(ServerLevel level, ServerPlayer player, RaidDef def) {
         BlockPos at = player.blockPosition();
         if (RaidStorage.get(level).raided(at, def.reach())) { return null; }
-        return new RaidTarget(RaidTarget.Kind.FREE, at, def.reach(), 0, null, true, 0);
+        return new RaidTarget(RaidTarget.Kind.FREE, at, def.reach(), 0, null, 0);
     }
 
     private static boolean refused(ServerLevel level, BaseDef rules, int owner, BlockPos center, int radius) {

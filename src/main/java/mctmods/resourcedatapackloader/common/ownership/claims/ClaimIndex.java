@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +29,16 @@ public final class ClaimIndex extends SavedData {
     public static final String MODE_REMOVE = "remove";
     private static final String NAME = "rdpl_claims";
     private static final int VERSION = 1;
+    private static final String HANDLE = "h";
+    private static final String PENDING_POS = "pos";
+    private static final String MODE = "mode";
+    private static final String YDONE = "ydone";
+    private static final String GROUP_POS = "pos";
+    private static final String VIA = "via";
+    private static final String NEXT = "next";
+    private static final String OWNERS = "owners";
+    private static final String ANCHORS = "anchors";
+    private static final String PENDING = "pending";
     private static final SavedDataType<ClaimIndex> TYPE = SavedTypes.of(NAME, ClaimIndex::new, ClaimIndex::read, ClaimIndex::write);
 
     public static final class Anchor {
@@ -46,6 +57,8 @@ public final class ClaimIndex extends SavedData {
             this.z = z;
             this.r = r;
         }
+
+        public BlockPos pos() { return new BlockPos(x, y, z); }
 
         CompoundTag write() {
             CompoundTag tag = new CompoundTag();
@@ -81,16 +94,16 @@ public final class ClaimIndex extends SavedData {
 
         CompoundTag write() {
             CompoundTag tag = new CompoundTag();
-            tag.putLong("pos", pos);
-            tag.putInt("h", h);
-            tag.putString("mode", mode);
-            tag.putIntArray("ydone", ydone.toIntArray());
+            tag.putLong(PENDING_POS, pos);
+            tag.putInt(HANDLE, h);
+            tag.putString(MODE, mode);
+            tag.putIntArray(YDONE, ydone.toIntArray());
             return tag;
         }
 
         static Pending read(CompoundTag tag) {
-            Pending pending = new Pending(tag.getLongOr("pos", 0L), tag.getIntOr("h", 0), tag.getStringOr("mode", ""));
-            for (int index : tag.getIntArray("ydone").orElse(new int[0])) { pending.ydone.add(index); }
+            Pending pending = new Pending(tag.getLongOr(PENDING_POS, 0L), tag.getIntOr(HANDLE, 0), tag.getStringOr(MODE, ""));
+            for (int index : tag.getIntArray(YDONE).orElse(new int[0])) { pending.ydone.add(index); }
             return pending;
         }
     }
@@ -142,10 +155,19 @@ public final class ClaimIndex extends SavedData {
         if (handle == 0 || handleAt.containsKey(pos)) { return false; }
         handleAt.put(pos, handle);
         if (via != 0) { viaAt.put(pos, via); }
-        chunks.computeIfAbsent(handle, _ -> new LongLinkedOpenHashSet()).add(pos);
-        if (table != null) { table.claimAdded(handle); }
-        setDirty();
+        groupOf(handle).add(pos);
+        counted(handle, true);
         return true;
+    }
+
+    private LongLinkedOpenHashSet groupOf(int handle) { return chunks.computeIfAbsent(handle, _ -> new LongLinkedOpenHashSet()); }
+
+    private void counted(int handle, boolean added) {
+        if (table != null) {
+            if (added) { table.claimAdded(handle); }
+            else { table.claimRemoved(handle); }
+        }
+        setDirty();
     }
 
     public int release(int chunkX, int chunkZ) {
@@ -158,8 +180,7 @@ public final class ClaimIndex extends SavedData {
             group.remove(pos);
             if (group.isEmpty()) { chunks.remove(handle); }
         }
-        if (table != null) { table.claimRemoved(handle); }
-        setDirty();
+        counted(handle, false);
         return handle;
     }
 
@@ -183,7 +204,7 @@ public final class ClaimIndex extends SavedData {
         int moved = 0;
         LongLinkedOpenHashSet group = chunks.remove(from);
         if (group != null) {
-            LongLinkedOpenHashSet target = chunks.computeIfAbsent(to, _ -> new LongLinkedOpenHashSet());
+            LongLinkedOpenHashSet target = groupOf(to);
             for (long pos : group) {
                 handleAt.put(pos, to);
                 target.add(pos);
@@ -243,8 +264,7 @@ public final class ClaimIndex extends SavedData {
         long pos = key(chunkX, chunkZ);
         if (handle == 0 || pending.containsKey(pos)) { return false; }
         pending.put(pos, new Pending(pos, handle, mode));
-        if (table != null) { table.claimAdded(handle); }
-        setDirty();
+        counted(handle, true);
         return true;
     }
 
@@ -260,33 +280,32 @@ public final class ClaimIndex extends SavedData {
     public void removePending(int chunkX, int chunkZ) {
         Pending one = pending.remove(key(chunkX, chunkZ));
         if (one == null) { return; }
-        if (table != null) { table.claimRemoved(one.h); }
-        setDirty();
+        counted(one.h, false);
     }
 
     private static ClaimIndex read(CompoundTag compound) {
         ClaimIndex data = new ClaimIndex();
-        data.next = Math.max(1, compound.getIntOr("next", 0));
-        ListTag owners = compound.getListOrEmpty("owners");
+        data.next = Math.max(1, compound.getIntOr(NEXT, 0));
+        ListTag owners = compound.getListOrEmpty(OWNERS);
         for (int index = 0; index < owners.size(); index++) {
             CompoundTag one = owners.getCompoundOrEmpty(index);
-            int handle = one.getIntOr("h", 0);
-            long[] positions = Longs.fromInts(one.getIntArray("pos").orElse(new int[0]));
-            int[] via = one.getIntArray("via").orElse(new int[0]);
-            LongLinkedOpenHashSet group = data.chunks.computeIfAbsent(handle, _ -> new LongLinkedOpenHashSet());
+            int handle = one.getIntOr(HANDLE, 0);
+            long[] positions = Longs.fromInts(one.getIntArray(GROUP_POS).orElse(new int[0]));
+            int[] via = one.getIntArray(VIA).orElse(new int[0]);
+            LongLinkedOpenHashSet group = data.groupOf(handle);
             for (int at = 0; at < positions.length; at++) {
                 data.handleAt.put(positions[at], handle);
                 group.add(positions[at]);
                 if (at < via.length && via[at] != 0) { data.viaAt.put(positions[at], via[at]); }
             }
         }
-        ListTag anchored = compound.getListOrEmpty("anchors");
+        ListTag anchored = compound.getListOrEmpty(ANCHORS);
         for (int index = 0; index < anchored.size(); index++) {
             Anchor anchor = Anchor.read(anchored.getCompoundOrEmpty(index));
             data.anchors.put(anchor.id, anchor);
             if (anchor.id >= data.next) { data.next = anchor.id + 1; }
         }
-        ListTag queued = compound.getListOrEmpty("pending");
+        ListTag queued = compound.getListOrEmpty(PENDING);
         for (int index = 0; index < queued.size(); index++) {
             Pending one = Pending.read(queued.getCompoundOrEmpty(index));
             data.pending.put(one.pos, one);
@@ -301,9 +320,9 @@ public final class ClaimIndex extends SavedData {
             int[] via = new int[positions.size()];
             for (int at = 0; at < via.length; at++) { via[at] = viaAt.get(positions.getLong(at)); }
             CompoundTag one = new CompoundTag();
-            one.putInt("h", entry.getKey());
-            one.putIntArray("pos", Longs.toInts(positions.toLongArray()));
-            one.putIntArray("via", via);
+            one.putInt(HANDLE, entry.getKey());
+            one.putIntArray(GROUP_POS, Longs.toInts(positions.toLongArray()));
+            one.putIntArray(VIA, via);
             owners.add(one);
         }
         ListTag anchored = new ListTag();
@@ -312,10 +331,10 @@ public final class ClaimIndex extends SavedData {
         for (Pending one : pending.values()) { queued.add(one.write()); }
         CompoundTag compound = new CompoundTag();
         compound.putInt("v", VERSION);
-        compound.putInt("next", next);
-        compound.put("owners", owners);
-        compound.put("anchors", anchored);
-        compound.put("pending", queued);
+        compound.putInt(NEXT, next);
+        compound.put(OWNERS, owners);
+        compound.put(ANCHORS, anchored);
+        compound.put(PENDING, queued);
         return compound;
     }
 }

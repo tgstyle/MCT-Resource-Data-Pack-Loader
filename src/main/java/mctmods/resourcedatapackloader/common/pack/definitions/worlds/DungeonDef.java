@@ -1,10 +1,14 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.SeedStreams;
+import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
+import mctmods.resourcedatapackloader.core.util.Fallbacks;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
@@ -17,13 +21,28 @@ public record DungeonDef(Identifier key, String name, List<PickDef> themes, List
     public static final int[] DEFAULT_LEVEL_HEIGHT = {5, 8};
     public static final int[] DEFAULT_ROOM_SIZE = {5, 15};
     public static final String DEFAULT_DIFFICULTY = "norm";
+    public static final List<String> SHAFTS = List.of("ladder", "spiral", "stairs");
     public static final List<String> ROLLS = List.of("outside", "liquids", "subrooms", "islands", "pillars", "symmetry", "variability", "degeneracy", "complexity", "vertical", "entrances", "fences", "naturals");
 
+    public static int rollIndex(String name) { return ROLLS.indexOf(name); }
+
+    public static double depthOf(int index, int levels) { return index / (double) Math.max(1, levels - 1); }
+
     public boolean allowsDimension(String dimension) { return dimensions.isEmpty() || dimensions.contains(dimension) != dimensionsAreBlacklist; }
+
+    public List<RoomKindDef> kindsAt(double depth) {
+        List<RoomKindDef> kinds = roomKinds;
+        for (LevelRule rule : levelRules) {
+            if (rule.fromDepth <= depth && rule.roomKinds != null) { kinds = rule.roomKinds; }
+        }
+        return kinds;
+    }
 
     public record Degree(int[] weights) {
         public static final String[] NAMES = {"none", "few", "some", "plenty", "heaps", "always"};
         public static final int[] CHANCES = {0, 10, 30, 50, 90, 100};
+
+        public static boolean chance(Random random, int percent) { return random.nextInt(100) < percent; }
 
         public static Degree named(int index) {
             int[] weights = new int[NAMES.length];
@@ -43,6 +62,13 @@ public record DungeonDef(Identifier key, String name, List<PickDef> themes, List
                 if (weight > 0) { return true; }
             }
             return false;
+        }
+
+        public static void apply(int[] into, Map<String, Degree> source, long seed, String stream, int base) {
+            for (int i = 0; i < into.length; i++) {
+                Degree degree = source.get(ROLLS.get(i));
+                if (degree != null && degree.valid()) { into[i] = WeightedPicks.index(degree.weights(), SeedStreams.random(seed, stream, base + i)); }
+            }
         }
     }
 
@@ -71,7 +97,7 @@ public record DungeonDef(Identifier key, String name, List<PickDef> themes, List
             Map<String, Difficulty> table = new LinkedHashMap<>();
             table.put("baby", preset("baby", 30, 0, 0, 0, 0, 371, false));
             table.put("noob", preset("noob", 40, 10, 1, 1, 1, 248, false));
-            table.put("norm", preset("norm", 50, 20, 1, 1, 2, 180, false));
+            table.put(DEFAULT_DIFFICULTY, preset(DEFAULT_DIFFICULTY, 50, 20, 1, 1, 2, 180, false));
             table.put("hard", preset("hard", 60, 30, 2, 2, 3, 136, true));
             table.put("nuts", preset("nuts", 70, 50, 2, 2, 4, 50, true));
             return Map.copyOf(table);
@@ -84,7 +110,7 @@ public record DungeonDef(Identifier key, String name, List<PickDef> themes, List
         public Difficulty resolved() {
             Difficulty base = PRESETS.get(preset);
             if (base == null) { return this; }
-            return new Difficulty(preset, spawners != null ? spawners : base.spawners, promote != null ? promote : base.promote, maxTier != null ? maxTier : base.maxTier, nodeTier != null ? nodeTier : base.nodeTier, bossTier != null ? bossTier : base.bossTier, blocksPerSpawner != null ? blocksPerSpawner : base.blocksPerSpawner, entranceMobs != null ? entranceMobs : base.entranceMobs);
+            return new Difficulty(preset, Fallbacks.orDefault(spawners, base.spawners), Fallbacks.orDefault(promote, base.promote), Fallbacks.orDefault(maxTier, base.maxTier), Fallbacks.orDefault(nodeTier, base.nodeTier), Fallbacks.orDefault(bossTier, base.bossTier), Fallbacks.orDefault(blocksPerSpawner, base.blocksPerSpawner), Fallbacks.orDefault(entranceMobs, base.entranceMobs));
         }
     }
 

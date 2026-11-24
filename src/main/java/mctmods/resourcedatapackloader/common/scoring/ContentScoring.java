@@ -181,8 +181,7 @@ public final class ContentScoring {
         if (!def.teamTotals()) { return; }
         String side = sideOf(level, who);
         if (side == null) { return; }
-        bump(board, objective, side, points);
-        watch(level.getServer(), def, Scores.score(board, side, objective));
+        watch(level.getServer(), def, bump(board, objective, side, points));
     }
 
     @Nullable public static String sideOf(ServerLevel level, Entity who) {
@@ -193,7 +192,16 @@ public final class ContentScoring {
         return claiming.isEmpty() ? null : claiming.getFirst().name();
     }
 
-    private static void bump(Scoreboard board, Objective objective, String row, int points) { Scores.set(board, row, objective, Scores.score(board, row, objective) + points); }
+    private static int bump(Scoreboard board, Objective objective, String row, int points) {
+        int total = Scores.score(board, row, objective) + points;
+        Scores.set(board, row, objective, total);
+        return total;
+    }
+
+    private static void armReset(ScoreDef def) {
+        resetting = def;
+        waiting = Math.max(1, def.endsIntermission());
+    }
 
     public static void onServerTick(ServerTickEvent.Post event) { tick(event.getServer()); }
 
@@ -253,8 +261,7 @@ public final class ContentScoring {
         if (RESET.equals(why)) { ContentLog.LOGGER.info("A reset round is awarded to nobody"); }
         else { award(server, def, winner); }
         if (def.endsResets()) {
-            resetting = def;
-            waiting = Math.max(1, def.endsIntermission());
+            armReset(def);
             ContentLog.LOGGER.info("The map is reset in {} second(s), so the scores can be read first", def.endsIntermission());
         }
         ItemStack icon = def.resultsIcon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceDataPackLoader.id("results"), def.resultsIcon(), 1);
@@ -285,10 +292,10 @@ public final class ContentScoring {
             ContentLog.LOGGER.error("A board game pays {} points to {}, which is not an objective this world keeps, so nothing is paid", points, objective);
             return;
         }
-        bump(board, held, row, points);
+        int total = bump(board, held, row, points);
         ContentLog.LOGGER.info("{} is paid {} in {} for a board game", row, points, objective);
         ScoreDef def = BY_NAME.get(objective);
-        if (def != null) { watch(server, def, Scores.score(board, row, held)); }
+        if (def != null) { watch(server, def, total); }
     }
 
     private static void award(MinecraftServer server, ScoreDef def, @Nullable String winner) {
@@ -309,8 +316,7 @@ public final class ContentScoring {
             ContentLog.LOGGER.info("The round ended level, so no round win is recorded");
             return;
         }
-        int held = Scores.score(board, best, match) + 1;
-        Scores.set(board, best, match, held);
+        int held = bump(board, match, best, 1);
         ContentLog.LOGGER.info("{} took the round, and now holds {} in {}", best, held, def.awardsTo());
         ScoreDef whole = BY_NAME.get(def.awardsTo());
         if (whole == null || FINISHED.contains(whole.name())) { return; }
@@ -346,8 +352,7 @@ public final class ContentScoring {
             if (!def.carries() && (def.ends() || def == offered)) { finish(server, def, RESET, null); }
         }
         ContentDowned.clear(server);
-        resetting = offered;
-        waiting = Math.max(1, offered.endsIntermission());
+        armReset(offered);
         ContentLog.LOGGER.info("The round was reset, so the map is reset in {} second(s)", waiting);
     }
 

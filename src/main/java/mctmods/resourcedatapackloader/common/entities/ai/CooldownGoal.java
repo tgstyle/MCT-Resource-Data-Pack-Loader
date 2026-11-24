@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -31,8 +33,12 @@ abstract class CooldownGoal extends Goal {
         if (mob.tickCount < restUntil) { return false; }
         LivingEntity found = mob.getTarget();
         if (found == null || !found.isAlive() || (grounded && !mob.onGround())) { return false; }
-        double away = mob.distanceToSqr(found);
-        return away > nearSqr && away < farSqr && mob.getSensing().hasLineOfSight(found);
+        return inBand(mob, found, nearSqr, farSqr);
+    }
+
+    static boolean inBand(PathfinderMob mob, LivingEntity target, double nearSqr, double farSqr) {
+        double away = mob.distanceToSqr(target);
+        return away > nearSqr && away < farSqr && mob.getSensing().hasLineOfSight(target);
     }
 
     @Override public void start() { target = mob.getTarget(); }
@@ -46,7 +52,7 @@ abstract class CooldownGoal extends Goal {
         if (!canContinueToUse()) { return; }
         LivingEntity current = target;
         if (current == null) { return; }
-        mob.getLookControl().setLookAt(current, 30.0F, 30.0F);
+        Looking.at(mob, current);
         act(current);
     }
 }

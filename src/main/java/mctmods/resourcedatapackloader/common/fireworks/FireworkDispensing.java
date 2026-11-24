@@ -31,7 +31,7 @@ public final class FireworkDispensing {
 
         @Override @Nonnull protected ItemStack execute(@Nonnull BlockSource source, @Nonnull ItemStack stack) {
             Direction facing = source.state().getValue(DispenserBlock.FACING);
-            FireworkRockets.dispense(source.level(), source.pos(), facing, FireworkRockets.stack(item, def), FireworkDef.MODE_BURST.equals(def.mode()));
+            FireworkRockets.dispense(source.level(), source.pos(), facing, FireworkRockets.stack(item, def), def.burstMode());
             stack.shrink(1);
             return stack;
         }

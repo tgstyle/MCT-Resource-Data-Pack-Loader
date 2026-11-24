@@ -44,20 +44,15 @@ public final class PlayerLoot {
     private PlayerLoot() {}
 
     private static void reload() {
-        ENTRIES.clear();
-        GENERATION.stale();
-        if (Config.data.playerLootOff()) { return; }
-        Json.eachObject(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
-        if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        GENERATION.load(!Config.data.playerLootOff(), ENTRIES::clear, PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read, () -> {
+            if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        });
     }
 
     private static void read(Identifier key, JsonObject json) {
         Json.unknownKeys(json, "the top level", LOOT_KEYS);
-        String table = Json.getString(json, TABLE, "");
-        if (table.isEmpty()) {
-            ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
-            return;
-        }
+        String table = Json.required(json, TABLE, key, "Player loot {} has no table, ignoring it");
+        if (table.isEmpty()) { return; }
         Identifier named = ContentParser.location(table);
         if (named == null) {
             ContentLog.LOGGER.error("Player loot {} names the table '{}', which is not a valid id, ignoring it", key, table);
@@ -108,7 +103,9 @@ public final class PlayerLoot {
         }
     }
 
-    public static boolean keeping(ServerPlayer player) { return player.level().getGameRules().get(GameRules.KEEP_INVENTORY) || player.isSpectator(); }
+    public static boolean keepInventory(ServerLevel level) { return level.getGameRules().get(GameRules.KEEP_INVENTORY); }
+
+    public static boolean keeping(ServerPlayer player) { return keepInventory(player.level()) || player.isSpectator(); }
 
     @Nullable private static Player killer(LivingDropsEvent event) {
         if (!event.isRecentlyHit()) { return null; }

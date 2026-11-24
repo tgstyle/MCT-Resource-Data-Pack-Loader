@@ -30,12 +30,10 @@ public final class RegistryRemaps {
     private RegistryRemaps() {}
 
     public static void reload() {
-        REMAPS.clear();
-        GENERATION.stale();
-        if (Config.data.registryRemapsOff()) { return; }
         int[] count = new int[1];
-        Json.eachObject(PackManager.REGISTRY_REMAP, "registry remap", (_, json) -> count[0] += read(json));
-        if (count[0] > 0) { Summary.info("remaps", "Loaded " + count[0] + " registry rename(s) across " + REMAPS.size() + " registry/registries"); }
+        GENERATION.load(!Config.data.registryRemapsOff(), REMAPS::clear, PackManager.REGISTRY_REMAP, "registry remap", (_, json) -> count[0] += read(json), () -> {
+            if (count[0] > 0) { Summary.info("remaps", "Loaded " + count[0] + " registry rename(s) across " + REMAPS.size() + " registry/registries"); }
+        });
     }
 
     private static int read(JsonObject json) {

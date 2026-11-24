@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.core.util.text;
 
 import mctmods.resourcedatapackloader.core.util.ILineNote;
-import mctmods.resourcedatapackloader.core.util.IdNames;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
 import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.json.NumberSlots;
 import mctmods.resourcedatapackloader.core.util.json.Snbt;
 
 import com.google.gson.JsonArray;
@@ -90,7 +90,7 @@ public final class FormatUp {
         else if (path.startsWith("items/")) { tints(out, note); }
         else if (path.startsWith("atlases/") && out.has("sources") && out.get("sources").isJsonArray()) {
             for (JsonElement source : out.getAsJsonArray("sources")) {
-                if (!source.isJsonObject() || !"paletted_permutations".equals(IdNames.bare(Json.text(source.getAsJsonObject(), TYPE)))) { continue; }
+                if (!source.isJsonObject() || !"paletted_permutations".equals(NumberSlots.type(source.getAsJsonObject()))) { continue; }
                 JsonObject permuted = source.getAsJsonObject();
                 if (permuted.has("palette_key")) { permuted.addProperty("palette_key", palette(Json.text(permuted, "palette_key"), note)); }
                 if (permuted.has("permutations") && permuted.get("permutations").isJsonObject()) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new JsonPrimitive(palette(entry.getValue().getAsString(), note)))); }
@@ -105,7 +105,7 @@ public final class FormatUp {
             JsonArray array = element.getAsJsonArray();
             for (int i = 0; i < array.size(); i++) {
                 JsonElement item = array.get(i);
-                if (item.isJsonObject() && "map_color".equals(IdNames.bare(Json.text(item.getAsJsonObject(), TYPE)))) {
+                if (item.isJsonObject() && "map_color".equals(NumberSlots.type(item.getAsJsonObject()))) {
                     note.accept("tints an item with map_color, which 26.3 removed, so it uses the tint's default color");
                     JsonObject constant = new JsonObject();
                     constant.addProperty(TYPE, MINECRAFT + "constant");

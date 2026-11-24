@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -65,7 +66,7 @@ public final class ContentDowned {
             this.down = down;
             this.side = side;
             this.by = by;
-            this.left = down.seconds() * 20;
+            this.left = down.seconds() * SharedConstants.TICKS_PER_SECOND;
             pin(player);
         }
 
@@ -116,8 +117,8 @@ public final class ContentDowned {
     private static void onAttack(LivingIncomingDamageEvent event) {
         if (bleeding || DOWNED.isEmpty() || event.getEntity().level().isClientSide()) { return; }
         Entity by = event.getSource().getEntity();
-        if (by != null && DOWNED.containsKey(by.getUUID())) { event.setCanceled(true); }
-        else if (!event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY) && DOWNED.containsKey(event.getEntity().getUUID())) { event.setCanceled(true); }
+        if (downed(by)) { event.setCanceled(true); }
+        else if (!event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY) && downed(event.getEntity())) { event.setCanceled(true); }
     }
 
     private static void onStrike(AttackEntityEvent event) { refuse(event, event.getEntity()); }
@@ -130,11 +131,13 @@ public final class ContentDowned {
 
     private static void onTouch(PlayerInteractEvent.EntityInteract event) { refuse(event, event.getEntity()); }
 
-    private static void refuse(ICancellableEvent event, Player player) { if (!DOWNED.isEmpty() && DOWNED.containsKey(player.getUUID())) { event.setCanceled(true); } }
+    private static void refuse(ICancellableEvent event, Player player) { if (downed(player)) { event.setCanceled(true); } }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && DOWNED.containsKey(player.getUUID())) { kill(player); }
+        if (event.getEntity() instanceof ServerPlayer player && downed(player)) { kill(player); }
     }
+
+    private static boolean downed(@Nullable Entity entity) { return entity != null && DOWNED.containsKey(entity.getUUID()); }
 
     private static void onRespawn(PlayerEvent.PlayerRespawnEvent event) { DOWNED.remove(event.getEntity().getUUID()); }
 
@@ -164,7 +167,7 @@ public final class ContentDowned {
             return;
         }
         state.reviving++;
-        if (state.reviving >= state.down.reviveSeconds() * 20) { revive(player, state, reviver); }
+        if (state.reviving >= state.down.reviveSeconds() * SharedConstants.TICKS_PER_SECOND) { revive(player, state, reviver); }
     }
 
     public static void clear(MinecraftServer server) {
@@ -181,7 +184,7 @@ public final class ContentDowned {
 
     @Nullable private static ServerPlayer reviver(MinecraftServer server, ServerPlayer down, State state) {
         for (ServerPlayer near : server.getPlayerList().getPlayers()) {
-            if (near == down || !near.isShiftKeyDown() || near.isSpectator() || near.level() != down.level() || DOWNED.containsKey(near.getUUID()) || near.distanceToSqr(down) > REACH_SQUARED) { continue; }
+            if (near == down || !near.isShiftKeyDown() || near.isSpectator() || near.level() != down.level() || downed(near) || near.distanceToSqr(down) > REACH_SQUARED) { continue; }
             TeamDef def = ContentTeams.defOf(near);
             if (def != null && def.name().equals(state.side)) { return near; }
         }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.syncdata.DataReader;
 import mctmods.resourcedatapackloader.common.syncdata.DataText;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
@@ -25,7 +26,7 @@ public final class CardSend {
     private static final int FADE_IN = 10;
     private static final int FADE_OUT = 20;
     private static final String TEXT = "{text}";
-    private static final Map<UUID, List<CardLook>> HELD = new HashMap<>();
+    private static final Map<UUID, List<CardLook>> HELD = PlayerLogout.track(new HashMap<>());
 
     private CardSend() {}
 
@@ -119,6 +120,4 @@ public final class CardSend {
         if (held == null) { return; }
         for (CardLook look : held) { send(look, player); }
     }
-
-    static void forget(UUID player) { HELD.remove(player); }
 }

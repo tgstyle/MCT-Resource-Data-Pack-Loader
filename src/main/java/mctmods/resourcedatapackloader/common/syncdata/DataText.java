@@ -9,6 +9,8 @@ public final class DataText {
 
     public static int token(String raw, int from) { return raw.indexOf(OPEN, from); }
 
+    public static int close(String raw, int at, String open) { return raw.indexOf(CLOSE, at + open.length()); }
+
     public static String name(String body) {
         int split = body.indexOf(SPLIT);
         return (split < 0 ? body : body.substring(0, split)).trim();
@@ -30,7 +32,7 @@ public final class DataText {
         StringBuilder out = new StringBuilder(line.length() + 16);
         int from = 0;
         while (at >= 0) {
-            int close = line.indexOf(CLOSE, at);
+            int close = close(line, at, OPEN);
             if (close < 0) { break; }
             String body = line.substring(at + OPEN.length(), close);
             out.append(line, from, at).append(value(reader, name(body), fallback(body)));

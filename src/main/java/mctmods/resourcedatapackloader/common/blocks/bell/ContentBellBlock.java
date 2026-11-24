@@ -60,7 +60,7 @@ public final class ContentBellBlock extends LineCompat.BellBase implements ICont
         boolean powered = level.hasNeighborSignal(pos);
         if (powered == state.getValue(POWERED)) { return; }
         if (powered) { ring(level, pos, null); }
-        level.setBlock(pos, state.setValue(POWERED, powered), 3);
+        level.setBlock(pos, state.setValue(POWERED, powered), Block.UPDATE_ALL);
     }
 
     private boolean hit(Level level, BlockState state, BlockHitResult at, @Nullable Player player) {

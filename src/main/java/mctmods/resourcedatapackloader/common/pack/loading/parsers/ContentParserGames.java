@@ -36,8 +36,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -98,7 +96,7 @@ public final class ContentParserGames {
                 Math.max(SharedConstants.TICKS_PER_SECOND, Json.getInt(results, "seconds", 8) * SharedConstants.TICKS_PER_SECOND),
                 Json.getBoolean(json, "carries", false),
                 Json.getBoolean(ends, "resets", false),
-                Math.max(0, Json.getInt(ends, "intermissionSeconds", 10)),
+                Json.atLeast(ends, "intermissionSeconds", 10, 0),
                 Json.getString(json, "awardsTo", "").trim(),
                 Json.getBoolean(ends, "locksTeams", true),
                 Json.getInt(points, "ownKill", 0),
@@ -123,10 +121,11 @@ public final class ContentParserGames {
     @Nullable private static TurnsDef turns(Identifier key, JsonObject json) {
         if (!json.has("turns")) { return null; }
         JsonObject turns = Json.getJsonObject(json, "turns");
-        String order = Json.choice(turns, "order", TurnsDef.FIXED, "Score file " + key + " turns", TurnsDef.ORDERS);
-        String held = Json.choice(turns, "held", TurnsDef.FROZEN, "Score file " + key + " turns", TurnsDef.HOLDS);
-        return new TurnsDef(order, Math.max(1, Json.getInt(turns, "seconds", 60)), Math.max(0, Json.getInt(turns, "gapSeconds", 3)), held,
-                Math.max(0, Json.getInt(turns, "endsAtScore", 0)), Math.max(0, Json.getInt(turns, "cycles", 0)), Json.names(turns, "mobTags"), Json.names(turns, "mobTypes"));
+        String owner = "Score file " + key + " turns";
+        String order = Json.choice(turns, "order", TurnsDef.FIXED, owner, TurnsDef.ORDERS);
+        String held = Json.choice(turns, "held", TurnsDef.FROZEN, owner, TurnsDef.HOLDS);
+        return new TurnsDef(order, Json.atLeast(turns, "seconds", 60, 1), Json.atLeast(turns, "gapSeconds", 3, 0), held,
+                Json.atLeast(turns, "endsAtScore", 0, 0), Json.atLeast(turns, "cycles", 0, 0), Json.names(turns, "mobTags"), Json.names(turns, "mobTypes"));
     }
 
     private static RoundResetDef roundReset(Identifier key, JsonObject reset) {
@@ -134,9 +133,9 @@ public final class ContentParserGames {
         String lead = Json.choice(reset, "lead", RoundResetDef.NONE, owner, List.of(RoundResetDef.NONE, RoundResetDef.NOW, RoundResetDef.VOTE));
         String players = Json.choice(reset, "players", RoundResetDef.NONE, owner, List.of(RoundResetDef.NONE, RoundResetDef.VOTE));
         return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.strings(reset, "teams"),
-                Mth.clamp(Json.getInt(reset, "passPercent", 51), 1, 100),
-                Math.max(5, Json.getInt(reset, "voteSeconds", 30)),
-                Math.max(0, Json.getInt(reset, "cooldownSeconds", 60)),
+                Json.clamped(reset, "passPercent", 51, 1, 100),
+                Json.atLeast(reset, "voteSeconds", 30, 5),
+                Json.atLeast(reset, "cooldownSeconds", 60, 0),
                 Json.getString(reset, "leadSays", "{player} reset the round"),
                 Json.getString(reset, "voteSays", "{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds"),
                 Json.getString(reset, "tallySays", "Reset the round? {yes} yes, {no} no, {seconds}"),
@@ -213,10 +212,10 @@ public final class ContentParserGames {
         }
         List<RaidTarget.Kind> target = raidTargets(json, key);
         return new RaidDef(key, omen, Json.getString(json, "name", "Raid"), color, List.copyOf(waves),
-                Math.max(1, Json.getInt(json, "waveDelay", 300)),
-                Math.max(8, Json.getInt(json, "spawnDistance", 32)),
-                Math.max(16, Json.getInt(json, "reach", 96)),
-                Math.max(0, Json.getInt(json, "timeout", 48000)),
+                Json.atLeast(json, "waveDelay", 300, 1),
+                Json.atLeast(json, "spawnDistance", 32, 8),
+                Json.atLeast(json, "reach", 96, 16),
+                Json.atLeast(json, "timeout", 48000, 0),
                 Json.getString(json, "sound", "").trim(),
                 Json.getString(json, "wins", "").trim(),
                 Json.getString(json, "loses", "").trim(),
@@ -324,16 +323,16 @@ public final class ContentParserGames {
                 leadWay(json, name), Json.getString(json, "leadOn", "").trim(), Json.getString(json, "leadIs", "").trim(),
                 Json.getString(json, "leadSays", "You are the current round leader"), Json.getString(json, "leadRuns", "").trim(),
                 Json.getBoolean(json, "balance", false), Json.getBoolean(json, "scoreboard", true),
-                Math.max(0, Json.getInt(json, "picks", 0)), Json.names(json, "picksFrom"), gives(key, json),
+                Json.atLeast(json, "picks", 0, 0), Json.names(json, "picksFrom"), gives(key, json),
                 standIn(json), standInAt(key, json), point(key, Json.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"), down(json));
     }
 
     @Nullable private static DownDef down(JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "down")) { return null; }
-        JsonObject asked = Json.getJsonObject(json, "down");
-        int seconds = Math.max(0, Json.getInt(asked, "seconds", 0));
+        JsonObject asked = Json.objectOrNull(json, "down");
+        if (asked == null) { return null; }
+        int seconds = Json.atLeast(asked, "seconds", 0, 0);
         if (seconds == 0) { return null; }
-        return new DownDef(seconds, Math.max(1, Json.getInt(asked, "reviveSeconds", 5)),
+        return new DownDef(seconds, Json.atLeast(asked, "reviveSeconds", 5, 1),
                 Json.getString(asked, "says", "You are down and bleed out in {seconds} seconds unless a teammate revives you"),
                 Json.getString(asked, "revivedSays", "You were revived"));
     }
@@ -351,13 +350,14 @@ public final class ContentParserGames {
     }
 
     private static String standIn(JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "standIn")) { return ""; }
-        return Json.getString(Json.getJsonObject(json, "standIn"), "entity", "").trim();
+        JsonObject held = Json.objectOrNull(json, "standIn");
+        return held == null ? "" : Json.getString(held, "entity", "").trim();
     }
 
     @Nullable private static int[] standInAt(Identifier key, JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "standIn")) { return null; }
-        String at = Json.getString(Json.getJsonObject(json, "standIn"), "at", "");
+        JsonObject held = Json.objectOrNull(json, "standIn");
+        if (held == null) { return null; }
+        String at = Json.getString(held, "at", "");
         int[] found = point(key, at, "Team file {} gives standIn an 'at' of '{}', which is not three whole numbers x,y,z, so no stand-in is kept");
         if (found == null && at.trim().isEmpty()) { ContentLog.LOGGER.error("Team file {} gives standIn no 'at', so no stand-in is kept", key); }
         return found;
@@ -368,7 +368,7 @@ public final class ContentParserGames {
         if (!json.has("gives")) { return values; }
         for (JsonElement held : Json.getJsonArray(json, "gives")) {
             if (held.isJsonPrimitive()) { values.add(new ItemGiveDef(held.getAsString().trim(), 1, false)); }
-            else if (held.isJsonObject()) { values.add(new ItemGiveDef(Json.getString(held.getAsJsonObject(), "item", "").trim(), Math.max(1, Json.getInt(held.getAsJsonObject(), "count", 1)), Json.getBoolean(held.getAsJsonObject(), "unbreakable", false))); }
+            else if (held.isJsonObject()) { values.add(new ItemGiveDef(Json.getString(held.getAsJsonObject(), "item", "").trim(), Json.atLeast(held.getAsJsonObject(), "count", 1, 1), Json.getBoolean(held.getAsJsonObject(), "unbreakable", false))); }
             else { ContentLog.LOGGER.error("Team file {} lists something under gives that is neither an item name nor an object, skipping it", key); }
         }
         return values;

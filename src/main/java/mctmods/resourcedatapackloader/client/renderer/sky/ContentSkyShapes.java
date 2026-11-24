@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import javax.annotation.Nullable;
@@ -160,10 +161,10 @@ public final class ContentSkyShapes {
         float along = (float) step / AURORA_STEPS;
         float around = (float) Math.toRadians(-70.0F + 140.0F * along + 4.0F * Mth.sin(time * 0.05F + step * 0.35F + band * 2.0F));
         float base = 18.0F + band * 6.0F + 3.0F * Mth.sin(time * 0.03F + step * 0.2F + band);
-        float height = 18.0F + 10.0F * (0.5F + 0.5F * Mth.sin(time * 0.07F + step * 0.5F + band * 1.3F));
+        float height = 18.0F + 10.0F * MathUtil.wave(time * 0.07F + step * 0.5F + band * 1.3F, 0.5F, 0.5F);
         float up = (float) Math.toRadians(top ? base + height : base);
         float flat = Mth.cos(up) * SIZE;
-        float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * (0.6F + 0.4F * Mth.sin(time * 0.11F + step * 0.9F + band * 0.7F));
+        float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * MathUtil.wave(time * 0.11F + step * 0.9F + band * 0.7F, 0.6F, 0.4F);
         return colored(out, at, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat, top ? aurora.topColor() : aurora.color(), alpha);
     }
 

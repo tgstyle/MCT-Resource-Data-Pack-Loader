@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMa
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.MapCodec;
@@ -57,7 +58,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
                 ContentLog.LOGGER.error("{} gives loot for '{}', which is not a loot table id, ignoring it", owner, entry.getKey());
                 continue;
             }
-            if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString()) {
+            if (!Json.isString(entry.getValue())) {
                 ContentLog.LOGGER.error("{} gives loot.{} that is not a loot table id, ignoring it", owner, entry.getKey());
                 continue;
             }

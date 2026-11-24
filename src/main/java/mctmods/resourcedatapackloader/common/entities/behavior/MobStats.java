@@ -10,6 +10,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -20,6 +21,8 @@ public final class MobStats {
     private static final List<String> KINDS = List.of("monster", "creature", "ambient", "water_creature");
 
     private MobStats() {}
+
+    public static float health(LivingEntity living) { return living.getHealth() / living.getMaxHealth(); }
 
     public static boolean entities(String owner, String label, JsonElement element, Collection<Identifier> ids, Collection<String> kinds) {
         if (!element.isJsonArray()) {

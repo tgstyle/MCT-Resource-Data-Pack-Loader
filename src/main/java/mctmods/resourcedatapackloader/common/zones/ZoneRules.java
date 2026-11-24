@@ -43,6 +43,7 @@ public final class ZoneRules {
     private static final List<String> PLACE_KEYS = List.of("allow", "deny", "on");
     private static final List<String> OPEN_KEYS = List.of("allow", "deny", "close");
     private static final String ALL = "all";
+    private static final String DAMAGE = "damage";
     private static final int BOX_VALUES = 6;
     private static final List<ZoneDef> ZONES = new ArrayList<>();
     private static final Map<ResourceKey<Level>, List<ZoneDef>> BY_DIMENSION = new HashMap<>();
@@ -141,7 +142,7 @@ public final class ZoneRules {
         EnumSet<ZoneTool> tools = EnumSet.noneOf(ZoneTool.class);
         if (!json.has(TOOLS)) { return tools; }
         JsonElement value = json.get(TOOLS);
-        boolean text = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString();
+        boolean text = Json.isString(value);
         if (!text && !value.isJsonArray()) {
             ContentLog.LOGGER.error("Zone file {} gives denyToolActions that is not a list of hoe_till, axe_strip or shovel_flatten, ignoring it", key);
             return tools;
@@ -150,7 +151,7 @@ public final class ZoneRules {
         if (text) { entries.add(value); }
         else { entries = value.getAsJsonArray(); }
         for (JsonElement entry : entries) {
-            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
+            if (!Json.isString(entry)) {
                 ContentLog.LOGGER.error("Zone file {} gives denyToolActions an entry {} that is not text, ignoring it", key, entry);
                 continue;
             }
@@ -162,13 +163,14 @@ public final class ZoneRules {
     }
 
     @Nullable private static ZoneDamageDef readDamage(Identifier key, JsonObject json) {
-        if (!json.has("damage")) { return null; }
-        if (!json.get("damage").isJsonObject()) {
+        JsonElement held = json.get(DAMAGE);
+        if (held == null) { return null; }
+        if (!held.isJsonObject()) {
             ContentLog.LOGGER.error("Zone file {} gives damage that is not an object, ignoring it", key);
             return null;
         }
-        JsonObject damage = json.getAsJsonObject("damage");
-        Json.unknownKeys(damage, "damage", DAMAGE_KEYS);
+        JsonObject damage = held.getAsJsonObject();
+        Json.unknownKeys(damage, DAMAGE, DAMAGE_KEYS);
         List<Identifier> ids = new ArrayList<>();
         List<String> kinds = new ArrayList<>();
         boolean listed = damage.has("entities") && MobStats.entities("Zone file " + key, "damage entities", damage.get("entities"), ids, kinds);
@@ -176,7 +178,7 @@ public final class ZoneRules {
             ContentLog.LOGGER.error("Zone file {} has a damage rule with no entities, ignoring it", key);
             return null;
         }
-        return new ZoneDamageDef(ids, kinds, bool(key, damage, "damage", "unlessAttackerInside"), bool(key, damage, "damage", "allowNoAttacker"));
+        return new ZoneDamageDef(ids, kinds, bool(key, damage, DAMAGE, "unlessAttackerInside"), bool(key, damage, DAMAGE, "allowNoAttacker"));
     }
 
     private static boolean bool(Identifier key, JsonObject rule, String part, String member) {

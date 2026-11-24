@@ -12,6 +12,21 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 public final class ContentBoardData extends SavedData {
     private static final String NAME = "rdpl_boards";
     private static final String TAG = "rdplBoards";
+    private static final String GAME = "game";
+    private static final String DIMENSION = "dimension";
+    private static final String X = "x";
+    private static final String Y = "y";
+    private static final String Z = "z";
+    private static final String MOVES = "moves";
+    private static final String OWNER = "owner";
+    private static final String TEAM = "team";
+    private static final String LEVELS = "levels";
+    private static final String CLOCK = "clock";
+    private static final String WINNER = "winner";
+    private static final String REASON = "reason";
+    private static final String OFFER = "offer";
+    private static final String TAKEBACK = "takeback";
+    private static final String SPAWN = "spawn";
     private static final SavedDataType<ContentBoardData> TYPE = SavedTypes.of(NAME, ContentBoardData::new, ContentBoardData::read, ContentBoardData::write);
     final Map<String, BoardGame> boards = new LinkedHashMap<>();
 
@@ -22,19 +37,19 @@ public final class ContentBoardData extends SavedData {
         CompoundTag all = compound.getCompoundOrEmpty(TAG);
         for (String name : all.keySet()) {
             CompoundTag one = all.getCompoundOrEmpty(name);
-            BoardGame game = new BoardGame(name, one.getStringOr("game", ""), one.getStringOr("dimension", ""), one.getIntOr("x", 0), one.getIntOr("y", 0), one.getIntOr("z", 0));
-            for (int move : one.getIntArray("moves").orElse(new int[0])) { game.moves.add(move); }
+            BoardGame game = new BoardGame(name, one.getStringOr(GAME, ""), one.getStringOr(DIMENSION, ""), one.getIntOr(X, 0), one.getIntOr(Y, 0), one.getIntOr(Z, 0));
+            for (int move : one.getIntArray(MOVES).orElse(new int[0])) { game.moves.add(move); }
             for (int side = 0; side < 2; side++) {
-                game.owners[side] = one.getStringOr("owner" + side, "");
-                game.teams[side] = one.getBooleanOr("team" + side, false);
+                game.owners[side] = one.getStringOr(OWNER + side, "");
+                game.teams[side] = one.getBooleanOr(TEAM + side, false);
             }
-            copy(one.getIntArray("levels").orElse(new int[0]), game.levels);
-            copy(one.getIntArray("clock").orElse(new int[0]), game.clock);
-            game.winner = one.getIntOr("winner", BoardGame.RUNNING);
-            game.reason = one.getStringOr("reason", "");
-            game.offer = one.getIntOr("offer", -1);
-            game.takeback = one.getIntOr("takeback", -1);
-            game.spawn = one.getLongOr("spawn", 0L);
+            copy(one.getIntArray(LEVELS).orElse(new int[0]), game.levels);
+            copy(one.getIntArray(CLOCK).orElse(new int[0]), game.clock);
+            game.winner = one.getIntOr(WINNER, BoardGame.RUNNING);
+            game.reason = one.getStringOr(REASON, "");
+            game.offer = one.getIntOr(OFFER, -1);
+            game.takeback = one.getIntOr(TAKEBACK, -1);
+            game.spawn = one.getLongOr(SPAWN, 0L);
             data.boards.put(name, game);
         }
         return data;
@@ -47,23 +62,23 @@ public final class ContentBoardData extends SavedData {
         CompoundTag all = new CompoundTag();
         for (BoardGame game : boards.values()) {
             CompoundTag one = new CompoundTag();
-            one.putString("game", game.game);
-            one.putString("dimension", game.dimension);
-            one.putInt("x", game.x);
-            one.putInt("y", game.y);
-            one.putInt("z", game.z);
-            one.putIntArray("moves", game.moves.stream().mapToInt(Integer::intValue).toArray());
+            one.putString(GAME, game.game);
+            one.putString(DIMENSION, game.dimension);
+            one.putInt(X, game.x);
+            one.putInt(Y, game.y);
+            one.putInt(Z, game.z);
+            one.putIntArray(MOVES, game.moves.stream().mapToInt(Integer::intValue).toArray());
             for (int side = 0; side < 2; side++) {
-                one.putString("owner" + side, game.owners[side]);
-                one.putBoolean("team" + side, game.teams[side]);
+                one.putString(OWNER + side, game.owners[side]);
+                one.putBoolean(TEAM + side, game.teams[side]);
             }
-            one.putIntArray("levels", game.levels.clone());
-            one.putIntArray("clock", game.clock.clone());
-            one.putInt("winner", game.winner);
-            one.putString("reason", game.reason);
-            one.putInt("offer", game.offer);
-            one.putInt("takeback", game.takeback);
-            one.putLong("spawn", game.spawn);
+            one.putIntArray(LEVELS, game.levels.clone());
+            one.putIntArray(CLOCK, game.clock.clone());
+            one.putInt(WINNER, game.winner);
+            one.putString(REASON, game.reason);
+            one.putInt(OFFER, game.offer);
+            one.putInt(TAKEBACK, game.takeback);
+            one.putLong(SPAWN, game.spawn);
             all.put(game.name, one);
         }
         compound.put(TAG, all);

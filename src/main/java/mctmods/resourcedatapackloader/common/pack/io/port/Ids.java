@@ -350,7 +350,7 @@ public final class Ids {
     public static String lootTable(String name) {
         String asked = namespaced(Settings.lower(name));
         if (isModded(asked)) { return asked; }
-        String path = asked.substring(IdNames.MINECRAFT.length());
+        String path = IdNames.bare(asked);
         String renamed = LOOT_TABLES.get(path);
         if (renamed != null) { return IdNames.MINECRAFT + renamed; }
         if (!path.startsWith(ENTITY_TABLES)) { return asked; }

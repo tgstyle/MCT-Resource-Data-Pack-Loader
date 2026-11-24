@@ -45,7 +45,7 @@ public final class ContentSeasonSensorBlock extends SensorSignal {
     @Override protected void tick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
         level.scheduleTick(pos, this, POLL);
         int power = power(level);
-        if (power != state.getValue(POWER)) { level.setBlock(pos, state.setValue(POWER, power), 3); }
+        if (power != state.getValue(POWER)) { level.setBlock(pos, state.setValue(POWER, power), Block.UPDATE_ALL); }
     }
 
     private int power(ServerLevel level) {

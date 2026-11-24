@@ -24,7 +24,7 @@ public final class RaidDefenders {
     public static List<ServerPlayer> inReach(ServerLevel level, BlockPos center, int reach, int owner, @Nullable UUID target) {
         List<ServerPlayer> defenders = new ArrayList<>();
         if (owner == 0 && target == null) { return defenders; }
-        for (ServerPlayer player : BossBars.near(level, center.getX() + 0.5D, center.getY() + 0.5D, center.getZ() + 0.5D, reach)) {
+        for (ServerPlayer player : BossBars.near(level, center, reach)) {
             if (defends(player, owner, target)) { defenders.add(player); }
         }
         return defenders;

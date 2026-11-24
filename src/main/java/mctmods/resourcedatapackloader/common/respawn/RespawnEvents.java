@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.respawn;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 import mctmods.resourcedatapackloader.common.util.world.PlayerNear;
 
 import net.minecraft.server.level.ServerLevel;
@@ -58,12 +59,5 @@ public final class RespawnEvents {
         data.setDirty();
     }
 
-    private static boolean generated(ServerLevel level, int[] box) {
-        for (int chunkX = box[0] >> 4; chunkX <= box[3] >> 4; chunkX++) {
-            for (int chunkZ = box[2] >> 4; chunkZ <= box[5] >> 4; chunkZ++) {
-                if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) { return false; }
-            }
-        }
-        return true;
-    }
+    private static boolean generated(ServerLevel level, int[] box) { return ChunkSpan.allChunks(box[0], box[2], box[3], box[5], (chunkX, chunkZ) -> level.getChunkSource().getChunkNow(chunkX, chunkZ) != null); }
 }

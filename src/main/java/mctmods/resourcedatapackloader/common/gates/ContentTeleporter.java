@@ -72,7 +72,7 @@ public final class ContentTeleporter {
         if (!here.equals(portal.dimension())) { cameFrom(player, portal.dimension(), here); }
         remember(player, here, pos);
         BlockPos step = new ContentTeleporter(portal, state, fit).arrive(target, player);
-        player.teleport(new TeleportTransition(target, new Vec3(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D), Vec3.ZERO, player.getYRot(), player.getXRot(), TeleportTransition.DO_NOTHING));
+        player.teleport(new TeleportTransition(target, Vec3.atBottomCenterOf(step), Vec3.ZERO, player.getYRot(), player.getXRot(), TeleportTransition.DO_NOTHING));
     }
 
     private BlockPos arrive(ServerLevel level, Entity entity) {
@@ -191,7 +191,7 @@ public final class ContentTeleporter {
         BlockPos high = new BlockPos(maxX + 1, at.getY() + height, maxZ + 1);
         for (BlockPos spot : BlockPos.betweenClosed(low, new BlockPos(high.getX(), high.getY() - 1, high.getZ()))) {
             hold(level, spot);
-            if (!frame.contains(spot) && !keep(level, spot)) { level.setBlock(spot, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
+            if (!frame.contains(spot) && !keep(level, spot)) { level.setBlock(spot, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE); }
         }
         Block floor = block(def.platformBlock());
         for (BlockPos spot : BlockPos.betweenClosed(low.offset(-1, 0, -1), high.offset(1, 0, 1))) {

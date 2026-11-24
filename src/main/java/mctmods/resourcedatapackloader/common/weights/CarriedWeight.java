@@ -4,17 +4,15 @@ import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
-import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BundleContents;
@@ -25,7 +23,6 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public final class CarriedWeight {
@@ -35,17 +32,6 @@ public final class CarriedWeight {
     private CarriedWeight() {}
 
     private record Scope(WeightDef settings, HolderLookup.Provider access) {}
-
-    public static List<ItemStack> worn(Player player) {
-        List<ItemStack> found = new ArrayList<>();
-        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
-            if (slot.getType() != EquipmentSlot.Type.HUMANOID_ARMOR) { continue; }
-            ItemStack stack = player.getItemBySlot(slot);
-            if (!stack.isEmpty()) { found.add(stack); }
-        }
-        found.addAll(ContentCurios.worn(player, _ -> true));
-        return found;
-    }
 
     public static long total(Player player, WeightDef settings, List<ItemStack> worn) {
         Scope scope = new Scope(settings, player.registryAccess());
@@ -74,11 +60,7 @@ public final class CarriedWeight {
         if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlockItem.holdsKept(stack)) { return listed(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY), scope, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(scope.settings.countContents)) { return 0L; }
         ResourceHandler<ItemResource> handler = ItemAccess.forHandlerIndex(VanillaContainerWrapper.of(new SimpleContainer(stack.copyWithCount(1))), 0).getCapability(Capabilities.Item.ITEM);
-        if (handler != null) {
-            long sum = 0L;
-            for (int slot = 0; slot < handler.size(); slot++) { sum += weigh(ItemUtil.getStack(handler, slot), scope, depth + 1); }
-            return sum;
-        }
+        if (handler != null) { return ItemHandlers.sum(handler, held -> weigh(held, scope, depth + 1)); }
         long sum = listed(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY), scope, depth);
         BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (bundle != null) { sum += LineCompat.bundled(bundle).mapToLong(held -> weigh(held, scope, depth + 1)).sum(); }

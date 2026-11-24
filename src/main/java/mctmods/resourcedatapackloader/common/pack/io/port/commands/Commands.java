@@ -34,6 +34,7 @@ import net.minecraft.util.GsonHelper;
 public final class Commands {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     static final String SELF = "@s";
+    private static final String CLICK_EVENT = "clickEvent";
     private static final String[] EFFECTS = {"", "speed", "slowness", "haste", "mining_fatigue", "strength", "instant_health", "instant_damage", "jump_boost", "nausea", "regeneration", "resistance", "fire_resistance", "water_breathing", "invisibility", "blindness", "night_vision", "hunger", "weakness", "poison", "wither", "health_boost", "absorption", "saturation", "glowing", "levitation", "luck", "unluck"};
     static final Map<String, String> GAME_MODES = Map.ofEntries(
             Map.entry("0", "survival"), Map.entry("s", "survival"), Map.entry("survival", "survival"), Map.entry("1", "creative"), Map.entry("c", "creative"), Map.entry("creative", "creative"),
@@ -426,8 +427,8 @@ public final class Commands {
             JsonObject score = held.getAsJsonObject("score");
             score.addProperty("name", CommandSelectors.target(score.get("name").getAsString(), pack));
         }
-        if (GsonHelper.isObjectNode(held, "clickEvent")) {
-            JsonObject click = held.getAsJsonObject("clickEvent");
+        if (GsonHelper.isObjectNode(held, CLICK_EVENT)) {
+            JsonObject click = held.getAsJsonObject(CLICK_EVENT);
             String action = Json.text(click, "action");
             String value = Json.text(click, "value");
             if (("run_command".equals(action) || "suggest_command".equals(action)) && value.startsWith("/") && value.length() > 1) {
@@ -436,7 +437,7 @@ public final class Commands {
             }
         }
         for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
-            if (!"clickEvent".equals(entry.getKey())) { textWalk(entry.getValue(), pack); }
+            if (!CLICK_EVENT.equals(entry.getKey())) { textWalk(entry.getValue(), pack); }
         }
     }
 

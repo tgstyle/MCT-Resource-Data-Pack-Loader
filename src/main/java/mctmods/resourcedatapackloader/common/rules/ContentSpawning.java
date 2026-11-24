@@ -36,10 +36,10 @@ public final class ContentSpawning {
 
     public static void applyCaps() {
         if (ContentControl.off(ContentControl.SPAWNING)) { return; }
-        cap(MobCategory.MONSTER, ContentControl.number(ContentControl.SPAWNING, "monsterCap", Config.worldgen.monsterCap()));
-        cap(MobCategory.CREATURE, ContentControl.number(ContentControl.SPAWNING, "creatureCap", Config.worldgen.creatureCap()));
-        cap(MobCategory.AMBIENT, ContentControl.number(ContentControl.SPAWNING, "ambientCap", Config.worldgen.ambientCap()));
-        cap(MobCategory.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, "waterCreatureCap", Config.worldgen.waterCreatureCap()));
+        cap(MobCategory.MONSTER, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAP_KEYS.getFirst(), Config.worldgen.monsterCap()));
+        cap(MobCategory.CREATURE, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAP_KEYS.get(1), Config.worldgen.creatureCap()));
+        cap(MobCategory.AMBIENT, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAP_KEYS.get(2), Config.worldgen.ambientCap()));
+        cap(MobCategory.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, ContentSpawnSwitch.CAP_KEYS.get(3), Config.worldgen.waterCreatureCap()));
     }
 
     private static void cap(MobCategory category, int wanted) {
@@ -134,10 +134,10 @@ public final class ContentSpawning {
             if (wanted >= 0.0F) { return wanted; }
         }
         float[] rates = RATES.get(() -> new float[] {
-                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate()),
-                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate()),
-                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate()),
-                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate()) });
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATE_KEYS.getFirst(), Config.worldgen.surfaceDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATE_KEYS.get(1), Config.worldgen.surfaceNightMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATE_KEYS.get(2), Config.worldgen.undergroundDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, ContentSpawnSwitch.RATE_KEYS.get(3), Config.worldgen.undergroundNightMonsterRate()) });
         if (sky) { return day ? rates[0] : rates[1]; }
         return day ? rates[2] : rates[3];
     }

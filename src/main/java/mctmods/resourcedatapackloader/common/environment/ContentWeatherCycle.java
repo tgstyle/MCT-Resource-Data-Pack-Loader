@@ -37,10 +37,8 @@ public final class ContentWeatherCycle {
             if (data.getRainTime() < 2) { data.setRainTime(RAIN_HOLD); }
             return true;
         }
-        level.oRainLevel = level.rainLevel;
-        level.rainLevel = Mth.clamp(level.rainLevel + THUNDER_STEP, 0.0F, 1.0F);
-        level.oThunderLevel = level.thunderLevel;
-        level.thunderLevel = Mth.clamp(level.thunderLevel + (level.getWeatherData().isThundering() ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+        stepRain(level, THUNDER_STEP);
+        stepThunder(level, level.getWeatherData().isThundering() ? THUNDER_STEP : -THUNDER_STEP, 1.0F);
         return false;
     }
 
@@ -52,15 +50,23 @@ public final class ContentWeatherCycle {
         level.thunderLevel = Math.max(0.0F, level.thunderLevel - THUNDER_STEP);
     }
 
+    private static void stepRain(Level level, float delta) {
+        level.oRainLevel = level.rainLevel;
+        level.rainLevel = Mth.clamp(level.rainLevel + delta, 0.0F, 1.0F);
+    }
+
+    private static void stepThunder(Level level, float delta, float top) {
+        level.oThunderLevel = level.thunderLevel;
+        level.thunderLevel = Mth.clamp(level.thunderLevel + delta, 0.0F, top);
+    }
+
     public static void force(Level level, int kind) {
         if (kind == RuleSwitchDef.CLEAR) {
             dry(level);
             return;
         }
-        level.oRainLevel = level.rainLevel;
-        level.rainLevel = Mth.clamp(level.rainLevel + THUNDER_STEP, 0.0F, 1.0F);
-        level.oThunderLevel = level.thunderLevel;
-        level.thunderLevel = Mth.clamp(level.thunderLevel + (kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+        stepRain(level, THUNDER_STEP);
+        stepThunder(level, kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP, 1.0F);
     }
 
     public static void hurry(ServerLevel level, int steps) {
@@ -97,12 +103,8 @@ public final class ContentWeatherCycle {
             shift = random.nextInt(200) + 100;
         }
         boolean storming = raining && thundering;
-        float strength = level.rainLevel;
-        level.oRainLevel = strength;
         float aim = storming ? 1.0F : raining ? target : 0.0F;
-        level.rainLevel = Mth.clamp(strength + Mth.clamp(aim - strength, -STEP, STEP), 0.0F, 1.0F);
-        float thunder = level.thunderLevel;
-        level.oThunderLevel = thunder;
-        level.thunderLevel = Mth.clamp(thunder + (storming ? THUNDER_STEP : -THUNDER_STEP), 0.0F, cycle.thunderStrength());
+        stepRain(level, Mth.clamp(aim - level.rainLevel, -STEP, STEP));
+        stepThunder(level, storming ? THUNDER_STEP : -THUNDER_STEP, cycle.thunderStrength());
     }
 }

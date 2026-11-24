@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.Crisp;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.network.CardMessage;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,6 +28,7 @@ public final class CardOverlay {
     private static final int MOST = 5;
     private static final int SLIDE = 8;
     private static final int FADE = 20;
+    private static final float MIN_ALPHA = 0.05F;
     private static final int MARGIN = 6;
     private static final int GAP = 4;
     private static final int PAD = 5;
@@ -38,7 +41,7 @@ public final class CardOverlay {
 
     private CardOverlay() {}
 
-    private static final class Card {
+    static final class Card {
         final String title;
         final List<String> lines;
         final ItemStack icon;
@@ -51,7 +54,7 @@ public final class CardOverlay {
         int age;
         int measured;
 
-        Card(CardMessage message) {
+        Card(CardMessage message, int leastLife) {
             this.title = message.title();
             this.lines = message.lines();
             this.icon = message.icon();
@@ -60,7 +63,7 @@ public final class CardOverlay {
             this.panel = message.panel();
             this.face = CardFont.of(message.font());
             this.text = message.text();
-            this.life = Math.max(SLIDE + FADE, message.ticks());
+            this.life = Math.max(leastLife, message.ticks());
         }
 
         int height() { return PAD * 2 + (title.isEmpty() ? 0 : LINE) + lines.size() * LINE; }
@@ -74,12 +77,9 @@ public final class CardOverlay {
             return measured;
         }
 
-        float alpha() {
-            int left = life - age;
-            return left < FADE ? Math.max(0.05F, left / (float) FADE) : 1.0F;
-        }
+        float alpha() { return Math.max(MIN_ALPHA, MathUtil.ramp(life - age, FADE)); }
 
-        float slide() { return age < SLIDE ? 1.0F - age / (float) SLIDE : 0.0F; }
+        float slide() { return MathUtil.drain(age, SLIDE); }
     }
 
     public static void show(CardMessage message) {
@@ -88,7 +88,7 @@ public final class CardOverlay {
             return;
         }
         while (CARDS.size() >= MOST) { CARDS.removeFirst(); }
-        CARDS.add(new Card(message));
+        CARDS.add(new Card(message, SLIDE + FADE));
     }
 
     @SuppressWarnings("unused") public static void onClientTick(ClientTickEvent.Post event) {
@@ -152,7 +152,7 @@ public final class CardOverlay {
         graphics.fill(left, top, left + width, top + height, withAlpha(background, 0.85F * alpha));
     }
 
-    public static int withAlpha(int rgb, float alpha) { return (Math.round(Mth.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    public static int withAlpha(int rgb, float alpha) { return Colors.withAlpha(rgb, Mth.clamp(alpha, MIN_ALPHA, 1.0F)); }
 
     static int darker(int rgb) { return ARGB.scaleRGB(rgb, 0.5F); }
 }

@@ -38,11 +38,9 @@ public final class MobDrops {
     private MobDrops() {}
 
     public static void load() {
-        DEFS.clear();
-        GENERATION.stale();
-        if (Config.data.mobDropsOff()) { return; }
-        Json.eachObject(PackManager.MOB_DROPS, "mob drop file", MobDrops::read);
-        if (!DEFS.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        GENERATION.load(!Config.data.mobDropsOff(), DEFS::clear, PackManager.MOB_DROPS, "mob drop file", MobDrops::read, () -> {
+            if (!DEFS.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        });
     }
 
     private static void read(Identifier key, JsonObject json) {
