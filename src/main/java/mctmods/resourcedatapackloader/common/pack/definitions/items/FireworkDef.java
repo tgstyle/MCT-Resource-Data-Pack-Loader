@@ -32,6 +32,8 @@ public record FireworkDef(boolean replaceUse, String mode, String on, int flight
     public static final int DEFAULT_COUNT = 40;
     public static final float DEFAULT_SPEED = 0.3F;
 
+    public boolean burstMode() { return MODE_BURST.equals(mode); }
+
     public boolean onBlock() { return !ON_AIR.equals(on); }
 
     public boolean onAir() { return !ON_BLOCK.equals(on); }

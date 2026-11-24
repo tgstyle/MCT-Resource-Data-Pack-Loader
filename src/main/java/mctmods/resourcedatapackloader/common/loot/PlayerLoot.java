@@ -24,6 +24,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -44,20 +45,15 @@ public final class PlayerLoot {
     private PlayerLoot() {}
 
     private static void reload() {
-        ENTRIES.clear();
-        GENERATION.stale();
-        if (Config.data.playerLootOff()) { return; }
-        Json.eachObject(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
-        if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        GENERATION.load(!Config.data.playerLootOff(), ENTRIES::clear, PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read, () -> {
+            if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", LOOT_KEYS);
-        String table = Json.getString(json, TABLE, "");
-        if (table.isEmpty()) {
-            ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
-            return;
-        }
+        String table = Json.required(json, TABLE, key, "Player loot {} has no table, ignoring it");
+        if (table.isEmpty()) { return; }
         ResourceLocation named = ContentParser.location(table);
         if (named == null) {
             ContentLog.LOGGER.error("Player loot {} names the table '{}', which is not a valid id, ignoring it", key, table);
@@ -108,7 +104,9 @@ public final class PlayerLoot {
         }
     }
 
-    public static boolean keeping(Player player) { return player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || player.isSpectator(); }
+    public static boolean keepInventory(Level level) { return level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY); }
+
+    public static boolean keeping(Player player) { return keepInventory(player.level()) || player.isSpectator(); }
 
     @Nullable private static Player killer(LivingDropsEvent event) {
         if (!event.isRecentlyHit()) { return null; }

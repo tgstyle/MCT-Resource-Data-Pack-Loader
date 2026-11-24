@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
@@ -42,12 +41,12 @@ public final class ContentColumns {
 
     public static boolean clearing() { return clearing; }
 
-    private static void reload() {
-        RULES.clear();
-        GENERATION.stale();
-        Json.eachObject(PackManager.COLUMNS, "falling column", ContentColumns::read);
-        if (!RULES.isEmpty()) { Summary.info("content.columns", "Loaded " + RULES.size() + " falling column group(s)"); }
+    private static boolean idle() {
+        if (GENERATION.stale()) { reload(); }
+        return RULES.isEmpty();
     }
+
+    private static void reload() { PackGeneration.reload(RULES, PackManager.COLUMNS, "falling column", "content.columns", "falling column group(s)", ContentColumns::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", COLUMN_KEYS);
@@ -84,8 +83,7 @@ public final class ContentColumns {
     public static void onBreak(BlockEvent.BreakEvent event) {
         if (clearing || ContentCarry.breaking() || ContentCarry.probing() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player) || player instanceof FakePlayer) { return; }
         if (player.isSpectator()) { return; }
-        if (GENERATION.stale()) { reload(); }
-        if (RULES.isEmpty()) { return; }
+        if (idle()) { return; }
         BlockPos origin = event.getPos();
         Rule rule = ruleFor(level.getBlockState(origin.above()));
         if (rule == null || rule.unlessSneaking() && player.isShiftKeyDown() || !rule.includeSelf() && rule.group().contains(event.getState())) { return; }

@@ -128,7 +128,7 @@ public final class ContentBoards {
     private static void think(MinecraftServer server, BoardGame game, BoardState state, int level) {
         BoardState snapshot = state.copy();
         int version = game.version;
-        long seed = server.overworld().random.nextLong();
+        long seed = ContentDice.random(server).nextLong();
         game.thinking = true;
         THINKER.execute(() -> {
             int move = BoardSearch.best(snapshot, level, new Random(seed));

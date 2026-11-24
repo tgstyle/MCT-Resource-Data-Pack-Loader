@@ -23,7 +23,6 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.level.ChunkEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public final class ContentTreeClock {
@@ -91,9 +90,7 @@ public final class ContentTreeClock {
         state.spent = 0;
     }
 
-    public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level) { STATES.remove(level.dimension()); }
-    }
+    static void forget(ResourceKey<Level> dimension) { STATES.remove(dimension); }
 
     private static void unload(ServerLevel level, ChunkPos chunk) {
         State state = STATES.get(level.dimension());
@@ -171,7 +168,7 @@ public final class ContentTreeClock {
         int owed = 0;
         for (int i = 0; i < ticks; i++) {
             for (int tries = ContentGrowSwitch.draws(scale, random); tries > 0; tries--) {
-                if (growth.chance() < 0.0 || random.nextDouble() < growth.chance()) { owed++; }
+                if (growth.rolls(random)) { owed++; }
                 else { state.reasons.put(entry.pos, "chance"); }
             }
         }

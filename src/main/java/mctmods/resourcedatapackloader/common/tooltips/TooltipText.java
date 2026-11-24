@@ -66,12 +66,12 @@ public final class TooltipText {
             int start = first(first(nbt, item), data);
             boolean isData = start == data;
             boolean isNbt = start == nbt;
-            String opening = isData ? DataText.OPEN : isNbt ? NBT_OPEN : ITEM_OPEN;
-            int open = start + opening.length();
-            int end = raw.indexOf('}', open);
+            String open = isData ? DataText.OPEN : isNbt ? NBT_OPEN : ITEM_OPEN;
+            int begin = start + open.length();
+            int end = DataText.close(raw, start, open);
             if (end < 0) { break; }
-            String body = raw.substring(open, end);
-            if (isData ? DataText.name(body).isEmpty() : end == open) {
+            String body = raw.substring(begin, end);
+            if (isData ? DataText.name(body).isEmpty() : end == begin) {
                 ContentLog.LOGGER.error("A tooltip line in {} has an empty {} {}, keeping it as text", file, isData ? "data" : isNbt ? NBT : ITEM, isData ? "name" : "path");
                 from = end + 1;
                 continue;

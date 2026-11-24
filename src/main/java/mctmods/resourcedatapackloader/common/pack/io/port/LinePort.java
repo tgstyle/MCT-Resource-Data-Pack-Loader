@@ -16,11 +16,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public final class LinePort {
     private static final String[][] FOLDERS = {{"worldgen/feature/", "worldgen/configured_feature/"}, {"worldgen/carver/", "worldgen/configured_carver/"}, {"tags/worldgen/feature/", "tags/worldgen/configured_feature/"}, {"tags/worldgen/carver/", "tags/worldgen/configured_carver/"}, {"recipe/brewing/", "brewing/"}};
     private static final List<String> LOOT = List.of("loot_table/", "loot_modifiers/", "villager_trade/");
-    private static final List<String> NUMBERS = List.of("loot_table/", "loot_modifiers/", "villager_trade/", "trade_set/", "predicate/", "item_modifier/", "advancement/", "enchantment/");
+    private static final List<String> NUMBERS = Stream.concat(LOOT.stream(), Stream.of("trade_set/", "predicate/", "item_modifier/", "advancement/", "enchantment/")).toList();
     private static final String POTION_CONTENTS = "potion_contents";
     private static final String ITEM = "item";
 

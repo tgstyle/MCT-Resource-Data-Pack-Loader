@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.client.util.ContentPixelImages;
 import mctmods.resourcedatapackloader.client.util.ContentResourceText;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -60,20 +62,24 @@ public final class CompressedBase {
 
     private static int[][] opaque(int[][] image) {
         int[] pixels = image[1];
+        int fill = halfAverage(pixels);
+        for (int index = 0; index < pixels.length; index++) { pixels[index] = (pixels[index] >>> 24 == 0 ? fill : pixels[index] & 0xFFFFFF) | 0xFF000000; }
+        return image;
+    }
+
+    private static int halfAverage(int[] pixels) {
         long red = 0;
         long green = 0;
         long blue = 0;
         long count = 0;
         for (int pixel : pixels) {
             if (pixel >>> 24 == 0) { continue; }
-            red += pixel >> 16 & 0xFF;
-            green += pixel >> 8 & 0xFF;
-            blue += pixel & 0xFF;
+            red += Colors.red(pixel);
+            green += Colors.green(pixel);
+            blue += Colors.blue(pixel);
             count++;
         }
-        int fill = count == 0 ? 0 : (int) (red / count / 2) << 16 | (int) (green / count / 2) << 8 | (int) (blue / count / 2);
-        for (int index = 0; index < pixels.length; index++) { pixels[index] = (pixels[index] >>> 24 == 0 ? fill : pixels[index] & 0xFFFFFF) | 0xFF000000; }
-        return image;
+        return count == 0 ? 0 : (int) (red / count / 2) << 16 | (int) (green / count / 2) << 8 | (int) (blue / count / 2);
     }
 
     @Nullable private static ResourceLocation itemTexture(CompressedSet set) {
@@ -142,8 +148,7 @@ public final class CompressedBase {
     }
 
     private static void merge(Map<String, String> textures, JsonObject json) {
-        if (!json.has("textures") || !json.get("textures").isJsonObject()) { return; }
-        for (Map.Entry<String, JsonElement> one : json.getAsJsonObject("textures").entrySet()) {
+        for (Map.Entry<String, JsonElement> one : Json.object(json, "textures").entrySet()) {
             if (one.getValue().isJsonPrimitive()) { textures.putIfAbsent(one.getKey(), one.getValue().getAsString()); }
         }
     }

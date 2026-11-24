@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
+import mctmods.resourcedatapackloader.core.util.math.Rgb;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.List;
@@ -127,7 +128,7 @@ public final class HeartsHud {
         int rgb = palette[Math.min(layer - 1, palette.length - 1)];
         ResourceLocation texture = hardcore ? half ? HARDCORE_HALF : HARDCORE_FULL : half ? HALF : FULL;
         RenderSystem.enableBlend();
-        graphics.setColor((rgb >> 16 & 0xFF) / 255.0F, (rgb >> 8 & 0xFF) / 255.0F, (rgb & 0xFF) / 255.0F, 1.0F);
+        graphics.setColor(Rgb.red(rgb), Rgb.green(rgb), Rgb.blue(rgb), 1.0F);
         graphics.blit(texture, x, y, 0, 0.0F, 0.0F, SIZE, SIZE, SIZE, SIZE);
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();

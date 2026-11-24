@@ -39,6 +39,8 @@ public final class ContentCityStructureLamps {
 
     private ContentCityStructureLamps() {}
 
+    private static int nextGap(RandomSource roll) { return LAMP_LEAST + roll.nextInt(LAMP_SPREAD); }
+
     private static boolean lampless(@Nullable Object template) { return template == null && ContentCity.lampBlock().isEmpty(); }
 
     @Nullable private static ResourceLocation lampTemplate(GenerationContext context) {
@@ -62,7 +64,7 @@ public final class ContentCityStructureLamps {
         RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ (line.at() * SeededRandom.ACROSS + (line.alongX() ? 1L : 2L)));
         List<Integer> along = new ArrayList<>();
         along.add(from);
-        for (int step = from + LAMP_LEAST + roll.nextInt(LAMP_SPREAD); step < to - 1; step += LAMP_LEAST + roll.nextInt(LAMP_SPREAD)) { along.add(step); }
+        for (int step = from + nextGap(roll); step < to - 1; step += nextGap(roll)) { along.add(step); }
         along.add(to);
         for (CityPlan.Line other : plan.crossing(line)) {
             if (!other.covers(line.middle()) || other.last() < from || other.at() > to) { continue; }
@@ -138,7 +140,7 @@ public final class ContentCityStructureLamps {
         int spots = Math.max(1, (int) Math.round(2.0D * Math.PI * ring));
         RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ ((long) court.centerX() << 32 ^ court.centerZ()));
         int raised = 0;
-        for (int step = 0; step + LAMP_SHORTEST < spots; step += LAMP_LEAST + roll.nextInt(LAMP_SPREAD)) {
+        for (int step = 0; step + LAMP_SHORTEST < spots; step += nextGap(roll)) {
             double angle = 2.0D * Math.PI * step / spots;
             int x = Integer.MIN_VALUE;
             int z = Integer.MIN_VALUE;

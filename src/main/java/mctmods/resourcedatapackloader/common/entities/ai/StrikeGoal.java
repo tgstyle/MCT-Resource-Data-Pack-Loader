@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,6 +21,8 @@ public final class StrikeGoal extends MeleeAttackGoal {
         mob.swing(InteractionHand.MAIN_HAND);
         hit(mob, target);
     }
+
+    public static void knockAlongYaw(Mob mob, LivingEntity target, double power) { target.knockback(power, Mth.sin(mob.getYRot() * Mth.DEG_TO_RAD), -Mth.cos(mob.getYRot() * Mth.DEG_TO_RAD)); }
 
     public static void hit(Mob mob, LivingEntity target) {
         if (mob.getAttribute(Attributes.ATTACK_DAMAGE) == null) {

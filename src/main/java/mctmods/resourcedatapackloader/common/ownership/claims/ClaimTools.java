@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
+
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -91,33 +92,30 @@ public final class ClaimTools {
         ClaimIndex index = ClaimIndex.obtain(level);
         if (denied != null || index == null) { return ClaimActions.Result.no(denied == null ? ClaimRules.DIMENSION : denied); }
         List<ChunkPos> open = new ArrayList<>();
-        int taken = 0;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                int owner = index.ownerAt(chunkX + dx, chunkZ + dz);
-                if (owner == 0 && index.pendingAt(chunkX + dx, chunkZ + dz) == null) { open.add(new ChunkPos(chunkX + dx, chunkZ + dz)); }
-                else if (owner != handle && ClaimSettings.blockOverlap() == ClaimSettings.Overlap.REFUSE) { return ClaimActions.Result.no(BLOCK_OVERLAP); }
-                else { taken++; }
+        boolean clear = ChunkSpan.forEachWithin(chunkX, chunkZ, radius, (x, z) -> {
+            int owner = index.ownerAt(x, z);
+            if (owner == 0 && index.pendingAt(x, z) == null) {
+                open.add(new ChunkPos(x, z));
+                return true;
             }
-        }
-        open.sort(Comparator.comparingInt(chunk -> Math.max(Math.abs(chunk.x - chunkX), Math.abs(chunk.z - chunkZ))));
+            return owner == handle || ClaimSettings.blockOverlap() != ClaimSettings.Overlap.REFUSE;
+        });
+        if (!clear) { return ClaimActions.Result.no(BLOCK_OVERLAP); }
+        int taken = (radius * 2 + 1) * (radius * 2 + 1) - open.size();
         int anchor = index.addAnchor(handle, pos.getX(), pos.getY(), pos.getZ(), radius);
-        int claimed = ClaimActions.claimOpen(level, index, open, handle, anchor);
+        int claimed = ClaimActions.claimOpen(level, index, open, handle, anchor, chunkX, chunkZ);
         if (claimed == 0) {
             index.removeAnchor(anchor);
             return ClaimActions.Result.no(ClaimRules.TAKEN);
         }
         MinecraftServer server = level.getServer();
-        String owner = ClaimOwners.labelOf(server, handle);
-        int used = index.claimCountOf(handle);
-        int limit = ClaimRules.limitFor(server, handle);
-        if (radius == 0) { return ClaimActions.Result.yes(ClaimActions.DONE, chunkX, chunkZ, owner, used, limit); }
-        return ClaimActions.Result.yes(ClaimActions.RADIUS_DONE, claimed, owner, taken, open.size(), used, limit);
+        if (radius == 0) { return ClaimActions.done(server, chunkX, chunkZ, handle, index); }
+        return ClaimActions.radiusDone(server, claimed, handle, taken, open.size(), index);
     }
 
     @Nullable private static ClaimIndex.Anchor anchorAt(ClaimIndex index, BlockPos pos) {
         for (ClaimIndex.Anchor anchor : index.anchorList()) {
-            if (anchor.x == pos.getX() && anchor.y == pos.getY() && anchor.z == pos.getZ()) { return anchor; }
+            if (pos.equals(anchor.pos())) { return anchor; }
         }
         return null;
     }

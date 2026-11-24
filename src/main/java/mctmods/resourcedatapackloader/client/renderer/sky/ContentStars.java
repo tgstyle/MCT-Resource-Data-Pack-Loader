@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -86,7 +87,7 @@ public final class ContentStars {
             VertexBuffer buffer = meshes[group];
             VertexBuffer sweptBuffer = swept == null ? null : swept[group];
             if (buffer == null && sweptBuffer == null) { continue; }
-            float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
+            float shown = brightness * (1.0F - twinkle * MathUtil.wave(time * SPEED[group] + group * PHASE, 0.5F, 0.5F));
             RenderSystem.setShaderColor(red * shown, green * shown, blue * shown, shown);
             if (buffer != null) {
                 buffer.bind();

@@ -37,6 +37,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 public final class RecipeTransfer {
+    private static final String KIND = "Recipe transfer";
     private static final String ENCHANTMENTS = "enchantments";
     private static final String NAME = "name";
     private static final String DAMAGE = "damage";
@@ -93,24 +94,16 @@ public final class RecipeTransfer {
     private static void read(ResourceLocation key, JsonObject json) {
         if (!json.has("transfer")) { return; }
         if (!json.has("swaps")) { Json.unknownKeys(json, "the top level", SwapEntry.FILE_KEYS); }
-        if (!json.has("recipes") || !json.get("recipes").isJsonObject()) {
-            ContentLog.LOGGER.error("Recipe transfer file {} needs a recipes object saying which recipes it covers, ignoring it", key);
-            return;
-        }
+        if (RecipeSelector.lacksRecipes(KIND, key, json)) { return; }
         if (json.get("transfer").isJsonObject()) { Json.unknownKeys(json.getAsJsonObject("transfer"), "transfer", TRANSFER_KEYS); }
         Transfer transfer = json.get("transfer").isJsonObject() ? transfer(key, json.getAsJsonObject("transfer")) : null;
         if (transfer == null) {
             ContentLog.LOGGER.error("The transfer in {} needs a from, a source and a take list of enchantments, name, damage or nbt, ignoring it", key);
             return;
         }
-        RecipeSelector scope = new RecipeSelector();
         Json.unknownKeys(json.getAsJsonObject("recipes"), "recipes", RecipeSelector.KEYS);
-        scope.read(key, json.getAsJsonObject("recipes"));
-        if (scope.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe transfer file {} selects no recipes, ignoring it", key);
-            return;
-        }
-        ENTRIES.add(new Entry(scope, transfer));
+        RecipeSelector scope = RecipeSelector.scopeOf(KIND, key, json.getAsJsonObject("recipes"));
+        if (scope != null) { ENTRIES.add(new Entry(scope, transfer)); }
     }
 
     @Nullable private static Transfer transfer(ResourceLocation key, JsonObject json) {

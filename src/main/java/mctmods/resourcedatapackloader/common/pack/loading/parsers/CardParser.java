@@ -51,10 +51,11 @@ public final class CardParser {
         rule.item = Json.getString(json, "item", "").trim();
         rule.entity = Json.getString(json, "entity", "").trim();
         rule.count = Math.max(1, Json.getInt(json, "count", 1));
-        rule.below = json.has("below") ? Json.getInt(json, "below") : null;
-        rule.above = json.has("above") ? Json.getInt(json, "above") : null;
+        rule.below = Json.intOrNull(json, "below");
+        rule.above = Json.intOrNull(json, "above");
         rule.time = Math.floorMod(Json.getInt(json, "time", 0), Level.TICKS_PER_DAY);
-        rule.day = json.has("day") ? Math.max(0L, Json.getInt(json, "day")) : -1L;
+        Integer day = Json.intOrNull(json, "day");
+        rule.day = day == null ? -1L : Math.max(0L, day);
         rule.minutes = Math.max(0, Json.getInt(json, "minutes", 0));
         rule.objective = Json.getString(json, "objective", "").trim();
         rule.score = Json.getInt(json, "score", 1);
@@ -67,16 +68,16 @@ public final class CardParser {
         rule.rank = ContentRanks.key(id.getNamespace(), Json.getString(json, "rank", "").trim());
         rule.network = Json.getString(json, "network", "").trim();
         rule.reason = Json.getString(json, "reason", "").trim();
-        rule.level = json.has("level") ? Json.getInt(json, "level") : null;
-        rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
-        rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
+        rule.level = Json.intOrNull(json, "level");
+        rule.atLeast = Json.intOrNull(json, "atLeast");
+        rule.atMost = Json.intOrNull(json, "atMost");
         if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when"), id, "Card rule"); }
-        rule.title = json.has("title") ? Json.getString(json, "title") : null;
+        rule.title = Json.stringOrNull(json, "title");
         rule.lines = json.has("lines") ? lines(key, json) : null;
         rule.icon = optional(json, "icon");
         rule.color = optional(json, "color");
         rule.image = optional(json, "image");
-        rule.background = json.has("background") ? Json.getBoolean(json, "background") : null;
+        rule.background = Json.flagOrNull(json, "background");
         rule.font = optional(json, "font");
         String owner = "Card rule " + key;
         rule.style = Json.choice(json, "style", null, owner, CardLook.STYLES);
@@ -85,7 +86,7 @@ public final class CardParser {
         rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
         rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
         rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
-        rule.runs = Json.getString(json, "runs", "").trim();
+        rule.runs = Json.getString(json, Json.RUNS, "").trim();
         rule.sets = DataSets.parse(json, "Card rule", key, id);
         if (CardRule.WORN.equals(rule.trigger)) { meter(rule, json); }
         rule.requires = Json.strings(json, "requires");
@@ -131,7 +132,10 @@ public final class CardParser {
         return Collections.unmodifiableList(lines);
     }
 
-    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }
+    @Nullable private static String optional(JsonObject json, String member) {
+        String value = Json.stringOrNull(json, member);
+        return value == null ? null : value.trim();
+    }
 
     private static boolean missing(CardRule rule) {
         String needs = needs(rule);

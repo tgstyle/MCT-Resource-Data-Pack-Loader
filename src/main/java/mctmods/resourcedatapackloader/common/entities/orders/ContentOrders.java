@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVar
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
 import mctmods.resourcedatapackloader.common.util.world.TileScan;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -137,9 +138,9 @@ public final class ContentOrders {
             for (JsonElement radius : Json.getJsonArray(json, "areaByTier")) { byTier.add(Math.max(1, radius.getAsInt())); }
         }
         TagKey<Item> items = tag == null ? null : TagKey.create(Registries.ITEM, tag);
-        return new OrderDef(name, job, items, Math.max(1, Json.getInt(json, "area", 16)), List.copyOf(byTier), "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
-                Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
-                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim(),
+        return new OrderDef(name, job, items, Json.atLeast(json, "area", 16, 1), List.copyOf(byTier), "self".equalsIgnoreCase(deliver), Json.atLeast(json, "limit", 64, 1),
+                Json.atLeast(json, "standing", 0, 0), Json.atLeast(json, "workers", 1, 1), Json.getInt(json, "priority", 0), takers,
+                Json.getString(json, "sign", "").trim(), Json.atLeast(json, "speed", 1.0F, 0.01F), Json.getString(json, "tool", "").trim(),
                 Json.getString(json, "wins", "").trim(), Json.getInt(json, "points", 0), Json.getString(json, "loot", "").trim());
     }
 
@@ -148,16 +149,21 @@ public final class ContentOrders {
     static int spawnCap() { return spawnCap; }
 
     static boolean grouped(String taker) {
-        String lower = taker.toLowerCase(Locale.ROOT);
-        return lower.startsWith(TEAM) || lower.startsWith(TAG);
+        return prefixed(taker, TEAM) || prefixed(taker, TAG);
     }
+
+    private static boolean prefixed(String taker, String prefix) { return taker.toLowerCase(Locale.ROOT).startsWith(prefix); }
+
+    private static boolean takesVariant(String taker, EntityVariantDef variant) { return taker.equalsIgnoreCase(variant.key().toString()); }
+
+    static boolean onTeam(@Nullable Team side, String name) { return side != null && side.getName().equals(name); }
 
     public static boolean wants(EntityVariantDef variant) {
         if (DEFS.isEmpty()) { return false; }
         if (anyGrouped) { return true; }
         for (OrderDef def : DEFS.values()) {
             for (String taker : def.takers()) {
-                if (taker.equalsIgnoreCase(variant.key().toString())) { return true; }
+                if (takesVariant(taker, variant)) { return true; }
             }
         }
         return false;
@@ -167,18 +173,17 @@ public final class ContentOrders {
         EntityVariantDef variant = ContentEntities.def(mob);
         Team side = mob.getTeam();
         for (String taker : def.takers()) {
-            String lower = taker.toLowerCase(Locale.ROOT);
-            if (lower.startsWith(TEAM)) {
+            if (prefixed(taker, TEAM)) {
                 if (side != null && side.getName().equalsIgnoreCase(taker.substring(TEAM.length()))) { return true; }
                 continue;
             }
-            if (lower.startsWith(TAG)) {
+            if (prefixed(taker, TAG)) {
                 for (String tag : mob.getTags()) {
                     if (tag.equalsIgnoreCase(taker.substring(TAG.length()))) { return true; }
                 }
                 continue;
             }
-            if (variant != null && taker.equalsIgnoreCase(variant.key().toString())) { return true; }
+            if (variant != null && takesVariant(taker, variant)) { return true; }
         }
         return false;
     }
@@ -186,7 +191,7 @@ public final class ContentOrders {
     static boolean serves(Mob mob, WorkOrder order) {
         if (!takes(order.def, mob)) { return false; }
         Team side = mob.getTeam();
-        if (!order.team.isEmpty()) { return side != null && side.getName().equals(order.team); }
+        if (!order.team.isEmpty()) { return onTeam(side, order.team); }
         UUID boss = boss(mob);
         if (boss != null) { return boss.equals(order.owner); }
         return side == null;
@@ -195,8 +200,7 @@ public final class ContentOrders {
     @Nullable static UUID boss(Mob mob) {
         String kept = mob.getPersistentData().getString(BOSS);
         if (kept.isEmpty()) { return null; }
-        try { return UUID.fromString(kept); }
-        catch (IllegalArgumentException ex) { return null; }
+        return Nbts.uuid(kept);
     }
 
     static void bind(Mob mob, UUID player) {
@@ -221,7 +225,7 @@ public final class ContentOrders {
         BlockPos pos = event.getPos();
         Block placed = event.getPlacedBlock().getBlock();
         if (placed instanceof StandingSignBlock || placed instanceof WallSignBlock) {
-            PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(player.getUUID(), level.getGameTime() + SIGN_WAIT));
+            pend(level, pos, player.getUUID());
             return;
         }
         BlockEntity tile = level.getBlockEntity(pos);
@@ -288,7 +292,11 @@ public final class ContentOrders {
 
     public static void plotSign(ServerLevel level, BlockPos pos) {
         if (DEFS.isEmpty()) { return; }
-        PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(null, level.getGameTime() + SIGN_WAIT));
+        pend(level, pos, null);
+    }
+
+    private static void pend(ServerLevel level, BlockPos pos, @Nullable UUID owner) {
+        PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(owner, level.getGameTime() + SIGN_WAIT));
     }
 
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -364,7 +372,7 @@ public final class ContentOrders {
         if (def == null) { return false; }
         Team side = mob.getTeam();
         PlayerTeam theirs = teamOf(player);
-        if (side != null && (theirs == null || !side.getName().equals(theirs.getName()))) { return false; }
+        if (side != null && (theirs == null || !onTeam(side, theirs.getName()))) { return false; }
         UUID boss = boss(mob);
         if (side == null && boss != null && !boss.equals(player.getUUID())) { return false; }
         BlockPos chest = nearestChest(level, mob.blockPosition(), def.widest());

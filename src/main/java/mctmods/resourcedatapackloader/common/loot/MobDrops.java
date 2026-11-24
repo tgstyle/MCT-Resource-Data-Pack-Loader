@@ -43,10 +43,9 @@ public final class MobDrops {
 
     private static synchronized void ensure() {
         if (!GENERATION.stale()) { return; }
-        DEFS.clear();
-        if (Config.data.mobDropsOff()) { return; }
-        Json.eachObject(PackManager.MOB_DROPS, "mob drops file", MobDrops::read);
-        if (!DEFS.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        GENERATION.load(!Config.data.mobDropsOff(), DEFS::clear, PackManager.MOB_DROPS, "mob drops file", MobDrops::read, () -> {
+            if (!DEFS.isEmpty()) { Summary.info("loot.mobdrops", "Loaded " + DEFS.size() + " mob drop file(s)"); }
+        });
     }
 
     private static void read(ResourceLocation key, JsonObject json) {

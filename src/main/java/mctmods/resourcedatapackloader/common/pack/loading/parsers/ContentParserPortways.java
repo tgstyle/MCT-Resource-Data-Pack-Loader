@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 
 final class ContentParserPortways {
     private static final String[] BUTTONS = {"previous", "sort", "page", "next", "scope"};
@@ -35,22 +34,22 @@ final class ContentParserPortways {
     private ContentParserPortways() {}
 
     @Nullable static PortwayDef portway(ResourceLocation key, JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "portway")) { return null; }
-        JsonObject held = Json.getJsonObject(json, "portway");
+        JsonObject held = Json.objectOrNull(json, "portway");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "portway", PORTWAY_KEYS);
         return settings(key, held, false);
     }
 
     @Nullable static PortwayItemDef item(ResourceLocation key, JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "portway")) { return null; }
-        JsonObject held = Json.getJsonObject(json, "portway");
+        JsonObject held = Json.objectOrNull(json, "portway");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "portway", ITEM_KEYS);
         return new PortwayItemDef(settings(key, held, true), Json.getBoolean(held, "consume", false), Json.getBoolean(held, "bind", false));
     }
 
     private static boolean toggleAsked(JsonObject held) {
         JsonElement element = held.get("global");
-        return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() && "toggle".equalsIgnoreCase(element.getAsString().trim());
+        return element != null && Json.isString(element) && "toggle".equalsIgnoreCase(element.getAsString().trim());
     }
 
     private static PortwayDef settings(ResourceLocation key, JsonObject held, boolean item) {
@@ -153,8 +152,8 @@ final class ContentParserPortways {
             ContentLog.LOGGER.error("Portway {} asks for the item '{}', which is not an item id, so it costs no item", key, itemId);
             itemId = "";
         }
-        return new CostDef(part(xp), Json.getBoolean(xp, "points", false), itemId, part(item), part(health), part(hunger), Math.max(0, Json.getInt(cost, "cooldown", 0)));
+        return new CostDef(part(xp), Json.getBoolean(xp, "points", false), itemId, part(item), part(health), part(hunger), Json.atLeast(cost, "cooldown", 0, 0));
     }
 
-    private static CostPart part(JsonObject part) { return new CostPart(Math.max(0, Json.getInt(part, "amount", 0)), Math.max(0, Json.getInt(part, "perBlocks", 0)), Math.max(0, Json.getInt(part, "dimension", 0)), Math.max(0, Json.getInt(part, "max", 0))); }
+    private static CostPart part(JsonObject part) { return new CostPart(Json.atLeast(part, "amount", 0, 0), Json.atLeast(part, "perBlocks", 0, 0), Json.atLeast(part, "dimension", 0, 0), Json.atLeast(part, "max", 0, 0)); }
 }

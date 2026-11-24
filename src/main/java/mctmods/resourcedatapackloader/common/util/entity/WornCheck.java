@@ -1,12 +1,10 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
-import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
-import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -46,10 +44,9 @@ public final class WornCheck {
 
     public ItemStack found(Player player) {
         if (wanted.isEmpty()) { return ItemStack.EMPTY; }
-        for (ItemStack stack : player.getInventory().armor) {
+        for (ItemStack stack : Worn.worn(player)) {
             if (ContentStacks.matches(stack, wanted)) { return stack; }
         }
-        List<ItemStack> curios = ContentCurios.worn(player, stack -> ContentStacks.matches(stack, wanted));
-        return curios.isEmpty() ? ItemStack.EMPTY : curios.getFirst();
+        return ItemStack.EMPTY;
     }
 }

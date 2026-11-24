@@ -92,6 +92,12 @@ public final class Says {
         return all;
     }
 
+    public static String fill(String template, String... pairs) {
+        String filled = template;
+        for (int i = 0; i + 1 < pairs.length; i += 2) { filled = filled.replace(pairs[i], pairs[i + 1]); }
+        return filled;
+    }
+
     public static void tellAll(MinecraftServer server, ChatFormatting color, String said) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, color, said); } }
 
     public static void tellAll(MinecraftServer server, String rule, ChatFormatting color, String said) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, rule, color, said); } }

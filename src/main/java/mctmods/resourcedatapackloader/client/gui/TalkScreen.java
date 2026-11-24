@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.client.util.Crisp;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.network.TalkMessage;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -35,7 +36,6 @@ public final class TalkScreen extends Screen {
     private static final double REACH = 8.0D;
     private static final int HOVER = 0x40FFFFFF;
     private static final int HOVER_TEXT = 0xFFFF55;
-    private static final int TEXT = 0xFFFFFF;
     private static final int BUTTON = 12;
     private static final int MIN_BAR = 40;
     private static final int MIN_THUMB = 8;
@@ -212,7 +212,7 @@ public final class TalkScreen extends Screen {
             ResourceLocation image = ContentParser.location(talk.image());
             if (image != null) { graphics.blit(image, left, top, 0, 0.0F, 0.0F, panelWidth, panelHeight, panelWidth, panelHeight); }
         }
-        if (talk.panel()) { graphics.fill(left, top, left + STRIPE, top + panelHeight, CardOverlay.withAlpha(TEXT, 1.0F)); }
+        if (talk.panel()) { graphics.fill(left, top, left + STRIPE, top + panelHeight, Colors.withAlpha(Colors.WHITE_TEXT, 1.0F)); }
         int x = left + STRIPE + PAD;
         if (!talk.icon().isEmpty()) {
             graphics.renderItem(talk.icon(), x, top + PAD);
@@ -223,16 +223,16 @@ public final class TalkScreen extends Screen {
         graphics.enableScissor(Crisp.real(left), Crisp.real(top + PAD), Crisp.real(rightEdge()), Crisp.real(top + panelHeight - PAD));
         int y = contentTop();
         for (FormattedCharSequence line : title) {
-            graphics.drawString(font, line, x + titleShift(), y, CardOverlay.withAlpha(pick(talk.titleColor(), TEXT), 1.0F), true);
+            graphics.drawString(font, line, x + titleShift(), y, Colors.withAlpha(pick(talk.titleColor(), Colors.WHITE_TEXT), 1.0F), true);
             y += CardOverlay.LINE;
         }
         y = contentTop() + headerHeight();
         for (FormattedCharSequence line : lines) {
-            graphics.drawString(font, line, x, y, CardOverlay.withAlpha(pick(talk.textColor(), CardOverlay.LINE_COLOR), 1.0F), true);
+            graphics.drawString(font, line, x, y, Colors.withAlpha(pick(talk.textColor(), CardOverlay.LINE_COLOR), 1.0F), true);
             y += CardOverlay.LINE;
         }
         for (FormattedCharSequence line : pickedLines) {
-            graphics.drawString(font, line, x, y, CardOverlay.withAlpha(pick(talk.replyColor(), TEXT), 1.0F), true);
+            graphics.drawString(font, line, x, y, Colors.withAlpha(pick(talk.replyColor(), Colors.WHITE_TEXT), 1.0F), true);
             y += CardOverlay.LINE;
         }
         drawReplies(graphics, x, fitX, fitY);
@@ -256,7 +256,7 @@ public final class TalkScreen extends Screen {
             if (i == hovered) { graphics.fill(left + STRIPE, y, rightEdge(), y + rowHeight, band); }
             int lineY = y + ROW_PAD;
             for (FormattedCharSequence line : row) {
-                graphics.drawString(font, line, x, lineY, CardOverlay.withAlpha(i == hovered ? pick(talk.hoverColor(), HOVER_TEXT) : pick(talk.replyColor(), TEXT), 1.0F), true);
+                graphics.drawString(font, line, x, lineY, Colors.withAlpha(i == hovered ? pick(talk.hoverColor(), HOVER_TEXT) : pick(talk.replyColor(), Colors.WHITE_TEXT), 1.0F), true);
                 lineY += CardOverlay.LINE;
             }
             y += rowHeight;
@@ -319,9 +319,9 @@ public final class TalkScreen extends Screen {
             boolean enabled = buttonEnabled(button);
             int x = buttonLeft(button);
             int y = buttonTop(button);
-            if (talk.panel()) { graphics.fill(x, y, x + BUTTON, y + BUTTON, CardOverlay.withAlpha(talk.background(), 1.0F)); }
+            if (talk.panel()) { graphics.fill(x, y, x + BUTTON, y + BUTTON, Colors.withAlpha(talk.background(), 1.0F)); }
             graphics.fill(x, y, x + BUTTON, y + BUTTON, enabled && button == hovered ? band() : 0x30FFFFFF);
-            int color = CardOverlay.withAlpha(pick(talk.replyColor(), TEXT), enabled ? 1.0F : 0.4F);
+            int color = Colors.withAlpha(pick(talk.replyColor(), Colors.WHITE_TEXT), enabled ? 1.0F : 0.4F);
             if (button <= NEXT) {
                 Component label = MarkText.text(CardFont.of(talk.font()), button == PREV ? "<" : ">");
                 graphics.drawString(font, label, x + (BUTTON - font.width(label)) / 2, y + 2, color, true);

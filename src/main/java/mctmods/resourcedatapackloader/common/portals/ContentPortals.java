@@ -172,7 +172,7 @@ public final class ContentPortals {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
             if (binding.igniter() == null || held.getItem() != binding.igniter()) { continue; }
-            if (level.dimension().location().equals(binding.name()) && binding.portal().noLightBack()) { continue; }
+            if (binding.blockedIn(level)) { continue; }
             for (PortalFrameDef frame : binding.itemFrames()) {
                 for (BlockPos candidate : candidates(level, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(level, candidate, frame);
@@ -190,7 +190,7 @@ public final class ContentPortals {
         Fluid fluid = FluidTouch.sourceOf(state.getFluidState());
         if (fluid == null || !litFluids.contains(fluid) || !besideFrame(level, at)) { return; }
         for (Binding binding : bindings()) {
-            if (binding.fluid() != fluid || (level.dimension().location().equals(binding.name()) && binding.portal().noLightBack())) { continue; }
+            if (binding.fluid() != fluid || binding.blockedIn(level)) { continue; }
             for (PortalFrameDef frame : binding.fluidFrames()) {
                 PortalFit fit = ContentPortalFrames.fit(level, at, frame, null, fluid);
                 if (fit == null) { continue; }
@@ -277,5 +277,7 @@ public final class ContentPortals {
 
     public record Lighting(Binding binding, PortalFit fit, BlockPos at) {}
 
-    public record Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, @Nullable Item igniter, @Nullable Fluid fluid, List<PortalFrameDef> frames, List<PortalFrameDef> itemFrames, List<PortalFrameDef> fluidFrames, ContentPortalBlock block) {}
+    public record Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, @Nullable Item igniter, @Nullable Fluid fluid, List<PortalFrameDef> frames, List<PortalFrameDef> itemFrames, List<PortalFrameDef> fluidFrames, ContentPortalBlock block) {
+        private boolean blockedIn(Level level) { return level.dimension().location().equals(name) && portal.noLightBack(); }
+    }
 }

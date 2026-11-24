@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -28,6 +30,8 @@ public final class MobStats {
 
     private MobStats() {}
 
+    public static float health(LivingEntity living) { return living.getHealth() / living.getMaxHealth(); }
+
     @Nullable public static List<String> entities(String owner, String label, JsonElement element) {
         if (!element.isJsonArray()) {
             ContentLog.LOGGER.error("{} gives {} that is not a list of entity ids and kinds, ignoring it", owner, label);
@@ -35,7 +39,7 @@ public final class MobStats {
         }
         List<String> listed = new ArrayList<>();
         for (JsonElement item : element.getAsJsonArray()) {
-            if (!item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()) {
+            if (!Json.isString(item)) {
                 ContentLog.LOGGER.error("{} gives a {} entry that is not text, ignoring it", owner, label);
                 continue;
             }

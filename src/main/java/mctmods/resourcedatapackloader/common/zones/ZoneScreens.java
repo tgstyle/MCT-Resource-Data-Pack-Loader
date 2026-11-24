@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.zones;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.zones.ZoneDef;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,12 +14,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 public final class ZoneScreens {
-    private static final Map<UUID, Click> CLICKED = new HashMap<>();
+    private static final Map<UUID, Click> CLICKED = PlayerLogout.track(new HashMap<>());
 
     private ZoneScreens() {}
 
@@ -50,8 +50,6 @@ public final class ZoneScreens {
         player.closeContainer();
         ZoneGuard.tell(player, zone);
     }
-
-    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { CLICKED.remove(event.getEntity().getUUID()); }
 
     private static final class Click {
         private long time;

@@ -30,6 +30,8 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 public final class DungeonEntrance {
+    private static final int PLACE_SALT = 5;
+    private static final int TOP_SALT = 6;
     private static final int CLEAR_ABOVE = 2;
     private static final int DOOR_HEIGHT = 2;
     private static final int MIN_SIDE = 6;
@@ -52,7 +54,7 @@ public final class DungeonEntrance {
         }
         List<Entrance> extras = new ArrayList<>();
         Random random = SeedStreams.random(siteSeed, "entranceExtra", 0);
-        if (random.nextInt(100) < DungeonDef.Degree.CHANCES[degree]) {
+        if (DungeonDef.Degree.chance(random, DungeonDef.Degree.CHANCES[degree])) {
             List<Room> open = new ArrayList<>();
             for (Room room : rooms) {
                 if (plain(room) && Math.max(Math.abs((room.x0 + room.x1) / 2 - anchorX), Math.abs((room.z0 + room.z1) / 2 - anchorZ)) > TEMPLATE_SIDE) { open.add(room); }
@@ -148,7 +150,7 @@ public final class DungeonEntrance {
     }
 
     private static Top top(WorldGenLevel level, DungeonPlan plan, Entrance entrance) {
-        Random random = new Random(Hashes.mix(plan.site.siteSeed(), entrance.x(), 5, entrance.z()));
+        Random random = new Random(Hashes.mix(plan.site.siteSeed(), entrance.x(), PLACE_SALT, entrance.z()));
         StructureTemplate template = DungeonTemplates.load(level, entrance.toproomTemplate());
         if (template != null) {
             Rotation rotation = Rotation.values()[random.nextInt(Rotation.values().length)];
@@ -180,12 +182,12 @@ public final class DungeonEntrance {
             }
         }
         StructureTemplate template = top.template;
-        if (template != null && top.x1 >= box.minX() && top.x0 <= box.maxX() && top.z1 >= box.minZ() && top.z0 <= box.maxZ()) { place(level, plan, box, top, template); }
+        if (template != null && box.intersects(top.x0, top.z0, top.x1, top.z1)) { place(level, plan, box, top, template); }
     }
 
     private static void place(WorldGenLevel level, DungeonPlan plan, BoundingBox box, Top top, StructureTemplate template) {
         BlockPos at = new BlockPos(top.x0 + ContentImprint.backX(top.rotation, top.span), plan.site.surfaceY(), top.z0 + ContentImprint.backZ(top.rotation, top.span));
-        DungeonTemplates.place(level, template, at, top.rotation, box, TemplateFilters.nothing(), Hashes.mix(plan.site.siteSeed(), top.x0, 6, top.z0));
+        DungeonTemplates.place(level, template, at, top.rotation, box, TemplateFilters.nothing(), Hashes.mix(plan.site.siteSeed(), top.x0, TOP_SALT, top.z0));
     }
 
     @Nullable private static BlockState hall(Top top, DungeonShapes.Palette.Kit kit, int x, int z, int dy) {

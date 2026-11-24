@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -65,8 +66,7 @@ public final class PortalStorage extends SavedData {
     @Nullable public static UUID owner(ServerLevel level, BlockPos pos) {
         String stored = get(level).positions.get(pos.asLong());
         if (stored == null || stored.isEmpty()) { return null; }
-        try { return UUID.fromString(stored); }
-        catch (IllegalArgumentException broken) { return null; }
+        return Nbts.uuid(stored);
     }
 
     public static void remove(ServerLevel level, BlockPos pos) {

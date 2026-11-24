@@ -97,7 +97,7 @@ public final class ModPacks {
         return settings;
     }
 
-    private static Path controlFile(Path packRoot) { return packRoot.resolve(PackManager.CONFIG).resolve(CONTROL_FILE); }
+    private static Path controlFile(Path packRoot) { return PackManager.config(packRoot, CONTROL_FILE); }
 
     private static JsonObject readControl(Path packRoot) {
         Path file = controlFile(packRoot);

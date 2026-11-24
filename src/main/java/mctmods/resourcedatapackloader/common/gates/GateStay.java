@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.gates;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
+import mctmods.resourcedatapackloader.common.util.Nbts;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
@@ -18,7 +19,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,7 +34,7 @@ public final class GateStay {
     private static final String SECTION = "rdplGateStay";
     private static final String USED = "used";
     private static final String DAY_KEY = "day";
-    private static final int STEP = 20;
+    private static final int TICKS_PER_SECOND = 20;
     private static final int TICKS_PER_MINUTE = 1200;
     private static final int SECONDS_PER_MINUTE = 60;
 
@@ -58,10 +58,7 @@ public final class GateStay {
 
     public static GateStay parse(JsonObject json, ResourceLocation key, @Nullable ResourceLocation dimension) {
         if (!json.has("stayMinutes")) { return NONE; }
-        if (dimension == null) {
-            ContentLog.LOGGER.error("Gate {} sets stayMinutes without dimension, so it has no time budget", key);
-            return NONE;
-        }
+        if (GateDef.dimensionMissing(dimension, key, "stayMinutes", "it has no time budget")) { return NONE; }
         int minutes = Json.getInt(json, "stayMinutes", 0);
         if (minutes <= 0) {
             ContentLog.LOGGER.error("Gate {} sets stayMinutes {}, which is not above 0, so it has no time budget", key, minutes);
@@ -94,21 +91,21 @@ public final class GateStay {
         return entry.getInt(USED) >= stay.limit();
     }
 
-    static void refused(ServerPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, ChatFormatting.RED, def.stay().expired.replace("%dim%", def.name())); }
+    static void refused(ServerPlayer player, GateDef def) { Says.bar(player, CardIds.GATE_EXPIRED, ChatFormatting.RED, Says.fill(def.stay().expired, "%dim%", def.name())); }
 
-    static void tick(MinecraftServer server) {
+    static void tick(MinecraftServer server, int step) {
         List<GateDef> gates = ContentGates.staying();
         if (gates.isEmpty()) { return; }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ResourceLocation here = player.level().dimension().location();
             for (GateDef def : gates) {
-                if (here.equals(def.dimension())) { count(server, player, def); }
+                if (here.equals(def.dimension())) { count(server, player, def, step); }
                 else if (VISIT.equals(def.stay().reset)) { forget(player, def); }
             }
         }
     }
 
-    private static void count(MinecraftServer server, ServerPlayer player, GateDef def) {
+    private static void count(MinecraftServer server, ServerPlayer player, GateDef def, int step) {
         GateStay stay = def.stay();
         CompoundTag entry = entry(player, def);
         if (DAY.equals(stay.reset) && entry.getLong(DAY_KEY) != today(server)) {
@@ -118,16 +115,16 @@ public final class GateStay {
         int limit = stay.limit();
         int used = entry.getInt(USED);
         if (used >= limit) { return; }
-        used = Math.min(limit, used + STEP);
+        used = Math.min(limit, used + step);
         entry.putInt(USED, used);
         if (used >= limit) {
             expire(server, player, def);
             return;
         }
-        int seconds = (limit - used) / STEP;
+        int seconds = (limit - used) / TICKS_PER_SECOND;
         if (stay.warn.contains(seconds)) {
             String time = String.format("%d:%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE);
-            Says.bar(player, CardIds.GATE_STAY, ChatFormatting.GOLD, stay.message.replace("%dim%", def.name()).replace("%time%", time));
+            Says.bar(player, CardIds.GATE_STAY, ChatFormatting.GOLD, Says.fill(stay.message, "%dim%", def.name(), "%time%", time));
         }
     }
 
@@ -143,9 +140,7 @@ public final class GateStay {
     }
 
     private static CompoundTag entry(ServerPlayer player, GateDef def) {
-        CompoundTag section = PlayerPersisted.section(player, SECTION);
-        if (!section.contains(def.id(), Tag.TAG_COMPOUND)) { section.put(def.id(), new CompoundTag()); }
-        return section.getCompound(def.id());
+        return Nbts.child(PlayerPersisted.section(player, SECTION), def.id());
     }
 
     private static void forget(ServerPlayer player, GateDef def) {

@@ -4,9 +4,8 @@ import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
-import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -27,15 +26,6 @@ public final class CarriedWeight {
     private CarriedWeight() {}
 
     private record Scope(WeightDef settings, HolderLookup.Provider access) {}
-
-    public static List<ItemStack> worn(Player player) {
-        List<ItemStack> found = new ArrayList<>();
-        for (ItemStack stack : player.getInventory().armor) {
-            if (!stack.isEmpty()) { found.add(stack); }
-        }
-        found.addAll(ContentCurios.worn(player, stack -> !stack.isEmpty()));
-        return found;
-    }
 
     public static long total(Player player, WeightDef settings, List<ItemStack> worn) {
         Scope scope = new Scope(settings, player.registryAccess());
@@ -64,11 +54,7 @@ public final class CarriedWeight {
         if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlockItem.holdsKept(stack)) { return stacks(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItems(), scope, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(scope.settings.countContents)) { return 0L; }
         IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
-        if (handler != null) {
-            long sum = 0L;
-            for (int slot = 0; slot < handler.getSlots(); slot++) { sum += weigh(handler.getStackInSlot(slot), scope, depth + 1); }
-            return sum;
-        }
+        if (handler != null) { return ItemHandlers.sum(handler, held -> weigh(held, scope, depth + 1)); }
         long sum = stacks(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItems(), scope, depth);
         sum += stacks(stack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY).items(), scope, depth);
         CustomData tile = stack.get(DataComponents.BLOCK_ENTITY_DATA);

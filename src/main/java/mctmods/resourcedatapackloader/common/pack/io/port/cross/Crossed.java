@@ -149,7 +149,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
                 continue;
             }
             JsonObject made;
-            try { made = DownAssets.made(namespace, modelPath, readJson(real), base + path, this::note); }
+            try { made = DownAssets.made(namespace, modelPath, readJson(real), said(base + path)); }
             catch (RuntimeException failed) {
                 note("'" + base + path + "' could not be ported and is left out: " + failed);
                 continue;
@@ -196,9 +196,11 @@ public final class Crossed extends PortBase<Crossed.Source> {
         }
     }
 
-    private ILineNote said(Source source) {
+    private ILineNote said(Source source) { return said(source.file()); }
+
+    private ILineNote said(String file) {
         return new ILineNote() {
-            @Override public void accept(String said) { note("'" + source.file() + "' " + said); }
+            @Override public void accept(String said) { note("'" + file + "' " + said); }
 
             @Override @Nullable public JsonElement carried(String folder, String id) { return Crossed.this.carried(folder, id); }
         };
@@ -216,7 +218,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
     private void downgrade(JsonObject held, Source source, String path) {
         Down.data(held, source.kind(), layout(path), source.file(), this::note);
         Definition definition = source.kind() == Port.Kind.MODEL ? definitions.get(source.file()) : null;
-        if (definition != null) { DownAssets.attach(held, definition.namespace(), definition.modelPath(), readJson(definition.real()), source.file(), this::note); }
+        if (definition != null) { DownAssets.attach(held, definition.namespace(), definition.modelPath(), readJson(definition.real()), said(source)); }
     }
 
     private String layout(String path) { return to == Port.Line.V1_20 ? singular(path) : path; }

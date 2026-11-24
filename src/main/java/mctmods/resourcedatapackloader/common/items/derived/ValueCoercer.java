@@ -19,6 +19,8 @@ import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.Tiers;
 
 public final class ValueCoercer {
     private ValueCoercer() {}
@@ -47,6 +49,10 @@ public final class ValueCoercer {
             Object found = Enums.byName((Class) type, text);
             return found == null ? no(type) : yes(found);
         }
+        if (type == Tier.class && text.indexOf(':') < 0) {
+            Tiers tier = Enums.byName(Tiers.class, text);
+            return tier == null ? no(type) : yes(tier);
+        }
         ResourceLocation id = ResourceLocation.tryParse(text);
         if (type == ResourceLocation.class) { return id == null ? no(type) : yes(id); }
         if (type == ItemStack.class) {
@@ -54,9 +60,14 @@ public final class ValueCoercer {
             return stack.isEmpty() ? no(type) : yes(stack);
         }
         if (type == Component.class) { return yes(Component.literal(text)); }
-        if (id == null || RegistryTypes.find(type, generic) == null) { return no(type); }
-        Object found = RegistryTypes.lookup(type, generic, id);
+        if (RegistryTypes.find(type, generic) == null) { return no(type); }
+        Object found = entryOf(type, generic, text);
         return found == null ? no(type) : yes(found);
+    }
+
+    @Nullable static Object entryOf(Class<?> type, Type generic, String text) {
+        ResourceLocation id = ResourceLocation.tryParse(text);
+        return id == null ? null : RegistryTypes.lookup(type, generic, id);
     }
 
     private static Result array(JsonArray json, Class<?> type, Type generic, ResourceLocation owner) {

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.util.plant.PlantWater;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 
 import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
@@ -55,16 +56,14 @@ public final class ContentCaneBlock extends Block implements IContentSoil {
             return;
         }
         if (!level.isEmptyBlock(pos.above())) { return; }
-        int height = 1;
-        while (level.getBlockState(pos.below(height)).is(this)) { height++; }
-        if (height >= growth.maxHeight()) { return; }
+        if (TallPlants.run(level, pos, this, Direction.DOWN) >= growth.maxHeight()) { return; }
         int age = state.getValue(AGE);
         if (!CommonHooks.canCropGrow(level, pos, state, true)) { return; }
         if (age >= growth.stages() - 1) {
             level.setBlockAndUpdate(pos.above(), defaultBlockState());
-            level.setBlock(pos, state.setValue(AGE, 0), 4);
+            level.setBlock(pos, state.setValue(AGE, 0), Block.UPDATE_INVISIBLE);
         }
-        else { level.setBlock(pos, state.setValue(AGE, age + 1), 4); }
+        else { level.setBlock(pos, state.setValue(AGE, age + 1), Block.UPDATE_INVISIBLE); }
         CommonHooks.fireCropGrowPost(level, pos, state);
     }
 

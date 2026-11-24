@@ -5,6 +5,8 @@ public final class Longs {
 
     public static long pack(int high, int low) { return ((long) high << 32) | (low & 0xFFFFFFFFL); }
 
+    public static long packPos(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFFL); }
+
     public static int high(long packed) { return (int) (packed >> 32); }
 
     public static int low(long packed) { return (int) packed; }

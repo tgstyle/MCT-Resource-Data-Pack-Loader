@@ -13,14 +13,19 @@ import java.util.stream.IntStream;
 public final class OwnedBlocks {
     public static final String TAG = "rdpl_owned";
     private static final int VERSION = 1;
+    private static final String BLOCKS = "blocks";
+    private static final String POS = "pos";
+    private static final String BLOCK = "block";
+    private static final String OWNER = "owner";
+    private static final String EPOCH = "epoch";
     private static final Codec<int[]> INTS = Codec.INT_STREAM.xmap(IntStream::toArray, Arrays::stream);
     private static final Codec<Raw> RAW = RecordCodecBuilder.<Raw>mapCodec(instance -> instance.group(
             Codec.INT.fieldOf("v").orElse(VERSION).forGetter(Raw::v),
-            Codec.STRING.listOf().fieldOf("blocks").forGetter(Raw::blocks),
-            INTS.fieldOf("pos").forGetter(Raw::pos),
-            INTS.fieldOf("block").forGetter(Raw::block),
-            INTS.fieldOf("owner").forGetter(Raw::owner),
-            Codec.INT.fieldOf("epoch").orElse(0).forGetter(Raw::epoch)).apply(instance, Raw::new)).codec().fieldOf(TAG).codec();
+            Codec.STRING.listOf().fieldOf(BLOCKS).forGetter(Raw::blocks),
+            INTS.fieldOf(POS).forGetter(Raw::pos),
+            INTS.fieldOf(BLOCK).forGetter(Raw::block),
+            INTS.fieldOf(OWNER).forGetter(Raw::owner),
+            Codec.INT.fieldOf(EPOCH).orElse(0).forGetter(Raw::epoch)).apply(instance, Raw::new)).codec().fieldOf(TAG).codec();
     public static final Codec<OwnedBlocks> CODEC = RAW.xmap(OwnedBlocks::from, OwnedBlocks::raw);
     private final List<String> palette = new ArrayList<>();
     private final Map<Integer, Entry> entries = new HashMap<>();

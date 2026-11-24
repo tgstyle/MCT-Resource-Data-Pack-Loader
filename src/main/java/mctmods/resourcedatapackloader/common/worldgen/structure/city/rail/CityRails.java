@@ -251,9 +251,16 @@ public final class CityRails {
         return lines;
     }
 
-    static boolean surfaced(@Nullable int[] rising, int row) {
+    static boolean surfaced(@Nullable int[] rising, int row) { return surfaced(rising, row, 0); }
+
+    static boolean surfaced(@Nullable int[] rising, int row, int ahead) {
         if (rising == null) { return false; }
-        return rising[1] > 0 ? row >= rising[0] : row <= rising[0];
+        return rising[1] > 0 ? row >= rising[0] - ahead : row <= rising[0] + ahead;
+    }
+
+    static int pushOff(int center, int half, int low, int high, int side) {
+        if (center + half < low || center - half > high) { return center; }
+        return side >= 0 ? high + half + 1 : low - half - 1;
     }
 
     @Nullable private static int[] streetOver(List<CityPlan.Line> lines, CityPlan.Rail rail) {

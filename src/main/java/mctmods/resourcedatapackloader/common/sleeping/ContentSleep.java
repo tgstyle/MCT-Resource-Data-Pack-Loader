@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.sleeping;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.core.network.BedStateMessage;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -30,7 +31,6 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.CanPlayerSleepEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerSetSpawnEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -50,7 +50,7 @@ public final class ContentSleep {
     private static final List<String> KEYS = List.of(BED_SETS_SPAWN, BED_SPAWN_BY_DAY, SLEEP_SHARE, LEAVES_OUT_BELOW, SLEEP_SAYS, WAKE_SAYS, MORNING_SAYS, SAYS_IN);
     private static final int UNSET = -1;
     private static final int WHOLE_SHARE = 100;
-    private static final Map<UUID, Byte> STATES = new HashMap<>();
+    private static final Map<UUID, Byte> STATES = PlayerLogout.track(new HashMap<>());
     private static final Map<ResourceKey<Level>, Set<UUID>> SLEEPERS = new HashMap<>();
     private static final Set<ResourceKey<Level>> SKIPPED = new HashSet<>();
     private static boolean bedSetsSpawn = true;
@@ -194,8 +194,6 @@ public final class ContentSleep {
         if (!bedSetsSpawn) { RDPLNetwork.sendBedState(player, BedStateMessage.HIDDEN); }
         if (talks() && !event.wakeImmediately() && !event.updateLevel()) { SKIPPED.add(player.level().dimension()); }
     }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { STATES.remove(event.getEntity().getUUID()); }
 
     public static void onServerStarted(ServerStartedEvent event) {
         STATES.clear();

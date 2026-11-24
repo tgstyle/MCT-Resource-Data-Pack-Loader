@@ -55,7 +55,6 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
     public static final ContainerDef SHAPE = new ContainerDef(ROWS, COLUMNS, "", false, null, null, 0, 0, false);
     private static final int SLOTS = ROWS * COLUMNS;
     private static final int PAGED = SLOTS - COLUMNS;
-    private static final int TOP = 18;
     private static final double REACH = 64.0D;
     private static final String NAV = "rdplNav";
     public static final int FILTER_MAX = 32;
@@ -92,14 +91,11 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
         this.openedWith = hand == null ? null : inventory.player.getItemInHand(hand).getItem();
         this.from = origin != null ? origin.dimension() : inventory.player.level().dimension();
         int wide = ContentContainerMenu.width(SHAPE);
-        int left = (wide - COLUMNS * ContentContainerMenu.SLOT) / 2 + 1;
-        for (int slot = 0; slot < SLOTS; slot++) {
-            addSlot(new Slot(icons, slot, left + slot % COLUMNS * ContentContainerMenu.SLOT, TOP + slot / COLUMNS * ContentContainerMenu.SLOT) {
-                @Override public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
+        for (Slot slot : ContentContainerMenu.gridSlots(wide, COLUMNS, SLOTS, (index, x, y) -> new Slot(icons, index, x, y) {
+            @Override public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
 
-                @Override public boolean mayPickup(@Nonnull Player player) { return false; }
-            });
-        }
+            @Override public boolean mayPickup(@Nonnull Player player) { return false; }
+        })) { addSlot(slot); }
         for (Slot slot : ContentContainerMenu.playerSlots(inventory, wide, ContentContainerMenu.height(SHAPE), Slot::new)) { addSlot(slot); }
         if (inventory.player instanceof ServerPlayer server && (origin != null || hand != null)) { load(server); }
     }

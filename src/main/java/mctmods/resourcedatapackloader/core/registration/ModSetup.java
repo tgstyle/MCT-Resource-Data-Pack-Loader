@@ -133,6 +133,7 @@ import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentDisabledEvents;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
@@ -220,6 +221,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLogin);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLogout);
+        NeoForge.EVENT_BUS.addListener(PlayerLogout::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onServerTick);
         NeoForge.EVENT_BUS.addListener(PackOptionsWorld::onLogin);
         NeoForge.EVENT_BUS.addListener(PackOptionsWorld::onLevelSave);
@@ -268,11 +270,9 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(BaseSignals::onOpen);
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, ContentDiet::onTick);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onFinish);
-        NeoForge.EVENT_BUS.addListener(ContentDiet::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onLogin);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onClone);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onLogin);
-        NeoForge.EVENT_BUS.addListener(ContentHearts::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onClone);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onRespawn);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onAdvancement);
@@ -314,7 +314,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(WeightEnforce::onPickup);
         NeoForge.EVENT_BUS.addListener(WeightSync::onServerTick);
         NeoForge.EVENT_BUS.addListener(WeightSync::onLogin);
-        NeoForge.EVENT_BUS.addListener(WeightSync::onLogout);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onToss);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onOpen);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onClose);
@@ -327,7 +326,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onDimension);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onClone);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
-        NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentStorageSwap::onItemJoin);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onDig);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onUse);
@@ -347,7 +345,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
         NeoForge.EVENT_BUS.addListener(ContentWeapons::onTick);
-        NeoForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onServerStarted);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onAdvancement);
@@ -384,15 +381,11 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentDarkDamage::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(ContentDimensions::onClone);
         NeoForge.EVENT_BUS.addListener(ContentDimensions::onRespawn);
-        NeoForge.EVENT_BUS.addListener(ContentDimensions::onLogout);
-        NeoForge.EVENT_BUS.addListener(GateEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(GateSync::onLogin);
         NeoForge.EVENT_BUS.addListener(GateSync::onDimension);
         NeoForge.EVENT_BUS.addListener(GateSync::onRespawn);
-        NeoForge.EVENT_BUS.addListener(GateSync::onLogout);
         NeoForge.EVENT_BUS.addListener(GateSync::onServerTick);
         NeoForge.EVENT_BUS.addListener(ItemLockSync::onLogin);
-        NeoForge.EVENT_BUS.addListener(ItemLockSync::onLogout);
         NeoForge.EVENT_BUS.addListener(ItemLockSync::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentItemLocks::onServerStarted);
         NeoForge.EVENT_BUS.addListener(GateEvents::onTravel);
@@ -403,11 +396,9 @@ public class ModSetup {
         GateLoot.register(NeoForge.EVENT_BUS);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onCanContinue);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onWakeUp);
-        NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentSleep::onSetSpawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentSleep::onCanSleep);
         NeoForge.EVENT_BUS.addListener(ContentSleep::onWakeUp);
-        NeoForge.EVENT_BUS.addListener(ContentSleep::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentSleep::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentSleep::onLevelTick);
         NeoForge.EVENT_BUS.addListener(CardEvents::onDimension);
@@ -416,9 +407,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(CardEvents::onAdvancement);
         NeoForge.EVENT_BUS.addListener(CardEvents::onCraft);
         NeoForge.EVENT_BUS.addListener(CardEvents::onPickup);
-        NeoForge.EVENT_BUS.addListener(CardEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, DialogEvents::onInteract);
-        NeoForge.EVENT_BUS.addListener(DialogEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(CardScan::onTick);
         NeoForge.EVENT_BUS.addListener(FireworkBursts::onTick);
         NeoForge.EVENT_BUS.addListener(FireworkDetonations::onGameEvent);
@@ -428,12 +417,10 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentProspect::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(ContentProspect::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentProspect::onDrops);
-        NeoForge.EVENT_BUS.addListener(PortalEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onBroken);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onLit);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onFluid);
         NeoForge.EVENT_BUS.addListener(ContentThreat::onServerTick);
-        NeoForge.EVENT_BUS.addListener(ContentThreat::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentThreat::onLevelUnload);
         WorldgenSetup.seamListeners();
         WorldgenSetup.pregenListeners();
@@ -452,7 +439,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentMobExperience::onDeath);
         NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(ContentIntroPlay::onLogin);
-        NeoForge.EVENT_BUS.addListener(ContentIntroPlay::onLogout);
         modBus.addListener(ContentEntityTypes::attributes);
         modBus.addListener(ContentFluids::registerCapabilities);
         modBus.addListener(ContentContainers::registerCapabilities);
@@ -487,7 +473,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onBabySpawn);
         NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onPlayerTick);
-        NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onCanSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onContinueSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepFinished);
@@ -497,7 +482,6 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(Toasts::onLogin);
         NeoForge.EVENT_BUS.addListener(AnvilCosts::onLogin);
         NeoForge.EVENT_BUS.addListener(AnvilCosts::onLevelSet);
-        NeoForge.EVENT_BUS.addListener(ContentWelcome::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentWelcome::onDimensionChange);
         modBus.addListener(ModSetup::onConfig);
         modBus.addListener(ModSetup::onCommonSetup);

@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,13 +39,15 @@ public final class ContentParserWeapons {
         return new WeaponDef(reach, sweep, combo, fire, finisher);
     }
 
+    private static void notObject(ResourceLocation key, String noun) { ContentLog.LOGGER.error("The {} on {} is not an object, so the key is ignored", noun, key); }
+
     @Nullable private static WeaponDef.Finisher finisher(ResourceLocation key, JsonObject parent) {
         if (!parent.has("finisher")) { return null; }
-        if (!parent.get("finisher").isJsonObject()) {
-            ContentLog.LOGGER.error("The finisher on {} is not an object, so the key is ignored", key);
+        JsonObject json = Json.objectOrNull(parent, "finisher");
+        if (json == null) {
+            notObject(key, "finisher");
             return null;
         }
-        JsonObject json = parent.getAsJsonObject("finisher");
         Json.unknownKeys(json, "finisher", FINISHER_KEYS);
         String owner = "The finisher on " + key;
         List<String> targets = json.has("targets") ? MobStats.entities(owner, "targets", json.get("targets")) : null;
@@ -66,13 +67,13 @@ public final class ContentParserWeapons {
 
     @Nullable private static WeaponDef.Sweep sweep(ResourceLocation key, JsonObject parent) {
         if (!parent.has("sweep")) { return null; }
-        if (!parent.get("sweep").isJsonObject()) {
-            ContentLog.LOGGER.error("The sweep on {} is not an object, so the key is ignored", key);
+        JsonObject json = Json.objectOrNull(parent, "sweep");
+        if (json == null) {
+            notObject(key, "sweep");
             return null;
         }
-        JsonObject json = parent.getAsJsonObject("sweep");
         Json.unknownKeys(json, "sweep", SWEEP_KEYS);
-        String named = Json.getString(json, "shape", "box").trim().toLowerCase(Locale.ROOT);
+        String named = Json.getLowerString(json, "shape", "box");
         WeaponDef.Shape shape = null;
         for (WeaponDef.Shape each : WeaponDef.Shape.values()) {
             if (each.name().toLowerCase(Locale.ROOT).equals(named)) { shape = each; }
@@ -91,11 +92,11 @@ public final class ContentParserWeapons {
 
     @Nullable private static WeaponDef.Combo combo(ResourceLocation key, JsonObject parent) {
         if (!parent.has("combo")) { return null; }
-        if (!parent.get("combo").isJsonObject()) {
-            ContentLog.LOGGER.error("The combo on {} is not an object, so the key is ignored", key);
+        JsonObject json = Json.objectOrNull(parent, "combo");
+        if (json == null) {
+            notObject(key, "combo");
             return null;
         }
-        JsonObject json = parent.getAsJsonObject("combo");
         Json.unknownKeys(json, "combo", COMBO_KEYS);
         int window = Json.getInt(json, "window", DEFAULT_WINDOW);
         if (window < 1) {
@@ -104,12 +105,7 @@ public final class ContentParserWeapons {
         }
         JsonArray array = Json.getJsonArray(json, "steps", new JsonArray());
         List<WeaponDef.Step> steps = new ArrayList<>();
-        for (JsonElement element : array) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A step of the combo on {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject step = element.getAsJsonObject();
+        for (JsonObject step : Json.objectsOrSkip(array, "A step of the combo on {} is not an object, skipping it", key)) {
             Json.unknownKeys(step, "combo.steps", STEP_KEYS);
             steps.add(new WeaponDef.Step(Json.ranged(step, "damage", 1.0F, 0.0F, 100.0F, "A step of the combo on " + key), sweep(key, step)));
         }

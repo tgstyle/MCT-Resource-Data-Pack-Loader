@@ -87,7 +87,7 @@ public final class ContentTurns {
         }
         else if (current == null) { advance(server, def, turns, groups); }
         else if (CLOCK.runsOut()) {
-            tellAll(server, "turnout", current);
+            tellAll(server, "turnout", "group", shown(current));
             ContentLog.LOGGER.info("{} ran out of time", current);
             endTurn(server, def, turns, groups);
         }
@@ -125,7 +125,7 @@ public final class ContentTurns {
         for (String group : SEEN) {
             if (groups.containsKey(group)) { ORDER.add(group); }
         }
-        if (TurnsDef.RANDOM.equals(turns.order())) { Util.shuffle(ORDER, server.overworld().getRandom()); }
+        if (TurnsDef.RANDOM.equals(turns.order())) { Util.shuffle(ORDER, ContentDice.random(server)); }
         else if (TurnsDef.LOWEST_FIRST.equals(turns.order())) { ORDER.sort(Comparator.comparingInt(group -> score(server, def, group))); }
         else if (TurnsDef.LAST_WINNER.equals(turns.order()) && lastWinner != null && ORDER.remove(lastWinner)) { ORDER.addFirst(lastWinner); }
         ContentLog.LOGGER.info("Cycle {} of turns in {} goes {}", cycle + 1, def.name(), ORDER);
@@ -135,7 +135,7 @@ public final class ContentTurns {
         current = group;
         CLOCK.start(turns.seconds());
         ContentLog.LOGGER.info("{} takes its turn for {} second(s)", group, turns.seconds());
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { Says.line(player, ChatFormatting.GOLD, ContentDice.words(player, "turn", "group", shown(group), "seconds", turns.seconds())); }
+        tellAll(server, "turn", "group", shown(group), "seconds", turns.seconds());
     }
 
     private static void endTurn(MinecraftServer server, ScoreDef def, TurnsDef turns, Map<String, List<Entity>> groups) {
@@ -214,7 +214,7 @@ public final class ContentTurns {
         TurnsDef turns = def == null ? null : def.turns();
         if (def == null || turns == null || current == null) { return "noturns"; }
         if (player != null && !current.equals(groupOf(turns, player.serverLevel(), player))) { return "notturn"; }
-        tellAll(server, "turnpass", current);
+        tellAll(server, "turnpass", "group", shown(current));
         ContentLog.LOGGER.info("{} passed the turn of {}", player == null ? "The server" : player.getGameProfile().getName(), current);
         Map<String, List<Entity>> groups = groups(server, turns);
         endTurn(server, def, turns, groups);
@@ -294,7 +294,7 @@ public final class ContentTurns {
         return side == null ? group : side.displayName();
     }
 
-    private static void tellAll(MinecraftServer server, String key, String group) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { Says.line(player, ChatFormatting.GOLD, ContentDice.words(player, key, "group", shown(group))); } }
+    private static void tellAll(MinecraftServer server, String key, Object... pairs) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { Says.line(player, ChatFormatting.GOLD, ContentDice.words(player, key, pairs)); } }
 
     private static void bar(MinecraftServer server, String key, Object... pairs) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.displayClientMessage(Says.marked(ContentDice.words(player, key, pairs), ChatFormatting.YELLOW), true); } }
 }

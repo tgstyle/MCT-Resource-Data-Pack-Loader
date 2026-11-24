@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class MemberNames {
@@ -17,7 +18,7 @@ public final class MemberNames {
         int dot = key.lastIndexOf('.');
         String owner = dot < 0 ? "" : key.substring(0, dot);
         String name = dot < 0 ? key : key.substring(dot + 1);
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) {
             if (!owner.isEmpty() && !level.getSimpleName().equals(owner) && !level.getName().equals(owner)) { continue; }
             for (Field field : level.getDeclaredFields()) {
                 if (readable(field.getName()).equals(name)) { return field; }
@@ -27,11 +28,20 @@ public final class MemberNames {
         return null;
     }
 
+    @Nullable public static Field find(Class<?> type, String name, Predicate<Field> keep) {
+        for (Class<?> level : levels(type)) {
+            for (Field field : level.getDeclaredFields()) {
+                if (keep.test(field) && readable(field.getName()).equals(name)) { return field; }
+            }
+        }
+        return null;
+    }
+
     @Nullable public static Method method(Class<?> type, String key) {
         int paren = key.indexOf('(');
         String name = paren < 0 ? key : key.substring(0, paren);
         List<String> wanted = paren < 0 ? null : parameters(key.substring(paren + 1, key.length() - (key.endsWith(")") ? 1 : 0)));
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) {
             List<Method> found = matching(Arrays.asList(level.getDeclaredMethods()), name, wanted);
             if (found.size() == 1) { return found.getFirst(); }
             if (found.size() > 1) {
@@ -40,7 +50,7 @@ public final class MemberNames {
             }
         }
         List<Method> defaults = new ArrayList<>();
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) {
             for (Class<?> face : level.getInterfaces()) { defaults(face, defaults); }
         }
         List<Method> found = matching(defaults, name, wanted);
@@ -55,11 +65,17 @@ public final class MemberNames {
 
     public static List<Method> methods(Class<?> type) {
         List<Method> all = new ArrayList<>();
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) { Collections.addAll(all, level.getDeclaredMethods()); }
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+        for (Class<?> level : levels(type)) { Collections.addAll(all, level.getDeclaredMethods()); }
+        for (Class<?> level : levels(type)) {
             for (Class<?> face : level.getInterfaces()) { defaults(face, all); }
         }
         return all;
+    }
+
+    private static List<Class<?>> levels(Class<?> type) {
+        List<Class<?>> levels = new ArrayList<>();
+        for (Class<?> level = type; level != null; level = level.getSuperclass()) { levels.add(level); }
+        return levels;
     }
 
     private static void defaults(Class<?> face, List<Method> into) {

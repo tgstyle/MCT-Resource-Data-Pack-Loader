@@ -87,11 +87,9 @@ public final class ContentDialogs {
     private static Map<String, DialogDef.Node> nodes(String key, JsonObject json) {
         JsonObject raw = Json.getJsonObject(json, "nodes", new JsonObject());
         List<String> names = new ArrayList<>();
-        for (Map.Entry<String, JsonElement> entry : raw.entrySet()) {
-            if (!entry.getValue().isJsonObject()) { ContentLog.LOGGER.error("Dialog {} has a node '{}' that is not an object, skipping it", key, entry.getKey()); }
-            else if (names.size() >= MOST_NODES) { ContentLog.LOGGER.error("Dialog {} has more than {} nodes, skipping '{}'", key, MOST_NODES, entry.getKey()); }
-            else { names.add(entry.getKey()); }
-        }
+        Json.eachCapped(raw.entrySet(), MOST_NODES, entry -> entry.getValue().isJsonObject(), entry -> names.add(entry.getKey()),
+                entry -> ContentLog.LOGGER.error("Dialog {} has a node '{}' that is not an object, skipping it", key, entry.getKey()),
+                entry -> ContentLog.LOGGER.error("Dialog {} has more than {} nodes, skipping '{}'", key, MOST_NODES, entry.getKey()));
         Map<String, DialogDef.Node> nodes = new LinkedHashMap<>();
         for (String name : names) { nodes.put(name, node(key, name, raw.getAsJsonObject(name), names)); }
         return nodes;
@@ -130,7 +128,7 @@ public final class ContentDialogs {
             return null;
         }
         CardWhen when = json.has("when") ? CardParser.when(Json.getJsonObject(json, "when"), ResourceLocation.parse(key), "Dialog") : null;
-        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade, DataSets.parse(json, "Dialog", key, "node " + node));
+        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, Json.RUNS, "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade, DataSets.parse(json, "Dialog", key, "node " + node));
     }
 
     @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }

@@ -5,7 +5,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 
-public record RaidTarget(Kind kind, BlockPos center, int radius, int ownerHandle, @Nullable UUID targetUuid, boolean free, int score) {
+public record RaidTarget(Kind kind, BlockPos center, int radius, int ownerHandle, @Nullable UUID targetUuid, int score) {
     public enum Kind {
         VILLAGE, BASE, PLAYER, FREE;
 

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.core.rhino.Context;
 import mctmods.resourcedatapackloader.core.rhino.Function;
@@ -9,11 +10,13 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -31,6 +34,7 @@ import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 public final class RdplWorldApi {
     private static final ResourceLocation SCRIPT_KEY = ResourceLocation.fromNamespaceAndPath("resourcedatapackloader", "script");
@@ -48,15 +52,13 @@ public final class RdplWorldApi {
 
     public int scanAt(double x, double y, double z, Object match) {
         Predicate<ItemStack> test = predicate(match);
-        IItemHandler handler = at(x, y, z, Capabilities.ItemHandler.BLOCK);
+        IItemHandler handler = items(x, y, z);
         if (test == null || handler == null) { return 0; }
-        int total = 0;
-        for (int slot = 0; slot < handler.getSlots(); slot++) { total += count(handler.getStackInSlot(slot), test); }
-        return total;
+        return (int) ItemHandlers.sum(handler, stack -> count(stack, test));
     }
 
     @Nullable public Object capability(double x, double y, double z, String type) {
-        if ("items".equals(type)) { return at(x, y, z, Capabilities.ItemHandler.BLOCK); }
+        if ("items".equals(type)) { return items(x, y, z); }
         if ("fluids".equals(type)) { return at(x, y, z, Capabilities.FluidHandler.BLOCK); }
         if ("energy".equals(type)) { return at(x, y, z, Capabilities.EnergyStorage.BLOCK); }
         return null;
@@ -86,11 +88,28 @@ public final class RdplWorldApi {
         return world.tryAddFreshEntityWithPassengers(entity);
     }
 
-    @Nullable private <T, C> T at(double x, double y, double z, BlockCapability<T, C> capability) {
+    @Nullable private BlockEntity entity(double x, double y, double z) {
         BlockPos pos = BlockPos.containing(x, y, z);
-        if (!world.isLoaded(pos)) { return null; }
-        BlockEntity entity = world.getBlockEntity(pos);
-        return entity == null ? null : world.getCapability(capability, pos, entity.getBlockState(), entity, null);
+        return world.isLoaded(pos) ? world.getBlockEntity(pos) : null;
+    }
+
+    @Nullable private <T> T at(double x, double y, double z, BlockCapability<T, @org.jetbrains.annotations.Nullable Direction> capability) {
+        BlockEntity entity = entity(x, y, z);
+        if (entity == null) { return null; }
+        BlockPos pos = entity.getBlockPos();
+        T handler = world.getCapability(capability, pos, entity.getBlockState(), entity, null);
+        if (handler != null) { return handler; }
+        for (Direction side : Direction.values()) {
+            handler = world.getCapability(capability, pos, entity.getBlockState(), entity, side);
+            if (handler != null) { return handler; }
+        }
+        return null;
+    }
+
+    @Nullable private IItemHandler items(double x, double y, double z) {
+        IItemHandler handler = at(x, y, z, Capabilities.ItemHandler.BLOCK);
+        BlockEntity entity = entity(x, y, z);
+        return handler == null && entity instanceof Container container ? new InvWrapper(container) : handler;
     }
 
     @Nullable private static Predicate<ItemStack> predicate(Object match) {

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -26,14 +27,11 @@ public final class ClaimRules {
 
     @Nullable public static String canClaim(ServerLevel level, int chunkX, int chunkZ, int handle, boolean op) {
         if (ClaimSettings.dimensionBarred(level.dimension())) { return DIMENSION; }
-        if (ClaimSettings.yieldsToForeign()) {
-            if (ClaimSettings.ftbPolicy() == ClaimSettings.FtbPolicy.EXCLUSIVE) { return FTB_ONLY; }
-            if (ForeignClaimsHolder.get().isClaimed(level, chunkX, chunkZ)) { return FTB_LAND; }
-        }
+        if (ClaimSettings.yieldsAt(level, chunkX, chunkZ)) { return ClaimSettings.ftbPolicy() == ClaimSettings.FtbPolicy.EXCLUSIVE ? FTB_ONLY : FTB_LAND; }
         int spawnRadius = ClaimSettings.spawnRadius();
         if (!op && spawnRadius > 0) {
             BlockPos spawn = level.getSharedSpawnPos();
-            if (Math.max(Math.abs(chunkX - (spawn.getX() >> 4)), Math.abs(chunkZ - (spawn.getZ() >> 4))) <= spawnRadius) { return SPAWN; }
+            if (ChunkSpan.chebyshev(chunkX - (spawn.getX() >> 4), chunkZ - (spawn.getZ() >> 4)) <= spawnRadius) { return SPAWN; }
         }
         ClaimIndex index = ClaimIndex.obtain(level);
         if (index == null) { return null; }
@@ -61,13 +59,10 @@ public final class ClaimRules {
 
     private static boolean crowded(ClaimIndex index, int chunkX, int chunkZ, int handle) {
         int distance = ClaimSettings.minDistance();
-        for (int dx = -distance; dx <= distance; dx++) {
-            for (int dz = -distance; dz <= distance; dz++) {
-                int other = index.ownerAt(chunkX + dx, chunkZ + dz);
-                if (other != 0 && other != handle) { return true; }
-            }
-        }
-        return false;
+        return !ChunkSpan.forEachWithin(chunkX, chunkZ, distance, (x, z) -> {
+            int other = index.ownerAt(x, z);
+            return other == 0 || other == handle;
+        });
     }
 
     private static int members(MinecraftServer server, int handle) { return ScoreboardOwnerSource.current().memberNames(server, handle).size(); }

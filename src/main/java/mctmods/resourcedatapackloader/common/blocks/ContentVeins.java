@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.entity.Advancements;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
-import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonObject;
@@ -52,12 +51,12 @@ public final class ContentVeins {
         }
     }
 
-    private static void reload() {
-        RULES.clear();
-        GENERATION.stale();
-        Json.eachObject(PackManager.VEINS, "vein mining", ContentVeins::read);
-        if (!RULES.isEmpty()) { Summary.info("content.veins", "Loaded " + RULES.size() + " vein mining group(s)"); }
+    private static boolean idle() {
+        if (GENERATION.stale()) { reload(); }
+        return RULES.isEmpty();
     }
+
+    private static void reload() { PackGeneration.reload(RULES, PackManager.VEINS, "vein mining", "content.veins", "vein mining group(s)", ContentVeins::read); }
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", VEIN_KEYS);
@@ -87,8 +86,7 @@ public final class ContentVeins {
     public static void onBreak(BlockEvent.BreakEvent event) {
         if (veining || ContentColumns.clearing() || ContentCarry.probing() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
         if (player.isCreative() || player.isSpectator()) { return; }
-        if (GENERATION.stale()) { reload(); }
-        if (RULES.isEmpty()) { return; }
+        if (idle()) { return; }
         BlockState state = event.getState();
         Rule rule = ruleFor(player, state, player.getMainHandItem());
         if (rule == null) { return; }

@@ -15,6 +15,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.biome.Biome;
@@ -47,13 +48,7 @@ public final class ContentSeasonTint {
     }
 
     private static boolean compute() {
-        for (DimensionDef def : ContentDimensions.available()) {
-            if (def.look() != null && def.look().tintsPlants()) { return true; }
-        }
-        for (SkyLookDef look : ContentEnvironments.looks()) {
-            if (look.tintsPlants()) { return true; }
-        }
-        return false;
+        return ContentEnvironments.anyLook(SkyLookDef::tintsPlants);
     }
 
     public static void changed() { dirty = true; }
@@ -109,9 +104,9 @@ public final class ContentSeasonTint {
     }
 
     private static int multiply(int color, int tint) {
-        int red = (color >> 16 & 255) * (tint >> 16 & 255) / 255;
-        int green = (color >> 8 & 255) * (tint >> 8 & 255) / 255;
-        int blue = (color & 255) * (tint & 255) / 255;
+        int red = FastColor.ARGB32.red(color) * FastColor.ARGB32.red(tint) / 255;
+        int green = FastColor.ARGB32.green(color) * FastColor.ARGB32.green(tint) / 255;
+        int blue = FastColor.ARGB32.blue(color) * FastColor.ARGB32.blue(tint) / 255;
         return color & 0xFF000000 | red << 16 | green << 8 | blue;
     }
 

@@ -46,6 +46,8 @@ public final class RDPLPack {
     @Nullable private final IPackPort ported;
     private int fileCount;
 
+    static String id(String namespace, String path) { return namespace + ":" + path; }
+
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) { this(name, priority, overriding, root, owned, null); }
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Set<String> ownedNamespaces) {
@@ -186,7 +188,7 @@ public final class RDPLPack {
 
     public List<String> files(PackType type, String folder, String ext) {
         List<String> found = new ArrayList<>();
-        matching(type, folder, ext, (namespace, id) -> found.add(namespace + ":" + id));
+        matching(type, folder, ext, (namespace, id) -> found.add(id(namespace, id)));
         Collections.sort(found);
         return found;
     }

@@ -5,11 +5,14 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperie
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.AnvilDef;
 import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 
 public final class AnvilWorkGoal extends Goal {
     private static final int FIRST_LOOK = 100;
@@ -42,17 +45,11 @@ public final class AnvilWorkGoal extends Goal {
 
     @Nullable private BlockPos nearestAnvil() {
         BlockPos feet = mob.blockPosition();
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
+        List<BlockPos> anvils = new ArrayList<>();
         for (BlockPos at : BlockPos.betweenClosed(feet.offset(-REACH, -RISE, -REACH), feet.offset(REACH, RISE, REACH))) {
-            if (!ContentAnvils.anvil(mob.level().getBlockState(at))) { continue; }
-            double distance = at.distSqr(feet);
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = at.immutable();
-            }
+            if (ContentAnvils.anvil(mob.level().getBlockState(at))) { anvils.add(at.immutable()); }
         }
-        return best;
+        return Walking.nearest(anvils, at -> at.distSqr(feet), Double.MAX_VALUE);
     }
 
     @Override public boolean canContinueToUse() { return anvil != null && work != null && walked < GIVE_UP && ContentAnvils.anvil(mob.level().getBlockState(anvil)); }
@@ -76,11 +73,8 @@ public final class AnvilWorkGoal extends Goal {
         if (!canContinueToUse()) { return; }
         if (anvil == null || work == null) { return; }
         walked++;
-        double x = anvil.getX() + 0.5D;
-        double y = anvil.getY() + 0.5D;
-        double z = anvil.getZ() + 0.5D;
-        mob.getLookControl().setLookAt(x, y, z, 30.0F, 30.0F);
-        if (mob.distanceToSqr(x, y, z) <= USE_DISTANCE_SQ) {
+        BlockBreak.look(mob, anvil);
+        if (mob.distanceToSqr(Vec3.atCenterOf(anvil)) <= USE_DISTANCE_SQ) {
             ContentAnvils.work(mob, work, anvil);
             anvil = null;
             return;

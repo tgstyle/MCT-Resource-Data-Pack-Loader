@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class ContentAttributes {
@@ -56,6 +57,13 @@ public final class ContentAttributes {
         Holder<Attribute> attribute = find(name, context);
         if (attribute == null) { return null; }
         return mob.getAttribute(attribute);
+    }
+
+    public static void replace(AttributeInstance instance, ResourceLocation id, double amount, AttributeModifier.Operation operation, boolean saved) {
+        instance.removeModifier(id);
+        AttributeModifier modifier = new AttributeModifier(id, amount, operation);
+        if (saved) { instance.addPermanentModifier(modifier); }
+        else { instance.addTransientModifier(modifier); }
     }
 
     private static String key(String name) { return name.toLowerCase(Locale.ROOT); }

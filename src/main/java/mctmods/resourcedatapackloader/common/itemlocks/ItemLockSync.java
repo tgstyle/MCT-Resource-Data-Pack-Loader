@@ -26,8 +26,6 @@ public final class ItemLockSync {
         if (event.getEntity() instanceof ServerPlayer player) { SYNC.fresh(player); }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.getEntity()); }
-
     public static void resendAll(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             boolean told = SYNC.told(player);

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 
 final class ContentParserSeasons {
@@ -32,8 +31,8 @@ final class ContentParserSeasons {
     }
 
     @Nullable static SeasonSensorDef sensor(JsonObject json) {
-        if (!GsonHelper.isObjectNode(json, "seasonSensor")) { return null; }
-        JsonObject held = Json.getJsonObject(json, "seasonSensor");
+        JsonObject held = Json.objectOrNull(json, "seasonSensor");
+        if (held == null) { return null; }
         Json.unknownKeys(held, "seasonSensor", SENSOR_KEYS);
         Map<String, Integer> output = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.object(held, "output").entrySet()) {

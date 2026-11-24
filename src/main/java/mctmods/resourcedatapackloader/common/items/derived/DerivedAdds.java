@@ -78,14 +78,7 @@ public final class DerivedAdds {
         if (!into.contains(each.object)) { into.add(each.object); }
     }
 
-    @Nullable private static Field field(Class<?> type, String member) {
-        for (Class<?> level = type; level != null; level = level.getSuperclass()) {
-            for (Field field : level.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers()) && MemberNames.readable(field.getName()).equals(member)) { return field; }
-            }
-        }
-        return null;
-    }
+    @Nullable private static Field field(Class<?> type, String member) { return MemberNames.find(type, member, field -> Modifier.isStatic(field.getModifiers())); }
 
     @Nullable private static Method method(Class<?> type, String member) {
         for (Method method : MemberNames.methods(type)) {

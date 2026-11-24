@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 public final class PlayerValueSync<T> {
-    private final Map<UUID, T> sent = new HashMap<>();
+    private final Map<UUID, T> sent = PlayerLogout.track(new HashMap<>());
     private final Function<ServerPlayer, T> compute;
     private final BooleanSupplier watching;
     private final BiConsumer<ServerPlayer, T> send;
@@ -36,7 +36,7 @@ public final class PlayerValueSync<T> {
         push(player);
     }
 
-    public void forget(Player player) { sent.remove(player.getUUID()); }
+    private void forget(Player player) { sent.remove(player.getUUID()); }
 
     public boolean told(ServerPlayer player) { return sent.containsKey(player.getUUID()); }
 

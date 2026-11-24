@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.common.entities.ai;
 
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 
@@ -32,7 +31,7 @@ public final class ChargeGoal extends CooldownGoal {
         mob.getNavigation().moveTo(current, speed);
         if (mob.distanceToSqr(current) > 6.25D) { return; }
         StrikeGoal.hit(mob, current);
-        current.knockback(2.0D, Mth.sin(mob.getYRot() * Mth.DEG_TO_RAD), -Mth.cos(mob.getYRot() * Mth.DEG_TO_RAD));
+        StrikeGoal.knockAlongYaw(mob, current, 2.0D);
         running = 0;
     }
 }

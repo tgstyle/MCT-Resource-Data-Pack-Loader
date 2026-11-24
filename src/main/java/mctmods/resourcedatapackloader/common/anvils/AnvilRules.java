@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 
 public final class AnvilRules {
@@ -51,11 +52,9 @@ public final class AnvilRules {
     private static AnvilMath.Cost cost(ResourceLocation key, JsonObject json, String name) {
         if (!json.has(name)) { return AnvilMath.VANILLA_COST; }
         JsonElement held = json.get(name);
-        if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber()) {
-            double flat = held.getAsDouble();
-            if (flat >= 1 && flat <= AnvilCosts.HIGHEST && flat == Math.rint(flat)) { return new AnvilMath.Cost((int) flat, 1.0D); }
-        }
-        else if (held.isJsonObject() && held.getAsJsonObject().size() == 1 && held.getAsJsonObject().has(MULTIPLIER)) {
+        Integer flat = Json.whole(held, 1, AnvilCosts.HIGHEST);
+        if (flat != null) { return new AnvilMath.Cost(flat, 1.0D); }
+        if (held.isJsonObject() && held.getAsJsonObject().size() == 1 && held.getAsJsonObject().has(MULTIPLIER)) {
             JsonElement times = held.getAsJsonObject().get(MULTIPLIER);
             if (times.isJsonPrimitive() && times.getAsJsonPrimitive().isNumber() && times.getAsDouble() > 0.0D && times.getAsDouble() <= MOST_MULTIPLIED) { return new AnvilMath.Cost(-1, times.getAsDouble()); }
         }
@@ -66,7 +65,7 @@ public final class AnvilRules {
     private static int growth(ResourceLocation key, JsonObject json) {
         if (!json.has(PENALTY)) { return AnvilMath.VANILLA_GROWTH; }
         JsonElement held = json.get(PENALTY);
-        if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
+        if (Json.isString(held)) {
             String named = held.getAsString().trim().toLowerCase(Locale.ROOT);
             if ("vanilla".equals(named)) { return AnvilMath.VANILLA_GROWTH; }
             if ("none".equals(named)) { return AnvilMath.NO_GROWTH; }
@@ -98,8 +97,12 @@ public final class AnvilRules {
             event.setCanceled(true);
             return;
         }
-        event.setOutput(worked.output());
-        event.setCost(worked.cost());
-        event.setMaterialCost(worked.material());
+        offer(event, worked.output(), worked.cost(), worked.material());
+    }
+
+    public static void offer(AnvilUpdateEvent event, ItemStack output, int cost, int material) {
+        event.setOutput(output);
+        event.setCost(cost);
+        event.setMaterialCost(material);
     }
 }

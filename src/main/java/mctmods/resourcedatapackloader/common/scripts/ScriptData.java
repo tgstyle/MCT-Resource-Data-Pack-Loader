@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.scripts;
 
+import mctmods.resourcedatapackloader.common.util.Nbts;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.core.HolderLookup;
@@ -37,14 +39,9 @@ public final class ScriptData extends SavedData {
 
     public View world() { return new View(this, world); }
 
-    public View player(Player player) { return new View(this, scope(players, player.getUUID().toString())); }
+    public View player(Player player) { return new View(this, Nbts.child(players, player.getUUID().toString())); }
 
-    public View team(String name) { return new View(this, scope(teams, name)); }
-
-    private CompoundTag scope(CompoundTag parent, String key) {
-        if (!parent.contains(key, Tag.TAG_COMPOUND)) { parent.put(key, new CompoundTag()); }
-        return parent.getCompound(key);
-    }
+    public View team(String name) { return new View(this, Nbts.child(teams, name)); }
 
     @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
         tag.put(WORLD, world);

@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,12 +84,8 @@ final class SwapEntry {
             return;
         }
         Json.unknownKeys(json, "the top level", FILE_KEYS);
-        for (JsonElement element : Json.getJsonArray(json, "swaps")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A swap in {} is not an object, skipping it", key);
-                continue;
-            }
-            SwapEntry entry = read(key, element.getAsJsonObject());
+        for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "swaps"), "A swap in {} is not an object, skipping it", key)) {
+            SwapEntry entry = read(key, element);
             if (entry != null) { ALL.add(entry); }
         }
     }

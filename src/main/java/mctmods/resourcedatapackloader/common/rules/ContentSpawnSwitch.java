@@ -30,8 +30,8 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 public final class ContentSpawnSwitch {
     private static final int CHUNKS = 289;
     private static final String WEIGHTS = "weights";
-    private static final List<String> RATE_KEYS = List.of("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
-    private static final List<String> CAP_KEYS = List.of("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
+    static final List<String> RATE_KEYS = List.of("surfaceDayMonsterRate", "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate");
+    static final List<String> CAP_KEYS = List.of("monsterCap", "creatureCap", "ambientCap", "waterCreatureCap");
     @Nullable private static NaturalSpawner.SpawnState seen;
     @Nullable private static ResourceLocation seenDimension;
     private static int scope = -1;
@@ -130,8 +130,7 @@ public final class ContentSpawnSwitch {
         if (regions.isEmpty()) { return normal; }
         int top = 0;
         for (SpawnSwitchDef region : regions) {
-            int cap = region.cap(kind);
-            top = Math.max(top, cap < 0 ? normal : cap);
+            top = Math.max(top, capOr(region, kind, normal));
         }
         return top;
     }
@@ -157,9 +156,11 @@ public final class ContentSpawnSwitch {
 
     private static int capAt(ServerLevel level, BlockPos pos, MobCategory category) {
         SpawnSwitchDef def = at(level, pos);
-        int cap = def == null ? -1 : def.cap(kind(category));
-        return cap < 0 ? category.getMaxInstancesPerChunk() : cap;
+        int normal = category.getMaxInstancesPerChunk();
+        return def == null ? normal : capOr(def, kind(category), normal);
     }
+
+    private static int capOr(SpawnSwitchDef def, int kind, int normal) { return def.cap(kind) < 0 ? normal : def.cap(kind); }
 
     static boolean overCap(ServerLevel level, Mob mob, BlockPos pos) {
         MobCategory category = mob.getType().getCategory();

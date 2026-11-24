@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
 import mctmods.resourcedatapackloader.core.util.MemberNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -45,7 +46,14 @@ public final class ItemOverrides {
         return planned;
     }
 
-    public static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
+    @Nullable public static Class<?> makeStored(Class<?> base, ResourceLocation key, List<ItemClassMaker.Override> planned) {
+        Class<?> made = ItemClassMaker.make(base, key, planned);
+        if (made == null) { return null; }
+        store(key, planned);
+        return made;
+    }
+
+    private static void store(ResourceLocation key, List<ItemClassMaker.Override> planned) {
         Object[] values = new Object[planned.size()];
         for (ItemClassMaker.Override each : planned) { values[each.slot()] = each.constant(); }
         DerivedConstants.put(key.toString(), values);
@@ -71,7 +79,7 @@ public final class ItemOverrides {
     @Nullable @SuppressWarnings({"unchecked", "rawtypes"}) private static Object constant(Method method, String name, JsonElement json, ResourceLocation key, @Nullable Object source) {
         Class<?> type = method.getReturnType();
         Type generic = method.getGenericReturnType();
-        boolean text = json.isJsonPrimitive() && json.getAsJsonPrimitive().isString();
+        boolean text = Json.isString(json);
         if (json.isJsonObject()) { return object(method, name, json.getAsJsonObject(), key, source); }
         if (type == ItemStack.class && text) {
             String stack = json.getAsString();
@@ -82,12 +90,11 @@ public final class ItemOverrides {
         }
         if (text && RegistryTypes.find(type, generic) != null) {
             String entry = json.getAsString();
-            ResourceLocation id = ResourceLocation.tryParse(entry);
-            if (id == null) {
+            if (ResourceLocation.tryParse(entry) == null) {
                 mismatch(key, name, json, "not a " + type.getSimpleName());
                 return null;
             }
-            return new DerivedConstants.Lazy(entry, () -> RegistryTypes.lookup(type, generic, id));
+            return new DerivedConstants.Lazy(entry, () -> ValueCoercer.entryOf(type, generic, entry));
         }
         if (type == Component.class && text) { return Component.literal(json.getAsString()); }
         if (type.isEnum() && text) {

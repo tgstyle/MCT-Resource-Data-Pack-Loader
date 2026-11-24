@@ -67,7 +67,7 @@ public final class CityRailsGrade {
             int ramp = ContentCity.subwayDepth() * climb;
             for (int at = 0; at < rows; at++) {
                 int row = start + at;
-                if (rising[1] > 0 ? row >= rising[0] - ramp : row <= rising[0] + ramp) { settled[at] = true; }
+                if (CityRails.surfaced(rising, row, ramp)) { settled[at] = true; }
             }
         }
         if (crossings > 0) { CityGrade.spaceSteps(profile, fixed, settled, climb); }

@@ -6,9 +6,9 @@ import mctmods.resourcedatapackloader.common.util.worldgen.Noise3D;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentOreVein implements IContentChunkShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentOreVein extends ContentPlacedShape implements IContentChunkShape {
     public static final int REACH = 24;
     private static final int FULL = 16;
     private static final int WANING = 20;
@@ -132,7 +129,7 @@ public final class ContentOreVein implements IContentChunkShape {
                     float value = pattern(kind, x, y, z) * bound;
                     if (value <= threshold) { continue; }
                     if (placer.occupied(x, y, z)) { continue; }
-                    float tier = (value - threshold) / (1.0F - threshold);
+                    float tier = MathUtil.unlerp(value, threshold, 1.0F);
                     BlockState state = shape.richAt() < 1.0F && tier >= shape.richAt() && rich != null ? rich : tier >= shape.poorAt() || poor == null ? placer.palette().choose(random) : poor;
                     if (placer.placeExactly(state, x, y, z)) { placed++; }
                 }
@@ -197,7 +194,6 @@ public final class ContentOreVein implements IContentChunkShape {
     }
 
     private static float smooth(float from, float to, float at) {
-        float t = Mth.clamp((at - from) / (to - from), 0.0F, 1.0F);
-        return t * t * (3.0F - 2.0F * t);
+        return MathUtil.smoothstep(MathUtil.unlerp(at, from, to));
     }
 }

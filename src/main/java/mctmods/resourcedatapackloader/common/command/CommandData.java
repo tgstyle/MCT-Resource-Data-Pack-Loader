@@ -96,9 +96,10 @@ final class CommandData {
     @Nullable private static SyncValue own(CommandSourceStack source, @Nullable ServerPlayer target, String name) {
         SyncData data = SyncData.peek(source.getLevel());
         if (data == null) { return null; }
-        Map<String, SyncValue> values = target == null ? data.worldValues() : data.playerValues(target.getUUID());
-        return values.get(name);
+        return values(data, target).get(name);
     }
+
+    private static Map<String, SyncValue> values(SyncData data, @Nullable ServerPlayer target) { return target == null ? data.worldValues() : data.playerValues(target.getUUID()); }
 
     private static int get(CommandContext<CommandSourceStack> context, String command, String[] words) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
@@ -184,7 +185,7 @@ final class CommandData {
         ServerPlayer target = player(source, words[0]);
         CommandShared.ran(source, command, "data list " + label(target));
         SyncData data = SyncData.peek(source.getLevel());
-        Map<String, SyncValue> values = data == null ? Map.of() : target == null ? data.worldValues() : data.playerValues(target.getUUID());
+        Map<String, SyncValue> values = data == null ? Map.of() : values(data, target);
         if (values.isEmpty()) {
             CommandShared.send(source, ChatFormatting.YELLOW, CommandShared.tr("rdpl.command.datanone", label(target)));
             return 0;

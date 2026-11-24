@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.IntPredicate;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -127,8 +128,7 @@ public final class DungeonSlots {
             double expected = rooms * (double) kind.weight() / total;
             int count = (int) expected;
             if (counts.nextDouble() < expected - count) { count++; }
-            if (kind.maxPerLevel() != RoomKindDef.NO_CAP) { count = Math.min(count, kind.maxPerLevel()); }
-            if (kind.maxPerDungeon() != RoomKindDef.NO_CAP) { count = Math.min(count, kind.maxPerDungeon() - tally.count(kind.kind())); }
+            count = Math.min(count, remaining(kind));
             for (int i = 0; i < count; i++) {
                 tally.add(kind.kind());
                 specs.add(templateSpec(kind, specs.size()));
@@ -258,9 +258,22 @@ public final class DungeonSlots {
     private void claim(Spec spec, int col, int row, int kx, int kz) {
         Block block = new Block(spec, col, row, kx, kz);
         blocks.add(block);
+        fill(col, row, kx, kz, blocks.size() - 1);
+    }
+
+    private void fill(int col, int row, int kx, int kz, int value) {
         for (int r = row; r < row + kz; r++) {
-            for (int c = col; c < col + kx; c++) { owner[cell(c, r)] = blocks.size() - 1; }
+            for (int c = col; c < col + kx; c++) { owner[cell(c, r)] = value; }
         }
+    }
+
+    private boolean anyCell(int col, int row, int kx, int kz, IntPredicate test) {
+        for (int r = row; r < row + kz; r++) {
+            for (int c = col; c < col + kx; c++) {
+                if (test.test(cell(c, r))) { return true; }
+            }
+        }
+        return false;
     }
 
     private List<int[]> freeSpots(int kx, int kz) {
@@ -273,14 +286,7 @@ public final class DungeonSlots {
         return spots;
     }
 
-    private boolean blockFree(int col, int row, int kx, int kz) {
-        for (int r = row; r < row + kz; r++) {
-            for (int c = col; c < col + kx; c++) {
-                if (owner[cell(c, r)] != FREE) { return false; }
-            }
-        }
-        return true;
-    }
+    private boolean blockFree(int col, int row, int kx, int kz) { return !anyCell(col, row, kx, kz, i -> owner[i] != FREE); }
 
     @Nullable private int[] bossSpot(int kx, int kz, Random random) {
         List<int[]> spots = freeSpots(kx, kz);
@@ -296,17 +302,7 @@ public final class DungeonSlots {
             if (xEdge || zEdge) { edge.add(spot); }
         }
         List<int[]> pool = edge.isEmpty() ? spots : edge;
-        int best = -1;
-        List<int[]> ties = new ArrayList<>();
-        for (int[] spot : pool) {
-            int away = Math.abs(spot[0] + kx / 2 - startCol) + Math.abs(spot[1] + kz / 2 - startRow);
-            if (away > best) {
-                best = away;
-                ties.clear();
-            }
-            if (away == best) { ties.add(spot); }
-        }
-        return ties.get(random.nextInt(ties.size()));
+        return BestPick.of(pool, spot -> Math.abs(spot[0] + kx / 2 - startCol) + Math.abs(spot[1] + kz / 2 - startRow), true, random);
     }
 
     private void grow() {
@@ -350,21 +346,12 @@ public final class DungeonSlots {
             }
             if (!drawPath(block, b, random.nextInt(STEP_X.length))) {
                 fallback(block.spec);
-                for (int r = block.row; r < block.row + block.kz; r++) {
-                    for (int c = block.col; c < block.col + block.kx; c++) { owner[cell(c, r)] = FREE; }
-                }
+                fill(block.col, block.row, block.kx, block.kz, FREE);
             }
         }
     }
 
-    private boolean blockTouchesTaken(Block block) {
-        for (int r = block.row; r < block.row + block.kz; r++) {
-            for (int c = block.col; c < block.col + block.kx; c++) {
-                if (touchesTaken(cell(c, r))) { return true; }
-            }
-        }
-        return false;
-    }
+    private boolean blockTouchesTaken(Block block) { return anyCell(block.col, block.row, block.kx, block.kz, this::touchesTaken); }
 
     private boolean drawPath(Block block, int b, int shift) {
         int[] parent = new int[owner.length];
@@ -459,10 +446,14 @@ public final class DungeonSlots {
         return hall;
     }
 
-    private boolean capped(RoomKindDef kind) {
-        boolean level = kind.maxPerLevel() != RoomKindDef.NO_CAP && levelCounts.getOrDefault(kind.kind(), 0) >= kind.maxPerLevel();
-        return level || kind.maxPerDungeon() != RoomKindDef.NO_CAP && tally.count(kind.kind()) >= kind.maxPerDungeon();
+    private int remaining(RoomKindDef kind) {
+        int left = Integer.MAX_VALUE;
+        if (kind.maxPerLevel() != RoomKindDef.NO_CAP) { left = kind.maxPerLevel() - levelCounts.getOrDefault(kind.kind(), 0); }
+        if (kind.maxPerDungeon() != RoomKindDef.NO_CAP) { left = Math.min(left, kind.maxPerDungeon() - tally.count(kind.kind())); }
+        return left;
     }
+
+    private boolean capped(RoomKindDef kind) { return remaining(kind) <= 0; }
 
     private Room plainRoom(int index, int gx, int gz, @Nullable Spec spec, boolean start) {
         RoomKindDef kind = spec != null ? spec.kind : rollKind(SeedStreams.random(levelSeed, "kind", index));
@@ -487,7 +478,7 @@ public final class DungeonSlots {
         int x0 = start ? forcedOffset(slotX, anchorX, w, offset) : slotX + m + offset.nextInt(side - w + 1);
         int z0 = start ? forcedOffset(slotZ, anchorZ, d, offset) : slotZ + m + offset.nextInt(side - d + 1);
         Random vertical = SeedStreams.random(levelSeed, "vertical", index);
-        int sunk = vertical.nextInt(100) < DungeonDef.Degree.CHANCES[this.vertical] ? 1 + vertical.nextInt(MAX_SUNK) : 0;
+        int sunk = DungeonDef.Degree.chance(vertical, DungeonDef.Degree.CHANCES[this.vertical]) ? 1 + vertical.nextInt(MAX_SUNK) : 0;
         int height = rollHeight(vertical, kind.height());
         return room(index, gx, gz, 1, 1, new int[] {x0, z0, w, d}, floorY - sunk, height, kind.kind(), kind, null, 0, start, boss);
     }

@@ -14,7 +14,6 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +37,8 @@ public final class ContentEnchantments {
     private static final String POST_ATTACK = "minecraft:post_attack";
     private static final String DAMAGE_SOURCE = "minecraft:damage_source_properties";
     private static final String BYPASS = "bypasses_invulnerability";
+    private static final int MOST = 255;
+    private static final double DEFAULT_DURATION = 100.0D;
     private static final List<String> RARITIES = List.of("common", "uncommon", "rare", "very_rare");
     private static final int[] WEIGHTS = {10, 5, 2, 1};
     private static final int[] ANVIL_COSTS = {1, 2, 4, 8};
@@ -100,20 +101,16 @@ public final class ContentEnchantments {
             slots.add("mainhand");
         }
         int maxLevel = Json.getInt(json, "maxLevel", 1);
-        if (maxLevel < 1 || maxLevel > 255) {
+        if (maxLevel < 1 || maxLevel > MOST) {
             ContentLog.LOGGER.error("Enchantment {} sets maxLevel to {}, which is outside 1 to 255, so it is clamped", key, maxLevel);
-            maxLevel = Math.clamp(maxLevel, 1, 255);
+            maxLevel = Math.clamp(maxLevel, 1, MOST);
         }
         double[] min = linear(json, "minCost", 11, 10);
         double[] max = linear(json, "maxCost", (int) min[0] + 5, (int) min[1]);
         List<EnchantmentEffectDef> effects = new ArrayList<>();
         if (json.has("effects")) {
-            for (JsonElement element : Json.getJsonArray(json, "effects")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                    continue;
-                }
-                EnchantmentEffectDef effect = readEffect(key, element.getAsJsonObject(), slots);
+            for (JsonObject element : Json.objectsOrSkip(Json.getJsonArray(json, "effects"), "An effect in {} is not an object, skipping it", key)) {
+                EnchantmentEffectDef effect = readEffect(key, element, slots);
                 if (effect != null) { effects.add(effect); }
             }
         }
@@ -140,7 +137,7 @@ public final class ContentEnchantments {
         double[] amount = linear(entry, "amount", 0, 0);
         List<String> from = new ArrayList<>();
         String potion = "";
-        double[] duration = {100, 0};
+        double[] duration = {DEFAULT_DURATION, 0};
         if (type.equals("protection")) {
             for (String slot : slots) {
                 if (!ARMOR_SLOTS.contains(slot)) {
@@ -161,13 +158,13 @@ public final class ContentEnchantments {
                 ContentLog.LOGGER.error("An apply_effect in {} names no potion, skipping it", key);
                 return null;
             }
-            duration = linear(entry, "duration", 100, 0);
+            duration = linear(entry, "duration", DEFAULT_DURATION, 0);
         }
         return new EnchantmentEffectDef(type, Collections.unmodifiableList(from),
                 Json.choice(entry, "mob", "any", key, MOBS),
                 Json.choice(entry, "on", "attack", key, TRIGGERS),
                 potion, amount[0], amount[1], duration[0], duration[1],
-                Math.clamp(Json.getInt(entry, "amplifier", 0), 0, 255));
+                Math.clamp(Json.getInt(entry, "amplifier", 0), 0, MOST));
     }
 
     private static double[] linear(JsonObject json, String member, double base, double perLevel) {

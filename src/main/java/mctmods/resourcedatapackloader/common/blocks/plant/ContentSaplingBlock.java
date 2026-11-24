@@ -104,7 +104,7 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
     private void advance(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
         int current = state.getValue(stage);
         if (current < Math.max(1, sapling.stages()) - 1) {
-            level.setBlock(pos, state.setValue(stage, current + 1), 4);
+            level.setBlock(pos, state.setValue(stage, current + 1), Block.UPDATE_INVISIBLE);
             return;
         }
         generate(level, pos, state, random);

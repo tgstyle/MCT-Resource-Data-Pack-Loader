@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ReturningThrow;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -13,7 +15,6 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.item.BlockItem;
@@ -62,8 +63,7 @@ public final class ThrowerGoal extends Goal {
         if (retreating > 0 || reloading > 0) { return true; }
         LivingEntity found = mob.getTarget();
         if (found == null || held().isEmpty()) { return false; }
-        double away = mob.distanceToSqr(found);
-        return away < range * range && away > REACH * REACH && mob.getSensing().hasLineOfSight(found);
+        return CooldownGoal.inBand(mob, found, REACH * REACH, range * range);
     }
 
     @Override public boolean canContinueToUse() { return retreating > 0 || reloading > 0 || canUse(); }
@@ -87,7 +87,7 @@ public final class ThrowerGoal extends Goal {
             if (!held().isEmpty()) { mob.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY); }
             return;
         }
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         mob.getNavigation().stop();
         ItemStack thrown = held();
         if (thrown.isEmpty() || mob.level().isClientSide()) { return; }
@@ -148,15 +148,11 @@ public final class ThrowerGoal extends Goal {
         thrownWith(SoundEvents.SNOWBALL_THROW);
     }
 
-    private void thrownWith(SoundEvent fallback) {
-        SoundEvent own = ContentEntities.sound(mob, ContentEntities.THROW);
-        mob.playSound(own != null ? own : fallback, 1.0F, 1.0F);
-    }
+    private void thrownWith(SoundEvent fallback) { mob.playSound(ContentEntities.sound(mob, ContentEntities.THROW, () -> fallback), 1.0F, 1.0F); }
 
     private void backAway() {
         if (target == null || !mob.getNavigation().isDone()) { return; }
-        Vec3 away = DefaultRandomPos.getPosAway(mob, 12, 5, target.position());
-        if (away != null) { mob.getNavigation().moveTo(away.x, away.y, away.z, 1.4D); }
+        Walking.awayFrom(mob, target.position(), 12, 5, 1.4D);
     }
 
     private ItemStack held() { return mob.getMainHandItem(); }

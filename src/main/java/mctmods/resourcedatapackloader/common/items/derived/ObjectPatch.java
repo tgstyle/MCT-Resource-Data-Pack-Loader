@@ -21,10 +21,14 @@ import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 
 public final class ObjectPatch {
-    private static final List<String> SPEC_KEYS = List.of("set", "returns", "addTo");
+    static final String SET = "set";
+    static final String RETURNS = "returns";
+    static final String ADD_TO = "addTo";
+    private static final List<String> SPEC_KEYS = List.of(SET, RETURNS, ADD_TO);
     private static final JsonObject NONE = new JsonObject();
 
     private ObjectPatch() {}
@@ -44,11 +48,11 @@ public final class ObjectPatch {
             Json.unknownKeys(spec, path, SPEC_KEYS);
             return null;
         });
-        JsonObject returns = member(spec, "returns", owner, path);
+        JsonObject returns = member(spec, RETURNS, owner, path);
         Object made = copy(source, owner, path, returns);
         if (made == null) { return null; }
-        String addTo = Json.getString(spec, "addTo", "").trim();
-        apply(made, member(spec, "set", owner, path), addTo.isEmpty() ? null : addTo, owner, path);
+        String addTo = Json.getString(spec, ADD_TO, "").trim();
+        apply(made, member(spec, SET, owner, path), addTo.isEmpty() ? null : addTo, owner, path);
         DerivedObjects.put(owner, path, made);
         return made;
     }
@@ -112,6 +116,12 @@ public final class ObjectPatch {
             Object made = nested(current, json.getAsJsonObject(), owner, path);
             return made == null ? DerivedConstants.MISSING : made;
         }
+        if (type == TagKey.class && json.isJsonPrimitive() && json.getAsJsonPrimitive().isString() && json.getAsString().startsWith("#")) {
+            ResourceLocation id = ResourceLocation.tryParse(json.getAsString().substring(1));
+            TagKey<?> key = id == null ? null : RegistryTypes.tag(field.getGenericType(), field.get(holder), id);
+            if (key == null) { ContentLog.LOGGER.error("{} sets {} to {}, which is not a tag of a known registry, leaving it out", owner, path, json); }
+            return key == null ? DerivedConstants.MISSING : key;
+        }
         if (reuses(field, json)) { return reuse(type, json.getAsString(), owner, path); }
         ValueCoercer.Result result = ValueCoercer.coerce(json, type, field.getGenericType(), owner);
         if (result.failed()) {
@@ -123,7 +133,7 @@ public final class ObjectPatch {
 
     private static boolean reuses(Field field, JsonElement json) {
         Class<?> type = field.getType();
-        if (!json.isJsonPrimitive() || !json.getAsJsonPrimitive().isString() || json.getAsString().indexOf(':') < 0) { return false; }
+        if (!Json.isString(json) || json.getAsString().indexOf(':') < 0) { return false; }
         return !Primitives.unwrap(type).isPrimitive() && type != String.class && type != ResourceLocation.class && type != ItemStack.class && type != Component.class && !type.isArray() && !Collection.class.isAssignableFrom(type) && RegistryTypes.find(type, field.getGenericType()) == null;
     }
 
@@ -156,9 +166,8 @@ public final class ObjectPatch {
             ResourceLocation key = ResourceLocation.fromNamespaceAndPath(owner.getNamespace(), owner.getPath() + "_" + path.replaceAll("[^A-Za-z0-9_]", "_"));
             List<ItemClassMaker.Override> overrides = ItemOverrides.plan(type, key, returns, value);
             if (!overrides.isEmpty()) {
-                Class<?> made = ItemClassMaker.make(type, key, overrides);
+                Class<?> made = ItemOverrides.makeStored(type, key, overrides);
                 if (made == null) { return null; }
-                ItemOverrides.store(key, overrides);
                 type = made;
             }
         }

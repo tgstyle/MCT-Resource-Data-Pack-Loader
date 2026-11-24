@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.io.port.cross.CrossJson;
 import static mctmods.resourcedatapackloader.core.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.core.util.IdNames;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -80,7 +81,8 @@ final class DownFixes {
 
     static String recipe(String id) {
         String named = namespaced(id);
-        String old = named.startsWith(MINECRAFT) ? RECIPES.get(named.substring(MINECRAFT.length())) : null;
+        String bare = IdNames.bare(named);
+        String old = bare.equals(named) ? null : RECIPES.get(bare);
         return old == null ? id : MINECRAFT + old;
     }
 
@@ -99,7 +101,7 @@ final class DownFixes {
             held.entrySet().forEach(entry -> out.add(entry.getKey(), names(entry.getValue(), modifies && ("attribute".equals(entry.getKey()) || "type".equals(entry.getKey())))));
             return out;
         }
-        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { return element; }
+        if (!Json.isString(element)) { return element; }
         String text = element.getAsString();
         if (text.indexOf(':') <= 0 || text.startsWith("#") || text.indexOf(' ') >= 0) { return element; }
         String renamed = name(text);
@@ -174,9 +176,11 @@ final class DownFixes {
         return out;
     }
 
-    static void stack(JsonObject stack, String file, Consumer<String> note) { if (GsonHelper.isObjectNode(stack, CrossJson.COMPONENTS)) { components(stack.getAsJsonObject(CrossJson.COMPONENTS), file, note); } }
+    static void stack(JsonObject stack, Consumer<String> note) { if (GsonHelper.isObjectNode(stack, CrossJson.COMPONENTS)) { components(stack.getAsJsonObject(CrossJson.COMPONENTS), note); } }
 
-    static void components(JsonObject components, String file, Consumer<String> note) {
+    static void rename(JsonObject json) { CrossJson.replace(json, names(json).getAsJsonObject()); }
+
+    static void components(JsonObject components, Consumer<String> note) {
         List<String> lost = new ArrayList<>();
         Set<String> hidden = new HashSet<>();
         JsonElement display = components.remove(MINECRAFT + "tooltip_display");
@@ -199,7 +203,7 @@ final class DownFixes {
         }
         hidden.removeAll(TOOLTIP_SHOWN);
         if (!hidden.isEmpty()) { components.add(MINECRAFT + "hide_additional_tooltip", new JsonObject()); }
-        if (!lost.isEmpty()) { note.accept("'" + file + "' sets the item component(s) " + String.join(", ", lost) + ", which " + Port.Line.running().title() + " does not have in that form, so they are left out"); }
+        if (!lost.isEmpty()) { note.accept("sets the item component(s) " + String.join(", ", lost) + ", which " + Port.Line.running().title() + " does not have in that form, so they are left out"); }
     }
 
     private static JsonElement component(String named, JsonElement value) {
@@ -232,7 +236,7 @@ final class DownFixes {
         if (value.isJsonObject() && (value.getAsJsonObject().has(field) || named.endsWith("can_break") || named.endsWith("can_place_on"))) { return value; }
         JsonElement inner = value;
         if ("modifiers".equals(field) && value.isJsonArray()) { inner = names(value); }
-        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(color(value, 0)); }
+        if ("rgb".equals(field) && Json.isString(value)) { inner = new JsonPrimitive(color(value, 0)); }
         JsonObject out = new JsonObject();
         out.add(field, inner);
         return out;
@@ -266,7 +270,7 @@ final class DownFixes {
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();
-            if (!"minecraft:apply_effects".equals(namespaced(Json.text(applied, "type"))) || !applied.has("effects")) {
+            if (!"minecraft:apply_effects".equals(Json.id(applied, "type")) || !applied.has("effects")) {
                 lost.add(MINECRAFT + "consumable/" + Json.text(applied, "type"));
                 continue;
             }

@@ -65,6 +65,7 @@ public final class ContentCarry {
     private static final String STATE = "state";
     private static final String TILE = "tile";
     private static final String ID = "id";
+    public static final String DENIED = "rdpl.carry.denied";
     private static final int EVERY = 10;
     private static final ResourceLocation CARRIED = ResourceDataPackLoader.id("carry");
     private static BlockGroup blockRules = new BlockGroup();
@@ -249,9 +250,9 @@ public final class ContentCarry {
     private static void pickUp(ServerPlayer player, BlockPos pos, BlockState state) {
         ServerLevel level = player.serverLevel();
         ResourceLocation name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (state.getDestroySpeed(level, pos) < 0.0F) { refuse(player, name, "unbreakable", "rdpl.carry.denied"); return; }
-        if (twoBlock(state)) { refuse(player, name, "two blocks", "rdpl.carry.denied"); return; }
-        if (!permits(player, pos, state)) { refuse(player, name, "not allowed to break it", "rdpl.carry.denied"); return; }
+        if (state.getDestroySpeed(level, pos) < 0.0F) { refuse(player, name, "unbreakable", DENIED); return; }
+        if (twoBlock(state)) { refuse(player, name, "two blocks", DENIED); return; }
+        if (!permits(player, pos, state)) { refuse(player, name, "not allowed to break it", DENIED); return; }
         CompoundTag saved = new CompoundTag();
         saved.putString(KIND, BLOCK);
         saved.put(STATE, NbtUtils.writeBlockState(state));
@@ -266,11 +267,11 @@ public final class ContentCarry {
 
     private static void pickUp(ServerPlayer player, Entity target) {
         ResourceLocation name = EntityType.getKey(target.getType());
-        if (!target.isAlive()) { refuse(player, name, "not alive", "rdpl.carry.denied"); return; }
+        if (!target.isAlive()) { refuse(player, name, "not alive", DENIED); return; }
         target.ejectPassengers();
         target.stopRiding();
         CompoundTag data = new CompoundTag();
-        if (!target.save(data)) { refuse(player, name, "cannot be saved", "rdpl.carry.denied"); return; }
+        if (!target.save(data)) { refuse(player, name, "cannot be saved", DENIED); return; }
         Component label = target.getDisplayName();
         target.discard();
         CompoundTag saved = new CompoundTag();
@@ -281,7 +282,7 @@ public final class ContentCarry {
 
     private static void setDown(ServerPlayer player, CompoundTag held, BlockPos pos, Direction side) {
         BlockPos target = player.serverLevel().getBlockState(pos).canBeReplaced() ? pos : pos.relative(side);
-        if (unresolved(held)) { refuse(player, held.getString(KIND), "nothing registers it", "rdpl.carry.denied"); return; }
+        if (unresolved(held)) { refuse(player, held.getString(KIND), "nothing registers it", DENIED); return; }
         if (BLOCK.equals(held.getString(KIND))) { setDownBlock(player, held, target, side); }
         else { setDownMob(player, held, target); }
     }
@@ -290,12 +291,12 @@ public final class ContentCarry {
         ServerLevel level = player.serverLevel();
         BlockState state = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), held.getCompound(STATE));
         ResourceLocation name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (!player.getAbilities().mayBuild || !level.mayInteract(player, target) || !level.getBlockState(target).canBeReplaced() || !state.canSurvive(level, target) || !level.isUnobstructed(state, target, CollisionContext.empty())) { refuse(player, name, "no room", "rdpl.carry.denied"); return; }
+        if (!player.getAbilities().mayBuild || !level.mayInteract(player, target) || !level.getBlockState(target).canBeReplaced() || !state.canSurvive(level, target) || !level.isUnobstructed(state, target, CollisionContext.empty())) { refuse(player, name, "no room", DENIED); return; }
         BlockState placed = Block.updateFromNeighbourShapes(state, level, target);
         BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, target);
         if (!level.setBlock(target, placed, Block.UPDATE_ALL) || EventHooks.onBlockPlace(player, snapshot, side)) {
             snapshot.restore(Block.UPDATE_ALL);
-            refuse(player, name, "placement canceled", "rdpl.carry.denied");
+            refuse(player, name, "placement canceled", DENIED);
             return;
         }
         BlockEntity entity = level.getBlockEntity(target);
@@ -311,11 +312,11 @@ public final class ContentCarry {
         ServerLevel level = player.serverLevel();
         ResourceLocation name = ResourceLocation.tryParse(held.getCompound(MOB).getString(ID));
         Entity entity = EntityType.loadEntityRecursive(held.getCompound(MOB).copy(), level, created -> created);
-        if (entity == null) { refuse(player, name, "cannot be created", "rdpl.carry.denied"); return; }
+        if (entity == null) { refuse(player, name, "cannot be created", DENIED); return; }
         entity.moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, entity.getYRot(), entity.getXRot());
         entity.setDeltaMovement(Vec3.ZERO);
         if (!player.getAbilities().mayBuild || !level.mayInteract(player, target) || !level.noCollision(entity) || !level.addFreshEntity(entity)) {
-            refuse(player, name, "no room", "rdpl.carry.denied");
+            refuse(player, name, "no room", DENIED);
             return;
         }
         given(player, name, entity.getDisplayName());

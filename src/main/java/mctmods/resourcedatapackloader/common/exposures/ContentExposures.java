@@ -106,7 +106,7 @@ public final class ContentExposures {
         boolean catches = ExposureSpread.catches(def, mob);
         if (!catches && ExposureSpread.carrierLevel(def, mob) <= 0) { return; }
         if (mob.tickCount % def.scanInterval() == 0) {
-            int reached = catches && !immune(def, mob) ? Math.min(def.levels().size(), ExposureSpread.caughtLevel(def, mob)) : 0;
+            int reached = catches && !immune(def, mob) ? capped(def, ExposureSpread.caughtLevel(def, mob)) : 0;
             if (catches) { applyLevel(def, mob, reached); }
             spreadFrom(def, mob, reached);
         }
@@ -116,8 +116,10 @@ public final class ContentExposures {
     private static void spreadFrom(ExposureDef def, LivingEntity living, int reached) {
         if (!def.spreads()) { return; }
         int spreading = Math.max(ExposureSpread.carrierLevel(def, living), def.contagious() ? reached : 0);
-        ExposureSpread.spread(def, living, Math.min(def.levels().size(), spreading));
+        ExposureSpread.spread(def, living, capped(def, spreading));
     }
+
+    private static int capped(ExposureDef def, int level) { return Math.min(def.levels().size(), level); }
 
     private static int scan(ExposureDef def, ServerPlayer player) {
         if (immune(def, player)) { return 0; }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.board;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class BoardPiece {
@@ -37,8 +38,9 @@ public final class BoardPiece {
     public String mob(int side) { return mobs.get(Math.min(side, mobs.size() - 1)); }
 
     record Steps(int[][] steps, boolean slides, int mode, int firstRange) {
-        static final int NEVER = 1;
-        static final int ONLY = 2;
-        static final int HOP = 3;
+        static final List<String> MODES = Arrays.asList("both", "never", "only", "hop");
+        static final int NEVER = MODES.indexOf("never");
+        static final int ONLY = MODES.indexOf("only");
+        static final int HOP = MODES.indexOf("hop");
     }
 }

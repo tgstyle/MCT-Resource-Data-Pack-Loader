@@ -41,8 +41,6 @@ public final class GateSync {
         if (event.getEntity() instanceof ServerPlayer player) { SYNC.fresh(player); }
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SYNC.forget(event.getEntity()); }
-
     public static void onServerTick(ServerTickEvent.Post event) {
         if (WATCHED.isEmpty() || ++ticks % INTERVAL != 0) { return; }
         SYNC.pushAll(event.getServer().getPlayerList().getPlayers());

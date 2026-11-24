@@ -65,7 +65,9 @@ public final class CardPlace {
         return false;
     }
 
-    public static long day(Level level) { return level.getDayTime() / Level.TICKS_PER_DAY; }
+    public static long day(long time) { return time / Level.TICKS_PER_DAY; }
+
+    public static long day(Level level) { return day(level.getDayTime()); }
 
     public static int timeOfDay(Level level) { return (int) (level.getDayTime() % Level.TICKS_PER_DAY); }
 

@@ -34,6 +34,7 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
+import com.google.gson.JsonObject;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
@@ -123,6 +124,10 @@ public final class ContentRegistry {
         if (!ResourceDataPackLoader.MOD_ID.equals(key.getNamespace())) { return false; }
         ContentLog.LOGGER.errorOnce(CLAIMED, key.getNamespace(), "A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
         return true;
+    }
+
+    public static boolean available(JsonObject json, ResourceLocation key) {
+        return available(Json.strings(json, PackRequirements.REQUIRES), key);
     }
 
     public static boolean available(List<String> requires, ResourceLocation key) {

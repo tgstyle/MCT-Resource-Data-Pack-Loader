@@ -48,7 +48,7 @@ public final class TeamDissolve {
 
     private static void dissolve(MinecraftServer server, OwnerTable table, int handle, String source) {
         table.markDissolved(handle);
-        ClaimDissolve.apply(server, handle, OwnerRecord.SOURCE_FTB.equals(source) ? OwnershipSettings.ftbDissolveMode(ClaimSettings.dissolveMode()) : ClaimSettings.dissolveMode());
+        ClaimDissolve.apply(server, handle, OwnershipSettings.dissolveMode(source, ClaimSettings.dissolveMode()));
     }
 
     public static void onLogin(ServerPlayer player) {

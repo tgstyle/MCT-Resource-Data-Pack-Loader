@@ -58,7 +58,7 @@ public final class RaidBreakDoorGoal extends Goal {
 
     @Override public void stop() {
         mob.getPersistentData().remove(ActiveRaid.DOOR);
-        if (door != null) { mob.level().destroyBlockProgress(mob.getId(), door, -1); }
+        if (door != null) { BlockBreak.clear(mob, door); }
     }
 
     @Override public void tick() {

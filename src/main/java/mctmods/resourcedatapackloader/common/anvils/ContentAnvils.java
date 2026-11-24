@@ -247,9 +247,7 @@ public final class ContentAnvils {
             output.setCount(def.itemCount());
         }
         OFFERED.put(output, def);
-        event.setOutput(output);
-        event.setCost(def.levels());
-        event.setMaterialCost(def.withCount());
+        AnvilRules.offer(event, output, def.levels(), def.withCount());
         return true;
     }
 

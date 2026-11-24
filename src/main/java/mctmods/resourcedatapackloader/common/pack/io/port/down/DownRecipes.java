@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.common.pack.io.port.down;
 
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.io.port.cross.CrossJson;
-import static mctmods.resourcedatapackloader.core.util.IdNames.namespaced;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -21,28 +20,28 @@ final class DownRecipes {
 
     private DownRecipes() {}
 
-    static void recipe(JsonObject json, String file, Consumer<String> note) {
+    static void recipe(JsonObject json, Consumer<String> note) {
         if (!json.has(TYPE)) { return; }
-        String type = namespaced(Json.text(json, TYPE));
+        String type = Json.id(json, TYPE);
         if (DownFixes.unknownRecipe(type)) {
             dropped(json);
-            note.accept("'" + file + "' is a " + type + " recipe, a type " + Port.Line.running().title() + " does not have, so it is left out");
+            note.accept("is a " + type + " recipe, a type " + Port.Line.running().title() + " does not have, so it is left out");
             return;
         }
         if ("minecraft:smithing_trim".equals(type)) { json.remove("pattern"); }
         for (String key : SINGLE) {
-            if (json.has(key)) { json.add(key, ingredient(json.get(key), file, note)); }
+            if (json.has(key)) { json.add(key, ingredient(json.get(key), note)); }
         }
         if (GsonHelper.isArrayNode(json, "ingredients")) {
             JsonArray out = new JsonArray();
-            for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, file, note)); }
+            for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, note)); }
             json.add("ingredients", out);
         }
         if (GsonHelper.isObjectNode(json, "key")) {
-            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), file, note)); }
+            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), note)); }
         }
-        if (GsonHelper.isObjectNode(json, "result")) { DownFixes.stack(json.getAsJsonObject("result"), file, note); }
-        CrossJson.replace(json, DownFixes.names(json).getAsJsonObject());
+        if (GsonHelper.isObjectNode(json, "result")) { DownFixes.stack(json.getAsJsonObject("result"), note); }
+        DownFixes.rename(json);
     }
 
     private static void dropped(JsonObject json) {
@@ -56,10 +55,10 @@ final class DownRecipes {
         CrossJson.replace(json, out);
     }
 
-    static JsonElement ingredient(JsonElement held, String file, Consumer<String> note) {
+    static JsonElement ingredient(JsonElement held, Consumer<String> note) {
         if (held.isJsonArray()) {
             JsonArray out = new JsonArray();
-            for (JsonElement one : held.getAsJsonArray()) { out.add(ingredient(one, file, note)); }
+            for (JsonElement one : held.getAsJsonArray()) { out.add(ingredient(one, note)); }
             return out;
         }
         if (held.isJsonPrimitive()) {
@@ -77,10 +76,10 @@ final class DownRecipes {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
             if (CUSTOM_TYPE.equals(key)) { continue; }
-            if (NESTED.contains(key)) { out.add(key, ingredient(value, file, note)); }
+            if (NESTED.contains(key)) { out.add(key, ingredient(value, note)); }
             else if (CrossJson.COMPONENTS.equals(key) && value.isJsonObject()) {
                 JsonObject components = value.getAsJsonObject().deepCopy();
-                DownFixes.components(components, file, note);
+                DownFixes.components(components, note);
                 out.add(key, components);
             }
             else { out.add(key, value); }

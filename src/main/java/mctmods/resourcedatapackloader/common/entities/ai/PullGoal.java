@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.entities.ai;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.PullingHand;
+import mctmods.resourcedatapackloader.common.util.entity.Looking;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
 
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -9,7 +11,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
@@ -37,7 +38,7 @@ public final class PullGoal extends Goal {
     }
 
     @Nullable private Player aimed() {
-        double range = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
+        double range = Walking.followRange(mob);
         LivingEntity attack = mob.getTarget();
         Player found = attack instanceof Player player && !player.isCreative() && !player.isSpectator() ? player : null;
         if (found == null && follows && attack == null) { found = mob.level().getNearestPlayer(TargetingConditions.forCombat().range(range), mob); }
@@ -58,7 +59,7 @@ public final class PullGoal extends Goal {
     @Override public void start() {
         next = mob.level().getGameTime() + reload;
         if (target == null || mob.level().isClientSide()) { return; }
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        Looking.at(mob, target);
         PullingHand hand = new PullingHand(mob.level(), mob, stack, power);
         Vec3 at = new Vec3(target.getX() - hand.getX(), target.getEyeY() - hand.getY(), target.getZ() - hand.getZ());
         hand.shoot(at.normalize().scale(SPEED));

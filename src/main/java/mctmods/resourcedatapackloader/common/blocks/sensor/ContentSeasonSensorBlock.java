@@ -55,7 +55,7 @@ public final class ContentSeasonSensorBlock extends Block implements IContentBlo
         level.scheduleTick(pos, this, POLL);
         int power = power(level);
         if (power == state.getValue(POWER)) { return; }
-        level.setBlock(pos, state.setValue(POWER, power), 3);
+        level.setBlock(pos, state.setValue(POWER, power), Block.UPDATE_ALL);
         level.updateNeighborsAt(pos, this);
     }
 

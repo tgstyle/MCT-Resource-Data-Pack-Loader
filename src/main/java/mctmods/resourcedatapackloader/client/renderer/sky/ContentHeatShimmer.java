@@ -13,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
@@ -35,7 +36,7 @@ public final class ContentHeatShimmer {
         Minecraft mc = Minecraft.getInstance();
         SkyLookDef look = ContentFogSampler.look(mc.level);
         float target = target(mc, look);
-        strength = look == null || look.heat() == null ? 0.0F : strength + (target - strength) * EASE;
+        strength = look == null || look.heat() == null ? 0.0F : Mth.lerp(EASE, strength, target);
         if (target <= 0.0F && strength < GONE) { strength = 0.0F; }
         if (strength <= 0.0F) {
             close();

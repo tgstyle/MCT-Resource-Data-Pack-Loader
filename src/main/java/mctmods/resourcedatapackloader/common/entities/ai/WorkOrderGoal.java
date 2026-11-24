@@ -16,7 +16,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -66,7 +65,7 @@ public final class WorkOrderGoal extends Goal {
     }
 
     @Override public void stop() {
-        if (target != null && total > 0) { mob.level().destroyBlockProgress(mob.getId(), target, -1); }
+        if (target != null && total > 0) { BlockBreak.clear(mob, target); }
         if (target != null && order != null && stage == Stage.WORK) { order.giveBack(target); }
         OrderBoard.release(mob, order);
         order = null;
@@ -109,7 +108,7 @@ public final class WorkOrderGoal extends Goal {
         if (total == 0 && blocked(held, pos, state)) { return; }
         left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
-        mob.level().destroyBlockProgress(mob.getId(), pos, -1);
+        BlockBreak.clear(mob, pos);
         harvest(held, pos, state);
     }
 
@@ -230,7 +229,7 @@ public final class WorkOrderGoal extends Goal {
         giveUp();
     }
 
-    private boolean far(BlockPos pos) { return mob.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) > REACH_SQ; }
+    private boolean far(BlockPos pos) { return mob.distanceToSqr(Vec3.atCenterOf(pos)) > REACH_SQ; }
 
     private void walk(BlockPos pos) {
         if (++walked > GIVE_UP) {
@@ -246,8 +245,7 @@ public final class WorkOrderGoal extends Goal {
         Vec3 aim = Vec3.atBottomCenterOf(to);
         double floor = Math.min(mob.getY(), to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {
-            Vec3 toward = DefaultRandomPos.getPosTowards(mob, 10, 7, aim, Math.PI / 2.0D);
-            if (toward != null && toward.y >= floor && mob.getNavigation().moveTo(toward.x, toward.y, toward.z, pace)) { return; }
+            if (Walking.toward(mob, aim, 10, 7, pace, spot -> spot.y >= floor)) { return; }
         }
     }
 

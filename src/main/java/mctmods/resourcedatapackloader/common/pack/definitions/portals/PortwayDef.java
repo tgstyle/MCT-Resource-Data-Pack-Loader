@@ -9,9 +9,9 @@ public record PortwayDef(String activateSound, String travelSound, List<String> 
                          String activateParticle, String travelParticle, CarryDef carry, CostDef cost, PortwayMenu menu) {
     public static final PortwayDef PLAIN = new PortwayDef("minecraft:block.beacon.activate", "minecraft:block.portal.travel", List.of(), List.of(), List.of(), true, "", "", GateDef.PLAYER, false, false, false, "", "", CarryDef.NONE, CostDef.NONE, PortwayMenu.PLAIN);
 
-    public boolean global() { return GateDef.GLOBAL.equals(scope); }
+    public boolean global() { return GateDef.global(scope); }
 
-    public boolean teamWide() { return GateDef.TEAM.equals(scope); }
+    public boolean teamWide() { return GateDef.teamWide(scope); }
 
     public boolean lists(String dimension) { return !deny.contains(dimension) && (allow.isEmpty() || allow.contains(dimension)); }
 }

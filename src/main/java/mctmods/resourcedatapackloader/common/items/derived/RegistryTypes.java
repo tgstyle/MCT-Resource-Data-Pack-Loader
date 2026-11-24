@@ -11,7 +11,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.effect.MobEffect;
@@ -48,6 +50,14 @@ final class RegistryTypes {
         if (found == null) { return null; }
         if (type == Supplier.class) { return (Supplier<Object>) () -> found; }
         return type.isInstance(found) ? found : null;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"}) @Nullable static TagKey<?> tag(@Nullable Type generic, @Nullable Object current, ResourceLocation id) {
+        if (generic instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments()[0] instanceof Class<?> element) {
+            Registry<?> registry = find(element, null);
+            if (registry != null) { return TagKey.create((ResourceKey) registry.key(), id); }
+        }
+        return current instanceof TagKey<?> key ? TagKey.create((ResourceKey) key.registry(), id) : null;
     }
 
     @Nullable private static Class<?> element(Class<?> type, @Nullable Type generic) {

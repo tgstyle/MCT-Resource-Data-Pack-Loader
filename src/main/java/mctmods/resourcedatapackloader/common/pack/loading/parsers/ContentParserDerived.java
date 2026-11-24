@@ -14,7 +14,7 @@ import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ContentParserDerived {
-    private static final List<String> NEEDS_RDPL_CLASS = Arrays.asList("type", "variants", "runs", "script", "cooldown", "rolls", "rollStore", "locates", "locator", "sleepingBag", "firework", "container", "upgrade", "portway", "eat", "alwaysEdible", "useDuration", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "rocket", "passesTurn", "record", "seasonClock", "holds");
+    private static final List<String> NEEDS_RDPL_CLASS = Arrays.asList("type", "variants", Json.RUNS, "script", "cooldown", "rolls", "rollStore", "locates", "locator", "sleepingBag", "firework", "container", "upgrade", "portway", "eat", "alwaysEdible", "useDuration", "material", "toolClass", "slot", "crop", "soil", "potionTypes", "attackSpeed", "rocket", "passesTurn", "record", "seasonClock", "holds");
 
     private ContentParserDerived() {}
 

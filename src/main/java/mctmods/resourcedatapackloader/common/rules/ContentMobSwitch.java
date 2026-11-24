@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Enums;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,7 +33,12 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 public final class ContentMobSwitch {
-    private static final List<String> KEYS = List.of("entities", "health", "damage", "speed", "equipment");
+    private static final String ENTITIES_KEY = "entities";
+    private static final String HEALTH_KEY = "health";
+    private static final String DAMAGE_KEY = "damage";
+    private static final String SPEED_KEY = "speed";
+    private static final String EQUIPMENT_KEY = "equipment";
+    private static final List<String> KEYS = List.of(ENTITIES_KEY, HEALTH_KEY, DAMAGE_KEY, SPEED_KEY, EQUIPMENT_KEY);
     private static final List<String> SLOTS = List.of("mainhand", "offhand", "head", "chest", "legs", "feet");
     private static final String ITEM = "item";
     private static final String DROP_CHANCE = "dropChance";
@@ -65,17 +71,17 @@ public final class ContentMobSwitch {
                 ContentLog.LOGGER.error("{} gives mobs.{}, which is not a mobs key, ignoring it", owner, key);
                 continue;
             }
-            if ("entities".equals(key)) {
+            if (ENTITIES_KEY.equals(key)) {
                 List<String> listed = MobStats.entities(owner, "mobs.entities", entry.getValue());
                 if (listed != null) { entities = listed; }
             }
-            else if ("equipment".equals(key)) { equipment(owner, entry.getValue(), equipment); }
+            else if (EQUIPMENT_KEY.equals(key)) { equipment(owner, entry.getValue(), equipment); }
             else {
                 float amount = ContentSpawnSwitch.amount(owner, "mobs." + key, entry.getValue());
-                if (amount == 0.0F && "health".equals(key)) { ContentLog.LOGGER.error("{} gives mobs.health as 0, which is not above 0, ignoring it", owner); }
+                if (amount == 0.0F && HEALTH_KEY.equals(key)) { ContentLog.LOGGER.error("{} gives mobs.health as 0, which is not above 0, ignoring it", owner); }
                 else if (amount >= 0.0F) {
-                    if ("health".equals(key)) { health = amount; }
-                    else if ("damage".equals(key)) { damage = amount; }
+                    if (HEALTH_KEY.equals(key)) { health = amount; }
+                    else if (DAMAGE_KEY.equals(key)) { damage = amount; }
                     else { speed = amount; }
                 }
             }
@@ -110,7 +116,7 @@ public final class ContentMobSwitch {
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             if (ITEM.equals(entry.getKey())) {
                 JsonElement value = entry.getValue();
-                String id = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? Settings.lower(value.getAsString()) : "";
+                String id = Json.isString(value) ? Settings.lower(value.getAsString()) : "";
                 if (id.isEmpty()) { ContentLog.LOGGER.error("{} gives {}.item that is not an item id, ignoring it", owner, where); }
                 else { item = id.indexOf(':') < 0 ? "minecraft:" + id : id; }
             }

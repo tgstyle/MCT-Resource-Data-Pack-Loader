@@ -76,12 +76,7 @@ public final class ContentBiomeParser {
     public static List<BiomeSpawnDef> spawns(ResourceLocation key, JsonObject json, int weight, int max) {
         if (!json.has("spawns")) { return List.of(); }
         List<BiomeSpawnDef> spawns = new ArrayList<>();
-        for (JsonElement element : Json.getJsonArray(json, "spawns")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
+        for (JsonObject entry : Json.objectsOrSkip(Json.getJsonArray(json, "spawns"), "A spawn entry in {} is not an object, skipping it", key)) {
             ResourceLocation entity = ContentParser.location(Json.getString(entry, "entity", ""));
             if (entity == null) {
                 ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);

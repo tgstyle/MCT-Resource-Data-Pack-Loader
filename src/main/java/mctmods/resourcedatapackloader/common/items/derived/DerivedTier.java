@@ -14,8 +14,10 @@ final class DerivedTier implements Tier {
     TagKey<Block> incorrectBlocksForDrops;
     int enchantmentValue;
     Supplier<Ingredient> repairIngredient;
+    final String name;
 
     DerivedTier(Tier from) {
+        name = from.toString();
         uses = from.getUses();
         speed = from.getSpeed();
         attackDamageBonus = from.getAttackDamageBonus();
@@ -23,6 +25,8 @@ final class DerivedTier implements Tier {
         enchantmentValue = from.getEnchantmentValue();
         repairIngredient = from::getRepairIngredient;
     }
+
+    @Override public String toString() { return name; }
 
     @Override public int getUses() { return uses; }
 

@@ -66,7 +66,9 @@ public final class OwnershipSettings {
         };
     }
 
-    public static Dissolve dissolveMode(String source) { return OwnerRecord.SOURCE_FTB.equals(source) ? ftbDissolveMode(dissolveMode()) : dissolveMode(); }
+    public static Dissolve dissolveMode(String source) { return dissolveMode(source, dissolveMode()); }
+
+    public static Dissolve dissolveMode(String source, Dissolve follow) { return OwnerRecord.SOURCE_FTB.equals(source) ? ftbDissolveMode(follow) : follow; }
 
     public static boolean keepsEverything() { return dissolveMode() == Dissolve.KEEP && ftbDissolveMode(Dissolve.KEEP) == Dissolve.KEEP; }
 

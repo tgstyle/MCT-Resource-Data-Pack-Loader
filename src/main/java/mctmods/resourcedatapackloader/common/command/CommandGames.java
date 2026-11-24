@@ -29,9 +29,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
 
 final class CommandGames {
+    private static final String DECK = "deck";
+    private static final String BOARD = "board";
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
+    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", DECK, "teamroll", "tiebreak", "last", "pass", BOARD);
     private static final List<String> DECK_ACTIONS = List.of("draw", "shuffle", "left");
     private static final List<String> PICKS = List.of("player", "team");
     private static final List<String> OPTIONS = List.of("store", "audience");
@@ -39,26 +41,22 @@ final class CommandGames {
     private static final Map<String, Integer> LEVELS = new LinkedHashMap<>();
     static {
         for (String roll : ROLLS) { LEVELS.put(roll, 0); }
-        LEVELS.remove("deck");
-        for (String action : DECK_ACTIONS) { LEVELS.put("deck " + action, 0); }
-        LEVELS.put("deck shuffle", 2);
+        LEVELS.remove(DECK);
+        for (String action : DECK_ACTIONS) { LEVELS.put(DECK + " " + action, 0); }
+        LEVELS.put(DECK + " shuffle", 2);
         LEVELS.put("tiebreak", 2);
-        LEVELS.remove("board");
-        for (String action : CommandBoard.ACTIONS) { LEVELS.put("board " + action, 0); }
-        LEVELS.put("board start", 2);
-        LEVELS.put("board end", 2);
-        LEVELS.put("board ai", 2);
+        LEVELS.remove(BOARD);
+        for (String action : CommandBoard.ACTIONS) { LEVELS.put(BOARD + " " + action, 0); }
+        LEVELS.put(BOARD + " start", 2);
+        LEVELS.put(BOARD + " end", 2);
+        LEVELS.put(BOARD + " ai", 2);
     }
 
     private CommandGames() {}
 
     private static int level(String sub) { return ContentStructureSearch.listedLevel("gameLevels", Config.commands.gameLevels(), sub, LEVELS.getOrDefault(sub, 0)); }
 
-    private static int lowest() {
-        int lowest = CommandShared.OPERATOR;
-        for (String sub : LEVELS.keySet()) { lowest = Math.min(lowest, level(sub)); }
-        return lowest;
-    }
+    private static int lowest() { return ServerCommands.lowest(LEVELS.keySet(), CommandGames::level); }
 
     static LiteralArgumentBuilder<CommandSourceStack> game(String name) {
         return Commands.literal("game").requires(source -> source.hasPermission(lowest()))
@@ -66,14 +64,14 @@ final class CommandGames {
                         .executes(context -> run(context.getSource(), name, StringArgumentType.getString(context, "roll"))));
     }
 
-    private static String sub(String[] args) { return args.length > 1 && ("deck".equals(args[0]) || "board".equals(args[0])) ? args[0] + " " + args[1] : args[0]; }
+    private static String sub(String[] args) { return args.length > 1 && (DECK.equals(args[0]) || BOARD.equals(args[0])) ? args[0] + " " + args[1] : args[0]; }
 
     private static int run(CommandSourceStack source, String name, String line) {
         CommandShared.ran(source, name, "game " + line);
         String[] args = line.trim().split("\\s+");
         if (!ROLLS.contains(args[0])) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
         if (!source.hasPermission(level(sub(args)))) { return refuse(source, ContentDice.words(source.getPlayer(), "notallowed")); }
-        if ("board".equals(args[0])) { return CommandBoard.run(source, args); }
+        if (BOARD.equals(args[0])) { return CommandBoard.run(source, args); }
         MinecraftServer server = source.getServer();
         if ("pass".equals(args[0])) {
             String refusal = ContentTurns.pass(server, source.getPlayer());
@@ -115,7 +113,7 @@ final class CommandGames {
             case "advantage" -> ContentDice.edge(random, first == null ? DEFAULT_ROLL : first, true);
             case "disadvantage" -> ContentDice.edge(random, first == null ? DEFAULT_ROLL : first, false);
             case "pick" -> pick(server, plain);
-            case "deck" -> deck(server, plain);
+            case DECK -> deck(server, plain);
             case "teamroll" -> ContentDice.teamroll(server, source, first == null ? DEFAULT_ROLL : first);
             default -> ContentDice.tiebreak(server, first);
         };
@@ -164,7 +162,7 @@ final class CommandGames {
             for (String roll : ROLLS) { if (source.hasPermission(lowestOf(roll))) { open.add(roll); } }
             return open;
         }
-        if ("board".equals(words.getFirst())) { return CommandBoard.offered(source.getServer(), words); }
+        if (BOARD.equals(words.getFirst())) { return CommandBoard.offered(source.getServer(), words); }
         String before = words.getLast();
         if ("store".equals(before)) { return new ArrayList<>(Scores.board(source.getServer()).getObjectiveNames()); }
         if ("audience".equals(before)) { return ContentDice.AUDIENCES; }
@@ -177,20 +175,20 @@ final class CommandGames {
                 }
                 case "dice", "advantage", "disadvantage", "teamroll" -> { return SAMPLE_ROLLS; }
                 case "pick" -> { return PICKS; }
-                case "deck" -> { return DECK_ACTIONS; }
+                case DECK -> { return DECK_ACTIONS; }
                 case "tiebreak" -> { return new ArrayList<>(ContentScoring.all().keySet()); }
                 default -> { }
             }
         }
-        if (words.size() == 2 && "deck".equals(words.get(0))) { return ContentDice.deckNames(); }
+        if (words.size() == 2 && DECK.equals(words.get(0))) { return ContentDice.deckNames(); }
         if (words.size() == 2 && "pick".equals(words.get(0)) && "team".equals(words.get(1))) { return new ArrayList<>(Scores.board(source.getServer()).getTeamNames()); }
         return OPTIONS;
     }
 
     private static int lowestOf(String roll) {
-        if (!"deck".equals(roll) && !"board".equals(roll)) { return level(roll); }
-        int lowest = CommandShared.OPERATOR;
-        for (String action : "deck".equals(roll) ? DECK_ACTIONS : CommandBoard.ACTIONS) { lowest = Math.min(lowest, level(roll + " " + action)); }
-        return lowest;
+        if (!DECK.equals(roll) && !BOARD.equals(roll)) { return level(roll); }
+        List<String> subs = new ArrayList<>();
+        for (String action : DECK.equals(roll) ? DECK_ACTIONS : CommandBoard.ACTIONS) { subs.add(roll + " " + action); }
+        return ServerCommands.lowest(subs, CommandGames::level);
     }
 }

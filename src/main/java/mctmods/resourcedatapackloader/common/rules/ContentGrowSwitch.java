@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -72,7 +73,7 @@ public final class ContentGrowSwitch {
     }
 
     private static int tooltip(String owner, JsonElement element) {
-        int mode = element.isJsonPrimitive() && element.getAsJsonPrimitive().isString() ? TOOLTIPS.indexOf(element.getAsString()) : -1;
+        int mode = Json.isString(element) ? TOOLTIPS.indexOf(element.getAsString()) : -1;
         if (mode < 0) { ContentLog.LOGGER.error("{} gives growth.tooltip as {}, which is not one of {}, ignoring it", owner, element, TOOLTIPS); }
         return Math.max(mode, GrowSwitchDef.TOOLTIP_OFF);
     }
@@ -83,7 +84,7 @@ public final class ContentGrowSwitch {
             return;
         }
         for (JsonElement entry : element.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
+            if (!Json.isString(entry)) {
                 ContentLog.LOGGER.error("{} gives {} an entry {} that is not a block id or #tag, ignoring it", owner, key, entry);
                 continue;
             }

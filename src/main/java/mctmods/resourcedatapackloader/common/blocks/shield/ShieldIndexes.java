@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SpawnShieldDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -90,15 +92,13 @@ public final class ShieldIndexes {
         for (int i = 0; i < sections.length; i++) { addSection(index, key, sections[i], at.getMinBlockX(), chunk.getSectionYFromSectionIndex(i) << 4, at.getMinBlockZ()); }
     }
 
-    private static long column(int x, int z) { return (x & 0x3FFFFFFL) << 38 | (z & 0x3FFFFFFL); }
-
     private static void addSection(ShieldIndex index, long key, LevelChunkSection section, int baseX, int baseY, int baseZ) {
         if (section.hasOnlyAir() || !section.getStates().maybeHas(LISTED)) { return; }
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     BlockShield shield = TABLE.get(section.getBlockState(x, y, z).getBlock());
-                    if (shield != null) { index.add(key, column(baseX + x, baseZ + z), baseY + y, shield); }
+                    if (shield != null) { index.add(key, Longs.packPos(baseX + x, 0, baseZ + z), baseY + y, shield); }
                 }
             }
         }
@@ -110,8 +110,8 @@ public final class ShieldIndexes {
         BlockShield now = TABLE.get(newState.getBlock());
         if (was == now) { return; }
         ShieldIndex index = of(level);
-        long key = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
-        long column = column(pos.getX(), pos.getZ());
+        long key = ChunkPos.asLong(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
+        long column = Longs.packPos(pos.getX(), 0, pos.getZ());
         if (was != null) { index.remove(key, column, pos.getY()); }
         if (now != null) { index.add(key, column, pos.getY(), now); }
     }

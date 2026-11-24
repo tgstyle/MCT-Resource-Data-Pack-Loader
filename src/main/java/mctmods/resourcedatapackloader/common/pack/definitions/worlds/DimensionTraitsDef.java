@@ -15,6 +15,11 @@ public record DimensionTraitsDef(double gravity, double fallDamage, double arrow
     public static final long VANILLA_DAY = Level.TICKS_PER_DAY;
     public static final float VANILLA_SUN = 30.0F;
     public static final float VANILLA_MOON = 20.0F;
+
+    public static boolean inWindow(long tick, long from, long to, boolean endInclusive) {
+        boolean beforeEnd = endInclusive ? tick <= to : tick < to;
+        return from <= to ? tick >= from && beforeEnd : tick >= from || beforeEnd;
+    }
     public static final DimensionTraitsDef DEFAULTS = new DimensionTraitsDef(-1.0D, -1.0D, -1.0D, VANILLA_DAY, true, true, true, true, false, null, null, null, null, null, null);
 
     public DimensionTraitsDef withSky(Sky held) { return new DimensionTraitsDef(gravity, fallDamage, arrowGravity, dayLength, precipitation, lightning, snow, freeze, alwaysRain, cycle, rain, held, moon, ambience, darkDamage); }

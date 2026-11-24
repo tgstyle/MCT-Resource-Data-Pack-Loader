@@ -22,6 +22,10 @@ import javax.annotation.Nullable;
 public final class OwnerTable extends SavedData {
     private static final String NAME = "rdpl_owners";
     private static final String FTB_MIRROR_PREFIX = "ftbteams-";
+    private static final String NEXT = "next";
+    private static final String EPOCH = "epoch";
+    private static final String SWEEP = "sweep";
+    private static final String RECORDS = "records";
     private static final Factory<OwnerTable> FACTORY = new Factory<>(OwnerTable::new, (tag, lookup) -> read(tag));
     private final Map<Integer, OwnerRecord> records = new LinkedHashMap<>();
     private final Map<String, Integer> liveByKey = new HashMap<>();
@@ -210,10 +214,10 @@ public final class OwnerTable extends SavedData {
 
     private static OwnerTable read(CompoundTag compound) {
         OwnerTable table = new OwnerTable();
-        table.next = Math.max(1, compound.getInt("next"));
-        table.epoch = compound.getInt("epoch");
-        table.sweep = compound.getCompound("sweep");
-        ListTag tagged = compound.getList("records", Tag.TAG_COMPOUND);
+        table.next = Math.max(1, compound.getInt(NEXT));
+        table.epoch = compound.getInt(EPOCH);
+        table.sweep = compound.getCompound(SWEEP);
+        ListTag tagged = compound.getList(RECORDS, Tag.TAG_COMPOUND);
         for (int index = 0; index < tagged.size(); index++) {
             OwnerRecord record = OwnerRecord.read(tagged.getCompound(index));
             table.records.put(record.h, record);
@@ -226,10 +230,10 @@ public final class OwnerTable extends SavedData {
     @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag compound, @Nonnull HolderLookup.Provider lookup) {
         ListTag tagged = new ListTag();
         for (OwnerRecord record : records.values()) { tagged.add(record.write()); }
-        compound.putInt("next", next);
-        compound.putInt("epoch", epoch);
-        compound.put("records", tagged);
-        compound.put("sweep", sweep.copy());
+        compound.putInt(NEXT, next);
+        compound.putInt(EPOCH, epoch);
+        compound.put(RECORDS, tagged);
+        compound.put(SWEEP, sweep.copy());
         return compound;
     }
 }

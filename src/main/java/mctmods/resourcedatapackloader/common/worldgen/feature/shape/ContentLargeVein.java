@@ -1,19 +1,12 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
 
-public final class ContentLargeVein implements IContentShape {
-    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
-
+public final class ContentLargeVein extends ContentPlacedShape {
     private final AmountDef size;
     private final boolean sparse;
     private final boolean spindly;

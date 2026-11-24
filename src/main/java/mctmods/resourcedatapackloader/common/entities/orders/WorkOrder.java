@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.orders;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
+import mctmods.resourcedatapackloader.common.util.ItemHandlers;
 import mctmods.resourcedatapackloader.common.util.world.TileScan;
 
 import java.util.ArrayDeque;
@@ -175,16 +176,14 @@ public final class WorkOrder {
     }
 
     private boolean holds(IItemHandler items, @Nullable List<ItemStack> wants) {
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) { continue; }
-            if (wants == null && OrderItems.matches(def, stack)) { return true; }
-            if (wants == null) { continue; }
+        return ItemHandlers.any(items, stack -> {
+            if (stack.isEmpty()) { return false; }
+            if (wants == null) { return OrderItems.matches(def, stack); }
             for (ItemStack want : wants) {
                 if (OrderItems.same(want, stack)) { return true; }
             }
-        }
-        return false;
+            return false;
+        });
     }
 
     int working(long now) {

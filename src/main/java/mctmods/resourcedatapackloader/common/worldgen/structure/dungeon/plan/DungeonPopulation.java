@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DungeonThem
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RoomKindDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RoomKindDef.Amount;
 import mctmods.resourcedatapackloader.common.util.worldgen.SeedStreams;
+import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.ContentDungeonThemes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Link;
 import mctmods.resourcedatapackloader.common.worldgen.structure.dungeon.plan.DungeonPlan.Room;
@@ -31,7 +32,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
 public final class DungeonPopulation {
-    static final List<String> TIERS = List.of("common", "hard", "brute", "elite", "boss");
+    public static final List<String> TIERS = List.of("common", "hard", "brute", "elite", "boss");
     private static final Set<String> MISSING = new HashSet<>();
     private static final int JITTER = 20;
     private static final int CEILING_IN = 4;
@@ -100,12 +101,8 @@ public final class DungeonPopulation {
     @Nullable public static Draw draw(DungeonPlan plan, DungeonDef def, DungeonPlan.Level level, Room room) {
         DungeonThemeDef theme = ContentDungeonThemes.byName(level.themeId);
         if (theme == null) { return null; }
-        double depth = level.index / (double) Math.max(1, plan.levels.size() - 1);
-        List<RoomKindDef> kinds = def.roomKinds();
-        for (LevelRule rule : def.levelRules()) {
-            if (rule.fromDepth() <= depth && rule.roomKinds() != null) { kinds = rule.roomKinds(); }
-        }
-        DungeonPopulation population = new DungeonPopulation(null, null, def, kinds, theme, depth, SeedStreams.seed(plan.site.siteSeed(), "population", level.index));
+        double depth = DungeonDef.depthOf(level.index, plan.levels.size());
+        DungeonPopulation population = new DungeonPopulation(null, null, def, def.kindsAt(depth), theme, depth, SeedStreams.seed(plan.site.siteSeed(), "population", level.index));
         return new Draw(population, room, population.kindOf(room));
     }
 
@@ -180,7 +177,7 @@ public final class DungeonPopulation {
         if (amount != null && !amount.percent()) { return amount.min() + random.nextInt(amount.max() - amount.min() + 1); }
         int chance = amount != null ? amount.min() : spawnPercent;
         boolean allowed = amount != null || !room.entrance || entranceMobs;
-        boolean gets = room.node && amount == null || allowed && random.nextInt(100) < chance;
+        boolean gets = room.node && amount == null || allowed && DungeonDef.Degree.chance(random, chance);
         double area = (room.x1 - room.x0 + 1) * (double) (room.z1 - room.z0 + 1);
         double expected = area / perSpawner * (1.0D + (random.nextInt(2 * JITTER + 1) - JITTER) / 100.0D);
         int count = (int) expected + (random.nextDouble() < expected - (int) expected ? 1 : 0);
@@ -191,7 +188,7 @@ public final class DungeonPopulation {
     private int rollTier(Room room, int base, Random random) {
         int cap = room.node ? bossTier : maxTier;
         int tier = room.node ? Math.max(base, nodeTier) : base;
-        while (tier < cap && random.nextInt(100) < promote) {
+        while (tier < cap && DungeonDef.Degree.chance(random, promote)) {
             tier++;
         }
         tier = Math.max(tier, (int) Math.floor(depth * maxTier / 2.0D));
@@ -217,21 +214,14 @@ public final class DungeonPopulation {
 
     @Nullable private Mob pickMob(String spec, int tier, String roomKind, Random random) {
         List<SpawnGroup> groups = new ArrayList<>();
-        int total = 0;
         for (SpawnGroup group : theme.spawnGroups()) {
             if (!group.name().equals(spec) || depth < group.minDepth() || depth > group.maxDepth()) { continue; }
             if (!group.kinds().isEmpty() && !group.kinds().contains(roomKind) || group.tier() != null && !group.tier().equals(TIERS.get(tier))) { continue; }
             if (usable(group.mobs()).isEmpty()) { continue; }
             groups.add(group);
-            total += group.weight();
         }
-        if (!groups.isEmpty()) {
-            int roll = random.nextInt(total);
-            for (SpawnGroup group : groups) {
-                roll -= group.weight();
-                if (roll < 0) { return weighted(usable(group.mobs()), random); }
-            }
-        }
+        SpawnGroup chosen = groups.isEmpty() ? null : WeightedPicks.raw(groups, SpawnGroup::weight, random, null);
+        if (chosen != null) { return weighted(usable(chosen.mobs()), random); }
         for (int t = tier; t >= 0; t--) {
             List<Mob> held = usable(theme.mobs().getOrDefault(TIERS.get(t), Collections.emptyList()));
             if (!held.isEmpty()) { return weighted(held, random); }
@@ -249,16 +239,7 @@ public final class DungeonPopulation {
     }
 
     private static Mob weighted(List<Mob> mobs, Random random) {
-        int total = 0;
-        for (Mob mob : mobs) {
-            total += mob.weight();
-        }
-        int roll = random.nextInt(total);
-        for (Mob mob : mobs) {
-            roll -= mob.weight();
-            if (roll < 0) { return mob; }
-        }
-        return mobs.getFirst();
+        return WeightedPicks.raw(mobs, Mob::weight, random, mobs.getFirst());
     }
 
     private void bossChest(DungeonDef.Boss boss, Room room, Random random, List<int[]> cells, int top, int spawners) {
@@ -273,7 +254,7 @@ public final class DungeonPopulation {
         Amount amount = kind.chests();
         int count;
         if (amount == null) { count = room.entrance ? 0 : room.node || spawners > 0 && random.nextBoolean() || spawners == 0 && random.nextInt(WEAK_IN) == 0 ? 1 : 0; }
-        else if (amount.percent()) { count = random.nextInt(100) < amount.min() ? 1 : 0; }
+        else if (amount.percent()) { count = DungeonDef.Degree.chance(random, amount.min()) ? 1 : 0; }
         else { count = amount.min() + random.nextInt(amount.max() - amount.min() + 1); }
         int chestKind = room.node ? PlanRecords.CHEST_TREASURE : spawners > 0 ? PlanRecords.CHEST_BASIC : PlanRecords.CHEST_WEAK;
         int at = chestLevel(room, top, spawners);
@@ -293,20 +274,11 @@ public final class DungeonPopulation {
 
     @Nullable private LootEntry pickLoot(String set, int at, Random random) {
         List<LootEntry> fits = new ArrayList<>();
-        int total = 0;
         for (LootEntry entry : theme.loot().getOrDefault(set, Collections.emptyList())) {
-            if (at >= entry.minLevel() && at <= entry.maxLevel()) {
-                fits.add(entry);
-                total += entry.weight();
-            }
+            if (at >= entry.minLevel() && at <= entry.maxLevel()) { fits.add(entry); }
         }
         if (fits.isEmpty()) { return null; }
-        int roll = random.nextInt(total);
-        for (LootEntry entry : fits) {
-            roll -= entry.weight();
-            if (roll < 0) { return entry; }
-        }
-        return fits.getFirst();
+        return WeightedPicks.raw(fits, LootEntry::weight, random, fits.getFirst());
     }
 
     @Nullable private static int[] wallCell(Room room, List<int[]> cells, List<int[]> chests) {
@@ -347,7 +319,7 @@ public final class DungeonPopulation {
     }
 
     private boolean blocked(Room room, @Nullable Shaft shaft, int x, int z) {
-        if (Math.abs(x - level.anchorX()) <= LANDING_REACH && Math.abs(z - level.anchorZ()) <= LANDING_REACH) { return true; }
+        if (near(x, z, level.anchorX(), level.anchorZ(), LANDING_REACH)) { return true; }
         if (shaft != null && x >= shaft.x() - SHAFT_LOW && x <= shaft.x() + SHAFT_HIGH && z >= shaft.z() - SHAFT_LOW && z <= shaft.z() + SHAFT_HIGH) { return true; }
         for (Link link : level.links()) {
             int reach = Math.max(1, link.width / 2);

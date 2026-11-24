@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 public final class ContentSpawnGate {
-    private static final double REACH = 128.0D * 128.0D;
+    private static final double REACH_SQ = 128.0D * 128.0D;
 
     private ContentSpawnGate() {}
 
@@ -37,7 +37,7 @@ public final class ContentSpawnGate {
 
     private static boolean playerNear(SpawnGateDef gate, ServerLevel level, Entity entity) {
         for (ServerPlayer player : level.players()) {
-            if (player.isSpectator() || player.distanceToSqr(entity) > REACH) { continue; }
+            if (player.isSpectator() || player.distanceToSqr(entity) > REACH_SQ) { continue; }
             if (!gate.advancement().isEmpty() && !Advancements.has(player, gate.advancement())) { continue; }
             if (gate.standing().met(player)) { return true; }
         }

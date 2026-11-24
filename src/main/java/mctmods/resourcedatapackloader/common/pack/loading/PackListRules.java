@@ -66,7 +66,7 @@ public final class PackListRules {
         if (DEFAULTS.isEmpty()) { return false; }
         Path root = PackManager.get().getRoot();
         if (root == null) { return false; }
-        Path marker = root.resolve("config").resolve(MARKER);
+        Path marker = PackManager.config(root, MARKER);
         if (Files.exists(marker)) { return false; }
         try {
             Files.createDirectories(marker.getParent());
@@ -90,7 +90,7 @@ public final class PackListRules {
     private static synchronized void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEachAssets(PackManager.PACKLIST, PackManager.JSON, (namespace, path, contents) -> read(namespace + ":" + path, contents));
+        PackManager.get().forEachAssets(PackManager.PACKLIST, PackManager.JSON, (namespace, path, contents) -> read(RDPLPack.id(namespace, path), contents));
         if (!RULES.isEmpty() || !DEFAULTS.isEmpty()) { ContentLog.LOGGER.info("Pack list: {} rule(s), default packs {}, fall back after {} failed reload(s)", RULES.size(), DEFAULTS, allowedFailures); }
     }
 
@@ -111,7 +111,7 @@ public final class PackListRules {
                         for (Map.Entry<String, JsonElement> pack : entry.getValue().getAsJsonObject().entrySet()) { RULES.put(id(pack.getKey()), rule(file, pack.getKey(), pack.getValue().getAsJsonObject(), RULES.get(id(pack.getKey())))); }
                         break;
                     default:
-                        ContentLog.LOGGER.error("Pack list {} sets '{}', which is not a setting anything reads, so it does nothing", file, entry.getKey());
+                        ContentControl.unknownSetting("Pack list " + file, entry.getKey(), "", "");
                 }
             }
         }
@@ -148,7 +148,7 @@ public final class PackListRules {
                     else { rule.top = TOP.equals(place); }
                     break;
                 default:
-                    ContentLog.LOGGER.error("Pack list {} sets '{}' on {}, which is not a setting anything reads, so it does nothing", file, entry.getKey(), id);
+                    ContentControl.unknownSetting("Pack list " + file, entry.getKey(), " on " + id, "");
             }
         }
         return rule;

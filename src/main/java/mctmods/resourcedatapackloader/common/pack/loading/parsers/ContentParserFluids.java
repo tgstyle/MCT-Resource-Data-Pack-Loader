@@ -162,7 +162,7 @@ public final class ContentParserFluids {
                 continue;
             }
             found.add(new FluidBehaviorDef.Row(Collections.unmodifiableList(dimensions), whole(row, "flowTicks", 0, label), spread(row, label),
-                    row.has("infinite") ? Json.getBoolean(row, "infinite", false) : null));
+                    Json.flagOrNull(row, "infinite", false)));
         }
         return Collections.unmodifiableList(found);
     }
@@ -172,19 +172,17 @@ public final class ContentParserFluids {
         Json.unknownKeys(json, "creatures", CREATURES_KEYS);
         String label = key + " creatures";
         return new FluidBehaviorDef.Creatures(decimal(json, "damage", 0.0F, LARGE, label), whole(json, "damageEvery", DAMAGE_EVERY, label),
-                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Math.max(0, Json.getInt(json, "fireSeconds", 0)) : null,
-                flag(json, "drown"), flag(json, "swim"), decimal(json, "push", 0.0F, LARGE, label), decimal(json, "drag", 0.0F, 1.0F, label));
+                Json.getString(json, "damageType", "generic").trim(), json.has("fireSeconds") ? Json.atLeast(json, "fireSeconds", 0, 0) : null,
+                Json.flagOrNull(json, "drown", false), Json.flagOrNull(json, "swim", false), decimal(json, "push", 0.0F, LARGE, label), decimal(json, "drag", 0.0F, 1.0F, label));
     }
 
     private static FluidBehaviorDef.Items items(ResourceLocation key, JsonObject json) {
         if (json.entrySet().isEmpty()) { return FluidBehaviorDef.Items.NONE; }
         Json.unknownKeys(json, "items", ITEMS_KEYS);
         String label = key + " items";
-        return new FluidBehaviorDef.Items(flag(json, "burn"), Json.ranged(json, "dissolve", 0.0F, 0.0F, 1.0F, label), Json.names(json, "immune"),
+        return new FluidBehaviorDef.Items(Json.flagOrNull(json, "burn", false), Json.ranged(json, "dissolve", 0.0F, 0.0F, 1.0F, label), Json.names(json, "immune"),
                 decimal(json, "drift", -LARGE, LARGE, label), decimal(json, "buoyancy", -LARGE, LARGE, label));
     }
-
-    @Nullable private static Boolean flag(JsonObject json, String member) { return json.has(member) ? Json.getBoolean(json, member, false) : null; }
 
     @Nullable private static Float decimal(JsonObject json, String member, float low, float high, Object owner) {
         float value = Json.bounded(json, member, low, high, owner);

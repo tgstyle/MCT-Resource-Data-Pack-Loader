@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public final class DungeonShafts {
-    private static final int SIDE = 3;
+    private static final int SIDE = Shaft.SIDE;
     private static final int RING = 8;
     private static final int SPIRAL_CLEAR = 4;
     private static final int STAIRS_CLEAR = 2;
@@ -39,11 +39,11 @@ public final class DungeonShafts {
         for (Shaft shaft : bucket.shafts) {
             int bottom = bottomOf(plan, shaft);
             DungeonShapes.Palette.Kit kit = palette.of(shaft);
-            int x1 = Math.min(box.maxX(), shaft.x() + SIDE);
-            int z1 = Math.min(box.maxZ(), shaft.z() + SIDE);
+            int x1 = Math.min(box.maxX(), shaft.maxX(1));
+            int z1 = Math.min(box.maxZ(), shaft.maxZ(1));
             int y1 = Math.min(box.maxY(), shaft.topY() - 1);
-            for (int x = Math.max(box.minX(), shaft.x() - 1); x <= x1; x++) {
-                for (int z = Math.max(box.minZ(), shaft.z() - 1); z <= z1; z++) {
+            for (int x = Math.max(box.minX(), shaft.minX(1)); x <= x1; x++) {
+                for (int z = Math.max(box.minZ(), shaft.minZ(1)); z <= z1; z++) {
                     for (int y = Math.max(box.minY(), bottom); y <= y1; y++) {
                         BlockState state = at(shaft, bottom, x, y, z, kit);
                         if (state != null) { DungeonWriter.set(level, pos.set(x, y, z), state); }
@@ -65,10 +65,10 @@ public final class DungeonShafts {
     @Nullable public static BlockState at(Shaft shaft, int bottom, int x, int y, int z, DungeonShapes.Palette.Kit kit) {
         int dx = x - shaft.x();
         int dz = z - shaft.z();
-        if (y < bottom || y >= shaft.topY() || dx < -1 || dx > SIDE || dz < -1 || dz > SIDE) { return null; }
+        if (y < bottom || y >= shaft.topY() || !shaft.covers(x, z, 1)) { return null; }
         long hash = Hashes.mix(shaft.bottomY(), shaft.x(), shaft.topY(), shaft.z());
         int face = (int) Math.floorMod(hash >>> 8, 4L);
-        if (dx < 0 || dx == SIDE || dz < 0 || dz == SIDE) {
+        if (!shaft.covers(x, z, 0)) {
             boolean backing = shaft.type() == PlanRecords.SHAFT_LADDER && dx == BACKING_DX[face] && dz == BACKING_DZ[face];
             return backing ? kit.state(DungeonShapes.Palette.WALLS, 0) : null;
         }

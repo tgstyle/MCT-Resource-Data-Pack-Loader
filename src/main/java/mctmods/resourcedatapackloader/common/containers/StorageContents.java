@@ -27,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -44,7 +45,7 @@ final class StorageContents {
 
     static Map<String, Long> census(CompoundTag root) {
         Map<String, Long> totals = new HashMap<>();
-        eachStack(root, stack -> totals.merge(String.valueOf(ResourceLocation.tryParse(stack.getString(ID))), (long) count(stack), Long::sum));
+        eachStack(root, stack -> totals.merge(itemKey(ResourceLocation.tryParse(stack.getString(ID))), (long) count(stack), Long::sum));
         return totals;
     }
 
@@ -86,10 +87,12 @@ final class StorageContents {
     static Map<String, Long> totals(List<ItemStack> stacks) {
         Map<String, Long> totals = new HashMap<>();
         for (ItemStack stack : stacks) {
-            if (!stack.isEmpty()) { totals.merge(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), (long) stack.getCount(), Long::sum); }
+            if (!stack.isEmpty()) { totals.merge(itemKey(BuiltInRegistries.ITEM.getKey(stack.getItem())), (long) stack.getCount(), Long::sum); }
         }
         return totals;
     }
+
+    private static String itemKey(@Nullable ResourceLocation id) { return String.valueOf(id); }
 
     static List<ItemStack> shown(IItemHandler handler) {
         List<ItemStack> stacks = new ArrayList<>();
@@ -152,16 +155,17 @@ final class StorageContents {
         BlockPos pos = tile.getBlockPos();
         try {
             if (side == null) { return OrderItems.handler(level, pos); }
-            return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, tile.getBlockState(), tile, side);
+            return capability(level, tile, Capabilities.ItemHandler.BLOCK, side);
         }
         catch (RuntimeException ex) { return null; }
     }
 
     @Nullable static IItemHandler forProbe(Level level, BlockEntity probe) {
         IItemHandler own = own(probe);
-        if (own != null) { return own; }
-        return level.getCapability(Capabilities.ItemHandler.BLOCK, probe.getBlockPos(), probe.getBlockState(), probe, null);
+        return own != null ? own : capability(level, probe, Capabilities.ItemHandler.BLOCK, null);
     }
+
+    @Nullable private static <T, C> T capability(Level level, BlockEntity tile, BlockCapability<T, C> kind, @Nullable C side) { return level.getCapability(kind, tile.getBlockPos(), tile.getBlockState(), tile, side); }
 
     @Nullable static IItemHandler forFill(Level level, BlockEntity placed) {
         IItemHandler own = own(placed);
@@ -197,7 +201,7 @@ final class StorageContents {
     static boolean holdsFluid(Level level, BlockEntity tile) {
         for (Direction side : SIDES) {
             try {
-                IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, tile.getBlockPos(), tile.getBlockState(), tile, side);
+                IFluidHandler handler = capability(level, tile, Capabilities.FluidHandler.BLOCK, side);
                 if (handler == null) { continue; }
                 for (int tank = 0; tank < handler.getTanks(); tank++) {
                     if (!handler.getFluidInTank(tank).isEmpty()) { return true; }

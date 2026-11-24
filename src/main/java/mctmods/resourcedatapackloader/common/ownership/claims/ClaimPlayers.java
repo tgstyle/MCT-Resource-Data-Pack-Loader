@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.util.dimension.Travel;
+import mctmods.resourcedatapackloader.common.util.world.ChunkSpan;
 
 import java.util.ArrayList;
 import net.minecraft.core.BlockPos;
@@ -50,7 +51,7 @@ public final class ClaimPlayers {
             double best = Double.MAX_VALUE;
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring || index.pendingAt(chunkX + dx, chunkZ + dz) != null) { continue; }
+                    if (ChunkSpan.chebyshev(dx, dz) != ring || index.pendingAt(chunkX + dx, chunkZ + dz) != null) { continue; }
                     double gap = player.distanceToSqr(SectionPos.sectionToBlockCoord(chunkX + dx, 8), player.getY(), SectionPos.sectionToBlockCoord(chunkZ + dz, 8));
                     if (gap < best) {
                         best = gap;

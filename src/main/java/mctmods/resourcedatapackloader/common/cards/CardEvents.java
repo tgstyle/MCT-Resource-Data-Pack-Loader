@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.PlayerLogout;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 public final class CardEvents {
     private static final ResourceLocation CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
-    private static final Map<UUID, Map<String, Integer>> LEVELS = new HashMap<>();
+    private static final Map<UUID, Map<String, Integer>> LEVELS = PlayerLogout.track(new HashMap<>());
 
     private CardEvents() {}
 
@@ -57,7 +58,7 @@ public final class CardEvents {
         ResourceLocation fallen = EntityType.getKey(event.getEntity().getType());
         for (CardRule rule : rules) {
             if (!fallen.equals(ResourceLocation.tryParse(rule.entity))) { continue; }
-            if (!rule.rank.isEmpty() && !rule.rank.equals(ContentRanks.rankOf(event.getEntity()))) { continue; }
+            if (!CardRule.wants(rule.rank, ContentRanks.rankOf(event.getEntity()))) { continue; }
             if (rule.count > 1 && CardStorage.tallyFor(player, rule.key) < rule.count) { continue; }
             if (rule.count > 1) { CardStorage.clearTallyFor(player, rule.key); }
             CardFire.fire(rule, player);
@@ -66,7 +67,7 @@ public final class CardEvents {
 
     public static void raidEnded(ServerPlayer player, String raid, boolean won) {
         for (CardRule rule : CardRules.on(won ? CardRule.RAID_WON : CardRule.RAID_LOST)) {
-            if (rule.raid.isEmpty() || rule.raid.equals(raid)) { CardFire.fire(rule, player); }
+            if (CardRule.wants(rule.raid, raid)) { CardFire.fire(rule, player); }
         }
     }
 
@@ -84,7 +85,7 @@ public final class CardEvents {
         if (before == null ? level == 0 : before == level) { return; }
         if (before != null) {
             for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
-                if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
+                if (!CardRule.wants(rule.exposure, hazard)) { continue; }
                 if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
             }
         }
@@ -122,7 +123,7 @@ public final class CardEvents {
         if (what.isEmpty()) { return; }
         String named = ContentDice.notation(what);
         for (CardRule rule : CardRules.on(CardRule.ROLL)) {
-            if (!rule.roll.isEmpty() && !rule.roll.equals(named)) { continue; }
+            if (!CardRule.wants(rule.roll, named)) { continue; }
             if (rule.atLeast != null && total < rule.atLeast) { continue; }
             if (rule.atMost != null && total > rule.atMost) { continue; }
             CardFire.fire(rule, player);
@@ -131,9 +132,9 @@ public final class CardEvents {
 
     public static void portway(ServerPlayer player, String trigger, String block, String network, String reason) {
         for (CardRule rule : CardRules.on(trigger)) {
-            if (!rule.portway.isEmpty() && !rule.portway.equals(block)) { continue; }
-            if (!rule.network.isEmpty() && !rule.network.equals(network)) { continue; }
-            if (!rule.reason.isEmpty() && !rule.reason.equals(reason)) { continue; }
+            if (!CardRule.wants(rule.portway, block)) { continue; }
+            if (!CardRule.wants(rule.network, network)) { continue; }
+            if (!CardRule.wants(rule.reason, reason)) { continue; }
             CardFire.fire(rule, player);
         }
     }
@@ -149,13 +150,6 @@ public final class CardEvents {
     public static void onCraft(PlayerEvent.ItemCraftedEvent event) { if (event.getEntity() instanceof ServerPlayer player) { item(CardRules.on(CardRule.CRAFT), player, event.getCrafting()); } }
 
     public static void onPickup(ItemEntityPickupEvent.Post event) { if (event.getPlayer() instanceof ServerPlayer player) { item(CardRules.on(CardRule.PICKUP), player, event.getOriginalStack()); } }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        CardFire.forget(event.getEntity().getUUID());
-        CardScan.forget(event.getEntity().getUUID());
-        CardSend.forget(event.getEntity().getUUID());
-        LEVELS.remove(event.getEntity().getUUID());
-    }
 
     private static void item(List<CardRule> rules, ServerPlayer player, ItemStack stack) {
         if (rules.isEmpty() || stack.isEmpty()) { return; }

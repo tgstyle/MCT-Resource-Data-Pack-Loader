@@ -132,6 +132,7 @@ public final class ContentTreeStore {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
         CHUNKS.remove(level.dimension());
         OWNED.remove(level.dimension());
+        ContentTreeClock.forget(level.dimension());
     }
 
     public static void clear() {

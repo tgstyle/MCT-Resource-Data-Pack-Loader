@@ -67,14 +67,14 @@ public final class ContentSeasons {
         List<String> names = new ArrayList<>();
         if (entry.isJsonArray()) {
             for (JsonElement element : entry.getAsJsonArray()) {
-                if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+                if (!Json.isString(element)) {
                     ContentLog.LOGGER.error("{} order has an entry that is not an environment name, ignoring seasons", owner);
                     return null;
                 }
                 names.add(Settings.lower(element.getAsString()));
             }
         }
-        else if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { names.add(Settings.lower(entry.getAsString())); }
+        else if (Json.isString(entry)) { names.add(Settings.lower(entry.getAsString())); }
         else {
             ContentLog.LOGGER.error("{} order has an entry that is not an environment name or a list of names, ignoring seasons", owner);
             return null;

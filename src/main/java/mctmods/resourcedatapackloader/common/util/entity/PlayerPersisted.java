@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.util.entity;
 
+import mctmods.resourcedatapackloader.common.util.Nbts;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
@@ -10,8 +12,7 @@ public final class PlayerPersisted {
 
     public static CompoundTag of(Entity entity, String key) {
         CompoundTag data = entity.getPersistentData();
-        if (!data.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) { data.put(Player.PERSISTED_NBT_TAG, new CompoundTag()); }
-        CompoundTag persisted = data.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag persisted = Nbts.child(data, Player.PERSISTED_NBT_TAG);
         Tag loose = data.get(key);
         if (loose == null) { return persisted; }
         if (!persisted.contains(key)) { persisted.put(key, loose); }
@@ -21,16 +22,13 @@ public final class PlayerPersisted {
 
     public static CompoundTag read(Entity entity, String key) { return of(entity, key).getCompound(key); }
 
-    public static CompoundTag section(Entity entity, String key) {
-        CompoundTag persisted = of(entity, key);
-        if (!persisted.contains(key, Tag.TAG_COMPOUND)) { persisted.put(key, new CompoundTag()); }
-        return persisted.getCompound(key);
-    }
+    public static CompoundTag section(Entity entity, String key) { return Nbts.child(of(entity, key), key); }
 
-    public static int tally(Entity entity, String section, String key) {
-        CompoundTag tally = section(entity, section);
-        int now = tally.getInt(key) + 1;
-        tally.putInt(key, now);
+    public static int tally(Entity entity, String section, String key) { return bump(section(entity, section), key); }
+
+    public static int bump(CompoundTag tag, String key) {
+        int now = tag.getInt(key) + 1;
+        tag.putInt(key, now);
         return now;
     }
 

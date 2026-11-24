@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -40,6 +41,20 @@ public final class VanillaFluidRules {
     private static final List<FluidReactionDef> LAVA = new ArrayList<>();
     private static final List<Place> SOURCES = new ArrayList<>();
     private static final List<Rain> RAIN = new ArrayList<>();
+    private static final String BIOMES = "biomes";
+    private static final String DIMENSIONS = "dimensions";
+    private static final String CHANCE = "chance";
+    private static final String MAX_LEVEL = "maxLevel";
+    private static final String MIN_HEIGHT = "minHeight";
+    private static final String MAX_HEIGHT = "maxHeight";
+    private static final String SEA_LEVEL = "seaLevel";
+    private static final String IN_CLAIMS = "inClaims";
+    private static final String INFINITE = "infinite";
+    private static final String RAIN_KEY = "rain";
+    private static final String FLUID = "fluid";
+    private static final List<String> RULE_KEYS = List.of(FLUID, INFINITE, RAIN_KEY, "reactions");
+    private static final List<String> INFINITE_MEMBERS = List.of(BIOMES, DIMENSIONS);
+    private static final List<String> RAIN_MEMBERS = List.of(BIOMES, DIMENSIONS, CHANCE, MAX_LEVEL, MIN_HEIGHT, MAX_HEIGHT, SEA_LEVEL, IN_CLAIMS);
     private static final Map<BlockState, Boolean> TOUCHED = new ConcurrentHashMap<>();
 
     private VanillaFluidRules() {}
@@ -91,7 +106,7 @@ public final class VanillaFluidRules {
 
     private static void read(ResourceLocation key, JsonObject json) {
         Json.unknownKeys(json, "the top level", RULE_KEYS);
-        String named = Json.text(json, "fluid", "");
+        String named = Json.text(json, FLUID, "");
         ResourceLocation fluid = named.isEmpty() ? null : ResourceLocation.tryParse(named);
         List<FluidReactionDef> into = WATER_ID.equals(fluid) ? WATER : LAVA_ID.equals(fluid) ? LAVA : null;
         if (into == null) {
@@ -104,58 +119,53 @@ public final class VanillaFluidRules {
             if (sound != null && !"minecraft".equals(sound.getNamespace())) { VanillaClients.clientDrawn(key, "sound " + rule.sound); }
         }
         into.addAll(rules);
-        if (json.has("infinite")) { readInfinite(key, json, into == WATER); }
-        if (json.has("rain")) { readRain(key, json, into == WATER); }
+        readInfinite(key, json, into == WATER);
+        readRain(key, json, into == WATER);
+    }
+
+    @Nullable private static JsonObject member(ResourceLocation key, JsonObject json, String name, boolean water, List<String> allowed) {
+        if (!json.has(name)) { return null; }
+        if (!water) {
+            ContentLog.LOGGER.error("Fluid rule {} has '{}' in a lava file, but only water takes {}, so it is skipped", key, name, name);
+            return null;
+        }
+        JsonObject place = Json.getJsonObject(json, name, new JsonObject());
+        for (String member : place.keySet()) {
+            if (!allowed.contains(member)) {
+                ContentLog.LOGGER.error("Fluid rule {} has the unknown member '{}' in '{}', so the entry is ignored", key, member, name);
+                return null;
+            }
+        }
+        return place;
     }
 
     private static void readInfinite(ResourceLocation key, JsonObject json, boolean water) {
-        if (!water) {
-            ContentLog.LOGGER.error("Fluid rule {} has 'infinite' in a lava file, but only water takes infinite, so it is skipped", key);
-            return;
-        }
-        JsonObject infinite = Json.getJsonObject(json, "infinite", new JsonObject());
+        JsonObject infinite = member(key, json, INFINITE, water, INFINITE_MEMBERS);
+        if (infinite == null) { return; }
         if (infinite.isEmpty()) {
             ContentLog.LOGGER.error("Fluid rule {} has an 'infinite' that names no biomes and no dimensions, so the entry is ignored", key);
             return;
         }
-        for (String member : infinite.keySet()) {
-            if (!"biomes".equals(member) && !"dimensions".equals(member)) {
-                ContentLog.LOGGER.error("Fluid rule {} has the unknown member '{}' in 'infinite', so the entry is ignored", key, member);
-                return;
-            }
-        }
-        SOURCES.add(new Place(Json.names(infinite, "biomes"), Json.names(infinite, "dimensions")));
+        SOURCES.add(new Place(Json.names(infinite, BIOMES), Json.names(infinite, DIMENSIONS)));
     }
 
-    private static final List<String> RULE_KEYS = List.of("fluid", "infinite", "rain", "reactions");
-    private static final List<String> RAIN_MEMBERS = List.of("biomes", "dimensions", "chance", "maxLevel", "minHeight", "maxHeight", "seaLevel", "inClaims");
-
     private static void readRain(ResourceLocation key, JsonObject json, boolean water) {
-        if (!water) {
-            ContentLog.LOGGER.error("Fluid rule {} has 'rain' in a lava file, but only water takes rain, so it is skipped", key);
-            return;
-        }
-        JsonObject rain = Json.getJsonObject(json, "rain", new JsonObject());
-        for (String member : rain.keySet()) {
-            if (!RAIN_MEMBERS.contains(member)) {
-                ContentLog.LOGGER.error("Fluid rule {} has the unknown member '{}' in 'rain', so the entry is ignored", key, member);
-                return;
-            }
-        }
-        int chance = Json.number(rain, "chance", 160);
+        JsonObject rain = member(key, json, RAIN_KEY, water, RAIN_MEMBERS);
+        if (rain == null) { return; }
+        int chance = Json.number(rain, CHANCE, 160);
         if (chance < 1) {
             ContentLog.LOGGER.error("Fluid rule {} sets chance in 'rain' to {}, which is outside 1 and up, so 1 is used", key, chance);
             chance = 1;
         }
-        int maxLevel = Json.number(rain, "maxLevel", 4);
+        int maxLevel = Json.number(rain, MAX_LEVEL, 4);
         if (maxLevel < 1 || maxLevel > 7) {
             ContentLog.LOGGER.error("Fluid rule {} sets maxLevel in 'rain' to {}, which is outside 1 to 7, so {} is used", key, maxLevel, Mth.clamp(maxLevel, 1, 7));
             maxLevel = Mth.clamp(maxLevel, 1, 7);
         }
-        int minHeight = rain.has("minHeight") ? Json.number(rain, "minHeight", Integer.MIN_VALUE) : Integer.MIN_VALUE;
-        int maxHeight = rain.has("maxHeight") ? Json.number(rain, "maxHeight", Integer.MAX_VALUE) : Integer.MAX_VALUE;
-        boolean outsideClaims = !Json.getBoolean(rain, "inClaims", true);
-        RAIN.add(new Rain(new Place(Json.names(rain, "biomes"), Json.names(rain, "dimensions")), chance, maxLevel, minHeight, maxHeight, Json.flag(rain, "seaLevel"), outsideClaims));
+        int minHeight = rain.has(MIN_HEIGHT) ? Json.number(rain, MIN_HEIGHT, Integer.MIN_VALUE) : Integer.MIN_VALUE;
+        int maxHeight = rain.has(MAX_HEIGHT) ? Json.number(rain, MAX_HEIGHT, Integer.MAX_VALUE) : Integer.MAX_VALUE;
+        boolean outsideClaims = !Json.getBoolean(rain, IN_CLAIMS, true);
+        RAIN.add(new Rain(new Place(Json.names(rain, BIOMES), Json.names(rain, DIMENSIONS)), chance, maxLevel, minHeight, maxHeight, Json.flag(rain, SEA_LEVEL), outsideClaims));
     }
 
     public static void rained(Level level, BlockPos pos, BlockState state) {

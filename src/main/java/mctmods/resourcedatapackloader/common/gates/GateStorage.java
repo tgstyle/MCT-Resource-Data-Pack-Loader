@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -46,25 +47,27 @@ public final class GateStorage extends SavedData {
     }
 
     public static int tally(ServerPlayer player, GateDef def) {
-        if (def.global()) { return tallyGlobally(player.server, def.id()); }
-        String team = tallyTeam(player, def);
+        String team = scopeTeam(player, def, def.tallyByTeam());
+        if (team == null) { return tallyGlobally(player.server, def.id()); }
         return team.isEmpty() ? tallyFor(player, def.id()) : tallyByTeam(player.server, team, def.id());
     }
 
     public static void clearTally(ServerPlayer player, GateDef def) {
-        String team = tallyTeam(player, def);
-        if (def.global()) { clearTallyGlobally(player.server, def.id()); }
+        String team = scopeTeam(player, def, def.tallyByTeam());
+        if (team == null) { clearTallyGlobally(player.server, def.id()); }
         else if (team.isEmpty()) { clearTallyFor(player, def.id()); }
         else { clearTallyByTeam(player.server, team, def.id()); }
     }
 
-    private static String tallyTeam(ServerPlayer player, GateDef def) { return def.tallyByTeam() ? Standing.teamOf(player) : ""; }
+    @Nullable private static String scopeTeam(ServerPlayer player, GateDef def, boolean byTeam) {
+        if (def.global()) { return null; }
+        return byTeam ? Standing.teamOf(player) : "";
+    }
 
     private static int tallyByTeam(MinecraftServer server, String team, String key) {
         GateStorage data = get(server);
         CompoundTag counts = data.teamKills.getCompound(team);
-        int now = counts.getInt(key) + 1;
-        counts.putInt(key, now);
+        int now = PlayerPersisted.bump(counts, key);
         keep(data.teamKills, team, counts);
         data.setDirty();
         return now;
@@ -84,21 +87,21 @@ public final class GateStorage extends SavedData {
     }
 
     public static boolean unlocked(ServerPlayer player, GateDef def) {
-        if (def.global()) { return unlockedGlobally(player.server, def.id()); }
-        String team = teamFor(player, def);
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { return unlockedGlobally(player.server, def.id()); }
         return team.isEmpty() ? unlockedFor(player, def.id()) : unlockedByTeam(player.server, team, def.id());
     }
 
     public static void unlock(ServerPlayer player, GateDef def) {
-        String team = teamFor(player, def);
-        if (def.global()) { unlockGlobally(player.server, def.id()); }
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { unlockGlobally(player.server, def.id()); }
         else if (team.isEmpty()) { unlockFor(player, def.id()); }
         else { unlockByTeam(player.server, team, def.id(), true); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {
-        String team = teamFor(player, def);
-        if (def.global()) { lockGlobally(player.server, def.id()); }
+        String team = scopeTeam(player, def, def.teamWide());
+        if (team == null) { lockGlobally(player.server, def.id()); }
         else if (team.isEmpty()) { lockFor(player, def.id()); }
         else { unlockByTeam(player.server, team, def.id(), false); }
     }
@@ -110,17 +113,21 @@ public final class GateStorage extends SavedData {
     private static void unlockByTeam(MinecraftServer server, String team, String key, boolean unlocked) {
         GateStorage data = get(server);
         CompoundTag gates = data.teams.getCompound(team);
-        if (unlocked) { gates.putBoolean(key, true); }
-        else { gates.remove(key); }
+        setFlag(gates, key, unlocked);
         keep(data.teams, team, gates);
         data.setDirty();
     }
 
     public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBoolean(key); }
 
-    public static void unlockFor(Player player, String key) { PlayerPersisted.section(player, PERSISTED).putBoolean(key, true); }
+    public static void unlockFor(Player player, String key) { setFlag(PlayerPersisted.section(player, PERSISTED), key, true); }
 
-    public static void lockFor(Player player, String key) { PlayerPersisted.section(player, PERSISTED).remove(key); }
+    public static void lockFor(Player player, String key) { setFlag(PlayerPersisted.section(player, PERSISTED), key, false); }
+
+    private static void setFlag(CompoundTag tag, String key, boolean on) {
+        if (on) { tag.putBoolean(key, true); }
+        else { tag.remove(key); }
+    }
 
     public static int tallyFor(Player player, String key) { return PlayerPersisted.tally(player, PERSISTED_KILLS, key); }
 
@@ -128,8 +135,7 @@ public final class GateStorage extends SavedData {
 
     public static int tallyGlobally(MinecraftServer server, String key) {
         GateStorage data = get(server);
-        int now = data.kills.getInt(key) + 1;
-        data.kills.putInt(key, now);
+        int now = PlayerPersisted.bump(data.kills, key);
         data.setDirty();
         return now;
     }
@@ -150,13 +156,13 @@ public final class GateStorage extends SavedData {
 
     public static void unlockGlobally(MinecraftServer server, String key) {
         GateStorage data = get(server);
-        data.open.putBoolean(key, true);
+        setFlag(data.open, key, true);
         data.setDirty();
     }
 
     public static void lockGlobally(MinecraftServer server, String key) {
         GateStorage data = get(server);
-        data.open.remove(key);
+        setFlag(data.open, key, false);
         data.setDirty();
     }
 }

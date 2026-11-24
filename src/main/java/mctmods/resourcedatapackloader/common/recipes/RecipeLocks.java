@@ -49,13 +49,8 @@ public final class RecipeLocks {
             ContentLog.LOGGER.error("Recipe lock file {} names no advancement or standing, ignoring it", key);
             return;
         }
-        RecipeSelector selector = new RecipeSelector();
-        selector.readWithoutInputs(key, json);
-        if (selector.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe lock file {} selects no recipes, ignoring it", key);
-            return;
-        }
-        LOCKS.add(new Lock(selector, advancement, standing));
+        RecipeSelector selector = RecipeSelector.scopeOf("Recipe lock", key, json, false);
+        if (selector != null) { LOCKS.add(new Lock(selector, advancement, standing)); }
     }
 
     private record Lock(RecipeSelector selector, String advancement, Standing standing) {
