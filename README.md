@@ -78,6 +78,8 @@ ever touched.
   live with `/rdpl reload` (**RDPL client**)
 - [Block drops](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#block-drops): add drops and experience to any block without replacing
   its loot table
+- [Loot removals](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#loot-removals): take single entries out of any loot table, or empty
+  it, without replacing the table
 - [Disabled blocks and items](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#disabled-blocks-and-items): take any block or item out of the game,
   gone from tabs, JEI, loot, trades and every inventory
 - [Entity variants](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#entity-variants): new creatures built on any mod's mob, with its AI
@@ -98,6 +100,9 @@ to rework, not just the ones you create. See [Existing dimensions](https://githu
 
 - A new sky with your own sun, moon, planets and stars, or endless rain
   (**RDPL client**)
+- [Seasons](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#seasons) that cycle a dimension's weather, tint and crops through the
+  year, and [true darkness](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#true-darkness) for nights and caves that are really dark
+  (**RDPL client**)
 - New terrain and structures in every chunk not yet explored
 - [Gates](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#gates): lock any dimension, the Nether and the End included, until a
   player earns an advancement, crafts or holds the right item, pays an item
@@ -117,6 +122,8 @@ to rework, not just the ones you create. See [Existing dimensions](https://githu
   wearable items (Baubles or Curios) (**RDPL client**)
 - [Potions](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#potions-potion-types-and-brewing) and [villager professions](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#villagers-and-trades) (**RDPL client**)
 - [Enchantments](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#enchantments) (**RDPL client** on 1.12.2 and 1.20.1)
+- [Derived items](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#derived-items): new items that run on any existing item's
+  behavior, a mod's included, under their own name (**RDPL client**)
 - Brewing recipes and villager trades
 - [Biomes](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#biomes), [cave regions](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#cave-regions) and whole [dimensions](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#dimensions)
   (**RDPL client** on 1.12.2)
@@ -134,6 +141,10 @@ to rework, not just the ones you create. See [Existing dimensions](https://githu
 - Villages and cities: streets, plazas, bridges, railways, subways, sewers and
   lamp posts, rolled at random, drawn by hand from a [city map](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#city-layout-maps), or
   [one endless city](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#continuous-city) that never stops
+- [Procedural dungeons](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#procedural-dungeons): buried buildings of rooms, corridors and
+  shafts over many levels, planned from the seed
+- [Respawning structures](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#respawning-structures): cleared structures and dungeons that
+  refill their chests, reset their spawners and rebuild their walls
 - [Pregeneration](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#pregeneration) as a world is created, so nobody waits on chunks while
   playing
 - **1.12.2:** rubic worlds that reach far above and below the 256 block limit
@@ -157,6 +168,11 @@ to rework, not just the ones you create. See [Existing dimensions](https://githu
   [loot dropped by players on death](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#player-loot)
 - Rewards for a [varied diet](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#food-variety), [extra hearts](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#max-health-rewards) earned through play,
   and [work orders](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#work-orders)
+- [Item weights](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#item-weights): a carrying limit that slows players as their load grows,
+  [soulbound items](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#soulbound-items) kept through death, and [falling columns](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#falling-columns) of
+  gravel and sand that come down in one break
+- [Item locks](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#item-locks): items hidden from creative tabs and JEI until a player
+  earns an advancement (**RDPL client**)
 - [Exposures](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#exposures): environmental hazards with their own death messages
   (**RDPL client** on 1.20.1, 1.21.1 and 26.x)
 - [Portways](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#portways): a whole teleport system of named waypoints on their own
@@ -169,12 +185,22 @@ to rework, not just the ones you create. See [Existing dimensions](https://githu
 
 - A [world intro](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#world-intro) and story pages shown on entry (**RDPL client**)
 - [Teams](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#teams), [scoring rounds](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#scoring) and standings
-- [Raids](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#raids) of your own design, with your own waves, omens and rewards
+- [Raids](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#raids) of your own design, with your own waves, omens and rewards, that
+  can [go for a player's base or the player](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#raids-on-bases-and-players) instead of a village
+- [Claimed chunks](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#claimed-chunks) and owned blocks, per team or per player, with
+  the protections you choose
 - [Event cards](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#cards) triggered by commands, joins, dimensions, biomes,
   structures, advancements, kills, crafts, time and score
 - Branching [dialogs](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#dialogs) for your creatures, driven by choices and
   conditions
 - [Dice and card decks](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#dice-and-decks) and [board games](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#board-games) played in the world
+
+## Script it
+
+When JSON is not enough, a pack can carry [scripts](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/26.x-Release/howto_localized/HOWTO-en_us.md#scripting): ES6
+JavaScript run by an engine built into the mod, with nothing else to install.
+A script runs only when a pack file names it, and reacts to events such as
+blocks placed and broken, entities hurt and players joining.
 
 ## What still needs a mod
 
